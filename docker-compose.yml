@@ -1,0 +1,28 @@
+# Blink Social — Local Development Services
+# Usage: docker compose up -d
+
+services:
+  # PostgreSQL database (uncomment when ready)
+  # postgres:
+  #   image: postgres:16-alpine
+  #   ports:
+  #     - '5432:5432'
+  #   environment:
+  #     POSTGRES_USER: blinksocial
+  #     POSTGRES_PASSWORD: blinksocial
+  #     POSTGRES_DB: blinksocial
+  #   volumes:
+  #     - postgres_data:/var/lib/postgresql/data
+
+  # Redis cache (uncomment when ready)
+  # redis:
+  #   image: redis:7-alpine
+  #   ports:
+  #     - '6379:6379'
+
+  placeholder:
+    image: alpine:3.19
+    command: echo "Docker Compose is configured. Uncomment services as needed."
+
+# volumes:
+#   postgres_data:

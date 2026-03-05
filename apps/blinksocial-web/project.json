@@ -1,0 +1,88 @@
+{
+  "name": "blinksocial-web",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "projectType": "application",
+  "prefix": "app",
+  "sourceRoot": "apps/blinksocial-web/src",
+  "tags": [],
+  "targets": {
+    "build": {
+      "executor": "@angular/build:application",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/apps/blinksocial-web",
+        "browser": "apps/blinksocial-web/src/main.ts",
+        "tsConfig": "apps/blinksocial-web/tsconfig.app.json",
+        "inlineStyleLanguage": "scss",
+        "assets": [
+          {
+            "glob": "**/*",
+            "input": "apps/blinksocial-web/public"
+          }
+        ],
+        "styles": ["apps/blinksocial-web/src/styles.scss"],
+        "server": "apps/blinksocial-web/src/main.server.ts",
+        "ssr": {
+          "entry": "apps/blinksocial-web/src/server.ts"
+        },
+        "outputMode": "server"
+      },
+      "configurations": {
+        "production": {
+          "budgets": [
+            {
+              "type": "initial",
+              "maximumWarning": "500kb",
+              "maximumError": "1mb"
+            },
+            {
+              "type": "anyComponentStyle",
+              "maximumWarning": "4kb",
+              "maximumError": "8kb"
+            }
+          ],
+          "outputHashing": "all"
+        },
+        "development": {
+          "optimization": false,
+          "extractLicenses": false,
+          "sourceMap": true
+        }
+      },
+      "defaultConfiguration": "production"
+    },
+    "serve": {
+      "continuous": true,
+      "executor": "@angular/build:dev-server",
+      "options": {
+        "proxyConfig": "apps/blinksocial-web/proxy.conf.json"
+      },
+      "configurations": {
+        "production": {
+          "buildTarget": "blinksocial-web:build:production"
+        },
+        "development": {
+          "buildTarget": "blinksocial-web:build:development"
+        }
+      },
+      "defaultConfiguration": "development"
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint"
+    },
+    "test": {
+      "executor": "@angular/build:unit-test",
+      "options": {}
+    },
+    "serve-static": {
+      "continuous": true,
+      "executor": "@nx/web:file-server",
+      "options": {
+        "buildTarget": "blinksocial-web:build",
+        "port": 4200,
+        "staticFilePath": "dist/apps/blinksocial-web/browser",
+        "spa": true
+      }
+    }
+  }
+}
