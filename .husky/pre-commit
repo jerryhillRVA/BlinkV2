@@ -1,1 +1,1 @@
-npx nx affected -t lint --base=HEAD && npx nx affected -t test --base=HEAD -- --watch=false
+npx nx affected -t lint --base=HEAD && npx nx affected -t test --base=HEAD -- --watch=false && npx nx affected -t e2e --base=HEAD

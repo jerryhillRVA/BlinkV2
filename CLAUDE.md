@@ -98,9 +98,10 @@ When adding a new page or component, create a corresponding `<feature>.spec.ts` 
 Husky runs on every commit via `.husky/pre-commit`:
 
 1. `nx affected -t lint` — lints only changed projects (fast fail)
-2. `nx affected -t test -- --watch=false` — runs tests with coverage enforcement
+2. `nx affected -t test -- --watch=false` — runs unit tests with coverage enforcement
+3. `nx affected -t e2e` — runs E2E tests (Playwright for web, Jest for API)
 
-This means every commit is automatically validated against lint rules and 90% coverage thresholds. If either fails, the commit is blocked.
+This means every commit is validated against lint rules, 90% coverage thresholds, and E2E acceptance tests. If any step fails, the commit is blocked.
 
 ---
 
