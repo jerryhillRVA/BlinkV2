@@ -28,7 +28,7 @@
       "plugin": "@nx/webpack/plugin",
       "options": {
         "buildTargetName": "build",
-        "serveTargetName": "serve",
+        "serveTargetName": "webpack-serve",
         "previewTargetName": "preview",
         "buildDepsTargetName": "build-deps",
         "watchDepsTargetName": "watch-deps",
