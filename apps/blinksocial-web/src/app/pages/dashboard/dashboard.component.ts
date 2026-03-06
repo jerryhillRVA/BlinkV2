@@ -13,8 +13,8 @@ import {
 })
 export class DashboardComponent {
   workspaces: Workspace[] = [
-    { name: 'Hive Collective', color: '#e8533f' },
-    { name: 'Booze Kills', color: '#2979ff' },
+    { name: 'Hive Collective', color: '#d94e33' },
+    { name: 'Booze Kills', color: '#2b6bff' },
   ];
 
   onCreateWorkspace() {

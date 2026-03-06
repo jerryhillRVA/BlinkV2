@@ -64,7 +64,7 @@ test.describe('New Workspace Card', () => {
   test('should change border color on hover', async ({ page }) => {
     const card = page.locator('.card-new');
     await card.hover();
-    await expect(card).toHaveCSS('border-color', 'rgb(232, 83, 63)');
+    await expect(card).toHaveCSS('border-color', 'rgb(217, 78, 51)');
   });
 });
 

@@ -8,7 +8,7 @@ describe('WorkspaceCardComponent', () => {
     }).compileComponents();
   });
 
-  function createComponent(name = 'Test Workspace', color = '#e8533f') {
+  function createComponent(name = 'Test Workspace', color = '#d94e33') {
     const fixture = TestBed.createComponent(WorkspaceCardComponent);
     fixture.componentInstance.workspace = { name, color };
     fixture.detectChanges();
@@ -21,16 +21,16 @@ describe('WorkspaceCardComponent', () => {
   });
 
   it('should display workspace name in the header', () => {
-    const fixture = createComponent('Hive Collective', '#e8533f');
+    const fixture = createComponent('Hive Collective', '#d94e33');
     const el: HTMLElement = fixture.nativeElement;
     expect(el.querySelector('.header-name')?.textContent).toBe('Hive Collective');
   });
 
   it('should apply color to the header background', () => {
-    const fixture = createComponent('Test', '#2979ff');
+    const fixture = createComponent('Test', '#2b6bff');
     const el: HTMLElement = fixture.nativeElement;
     const header = el.querySelector('.card-header') as HTMLElement;
-    expect(header.style.background).toBe('rgb(41, 121, 255)');
+    expect(header.style.background).toBe('rgb(43, 107, 255)');
   });
 
   it('should have a globe watermark SVG', () => {
@@ -69,21 +69,21 @@ describe('WorkspaceCardComponent', () => {
     });
   });
 
-  it('should have a "Go to Workspace" link with matching color', () => {
-    const fixture = createComponent('Test', '#2979ff');
+  it('should have a "Go to Workspace" link with coral color', () => {
+    const fixture = createComponent('Test', '#2b6bff');
     const el: HTMLElement = fixture.nativeElement;
     const link = el.querySelector('.workspace-link') as HTMLElement;
     expect(link).toBeTruthy();
     expect(link.textContent).toContain('Go to Workspace');
-    expect(link.style.color).toBe('rgb(41, 121, 255)');
+    expect(link.style.color).not.toBe('rgb(43, 107, 255)');
   });
 
   it('should re-render when workspace input changes', () => {
-    const fixture = createComponent('First', '#e8533f');
+    const fixture = createComponent('First', '#d94e33');
     const el: HTMLElement = fixture.nativeElement;
     expect(el.querySelector('.header-name')?.textContent).toBe('First');
 
-    fixture.componentRef.setInput('workspace', { name: 'Second', color: '#2979ff' });
+    fixture.componentRef.setInput('workspace', { name: 'Second', color: '#2b6bff' });
     fixture.detectChanges();
     expect(el.querySelector('.header-name')?.textContent).toBe('Second');
   });

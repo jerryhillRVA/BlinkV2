@@ -4,12 +4,13 @@
   border: 1px solid #f3f4f6;
   overflow: hidden;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
-  transition: box-shadow 0.2s;
+  transition: box-shadow 0.2s, transform 0.2s;
   display: flex;
   flex-direction: column;
 
   &:hover {
     box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+    transform: translateY(-5px);
   }
 }
 
@@ -142,10 +143,11 @@
   cursor: pointer;
   font-size: 14px;
   font-weight: 700;
+  color: #d94e33;
   transition: background-color 0.15s;
 
   &:hover {
-    background-color: rgba(0, 0, 0, 0.03);
+    background-color: rgba(217, 78, 51, 0.05);
   }
 }
 

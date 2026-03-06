@@ -59,9 +59,9 @@ describe('DashboardComponent', () => {
     const fixture = TestBed.createComponent(DashboardComponent);
     const component = fixture.componentInstance;
     expect(component.workspaces[0].name).toBe('Hive Collective');
-    expect(component.workspaces[0].color).toBe('#e8533f');
+    expect(component.workspaces[0].color).toBe('#d94e33');
     expect(component.workspaces[1].name).toBe('Booze Kills');
-    expect(component.workspaces[1].color).toBe('#2979ff');
+    expect(component.workspaces[1].color).toBe('#2b6bff');
   });
 
   it('should have a plus-circle wrapper', () => {
