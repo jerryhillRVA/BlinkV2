@@ -1,0 +1,97 @@
+{
+  "month": "2026-03",
+  "events": [
+    {
+      "id": "ce-post1-production",
+      "type": "phase_window",
+      "contentItemId": "post1",
+      "title": "Production: 60-Second Morning Mobility Flow",
+      "platform": "instagram",
+      "contentType": "reel",
+      "status": "scheduled",
+      "owner": "user-brett",
+      "date": "2026-03-05T00:00:00Z",
+      "endDate": "2026-03-09T23:59:59Z",
+      "phaseType": "production_window",
+      "isRequired": true
+    },
+    {
+      "id": "ce-post1-draft-due",
+      "type": "milestone",
+      "contentItemId": "post1",
+      "title": "Draft Due: 60-Second Morning Mobility Flow",
+      "platform": "instagram",
+      "contentType": "reel",
+      "status": "scheduled",
+      "owner": "user-brett",
+      "date": "2026-03-05T17:00:00Z",
+      "milestoneType": "draft_due",
+      "milestoneStatus": "done",
+      "isRequired": true
+    },
+    {
+      "id": "ce-post1-assets-due",
+      "type": "milestone",
+      "contentItemId": "post1",
+      "title": "Assets Due: 60-Second Morning Mobility Flow",
+      "platform": "instagram",
+      "contentType": "reel",
+      "status": "scheduled",
+      "owner": "user-brett",
+      "date": "2026-03-07T17:00:00Z",
+      "milestoneType": "assets_due",
+      "milestoneStatus": "done",
+      "isRequired": true
+    },
+    {
+      "id": "ce-post1-review",
+      "type": "phase_window",
+      "contentItemId": "post1",
+      "title": "Review: 60-Second Morning Mobility Flow",
+      "platform": "instagram",
+      "contentType": "reel",
+      "status": "scheduled",
+      "owner": "user-brett",
+      "date": "2026-03-10T00:00:00Z",
+      "endDate": "2026-03-11T23:59:59Z",
+      "phaseType": "review_window",
+      "isRequired": true
+    },
+    {
+      "id": "ce-post1-qa-due",
+      "type": "milestone",
+      "contentItemId": "post1",
+      "title": "QA Due: 60-Second Morning Mobility Flow",
+      "platform": "instagram",
+      "contentType": "reel",
+      "status": "scheduled",
+      "owner": "user-brett",
+      "date": "2026-03-10T17:00:00Z",
+      "milestoneType": "qa_due",
+      "milestoneStatus": "done",
+      "isRequired": true
+    },
+    {
+      "id": "ce-post1-publish",
+      "type": "publish",
+      "contentItemId": "post1",
+      "title": "60-Second Morning Mobility Flow",
+      "platform": "instagram",
+      "contentType": "reel",
+      "status": "scheduled",
+      "owner": "user-brett",
+      "date": "2026-03-12T12:00:00Z",
+      "time": "07:00",
+      "isRequired": true
+    }
+  ],
+  "summary": {
+    "totalPublish": 1,
+    "totalMilestones": 3,
+    "totalPhaseWindows": 2,
+    "overdueCount": 0,
+    "atRiskCount": 0,
+    "byPlatform": { "instagram": 6 }
+  },
+  "lastRebuilt": "2026-03-08T10:00:00Z"
+}

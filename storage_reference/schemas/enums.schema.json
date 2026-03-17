@@ -1,0 +1,160 @@
+{
+  "$id": "https://blinksocial.io/schemas/enums.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$defs": {
+    "ContentStage": {
+      "type": "string",
+      "enum": ["idea", "concept", "post", "production-brief"]
+    },
+    "ContentStatus": {
+      "type": "string",
+      "enum": ["draft", "in-progress", "review", "scheduled", "published"]
+    },
+    "Platform": {
+      "type": "string",
+      "enum": ["instagram", "tiktok", "youtube", "facebook", "linkedin", "tbd"]
+    },
+    "ContentType": {
+      "type": "string",
+      "enum": [
+        "reel", "carousel", "feed-post", "story", "guide", "live",
+        "short-video", "photo-carousel",
+        "long-form", "shorts", "live-stream", "community-post",
+        "fb-link-post", "fb-feed-post", "fb-live", "fb-reel", "fb-story",
+        "ln-text-post", "ln-document", "ln-article", "ln-video"
+      ]
+    },
+    "CanonicalContentType": {
+      "type": "string",
+      "enum": [
+        "VIDEO_SHORT_VERTICAL", "VIDEO_LONG_HORIZONTAL", "VIDEO_SHORT_HORIZONTAL",
+        "IMAGE_SINGLE", "IMAGE_CAROUSEL", "TEXT_POST", "LINK_POST",
+        "DOCUMENT_CAROUSEL_PDF", "STORY_FRAME_SET", "LIVE_BROADCAST"
+      ]
+    },
+    "ContentObjective": {
+      "type": "string",
+      "enum": ["awareness", "engagement", "traffic", "leads", "sales", "community", "recruiting", "lead-gen", "trust", "education", "conversion"]
+    },
+    "CTATypeEnum": {
+      "type": "string",
+      "enum": ["none", "learn-more", "subscribe", "comment", "download", "buy", "book-call", "other"]
+    },
+    "CTAType": {
+      "type": "string",
+      "enum": ["follow", "link", "comment", "share", "subscribe", "swipe", "dm", "none"]
+    },
+    "TonePreset": {
+      "type": "string",
+      "enum": ["professional", "casual", "bold", "empathetic", "educational", "playful"]
+    },
+    "FormatNote": {
+      "type": "string",
+      "enum": ["talking-head", "b-roll", "ugc", "voiceover", "interview", "demo", "other"]
+    },
+    "RiskLevel": {
+      "type": "string",
+      "enum": ["low", "medium", "high"]
+    },
+    "HookType": {
+      "type": "string",
+      "enum": ["pattern-break", "problem-first", "outcome-first", "story-first", "question"]
+    },
+    "VideoStyle": {
+      "type": "string",
+      "enum": ["talking-head", "interview", "tutorial", "b-roll-montage", "text-only", "duet-style", "screen-recording"]
+    },
+    "StoryArc": {
+      "type": "string",
+      "enum": ["hook-promise-sections-recap-cta", "problem-solution", "listicle", "narrative", "before-after"]
+    },
+    "CarouselGoal": {
+      "type": "string",
+      "enum": ["teach", "convert", "story", "proof"]
+    },
+    "PostIntent": {
+      "type": "string",
+      "enum": ["announcement", "quote", "stat", "product", "meme", "event"]
+    },
+    "InteractionType": {
+      "type": "string",
+      "enum": ["poll", "question", "link", "quiz", "none"]
+    },
+    "HashtagStyle": {
+      "type": "string",
+      "enum": ["none", "light", "heavy"]
+    },
+    "PublishAction": {
+      "type": "string",
+      "enum": ["publish-now", "schedule", "save-draft", "export-packet"]
+    },
+    "Visibility": {
+      "type": "string",
+      "enum": ["public", "unlisted", "private"]
+    },
+    "ApprovalStatus": {
+      "type": "string",
+      "enum": ["pending", "approved", "changes-requested"]
+    },
+    "ProductionStep": {
+      "type": "string",
+      "enum": ["select", "brief", "draft", "blueprint", "assets", "packaging", "qa", "handoff"]
+    },
+    "MilestoneType": {
+      "type": "string",
+      "enum": ["brief_due", "draft_due", "blueprint_due", "assets_due", "packaging_due", "qa_due"]
+    },
+    "PhaseType": {
+      "type": "string",
+      "enum": ["production_window", "review_window"]
+    },
+    "Severity": {
+      "type": "string",
+      "enum": ["overdue", "at-risk", "blocked"]
+    },
+    "MilestoneStatus": {
+      "type": "string",
+      "enum": ["not_started", "in_progress", "done", "overdue"]
+    },
+    "WorkspaceRole": {
+      "type": "string",
+      "enum": ["Admin", "Editor", "Viewer"]
+    },
+    "MemberStatus": {
+      "type": "string",
+      "enum": ["active", "invited", "deactivated"]
+    },
+    "ProductionRole": {
+      "type": "string",
+      "enum": ["Strategist", "Writer", "On-camera", "Editor", "Designer", "Approver"]
+    },
+    "ActivityEventType": {
+      "type": "string",
+      "enum": ["status", "assignment", "draft-edit", "blueprint", "asset", "packaging", "ai-validation", "qa", "approval", "export", "system"]
+    },
+    "DecisionScope": {
+      "type": "string",
+      "enum": ["brief", "draft", "blueprint", "assets", "packaging", "qa"]
+    },
+    "QACheckGroup": {
+      "type": "string",
+      "enum": ["brand", "visual", "accessibility", "compliance", "links", "live"]
+    },
+    "ApprovalRole": {
+      "type": "string",
+      "enum": ["brand-reviewer", "legal-compliance", "publisher"]
+    },
+    "SourceType": {
+      "type": "string",
+      "enum": ["article", "report", "social", "news", "video"]
+    },
+    "ProductionSourceType": {
+      "type": "string",
+      "enum": ["article", "report", "social", "news", "video", "docs"]
+    },
+    "UnitRole": {
+      "type": "string",
+      "enum": ["hook", "value", "proof", "expansion", "cta", "transition"]
+    }
+  }
+}

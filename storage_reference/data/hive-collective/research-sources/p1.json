@@ -1,0 +1,32 @@
+{
+  "pillarId": "p1",
+  "pillarName": "Yoga & Movement",
+  "sources": [
+    {
+      "id": "rs1",
+      "title": "Yoga for Women Over 40: Joint Health & Flexibility",
+      "url": "https://example.com/yoga-joint-health",
+      "type": "report",
+      "status": "in-use",
+      "relevance": 98,
+      "summary": "Study on how modified yoga poses and gentle flows help women 40+ maintain joint health and flexibility while reducing injury risk.",
+      "usedInContentIds": ["post1", "concept1"],
+      "discoveredAt": "2026-02-20T08:00:00Z",
+      "discoveredBy": "ws-skill-research"
+    },
+    {
+      "id": "rs2",
+      "title": "Morning Mobility Routines: Impact on Daily Energy Levels",
+      "url": "https://example.com/morning-mobility-energy",
+      "type": "article",
+      "status": "available",
+      "relevance": 85,
+      "summary": "Research on how 5-10 minute morning mobility routines improve perceived energy and reduce joint stiffness throughout the day.",
+      "usedInContentIds": [],
+      "discoveredAt": "2026-03-01T10:00:00Z",
+      "discoveredBy": "ws-skill-research"
+    }
+  ],
+  "lastScannedAt": "2026-03-09T08:00:00Z",
+  "totalSources": 2
+}

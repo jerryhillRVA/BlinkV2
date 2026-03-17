@@ -1,0 +1,57 @@
+{
+  "$id": "https://blinksocial.io/schemas/settings/skills.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "SkillSettings",
+  "type": "object",
+  "required": ["skills"],
+  "properties": {
+    "skills": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "skillId", "name", "role"],
+        "properties": {
+          "id": { "type": "string", "description": "Unique workspace-level config ID" },
+          "skillId": { "type": "string", "description": "References global skill ID at /blinksocial/skills/{skillId}/skill.md" },
+          "name": { "type": "string", "description": "Display name in UI (e.g., 'Research Agent')" },
+          "role": { "type": "string", "description": "Functional role title (e.g., 'Trend Scanner')" },
+          "persona": { "type": "string", "maxLength": 2000, "description": "Persona/bio injected into skill system prompt as workspace context" },
+          "responsibilities": { "type": "array", "items": { "type": "string" }, "description": "What this skill configuration is responsible for" },
+          "expectedOutputs": { "type": "array", "items": { "type": "string" }, "description": "Expected deliverable types" },
+          "contextPreferences": {
+            "type": "object",
+            "description": "Controls which context docs the skill runner injects for this skill",
+            "properties": {
+              "includeBrandVoice": { "type": "boolean", "default": true },
+              "includeAudiencePersonas": { "type": "boolean", "default": true },
+              "includePlatformAccounts": { "type": "boolean", "default": true },
+              "additionalContextPaths": {
+                "type": "array",
+                "items": { "type": "string" },
+                "description": "Extra context files to inject"
+              }
+            }
+          },
+          "overrides": {
+            "type": "object",
+            "description": "Frontmatter overrides merged with global skill.md at runtime",
+            "properties": {
+              "tonePreset": { "$ref": "enums.schema.json#/$defs/TonePreset" },
+              "defaultPlatform": { "$ref": "enums.schema.json#/$defs/Platform" },
+              "maxOutputTokens": { "type": "integer" }
+            }
+          },
+          "triggers": {
+            "type": "array",
+            "items": { "type": "string" },
+            "description": "Workspace-specific trigger phrases (supplement global triggers in skill.md)"
+          },
+          "enabled": { "type": "boolean", "default": true },
+          "archived": { "type": "boolean", "default": false },
+          "createdAt": { "type": "string", "format": "date-time" },
+          "updatedAt": { "type": "string", "format": "date-time" }
+        }
+      }
+    }
+  }
+}

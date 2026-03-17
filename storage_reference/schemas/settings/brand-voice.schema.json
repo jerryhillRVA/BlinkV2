@@ -1,0 +1,18 @@
+{
+  "$id": "https://blinksocial.io/schemas/settings/brand-voice.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "BrandVoiceSettings",
+  "type": "object",
+  "properties": {
+    "brandVoiceDescription": { "type": "string", "maxLength": 2000 },
+    "toneGuidelines": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "brandColor": { "type": "string", "pattern": "^#[0-9a-fA-F]{6}$" },
+    "logoUrl": { "type": "string", "format": "uri" },
+    "visualGuidelines": { "type": "string", "maxLength": 2000 },
+    "typographyGuidelines": { "type": "string", "maxLength": 1000 },
+    "photographyGuidelines": { "type": "string", "maxLength": 1000 }
+  }
+}

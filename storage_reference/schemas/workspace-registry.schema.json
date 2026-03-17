@@ -1,0 +1,26 @@
+{
+  "$id": "https://blinksocial.io/schemas/workspace-registry.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "WorkspaceRegistry",
+  "type": "object",
+  "required": ["workspaces"],
+  "properties": {
+    "workspaces": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["tenantId", "name", "status", "createdAt"],
+        "properties": {
+          "tenantId": { "type": "string", "description": "AgenticFilesystem tenant ID (e.g., 'hive-collective')" },
+          "name": { "type": "string", "description": "Display name (e.g., 'Hive Collective')" },
+          "status": { "type": "string", "enum": ["active", "archived", "suspended"] },
+          "plan": { "type": "string", "enum": ["free", "pro", "enterprise"], "default": "free" },
+          "ownerEmail": { "type": "string", "format": "email" },
+          "createdAt": { "type": "string", "format": "date-time" },
+          "lastActiveAt": { "type": "string", "format": "date-time" }
+        }
+      }
+    },
+    "totalWorkspaces": { "type": "integer" }
+  }
+}

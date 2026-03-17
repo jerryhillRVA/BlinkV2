@@ -1,0 +1,12 @@
+{
+  "id": "idea1",
+  "stage": "idea",
+  "status": "draft",
+  "title": "Chair Yoga Series for Office Workers",
+  "description": "5-part series showing simple yoga stretches that can be done at a desk or with a chair. Target professionals who sit all day and experience neck/back tension.",
+  "pillarIds": ["p1", "p2"],
+  "segmentIds": ["s1", "s2"],
+  "tags": ["chair-yoga", "office-wellness", "series"],
+  "createdAt": "2026-02-28T09:00:00Z",
+  "updatedAt": "2026-02-28T09:00:00Z"
+}

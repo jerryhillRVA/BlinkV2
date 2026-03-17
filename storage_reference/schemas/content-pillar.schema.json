@@ -1,0 +1,20 @@
+{
+  "$id": "https://blinksocial.io/schemas/content-pillar.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "ContentPillar",
+  "type": "object",
+  "required": ["id", "name", "description", "color"],
+  "properties": {
+    "id": { "type": "string" },
+    "name": { "type": "string", "maxLength": 100 },
+    "description": { "type": "string", "maxLength": 500 },
+    "color": { "type": "string", "pattern": "^#[0-9a-fA-F]{6}$" },
+    "themes": { "type": "array", "items": { "type": "string" } },
+    "audienceSegmentIds": { "type": "array", "items": { "type": "string" } },
+    "platformDistribution": {
+      "type": "object",
+      "description": "Keyed by Platform enum, values are weights 0.0-1.0",
+      "additionalProperties": { "type": "number", "minimum": 0, "maximum": 1 }
+    }
+  }
+}

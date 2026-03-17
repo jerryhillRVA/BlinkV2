@@ -1,0 +1,32 @@
+{
+  "$id": "https://blinksocial.io/schemas/asset-manifest.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "AssetManifest",
+  "type": "object",
+  "required": ["contentItemId", "assets"],
+  "properties": {
+    "contentItemId": { "type": "string" },
+    "assets": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["fileId", "filename", "role", "mimeType"],
+        "properties": {
+          "fileId": { "type": "string", "description": "AgenticFilesystem file_id" },
+          "filename": { "type": "string" },
+          "role": {
+            "type": "string",
+            "enum": ["cover", "primary-media", "creative-variant", "captions", "source-file", "talent-release", "music-license", "other"]
+          },
+          "mimeType": { "type": "string" },
+          "sizeBytes": { "type": "integer" },
+          "uploadedAt": { "type": "string", "format": "date-time" },
+          "uploadedBy": { "type": "string" },
+          "description": { "type": "string" }
+        }
+      }
+    },
+    "totalSizeBytes": { "type": "integer" },
+    "lastUpdated": { "type": "string", "format": "date-time" }
+  }
+}

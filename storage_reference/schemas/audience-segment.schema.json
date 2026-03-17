@@ -1,0 +1,16 @@
+{
+  "$id": "https://blinksocial.io/schemas/audience-segment.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "AudienceSegment",
+  "type": "object",
+  "required": ["id", "name", "description"],
+  "properties": {
+    "id": { "type": "string" },
+    "name": { "type": "string", "maxLength": 100 },
+    "description": { "type": "string", "maxLength": 500 },
+    "demographics": { "type": "string" },
+    "interests": { "type": "array", "items": { "type": "string" } },
+    "painPoints": { "type": "array", "items": { "type": "string" } },
+    "peakTimes": { "type": "array", "items": { "type": "string" } }
+  }
+}

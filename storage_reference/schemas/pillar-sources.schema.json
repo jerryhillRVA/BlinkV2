@@ -1,0 +1,40 @@
+{
+  "$id": "https://blinksocial.io/schemas/pillar-sources.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "PillarSources",
+  "type": "object",
+  "required": ["pillarId", "sources"],
+  "properties": {
+    "pillarId": { "type": "string" },
+    "pillarName": { "type": "string" },
+    "sources": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "title", "url", "type", "status"],
+        "properties": {
+          "id": { "type": "string" },
+          "title": { "type": "string" },
+          "url": { "type": "string", "format": "uri" },
+          "type": { "$ref": "enums.schema.json#/$defs/SourceType" },
+          "status": {
+            "type": "string",
+            "enum": ["discovered", "available", "in-use", "archived"],
+            "description": "Lifecycle: discovered (new) -> available (vetted) -> in-use (referenced by content) -> archived"
+          },
+          "relevance": { "type": "integer", "minimum": 0, "maximum": 100 },
+          "summary": { "type": "string", "maxLength": 1000 },
+          "usedInContentIds": {
+            "type": "array",
+            "items": { "type": "string" },
+            "description": "Content item IDs that reference this source"
+          },
+          "discoveredAt": { "type": "string", "format": "date-time" },
+          "discoveredBy": { "type": "string", "description": "User ID or skill run ID that found this source" }
+        }
+      }
+    },
+    "lastScannedAt": { "type": "string", "format": "date-time" },
+    "totalSources": { "type": "integer" }
+  }
+}

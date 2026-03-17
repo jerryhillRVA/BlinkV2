@@ -1,0 +1,9 @@
+{
+  "id": "s1",
+  "name": "Active 40s",
+  "description": "Women in their 40s maintaining fitness and managing perimenopause",
+  "demographics": "Female, 40-49, urban/suburban, middle-to-upper income",
+  "interests": ["Strength training", "Hormone health", "Energy management", "Metabolism support"],
+  "painPoints": ["Metabolism changes", "Energy fluctuations", "Balancing career and health"],
+  "peakTimes": ["Mon 6am", "Wed 12pm", "Sat 8am"]
+}

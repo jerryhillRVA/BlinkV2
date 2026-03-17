@@ -1,5 +1,28 @@
 import { test, expect } from '@playwright/test';
 
+test.describe('Page Background', () => {
+  test.beforeEach(async ({ page }) => {
+    await page.goto('/');
+  });
+
+  test('should have the correct page background color', async ({ page }) => {
+    await expect(page.locator('body')).toHaveCSS(
+      'background-color',
+      'rgb(248, 249, 250)'
+    );
+  });
+});
+
+test.describe('Dashboard Background', () => {
+  test.beforeEach(async ({ page }) => {
+    await page.goto('/');
+  });
+
+  test('should have a decorative background glow', async ({ page }) => {
+    await expect(page.locator('.dashboard-bg')).toBeAttached();
+  });
+});
+
 test.describe('Welcome Header', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/');

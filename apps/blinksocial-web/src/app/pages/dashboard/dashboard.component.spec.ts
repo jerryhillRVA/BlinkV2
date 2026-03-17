@@ -80,6 +80,13 @@ describe('DashboardComponent', () => {
     );
   });
 
+  it('should have a decorative background glow element', () => {
+    const fixture = TestBed.createComponent(DashboardComponent);
+    fixture.detectChanges();
+    const el: HTMLElement = fixture.nativeElement;
+    expect(el.querySelector('.dashboard-bg')).toBeTruthy();
+  });
+
   it('should call onCreateWorkspace when new card is clicked', () => {
     const fixture = TestBed.createComponent(DashboardComponent);
     fixture.detectChanges();

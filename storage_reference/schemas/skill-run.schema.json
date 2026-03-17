@@ -1,0 +1,51 @@
+{
+  "$id": "https://blinksocial.io/schemas/skill-run.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "SkillRun",
+  "type": "object",
+  "required": ["id", "skillId", "workspaceSkillConfigId", "status", "startedAt"],
+  "properties": {
+    "id": { "type": "string" },
+    "skillId": { "type": "string", "description": "Global skill ID from /blinksocial/skills/{skillId}/" },
+    "workspaceSkillConfigId": { "type": "string", "description": "Workspace skill config ID from settings/skills.json" },
+    "routingPath": {
+      "type": "string",
+      "enum": ["deterministic", "planner"],
+      "description": "How the skill was invoked"
+    },
+    "planRunId": { "type": ["string", "null"], "description": "If routed by planner, the parent plan's run ID" },
+    "status": {
+      "type": "string",
+      "enum": ["running", "completed", "failed", "retrying"]
+    },
+    "input": {
+      "type": "object",
+      "description": "The input_context passed to the skill"
+    },
+    "output": {
+      "type": "object",
+      "description": "The validated JSON output from the skill"
+    },
+    "validationErrors": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Schema validation errors if output failed validation"
+    },
+    "retryCount": { "type": "integer", "default": 0 },
+    "contentItemId": { "type": "string", "description": "If the skill output was stored as/on a content item" },
+    "targetNamespace": { "type": "string", "description": "Where the output was stored" },
+    "triggeredBy": { "type": "string", "description": "User ID or 'system' for automated runs" },
+    "model": { "type": "string", "description": "LLM model used" },
+    "tokenUsage": {
+      "type": "object",
+      "properties": {
+        "inputTokens": { "type": "integer" },
+        "outputTokens": { "type": "integer" }
+      }
+    },
+    "durationMs": { "type": "integer", "description": "Wall-clock execution time in milliseconds" },
+    "startedAt": { "type": "string", "format": "date-time" },
+    "completedAt": { "type": "string", "format": "date-time" },
+    "error": { "type": ["string", "null"], "description": "Error message if status is 'failed'" }
+  }
+}

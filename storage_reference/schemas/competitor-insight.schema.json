@@ -1,0 +1,17 @@
+{
+  "$id": "https://blinksocial.io/schemas/competitor-insight.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "CompetitorInsight",
+  "type": "object",
+  "required": ["id", "competitor", "platform"],
+  "properties": {
+    "id": { "type": "string" },
+    "competitor": { "type": "string" },
+    "platform": { "$ref": "enums.schema.json#/$defs/Platform" },
+    "contentType": { "type": "string" },
+    "topic": { "type": "string" },
+    "engagement": { "type": "string" },
+    "frequency": { "type": "string" },
+    "insight": { "type": "string", "maxLength": 1000 }
+  }
+}

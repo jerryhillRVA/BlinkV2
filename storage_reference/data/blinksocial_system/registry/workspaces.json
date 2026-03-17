@@ -1,0 +1,14 @@
+{
+  "workspaces": [
+    {
+      "tenantId": "hive-collective",
+      "name": "Hive Collective",
+      "status": "active",
+      "plan": "pro",
+      "ownerEmail": "blewis@hivecollective.io",
+      "createdAt": "2026-01-15T10:00:00Z",
+      "lastActiveAt": "2026-03-09T15:30:00Z"
+    }
+  ],
+  "totalWorkspaces": 1
+}

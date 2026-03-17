@@ -1,4 +1,7 @@
 <div class="dashboard">
+  <div class="dashboard-bg" aria-hidden="true">
+    <img src="dashboard-bg.jpg" alt="" />
+  </div>
   <header class="dashboard-header">
     <div class="header-icon">
       <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#d94e33" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -18,7 +21,10 @@
     <button class="card card-new" (click)="onCreateWorkspace()">
       <div class="new-content">
         <div class="plus-circle">
-          <span class="plus-icon">+</span>
+          <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="plus-icon">
+            <path d="M5 12h14"/>
+            <path d="M12 5v14"/>
+          </svg>
         </div>
         <span class="new-label">New Workspace</span>
         <span class="new-description">Initialize a new content strategy and AI team.</span>
