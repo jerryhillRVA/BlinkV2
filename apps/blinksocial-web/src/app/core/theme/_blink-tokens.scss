@@ -1,0 +1,104 @@
+// App-level semantic CSS custom properties
+// Light-theme values match current hardcoded colors exactly (zero visual change)
+
+@mixin light-tokens {
+  // Brand
+  --blink-brand-primary: #d94e33;
+  --blink-brand-gradient: linear-gradient(to right, #E8533F, #F26B4C);
+  --blink-brand-primary-hover-bg: rgba(217, 78, 51, 0.05);
+  --blink-brand-primary-light-bg: rgba(217, 78, 51, 0.1);
+  --blink-brand-primary-lighter-bg: #fde0dc;
+  --blink-brand-primary-lightest-bg: #fef2f0;
+
+  // Surfaces
+  --blink-surface: white;
+  --blink-surface-dim: #f8f9fa;
+  --blink-surface-container: rgba(255, 255, 255, 0.5);
+  --blink-surface-container-low: #f9fafb;
+  --blink-surface-variant: #f5f5f5;
+  --blink-surface-hover: #f9fafb;
+
+  // Text / On-surface
+  --blink-on-surface: #333;
+  --blink-on-surface-strong: #222;
+  --blink-on-surface-medium: #666;
+  --blink-on-surface-muted: rgb(113, 113, 130);
+  --blink-on-surface-label: #1f2937;
+  --blink-on-surface-secondary: #374151;
+  --blink-on-surface-tertiary: #9ca3af;
+  --blink-on-surface-faint: #bbb;
+
+  // Borders / Outlines
+  --blink-outline: rgba(0, 0, 0, 0.1);
+  --blink-outline-variant: #f3f4f6;
+  --blink-outline-dashed: #d0d0d0;
+
+  // Shadows
+  --blink-shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.06);
+  --blink-shadow-md: 0 2px 8px rgba(0, 0, 0, 0.1);
+  --blink-shadow-lg: 0 20px 40px rgba(0, 0, 0, 0.1);
+
+  // Header
+  --blink-header-avatar-bg: rgba(255, 255, 255, 0.25);
+
+  // Icon colors (workspace card quick-access)
+  --blink-icon-purple-bg: #faf5ff;
+  --blink-icon-purple: #9333ea;
+  --blink-icon-green-bg: #f0fdf4;
+  --blink-icon-green: #16a34a;
+  --blink-icon-blue-bg: #eff6ff;
+  --blink-icon-blue: #2563eb;
+  --blink-icon-orange-bg: #fff7ed;
+  --blink-icon-orange: #ea580c;
+}
+
+@mixin dark-tokens {
+  // Brand (same — brand identity stays consistent)
+  --blink-brand-primary: #d94e33;
+  --blink-brand-gradient: linear-gradient(to right, #E8533F, #F26B4C);
+  --blink-brand-primary-hover-bg: #2d1f1b;
+  --blink-brand-primary-light-bg: #3a2420;
+  --blink-brand-primary-lighter-bg: #4d2a22;
+  --blink-brand-primary-lightest-bg: #2f2019;
+
+  // Surfaces
+  --blink-surface: #1e1e1e;
+  --blink-surface-dim: #121212;
+  --blink-surface-container: #1e1e1e;
+  --blink-surface-container-low: #282828;
+  --blink-surface-variant: #2a2a2a;
+  --blink-surface-hover: #2c2c2c;
+
+  // Text / On-surface
+  --blink-on-surface: #e0e0e0;
+  --blink-on-surface-strong: #f0f0f0;
+  --blink-on-surface-medium: #aaa;
+  --blink-on-surface-muted: #888;
+  --blink-on-surface-label: #e0e0e0;
+  --blink-on-surface-secondary: #ccc;
+  --blink-on-surface-tertiary: #777;
+  --blink-on-surface-faint: #555;
+
+  // Borders / Outlines
+  --blink-outline: rgba(255, 255, 255, 0.1);
+  --blink-outline-variant: #333;
+  --blink-outline-dashed: #555;
+
+  // Shadows
+  --blink-shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.3);
+  --blink-shadow-md: 0 2px 8px rgba(0, 0, 0, 0.4);
+  --blink-shadow-lg: 0 20px 40px rgba(0, 0, 0, 0.5);
+
+  // Header
+  --blink-header-avatar-bg: rgba(255, 255, 255, 0.2);
+
+  // Icon colors (workspace card quick-access — slightly desaturated for dark)
+  --blink-icon-purple-bg: rgba(147, 51, 234, 0.15);
+  --blink-icon-purple: #a855f7;
+  --blink-icon-green-bg: rgba(22, 163, 74, 0.15);
+  --blink-icon-green: #22c55e;
+  --blink-icon-blue-bg: rgba(37, 99, 235, 0.15);
+  --blink-icon-blue: #3b82f6;
+  --blink-icon-orange-bg: rgba(234, 88, 12, 0.15);
+  --blink-icon-orange: #f97316;
+}

@@ -18,8 +18,7 @@
           "passWithNoTests": true
         },
         "dependsOn": [
-          "blinksocial-api:build",
-          "blinksocial-api:serve"
+          "blinksocial-api:build"
         ]
       }
     }

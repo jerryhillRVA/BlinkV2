@@ -1,11 +1,20 @@
 import { TestBed } from '@angular/core/testing';
 import { HeaderComponent } from './header.component';
+import { ThemeService } from '../../core/theme/theme.service';
 
 describe('HeaderComponent', () => {
   beforeEach(async () => {
+    localStorage.clear();
+    document.documentElement.removeAttribute('data-theme');
+
     await TestBed.configureTestingModule({
       imports: [HeaderComponent],
     }).compileComponents();
+  });
+
+  afterEach(() => {
+    localStorage.clear();
+    document.documentElement.removeAttribute('data-theme');
   });
 
   it('should create', () => {
@@ -56,5 +65,47 @@ describe('HeaderComponent', () => {
     component.logout.subscribe(spy);
     logoutBtn.click();
     expect(spy).toHaveBeenCalled();
+  });
+
+  it('should have a theme toggle button', () => {
+    const fixture = TestBed.createComponent(HeaderComponent);
+    fixture.detectChanges();
+    const el: HTMLElement = fixture.nativeElement;
+    expect(el.querySelector('.theme-toggle-btn')).toBeTruthy();
+  });
+
+  it('should show moon icon in light mode', () => {
+    const fixture = TestBed.createComponent(HeaderComponent);
+    fixture.detectChanges();
+    const el: HTMLElement = fixture.nativeElement;
+    const btn = el.querySelector('.theme-toggle-btn');
+    expect(btn?.querySelector('.icon-moon')).toBeTruthy();
+    expect(btn?.querySelector('.icon-sun')).toBeFalsy();
+  });
+
+  it('should show sun icon in dark mode', () => {
+    const themeService = TestBed.inject(ThemeService);
+    themeService.setTheme('dark');
+    const fixture = TestBed.createComponent(HeaderComponent);
+    fixture.detectChanges();
+    const el: HTMLElement = fixture.nativeElement;
+    const btn = el.querySelector('.theme-toggle-btn');
+    expect(btn?.querySelector('.icon-sun')).toBeTruthy();
+    expect(btn?.querySelector('.icon-moon')).toBeFalsy();
+  });
+
+  it('should toggle theme when toggle button is clicked', () => {
+    const themeService = TestBed.inject(ThemeService);
+    const fixture = TestBed.createComponent(HeaderComponent);
+    fixture.detectChanges();
+    expect(themeService.theme()).toBe('light');
+
+    const el: HTMLElement = fixture.nativeElement;
+    const btn = el.querySelector('.theme-toggle-btn') as HTMLButtonElement;
+    btn.click();
+    expect(themeService.theme()).toBe('dark');
+
+    btn.click();
+    expect(themeService.theme()).toBe('light');
   });
 });

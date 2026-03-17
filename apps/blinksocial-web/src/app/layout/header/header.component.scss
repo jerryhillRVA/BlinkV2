@@ -4,9 +4,9 @@
   justify-content: space-between;
   padding: 0 24px;
   height: 64px;
-  background: linear-gradient(to right, #E8533F, #F26B4C);
+  background: var(--blink-brand-gradient);
   color: white;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  box-shadow: var(--blink-shadow-md);
 }
 
 .navbar-brand {
@@ -56,13 +56,30 @@
   width: 36px;
   height: 36px;
   border-radius: 50%;
-  background: rgba(255, 255, 255, 0.25);
+  background: var(--blink-header-avatar-bg);
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 14px;
   font-weight: 600;
   cursor: pointer;
+}
+
+.theme-toggle-btn {
+  appearance: none;
+  background: rgba(255, 255, 255, 0.15);
+  border: none;
+  padding: 6px;
+  border-radius: 8px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s;
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.3);
+  }
 }
 
 .logout-btn {

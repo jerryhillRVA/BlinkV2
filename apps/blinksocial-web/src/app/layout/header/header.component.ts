@@ -1,4 +1,5 @@
-import { Component, EventEmitter, Output } from '@angular/core';
+import { Component, EventEmitter, Output, inject } from '@angular/core';
+import { ThemeService } from '../../core/theme/theme.service';
 
 @Component({
   selector: 'app-header',
@@ -7,4 +8,6 @@ import { Component, EventEmitter, Output } from '@angular/core';
 })
 export class HeaderComponent {
   @Output() logout = new EventEmitter<void>();
+
+  protected readonly themeService = inject(ThemeService);
 }
