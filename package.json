@@ -3,7 +3,7 @@
   "version": "0.0.0",
   "license": "MIT",
   "scripts": {
-    "start": "nx run-many --target=serve --projects=blinksocial-api,blinksocial-web --output-style=stream",
+    "start": "concurrently \"nx serve blinksocial-api\" \"nx serve blinksocial-web\"",
     "start:api": "nx serve blinksocial-api",
     "start:web": "nx serve blinksocial-web",
     "build": "nx build blinksocial-web && nx build blinksocial-api",
@@ -46,6 +46,7 @@
     "@typescript-eslint/utils": "^8.40.0",
     "@vitest/coverage-v8": "^4.0.18",
     "angular-eslint": "^21.0.1",
+    "concurrently": "^9.2.1",
     "eslint": "^9.8.0",
     "eslint-config-prettier": "^10.0.0",
     "eslint-plugin-playwright": "^1.6.2",
@@ -90,5 +91,8 @@
     "express": "^5.0.1",
     "reflect-metadata": "^0.1.13",
     "rxjs": "^7.8.0"
+  },
+  "optionalDependencies": {
+    "@nx/nx-darwin-x64": "^22.5.4"
   }
 }
