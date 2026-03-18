@@ -1,11 +1,18 @@
 import { TestBed } from '@angular/core/testing';
+import { Router } from '@angular/router';
 import { DashboardComponent } from './dashboard.component';
 
 describe('DashboardComponent', () => {
+  let router: Router;
+
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [DashboardComponent],
+      providers: [
+        { provide: Router, useValue: { navigate: vi.fn() } },
+      ],
     }).compileComponents();
+    router = TestBed.inject(Router);
   });
 
   it('should create', () => {
@@ -96,5 +103,11 @@ describe('DashboardComponent', () => {
     const btn = el.querySelector('.card-new') as HTMLButtonElement;
     btn.click();
     expect(spy).toHaveBeenCalled();
+  });
+
+  it('should navigate to /new-workspace when onCreateWorkspace is called', () => {
+    const fixture = TestBed.createComponent(DashboardComponent);
+    fixture.componentInstance.onCreateWorkspace();
+    expect(router.navigate).toHaveBeenCalledWith(['/new-workspace']);
   });
 });

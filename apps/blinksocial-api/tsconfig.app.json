@@ -15,5 +15,13 @@
     "noFallthroughCasesInSwitch": true
   },
   "include": ["src/**/*.ts"],
-  "exclude": []
+  "exclude": [],
+  "references": [
+    {
+      "path": "../../libs/blinksocial-models/tsconfig.lib.json"
+    },
+    {
+      "path": "../../libs/blinksocial-contracts/tsconfig.lib.json"
+    }
+  ]
 }

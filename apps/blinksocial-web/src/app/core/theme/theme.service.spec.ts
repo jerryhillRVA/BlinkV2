@@ -81,4 +81,12 @@ describe('ThemeService', () => {
   it('should set data-theme to light on init when no stored value', () => {
     expect(document.documentElement.getAttribute('data-theme')).toBe('light');
   });
+
+  it('should default to light when stored value is null', () => {
+    localStorage.removeItem('blink-theme');
+    TestBed.resetTestingModule();
+    TestBed.configureTestingModule({});
+    const newService = TestBed.inject(ThemeService);
+    expect(newService.theme()).toBe('light');
+  });
 });

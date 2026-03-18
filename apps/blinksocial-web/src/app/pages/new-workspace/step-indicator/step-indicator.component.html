@@ -1,0 +1,33 @@
+<div class="step-indicator">
+  <div class="step-track">
+    @for (step of steps(); track step.id; let i = $index, last = $last) {
+      <div class="step-node">
+        <div
+          class="step-circle"
+          [class.step-completed]="isCompleted(step)"
+          [class.step-active]="isActive(step)"
+          [class.step-inactive]="!isCompleted(step) && !isActive(step)"
+        >
+          @if (isCompleted(step)) {
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M20 6 9 17l-5-5"/>
+            </svg>
+          } @else {
+            {{ step.id }}
+          }
+        </div>
+        <span
+          class="step-label"
+          [class.step-label-active]="isActive(step)"
+        >{{ step.title }}</span>
+      </div>
+
+      @if (!last) {
+        <div
+          class="step-line"
+          [class.step-line-filled]="isCompleted(step)"
+        ></div>
+      }
+    }
+  </div>
+</div>

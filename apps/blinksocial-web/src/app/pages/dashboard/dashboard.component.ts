@@ -1,5 +1,6 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { Router } from '@angular/router';
 import {
   WorkspaceCardComponent,
   Workspace,
@@ -12,12 +13,14 @@ import {
   styleUrl: './dashboard.component.scss',
 })
 export class DashboardComponent {
+  private readonly router = inject(Router);
+
   workspaces: Workspace[] = [
     { name: 'Hive Collective', color: '#d94e33' },
     { name: 'Booze Kills', color: '#2b6bff' },
   ];
 
   onCreateWorkspace() {
-    // Placeholder — will be implemented
+    this.router.navigate(['/new-workspace']);
   }
 }

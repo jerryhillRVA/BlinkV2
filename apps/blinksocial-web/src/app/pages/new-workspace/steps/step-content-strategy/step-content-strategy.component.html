@@ -1,0 +1,102 @@
+<div class="step-content-strategy">
+  <div class="step-header">
+    <h2>Content Strategy</h2>
+    <p class="step-subtitle">Define your content pillars to ensure consistency and audience alignment.</p>
+  </div>
+
+  <div class="actions-row">
+    <button class="add-pillar" (click)="formService.addPillar()">
+      <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
+      Add Pillar
+    </button>
+  </div>
+
+  <div class="pillars-list">
+    @for (pillar of formService.contentPillars(); track pillar.id; let i = $index) {
+      <div class="pillar-card">
+        <div class="pillar-header">
+          <div class="pillar-header-left">
+            <span class="pillar-number">{{ i + 1 }}</span>
+            <h3 class="pillar-title">Content Pillar Details</h3>
+          </div>
+          @if (formService.contentPillars().length > 1) {
+            <button class="remove-pillar" (click)="formService.removePillar(pillar.id)">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
+            </button>
+          }
+        </div>
+
+        <div class="pillar-fields">
+          <div class="pillar-row-2">
+            <div class="field-group">
+              <span class="field-label">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="7" height="7" x="14" y="3" rx="1"/><rect width="7" height="7" x="3" y="3" rx="1"/><rect width="7" height="7" x="14" y="14" rx="1"/><rect width="7" height="7" x="3" y="14" rx="1"/></svg>
+                Pillar Name
+              </span>
+              <input type="text" class="field-input pillar-name" [value]="pillar.name" placeholder="e.g. Industry News" (input)="formService.updatePillarName(pillar.id, $any($event.target).value)" />
+            </div>
+            <div class="field-group">
+              <span class="field-label">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="6" height="6" rx="1"/><path d="m3 17 2 2 4-4"/><path d="M13 6h8"/><path d="M13 12h8"/><path d="M13 18h8"/></svg>
+                Content Themes
+              </span>
+              <input type="text" class="field-input pillar-themes" [value]="pillar.themes" placeholder="e.g. AI News, Tutorials, Tips" (input)="formService.updatePillarThemes(pillar.id, $any($event.target).value)" />
+            </div>
+          </div>
+
+          <div class="field-group">
+            <span class="field-label">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 7 4 4 20 4 20 7"/><line x1="9" x2="15" y1="20" y2="20"/><line x1="12" x2="12" y1="4" y2="20"/></svg>
+              Description
+            </span>
+            <textarea class="field-textarea pillar-description" [value]="pillar.description" placeholder="Describe the purpose of this pillar..." (input)="formService.updatePillarDescription(pillar.id, $any($event.target).value)"></textarea>
+          </div>
+
+          <div class="multi-select-row">
+            <div class="multi-select-group">
+              <span class="multi-label">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                Target Audience
+              </span>
+              <div class="pill-list">
+                @for (segment of formService.AUDIENCES; track segment) {
+                  <button
+                    class="audience-pill"
+                    [class.pill-selected]="isAudienceSelected(pillar, segment)"
+                    (click)="formService.toggleAudience(pillar.id, segment)"
+                  >
+                    @if (isAudienceSelected(pillar, segment)) {
+                      <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+                    }
+                    {{ segment }}
+                  </button>
+                }
+              </div>
+            </div>
+
+            <div class="multi-select-group">
+              <span class="multi-label">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" x2="15.42" y1="13.51" y2="17.49"/><line x1="15.41" x2="8.59" y1="6.51" y2="10.49"/></svg>
+                Distribution Platforms
+              </span>
+              <div class="pill-list">
+                @for (platform of formService.PLATFORMS; track platform) {
+                  <button
+                    class="platform-pill"
+                    [class.pill-selected]="isPlatformSelected(pillar, platform)"
+                    (click)="formService.togglePillarPlatform(pillar.id, platform)"
+                  >
+                    @if (isPlatformSelected(pillar, platform)) {
+                      <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+                    }
+                    {{ platform }}
+                  </button>
+                }
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    }
+  </div>
+</div>

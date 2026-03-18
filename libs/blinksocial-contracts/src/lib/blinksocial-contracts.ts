@@ -1,5 +1,7 @@
-export interface HealthResponse {
+export interface HealthResponseContract {
   status: string;
   timestamp: string;
   service: string;
 }
+
+export * from './workspace/index.js';

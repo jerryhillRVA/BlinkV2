@@ -20,7 +20,9 @@
     "baseUrl": ".",
     "paths": {
       "@blinksocial/contracts": ["libs/blinksocial-contracts/src/index.ts"],
-      "@blinksocial/core": ["libs/blinksocial-core/src/index.ts"]
+      "@blinksocial/contracts/validation": ["libs/blinksocial-contracts/src/lib/workspace/validation.ts"],
+      "@blinksocial/core": ["libs/blinksocial-core/src/index.ts"],
+      "@blinksocial/models": ["libs/blinksocial-models/src/index.ts"]
     }
   }
 }

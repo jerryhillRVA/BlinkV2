@@ -1,0 +1,137 @@
+<div class="step-platform-config">
+  <div class="step-header">
+    <h2>Platform Configuration</h2>
+    <p class="step-subtitle">Set up global rules and individual platform strategies.</p>
+  </div>
+
+  <!-- Global Rules -->
+  <div class="global-rules">
+    <div class="global-rules-header">Global Rules</div>
+    <div class="global-rules-body">
+      <div class="global-grid">
+        <div class="field-group">
+          <label class="field-label-sm" for="default-platform">Default Platform</label>
+          <select id="default-platform" class="field-select" [value]="formService.defaultPlatform()" (change)="formService.defaultPlatform.set($any($event.target).value)">
+            @for (p of PLATFORMS; track p) {
+              <option [value]="p">{{ p }}</option>
+            }
+          </select>
+        </div>
+        <div class="field-group">
+          <label class="field-label-sm" for="max-ideas">Max Ideas Per Month</label>
+          <input id="max-ideas" type="number" class="field-input" [value]="formService.maxIdeasPerMonth()" (input)="formService.maxIdeasPerMonth.set(+$any($event.target).value)" />
+        </div>
+      </div>
+
+      <div class="toggles-row">
+        <button class="toggle-card toggle-content-warning" (click)="formService.toggleContentWarning()">
+          <div class="toggle-info">
+            <span class="toggle-title">Content Warning</span>
+            <span class="toggle-desc">Manual review trigger</span>
+          </div>
+          <div class="toggle-switch" [class.toggle-on]="formService.contentWarning()">
+            <div class="toggle-knob"></div>
+          </div>
+        </button>
+        <button class="toggle-card toggle-ai-disclaimer" (click)="formService.toggleAiDisclaimer()">
+          <div class="toggle-info">
+            <span class="toggle-title">AI Disclaimer</span>
+            <span class="toggle-desc">Always include label</span>
+          </div>
+          <div class="toggle-switch" [class.toggle-on]="formService.aiDisclaimer()">
+            <div class="toggle-knob"></div>
+          </div>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Platform List -->
+  <div class="platforms-section">
+    <span class="section-label">Active Platforms</span>
+    <div class="platforms-list">
+      @for (platform of PLATFORMS; track platform) {
+        <details class="platform-item">
+          <summary class="platform-header">
+            <div class="platform-left">
+              <div class="platform-icon" [class.platform-icon-active]="formService.isEnabled(platform)">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" x2="15.42" y1="13.51" y2="17.49"/><line x1="15.41" x2="8.59" y1="6.51" y2="10.49"/></svg>
+              </div>
+              <span class="platform-name" [class.platform-name-muted]="!formService.isEnabled(platform)">{{ platform }}</span>
+              <span class="platform-badge" [class.badge-active]="formService.isEnabled(platform)">
+                {{ formService.isEnabled(platform) ? 'ACTIVE' : 'OFF' }}
+              </span>
+            </div>
+            <button class="platform-toggle" (click)="formService.togglePlatform(platform); $event.preventDefault()">
+              <div class="toggle-switch" [class.toggle-on]="formService.isEnabled(platform)">
+                <div class="toggle-knob"></div>
+              </div>
+            </button>
+          </summary>
+          <div class="platform-details" [class.platform-disabled]="!formService.isEnabled(platform)">
+            <div class="detail-section">
+              <h4 class="detail-heading">
+                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m16 13 5.223 3.482a.5.5 0 0 0 .777-.416V7.87a.5.5 0 0 0-.752-.432L16 10.5"/><rect x="2" y="6" width="14" height="12" rx="2"/></svg>
+                Video Specs
+              </h4>
+              <div class="detail-grid">
+                <div class="detail-field">
+                  <span class="detail-label">Aspect Ratio</span>
+                  <select class="field-select-sm">
+                    <option>16:9</option>
+                    <option>9:16</option>
+                  </select>
+                </div>
+                <div class="detail-field">
+                  <span class="detail-label">Video Res</span>
+                  <select class="field-select-sm">
+                    <option>1080p</option>
+                    <option>720p</option>
+                  </select>
+                </div>
+                <div class="detail-field">
+                  <span class="detail-label">Thumb Res</span>
+                  <select class="field-select-sm">
+                    <option>1280x720</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            <div class="detail-section">
+              <h4 class="detail-heading">
+                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                Schedule
+              </h4>
+              <div class="detail-grid-2">
+                <div class="detail-field">
+                  <span class="detail-label">Frequency</span>
+                  <select class="field-select-sm"><option>Daily</option></select>
+                </div>
+                <div class="detail-field">
+                  <span class="detail-label">Timezone</span>
+                  <select class="field-select-sm"><option>UTC</option></select>
+                </div>
+              </div>
+            </div>
+
+            <div class="detail-section">
+              <h4 class="detail-heading">
+                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="7" height="7" x="14" y="3" rx="1"/><rect width="7" height="7" x="3" y="3" rx="1"/><rect width="7" height="7" x="14" y="14" rx="1"/><rect width="7" height="7" x="3" y="14" rx="1"/></svg>
+                AI Styling
+              </h4>
+              <div class="detail-field">
+                <span class="detail-label">Content Style</span>
+                <input type="text" class="field-input-sm" value="documentary" />
+              </div>
+              <div class="detail-field">
+                <span class="detail-label">Design Prompt Suffix</span>
+                <textarea class="field-textarea-sm">Bold, high-contrast design. 16:9 format.</textarea>
+              </div>
+            </div>
+          </div>
+        </details>
+      }
+    </div>
+  </div>
+</div>

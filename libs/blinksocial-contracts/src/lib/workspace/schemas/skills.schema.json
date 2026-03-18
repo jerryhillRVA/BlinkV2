@@ -1,0 +1,47 @@
+{
+  "$id": "https://blinksocial.io/schemas/settings/skills.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "SkillSettings",
+  "type": "object",
+  "required": ["skills"],
+  "properties": {
+    "skills": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "skillId", "name", "role"],
+        "properties": {
+          "id": { "type": "string" },
+          "skillId": { "type": "string" },
+          "name": { "type": "string" },
+          "role": { "type": "string" },
+          "persona": { "type": "string", "maxLength": 2000 },
+          "responsibilities": { "type": "array", "items": { "type": "string" } },
+          "expectedOutputs": { "type": "array", "items": { "type": "string" } },
+          "contextPreferences": {
+            "type": "object",
+            "properties": {
+              "includeBrandVoice": { "type": "boolean" },
+              "includeAudiencePersonas": { "type": "boolean" },
+              "includePlatformAccounts": { "type": "boolean" },
+              "additionalContextPaths": { "type": "array", "items": { "type": "string" } }
+            }
+          },
+          "overrides": {
+            "type": "object",
+            "properties": {
+              "tonePreset": { "$ref": "https://blinksocial.io/schemas/enums.schema.json#/$defs/TonePreset" },
+              "defaultPlatform": { "$ref": "https://blinksocial.io/schemas/enums.schema.json#/$defs/Platform" },
+              "maxOutputTokens": { "type": "integer" }
+            }
+          },
+          "triggers": { "type": "array", "items": { "type": "string" } },
+          "enabled": { "type": "boolean" },
+          "archived": { "type": "boolean" },
+          "createdAt": { "type": "string", "format": "date-time" },
+          "updatedAt": { "type": "string", "format": "date-time" }
+        }
+      }
+    }
+  }
+}
