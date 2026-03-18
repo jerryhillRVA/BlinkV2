@@ -35,17 +35,41 @@ test.describe('New Workspace Wizard', () => {
     await expect(page.locator('.page-title')).toHaveText('Setup Your Workspace');
   });
 
-  test('should advance to step 2 when Next is clicked', async ({ page }) => {
+  test('should not advance from step 1 without workspace name', async ({ page }) => {
+    await page.locator('.wizard-next').click();
+    // Should stay on step 1
+    const active = page.locator('.step-active');
+    await expect(active).toContainText('1');
+    // Toast should appear
+    const toast = page.locator('.mat-mdc-snack-bar-container');
+    await expect(toast).toBeVisible();
+  });
+
+  test('should advance to step 2 when Next is clicked with valid name', async ({ page }) => {
+    await page.locator('#workspace-name').fill('Test Workspace');
     await page.locator('.wizard-next').click();
     const active = page.locator('.step-active');
     await expect(active).toContainText('2');
   });
 
   test('should return to step 1 when Back is clicked after advancing', async ({ page }) => {
+    await page.locator('#workspace-name').fill('Test Workspace');
     await page.locator('.wizard-next').click();
     await page.locator('.wizard-back').click();
     const active = page.locator('.step-active');
     await expect(active).toContainText('1');
+  });
+
+  test('should allow Back from step 5 to step 4', async ({ page }) => {
+    await page.locator('#workspace-name').fill('Test Workspace');
+    for (let i = 0; i < 4; i++) {
+      await page.locator('.wizard-next').click();
+    }
+    const active5 = page.locator('.step-active');
+    await expect(active5).toContainText('5');
+    await page.locator('.wizard-back').click();
+    const active4 = page.locator('.step-active');
+    await expect(active4).toContainText('4');
   });
 
   test('should navigate to dashboard when "Back to Home" is clicked', async ({ page }) => {

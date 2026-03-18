@@ -7,6 +7,7 @@ import {
 } from '@angular/common/http/testing';
 import { NewWorkspaceComponent } from './new-workspace.component';
 import { ToastService } from '../../core/toast/toast.service';
+import { NewWorkspaceFormService } from './new-workspace-form.service';
 
 describe('NewWorkspaceComponent', () => {
   let router: Router;
@@ -97,18 +98,29 @@ describe('NewWorkspaceComponent', () => {
     expect(nextBtn?.textContent).not.toContain('Finish & Launch');
   });
 
-  it('should disable Back button on step 5', () => {
+  it('should enable Back button on step 5', () => {
     const fixture = TestBed.createComponent(NewWorkspaceComponent);
     fixture.componentInstance.currentStep.set(5);
     fixture.detectChanges();
     const el: HTMLElement = fixture.nativeElement;
     const backBtn = el.querySelector('.wizard-back') as HTMLButtonElement;
-    expect(backBtn.disabled).toBe(true);
+    expect(backBtn.disabled).toBe(false);
   });
 
-  it('should advance step when Next is clicked', () => {
+  it('should go back from step 5 to step 4', () => {
+    const fixture = TestBed.createComponent(NewWorkspaceComponent);
+    fixture.componentInstance.currentStep.set(5);
+    fixture.detectChanges();
+    const backBtn = fixture.nativeElement.querySelector('.wizard-back') as HTMLButtonElement;
+    backBtn.click();
+    expect(fixture.componentInstance.currentStep()).toBe(4);
+  });
+
+  it('should advance step when Next is clicked with valid data', () => {
     const fixture = TestBed.createComponent(NewWorkspaceComponent);
     fixture.detectChanges();
+    const formService = fixture.debugElement.injector.get(NewWorkspaceFormService);
+    formService.workspaceName.set('Test Workspace');
     const el: HTMLElement = fixture.nativeElement;
     const nextBtn = el.querySelector('.wizard-next') as HTMLButtonElement;
     nextBtn.click();
@@ -191,6 +203,25 @@ describe('NewWorkspaceComponent', () => {
 
     expect(toastService.showError).toHaveBeenCalledWith('Failed to create workspace. Please try again.');
     httpMock.verify();
+  });
+
+  it('should not advance from step 1 when workspace name is empty', () => {
+    const fixture = TestBed.createComponent(NewWorkspaceComponent);
+    fixture.detectChanges();
+    const nextBtn = fixture.nativeElement.querySelector('.wizard-next') as HTMLButtonElement;
+    nextBtn.click();
+    expect(fixture.componentInstance.currentStep()).toBe(1);
+    expect(toastService.showError).toHaveBeenCalled();
+  });
+
+  it('should advance from step 1 when workspace name is valid', () => {
+    const fixture = TestBed.createComponent(NewWorkspaceComponent);
+    fixture.detectChanges();
+    const formService = fixture.debugElement.injector.get(NewWorkspaceFormService);
+    formService.workspaceName.set('Valid Name');
+    const nextBtn = fixture.nativeElement.querySelector('.wizard-next') as HTMLButtonElement;
+    nextBtn.click();
+    expect(fixture.componentInstance.currentStep()).toBe(2);
   });
 
   it('should show "Submitting..." text when submitting', () => {

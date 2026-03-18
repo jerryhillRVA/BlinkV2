@@ -157,6 +157,24 @@ export class NewWorkspaceFormService {
     });
   });
 
+  // Validation
+  stepValidation(step: number): { valid: true } | { valid: false; error: string } {
+    switch (step) {
+      case 1: {
+        const name = this.workspaceName().trim();
+        if (!name) {
+          return { valid: false, error: 'Workspace Name is required.' };
+        }
+        if (name.length > 100) {
+          return { valid: false, error: 'Workspace Name must be 100 characters or fewer.' };
+        }
+        return { valid: true };
+      }
+      default:
+        return { valid: true };
+    }
+  }
+
   // Step 1 helpers
   addSegment(): void {
     this.audienceSegments.update((s) => [

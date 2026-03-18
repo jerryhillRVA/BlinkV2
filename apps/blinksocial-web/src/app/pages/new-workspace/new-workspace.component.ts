@@ -53,6 +53,12 @@ export class NewWorkspaceComponent {
   }
 
   onNext(): void {
+    const validation = this.formService.stepValidation(this.currentStep());
+    if (!validation.valid) {
+      this.toastService.showError(validation.error);
+      return;
+    }
+
     if (this.isLastStep) {
       this.submitWorkspace();
     } else {
