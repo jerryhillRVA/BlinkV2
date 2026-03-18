@@ -1,0 +1,16 @@
+{
+  "segmentId": "s1",
+  "interests": ["Strength training", "Hormone health", "Energy management", "Metabolism support"],
+  "painPoints": ["Energy fluctuations throughout day", "Metabolism slowing down", "Balancing career demands with self-care"],
+  "peakActivityTimes": [
+    { "day": "Monday", "hour": "6:00 AM", "engagement": "Very High" },
+    { "day": "Wednesday", "hour": "12:00 PM", "engagement": "High" },
+    { "day": "Saturday", "hour": "8:00 AM", "engagement": "High" }
+  ],
+  "preferredPlatforms": [
+    { "platform": "instagram", "preference": 88 },
+    { "platform": "youtube", "preference": 75 },
+    { "platform": "tiktok", "preference": 45 }
+  ],
+  "contentPreferences": ["Quick workout routines", "Hormone health tips", "Energy-boosting nutrition", "Motivational content"]
+}

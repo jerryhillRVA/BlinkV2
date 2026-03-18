@@ -1,0 +1,16 @@
+{
+  "channels": {
+    "email": true,
+    "inApp": true,
+    "slack": false,
+    "slackWebhookUrl": null
+  },
+  "triggers": {
+    "researchResults": true,
+    "contentPublished": true,
+    "teamMentions": true,
+    "qaReviewRequired": true,
+    "approachingDeadlines": true,
+    "weeklyDigest": true
+  }
+}

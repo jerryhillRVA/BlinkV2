@@ -1,0 +1,49 @@
+{
+  "$id": "https://blinksocial.io/schemas/settings/security.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "SecuritySettings",
+  "type": "object",
+  "properties": {
+    "twoFactorEnabled": { "type": "boolean", "default": false },
+    "activeSessions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "device": { "type": "string" },
+          "browser": { "type": "string" },
+          "location": { "type": "string" },
+          "lastActive": { "type": "string", "format": "date-time" },
+          "isCurrent": { "type": "boolean" }
+        }
+      }
+    },
+    "apiKeys": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "name": { "type": "string" },
+          "keyPrefix": { "type": "string" },
+          "createdAt": { "type": "string", "format": "date-time" },
+          "lastUsed": { "type": "string", "format": "date-time" }
+        }
+      }
+    },
+    "loginHistory": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "timestamp": { "type": "string", "format": "date-time" },
+          "ip": { "type": "string" },
+          "device": { "type": "string" },
+          "location": { "type": "string" },
+          "success": { "type": "boolean" }
+        }
+      }
+    }
+  }
+}

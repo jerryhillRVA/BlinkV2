@@ -1,0 +1,21 @@
+{
+  "$id": "https://blinksocial.io/schemas/create-workspace-request.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "CreateWorkspaceRequest",
+  "type": "object",
+  "required": ["general", "platforms", "brandVoice", "contentPillars", "audienceSegments", "skills"],
+  "properties": {
+    "general": { "$ref": "https://blinksocial.io/schemas/settings/general.schema.json" },
+    "platforms": { "$ref": "https://blinksocial.io/schemas/settings/platforms.schema.json" },
+    "brandVoice": { "$ref": "https://blinksocial.io/schemas/settings/brand-voice.schema.json" },
+    "contentPillars": {
+      "type": "array",
+      "items": { "$ref": "https://blinksocial.io/schemas/content-pillar.schema.json" }
+    },
+    "audienceSegments": {
+      "type": "array",
+      "items": { "$ref": "https://blinksocial.io/schemas/audience-segment.schema.json" }
+    },
+    "skills": { "$ref": "https://blinksocial.io/schemas/settings/skills.schema.json" }
+  }
+}

@@ -1,0 +1,44 @@
+{
+  "id": "run-post1-hooks",
+  "skillId": "post-drafting",
+  "workspaceSkillConfigId": "ws-skill-creative",
+  "routingPath": "deterministic",
+  "planRunId": null,
+  "status": "completed",
+  "input": {
+    "channel_id": "instagram",
+    "topic": "60-second morning mobility flow for stiff joints",
+    "tone": "casual",
+    "thread_length": 1,
+    "cta": "Follow for daily flows",
+    "segment_ids": ["s4"],
+    "pillar_ids": ["p1"],
+    "parent_concept_id": "concept1"
+  },
+  "output": {
+    "platform": "instagram",
+    "body": "Morning mobility in 60 seconds. No equipment needed.\n\nYour joints will thank you. Save this for tomorrow morning.",
+    "hashtags": ["#morningroutine", "#mobilitywod", "#yogaflow", "#over40fitness"],
+    "media": { "type": "video", "alt_text": "60-second morning mobility flow demonstration" },
+    "cta": { "text": "Follow for daily flows" },
+    "metadata": {
+      "content_category": "Yoga & Movement",
+      "target_persona": "Active Beginners"
+    },
+    "status": "draft"
+  },
+  "validationErrors": [],
+  "retryCount": 0,
+  "contentItemId": "post1",
+  "targetNamespace": "content-items",
+  "triggeredBy": "user-sarah",
+  "model": "claude-sonnet-4-6",
+  "tokenUsage": {
+    "inputTokens": 2840,
+    "outputTokens": 312
+  },
+  "durationMs": 3200,
+  "startedAt": "2026-02-24T14:55:00Z",
+  "completedAt": "2026-02-24T14:55:03Z",
+  "error": null
+}

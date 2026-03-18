@@ -1,0 +1,15 @@
+{
+  "id": "p2",
+  "name": "Wellness & Mindfulness",
+  "description": "Stress management, meditation, sleep, and mental health",
+  "color": "#10b981",
+  "themes": ["Meditation", "Stress reduction", "Sleep health", "Breathwork", "Mental wellness"],
+  "audienceSegmentIds": ["s1", "s2", "s3", "s5"],
+  "platformDistribution": {
+    "instagram": 0.30,
+    "youtube": 0.25,
+    "tiktok": 0.15,
+    "facebook": 0.20,
+    "linkedin": 0.10
+  }
+}

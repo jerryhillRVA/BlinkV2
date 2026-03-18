@@ -1,0 +1,19 @@
+{
+  "$id": "https://blinksocial.io/schemas/settings/general.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "GeneralSettings",
+  "type": "object",
+  "required": ["workspaceName"],
+  "properties": {
+    "workspaceName": { "type": "string", "maxLength": 100, "minLength": 1 },
+    "purpose": { "type": "string", "maxLength": 500 },
+    "mission": { "type": "string", "maxLength": 1000 },
+    "timezone": { "type": "string", "default": "America/New_York" },
+    "language": { "type": "string", "default": "en-US" },
+    "brandColor": { "type": "string", "pattern": "^#[0-9a-fA-F]{6}$" },
+    "logoUrl": { "type": "string", "format": "uri" },
+    "website": { "type": "string", "format": "uri" },
+    "contactEmail": { "type": "string", "format": "email" },
+    "status": { "type": "string", "enum": ["active", "archived"], "default": "active" }
+  }
+}

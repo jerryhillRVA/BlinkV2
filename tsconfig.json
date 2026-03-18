@@ -17,6 +17,9 @@
     },
     {
       "path": "./libs/blinksocial-core"
+    },
+    {
+      "path": "./libs/blinksocial-models"
     }
   ]
 }

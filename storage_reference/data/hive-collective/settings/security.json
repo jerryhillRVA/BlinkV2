@@ -1,0 +1,31 @@
+{
+  "twoFactorEnabled": false,
+  "activeSessions": [
+    {
+      "id": "sess-001",
+      "device": "MacBook Pro",
+      "browser": "Chrome 122",
+      "location": "Richmond, VA",
+      "lastActive": "2026-03-09T15:30:00Z",
+      "isCurrent": true
+    }
+  ],
+  "apiKeys": [
+    {
+      "id": "key-001",
+      "name": "CI/CD Pipeline",
+      "keyPrefix": "bsk_live_xR7k",
+      "createdAt": "2026-02-01T10:00:00Z",
+      "lastUsed": "2026-03-08T22:00:00Z"
+    }
+  ],
+  "loginHistory": [
+    {
+      "timestamp": "2026-03-09T08:15:00Z",
+      "ip": "192.168.1.100",
+      "device": "MacBook Pro / Chrome 122",
+      "location": "Richmond, VA",
+      "success": true
+    }
+  ]
+}

@@ -1,5 +1,5 @@
 const { NxAppWebpackPlugin } = require('@nx/webpack/app-plugin');
-const { join } = require('path');
+const { join, resolve } = require('path');
 
 module.exports = {
   output: {
@@ -8,6 +8,22 @@ module.exports = {
     ...(process.env.NODE_ENV !== 'production' && {
       devtoolModuleFilenameTemplate: '[absolute-resource-path]',
     }),
+  },
+  resolve: {
+    alias: {
+      '@blinksocial/contracts/validation': resolve(
+        __dirname,
+        '../../libs/blinksocial-contracts/src/lib/workspace/validation.ts'
+      ),
+      '@blinksocial/contracts': resolve(
+        __dirname,
+        '../../libs/blinksocial-contracts/src/index.ts'
+      ),
+      '@blinksocial/models': resolve(
+        __dirname,
+        '../../libs/blinksocial-models/src/index.ts'
+      ),
+    },
   },
   plugins: [
     new NxAppWebpackPlugin({

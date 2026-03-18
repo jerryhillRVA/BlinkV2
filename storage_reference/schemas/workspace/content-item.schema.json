@@ -1,0 +1,625 @@
+{
+  "$id": "https://blinksocial.io/schemas/content-item.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "ContentItem",
+  "type": "object",
+  "required": ["id", "stage", "status", "title", "description", "pillarIds", "segmentIds", "createdAt", "updatedAt"],
+  "properties": {
+    "id": { "type": "string" },
+    "stage": { "$ref": "enums.schema.json#/$defs/ContentStage" },
+    "status": { "$ref": "enums.schema.json#/$defs/ContentStatus" },
+    "title": { "type": "string", "maxLength": 200 },
+    "description": { "type": "string", "maxLength": 2000 },
+    "pillarIds": { "type": "array", "items": { "type": "string" } },
+    "segmentIds": { "type": "array", "items": { "type": "string" } },
+    "tags": { "type": "array", "items": { "type": "string" } },
+    "owner": { "type": "string" },
+    "createdAt": { "type": "string", "format": "date-time" },
+    "updatedAt": { "type": "string", "format": "date-time" },
+
+    "parentIdeaId": { "type": "string", "description": "For concepts: the originating idea ID" },
+    "parentConceptId": { "type": "string", "description": "For posts: the originating concept ID" },
+    "targetPlatforms": {
+      "type": "array",
+      "description": "For concepts: platform+contentType combinations this concept will produce posts for",
+      "items": {
+        "type": "object",
+        "required": ["platform", "contentType"],
+        "properties": {
+          "platform": { "$ref": "enums.schema.json#/$defs/Platform" },
+          "contentType": { "$ref": "enums.schema.json#/$defs/ContentType" },
+          "postId": { "type": ["string", "null"], "description": "ID of the generated post (set once post is created)" }
+        }
+      }
+    },
+    "assetRefs": {
+      "type": "array",
+      "description": "References to binary assets in the assets/ namespace",
+      "items": {
+        "type": "object",
+        "required": ["fileId", "role"],
+        "properties": {
+          "fileId": { "type": "string", "description": "AgenticFilesystem file_id" },
+          "filename": { "type": "string" },
+          "role": { "type": "string", "enum": ["cover", "primary-media", "creative-variant", "captions", "source-file", "talent-release", "music-license", "other"] },
+          "mimeType": { "type": "string" },
+          "sizeBytes": { "type": "integer" }
+        }
+      }
+    },
+
+    "hook": { "type": "string", "maxLength": 300 },
+    "objective": { "$ref": "enums.schema.json#/$defs/ContentObjective" },
+    "platform": { "$ref": "enums.schema.json#/$defs/Platform" },
+    "contentType": { "$ref": "enums.schema.json#/$defs/ContentType" },
+    "cta": {
+      "type": "object",
+      "properties": {
+        "type": { "$ref": "enums.schema.json#/$defs/CTATypeEnum" },
+        "text": { "type": "string" }
+      }
+    },
+    "keyMessage": { "type": "string", "maxLength": 180 },
+    "angle": { "type": "string" },
+    "formatNotes": { "type": "array", "items": { "$ref": "enums.schema.json#/$defs/FormatNote" } },
+    "claimsFlag": { "type": "boolean" },
+    "sourceLinks": { "type": "array", "items": { "type": "string", "format": "uri" } },
+    "riskLevel": { "$ref": "enums.schema.json#/$defs/RiskLevel" },
+    "targetPublishWindow": {
+      "type": "object",
+      "properties": {
+        "start": { "type": "string", "format": "date-time" },
+        "end": { "type": "string", "format": "date-time" }
+      }
+    },
+    "collaborators": { "type": "array", "items": { "type": "string" } },
+
+    "scheduledDate": { "type": "string", "format": "date" },
+    "scheduledTime": { "type": "string", "pattern": "^\\d{2}:\\d{2}$" },
+    "approvedBy": { "type": "string" },
+    "approvedAt": { "type": "string", "format": "date-time" },
+    "reviewNotes": { "type": "string" },
+
+    "metrics": { "$ref": "#/$defs/ContentMetrics" },
+    "production": { "$ref": "#/$defs/ProductionData" }
+  },
+
+  "$defs": {
+    "ContentMetrics": {
+      "type": "object",
+      "properties": {
+        "views": { "type": "integer" },
+        "likes": { "type": "integer" },
+        "comments": { "type": "integer" },
+        "shares": { "type": "integer" },
+        "engagementRate": { "type": "number" },
+        "reach": { "type": "integer" }
+      }
+    },
+
+    "ProductionData": {
+      "type": "object",
+      "required": ["productionStep"],
+      "properties": {
+        "productionStep": { "$ref": "enums.schema.json#/$defs/ProductionStep" },
+        "brief": { "$ref": "#/$defs/ContentBrief" },
+        "sources": { "type": "array", "items": { "$ref": "#/$defs/ProductionSource" } },
+        "outputs": { "$ref": "#/$defs/ProductionOutput" },
+        "assets": { "type": "array", "items": { "$ref": "#/$defs/AssetChecklistItem" } },
+        "tasks": { "type": "array", "items": { "$ref": "#/$defs/ProductionTask" } },
+        "internalApproval": {
+          "type": "object",
+          "properties": {
+            "approved": { "type": "boolean" },
+            "comments": { "type": "array", "items": { "type": "string" } },
+            "reviewer": { "type": "string" }
+          }
+        },
+        "versions": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "label": { "type": "string" },
+              "savedAt": { "type": "string", "format": "date-time" }
+            }
+          }
+        }
+      }
+    },
+
+    "ContentBrief": {
+      "type": "object",
+      "properties": {
+        "strategy": {
+          "type": "object",
+          "properties": {
+            "objective": { "$ref": "enums.schema.json#/$defs/ContentObjective" },
+            "audienceSegmentIds": { "type": "array", "items": { "type": "string" } },
+            "pillarIds": { "type": "array", "items": { "type": "string" } },
+            "keyMessage": { "type": "string", "maxLength": 180 },
+            "ctaType": { "$ref": "enums.schema.json#/$defs/CTAType" },
+            "ctaText": { "type": "string" },
+            "tonePreset": { "$ref": "enums.schema.json#/$defs/TonePreset" },
+            "doChecklist": { "type": "array", "items": { "type": "string" } },
+            "dontChecklist": { "type": "array", "items": { "type": "string" } }
+          }
+        },
+        "platformRules": {
+          "type": "object",
+          "properties": {
+            "targetLengthMin": { "type": "integer" },
+            "targetLengthMax": { "type": "integer" },
+            "videoStyle": { "$ref": "enums.schema.json#/$defs/VideoStyle" },
+            "hookType": { "$ref": "enums.schema.json#/$defs/HookType" },
+            "seoKeyword": { "type": "string" },
+            "viewerPromise": { "type": "string" },
+            "durationTarget": { "type": "integer", "enum": [15, 30, 45, 60, 90] },
+            "loopEnding": { "type": "boolean" },
+            "onScreenTextLines": { "type": "array", "items": { "type": "string" } },
+            "carouselGoal": { "$ref": "enums.schema.json#/$defs/CarouselGoal" },
+            "slideCount": { "type": "integer" },
+            "postIntent": { "$ref": "enums.schema.json#/$defs/PostIntent" },
+            "copyOnImage": { "type": "string" },
+            "captionMaxLength": { "type": "integer" },
+            "hashtagStyle": { "$ref": "enums.schema.json#/$defs/HashtagStyle" },
+            "frameCount": { "type": "integer" },
+            "interactionType": { "$ref": "enums.schema.json#/$defs/InteractionType" },
+            "creatorVoice": { "type": "string", "enum": ["casual", "brand-polished"] },
+            "commentBait": { "type": "string" },
+            "isSeriesPart": { "type": "boolean" }
+          }
+        },
+        "creativePlan": {
+          "type": "object",
+          "properties": {
+            "hook": { "type": "string" },
+            "storyArc": { "$ref": "enums.schema.json#/$defs/StoryArc" },
+            "sections": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "id": { "type": "string" },
+                  "title": { "type": "string" },
+                  "keyPoints": { "type": "array", "items": { "type": "string" } },
+                  "sourceUrl": { "type": "string", "format": "uri" }
+                }
+              }
+            },
+            "bRollList": { "type": "array", "items": { "type": "string" } },
+            "onScreenMoments": { "type": "array", "items": { "type": "string" } },
+            "musicNotes": { "type": "string" },
+            "slides": { "type": "array", "items": { "$ref": "#/$defs/SlideOutline" } },
+            "frames": { "type": "array", "items": { "$ref": "#/$defs/FrameOutline" } }
+          }
+        },
+        "compliance": {
+          "type": "object",
+          "properties": {
+            "containsClaims": { "type": "boolean" },
+            "claims": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "claim": { "type": "string" },
+                  "citation": { "type": "string" },
+                  "cited": { "type": "boolean" }
+                }
+              }
+            },
+            "disclosureNeeded": { "type": "boolean" },
+            "disclosureType": { "type": "string" }
+          }
+        },
+        "approved": { "type": "boolean" },
+        "approvedAt": { "type": "string", "format": "date-time" },
+        "approvedBy": { "type": "string" },
+        "approvalNote": { "type": "string" },
+        "canonicalType": { "$ref": "enums.schema.json#/$defs/CanonicalContentType" },
+        "publishingMode": { "type": "string", "enum": ["ORGANIC", "PAID_BOOSTED"] },
+        "hasTalent": { "type": "boolean" },
+        "hasMusic": { "type": "boolean" },
+        "needsAccessibility": { "type": "boolean" },
+        "owner": { "type": "string" },
+        "dueDate": { "type": "string", "format": "date" },
+        "primaryCta": { "type": "string" },
+        "destinationUrl": { "type": "string", "format": "uri" },
+        "approvers": { "type": "array", "items": { "type": "string" } },
+        "audienceNotes": { "type": "string" },
+        "constraintsNotes": { "type": "string" },
+        "referenceLinks": { "type": "array", "items": { "type": "string", "format": "uri" } },
+        "hookAngle": { "type": "string" },
+        "campaignName": { "type": "string" },
+        "paidPartnership": { "type": "boolean" }
+      }
+    },
+
+    "ProductionOutput": {
+      "type": "object",
+      "properties": {
+        "hook": { "type": "string" },
+        "hookBank": { "type": "array", "items": { "type": "string" } },
+        "postCopy": { "type": "string" },
+        "script": { "type": "string" },
+        "onScreenText": { "type": "string" },
+        "storyFrames": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": { "type": "string" },
+              "frameNumber": { "type": "integer" },
+              "text": { "type": "string" },
+              "ostText": { "type": "string" }
+            }
+          }
+        },
+        "slideOutlines": { "type": "array", "items": { "$ref": "#/$defs/SlideOutline" } },
+        "ctaLine": { "type": "string" },
+        "links": { "type": "array", "items": { "type": "string", "format": "uri" } },
+        "hashtags": { "type": "array", "items": { "type": "string" } },
+        "mentions": { "type": "array", "items": { "type": "string" } },
+        "location": { "type": "string" },
+        "disclosures": { "type": "string" },
+        "claimsList": { "type": "array", "items": { "type": "string" } },
+        "safetyDisclaimer": { "type": "string" },
+        "contentNotes": { "type": "string" },
+        "pinnedComment": { "type": "string" },
+        "scriptVersions": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": { "type": "string" },
+              "content": { "type": "string" },
+              "version": { "type": "integer" },
+              "approved": { "type": "boolean" }
+            }
+          }
+        },
+        "hookVariants": { "type": "array", "items": { "type": "string" } },
+        "captionVariants": { "type": "array", "items": { "type": "string" } },
+        "hashtagSets": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "name": { "type": "string" },
+              "tags": { "type": "array", "items": { "type": "string" } }
+            }
+          }
+        },
+        "beatSheet": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "timeRange": { "type": "string" },
+              "content": { "type": "string" }
+            }
+          }
+        },
+        "blueprintData": { "$ref": "#/$defs/BlueprintData" },
+        "assetsData": { "$ref": "#/$defs/AssetsData" },
+        "packagingData": { "$ref": "#/$defs/PackagingData" },
+        "qaData": { "$ref": "#/$defs/QAData" },
+        "activityData": { "$ref": "#/$defs/ActivityData" },
+        "altText": { "type": "string" },
+        "editNotes": { "type": "string" },
+        "repurposePlan": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+
+    "BlueprintData": {
+      "type": "object",
+      "properties": {
+        "structurePattern": { "type": "string" },
+        "customStructureDescription": { "type": "string" },
+        "units": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": { "type": "string" },
+              "order": { "type": "integer" },
+              "title": { "type": "string" },
+              "role": { "$ref": "enums.schema.json#/$defs/UnitRole" },
+              "notes": { "type": "string" }
+            }
+          }
+        },
+        "engagementDrivers": { "type": "array", "items": { "type": "string" } },
+        "primaryCTAType": { "type": "string" },
+        "ctaPlacementUnitId": { "type": "string" },
+        "formatCoherenceConfirmed": { "type": "boolean" },
+        "logicalProgressionConfirmed": { "type": "boolean" },
+        "accessibilityPlanConfirmed": { "type": "boolean" },
+        "formatProfile": { "type": "string" },
+        "aspectRatio": { "type": "string" },
+        "runtimeSeconds": { "type": "integer" },
+        "unitCountTarget": { "type": "integer" },
+        "beats": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": { "type": "string" },
+              "label": { "type": "string" },
+              "checked": { "type": "boolean" }
+            }
+          }
+        },
+        "ctaPlacement": { "type": "string", "enum": ["early", "middle", "end", "repeated"] },
+        "slidePattern": { "type": "string" },
+        "storyArc": { "type": "string" },
+        "interactiveElements": { "type": "array", "items": { "type": "string" } },
+        "runOfShow": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": { "type": "string" },
+              "label": { "type": "string" },
+              "notes": { "type": "string" },
+              "checked": { "type": "boolean" }
+            }
+          }
+        },
+        "liveRoles": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": { "type": "string" },
+              "role": { "type": "string" },
+              "assignee": { "type": "string" }
+            }
+          }
+        },
+        "liveEngagementPlan": { "type": "string" },
+        "audioPlan": { "type": "string" },
+        "musicSource": { "type": "string" },
+        "captionsStrategy": { "type": "string" },
+        "altTextStrategy": { "type": "string" },
+        "motionSafety": { "type": "array", "items": { "type": "string" } },
+        "claimsRisk": { "type": "string" },
+        "disclaimerPattern": { "type": "string" },
+        "productionNotes": { "type": "string" },
+        "shotList": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": { "type": "string" },
+              "label": { "type": "string" },
+              "checked": { "type": "boolean" }
+            }
+          }
+        },
+        "chaptersPlan": { "type": "string" },
+        "brandStyleConstraints": { "type": "string" }
+      }
+    },
+
+    "AssetsData": {
+      "type": "object",
+      "properties": {
+        "masterUploads": { "type": "array", "items": { "$ref": "#/$defs/AssetFileEntry" } },
+        "coverUpload": { "$ref": "#/$defs/AssetFileEntry" },
+        "creativeVariants": { "type": "array", "items": { "$ref": "#/$defs/AssetFileEntry" } },
+        "captionsFile": { "$ref": "#/$defs/AssetFileEntry" },
+        "altText": { "type": "string" },
+        "altTextItems": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": { "type": "string" },
+              "slideIndex": { "type": "integer" },
+              "text": { "type": "string" }
+            }
+          }
+        },
+        "talentReleaseUrl": { "type": "string", "format": "uri" },
+        "musicLicenseUrl": { "type": "string", "format": "uri" },
+        "thirdPartyRightsUrl": { "type": "string", "format": "uri" },
+        "sourceFiles": { "type": "array", "items": { "$ref": "#/$defs/AssetFileEntry" } },
+        "exportNotes": { "type": "string" },
+        "checklistOverrides": {
+          "type": "object",
+          "additionalProperties": { "type": "boolean" }
+        }
+      }
+    },
+
+    "PackagingData": {
+      "type": "object",
+      "properties": {
+        "publishAction": { "$ref": "enums.schema.json#/$defs/PublishAction" },
+        "visibility": { "$ref": "enums.schema.json#/$defs/Visibility" },
+        "scheduleAt": { "type": "string", "format": "date-time" },
+        "title": { "type": "string" },
+        "packagedCopy": { "type": "string" },
+        "description": { "type": "string" },
+        "keywords": { "type": "array", "items": { "type": "string" } },
+        "primaryMediaAsset": { "type": "string" },
+        "coverAsset": { "type": "string" },
+        "carouselOrder": { "type": "array", "items": { "type": "string" } },
+        "destinationUrl": { "type": "string", "format": "uri" },
+        "utmSource": { "type": "string" },
+        "utmMedium": { "type": "string" },
+        "utmCampaign": { "type": "string" },
+        "category": { "type": "string" },
+        "madeForKids": { "type": "boolean" },
+        "playlist": { "type": "string" },
+        "collaboratorTags": { "type": "array", "items": { "type": "string" } },
+        "igLocation": { "type": "string" },
+        "allowComments": { "type": "boolean" },
+        "allowDuetStitch": { "type": "boolean" },
+        "fbPage": { "type": "string" },
+        "crosspostToIg": { "type": "boolean" },
+        "liPublisherIdentity": { "type": "string" },
+        "pinnedComment": { "type": "string" }
+      }
+    },
+
+    "QAData": {
+      "type": "object",
+      "properties": {
+        "humanChecklist": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": { "type": "string" },
+              "label": { "type": "string" },
+              "group": { "$ref": "enums.schema.json#/$defs/QACheckGroup" },
+              "groupLabel": { "type": "string" },
+              "required": { "type": "boolean" },
+              "checked": { "type": "boolean" }
+            }
+          }
+        },
+        "approvals": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "role": { "$ref": "enums.schema.json#/$defs/ApprovalRole" },
+              "label": { "type": "string" },
+              "required": { "type": "boolean" },
+              "status": { "$ref": "enums.schema.json#/$defs/ApprovalStatus" },
+              "userName": { "type": "string" },
+              "timestamp": { "type": "string", "format": "date-time" },
+              "note": { "type": "string" }
+            }
+          }
+        },
+        "qaNotes": { "type": "string" },
+        "fixAssignee": { "type": "string" },
+        "auditTrail": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": { "type": "string" },
+              "action": { "type": "string" },
+              "userName": { "type": "string" },
+              "timestamp": { "type": "string", "format": "date-time" }
+            }
+          }
+        },
+        "approved": { "type": "boolean" }
+      }
+    },
+
+    "ActivityData": {
+      "type": "object",
+      "properties": {
+        "events": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": { "type": "string" },
+              "type": { "$ref": "enums.schema.json#/$defs/ActivityEventType" },
+              "actor": { "type": "string" },
+              "message": { "type": "string" },
+              "timestamp": { "type": "string", "format": "date-time" },
+              "important": { "type": "boolean" },
+              "detail": { "type": "string" },
+              "tab": { "type": "string" }
+            }
+          }
+        },
+        "decisionLog": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": { "type": "string" },
+              "title": { "type": "string" },
+              "note": { "type": "string" },
+              "scope": { "$ref": "enums.schema.json#/$defs/DecisionScope" },
+              "actor": { "type": "string" },
+              "timestamp": { "type": "string", "format": "date-time" }
+            }
+          }
+        }
+      }
+    },
+
+    "SlideOutline": {
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "slideNumber": { "type": "integer" },
+        "headline": { "type": "string" },
+        "body": { "type": "string" },
+        "visualGuidance": { "type": "string" },
+        "assetType": { "type": "string", "enum": ["upload", "ai-generate"] },
+        "assetUrl": { "type": "string", "format": "uri" },
+        "isCTA": { "type": "boolean" },
+        "slideRole": { "$ref": "enums.schema.json#/$defs/UnitRole" }
+      }
+    },
+
+    "FrameOutline": {
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "frameNumber": { "type": "integer" },
+        "script": { "type": "string" },
+        "onScreenText": { "type": "string" },
+        "stickerRecommendation": { "type": "string" }
+      }
+    },
+
+    "AssetFileEntry": {
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "url": { "type": "string", "format": "uri" },
+        "size": { "type": "string" },
+        "addedAt": { "type": "string", "format": "date-time" }
+      }
+    },
+
+    "AssetChecklistItem": {
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "label": { "type": "string" },
+        "required": { "type": "boolean" },
+        "completed": { "type": "boolean" },
+        "assignee": { "type": "string" },
+        "notes": { "type": "string" }
+      }
+    },
+
+    "ProductionSource": {
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "url": { "type": "string", "format": "uri" },
+        "title": { "type": "string" },
+        "keyTakeaways": { "type": "string" },
+        "type": { "$ref": "enums.schema.json#/$defs/ProductionSourceType" }
+      }
+    },
+
+    "ProductionTask": {
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "label": { "type": "string" },
+        "assignee": { "type": "string" },
+        "completed": { "type": "boolean" },
+        "dueDate": { "type": "string", "format": "date" }
+      }
+    }
+  }
+}

@@ -16,7 +16,15 @@
     }
   },
   "nx": {
-    "name": "blinksocial-contracts"
+    "name": "blinksocial-contracts",
+    "targets": {
+      "test": {
+        "executor": "nx:run-commands",
+        "options": {
+          "command": "vitest run --config libs/blinksocial-contracts/vitest.config.ts"
+        }
+      }
+    }
   },
   "dependencies": {
     "tslib": "^2.3.0"

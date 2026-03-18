@@ -1,0 +1,34 @@
+{
+  "$id": "https://blinksocial.io/schemas/audience-insight.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "AudienceInsight",
+  "type": "object",
+  "required": ["segmentId"],
+  "properties": {
+    "segmentId": { "type": "string" },
+    "interests": { "type": "array", "items": { "type": "string" } },
+    "painPoints": { "type": "array", "items": { "type": "string" } },
+    "peakActivityTimes": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "day": { "type": "string" },
+          "hour": { "type": "string" },
+          "engagement": { "type": "string", "enum": ["Low", "Medium", "High", "Very High"] }
+        }
+      }
+    },
+    "preferredPlatforms": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "platform": { "$ref": "enums.schema.json#/$defs/Platform" },
+          "preference": { "type": "integer", "minimum": 0, "maximum": 100 }
+        }
+      }
+    },
+    "contentPreferences": { "type": "array", "items": { "type": "string" } }
+  }
+}

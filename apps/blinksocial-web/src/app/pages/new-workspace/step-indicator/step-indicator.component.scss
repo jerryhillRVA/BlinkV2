@@ -1,0 +1,80 @@
+.step-indicator {
+  width: 100%;
+  padding: 32px 0;
+}
+
+.step-track {
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 0 16px;
+}
+
+.step-node {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+  z-index: 1;
+}
+
+.step-circle {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: 600;
+  border: 2px solid;
+  transition: all 0.3s;
+}
+
+.step-completed {
+  background: var(--blink-brand-primary);
+  border-color: var(--blink-brand-primary);
+  color: white;
+}
+
+.step-active {
+  background: var(--blink-surface);
+  border-color: var(--blink-brand-primary);
+  color: var(--blink-brand-primary);
+}
+
+.step-inactive {
+  background: var(--blink-surface);
+  border-color: var(--blink-on-surface-tertiary);
+  color: var(--blink-on-surface-tertiary);
+}
+
+.step-label {
+  position: absolute;
+  top: 48px;
+  white-space: nowrap;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--blink-on-surface-tertiary);
+}
+
+.step-label-active {
+  color: var(--blink-brand-primary);
+}
+
+.step-line {
+  flex: 1;
+  height: 2px;
+  margin: 20px 16px 0;
+  background: var(--blink-outline-variant);
+  overflow: hidden;
+  transition: background 0.5s ease-in-out;
+}
+
+.step-line-filled {
+  background: var(--blink-brand-primary);
+}

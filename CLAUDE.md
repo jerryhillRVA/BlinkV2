@@ -90,6 +90,7 @@ E2E specs are organized by component/page area — one spec file per area, NOT o
 - `header.spec.ts` — app header/navbar (layout)
 - `dashboard.spec.ts` — dashboard page (welcome header, workspace grid, cards)
 - `footer.spec.ts` — app footer (layout)
+- `theme.spec.ts` — theme switching and persistence
 
 When adding a new page or component, create a corresponding `<feature>.spec.ts` file. Mirror the component organization (layout files for layout components, page-named files for page components).
 
@@ -157,6 +158,65 @@ feature/
 - Webpack with `@nx/webpack` NxAppWebpackPlugin (target: `node`)
 - TypeScript compiler with `experimentalDecorators` and `emitDecoratorMetadata` enabled
 - Output: `apps/blinksocial-api/dist/`
+
+---
+
+## Design System (Theming)
+
+This project uses Angular Material M3 theming with a custom CSS custom property layer. **All new UI components MUST use `var(--blink-*)` tokens for colors** — never hardcode hex/rgb values in component SCSS.
+
+### Architecture
+
+- `app/core/theme/theme.service.ts` — Signal-based `ThemeService` (light/dark toggle, localStorage persistence, SSR-safe)
+- `app/core/theme/_blink-theme.scss` — M3 theme definitions (`$light-theme`, `$dark-theme`)
+- `app/core/theme/_blink-tokens.scss` — App-level semantic CSS custom properties (`--blink-*`)
+- `styles.scss` — Applies theme + tokens globally based on `html[data-theme]` attribute
+- `index.html` — Inline `<script>` reads localStorage before hydration to prevent theme flash
+
+### Using the Design System in Components
+
+In component SCSS, always use `var(--blink-*)` tokens:
+
+```scss
+// CORRECT
+.my-card {
+  background: var(--blink-surface);
+  color: var(--blink-on-surface);
+  border: 1px solid var(--blink-outline-variant);
+  box-shadow: var(--blink-shadow-sm);
+}
+.my-button {
+  color: var(--blink-brand-primary);
+  &:hover { background: var(--blink-brand-primary-hover-bg); }
+}
+
+// WRONG — never hardcode colors
+.my-card { background: white; color: #333; }
+```
+
+### Available Token Categories
+
+- **Brand**: `--blink-brand-primary`, `--blink-brand-gradient`, `--blink-brand-primary-hover-bg`, `--blink-brand-primary-light-bg`, `--blink-brand-primary-lighter-bg`, `--blink-brand-primary-lightest-bg`
+- **Surfaces**: `--blink-surface`, `--blink-surface-dim`, `--blink-surface-container`, `--blink-surface-container-low`, `--blink-surface-variant`, `--blink-surface-hover`
+- **Text**: `--blink-on-surface`, `--blink-on-surface-strong`, `--blink-on-surface-medium`, `--blink-on-surface-muted`, `--blink-on-surface-label`, `--blink-on-surface-secondary`, `--blink-on-surface-tertiary`, `--blink-on-surface-faint`
+- **Borders**: `--blink-outline`, `--blink-outline-variant`, `--blink-outline-dashed`
+- **Shadows**: `--blink-shadow-sm`, `--blink-shadow-md`, `--blink-shadow-lg`
+- **Icons**: `--blink-icon-purple`, `--blink-icon-green`, `--blink-icon-blue`, `--blink-icon-orange` (each has a `-bg` variant)
+
+To add new tokens, add them to both `light-tokens` and `dark-tokens` mixins in `_blink-tokens.scss`.
+
+### ThemeService Usage
+
+```typescript
+import { ThemeService } from '../../core/theme/theme.service';
+
+// In a component:
+protected readonly themeService = inject(ThemeService);
+
+// In template:
+// {{ themeService.isDark() }} — reactive computed signal
+// (click)="themeService.toggleTheme()" — toggle light↔dark
+```
 
 ---
 

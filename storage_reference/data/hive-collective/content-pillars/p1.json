@@ -1,0 +1,15 @@
+{
+  "id": "p1",
+  "name": "Yoga & Movement",
+  "description": "Yoga flows, stretching routines, and mindful movement practices",
+  "color": "#d94e33",
+  "themes": ["Yoga flows", "Stretching", "Mindful movement", "Flexibility", "Joint health"],
+  "audienceSegmentIds": ["s1", "s2", "s3", "s4"],
+  "platformDistribution": {
+    "instagram": 0.35,
+    "youtube": 0.30,
+    "tiktok": 0.20,
+    "facebook": 0.10,
+    "linkedin": 0.05
+  }
+}

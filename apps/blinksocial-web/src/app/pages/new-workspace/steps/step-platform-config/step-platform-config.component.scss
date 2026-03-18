@@ -1,0 +1,344 @@
+:host {
+  display: block;
+}
+
+.step-header {
+  margin-bottom: 32px;
+
+  h2 {
+    margin: 0;
+    font-size: 24px;
+    font-weight: 700;
+    letter-spacing: -0.025em;
+    color: var(--blink-on-surface-strong);
+  }
+}
+
+.step-subtitle {
+  margin: 4px 0 0;
+  font-size: 14px;
+  color: var(--blink-on-surface-muted);
+}
+
+// Global Rules
+.global-rules {
+  border: 1px solid var(--blink-outline-variant);
+  border-radius: 16px;
+  background: var(--blink-surface);
+  box-shadow: var(--blink-shadow-sm);
+  overflow: hidden;
+  margin-bottom: 24px;
+}
+
+.global-rules-header {
+  padding: 16px 24px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--blink-on-surface-muted);
+  border-bottom: 1px solid var(--blink-outline-variant);
+}
+
+.global-rules-body {
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.global-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+}
+
+.field-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.field-label-sm {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--blink-on-surface-medium);
+}
+
+.field-input,
+.field-select {
+  height: 40px;
+  padding: 0 12px;
+  border: 1px solid var(--blink-outline-variant);
+  border-radius: 8px;
+  background: var(--blink-surface);
+  font-size: 14px;
+  font-family: inherit;
+  color: var(--blink-on-surface);
+
+  &:focus {
+    outline: none;
+    border-color: var(--blink-brand-primary);
+  }
+}
+
+.toggles-row {
+  display: flex;
+  gap: 16px;
+}
+
+.toggle-card {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  border: 1px solid var(--blink-outline-variant);
+  border-radius: 10px;
+  background: var(--blink-surface);
+  cursor: pointer;
+  transition: background 0.2s;
+
+  &:hover {
+    background: var(--blink-surface-hover);
+  }
+}
+
+.toggle-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.toggle-title {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--blink-on-surface);
+}
+
+.toggle-desc {
+  font-size: 10px;
+  color: var(--blink-on-surface-muted);
+}
+
+.toggle-switch {
+  width: 36px;
+  height: 20px;
+  border-radius: 10px;
+  background: var(--blink-on-surface-tertiary);
+  position: relative;
+  transition: background 0.2s;
+  flex-shrink: 0;
+}
+
+.toggle-on {
+  background: var(--blink-brand-primary);
+}
+
+.toggle-knob {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: white;
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  transition: transform 0.2s;
+
+  .toggle-on & {
+    transform: translateX(16px);
+  }
+}
+
+// Platforms
+.platforms-section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.section-label {
+  font-size: 14px;
+  font-weight: 600;
+  padding-left: 4px;
+  color: var(--blink-on-surface);
+}
+
+.platforms-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.platform-item {
+  border: 1px solid var(--blink-outline-variant);
+  border-radius: 12px;
+  background: var(--blink-surface);
+  box-shadow: var(--blink-shadow-sm);
+  overflow: hidden;
+
+  &[open] summary {
+    border-bottom: 1px solid var(--blink-outline-variant);
+  }
+}
+
+.platform-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  cursor: pointer;
+  list-style: none;
+
+  &::-webkit-details-marker {
+    display: none;
+  }
+
+  &::marker {
+    display: none;
+    content: '';
+  }
+}
+
+.platform-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.platform-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--blink-surface-variant);
+  color: var(--blink-on-surface-tertiary);
+  transition: all 0.2s;
+}
+
+.platform-icon-active {
+  background: var(--blink-brand-primary-light-bg);
+  color: var(--blink-brand-primary);
+}
+
+.platform-name {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--blink-on-surface);
+}
+
+.platform-name-muted {
+  color: var(--blink-on-surface-muted);
+}
+
+.platform-badge {
+  font-size: 9px;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 4px;
+  border: 1px solid var(--blink-outline-variant);
+  color: var(--blink-on-surface-tertiary);
+}
+
+.badge-active {
+  background: #22c55e;
+  color: white;
+  border-color: transparent;
+}
+
+.platform-toggle {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px;
+}
+
+.platform-details {
+  padding: 16px 24px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.platform-disabled {
+  opacity: 0.4;
+  pointer-events: none;
+}
+
+.detail-section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.detail-heading {
+  margin: 0;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--blink-on-surface-muted);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.detail-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+}
+
+.detail-grid-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.detail-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.detail-label {
+  font-size: 10px;
+  font-weight: 500;
+  color: var(--blink-on-surface-muted);
+}
+
+.field-select-sm {
+  height: 32px;
+  padding: 0 8px;
+  border: 1px solid var(--blink-outline-variant);
+  border-radius: 6px;
+  background: var(--blink-surface);
+  font-size: 12px;
+  font-family: inherit;
+  color: var(--blink-on-surface);
+}
+
+.field-input-sm {
+  height: 32px;
+  padding: 0 8px;
+  border: 1px solid var(--blink-outline-variant);
+  border-radius: 6px;
+  background: var(--blink-surface);
+  font-size: 12px;
+  font-family: inherit;
+  color: var(--blink-on-surface);
+}
+
+.field-textarea-sm {
+  min-height: 60px;
+  padding: 8px;
+  border: 1px solid var(--blink-outline-variant);
+  border-radius: 6px;
+  background: var(--blink-surface);
+  font-size: 12px;
+  font-family: inherit;
+  color: var(--blink-on-surface);
+  resize: vertical;
+}

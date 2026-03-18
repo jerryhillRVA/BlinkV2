@@ -1,0 +1,35 @@
+{
+  "$id": "https://blinksocial.io/schemas/settings/platforms.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "PlatformSettings",
+  "type": "object",
+  "required": ["globalRules", "platforms"],
+  "properties": {
+    "globalRules": {
+      "type": "object",
+      "required": ["defaultPlatform", "maxIdeasPerMonth"],
+      "properties": {
+        "defaultPlatform": { "$ref": "https://blinksocial.io/schemas/enums.schema.json#/$defs/Platform" },
+        "maxIdeasPerMonth": { "type": "integer", "minimum": 1 },
+        "contentWarningToggle": { "type": "boolean", "default": false },
+        "aiDisclaimerToggle": { "type": "boolean", "default": false }
+      }
+    },
+    "platforms": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["platformId", "enabled"],
+        "properties": {
+          "platformId": { "$ref": "https://blinksocial.io/schemas/enums.schema.json#/$defs/Platform" },
+          "enabled": { "type": "boolean" },
+          "defaultResolution": { "type": "string" },
+          "postingSchedule": { "type": "string" },
+          "peakTimes": { "type": "array", "items": { "type": "string" } },
+          "aiContentStyle": { "type": "string", "maxLength": 500 },
+          "designPromptSuffix": { "type": "string", "maxLength": 500 }
+        }
+      }
+    }
+  }
+}

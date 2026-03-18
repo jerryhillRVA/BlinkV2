@@ -1,0 +1,37 @@
+{
+  "contentItemId": "post1",
+  "assets": [
+    {
+      "fileId": "af-uuid-001",
+      "filename": "morning-mobility-final.mp4",
+      "role": "primary-media",
+      "mimeType": "video/mp4",
+      "sizeBytes": 29779558,
+      "uploadedAt": "2026-03-06T10:00:00Z",
+      "uploadedBy": "user-brett",
+      "description": "Final edited vertical video (9:16, 60s)"
+    },
+    {
+      "fileId": "af-uuid-002",
+      "filename": "morning-mobility-cover.jpg",
+      "role": "cover",
+      "mimeType": "image/jpeg",
+      "sizeBytes": 245760,
+      "uploadedAt": "2026-03-06T10:30:00Z",
+      "uploadedBy": "user-brett",
+      "description": "Cover still from mobility flow"
+    },
+    {
+      "fileId": "af-uuid-003",
+      "filename": "morning-mobility-raw.mov",
+      "role": "source-file",
+      "mimeType": "video/quicktime",
+      "sizeBytes": 148897792,
+      "uploadedAt": "2026-03-04T16:00:00Z",
+      "uploadedBy": "user-brett",
+      "description": "Raw camera footage"
+    }
+  ],
+  "totalSizeBytes": 178923110,
+  "lastUpdated": "2026-03-06T10:30:00Z"
+}

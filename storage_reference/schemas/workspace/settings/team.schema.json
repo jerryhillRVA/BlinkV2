@@ -1,0 +1,26 @@
+{
+  "$id": "https://blinksocial.io/schemas/settings/team.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "TeamSettings",
+  "type": "object",
+  "required": ["members"],
+  "properties": {
+    "members": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "name", "email", "role", "status"],
+        "properties": {
+          "id": { "type": "string" },
+          "name": { "type": "string" },
+          "email": { "type": "string", "format": "email" },
+          "role": { "$ref": "enums.schema.json#/$defs/WorkspaceRole" },
+          "status": { "$ref": "enums.schema.json#/$defs/MemberStatus" },
+          "avatarUrl": { "type": "string", "format": "uri" },
+          "invitedAt": { "type": "string", "format": "date-time" },
+          "joinedAt": { "type": "string", "format": "date-time" }
+        }
+      }
+    }
+  }
+}

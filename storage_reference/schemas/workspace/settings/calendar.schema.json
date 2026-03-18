@@ -1,0 +1,53 @@
+{
+  "$id": "https://blinksocial.io/schemas/settings/calendar.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "CalendarSettings",
+  "type": "object",
+  "required": ["deadlineTemplates", "reminderSettings", "autoCreateOnPublish"],
+  "properties": {
+    "deadlineTemplates": {
+      "type": "object",
+      "description": "Keyed by CanonicalContentType",
+      "additionalProperties": {
+        "type": "object",
+        "properties": {
+          "milestones": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["milestoneType", "offsetDays", "required"],
+              "properties": {
+                "milestoneType": { "$ref": "enums.schema.json#/$defs/MilestoneType" },
+                "offsetDays": { "type": "integer", "description": "Negative = days before publish" },
+                "required": { "type": "boolean" }
+              }
+            }
+          },
+          "phases": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["phaseType", "startOffsetDays", "endOffsetDays", "required"],
+              "properties": {
+                "phaseType": { "$ref": "enums.schema.json#/$defs/PhaseType" },
+                "startOffsetDays": { "type": "integer" },
+                "endOffsetDays": { "type": "integer" },
+                "required": { "type": "boolean" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "reminderSettings": {
+      "type": "object",
+      "properties": {
+        "milestone72h": { "type": "boolean", "default": true },
+        "milestone24h": { "type": "boolean", "default": true },
+        "milestoneOverdue": { "type": "boolean", "default": true },
+        "publish24h": { "type": "boolean", "default": true }
+      }
+    },
+    "autoCreateOnPublish": { "type": "boolean", "default": true }
+  }
+}

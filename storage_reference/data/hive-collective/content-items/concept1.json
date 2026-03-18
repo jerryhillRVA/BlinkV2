@@ -1,0 +1,33 @@
+{
+  "id": "concept1",
+  "stage": "concept",
+  "status": "in-progress",
+  "parentIdeaId": "idea1",
+  "title": "5 Anti-Inflammatory Breakfast Ideas for Hormonal Balance",
+  "description": "Carousel post showcasing five quick anti-inflammatory breakfast recipes that support hormonal balance in women 40+. Each slide covers one recipe with ingredients and a quick benefit callout.",
+  "pillarIds": ["p4"],
+  "segmentIds": ["s1", "s5"],
+  "tags": ["nutrition", "anti-inflammatory", "breakfast", "hormone-balance"],
+  "owner": "user-sarah",
+  "createdAt": "2026-02-25T10:00:00Z",
+  "updatedAt": "2026-03-05T14:00:00Z",
+  "targetPlatforms": [
+    { "platform": "instagram", "contentType": "carousel", "postId": null },
+    { "platform": "linkedin", "contentType": "ln-document", "postId": null },
+    { "platform": "facebook", "contentType": "fb-feed-post", "postId": null }
+  ],
+  "hook": "These 5 breakfasts fight inflammation from the first bite.",
+  "objective": "education",
+  "cta": { "type": "other", "text": "Save this for your next grocery run" },
+  "keyMessage": "Anti-inflammatory eating starts at breakfast",
+  "angle": "Science-backed recipes made simple",
+  "formatNotes": ["b-roll"],
+  "claimsFlag": true,
+  "sourceLinks": ["https://example.com/anti-inflammatory-nutrition"],
+  "riskLevel": "medium",
+  "targetPublishWindow": {
+    "start": "2026-03-17T00:00:00Z",
+    "end": "2026-03-21T23:59:59Z"
+  },
+  "collaborators": ["user-sarah", "user-brett"]
+}

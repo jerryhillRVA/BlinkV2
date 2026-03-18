@@ -1,0 +1,28 @@
+{
+  "$id": "https://blinksocial.io/schemas/settings/notifications.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "NotificationSettings",
+  "type": "object",
+  "properties": {
+    "channels": {
+      "type": "object",
+      "properties": {
+        "email": { "type": "boolean", "default": true },
+        "inApp": { "type": "boolean", "default": true },
+        "slack": { "type": "boolean", "default": false },
+        "slackWebhookUrl": { "type": ["string", "null"], "format": "uri" }
+      }
+    },
+    "triggers": {
+      "type": "object",
+      "properties": {
+        "researchResults": { "type": "boolean", "default": true },
+        "contentPublished": { "type": "boolean", "default": true },
+        "teamMentions": { "type": "boolean", "default": true },
+        "qaReviewRequired": { "type": "boolean", "default": true },
+        "approachingDeadlines": { "type": "boolean", "default": true },
+        "weeklyDigest": { "type": "boolean", "default": true }
+      }
+    }
+  }
+}

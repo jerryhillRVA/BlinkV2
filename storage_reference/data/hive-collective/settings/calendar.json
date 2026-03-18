@@ -1,0 +1,79 @@
+{
+  "deadlineTemplates": {
+    "VIDEO_SHORT_VERTICAL": {
+      "milestones": [
+        { "milestoneType": "draft_due", "offsetDays": -7, "required": true },
+        { "milestoneType": "assets_due", "offsetDays": -5, "required": true },
+        { "milestoneType": "qa_due", "offsetDays": -2, "required": true }
+      ],
+      "phases": [
+        { "phaseType": "production_window", "startOffsetDays": -7, "endOffsetDays": -3, "required": true },
+        { "phaseType": "review_window", "startOffsetDays": -2, "endOffsetDays": -1, "required": true }
+      ]
+    },
+    "VIDEO_LONG_HORIZONTAL": {
+      "milestones": [
+        { "milestoneType": "draft_due", "offsetDays": -14, "required": true },
+        { "milestoneType": "assets_due", "offsetDays": -10, "required": true },
+        { "milestoneType": "qa_due", "offsetDays": -3, "required": true }
+      ],
+      "phases": [
+        { "phaseType": "production_window", "startOffsetDays": -14, "endOffsetDays": -6, "required": true },
+        { "phaseType": "review_window", "startOffsetDays": -3, "endOffsetDays": -1, "required": true }
+      ]
+    },
+    "IMAGE_CAROUSEL": {
+      "milestones": [
+        { "milestoneType": "draft_due", "offsetDays": -7, "required": true },
+        { "milestoneType": "assets_due", "offsetDays": -4, "required": true },
+        { "milestoneType": "qa_due", "offsetDays": -2, "required": true }
+      ],
+      "phases": [
+        { "phaseType": "production_window", "startOffsetDays": -7, "endOffsetDays": -3, "required": true },
+        { "phaseType": "review_window", "startOffsetDays": -2, "endOffsetDays": -1, "required": true }
+      ]
+    },
+    "IMAGE_SINGLE": {
+      "milestones": [
+        { "milestoneType": "draft_due", "offsetDays": -5, "required": true },
+        { "milestoneType": "assets_due", "offsetDays": -3, "required": true },
+        { "milestoneType": "qa_due", "offsetDays": -1, "required": true }
+      ],
+      "phases": [
+        { "phaseType": "production_window", "startOffsetDays": -5, "endOffsetDays": -2, "required": true }
+      ]
+    },
+    "TEXT_POST": {
+      "milestones": [
+        { "milestoneType": "draft_due", "offsetDays": -3, "required": true },
+        { "milestoneType": "qa_due", "offsetDays": -1, "required": true }
+      ],
+      "phases": [
+        { "phaseType": "review_window", "startOffsetDays": -1, "endOffsetDays": -1, "required": false }
+      ]
+    },
+    "STORY_FRAME_SET": {
+      "milestones": [
+        { "milestoneType": "draft_due", "offsetDays": -4, "required": true },
+        { "milestoneType": "assets_due", "offsetDays": -2, "required": true },
+        { "milestoneType": "qa_due", "offsetDays": -1, "required": true }
+      ],
+      "phases": []
+    },
+    "LIVE_BROADCAST": {
+      "milestones": [
+        { "milestoneType": "qa_due", "offsetDays": -1, "required": false }
+      ],
+      "phases": [
+        { "phaseType": "production_window", "startOffsetDays": -7, "endOffsetDays": -1, "required": true }
+      ]
+    }
+  },
+  "reminderSettings": {
+    "milestone72h": true,
+    "milestone24h": true,
+    "milestoneOverdue": true,
+    "publish24h": true
+  },
+  "autoCreateOnPublish": true
+}
