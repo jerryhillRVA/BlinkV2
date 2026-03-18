@@ -36,3 +36,20 @@ a {
   color: inherit;
   text-decoration: none;
 }
+
+// Toast / Snackbar overrides
+.blink-toast {
+  &.blink-toast-error .mdc-snackbar__surface {
+    background: var(--blink-toast-error-bg);
+    color: var(--blink-toast-error-text);
+  }
+
+  &.blink-toast-success .mdc-snackbar__surface {
+    background: var(--blink-toast-success-bg);
+    color: var(--blink-toast-success-text);
+  }
+
+  .mat-mdc-snack-bar-action {
+    color: var(--blink-toast-action-text);
+  }
+}

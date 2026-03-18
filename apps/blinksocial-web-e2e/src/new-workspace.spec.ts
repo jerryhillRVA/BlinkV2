@@ -53,7 +53,7 @@ test.describe('New Workspace Wizard', () => {
     await expect(page).toHaveURL('/');
   });
 
-  test('should show "Finish & Launch" on step 5 and navigate to dashboard', async ({ page }) => {
+  test('should show "Finish" on step 5 and navigate to dashboard', async ({ page }) => {
     // Mock the API since the backend isn't running during e2e tests
     await page.route('**/api/workspaces', (route) =>
       route.fulfill({
@@ -75,8 +75,33 @@ test.describe('New Workspace Wizard', () => {
     for (let i = 0; i < 4; i++) {
       await page.locator('.wizard-next').click();
     }
-    await expect(page.locator('.wizard-next')).toContainText('Finish & Launch');
+    await expect(page.locator('.wizard-next')).toContainText('Finish');
     await page.locator('.wizard-next').click();
     await expect(page).toHaveURL('/');
+  });
+
+  test('should show toast error when API returns validation error', async ({ page }) => {
+    // Mock the API to return a validation error
+    await page.route('**/api/workspaces', (route) =>
+      route.fulfill({
+        status: 400,
+        contentType: 'application/json',
+        body: JSON.stringify({ message: 'Validation failed' }),
+      })
+    );
+
+    // Fill in workspace name and navigate to step 5
+    await page.locator('#workspace-name').fill('E2E Test Workspace');
+    for (let i = 0; i < 4; i++) {
+      await page.locator('.wizard-next').click();
+    }
+
+    // Click Finish — should trigger API error
+    await page.locator('.wizard-next').click();
+
+    // Toast should appear with the validation error message
+    const toast = page.locator('.mat-mdc-snack-bar-container');
+    await expect(toast).toBeVisible();
+    await expect(toast).toContainText('Validation failed');
   });
 });

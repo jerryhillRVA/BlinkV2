@@ -53,6 +53,13 @@
   --blink-icon-blue: #2563eb;
   --blink-icon-orange-bg: #fff7ed;
   --blink-icon-orange: #ea580c;
+
+  // Toast / Snackbar
+  --blink-toast-error-bg: var(--blink-destructive);
+  --blink-toast-error-text: #fff;
+  --blink-toast-success-bg: var(--blink-icon-green);
+  --blink-toast-success-text: #fff;
+  --blink-toast-action-text: #fff;
 }
 
 @mixin dark-tokens {
@@ -107,4 +114,11 @@
   --blink-icon-blue: #3b82f6;
   --blink-icon-orange-bg: rgba(234, 88, 12, 0.15);
   --blink-icon-orange: #f97316;
+
+  // Toast / Snackbar
+  --blink-toast-error-bg: var(--blink-destructive);
+  --blink-toast-error-text: #fff;
+  --blink-toast-success-bg: var(--blink-icon-green);
+  --blink-toast-success-text: #fff;
+  --blink-toast-action-text: #fff;
 }
