@@ -11,6 +11,7 @@ import { StepAgentsComponent } from './steps/step-agents/step-agents.component';
 import { StepReviewComponent } from './steps/step-review/step-review.component';
 import { NewWorkspaceFormService } from './new-workspace-form.service';
 import { NewWorkspaceApiService } from './new-workspace-api.service';
+import { ToastService } from '../../core/toast/toast.service';
 
 @Component({
   selector: 'app-new-workspace',
@@ -29,11 +30,11 @@ import { NewWorkspaceApiService } from './new-workspace-api.service';
 export class NewWorkspaceComponent {
   private readonly router = inject(Router);
   private readonly apiService = inject(NewWorkspaceApiService);
+  private readonly toastService = inject(ToastService);
   protected readonly formService = inject(NewWorkspaceFormService);
 
   currentStep = signal(1);
   isSubmitting = signal(false);
-  submitError = signal<string | null>(null);
 
   readonly STEPS: WizardStep[] = [
     { id: 1, title: 'Workspace' },
@@ -52,6 +53,12 @@ export class NewWorkspaceComponent {
   }
 
   onNext(): void {
+    const validation = this.formService.stepValidation(this.currentStep());
+    if (!validation.valid) {
+      this.toastService.showError(validation.error);
+      return;
+    }
+
     if (this.isLastStep) {
       this.submitWorkspace();
     } else {
@@ -69,7 +76,6 @@ export class NewWorkspaceComponent {
 
   private submitWorkspace(): void {
     this.isSubmitting.set(true);
-    this.submitError.set(null);
 
     this.apiService.createWorkspace(this.formService.formData()).subscribe({
       next: () => {
@@ -78,7 +84,7 @@ export class NewWorkspaceComponent {
       },
       error: (err) => {
         this.isSubmitting.set(false);
-        this.submitError.set(
+        this.toastService.showError(
           err?.error?.message ?? 'Failed to create workspace. Please try again.'
         );
       },

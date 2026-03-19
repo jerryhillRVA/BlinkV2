@@ -291,4 +291,46 @@ describe('NewWorkspaceFormService', () => {
     const data = service.formData();
     expect(data.contentPillars[0].themes).toEqual([]);
   });
+
+  describe('stepValidation', () => {
+    it('should return error for step 1 when workspace name is empty', () => {
+      service.workspaceName.set('');
+      const result = service.stepValidation(1);
+      expect(result.valid).toBe(false);
+      if (!result.valid) {
+        expect(result.error).toContain('Workspace Name');
+      }
+    });
+
+    it('should return error for step 1 when workspace name is whitespace only', () => {
+      service.workspaceName.set('   ');
+      const result = service.stepValidation(1);
+      expect(result.valid).toBe(false);
+    });
+
+    it('should return error for step 1 when workspace name exceeds 100 characters', () => {
+      service.workspaceName.set('a'.repeat(101));
+      const result = service.stepValidation(1);
+      expect(result.valid).toBe(false);
+      if (!result.valid) {
+        expect(result.error).toContain('100');
+      }
+    });
+
+    it('should return valid for step 1 when workspace name is provided', () => {
+      service.workspaceName.set('My Workspace');
+      const result = service.stepValidation(1);
+      expect(result.valid).toBe(true);
+    });
+
+    it('should return valid for steps 2-4 (no required fields)', () => {
+      expect(service.stepValidation(2).valid).toBe(true);
+      expect(service.stepValidation(3).valid).toBe(true);
+      expect(service.stepValidation(4).valid).toBe(true);
+    });
+
+    it('should return valid for step 5 (review step, no own validation)', () => {
+      expect(service.stepValidation(5).valid).toBe(true);
+    });
+  });
 });

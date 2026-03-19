@@ -1,9 +1,0 @@
-{
-  "permissions": {
-    "allow": [
-      "Bash(node node_modules/nx/bin/nx.js --version)",
-      "Bash(node node_modules/nx/bin/nx.js daemon --stop)",
-      "Bash(node node_modules/nx/bin/nx.js reset)"
-    ]
-  }
-}

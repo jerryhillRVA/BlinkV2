@@ -6,20 +6,25 @@ import {
   provideHttpClientTesting,
 } from '@angular/common/http/testing';
 import { NewWorkspaceComponent } from './new-workspace.component';
+import { ToastService } from '../../core/toast/toast.service';
+import { NewWorkspaceFormService } from './new-workspace-form.service';
 
 describe('NewWorkspaceComponent', () => {
   let router: Router;
+  let toastService: ToastService;
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [NewWorkspaceComponent],
       providers: [
         { provide: Router, useValue: { navigate: vi.fn() } },
+        { provide: ToastService, useValue: { showError: vi.fn(), showSuccess: vi.fn() } },
         provideHttpClient(),
         provideHttpClientTesting(),
       ],
     }).compileComponents();
     router = TestBed.inject(Router);
+    toastService = TestBed.inject(ToastService);
   });
 
   it('should create', () => {
@@ -83,27 +88,39 @@ describe('NewWorkspaceComponent', () => {
     expect(nextBtn?.textContent).toContain('Next');
   });
 
-  it('should show "Finish & Launch" on step 5', () => {
+  it('should show "Finish" on step 5', () => {
     const fixture = TestBed.createComponent(NewWorkspaceComponent);
     fixture.componentInstance.currentStep.set(5);
     fixture.detectChanges();
     const el: HTMLElement = fixture.nativeElement;
     const nextBtn = el.querySelector('.wizard-next');
-    expect(nextBtn?.textContent).toContain('Finish & Launch');
+    expect(nextBtn?.textContent).toContain('Finish');
+    expect(nextBtn?.textContent).not.toContain('Finish & Launch');
   });
 
-  it('should disable Back button on step 5', () => {
+  it('should enable Back button on step 5', () => {
     const fixture = TestBed.createComponent(NewWorkspaceComponent);
     fixture.componentInstance.currentStep.set(5);
     fixture.detectChanges();
     const el: HTMLElement = fixture.nativeElement;
     const backBtn = el.querySelector('.wizard-back') as HTMLButtonElement;
-    expect(backBtn.disabled).toBe(true);
+    expect(backBtn.disabled).toBe(false);
   });
 
-  it('should advance step when Next is clicked', () => {
+  it('should go back from step 5 to step 4', () => {
+    const fixture = TestBed.createComponent(NewWorkspaceComponent);
+    fixture.componentInstance.currentStep.set(5);
+    fixture.detectChanges();
+    const backBtn = fixture.nativeElement.querySelector('.wizard-back') as HTMLButtonElement;
+    backBtn.click();
+    expect(fixture.componentInstance.currentStep()).toBe(4);
+  });
+
+  it('should advance step when Next is clicked with valid data', () => {
     const fixture = TestBed.createComponent(NewWorkspaceComponent);
     fixture.detectChanges();
+    const formService = fixture.debugElement.injector.get(NewWorkspaceFormService);
+    formService.workspaceName.set('Test Workspace');
     const el: HTMLElement = fixture.nativeElement;
     const nextBtn = el.querySelector('.wizard-next') as HTMLButtonElement;
     nextBtn.click();
@@ -151,7 +168,7 @@ describe('NewWorkspaceComponent', () => {
     httpMock.verify();
   });
 
-  it('should show error on failed submit', () => {
+  it('should show toast error on failed submit', () => {
     const fixture = TestBed.createComponent(NewWorkspaceComponent);
     const httpMock = TestBed.inject(HttpTestingController);
     fixture.componentInstance.currentStep.set(5);
@@ -166,11 +183,11 @@ describe('NewWorkspaceComponent', () => {
     fixture.detectChanges();
 
     expect(fixture.componentInstance.isSubmitting()).toBe(false);
-    expect(fixture.componentInstance.submitError()).toBe('Validation failed');
+    expect(toastService.showError).toHaveBeenCalledWith('Validation failed');
     httpMock.verify();
   });
 
-  it('should show fallback error message when error has no message', () => {
+  it('should show fallback toast error when error has no message', () => {
     const fixture = TestBed.createComponent(NewWorkspaceComponent);
     const httpMock = TestBed.inject(HttpTestingController);
     fixture.componentInstance.currentStep.set(5);
@@ -184,8 +201,27 @@ describe('NewWorkspaceComponent', () => {
     req.flush(null, { status: 500, statusText: 'Internal Server Error' });
     fixture.detectChanges();
 
-    expect(fixture.componentInstance.submitError()).toBe('Failed to create workspace. Please try again.');
+    expect(toastService.showError).toHaveBeenCalledWith('Failed to create workspace. Please try again.');
     httpMock.verify();
+  });
+
+  it('should not advance from step 1 when workspace name is empty', () => {
+    const fixture = TestBed.createComponent(NewWorkspaceComponent);
+    fixture.detectChanges();
+    const nextBtn = fixture.nativeElement.querySelector('.wizard-next') as HTMLButtonElement;
+    nextBtn.click();
+    expect(fixture.componentInstance.currentStep()).toBe(1);
+    expect(toastService.showError).toHaveBeenCalled();
+  });
+
+  it('should advance from step 1 when workspace name is valid', () => {
+    const fixture = TestBed.createComponent(NewWorkspaceComponent);
+    fixture.detectChanges();
+    const formService = fixture.debugElement.injector.get(NewWorkspaceFormService);
+    formService.workspaceName.set('Valid Name');
+    const nextBtn = fixture.nativeElement.querySelector('.wizard-next') as HTMLButtonElement;
+    nextBtn.click();
+    expect(fixture.componentInstance.currentStep()).toBe(2);
   });
 
   it('should show "Submitting..." text when submitting', () => {
