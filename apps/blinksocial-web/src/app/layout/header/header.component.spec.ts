@@ -1,4 +1,5 @@
 import { TestBed } from '@angular/core/testing';
+import { provideRouter } from '@angular/router';
 import { HeaderComponent } from './header.component';
 import { ThemeService } from '../../core/theme/theme.service';
 
@@ -9,6 +10,7 @@ describe('HeaderComponent', () => {
 
     await TestBed.configureTestingModule({
       imports: [HeaderComponent],
+      providers: [provideRouter([])],
     }).compileComponents();
   });
 
@@ -22,11 +24,11 @@ describe('HeaderComponent', () => {
     expect(fixture.componentInstance).toBeTruthy();
   });
 
-  it('should display brand text "BLINK"', () => {
+  it('should display brand text "BLINK SOCIAL"', () => {
     const fixture = TestBed.createComponent(HeaderComponent);
     fixture.detectChanges();
     const el: HTMLElement = fixture.nativeElement;
-    expect(el.querySelector('.brand-text')?.textContent).toBe('BLINK');
+    expect(el.querySelector('.brand-text')?.textContent).toBe('BLINK SOCIAL');
   });
 
   it('should have a brand icon with SVG', () => {
@@ -36,6 +38,16 @@ describe('HeaderComponent', () => {
     const icon = el.querySelector('.brand-icon');
     expect(icon).toBeTruthy();
     expect(icon?.querySelector('svg')).toBeTruthy();
+  });
+
+  it('should have a clickable brand link to dashboard', () => {
+    const fixture = TestBed.createComponent(HeaderComponent);
+    fixture.detectChanges();
+    const el: HTMLElement = fixture.nativeElement;
+    const brandLink = el.querySelector('.navbar-brand') as HTMLAnchorElement;
+    expect(brandLink).toBeTruthy();
+    expect(brandLink.tagName).toBe('A');
+    expect(brandLink.getAttribute('href')).toBe('/');
   });
 
   it('should display user name and role', () => {

@@ -1,0 +1,29 @@
+{
+  "deadlineTemplates": {
+    "VIDEO_SHORT_VERTICAL": {
+      "milestones": [
+        { "milestoneType": "draft_due", "offsetDays": -5, "required": true },
+        { "milestoneType": "assets_due", "offsetDays": -3, "required": true },
+        { "milestoneType": "qa_due", "offsetDays": -1, "required": true }
+      ],
+      "phases": [
+        { "phaseType": "production_window", "startOffsetDays": -5, "endOffsetDays": -2, "required": true },
+        { "phaseType": "review_window", "startOffsetDays": -1, "endOffsetDays": -1, "required": true }
+      ]
+    },
+    "IMAGE_SINGLE": {
+      "milestones": [
+        { "milestoneType": "draft_due", "offsetDays": -3, "required": true },
+        { "milestoneType": "qa_due", "offsetDays": -1, "required": true }
+      ],
+      "phases": []
+    }
+  },
+  "reminderSettings": {
+    "milestone72h": true,
+    "milestone24h": true,
+    "milestoneOverdue": true,
+    "publish24h": true
+  },
+  "autoCreateOnPublish": false
+}

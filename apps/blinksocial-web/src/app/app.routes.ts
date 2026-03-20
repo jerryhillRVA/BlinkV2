@@ -13,4 +13,11 @@ export const appRoutes: Route[] = [
         (m) => m.NewWorkspaceComponent
       ),
   },
+  {
+    path: 'workspace/:id/settings',
+    loadComponent: () =>
+      import('./pages/workspace-settings/workspace-settings.component').then(
+        (m) => m.WorkspaceSettingsComponent
+      ),
+  },
 ];

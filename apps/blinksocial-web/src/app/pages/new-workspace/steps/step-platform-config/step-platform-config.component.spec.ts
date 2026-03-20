@@ -73,7 +73,7 @@ describe('StepPlatformConfigComponent', () => {
     fixture.detectChanges();
     const el: HTMLElement = fixture.nativeElement;
     const items = el.querySelectorAll('.platform-item');
-    expect(items.length).toBe(7);
+    expect(items.length).toBe(8);
   });
 
   it('should have enable/disable toggle on each platform', () => {
@@ -81,7 +81,7 @@ describe('StepPlatformConfigComponent', () => {
     fixture.detectChanges();
     const el: HTMLElement = fixture.nativeElement;
     const toggles = el.querySelectorAll('.platform-toggle');
-    expect(toggles.length).toBe(7);
+    expect(toggles.length).toBe(8);
   });
 
   it('should show ACTIVE badge for enabled platforms', () => {
@@ -97,8 +97,9 @@ describe('StepPlatformConfigComponent', () => {
     fixture.detectChanges();
     const el: HTMLElement = fixture.nativeElement;
 
+    // Click first platform (Instagram, currently disabled) to enable it
     const toggles = el.querySelectorAll('.platform-toggle');
-    (toggles[2] as HTMLElement).click();
+    (toggles[0] as HTMLElement).click();
     fixture.detectChanges();
 
     const activeBadges = el.querySelectorAll('.badge-active');
@@ -128,6 +129,6 @@ describe('StepPlatformConfigComponent', () => {
     fixture.detectChanges();
     const el: HTMLElement = fixture.nativeElement;
     const details = el.querySelectorAll('.platform-details');
-    expect(details.length).toBe(7);
+    expect(details.length).toBe(8);
   });
 });

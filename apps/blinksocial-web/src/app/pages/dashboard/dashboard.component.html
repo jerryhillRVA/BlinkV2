@@ -31,8 +31,8 @@
       </div>
     </button>
 
-    @for (workspace of workspaces(); track workspace.name) {
-      <app-workspace-card [workspace]="workspace" />
+    @for (workspace of workspaces; track workspace.name) {
+      <app-workspace-card [workspace]="workspace" (goToWorkspace)="onGoToWorkspace($event)" />
     }
   </div>
 </div>

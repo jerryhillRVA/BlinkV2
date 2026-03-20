@@ -1,0 +1,37 @@
+{
+  "globalRules": {
+    "defaultPlatform": "tiktok",
+    "maxIdeasPerMonth": 90,
+    "contentWarningToggle": true,
+    "aiDisclaimerToggle": true
+  },
+  "platforms": [
+    {
+      "platformId": "tiktok",
+      "enabled": true,
+      "defaultResolution": "1080x1920",
+      "postingSchedule": "Daily 6:00 PM",
+      "peakTimes": ["Mon 6pm", "Wed 7pm", "Fri 8pm", "Sat 9pm"],
+      "aiContentStyle": "Raw, honest, pattern-interrupt hooks. Real stories. Under 60 seconds.",
+      "designPromptSuffix": "Bold text, high contrast, dark backgrounds with blue accent."
+    },
+    {
+      "platformId": "instagram",
+      "enabled": true,
+      "defaultResolution": "1080x1920",
+      "postingSchedule": "Mon/Wed/Fri 5:00 PM",
+      "peakTimes": ["Mon 5pm", "Wed 6pm", "Fri 5pm"],
+      "aiContentStyle": "Infographic-style, stat-heavy, shareable. Clean design with impact.",
+      "designPromptSuffix": "Blue brand palette #2b6bff, data visualizations, clean typography."
+    },
+    {
+      "platformId": "youtube",
+      "enabled": true,
+      "defaultResolution": "1920x1080",
+      "postingSchedule": "Sat 12:00 PM",
+      "peakTimes": ["Sat 12pm", "Sun 2pm"],
+      "aiContentStyle": "Documentary-style, interview format. Personal stories with expert commentary.",
+      "designPromptSuffix": "Cinematic thumbnails, bold text overlays, blue accent lighting."
+    }
+  ]
+}

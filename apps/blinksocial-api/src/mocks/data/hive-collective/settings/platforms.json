@@ -1,0 +1,55 @@
+{
+  "globalRules": {
+    "defaultPlatform": "instagram",
+    "maxIdeasPerMonth": 60,
+    "contentWarningToggle": true,
+    "aiDisclaimerToggle": false
+  },
+  "platforms": [
+    {
+      "platformId": "instagram",
+      "enabled": true,
+      "defaultResolution": "1080x1920",
+      "postingSchedule": "Mon/Wed/Fri 7:00 AM, Sat 9:00 AM",
+      "peakTimes": ["Mon 6am", "Wed 12pm", "Fri 7am", "Sat 8am"],
+      "aiContentStyle": "Warm, encouraging, uses direct address. Short sentences. Emoji sparingly.",
+      "designPromptSuffix": "Brand palette #d94e33 coral + warm neutrals. Clean sans-serif. Minimal decorative elements."
+    },
+    {
+      "platformId": "youtube",
+      "enabled": true,
+      "defaultResolution": "1920x1080",
+      "postingSchedule": "Tue/Thu 10:00 AM",
+      "peakTimes": ["Tue 7am", "Thu 10am", "Sun 9am"],
+      "aiContentStyle": "Educational and trustworthy. Longer explanations welcome. Cite sources.",
+      "designPromptSuffix": "Bold text overlay thumbnails, high-contrast, talent headshot when applicable."
+    },
+    {
+      "platformId": "tiktok",
+      "enabled": true,
+      "defaultResolution": "1080x1920",
+      "postingSchedule": "Daily 11:00 AM",
+      "peakTimes": ["Mon 11am", "Wed 2pm", "Fri 11am", "Sat 10am"],
+      "aiContentStyle": "Casual, punchy, pattern-interrupt hooks. Creator-first voice. Under 60 seconds.",
+      "designPromptSuffix": "Bold on-screen text, high energy, quick cuts."
+    },
+    {
+      "platformId": "linkedin",
+      "enabled": true,
+      "defaultResolution": "1200x1200",
+      "postingSchedule": "Tue/Thu 8:00 AM",
+      "peakTimes": ["Tue 8am", "Thu 9am"],
+      "aiContentStyle": "Professional, thought-leadership. Data-backed claims. First-person narrative.",
+      "designPromptSuffix": "Clean document style, data visualizations, professional photography."
+    },
+    {
+      "platformId": "facebook",
+      "enabled": true,
+      "defaultResolution": "1200x630",
+      "postingSchedule": "Mon/Wed/Fri 12:00 PM",
+      "peakTimes": ["Mon 12pm", "Wed 1pm", "Fri 12pm"],
+      "aiContentStyle": "Community-focused, conversational. Link posts with clear value proposition.",
+      "designPromptSuffix": "Warm imagery, lifestyle photography, readable preview images."
+    }
+  ]
+}

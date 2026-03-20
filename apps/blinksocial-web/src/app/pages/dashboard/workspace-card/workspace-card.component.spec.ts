@@ -8,9 +8,9 @@ describe('WorkspaceCardComponent', () => {
     }).compileComponents();
   });
 
-  function createComponent(name = 'Test Workspace', color = '#d94e33') {
+  function createComponent(id = 'test-workspace', name = 'Test Workspace', color = '#d94e33') {
     const fixture = TestBed.createComponent(WorkspaceCardComponent);
-    fixture.componentInstance.workspace = { name, color };
+    fixture.componentInstance.workspace = { id, name, color };
     fixture.detectChanges();
     return fixture;
   }
@@ -21,13 +21,13 @@ describe('WorkspaceCardComponent', () => {
   });
 
   it('should display workspace name in the header', () => {
-    const fixture = createComponent('Hive Collective', '#d94e33');
+    const fixture = createComponent('hive-collective', 'Hive Collective', '#d94e33');
     const el: HTMLElement = fixture.nativeElement;
     expect(el.querySelector('.header-name')?.textContent).toBe('Hive Collective');
   });
 
   it('should apply color to the header background', () => {
-    const fixture = createComponent('Test', '#2b6bff');
+    const fixture = createComponent('test', 'Test', '#2b6bff');
     const el: HTMLElement = fixture.nativeElement;
     const header = el.querySelector('.card-header') as HTMLElement;
     expect(header.style.background).toBe('rgb(43, 107, 255)');
@@ -70,7 +70,7 @@ describe('WorkspaceCardComponent', () => {
   });
 
   it('should have a "Go to Workspace" link with coral color', () => {
-    const fixture = createComponent('Test', '#2b6bff');
+    const fixture = createComponent('test', 'Test', '#2b6bff');
     const el: HTMLElement = fixture.nativeElement;
     const link = el.querySelector('.workspace-link') as HTMLElement;
     expect(link).toBeTruthy();
@@ -79,12 +79,22 @@ describe('WorkspaceCardComponent', () => {
   });
 
   it('should re-render when workspace input changes', () => {
-    const fixture = createComponent('First', '#d94e33');
+    const fixture = createComponent('first', 'First', '#d94e33');
     const el: HTMLElement = fixture.nativeElement;
     expect(el.querySelector('.header-name')?.textContent).toBe('First');
 
-    fixture.componentRef.setInput('workspace', { name: 'Second', color: '#2b6bff' });
+    fixture.componentRef.setInput('workspace', { id: 'second', name: 'Second', color: '#2b6bff' });
     fixture.detectChanges();
     expect(el.querySelector('.header-name')?.textContent).toBe('Second');
+  });
+
+  it('should emit goToWorkspace with workspace id when "Go to Workspace" is clicked', () => {
+    const fixture = createComponent('hive-collective', 'Hive Collective', '#d94e33');
+    const spy = vi.fn();
+    fixture.componentInstance.goToWorkspace.subscribe(spy);
+    const el: HTMLElement = fixture.nativeElement;
+    const link = el.querySelector('.workspace-link') as HTMLButtonElement;
+    link.click();
+    expect(spy).toHaveBeenCalledWith('hive-collective');
   });
 });

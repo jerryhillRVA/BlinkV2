@@ -54,6 +54,39 @@
   --blink-icon-orange-bg: #fff7ed;
   --blink-icon-orange: #ea580c;
 
+  // Form inputs
+  --blink-input-bg: #f3f4f6;
+  --blink-input-bg-focus: #edeff2;
+  --blink-input-ring: #e5e7eb;
+
+  // Cards / Elevated surfaces
+  --blink-surface-card: rgba(255, 255, 255, 0.8);
+  --blink-surface-elevated: #fff;
+  --blink-surface-elevated-hover: rgba(249, 250, 251, 0.3);
+
+  // Pills / Chips
+  --blink-pill-bg: #f9fafb;
+  --blink-pill-border: #e5e7eb;
+  --blink-pill-text: #6b7280;
+
+  // Toggle switch
+  --blink-toggle-bg: #d1d5db;
+
+  // Badge
+  --blink-badge-border: #e5e7eb;
+
+  // Platform icon (inactive)
+  --blink-icon-inactive-bg: #f3f4f6;
+  --blink-icon-inactive: #9ca3af;
+
+  // Blue action button
+  --blink-btn-blue: #2b6bff;
+  --blink-btn-blue-hover: #2152cc;
+
+  // Admin row highlight
+  --blink-row-admin-bg: rgba(59, 130, 246, 0.06);
+  --blink-row-admin-border: rgba(59, 130, 246, 0.2);
+
   // Toast / Snackbar
   --blink-toast-error-bg: var(--blink-destructive);
   --blink-toast-error-text: #fff;
@@ -114,6 +147,39 @@
   --blink-icon-blue: #3b82f6;
   --blink-icon-orange-bg: rgba(234, 88, 12, 0.15);
   --blink-icon-orange: #f97316;
+
+  // Form inputs
+  --blink-input-bg: #2a2a2a;
+  --blink-input-bg-focus: #333;
+  --blink-input-ring: #444;
+
+  // Cards / Elevated surfaces
+  --blink-surface-card: rgba(30, 30, 30, 0.8);
+  --blink-surface-elevated: #252525;
+  --blink-surface-elevated-hover: rgba(255, 255, 255, 0.03);
+
+  // Pills / Chips
+  --blink-pill-bg: #2a2a2a;
+  --blink-pill-border: #444;
+  --blink-pill-text: #888;
+
+  // Toggle switch
+  --blink-toggle-bg: #444;
+
+  // Badge
+  --blink-badge-border: #444;
+
+  // Platform icon (inactive)
+  --blink-icon-inactive-bg: #2a2a2a;
+  --blink-icon-inactive: #666;
+
+  // Blue action button
+  --blink-btn-blue: #3b82f6;
+  --blink-btn-blue-hover: #2563eb;
+
+  // Admin row highlight
+  --blink-row-admin-bg: rgba(59, 130, 246, 0.1);
+  --blink-row-admin-border: rgba(59, 130, 246, 0.25);
 
   // Toast / Snackbar
   --blink-toast-error-bg: var(--blink-destructive);

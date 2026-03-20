@@ -1,0 +1,16 @@
+{
+  "brandVoiceDescription": "Direct, unflinching, and empathetic. We don't sugarcoat the data but we never shame. We speak peer-to-peer, not top-down. Every stat gets a source. We center real stories from real people.",
+  "toneGuidelines": [
+    "Lead with a surprising stat or personal hook",
+    "Always cite sources for health claims",
+    "Use peer language — 'we', not 'you should'",
+    "Never shame or moralize",
+    "Keep it under 30 seconds for short-form",
+    "End with a clear call to action or resource link"
+  ],
+  "brandColor": "#2b6bff",
+  "logoUrl": "https://cdn.boozekills.org/logo.svg",
+  "visualGuidelines": "Electric blue (#2b6bff) + dark navy + white. Bold sans-serif. High contrast for mobile readability.",
+  "typographyGuidelines": "Headlines: Space Grotesk Bold 28-36px. Body: Inter Regular 16px. Stats: Space Grotesk Medium 48px.",
+  "photographyGuidelines": "Real people, real situations. No stock photos. Documentary-style. Diverse ages 18-30. Urban and campus settings."
+}

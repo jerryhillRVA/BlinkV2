@@ -1,0 +1,157 @@
+@if (settings) {
+  <div class="tab-card">
+    <div class="card-header">
+      <h2 class="card-title">General Information</h2>
+      <p class="card-description">Detailed identity and basic strategy for your Blink Social workspace.</p>
+    </div>
+    <div class="card-content">
+
+      <div class="field-group">
+        <label class="field-label" for="ws-name">
+          <svg class="field-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z"/>
+            <path d="m12 15-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z"/>
+            <path d="M9 12H4s.55-3.03 2-4c1.62-1.08 5 0 5 0"/>
+            <path d="M12 15v5s3.03-.55 4-2c1.08-1.62 0-5 0-5"/>
+          </svg>
+          Workspace Name
+          <button class="tooltip-trigger" type="button" aria-label="More information" data-tooltip="The name of your workspace used for identification.">
+            <svg class="tooltip-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/>
+            </svg>
+          </button>
+        </label>
+        <input
+          class="field-input"
+          id="ws-name"
+          type="text"
+          placeholder="e.g. Hive Collective"
+          [value]="settings.workspaceName"
+          (input)="updateField('workspaceName', $any($event.target).value)"
+        />
+      </div>
+
+      <div class="field-group">
+        <label class="field-label" for="ws-purpose">
+          <svg class="field-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/>
+          </svg>
+          Workspace Purpose
+          <button class="tooltip-trigger" type="button" aria-label="More information" data-tooltip="The core objective or intent of this specific workspace.">
+            <svg class="tooltip-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/>
+            </svg>
+          </button>
+        </label>
+        <textarea
+          class="field-textarea"
+          id="ws-purpose"
+          rows="3"
+          placeholder="The primary reason this workspace exists..."
+          [value]="settings.purpose ?? ''"
+          (input)="updateField('purpose', $any($event.target).value)"
+        ></textarea>
+      </div>
+
+      <div class="field-group">
+        <label class="field-label" for="ws-mission">
+          <svg class="field-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 .6-.92l7-3.11a1 1 0 0 1 .8 0l7 3.11A1 1 0 0 1 20 6z"/>
+          </svg>
+          Mission
+          <button class="tooltip-trigger" type="button" aria-label="More information" data-tooltip="A high-level statement of what you aim to achieve long-term.">
+            <svg class="tooltip-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/>
+            </svg>
+          </button>
+        </label>
+        <textarea
+          class="field-textarea"
+          id="ws-mission"
+          rows="3"
+          placeholder="Describe what this workspace aims to achieve..."
+          [value]="settings.mission ?? ''"
+          (input)="updateField('mission', $any($event.target).value)"
+        ></textarea>
+      </div>
+
+      <div class="field-group">
+        <div class="segment-header">
+          <span class="field-label">
+            <svg class="field-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+            </svg>
+            Audience Segment Targets
+            <button class="tooltip-trigger" type="button" aria-label="More information" data-tooltip="Define and manage the specific demographic segments you are targeting.">
+              <svg class="tooltip-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/>
+              </svg>
+            </button>
+          </span>
+          <button class="add-segment-btn" type="button" (click)="addSegment()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="12" height="12">
+              <path d="M5 12h14"/><path d="M12 5v14"/>
+            </svg>
+            Add Segment
+          </button>
+        </div>
+        <div class="segments-list">
+          @for (segment of segments; track segment.id; let i = $index) {
+            <div class="segment-row">
+              <label class="segment-field">
+                <span class="segment-label">Demographic Description</span>
+                <input
+                  class="field-input"
+                  type="text"
+                  placeholder="e.g. Tech-savvy engineers interested in AI automation"
+                  [value]="segment.description"
+                  (input)="updateSegment(i, 'description', $any($event.target).value)"
+                />
+              </label>
+              <label class="segment-field segment-age">
+                <span class="segment-label">Age Range</span>
+                <select
+                  class="field-select"
+                  [value]="segment.ageRange"
+                  (change)="updateSegment(i, 'ageRange', $any($event.target).value)"
+                >
+                  @for (range of ageRanges; track range) {
+                    <option [value]="range">{{ range }}</option>
+                  }
+                </select>
+              </label>
+              <button class="remove-segment-btn" type="button" (click)="removeSegment(i)" aria-label="Remove segment">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="12" height="12">
+                  <path d="M18 6 6 18"/><path d="m6 6 12 12"/>
+                </svg>
+              </button>
+            </div>
+          }
+        </div>
+      </div>
+
+      <div class="field-group">
+        <label class="field-label" for="ws-brand-voice">
+          <svg class="field-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="m12 8-9.04 9.06a2.82 2.82 0 1 0 3.98 3.98L16 12"/><circle cx="17" cy="7" r="5"/>
+          </svg>
+          Brand Voice
+          <button class="tooltip-trigger" type="button" aria-label="More information" data-tooltip="The characteristic style and tone used in all workspace communications.">
+            <svg class="tooltip-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/>
+            </svg>
+          </button>
+        </label>
+        <textarea
+          class="field-textarea"
+          id="ws-brand-voice"
+          rows="3"
+          placeholder="What tone and style will you use?"
+          [value]="brandVoice"
+          (input)="updateBrandVoice($any($event.target).value)"
+        ></textarea>
+      </div>
+
+    </div>
+  </div>
+}

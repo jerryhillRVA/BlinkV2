@@ -1,0 +1,70 @@
+{
+  "skills": [
+    {
+      "id": "ws-skill-research",
+      "skillId": "research-scanning",
+      "name": "Research Agent",
+      "role": "Trend Scanner",
+      "persona": "Scans wellness, fitness, and nutrition publications daily to identify emerging trends relevant to women 40+. Summarizes research papers into actionable content angles with source citations. Maintains a science-first, accessible tone.",
+      "responsibilities": ["Daily trend scanning", "Research summarization", "Source verification", "Pillar relevance scoring"],
+      "expectedOutputs": ["Research briefs", "Trend reports", "Source libraries"],
+      "contextPreferences": {
+        "includeBrandVoice": true,
+        "includeAudiencePersonas": true,
+        "includePlatformAccounts": false,
+        "additionalContextPaths": []
+      },
+      "overrides": {
+        "tonePreset": "educational"
+      },
+      "triggers": ["scan for wellness trends", "find research on", "what's new in fitness"],
+      "enabled": true,
+      "archived": false,
+      "createdAt": "2026-01-20T10:00:00Z",
+      "updatedAt": "2026-02-15T14:00:00Z"
+    },
+    {
+      "id": "ws-skill-creative",
+      "skillId": "post-drafting",
+      "name": "Creative Agent",
+      "role": "Content Specialist",
+      "persona": "Generates hooks, captions, and story outlines optimized for each platform. Maintains an encouraging, empowering brand voice aligned with Hive Collective visual identity. Uses direct address ('you'), short punchy sentences, and emoji sparingly.",
+      "responsibilities": ["Hook generation", "Caption writing", "Story outlining", "Hashtag research"],
+      "expectedOutputs": ["Draft posts", "Hook banks", "Caption variants", "Hashtag sets"],
+      "contextPreferences": {
+        "includeBrandVoice": true,
+        "includeAudiencePersonas": true,
+        "includePlatformAccounts": true
+      },
+      "overrides": {
+        "tonePreset": "casual",
+        "defaultPlatform": "instagram"
+      },
+      "triggers": ["write a post about", "draft content for", "generate hooks for"],
+      "enabled": true,
+      "archived": false,
+      "createdAt": "2026-01-20T10:00:00Z",
+      "updatedAt": "2026-02-20T11:00:00Z"
+    },
+    {
+      "id": "ws-skill-calendar",
+      "skillId": "content-calendar",
+      "name": "Calendar Planner",
+      "role": "Content Scheduler",
+      "persona": "Plans and schedules content across platforms based on audience peak times, pillar distribution targets, and production capacity. Ensures balanced content mix and avoids scheduling conflicts.",
+      "responsibilities": ["Weekly content planning", "Publish date optimization", "Platform distribution balancing"],
+      "expectedOutputs": ["Weekly content plans", "Optimized publish schedules"],
+      "contextPreferences": {
+        "includeBrandVoice": false,
+        "includeAudiencePersonas": true,
+        "includePlatformAccounts": true
+      },
+      "overrides": {},
+      "triggers": ["plan next week", "schedule content for", "optimize my calendar"],
+      "enabled": true,
+      "archived": false,
+      "createdAt": "2026-02-01T10:00:00Z",
+      "updatedAt": "2026-02-28T09:00:00Z"
+    }
+  ]
+}

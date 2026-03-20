@@ -1,0 +1,114 @@
+.tab-card {
+  background: var(--blink-surface-card);
+  backdrop-filter: blur(8px);
+  border-radius: 12px;
+  border: 1px solid var(--blink-outline-variant);
+  box-shadow: var(--blink-shadow-sm);
+  overflow: hidden;
+}
+
+.card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 24px 24px 16px;
+}
+
+.card-header-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.card-header-icon {
+  color: var(--blink-on-surface-muted);
+  flex-shrink: 0;
+}
+
+.card-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--blink-on-surface-strong);
+  margin: 0;
+}
+
+.add-user-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 12px;
+  height: 32px;
+  border: none;
+  border-radius: 8px;
+  background: var(--blink-btn-blue);
+  color: #fff;
+  font-size: 14px;
+  font-weight: 400;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.15s;
+  flex-shrink: 0;
+
+  &:hover {
+    background: var(--blink-btn-blue-hover);
+  }
+}
+
+.add-user-btn-text {
+  font-weight: 700;
+}
+
+.card-content {
+  padding: 0 16px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.member-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  border-radius: 12px;
+  border: 1px solid var(--blink-outline-variant);
+  background: var(--blink-surface-elevated);
+
+  &.admin {
+    background: var(--blink-row-admin-bg);
+    border-color: var(--blink-row-admin-border);
+  }
+}
+
+.member-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--blink-surface-dim);
+  border: 1px solid var(--blink-outline-variant);
+  color: var(--blink-on-surface-medium);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 500;
+  flex-shrink: 0;
+}
+
+.member-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.member-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--blink-on-surface-strong);
+}
+
+.member-email {
+  font-size: 12px;
+  color: var(--blink-on-surface-muted);
+}

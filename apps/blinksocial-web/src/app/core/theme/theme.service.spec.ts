@@ -1,4 +1,5 @@
 import { TestBed } from '@angular/core/testing';
+import { PLATFORM_ID } from '@angular/core';
 import { ThemeService } from './theme.service';
 
 describe('ThemeService', () => {
@@ -88,5 +89,36 @@ describe('ThemeService', () => {
     TestBed.configureTestingModule({});
     const newService = TestBed.inject(ThemeService);
     expect(newService.theme()).toBe('light');
+  });
+});
+
+describe('ThemeService (SSR / server platform)', () => {
+  let service: ThemeService;
+
+  beforeEach(() => {
+    TestBed.configureTestingModule({
+      providers: [{ provide: PLATFORM_ID, useValue: 'server' }],
+    });
+    service = TestBed.inject(ThemeService);
+  });
+
+  it('should default to light theme on server', () => {
+    expect(service.theme()).toBe('light');
+  });
+
+  it('should not throw when setting theme on server', () => {
+    expect(() => service.setTheme('dark')).not.toThrow();
+    expect(service.theme()).toBe('dark');
+  });
+
+  it('should toggle theme on server without error', () => {
+    service.toggleTheme();
+    expect(service.theme()).toBe('dark');
+  });
+
+  it('should report isDark correctly on server', () => {
+    expect(service.isDark()).toBe(false);
+    service.setTheme('dark');
+    expect(service.isDark()).toBe(true);
   });
 });

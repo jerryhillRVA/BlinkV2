@@ -1,0 +1,39 @@
+@if (settings) {
+  <div class="tab-card">
+    <div class="card-header">
+      <div class="card-header-left">
+        <!-- Lucide Users icon -->
+        <svg class="card-header-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="20" height="20">
+          <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>
+          <circle cx="9" cy="7" r="4"/>
+          <path d="M22 21v-2a4 4 0 0 0-3-3.87"/>
+          <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+        </svg>
+        <h4 class="card-title">Workspace Users</h4>
+      </div>
+      <button class="add-user-btn" type="button" (click)="addUser()">
+        <!-- Lucide UserPlus icon -->
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16">
+          <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>
+          <circle cx="9" cy="7" r="4"/>
+          <line x1="19" x2="19" y1="8" y2="14"/>
+          <line x1="22" x2="16" y1="11" y2="11"/>
+        </svg>
+        <span class="add-user-btn-text">Add User</span>
+      </button>
+    </div>
+    <div class="card-content">
+      @for (member of members; track member.id) {
+        <div class="member-row" [class.admin]="member.role === 'Admin'">
+          <div class="member-avatar">
+            {{ member.name.charAt(0) }}
+          </div>
+          <div class="member-info">
+            <span class="member-name">{{ member.name }} ({{ displayRole(member.role) }})</span>
+            <span class="member-email">{{ member.email }}</span>
+          </div>
+        </div>
+      }
+    </div>
+  </div>
+}

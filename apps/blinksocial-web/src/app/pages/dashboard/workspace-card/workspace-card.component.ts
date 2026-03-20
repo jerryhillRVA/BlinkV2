@@ -1,8 +1,8 @@
-import { Component, Input } from '@angular/core';
+import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { CommonModule } from '@angular/common';
 
 export interface Workspace {
-  id?: string;
+  id: string;
   name: string;
   color: string;
 }
@@ -15,4 +15,5 @@ export interface Workspace {
 })
 export class WorkspaceCardComponent {
   @Input() workspace!: Workspace;
+  @Output() goToWorkspace = new EventEmitter<string>();
 }

@@ -11,12 +11,20 @@ describe('GET /api/health', () => {
   });
 });
 
-describe('GET /api/workspaces', () => {
-  it('should return workspaces array', async () => {
-    const res = await axios.get(`/api/workspaces`);
+describe('GET /api/workspaces/:id/settings/:tab', () => {
+  it('should return settings for a mock workspace', async () => {
+    const res = await axios.get(`/api/workspaces/hive-collective/settings/general`);
 
     expect(res.status).toBe(200);
-    expect(res.data).toHaveProperty('workspaces');
-    expect(Array.isArray(res.data.workspaces)).toBe(true);
+    expect(res.data).toHaveProperty('workspaceName');
+  });
+
+  it('should return 404 for unknown workspace', async () => {
+    try {
+      await axios.get(`/api/workspaces/unknown/settings/general`);
+      fail('Expected 404');
+    } catch (e) {
+      expect(e.response.status).toBe(404);
+    }
   });
 });
