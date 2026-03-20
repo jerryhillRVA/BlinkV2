@@ -1,0 +1,23 @@
+{
+  "twoFactorEnabled": true,
+  "activeSessions": [
+    {
+      "id": "sess-101",
+      "device": "MacBook Air",
+      "browser": "Firefox 124",
+      "location": "Los Angeles, CA",
+      "lastActive": "2026-03-18T10:00:00Z",
+      "isCurrent": true
+    }
+  ],
+  "apiKeys": [],
+  "loginHistory": [
+    {
+      "timestamp": "2026-03-18T08:00:00Z",
+      "ip": "10.0.0.50",
+      "device": "MacBook Air / Firefox 124",
+      "location": "Los Angeles, CA",
+      "success": true
+    }
+  ]
+}

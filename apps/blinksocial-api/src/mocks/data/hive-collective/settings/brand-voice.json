@@ -1,0 +1,37 @@
+{
+  "brandVoiceDescription": "Warm, encouraging, and evidence-based. We speak directly to our audience using 'you' — like a knowledgeable friend who also happens to be a certified trainer. We celebrate strength at every age without being condescending. We cite sources when making health claims and never promise miracle results.",
+  "toneGuidelines": [
+    "Use direct address ('you', 'your')",
+    "Keep sentences short and punchy for social",
+    "Cite sources for any health/fitness claims",
+    "Celebrate progress, not perfection",
+    "Avoid medical advice — redirect to professionals",
+    "Use emoji sparingly — max 2-3 per post"
+  ],
+  "brandColor": "#d94e33",
+  "logoUrl": "https://cdn.hivecollective.io/logo-2026.svg",
+  "visualGuidelines": "Warm coral (#d94e33) + neutral earth tones. Clean sans-serif typography (Inter). Natural lighting, real bodies, inclusive representation.",
+  "typographyGuidelines": "Headlines: Inter Bold 24-32px. Body: Inter Regular 16px. Captions: Inter Medium 14px.",
+  "photographyGuidelines": "Real women, natural poses, diverse body types and skin tones. No overly filtered or retouched images. Prefer outdoor/natural light settings.",
+  "audienceOptions": ["Engineers", "Founders", "Social Media Managers", "Tech Enthusiasts", "Executives"],
+  "contentPillars": [
+    {
+      "id": "pillar-1",
+      "name": "Industry News",
+      "description": "Timely updates on industry shifts and breaking tech news.",
+      "color": "#d94e33",
+      "themes": ["AI", "Software Development", "Venture Capital"],
+      "audienceSegmentIds": ["Engineers"],
+      "targetPlatforms": ["youtube", "linkedin"]
+    },
+    {
+      "id": "pillar-2",
+      "name": "How-To Guides",
+      "description": "Practical tutorials and educational deep-dives.",
+      "color": "#3b82f6",
+      "themes": ["Tutorials", "Productivity", "Automation"],
+      "audienceSegmentIds": ["Social Media Managers"],
+      "targetPlatforms": ["youtube", "instagram"]
+    }
+  ]
+}

@@ -1,5 +1,6 @@
 import { Component, inject } from '@angular/core';
 import { NewWorkspaceFormService } from '../../new-workspace-form.service';
+import { PLATFORM_DISPLAY_OPTIONS } from '@blinksocial/contracts';
 
 @Component({
   selector: 'app-step-platform-config',
@@ -9,8 +10,5 @@ import { NewWorkspaceFormService } from '../../new-workspace-form.service';
 export class StepPlatformConfigComponent {
   protected readonly formService = inject(NewWorkspaceFormService);
 
-  readonly PLATFORMS = [
-    'YouTube', 'LinkedIn', 'Twitter/X', 'Instagram',
-    'Facebook', 'Slack', 'Discord',
-  ];
+  readonly PLATFORMS = PLATFORM_DISPLAY_OPTIONS;
 }

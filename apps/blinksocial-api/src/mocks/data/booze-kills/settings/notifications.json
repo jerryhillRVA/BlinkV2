@@ -1,0 +1,16 @@
+{
+  "channels": {
+    "email": true,
+    "inApp": true,
+    "slack": true,
+    "slackWebhookUrl": "https://hooks.slack.com/services/T000/B000/xxxx"
+  },
+  "triggers": {
+    "researchResults": true,
+    "contentPublished": true,
+    "teamMentions": true,
+    "qaReviewRequired": false,
+    "approachingDeadlines": true,
+    "weeklyDigest": false
+  }
+}

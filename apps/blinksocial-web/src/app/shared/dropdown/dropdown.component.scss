@@ -1,0 +1,82 @@
+.dropdown-wrapper {
+  position: relative;
+  width: 100%;
+}
+
+.dropdown-trigger {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  width: 100%;
+  padding: 12px 14px;
+  height: 48px;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  color: var(--blink-on-surface);
+  background: var(--blink-input-bg);
+  box-sizing: border-box;
+  cursor: pointer;
+  transition: background 0.15s;
+  text-align: left;
+
+  &:focus {
+    outline: none;
+    background: var(--blink-input-bg-focus);
+    box-shadow: 0 0 0 1px var(--blink-input-ring);
+  }
+}
+
+.dropdown-value {
+  pointer-events: none;
+}
+
+.dropdown-chevron {
+  color: var(--blink-on-surface-muted);
+  opacity: 0.5;
+  flex-shrink: 0;
+}
+
+.dropdown-options {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  background: var(--blink-surface-elevated);
+  border: 1px solid var(--blink-outline-variant);
+  border-radius: 8px;
+  box-shadow: var(--blink-shadow-md);
+  z-index: 50;
+  padding: 4px 0;
+  max-height: 280px;
+  overflow-y: auto;
+}
+
+.dropdown-option {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 10px 14px;
+  border: none;
+  background: none;
+  font-size: 14px;
+  color: var(--blink-on-surface);
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.1s;
+
+  &:hover {
+    background: var(--blink-input-bg);
+  }
+}
+
+.dropdown-option-active {
+  background: var(--blink-input-bg);
+}
+
+.dropdown-check {
+  color: var(--blink-on-surface-muted);
+  flex-shrink: 0;
+}

@@ -1,0 +1,20 @@
+{
+  "members": [
+    {
+      "id": "user-alex",
+      "name": "Alex Turner",
+      "email": "alex@boozekills.org",
+      "role": "Admin",
+      "status": "active",
+      "joinedAt": "2026-02-01T10:00:00Z"
+    },
+    {
+      "id": "user-jordan",
+      "name": "Jordan Blake",
+      "email": "jordan@boozekills.org",
+      "role": "Editor",
+      "status": "active",
+      "joinedAt": "2026-02-15T09:00:00Z"
+    }
+  ]
+}

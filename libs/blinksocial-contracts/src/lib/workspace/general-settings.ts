@@ -1,7 +1,15 @@
+export interface AudienceSegment {
+  id: string;
+  description: string;
+  ageRange: string;
+}
+
 export interface GeneralSettingsContract {
   workspaceName: string;
   purpose?: string;
   mission?: string;
+  audienceSegments?: AudienceSegment[];
+  brandVoice?: string;
   timezone?: string;
   language?: string;
   brandColor?: string;

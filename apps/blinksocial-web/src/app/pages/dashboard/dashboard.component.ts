@@ -1,11 +1,10 @@
-import { Component, inject, OnInit, signal } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import {
   WorkspaceCardComponent,
   Workspace,
 } from './workspace-card/workspace-card.component';
-import { DashboardApiService } from './dashboard-api.service';
 
 @Component({
   selector: 'app-dashboard',
@@ -13,32 +12,19 @@ import { DashboardApiService } from './dashboard-api.service';
   templateUrl: './dashboard.component.html',
   styleUrl: './dashboard.component.scss',
 })
-export class DashboardComponent implements OnInit {
+export class DashboardComponent {
   private readonly router = inject(Router);
-  private readonly dashboardApi = inject(DashboardApiService);
 
-  workspaces = signal<Workspace[]>([]);
-  loading = signal(true);
-
-  ngOnInit(): void {
-    this.dashboardApi.listWorkspaces().subscribe({
-      next: (response) => {
-        this.workspaces.set(
-          response.workspaces.map((w) => ({
-            id: w.id,
-            name: w.name,
-            color: w.color,
-          }))
-        );
-        this.loading.set(false);
-      },
-      error: () => {
-        this.loading.set(false);
-      },
-    });
-  }
+  workspaces: Workspace[] = [
+    { id: 'hive-collective', name: 'Hive Collective', color: '#d94e33' },
+    { id: 'booze-kills', name: 'Booze Kills', color: '#2b6bff' },
+  ];
 
   onCreateWorkspace() {
     this.router.navigate(['/new-workspace']);
+  }
+
+  onGoToWorkspace(id: string) {
+    this.router.navigate(['/workspace', id, 'settings']);
   }
 }

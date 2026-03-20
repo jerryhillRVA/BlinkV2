@@ -1,7 +1,7 @@
 import { Injectable, computed, signal } from '@angular/core';
 import {
   Platform,
-  PLATFORM_DISPLAY_NAMES,
+  PLATFORM_DISPLAY_OPTIONS,
   displayNameToPlatform,
   type AudienceSegmentContract,
   type ContentPillarContract,
@@ -220,9 +220,7 @@ export class NewWorkspaceFormService {
     'Tech Enthusiasts', 'Executives',
   ];
 
-  readonly PLATFORMS = Object.values(PLATFORM_DISPLAY_NAMES).filter(
-    (n) => n !== 'TBD'
-  );
+  readonly PLATFORMS = PLATFORM_DISPLAY_OPTIONS;
 
   addPillar(): void {
     this.contentPillars.update((p) => [

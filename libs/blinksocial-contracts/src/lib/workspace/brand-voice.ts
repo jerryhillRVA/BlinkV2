@@ -1,3 +1,5 @@
+import type { ContentPillarContract } from './content-pillar.js';
+
 export interface BrandVoiceSettingsContract {
   brandVoiceDescription?: string;
   toneGuidelines?: string[];
@@ -6,4 +8,6 @@ export interface BrandVoiceSettingsContract {
   visualGuidelines?: string;
   typographyGuidelines?: string;
   photographyGuidelines?: string;
+  contentPillars?: ContentPillarContract[];
+  audienceOptions?: string[];
 }

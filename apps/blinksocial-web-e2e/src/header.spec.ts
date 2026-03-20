@@ -12,7 +12,7 @@ test.describe('Header', () => {
   });
 
   test('should display "BLINK" brand text', async ({ page }) => {
-    await expect(page.locator('.brand-text')).toHaveText('BLINK');
+    await expect(page.locator('.brand-text')).toHaveText('BLINK SOCIAL');
   });
 
   test('should display user name and role', async ({ page }) => {

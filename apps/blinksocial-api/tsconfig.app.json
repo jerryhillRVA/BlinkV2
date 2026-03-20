@@ -18,9 +18,6 @@
   "exclude": [],
   "references": [
     {
-      "path": "../../libs/blinksocial-core/tsconfig.lib.json"
-    },
-    {
       "path": "../../libs/blinksocial-models/tsconfig.lib.json"
     },
     {

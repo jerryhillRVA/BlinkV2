@@ -7,3 +7,7 @@ export { AudienceSegment } from './audience-segment.model.js';
 export { SkillConfig, SkillSettings } from './skill-config.model.js';
 export { CreateWorkspaceRequest } from './create-workspace-request.model.js';
 export { CreateWorkspaceResponse, ValidationError, CreateWorkspaceError } from './create-workspace-response.model.js';
+export { TeamMember, TeamSettings } from './team-settings.model.js';
+export { NotificationChannels, NotificationTriggers, NotificationSettings } from './notification-settings.model.js';
+export { MilestoneTemplate, PhaseTemplate, DeadlineTemplate, ReminderSettings, CalendarSettings } from './calendar-settings.model.js';
+export { ActiveSession, ApiKey, LoginHistoryEntry, SecuritySettings } from './security-settings.model.js';

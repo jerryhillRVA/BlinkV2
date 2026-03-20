@@ -1,0 +1,154 @@
+@if (settings) {
+  <div class="tab-card">
+    <div class="card-header">
+      <div class="card-header-text">
+        <h4 class="card-title">Content Strategy</h4>
+        <p class="card-description">Manage your content pillars, audience mapping, and target platforms.</p>
+      </div>
+      <button class="add-pillar-btn" type="button" (click)="addPillar()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="12" height="12">
+          <path d="M5 12h14"/><path d="M12 5v14"/>
+        </svg>
+        Add Pillar
+      </button>
+    </div>
+    <div class="card-content">
+      @for (pillar of pillars; track pillar.id; let i = $index) {
+        <div class="pillar-card">
+          <div class="pillar-grid-2">
+            <div class="pillar-field">
+              <span class="pillar-label">
+                Pillar Name
+                <button class="tooltip-trigger" type="button" aria-label="More information" data-tooltip="A short name for this content pillar.">
+                  <svg class="tooltip-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/>
+                  </svg>
+                </button>
+              </span>
+              <label class="sr-only" [attr.for]="'pillar-name-' + i">Pillar Name</label>
+              <input
+                class="pillar-input"
+                [id]="'pillar-name-' + i"
+                type="text"
+                placeholder="e.g. Industry News"
+                [value]="pillar.name"
+                (input)="updatePillarField(i, 'name', $any($event.target).value)"
+              />
+            </div>
+            <div class="pillar-field">
+              <span class="pillar-label">
+                Themes
+                <button class="tooltip-trigger" type="button" aria-label="More information" data-tooltip="Comma-separated topics this pillar covers.">
+                  <svg class="tooltip-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/>
+                  </svg>
+                </button>
+              </span>
+              <label class="sr-only" [attr.for]="'pillar-themes-' + i">Themes</label>
+              <input
+                class="pillar-input"
+                [id]="'pillar-themes-' + i"
+                type="text"
+                placeholder="AI, Development, Tutorials"
+                [value]="themesDisplay(pillar)"
+                (input)="updatePillarThemes(i, $any($event.target).value)"
+              />
+            </div>
+          </div>
+          <div class="pillar-field">
+            <span class="pillar-label">
+              Description
+              <button class="tooltip-trigger" type="button" aria-label="More information" data-tooltip="Purpose and focus of this content pillar.">
+                <svg class="tooltip-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/>
+                </svg>
+              </button>
+            </span>
+            <label class="sr-only" [attr.for]="'pillar-desc-' + i">Description</label>
+            <textarea
+              class="pillar-textarea"
+              [id]="'pillar-desc-' + i"
+              placeholder="Purpose of this pillar..."
+              [value]="pillar.description"
+              (input)="updatePillarField(i, 'description', $any($event.target).value)"
+            ></textarea>
+          </div>
+          <div class="pillar-grid-2 pillar-mapping-section">
+            <div class="pillar-field">
+              <span class="mapping-label">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="12" height="12">
+                  <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/>
+                  <path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+                </svg>
+                Audience Mapping
+                <button class="tooltip-trigger" type="button" aria-label="More information" data-tooltip="Select which audience segments this pillar targets.">
+                  <svg class="tooltip-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/>
+                  </svg>
+                </button>
+              </span>
+              <div class="pill-group">
+                @for (audience of audienceOptions; track audience) {
+                  <button
+                    class="pill"
+                    type="button"
+                    [class.pill-audience-active]="isAudienceSelected(pillar, audience)"
+                    (click)="toggleAudience(i, audience)"
+                  >
+                    @if (isAudienceSelected(pillar, audience)) {
+                      <svg class="pill-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M20 6 9 17l-5-5"/>
+                      </svg>
+                    }
+                    {{ audience }}
+                  </button>
+                }
+              </div>
+            </div>
+            <div class="pillar-field">
+              <span class="mapping-label">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="12" height="12">
+                  <circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/>
+                  <line x1="8.59" x2="15.42" y1="13.51" y2="17.49"/><line x1="15.41" x2="8.59" y1="6.51" y2="10.49"/>
+                </svg>
+                Target Platforms
+                <button class="tooltip-trigger" type="button" aria-label="More information" data-tooltip="Select which platforms this pillar targets.">
+                  <svg class="tooltip-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/>
+                  </svg>
+                </button>
+              </span>
+              <div class="pill-group">
+                @for (platform of platformOptions; track platform) {
+                  <button
+                    class="pill"
+                    type="button"
+                    [class.pill-platform-active]="isPlatformSelected(pillar, platform)"
+                    (click)="togglePlatform(i, platform)"
+                  >
+                    @if (isPlatformSelected(pillar, platform)) {
+                      <svg class="pill-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M20 6 9 17l-5-5"/>
+                      </svg>
+                    }
+                    {{ platformDisplayName(platform) }}
+                  </button>
+                }
+              </div>
+            </div>
+          </div>
+          <button
+            class="pillar-remove-btn"
+            type="button"
+            aria-label="Remove pillar"
+            (click)="removePillar(i)"
+          >
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="12" height="12">
+              <path d="M18 6 6 18"/><path d="m6 6 12 12"/>
+            </svg>
+          </button>
+        </div>
+      }
+    </div>
+  </div>
+}

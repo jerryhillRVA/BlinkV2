@@ -1,0 +1,45 @@
+.tab-card {
+  background: var(--blink-surface-card);
+  backdrop-filter: blur(8px);
+  border-radius: 12px;
+  border: none;
+  box-shadow: var(--blink-shadow-sm);
+  overflow: hidden;
+}
+
+.card-header {
+  padding: 24px 24px 0;
+}
+
+.card-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--blink-on-surface-strong);
+  margin: 0;
+}
+
+.card-content {
+  padding: 24px;
+}
+
+.archive-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 0 16px;
+  height: 36px;
+  border: none;
+  border-radius: 8px;
+  background: #dc2626;
+  color: #fff;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.15s;
+
+  &:hover {
+    background: #b91c1c;
+  }
+}

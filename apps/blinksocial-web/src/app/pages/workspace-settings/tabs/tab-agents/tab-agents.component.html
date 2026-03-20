@@ -1,0 +1,117 @@
+@if (settings) {
+  <div class="tab-card">
+    <div class="card-header">
+      <div class="card-header-text">
+        <h4 class="card-title">Agent Personalities</h4>
+        <p class="card-description">View and manage your AI team members. Expand an agent to edit their full biography.</p>
+      </div>
+      <button class="add-agent-btn" type="button" (click)="addAgent()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16">
+          <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/>
+          <line x1="19" x2="19" y1="8" y2="14"/><line x1="22" x2="16" y1="11" y2="11"/>
+        </svg>
+        Add Agent
+      </button>
+    </div>
+    <div class="card-content">
+      @for (agent of agents; track agent.id; let i = $index) {
+        <div class="agent-row">
+          <div class="agent-row-inner" role="button" tabindex="0" (click)="toggleEdit(i)" (keydown.enter)="toggleEdit(i)" (keydown.space)="toggleEdit(i); $event.preventDefault()">
+            <div class="agent-left">
+              <div class="agent-number">{{ i + 1 }}</div>
+              <div class="agent-details">
+                <h3 class="agent-name">
+                  {{ agent.name }}
+                  @if (agent.role) {
+                    <span class="agent-role-badge">{{ agent.role }}</span>
+                  }
+                </h3>
+                @if (agent.persona) {
+                  <p class="agent-persona">{{ agent.persona }}</p>
+                }
+              </div>
+            </div>
+            <div class="agent-actions">
+              <button class="action-btn action-btn-edit" type="button" aria-label="Edit agent" (click)="toggleEdit(i); $event.stopPropagation()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16">
+                  <path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z"/>
+                </svg>
+              </button>
+              <button class="action-btn action-btn-remove" type="button" aria-label="Remove agent" (click)="removeAgent(i); $event.stopPropagation()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16">
+                  <rect width="20" height="5" x="2" y="3" rx="1"/><path d="M4 8v11a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8"/><path d="M10 12h4"/>
+                </svg>
+              </button>
+              <svg class="agent-chevron" [class.agent-chevron-open]="editingIndex() === i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="20" height="20">
+                <path d="m9 18 6-6-6-6"/>
+              </svg>
+            </div>
+          </div>
+          @if (editingIndex() === i) {
+            <div class="agent-edit-panel" @expandPanel>
+              <div class="edit-form">
+                <div class="edit-field-grid">
+                  <div class="edit-field-group">
+                    <label class="edit-field-label" for="agent-name-{{ i }}">
+                      Agent Name
+                      <button class="edit-info-icon" type="button" aria-label="More information">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="14" height="14">
+                          <circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/>
+                        </svg>
+                      </button>
+                    </label>
+                    <input
+                      class="edit-input edit-input-name"
+                      id="agent-name-{{ i }}"
+                      type="text"
+                      placeholder="e.g. Reporting Bot"
+                      [value]="agent.name"
+                      (input)="updateAgentField(i, 'name', $any($event.target).value)"
+                    />
+                  </div>
+                  <div class="edit-field-group">
+                    <label class="edit-field-label" for="agent-role-{{ i }}">
+                      Role
+                      <button class="edit-info-icon" type="button" aria-label="More information">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="14" height="14">
+                          <circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/>
+                        </svg>
+                      </button>
+                    </label>
+                    <input
+                      class="edit-input edit-input-role"
+                      id="agent-role-{{ i }}"
+                      type="text"
+                      placeholder="e.g. Research Specialist"
+                      [value]="agent.role"
+                      (input)="updateAgentField(i, 'role', $any($event.target).value)"
+                    />
+                  </div>
+                </div>
+                <div class="edit-field-group">
+                  <label class="edit-field-label" for="agent-bio-{{ i }}">
+                    Full Bio
+                    <button class="edit-info-icon" type="button" aria-label="More information">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="14" height="14">
+                        <circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/>
+                      </svg>
+                    </button>
+                  </label>
+                  <textarea
+                    class="edit-textarea-bio"
+                    id="agent-bio-{{ i }}"
+                    placeholder="Describe the agent's personality, responsibilities, and specific goals..."
+                    (input)="updateAgentField(i, 'persona', $any($event.target).value)"
+                  >{{ agent.persona }}</textarea>
+                </div>
+                <div class="edit-actions">
+                  <button class="edit-done-btn" type="button" (click)="toggleEdit(i)">Done</button>
+                </div>
+              </div>
+            </div>
+          }
+        </div>
+      }
+    </div>
+  </div>
+}

@@ -1,0 +1,239 @@
+.tab-card {
+  background: var(--blink-surface-card);
+  backdrop-filter: blur(8px);
+  border-radius: 12px;
+  box-shadow: var(--blink-shadow-sm);
+  overflow: hidden;
+}
+
+.card-header {
+  padding: 24px 24px 0;
+}
+
+.card-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--blink-on-surface-strong);
+  margin: 0;
+}
+
+.card-description {
+  margin: 4px 0 0;
+  font-size: 14px;
+  color: var(--blink-on-surface-medium);
+}
+
+.card-content {
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+}
+
+.field-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.field-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--blink-on-surface-strong);
+}
+
+.field-icon {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+}
+
+.tooltip-trigger {
+  appearance: none;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--blink-on-surface-muted);
+  transition: color 0.15s;
+  position: relative;
+
+  &:hover {
+    color: var(--blink-brand-primary);
+  }
+
+  &:hover::after {
+    content: attr(data-tooltip);
+    position: absolute;
+    bottom: calc(100% + 8px);
+    left: 50%;
+    transform: translateX(-50%);
+    background: #111827;
+    color: #fff;
+    font-size: 11px;
+    font-weight: 500;
+    line-height: 1.5;
+    padding: 8px 12px;
+    border-radius: 8px;
+    white-space: normal;
+    width: max-content;
+    max-width: 220px;
+    z-index: 50;
+    pointer-events: none;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  }
+}
+
+.tooltip-icon {
+  width: 14px;
+  height: 14px;
+}
+
+.field-input {
+  width: 100%;
+  padding: 12px 14px;
+  height: 48px;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  color: var(--blink-on-surface);
+  background: var(--blink-input-bg);
+  box-sizing: border-box;
+  transition: background 0.15s;
+
+  &:focus {
+    outline: none;
+    background: var(--blink-input-bg-focus);
+    box-shadow: 0 0 0 1px var(--blink-input-ring);
+  }
+
+  &::placeholder {
+    color: var(--blink-on-surface-muted);
+  }
+}
+
+.field-textarea {
+  width: 100%;
+  padding: 14px;
+  min-height: 100px;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-family: inherit;
+  color: var(--blink-on-surface);
+  background: var(--blink-input-bg);
+  box-sizing: border-box;
+  resize: vertical;
+  transition: background 0.15s;
+
+  &:focus {
+    outline: none;
+    background: var(--blink-input-bg-focus);
+    box-shadow: 0 0 0 1px var(--blink-input-ring);
+  }
+
+  &::placeholder {
+    color: var(--blink-on-surface-muted);
+  }
+}
+
+.segment-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.add-segment-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 12px;
+  border: 1px dashed var(--blink-outline-dashed);
+  border-radius: 6px;
+  background: none;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--blink-on-surface-medium);
+  cursor: pointer;
+  transition: all 0.15s;
+
+  &:hover {
+    border-color: var(--blink-brand-primary);
+    color: var(--blink-brand-primary);
+  }
+}
+
+.segments-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.segment-row {
+  display: flex;
+  gap: 12px;
+  align-items: flex-end;
+}
+
+.segment-field {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.segment-age {
+  flex: 0 0 140px;
+}
+
+.segment-label {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--blink-on-surface-medium);
+}
+
+.field-select {
+  width: 100%;
+  padding: 12px 14px;
+  height: 48px;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  color: var(--blink-on-surface);
+  background: var(--blink-input-bg);
+  box-sizing: border-box;
+  cursor: pointer;
+  transition: background 0.15s;
+
+  &:focus {
+    outline: none;
+    background: var(--blink-input-bg-focus);
+    box-shadow: 0 0 0 1px var(--blink-input-ring);
+  }
+}
+
+.remove-segment-btn {
+  appearance: none;
+  background: none;
+  border: none;
+  padding: 0;
+  width: 32px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: var(--blink-on-surface-muted);
+  flex-shrink: 0;
+  transition: color 0.15s;
+
+  &:hover {
+    color: var(--blink-destructive);
+  }
+}
