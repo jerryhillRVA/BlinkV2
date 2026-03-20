@@ -7,3 +7,5 @@ export * from './audience-segment.js';
 export * from './skill-config.js';
 export * from './create-workspace-request.js';
 export * from './create-workspace-response.js';
+export * from './workspace-registry.js';
+export * from './list-workspaces-response.js';

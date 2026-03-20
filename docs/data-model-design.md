@@ -128,7 +128,7 @@ What the UI calls "Agent Personalities" are actually **skill configurations** â€
 7. Stores result in target namespace + updates `_index.json`
 8. Logs execution in `skill-runs/`
 
-See: `schemas/settings/skills.schema.json`, `schemas/skill-run.schema.json`
+See: `schemas/workspace/settings/skills.schema.json`, `schemas/workspace/skill-run.schema.json`
 
 ---
 
@@ -190,7 +190,7 @@ Each namespace needing list-view filtering maintains a lightweight `_index.json`
 | **Index document** | **Yes** | **Good to ~10K** | **Yes (v1)** |
 | Per-status subdirs | Partial | Poor | No |
 
-See: `schemas/content-items-index.schema.json`, sample at `data/hive-collective/content-items/_index.json`
+See: `schemas/workspace/content-items-index.schema.json`, sample at `data/hive-collective/content-items/_index.json`
 
 ---
 
@@ -211,7 +211,7 @@ assets/{item-id}/
 - Content items reference assets via `assetRefs[]` (inline array of `{fileId, filename, role, mimeType, sizeBytes}`)
 - Manifest provides full asset inventory per content item
 
-See: `schemas/asset-manifest.schema.json`, sample at `data/hive-collective/assets/post1/_manifest.json`
+See: `schemas/workspace/asset-manifest.schema.json`, sample at `data/hive-collective/assets/post1/_manifest.json`
 
 ---
 
@@ -225,7 +225,7 @@ Calendar data is organized as one document per month containing ALL events (publ
 - Phase windows spanning month boundaries appear in BOTH months' documents
 - Includes summary stats (counts by type, overdue/at-risk counts, platform breakdown)
 
-See: `schemas/monthly-calendar.schema.json`, sample at `data/hive-collective/calendars/2026-03.json`
+See: `schemas/workspace/monthly-calendar.schema.json`, sample at `data/hive-collective/calendars/2026-03.json`
 
 ---
 
@@ -238,7 +238,7 @@ Research sources are organized as one document per content pillar, containing al
 - Tracks which content items reference each source via `usedInContentIds[]`
 - Updated by the research-scanning skill and when content items reference sources
 
-See: `schemas/pillar-sources.schema.json`, sample at `data/hive-collective/research-sources/p1.json`
+See: `schemas/workspace/pillar-sources.schema.json`, sample at `data/hive-collective/research-sources/p1.json`
 
 ---
 

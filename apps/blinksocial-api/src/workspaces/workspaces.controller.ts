@@ -1,4 +1,4 @@
-import { Controller, Post, Body } from '@nestjs/common';
+import { Controller, Post, Get, Body } from '@nestjs/common';
 import { WorkspacesService } from './workspaces.service';
 import type { CreateWorkspaceRequestContract } from '@blinksocial/contracts';
 
@@ -6,8 +6,13 @@ import type { CreateWorkspaceRequestContract } from '@blinksocial/contracts';
 export class WorkspacesController {
   constructor(private readonly workspacesService: WorkspacesService) {}
 
+  @Get()
+  list() {
+    return this.workspacesService.list();
+  }
+
   @Post()
-  create(@Body() body: CreateWorkspaceRequestContract) {
+  async create(@Body() body: CreateWorkspaceRequestContract) {
     this.workspacesService.validate(body);
     return this.workspacesService.create(body);
   }

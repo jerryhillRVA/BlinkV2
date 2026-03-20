@@ -20,7 +20,8 @@ import { HealthResponse } from '@blinksocial/contracts';
 import { formatTimestamp } from '@blinksocial/core';
 ```
 
-### Common Commands
+### Common Commands 
+!!! Always use nvm "nvm use" to manage npm versions (may be in ~/.nvm)
 
 ```bash
 npm start                                          # Serve API + web concurrently

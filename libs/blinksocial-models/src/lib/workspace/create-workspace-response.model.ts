@@ -6,12 +6,14 @@ import type {
 
 export class CreateWorkspaceResponse implements CreateWorkspaceResponseContract {
   readonly id: string;
+  readonly tenantId: string;
   readonly workspaceName: string;
   readonly status: 'active';
   readonly createdAt: string;
 
   constructor(data: CreateWorkspaceResponseContract) {
     this.id = data.id;
+    this.tenantId = data.tenantId;
     this.workspaceName = data.workspaceName;
     this.status = data.status;
     this.createdAt = data.createdAt;
