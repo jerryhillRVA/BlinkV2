@@ -9,6 +9,10 @@ import { StepPlatformConfig } from "@/app/components/steps/StepPlatformConfig";
 import { StepAgents } from "@/app/components/steps/StepAgents";
 import { StepReview } from "@/app/components/steps/StepReview";
 import { StepContent } from "@/app/components/steps/StepContent";
+import { StepObjectives, DEFAULT_OBJECTIVES } from "@/app/components/steps/StepObjectives";
+import { StepBrandPositioning } from "@/app/components/steps/StepBrandPositioning";
+import { StepAudience } from "@/app/components/steps/StepAudience";
+import type { BusinessObjective } from "@/app/components/content/types";
 import { WorkspaceSettings } from "@/app/components/WorkspaceSettings";
 import { ProfileSettings } from "@/app/components/ProfileSettings";
 import { ContentPipeline } from "@/app/components/ContentPipeline";
@@ -22,11 +26,13 @@ import { AnimatePresence, motion } from "motion/react";
 import { cn } from "@/lib/utils";
 
 const STEPS = [
-  { id: 1, title: "Workspace", description: "Identity" },
-  { id: 2, title: "Platforms", description: "Config" },
-  { id: 3, title: "Content", description: "Strategy" },
-  { id: 4, title: "Agents", description: "Team" },
-  { id: 5, title: "Review", description: "Finish" },
+  { id: 1, title: "Strategic Foundation", description: "Identity" },
+  { id: 2, title: "Business Objectives", description: "Goals" },
+  { id: 3, title: "Brand & Voice", description: "Positioning" },
+  { id: 4, title: "Audience", description: "Segments" },
+  { id: 5, title: "Platforms", description: "Config" },
+  { id: 6, title: "Content Strategy", description: "Pillars" },
+  { id: 7, title: "Review", description: "Finish" },
 ];
 
 import { TooltipProvider } from "@/app/components/ui/tooltip";
@@ -39,6 +45,7 @@ export default function App() {
   const [activeTab, setActiveTab] = useState<DashboardTab>("content");
   const [contentResetKey, setContentResetKey] = useState(0); // Key to reset ContentIdeas to overview
   const [calendarOpenItem, setCalendarOpenItem] = useState<{ itemId: string; tab: string } | null>(null);
+  const [objectives, setObjectives] = useState<BusinessObjective[]>(() => DEFAULT_OBJECTIVES());
 
   const nextStep = () => {
     if (currentStep < STEPS.length) {
@@ -90,12 +97,16 @@ export default function App() {
       case 1:
         return <StepWorkspaceBasics />;
       case 2:
-        return <StepPlatformConfig />;
+        return <StepObjectives objectives={objectives} onUpdateObjectives={setObjectives} />;
       case 3:
-        return <StepContent />;
+        return <StepBrandPositioning workspaceName={activeWorkspace} />;
       case 4:
-        return <StepAgents />;
+        return <StepAudience />;
       case 5:
+        return <StepPlatformConfig />;
+      case 6:
+        return <StepContent objectives={objectives} />;
+      case 7:
         return <StepReview workspaceName={activeWorkspace} />;
       default:
         return <StepWorkspaceBasics />;
@@ -105,7 +116,7 @@ export default function App() {
   const renderDashboardContent = () => {
     switch (activeTab) {
       case "strategy":
-        return <StrategyTab />;
+        return <StrategyTab objectives={objectives} onUpdateObjectives={setObjectives} />;
       case "content":
         return <ContentIdeas key={contentResetKey} initialOpenItem={calendarOpenItem} onClearOpenItem={() => setCalendarOpenItem(null)} />;
       case "calendar":

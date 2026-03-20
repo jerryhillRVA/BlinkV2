@@ -476,11 +476,9 @@ export const CTA_TYPE_CAROUSEL_OPTIONS: { value: string; label: string }[] = [
 
 export const PRODUCTION_STEPS: { id: ProductionStep; label: string; step: number }[] = [
   { id: "brief", label: "Brief", step: 1 },
-  { id: "draft", label: "Draft", step: 2 },
-  { id: "blueprint", label: "Blueprint", step: 3 },
-  { id: "assets", label: "Assets", step: 4 },
-  { id: "packaging", label: "Packaging", step: 5 },
-  { id: "qa", label: "QA", step: 6 },
+  { id: "builder", label: "Builder", step: 2 },
+  { id: "packaging", label: "Packaging", step: 3 },
+  { id: "qa", label: "QA", step: 4 },
 ];
 
 // Export MOCK_RESEARCH_SOURCES

@@ -37,9 +37,9 @@ export function StepIndicator({ steps, currentStep }: StepIndicatorProps) {
                 >
                   {isCompleted ? <Check className="size-5" /> : step.id}
                 </div>
-                <div className="absolute top-12 text-center whitespace-nowrap">
+                <div className="absolute top-12 text-center w-20">
                   <p className={cn(
-                    "text-xs font-bold uppercase tracking-wider",
+                    "text-[9px] font-bold uppercase tracking-wider leading-tight",
                     isActive ? "text-[#d94e33]" : "text-muted-foreground"
                   )}>
                     {step.title}
@@ -49,7 +49,7 @@ export function StepIndicator({ steps, currentStep }: StepIndicatorProps) {
 
               {/* Progress Line */}
               {index < steps.length - 1 && (
-                <div className="flex-1 h-[2px] mx-4 bg-muted overflow-hidden">
+                <div className="flex-1 h-[2px] mx-1 bg-muted overflow-hidden">
                   <div
                     className="h-full bg-[#d94e33] transition-all duration-500 ease-in-out"
                     style={{

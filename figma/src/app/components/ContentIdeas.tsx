@@ -74,6 +74,7 @@ import type {
   ContentStage,
   WorkflowStep,
   ResearchSource,
+  InvestmentPlan,
 } from "./content/types";
 import {
   DEFAULT_PILLARS,
@@ -121,7 +122,28 @@ export function ContentIdeas({ initialOpenItem, onClearOpenItem }: ContentIdeasP
     
     // Filter out old unrelated content items (c1-c12)
     const oldContentIds = ["c1", "c2", "c3", "c4", "c5", "c6", "c7", "c8", "c9", "c10", "c11", "c12"];
-    const filtered = stored.filter((i) => !oldContentIds.includes(i.id));
+    let filtered = stored.filter((i) => !oldContentIds.includes(i.id));
+
+    // Deduplicate production items (stage === "post") per concept per content type.
+    // If duplicates exist (legacy data), keep the most recently updated one.
+    const deduped: ContentItem[] = [];
+    const seenProductionKeys = new Set<string>();
+    // Sort newest-first so we always keep the most recent duplicate
+    const sorted = [...filtered].sort((a, b) =>
+      (b.updatedAt ?? "").localeCompare(a.updatedAt ?? "")
+    );
+    for (const item of sorted) {
+      if (item.stage === "post" && item.conceptId && item.contentType) {
+        const key = `${item.conceptId}|${item.contentType}`;
+        if (seenProductionKeys.has(key)) continue; // skip older duplicate
+        seenProductionKeys.add(key);
+      }
+      deduped.push(item);
+    }
+    // Restore original order (by createdAt descending)
+    filtered = deduped.sort((a, b) =>
+      (b.createdAt ?? "").localeCompare(a.createdAt ?? "")
+    );
     
     if (filtered.length === 0) return MOCK_CONTENT;
     const storedIds = new Set(filtered.map((i) => i.id));
@@ -140,6 +162,7 @@ export function ContentIdeas({ initialOpenItem, onClearOpenItem }: ContentIdeasP
     saveToStorage("blink_content_segments", DEFAULT_SEGMENTS);
     return DEFAULT_SEGMENTS;
   });
+  const [investmentPlan, setInvestmentPlan] = useState<InvestmentPlan | null>(null);
 
   // Persist to localStorage
   useEffect(() => { saveToStorage("blink_content_items", items); }, [items]);
@@ -334,12 +357,17 @@ export function ContentIdeas({ initialOpenItem, onClearOpenItem }: ContentIdeasP
   if (selectedItem) {
     // If it's a Concept, show the ConceptEditor
     if (selectedItem.stage === "concept") {
+      // Find any items already in production for this concept (to enforce 1 per content type)
+      const existingProductionItems = items.filter(
+        (i) => i.conceptId === selectedItem.id && i.stage === "post"
+      );
       return (
         <div className="animate-in fade-in duration-300">
           <ConceptEditor
             item={selectedItem}
             pillars={pillars}
             segments={segments}
+            existingProductionItems={existingProductionItems}
             onBack={() => setSelectedItemId(null)}
             onSave={(item) => {
               handleSaveItem(item);
@@ -348,14 +376,41 @@ export function ContentIdeas({ initialOpenItem, onClearOpenItem }: ContentIdeasP
               handleDeleteItem(selectedItem.id);
               setSelectedItemId(null);
             }}
-            onCreateBrief={(updatedItem) => {
-              const briefItem: ContentItem = {
-                ...updatedItem,
-                stage: "post" as ContentStage,
-              };
-              handleSaveItem(briefItem);
-              setSelectedItemId(null);
-              handleMoveToProduction(briefItem);
+            onCreateBrief={(itemsToProduce, keepConcept, workOnIndex = 0) => {
+              // Deduplicate: skip any item whose contentType already has a production item for this concept
+              const alreadyProductionTypes = new Set(
+                existingProductionItems.map((i) => i.contentType)
+              );
+              const filtered = itemsToProduce.filter(
+                (i) => !alreadyProductionTypes.has(i.contentType)
+              );
+              if (filtered.length === 0) {
+                return;
+              }
+              filtered.forEach((updatedItem, index) => {
+                const briefItem: ContentItem = {
+                  ...updatedItem,
+                  stage: "post" as ContentStage,
+                  status: "in-progress" as ContentStatus,
+                };
+                handleSaveItem(briefItem);
+
+                if (index === workOnIndex) {
+                  handleMoveToProduction(briefItem);
+                }
+              });
+
+              if (!keepConcept && itemsToProduce.some(i => i.id !== selectedItem.id)) {
+                // If we didn't keep the concept and we generated NEW items, we should delete the original concept item
+                setItems((prev) => prev.filter((i) => i.id !== selectedItem.id));
+              }
+
+              if (keepConcept || workOnIndex === -1) {
+                setSelectedItemId(null);
+                setActiveStep("overview");
+              } else {
+                setSelectedItemId(null);
+              }
             }}
           />
         </div>
@@ -412,6 +467,7 @@ export function ContentIdeas({ initialOpenItem, onClearOpenItem }: ContentIdeasP
               onNavigateToProduction={() => setActiveStep("production")}
               onCreateIdeaFromSource={handleCreateIdeaFromSource}
               onCreateProductionFromSource={handleCreateProductionFromSource}
+              onSaveInvestmentPlan={setInvestmentPlan}
             />
           )}
 

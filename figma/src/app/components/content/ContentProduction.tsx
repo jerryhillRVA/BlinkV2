@@ -77,10 +77,7 @@ import type {
 import { PLATFORM_CONTENT_TYPES, PLATFORM_CONFIG, STAGE_CONFIG, STATUS_CONFIG } from "./types";
 import { CONTENT_TYPE_CONFIG, PRODUCTION_STEPS, TEAM_ROLES } from "./production/production-config";
 import { BriefBuilder } from "./production/BriefBuilder";
-import { DraftStudio } from "./production/DraftStudio";
-import { ExecutionStudio } from "./production/ExecutionStudio";
-import { BlueprintStudio } from "./production/BlueprintStudio";
-import { AssetsStudio } from "./production/AssetsStudio";
+import { ContentBuilderStudio } from "./production/ContentBuilderStudio";
 import { PackagingStudio } from "./production/PackagingStudio";
 import { QAStudio } from "./production/QAStudio";
 import { ActivityStudio } from "./production/ActivityStudio";
@@ -105,30 +102,6 @@ const TikTokIcon = ({ className }: { className?: string }) => (
   </svg>
 );
 
-const CONTENT_TYPE_ICONS: Record<string, React.ReactNode> = {
-  reel: <Clapperboard className="size-4" />,
-  carousel: <BookOpen className="size-4" />,
-  "feed-post": <ImageIcon className="size-4" />,
-  story: <Circle className="size-4" />,
-  guide: <FileText className="size-4" />,
-  live: <Radio className="size-4" />,
-  "short-video": <Video className="size-4" />,
-  "photo-carousel": <BookOpen className="size-4" />,
-  "long-form": <Monitor className="size-4" />,
-  shorts: <Zap className="size-4" />,
-  "live-stream": <Radio className="size-4" />,
-  "community-post": <MessageSquare className="size-4" />,
-  "fb-feed-post": <ImageIcon className="size-4" />,
-  "fb-link-post": <LinkIcon className="size-4" />,
-  "fb-reel": <Clapperboard className="size-4" />,
-  "fb-story": <Circle className="size-4" />,
-  "fb-live": <Radio className="size-4" />,
-  "ln-text-post": <FileText className="size-4" />,
-  "ln-document": <BookOpen className="size-4" />,
-  "ln-article": <FileText className="size-4" />,
-  "ln-video": <Video className="size-4" />,
-};
-
 const PLATFORM_ICONS: Record<Platform, React.ReactNode> = {
   instagram: <Instagram className="size-5" />,
   tiktok: <TikTokIcon />,
@@ -137,6 +110,35 @@ const PLATFORM_ICONS: Record<Platform, React.ReactNode> = {
   linkedin: <Linkedin className="size-5" />,
   tbd: <div className="size-5" />,
 };
+
+// ─── Content type labels (with orientation annotations) ───────────────────────
+const CONTENT_TYPE_LABELS: Partial<Record<ContentType, string>> = {
+  "reel": "Reel (Vertical)",
+  "carousel": "Carousel",
+  "feed-post": "Feed Post",
+  "story": "Stories",
+  "guide": "Guide",
+  "live": "Live",
+  "short-video": "Short Video (Vertical)",
+  "photo-carousel": "Photo Carousel",
+  "long-form": "Long-form Video",
+  "shorts": "Shorts (Vertical)",
+  "live-stream": "Live Stream",
+  "community-post": "Community Post",
+  "fb-feed-post": "Feed Post",
+  "fb-link-post": "Link Post",
+  "fb-reel": "Reel (Vertical)",
+  "fb-story": "Story",
+  "fb-live": "Live",
+  "ln-text-post": "Text Post",
+  "ln-document": "Document / Carousel",
+  "ln-article": "Article",
+  "ln-video": "Video",
+};
+
+function getContentTypeLabel(ct: ContentType): string {
+  return CONTENT_TYPE_LABELS[ct] || ct;
+}
 
 function createDefaultProductionData(): ProductionData {
   return {
@@ -151,12 +153,13 @@ function createDefaultProductionData(): ProductionData {
 
 // Remap any production steps that have been removed from the workflow
 // so stored items don't silently show a blank panel.
-const VALID_PRODUCTION_STEPS: ProductionStep[] = [
-  "select", "brief", "draft", "blueprint", "assets", "packaging", "qa", "handoff",
+const VALID_PRODUCTION_STEPS: string[] = [
+  "select", "brief", "builder", "packaging", "qa", "handoff",
 ];
 function normalizeStep(step: string | undefined): ProductionStep {
   if (!step) return "brief";
-  if ((VALID_PRODUCTION_STEPS as string[]).includes(step)) return step as ProductionStep;
+  if (step === "draft" || step === "blueprint" || step === "assets") return "builder";
+  if (VALID_PRODUCTION_STEPS.includes(step)) return step as ProductionStep;
   // "activity" was removed — send users back to QA (the last step before it)
   if (step === "activity") return "qa";
   return "brief";
@@ -484,85 +487,140 @@ export function ContentProduction({
     const config = CONTENT_TYPE_CONFIG[selectedContentType];
     const stepIndex = PRODUCTION_STEPS.findIndex((s) => s.id === productionStep);
 
+    // Sibling navigation: items sharing the same parent concept
+    const siblingConceptId = currentItem.conceptId;
+    const siblingItems = (() => {
+      if (!siblingConceptId) return [];
+      const raw = items.filter(
+        (i) => i.conceptId === siblingConceptId && i.id !== currentItem.id
+      );
+      // Deduplicate by platform+contentType — keep the most recently updated
+      const seen = new Map<string, ContentItem>();
+      raw.forEach((i) => {
+        const key = `${i.platform}|${i.contentType}`;
+        const existing = seen.get(key);
+        if (!existing || (i.updatedAt ?? "") > (existing.updatedAt ?? "")) {
+          seen.set(key, i);
+        }
+      });
+      return Array.from(seen.values());
+    })();
+    const parentConceptItem = siblingConceptId
+      ? (items.find((i) => i.id === siblingConceptId) ?? null)
+      : null;
+
     return (
       <div className="space-y-4">
-        {/* ─── Orange Gradient Header ─── */}
-        <div className="bg-gradient-to-r from-[#d94e33] to-[#f26b4d] rounded-xl p-4 shadow-sm">
-          <div className="flex items-center justify-between gap-3">
-            <div className="flex items-center gap-3 min-w-0">
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-7 text-[10px] gap-1 text-white/90 hover:text-white hover:bg-white/15 shrink-0"
-                onClick={handleBackToPipeline}
-              >
-                <ChevronLeft className="size-3" /> Pipeline
-              </Button>
-              <div className="h-5 w-px bg-white/20 shrink-0" />
-              <div className="flex items-center gap-2 min-w-0">
-                <div className="flex items-center justify-center size-7 rounded-lg bg-white/15 shrink-0">
-                  {PLATFORM_ICONS[selectedPlatform]}
-                </div>
-                <div className="min-w-0">
-                  <h2 className="text-white text-sm truncate" style={{ fontWeight: 700 }}>
-                    {currentItem.title}
-                  </h2>
-                  <div className="flex items-center gap-1.5">
-                    <span className="text-white/70 text-[10px]">
-                      {PLATFORM_CONFIG[selectedPlatform].label}
-                    </span>
-                    <span className="text-white/40 text-[10px]">·</span>
-                    <span className="text-white/70 text-[10px]">
-                      {config.label}
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </div>
+        {/* ─── Header ─── */}
+        <div className="bg-gradient-to-r from-[#d94e33] to-[#f26b4d] rounded-xl shadow-sm px-4 pt-3 pb-2.5">
+          {/* Row 1: nav buttons */}
+          <div className="flex items-center justify-between gap-2">
+            {/* Left: Pipeline back */}
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-7 text-[10px] gap-1 text-white/80 hover:text-white hover:bg-white/15 shrink-0"
+              onClick={handleBackToPipeline}
+            >
+              <ChevronLeft className="size-3" /> Pipeline
+            </Button>
 
-            {/* Actions */}
-            <div className="flex items-center gap-1.5 shrink-0">
-              {/* Activity Log button — persistent across all steps */}
+            {/* Right: Back to Concept + Actions + Activity */}
+            <div className="flex items-center gap-1 shrink-0">
+              {parentConceptItem && (
+                <>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-7 text-[10px] gap-1 text-white/80 hover:text-white hover:bg-white/15"
+                    onClick={() => {
+                      handleBackToPipeline();
+                      onSelectItem(parentConceptItem.id);
+                    }}
+                  >
+                    <ChevronLeft className="size-3" />
+                    <span className="hidden sm:inline">Back to Concept</span>
+                  </Button>
+                  <div className="h-4 w-px bg-white/20" />
+                </>
+              )}
               <Button
                 variant="ghost"
                 size="sm"
-                className="h-7 text-[10px] gap-1 text-white/70 hover:text-white hover:bg-white/15"
-                onClick={() => setActivityPanelOpen(true)}
-                title="Activity Log"
-              >
-                <History className="size-3" />
-                <span className="hidden lg:inline">Activity</span>
-              </Button>
-              <div className="h-4 w-px bg-white/20" />
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-7 text-[10px] gap-1 text-white/70 hover:text-white hover:bg-white/15"
+                className="h-7 text-[10px] gap-1 text-white/80 hover:text-white hover:bg-white/15"
                 onClick={() => setActionDialog("choose")}
                 title="Item Actions"
               >
                 <ShieldAlert className="size-3" />
                 <span className="hidden lg:inline">Actions</span>
               </Button>
-              <div className="h-4 w-px bg-white/20 hidden md:block" />
-              <span className="text-white/50 text-[9px] hidden md:inline mr-1">Repurpose:</span>
-              {(Object.keys(PLATFORM_CONFIG) as Platform[])
-                .filter((p) => p !== selectedPlatform && p !== "tbd")
-                .map((p) => (
-                  <Button
-                    key={p}
-                    variant="ghost"
-                    size="sm"
-                    className="h-7 w-7 p-0 text-white/60 hover:text-white hover:bg-white/15 rounded-lg"
-                    onClick={() => handleRepurpose(p)}
-                    title={`Repurpose for ${PLATFORM_CONFIG[p].label}`}
-                  >
-                    {PLATFORM_ICONS[p]}
-                  </Button>
-                ))}
+              <div className="h-4 w-px bg-white/20" />
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-7 text-[10px] gap-1 text-white/80 hover:text-white hover:bg-white/15"
+                onClick={() => setActivityPanelOpen(true)}
+                title="Activity Log"
+              >
+                <History className="size-3" />
+                <span className="hidden lg:inline">Activity</span>
+              </Button>
             </div>
           </div>
+
+          {/* Row 2: full-width editable title */}
+          <div className="mt-1.5 px-1">
+            <input
+              value={currentItem.title}
+              onChange={(e) => {
+                const updated = items.map(i =>
+                  i.id === currentItem.id ? { ...i, title: e.target.value } : i
+                );
+                onSaveItem(updated.find(i => i.id === currentItem.id)!);
+              }}
+              className="w-full bg-transparent border-none outline-none text-white placeholder-white/40 focus:bg-white/10 focus:rounded px-1.5 -mx-1.5 py-0.5 transition-colors"
+              style={{ fontSize: "1.05rem", fontWeight: 700 }}
+              placeholder="Untitled"
+              aria-label="Content title"
+            />
+          </div>
         </div>
+
+        {/* ─── Variation Chips (floats below header, only when siblings exist) ─── */}
+        {siblingItems.length > 0 && (
+          <div className="flex items-center gap-2 overflow-x-auto pb-0.5">
+            <span className="text-[10px] text-gray-400 uppercase tracking-wider font-bold shrink-0">Variations</span>
+            <div className="h-3 w-px bg-gray-200 shrink-0" />
+            {/* Active chip */}
+            <div
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] shrink-0 shadow-sm border"
+              style={{ fontWeight: 700, background: "linear-gradient(to right, #d94e33, #f26b4d)", color: "white", borderColor: "transparent" }}
+            >
+              <span className="flex items-center [&_svg]:size-3 opacity-80">
+                {PLATFORM_ICONS[selectedPlatform]}
+              </span>
+              {PLATFORM_CONFIG[selectedPlatform].label}
+              <span className="opacity-40 mx-0.5">·</span>
+              {getContentTypeLabel(selectedContentType)}
+            </div>
+            {/* Sibling chips */}
+            {siblingItems.map((sib) => (
+              <button
+                key={sib.id}
+                onClick={() => handleOpenItem(sib)}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] shrink-0 border border-gray-200 bg-white text-gray-600 hover:border-[#d94e33]/40 hover:text-[#d94e33] hover:bg-[#d94e33]/5 transition-all"
+                style={{ fontWeight: 600 }}
+              >
+                <span className="flex items-center [&_svg]:size-3 opacity-60">
+                  {PLATFORM_ICONS[sib.platform || "tbd"]}
+                </span>
+                {PLATFORM_CONFIG[sib.platform || "tbd"].label}
+                <span className="text-gray-300 mx-0.5">·</span>
+                {sib.contentType ? getContentTypeLabel(sib.contentType) : "Unknown"}
+              </button>
+            ))}
+          </div>
+        )}
 
         {/* Production Step Navigation */}
         <div className="bg-white rounded-xl border border-gray-100 p-1 shadow-sm">
@@ -639,45 +697,29 @@ export function ContentProduction({
               toast.success("Brief approved!");
             }}
             onUnlockBrief={handleUnlockBrief}
-            onNext={() => goToStep("draft")}
+            onNext={() => goToStep("builder")}
           />
         )}
 
-        {productionStep === "draft" && production.brief && selectedPlatform && selectedContentType && (
-          <DraftStudio
-            platform={selectedPlatform}
-            contentType={selectedContentType}
-            title={currentItem.title}
-            brief={production.brief}
-            outputs={production.outputs}
-            onUpdateOutputs={(outputs) => saveProductionData({ outputs })}
-            onNext={() => goToStep("blueprint")}
-          />
-        )}
-
-        {productionStep === "blueprint" && production.brief && selectedPlatform && selectedContentType && (
-          <BlueprintStudio
-            platform={selectedPlatform}
-            contentType={selectedContentType}
-            title={currentItem.title}
-            brief={production.brief}
-            outputs={production.outputs}
-            onUpdateOutputs={(outputs) => saveProductionData({ outputs })}
-            onNext={() => goToStep("assets")}
-            onBack={() => goToStep("draft")}
-          />
-        )}
-
-        {productionStep === "assets" && production.brief && selectedPlatform && selectedContentType && (
-          <AssetsStudio
-            platform={selectedPlatform}
-            contentType={selectedContentType}
-            title={currentItem.title}
-            brief={production.brief}
-            outputs={production.outputs}
-            onUpdateOutputs={(outputs) => saveProductionData({ outputs })}
+        {productionStep === "builder" && selectedPlatform && selectedContentType && (
+          <ContentBuilderStudio
+            item={currentItem}
+            allItems={items}
+            onUpdateItem={(itemUpdates, productionUpdates) => saveProductionData(productionUpdates, itemUpdates)}
             onNext={() => goToStep("packaging")}
-            onBack={() => goToStep("blueprint")}
+            onBack={() => goToStep("brief")}
+            onNavigateToItem={(itemId) => {
+              const targetItem = items.find((i) => i.id === itemId);
+              if (targetItem) {
+                handleOpenItem(targetItem);
+              }
+            }}
+            onNavigateToConcept={(conceptId) => {
+              // Navigate back to concept editor via pipeline
+              handleBackToPipeline();
+              // Signal to parent to open the concept
+              onSelectItem(conceptId);
+            }}
           />
         )}
 
@@ -690,7 +732,7 @@ export function ContentProduction({
             outputs={production.outputs}
             onUpdateOutputs={(outputs) => saveProductionData({ outputs })}
             onNext={() => goToStep("qa")}
-            onBack={() => goToStep("assets")}
+            onBack={() => goToStep("builder")}
           />
         )}
 
