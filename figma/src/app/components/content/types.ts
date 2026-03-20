@@ -15,11 +15,60 @@ export type TikTokContentType = "short-video" | "photo-carousel";
 export type YouTubeContentType = "long-form" | "shorts" | "live-stream" | "community-post";
 export type ContentType = InstagramContentType | TikTokContentType | YouTubeContentType | FacebookContentType | LinkedInContentType;
 
+export interface PillarGoal {
+  id: string;
+  metric: string;
+  target: number;
+  unit: "%" | "followers" | "posts" | "views" | "leads" | string;
+  period: "monthly" | "quarterly" | "yearly";
+  current?: number;
+}
+
+export type ObjectiveCategory =
+  | "growth"
+  | "revenue"
+  | "awareness"
+  | "trust"
+  | "community"
+  | "engagement";
+
+export interface BusinessObjective {
+  id: string;
+  category: ObjectiveCategory;
+  statement: string;
+  target: number;
+  unit: string;
+  timeframe: string;
+  currentValue?: number;
+  pillarIds?: string[];
+  status: "on-track" | "at-risk" | "behind" | "achieved";
+}
+
+export interface BrandPositioning {
+  targetCustomer: string;
+  problemSolved: string;
+  solution: string;
+  differentiator: string;
+  positioningStatement: string;
+}
+
 export interface ContentPillar {
   id: string;
   name: string;
   description: string;
   color: string;
+  goals?: PillarGoal[];
+  objectiveIds?: string[];
+}
+
+export type JourneyStage = "awareness" | "consideration" | "conversion" | "retention";
+
+export interface SegmentJourneyStage {
+  stage: JourneyStage;
+  primaryGoal: string;
+  contentTypes: string[];
+  hookAngles: string[];
+  successMetric: string;
 }
 
 export interface AudienceSegment {
@@ -30,6 +79,7 @@ export interface AudienceSegment {
   interests?: string[];
   painPoints?: string[];
   peakTimes?: string[];
+  journeyStages?: SegmentJourneyStage[];
 }
 
 export interface Attachment {
@@ -38,14 +88,55 @@ export interface Attachment {
   size: string;
 }
 
+export interface CompetitorIntel {
+  handle: string;
+  platform: Platform;
+  analyzedAt: string;
+  positioning: {
+    brandVoice: string;
+    primaryMessage: string;
+    messagingHierarchy: string[];
+    targetAudience: string;
+  };
+  contentStrategy: {
+    topFormat: string;
+    postingFrequency: string;
+    hookStyle: string;
+    ctaPattern: string;
+    engagementSignal: "Very High" | "High" | "Medium" | "Low";
+  };
+  gaps: {
+    uncoveredAngles: string[];
+    missedPainPoints: string[];
+    counterStrategy: string;
+  };
+}
+
+export type ContentCategory =
+  | "educational"
+  | "entertaining"
+  | "community"
+  | "promotional"
+  | "trending";
+
+export interface ContentMixTarget {
+  category: ContentCategory;
+  label: string;
+  targetPercent: number;
+  color: string;
+  description: string;
+}
+
 export interface ContentItem {
   id: string;
+  conceptId?: string; // Links variations to their parent concept
   stage: ContentStage;
   status: ContentStatus;
   title: string;
   description: string;
   pillarIds: string[];
   segmentIds: string[];
+  contentCategory?: ContentCategory;
   createdAt: string;
   updatedAt: string;
   
@@ -57,6 +148,7 @@ export interface ContentItem {
   // Directional Fields (Strategic Context)
   platform?: Platform; // Optional at Concept, Required before In Production
   contentType?: ContentType;
+  productionTargets?: { platform: Platform; contentType: ContentType }[];
   audienceSegment?: string; // Primary audience segment
   cta?: {
     type: CTATypeEnum;
@@ -116,9 +208,13 @@ export interface CompetitorInsight {
   platform: Platform;
   contentType: string;
   topic: string;
-  engagement: string;
+  relevancyLevel: "Very High" | "High" | "Medium";
   frequency: string;
   insight: string;
+  intel?: CompetitorIntel;
+  intelOpen?: boolean;
+  isRunningIntel?: boolean;
+  deleteConfirm?: boolean;
 }
 
 export interface ResearchSource {
@@ -234,11 +330,11 @@ export const MOCK_RESEARCH_SOURCES: ResearchSource[] = [
 ];
 
 export const MOCK_COMPETITOR_INSIGHTS: CompetitorInsight[] = [
-  { id: "ci1", competitor: "Yoga with Adriene", platform: "youtube", contentType: "Long-form", topic: "30-day yoga journeys", engagement: "Very High (8.4%)", frequency: "Daily", insight: "Monthly yoga challenges with daily 20-30 min videos. Strong community engagement in comments. Gentle, accessible approach resonates with 40+ audience." },
-  { id: "ci2", competitor: "Move with Nicole", platform: "instagram", contentType: "Reels", topic: "Low-impact fitness demos", engagement: "High (6.8%)", frequency: "4x/week", insight: "Short fitness demos focused on joint-friendly movements. Clear form cues and modifications for different fitness levels." },
-  { id: "ci3", competitor: "The Midlife Feast", platform: "instagram", contentType: "Carousel", topic: "Nutrition & recipes", engagement: "High (7.2%)", frequency: "3x/week", insight: "Recipe carousels with ingredient benefits highlighted. Focus on anti-inflammatory foods and hormone-supporting nutrition." },
-  { id: "ci4", competitor: "Dr. Mary Claire Haver", platform: "tiktok", contentType: "Short-form", topic: "Menopause education", engagement: "Very High (9.6%)", frequency: "5x/week", insight: "Myth-busting menopause content with medical expertise. Direct, science-backed tips in under 60 seconds drive strong saves and shares." },
-  { id: "ci5", competitor: "Fit After 40", platform: "youtube", contentType: "Shorts", topic: "Quick strength workouts", engagement: "Medium (5.1%)", frequency: "6x/week", insight: "15-second exercise demos with clear benefits callout. Focus on functional strength for everyday activities." },
+  { id: "ci1", competitor: "Yoga with Adriene", platform: "youtube", contentType: "Long-form", topic: "30-day yoga journeys", relevancyLevel: "Very High", frequency: "Daily", insight: "Monthly yoga challenges with daily 20-30 min videos. Strong community engagement in comments. Gentle, accessible approach resonates with 40+ audience." },
+  { id: "ci2", competitor: "Move with Nicole", platform: "instagram", contentType: "Reels", topic: "Low-impact fitness demos", relevancyLevel: "High", frequency: "4x/week", insight: "Short fitness demos focused on joint-friendly movements. Clear form cues and modifications for different fitness levels." },
+  { id: "ci3", competitor: "The Midlife Feast", platform: "instagram", contentType: "Carousel", topic: "Nutrition & recipes", relevancyLevel: "High", frequency: "3x/week", insight: "Recipe carousels with ingredient benefits highlighted. Focus on anti-inflammatory foods and hormone-supporting nutrition." },
+  { id: "ci4", competitor: "Dr. Mary Claire Haver", platform: "tiktok", contentType: "Short-form", topic: "Menopause education", relevancyLevel: "Very High", frequency: "5x/week", insight: "Myth-busting menopause content with medical expertise. Direct, science-backed tips in under 60 seconds drive strong saves and shares." },
+  { id: "ci5", competitor: "Fit After 40", platform: "youtube", contentType: "Shorts", topic: "Quick strength workouts", relevancyLevel: "Medium", frequency: "6x/week", insight: "15-second exercise demos with clear benefits callout. Focus on functional strength for everyday activities." },
 ];
 
 export const MOCK_AUDIENCE_INSIGHTS: AudienceInsight[] = [
@@ -338,7 +434,7 @@ export const WORKFLOW_STEPS = [
 
 // ─── Production Blueprint Types ───
 
-export type ProductionStep = "select" | "brief" | "draft" | "blueprint" | "assets" | "packaging" | "qa" | "handoff";
+export type ProductionStep = "select" | "brief" | "builder" | "packaging" | "qa" | "handoff";
 
 export type Objective = "awareness" | "engagement" | "traffic" | "leads" | "sales" | "community" | "recruiting" | "lead-gen" | "trust" | "education" | "conversion";
 export type CTAType = "follow" | "link" | "comment" | "share" | "subscribe" | "swipe" | "dm" | "none";
@@ -586,6 +682,7 @@ export interface ProductionOutput {
   altText?: string;
   editNotes?: string;
   repurposePlan?: string[];
+  amplification?: AmplificationData;
 
   // ─── Spec-aligned Draft fields (draft-requirements.md) ───
   hook?: string;              // §2A – selected/active hook
@@ -622,6 +719,10 @@ export interface AssetChecklistItem {
   completed: boolean;
   assignee?: string;
   notes?: string;
+  fileUrl?: string;
+  fileName?: string;
+  fileType?: string;
+  aiGenerated?: boolean;
 }
 
 export interface ProductionTask {
@@ -641,6 +742,7 @@ export interface ProductionData {
   tasks: ProductionTask[];
   internalApproval?: { approved: boolean; comments: string[]; reviewer?: string };
   versions: { label: string; savedAt: string }[];
+  amplification?: AmplificationData;
 }
 
 export interface ProductionSource {
@@ -781,6 +883,22 @@ export interface QAData {
 
 // ─── End QA Data ───
 
+// ─── Amplification Data ───
+
+export interface AmplificationData {
+  boostEnabled?: "yes" | "no" | "later";
+  boostPlatform?: Platform;
+  boostBudget?: string;
+  boostDuration?: string;
+  boostAudience?: string;
+  crossPostPlans?: { platform: Platform; enabled: boolean; adaptationNote: string }[];
+  repurposePlan?: string;
+  teamShare?: boolean;
+  teamCaption?: string;
+}
+
+// ─── End Amplification Data ───
+
 // ─── Activity Data ───
 
 export type ActivityEventType =
@@ -824,3 +942,175 @@ export interface ActivityData {
 }
 
 // ─── End Activity Data ───
+
+// ─── Repurposer Types ───
+
+export interface RepurposeOutput {
+  sourceText: string;
+  pillarId: string;
+  segmentId: string;
+  generatedAt: string;
+  reelHooks: string[];
+  carouselSlides: { headline: string; role: string }[];
+  instagramCaption: string;
+  tiktokHook: string;
+  youtubeShort: string;
+  linkedinPost: string;
+  facebookPost: string;
+}
+
+// ─── End Repurposer Types ───
+
+// ─── Series Builder Types ───
+
+export interface SeriesPost {
+  postNumber: number;
+  suggestedDay: string;
+  contentType: ContentType;
+  seriesRole: "Hook" | "Value" | "Proof" | "Pivot" | "Conversion";
+  hook: string;
+  captionSummary: string;
+  cta: string;
+  bridgeNote?: string;
+}
+
+export interface ContentSeries {
+  title: string;
+  narrativeArc: string;
+  platform: Platform;
+  goal: string;
+  pillarId: string;
+  segmentId: string;
+  posts: SeriesPost[];
+  generatedAt: string;
+}
+
+// ─── End Series Builder Types ───
+
+// ─── A/B Analyzer Types ───
+
+export interface ABAnalysisResult {
+  winner: "A" | "B";
+  confidence: "High" | "Medium" | "Low";
+  verdict: string;
+  variantA: {
+    strengths: string[];
+    weaknesses: string[];
+    scores: { hook: number; clarity: number; emotion: number; cta: number };
+  };
+  variantB: {
+    strengths: string[];
+    weaknesses: string[];
+    scores: { hook: number; clarity: number; emotion: number; cta: number };
+  };
+  improvedVersion: string;
+  improvementRationale: string;
+}
+
+// ─── End A/B Analyzer Types ───
+
+// ─── SEO Strategy Types ───
+
+export interface HashtagSet {
+  tier: "reach" | "niche" | "community";
+  tags: string[];
+}
+
+export interface TrendingAngle {
+  angle: string;
+  hookExample: string;
+  viralityLevel: "High" | "Medium" | "Emerging";
+  searchVolume: string;
+}
+
+export interface SEOStrategy {
+  platform: Platform;
+  pillarId: string;
+  goal: string;
+  generatedAt: string;
+  hashtagSets: HashtagSet[];
+  bioKeywords: string[];
+  searchIntents: string[];
+  exampleBio: string;
+  captionChecklist: { label: string; tip: string }[];
+  trendingAngles: TrendingAngle[];
+}
+
+// ─── End SEO Strategy Types ───
+
+// ─── Brand Voice & Tone Types ───
+
+export interface VoiceAttribute {
+  id: string;
+  label: string;
+  description: string;
+  doExample: string;
+  dontExample: string;
+}
+
+export interface ToneContext {
+  id: string;
+  context: string;
+  tone: string;
+  example: string;
+}
+
+export interface BrandVoice {
+  missionStatement: string;
+  voiceAttributes: VoiceAttribute[];
+  toneByContext: ToneContext[];
+  platformToneAdjustments: {
+    platform: Platform;
+    adjustment: string;
+  }[];
+  vocabulary: {
+    preferred: string[];
+    avoid: string[];
+  };
+  generatedAt?: string;
+}
+
+// ─── End Brand Voice & Tone Types ───
+
+// ─── Channel Strategy Types ───
+
+export interface ChannelStrategyEntry {
+  platform: Platform;
+  active: boolean;
+  role: string;
+  primaryContentTypes: ContentType[];
+  toneAdjustment: string;
+  postingCadence: string;
+  primaryAudience: string;
+  primaryGoal: string;
+  notes: string;
+  generatedAt?: string;
+}
+
+// ─── End Channel Strategy Types ───
+
+// ─── Investment Allocator Types ───
+
+export interface PillarAllocation {
+  pillarId: string;
+  postsPerWeek: number;
+  percentage: number;
+  rationale: string;
+}
+
+export interface PlatformAllocation {
+  platform: Platform;
+  postsPerWeek: number;
+  rationale: string;
+}
+
+export interface InvestmentPlan {
+  totalPostsPerWeek: number;
+  pillarAllocations: PillarAllocation[];
+  platformAllocations: PlatformAllocation[];
+  quickWins: string[];
+  generatedAt: string;
+  selectedSegmentIds?: string[];
+}
+
+// ─── End Investment Allocator Types ───

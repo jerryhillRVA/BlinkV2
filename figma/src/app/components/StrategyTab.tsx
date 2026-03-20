@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { StrategyResearch } from "./content/StrategyResearch";
-import type { ContentPillar, AudienceSegment, ContentItem } from "./content/types";
+import type { ContentPillar, AudienceSegment, ContentItem, BusinessObjective } from "./content/types";
 import { DEFAULT_PILLARS, DEFAULT_SEGMENTS } from "./content/types";
 
 function loadFromStorage<T>(key: string, fallback: T): T {
@@ -17,7 +17,12 @@ function saveToStorage<T>(key: string, value: T): void {
   } catch {}
 }
 
-export function StrategyTab() {
+interface StrategyTabProps {
+  objectives?: BusinessObjective[];
+  onUpdateObjectives?: (objectives: BusinessObjective[]) => void;
+}
+
+export function StrategyTab({ objectives = [], onUpdateObjectives }: StrategyTabProps) {
   // Force update to Hive Collective pillars and segments
   const [pillars, setPillars] = useState<ContentPillar[]>(() => {
     // Clear old data and use Hive Collective defaults
@@ -49,6 +54,8 @@ export function StrategyTab() {
         onNavigateToProduction={() => {}}
         onCreateIdeaFromSource={() => {}}
         onCreateProductionFromSource={() => {}}
+        objectives={objectives}
+        onUpdateObjectives={onUpdateObjectives}
       />
     </div>
   );

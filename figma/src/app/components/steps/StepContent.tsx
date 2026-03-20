@@ -3,19 +3,28 @@ import { Label } from "@/app/components/ui/label";
 import { Input } from "@/app/components/ui/input";
 import { Textarea } from "@/app/components/ui/textarea";
 import { Button } from "@/app/components/ui/button";
-import { 
-  Plus, 
-  Trash2, 
-  Layout, 
-  Type, 
-  ListTodo, 
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/app/components/ui/select";
+import {
+  Plus,
+  Trash2,
+  Layout,
+  Type,
+  ListTodo,
   Users,
   Check,
-  Share2
+  Share2,
+  Target,
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { cn } from "@/lib/utils";
 import { FieldInfo } from "@/app/components/FieldInfo";
+import type { BusinessObjective } from "@/app/components/content/types";
 
 interface ContentPillar {
   id: number;
@@ -24,11 +33,16 @@ interface ContentPillar {
   themes: string;
   audienceSegments: string[];
   platforms: string[];
+  objectiveId?: string;
 }
 
 const fieldStyles = "bg-[#f3f4f6] border-none shadow-none focus-visible:ring-1 focus-visible:ring-gray-200 focus-visible:bg-[#edeff2] transition-colors";
 
-export function StepContent() {
+interface StepContentProps {
+  objectives?: BusinessObjective[];
+}
+
+export function StepContent({ objectives = [] }: StepContentProps) {
   const [pillars, setPillars] = React.useState<ContentPillar[]>([
     { 
       id: 1, 
@@ -141,24 +155,52 @@ export function StepContent() {
                       <Layout className="size-4 text-[#d94e33]" /> Pillar Name
                       <FieldInfo content="Give this content pillar a clear, descriptive name." />
                     </Label>
-                    <Input 
-                      value={pillar.name} 
+                    <Input
+                      value={pillar.name}
                       onChange={(e) => updatePillar(pillar.id, "name", e.target.value)}
-                      placeholder="e.g. Industry News" 
-                      className={cn(fieldStyles, "h-12")} 
+                      placeholder="e.g. Industry News"
+                      className={cn(fieldStyles, "h-12")}
                     />
                   </div>
 
                   <div className="space-y-2">
                     <Label className="flex items-center gap-2 text-sm font-bold text-gray-900">
+                      <Target className="size-4 text-[#d94e33]" /> Linked Objective
+                      <FieldInfo content="Connect this pillar to a business objective so your content always traces back to a measurable goal." />
+                    </Label>
+                    <Select
+                      value={pillar.objectiveId || ""}
+                      onValueChange={(v) => updatePillar(pillar.id, "objectiveId", v)}
+                    >
+                      <SelectTrigger className={cn(fieldStyles, "h-12")}>
+                        <SelectValue placeholder={objectives.length === 0 ? "No objectives defined — add in previous step" : "Select an objective"} />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {objectives.length === 0 ? (
+                          <SelectItem value="__none__" disabled>No objectives defined — add in previous step</SelectItem>
+                        ) : (
+                          objectives.map((obj) => (
+                            <SelectItem key={obj.id} value={obj.id}>
+                              {obj.statement || `${obj.category} objective`}
+                            </SelectItem>
+                          ))
+                        )}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="space-y-2">
+                    <Label className="flex items-center gap-2 text-sm font-bold text-gray-900">
                       <ListTodo className="size-4 text-[#d94e33]" /> Content Themes
                       <FieldInfo content="List the specific themes or topics that fall under this pillar." />
                     </Label>
-                    <Input 
-                      value={pillar.themes} 
+                    <Input
+                      value={pillar.themes}
                       onChange={(e) => updatePillar(pillar.id, "themes", e.target.value)}
-                      placeholder="e.g. AI News, Tutorials, Tips" 
-                      className={cn(fieldStyles, "h-12")} 
+                      placeholder="e.g. AI News, Tutorials, Tips"
+                      className={cn(fieldStyles, "h-12")}
                     />
                   </div>
                 </div>

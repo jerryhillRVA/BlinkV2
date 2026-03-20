@@ -20,6 +20,8 @@ import {
   Sparkles,
   Info,
   User,
+  Megaphone,
+  Loader2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
@@ -45,6 +47,7 @@ import type {
   ApprovalEntry,
   AuditEntry,
   CanonicalContentType,
+  AmplificationData,
 } from "../types";
 
 // ─── Props ───
@@ -508,6 +511,20 @@ export function QAStudio({
   const [currentUser, setCurrentUser] = useState("Sarah K.");
   const [approvalNotes, setApprovalNotes] = useState<Record<string, string>>({});
   const [showNoteInput, setShowNoteInput] = useState<string | null>(null);
+
+  // Amplification state
+  const amp: AmplificationData = outputs.amplification ?? {};
+  const updateAmp = useCallback(
+    (updates: Partial<AmplificationData>) => {
+      onUpdateOutputs({ ...outputs, amplification: { ...amp, ...updates } });
+    },
+    [outputs, amp, onUpdateOutputs]
+  );
+  const [isGeneratingCaption, setIsGeneratingCaption] = useState(false);
+  const [isGeneratingRepurpose, setIsGeneratingRepurpose] = useState(false);
+  const [isSuggestingAdaptations, setIsSuggestingAdaptations] = useState(false);
+
+  const OTHER_PLATFORMS: Platform[] = (["instagram", "tiktok", "youtube", "facebook", "linkedin"] as Platform[]).filter((p) => p !== platform);
 
   // Overall status label
   const overallStatus = isApproved
@@ -1016,6 +1033,209 @@ export function QAStudio({
           </Card>
         </div>
       </div>
+
+      {/* ─── POST-PUBLISH AMPLIFICATION ─── */}
+      {qa.approved && (
+        <Card className="border-green-200 bg-green-50/20">
+          <CardContent className="px-4 pt-3 pb-4">
+            <div className="flex items-center gap-2 mb-3">
+              <Megaphone className="size-4 text-[#d94e33]" />
+              <div>
+                <p className="text-sm font-bold text-gray-900">Post-Publish Amplification</p>
+                <p className="text-[10px] text-muted-foreground">Content is approved — now plan how to maximize its reach</p>
+              </div>
+            </div>
+
+            <div className="space-y-4">
+              {/* 1. Paid Boost */}
+              <div className="space-y-2">
+                <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Paid Boost</p>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-gray-600">Boost this post?</span>
+                  <div className="flex gap-1">
+                    {(["yes", "no", "later"] as const).map((opt) => (
+                      <button
+                        key={opt}
+                        onClick={() => updateAmp({ boostEnabled: opt })}
+                        className={cn(
+                          "px-2.5 py-1 rounded text-[10px] font-bold border transition-colors capitalize",
+                          amp.boostEnabled === opt
+                            ? "bg-[#d94e33] text-white border-[#d94e33]"
+                            : "bg-white text-gray-600 border-gray-200 hover:border-gray-300"
+                        )}
+                      >
+                        {opt === "later" ? "Decide Later" : opt.charAt(0).toUpperCase() + opt.slice(1)}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                {amp.boostEnabled === "yes" && (
+                  <div className="grid grid-cols-2 gap-2 pl-4 border-l-2 border-[#d94e33]/30 ml-1">
+                    <div>
+                      <label className="text-[10px] text-gray-500 mb-0.5 block">Budget</label>
+                      <input
+                        value={amp.boostBudget ?? ""}
+                        onChange={(e) => updateAmp({ boostBudget: e.target.value })}
+                        placeholder="e.g. $50"
+                        className="w-full h-7 text-xs px-2 border border-gray-200 rounded outline-none focus:border-[#d94e33]"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-[10px] text-gray-500 mb-0.5 block">Duration</label>
+                      <input
+                        value={amp.boostDuration ?? ""}
+                        onChange={(e) => updateAmp({ boostDuration: e.target.value })}
+                        placeholder="e.g. 7 days"
+                        className="w-full h-7 text-xs px-2 border border-gray-200 rounded outline-none focus:border-[#d94e33]"
+                      />
+                    </div>
+                    <div className="col-span-2">
+                      <label className="text-[10px] text-gray-500 mb-0.5 block">Target Audience</label>
+                      <input
+                        value={amp.boostAudience ?? ""}
+                        onChange={(e) => updateAmp({ boostAudience: e.target.value })}
+                        placeholder="e.g. Women 40–60 interested in yoga and wellness"
+                        className="w-full h-7 text-xs px-2 border border-gray-200 rounded outline-none focus:border-[#d94e33]"
+                      />
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* 2. Cross-Post Plan */}
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Cross-Post Plan</p>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="h-6 text-[9px] gap-1"
+                    disabled={isSuggestingAdaptations}
+                    onClick={() => {
+                      setIsSuggestingAdaptations(true);
+                      setTimeout(() => {
+                        setIsSuggestingAdaptations(false);
+                        const suggestions: Record<Platform, string> = {
+                          instagram: "Trim to 30s, add captions, use trending audio",
+                          tiktok: "Use hook-first cut, add on-screen text, tag trending sound",
+                          youtube: "Publish as Shorts with keyword-rich title",
+                          facebook: "Add text overlay, post to group with context",
+                          linkedin: "Add professional framing, remove casual language",
+                          tbd: "",
+                        };
+                        const existing = amp.crossPostPlans ?? OTHER_PLATFORMS.map((p) => ({ platform: p, enabled: false, adaptationNote: "" }));
+                        updateAmp({ crossPostPlans: existing.map((cp) => ({ ...cp, adaptationNote: suggestions[cp.platform] || cp.adaptationNote })) });
+                        toast.success("Adaptation notes generated");
+                      }, 1500);
+                    }}
+                  >
+                    {isSuggestingAdaptations ? <Loader2 className="size-2.5 animate-spin" /> : <Sparkles className="size-2.5" />}
+                    AI Suggest Adaptations
+                  </Button>
+                </div>
+                <div className="space-y-1.5">
+                  {OTHER_PLATFORMS.map((p) => {
+                    const existing = (amp.crossPostPlans ?? []).find((cp) => cp.platform === p);
+                    const enabled = existing?.enabled ?? false;
+                    const note = existing?.adaptationNote ?? "";
+                    const updatePlan = (updates: Partial<{ enabled: boolean; adaptationNote: string }>) => {
+                      const plans = OTHER_PLATFORMS.map((op) => {
+                        const cur = (amp.crossPostPlans ?? []).find((cp) => cp.platform === op) ?? { platform: op, enabled: false, adaptationNote: "" };
+                        return op === p ? { ...cur, ...updates } : cur;
+                      });
+                      updateAmp({ crossPostPlans: plans });
+                    };
+                    return (
+                      <div key={p} className="flex items-center gap-2">
+                        <Checkbox checked={enabled} onCheckedChange={(v) => updatePlan({ enabled: !!v })} />
+                        <span className="text-xs text-gray-700 w-20 shrink-0 capitalize">{p}</span>
+                        <input
+                          value={note}
+                          onChange={(e) => updatePlan({ adaptationNote: e.target.value })}
+                          placeholder="Adaptation note…"
+                          className="flex-1 h-6 text-[10px] px-2 border border-gray-100 rounded outline-none focus:border-[#d94e33] bg-white"
+                        />
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* 3. Repurpose Plan */}
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Repurpose Plan</p>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="h-6 text-[9px] gap-1"
+                    disabled={isGeneratingRepurpose}
+                    onClick={() => {
+                      setIsGeneratingRepurpose(true);
+                      setTimeout(() => {
+                        setIsGeneratingRepurpose(false);
+                        updateAmp({ repurposePlan: "1. Extract 3 key quotes for LinkedIn text posts\n2. Turn into a 15-second TikTok highlight clip\n3. Create a carousel summarizing the top takeaways\n4. Use b-roll for Instagram Reels intro" });
+                        toast.success("Repurpose plan generated");
+                      }, 2500);
+                    }}
+                  >
+                    {isGeneratingRepurpose ? <Loader2 className="size-2.5 animate-spin" /> : <Sparkles className="size-2.5" />}
+                    AI Generate
+                  </Button>
+                </div>
+                <Textarea
+                  value={amp.repurposePlan ?? ""}
+                  onChange={(e) => updateAmp({ repurposePlan: e.target.value })}
+                  placeholder="How will this content be repurposed? e.g. Turn YouTube video into 3 TikTok clips, extract quotes for LinkedIn…"
+                  className="min-h-[72px] resize-none text-xs"
+                />
+              </div>
+
+              {/* 4. Employee Advocacy */}
+              <div className="space-y-2">
+                <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Employee Advocacy</p>
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <Checkbox
+                    checked={amp.teamShare ?? false}
+                    onCheckedChange={(v) => updateAmp({ teamShare: !!v })}
+                  />
+                  <span className="text-xs text-gray-700">Share with team for organic amplification</span>
+                </label>
+                {amp.teamShare && (
+                  <div className="pl-6 space-y-1.5">
+                    <div className="flex items-center justify-between">
+                      <label className="text-[10px] text-gray-500">Suggested caption for team to share</label>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="h-5 text-[9px] gap-1"
+                        disabled={isGeneratingCaption}
+                        onClick={() => {
+                          setIsGeneratingCaption(true);
+                          setTimeout(() => {
+                            setIsGeneratingCaption(false);
+                            updateAmp({ teamCaption: "Just published: [post title] 🎉 Check it out and share with anyone who'd find this valuable! [link]" });
+                            toast.success("Team caption drafted");
+                          }, 1500);
+                        }}
+                      >
+                        {isGeneratingCaption ? <Loader2 className="size-2 animate-spin" /> : <Sparkles className="size-2" />}
+                        AI Draft
+                      </Button>
+                    </div>
+                    <Textarea
+                      value={amp.teamCaption ?? ""}
+                      onChange={(e) => updateAmp({ teamCaption: e.target.value })}
+                      placeholder="e.g. Just published our latest piece — share with your network! [link]"
+                      className="min-h-[56px] resize-none text-xs"
+                    />
+                  </div>
+                )}
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* ─── Footer ─── */}
       <div className="flex items-center justify-between pt-1.5 border-t border-gray-100">

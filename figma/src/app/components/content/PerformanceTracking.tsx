@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useId } from "react";
+import { motion } from "motion/react";
 import {
   BarChart3,
   TrendingUp,
@@ -20,6 +21,7 @@ import {
   Users,
   Zap,
   RefreshCcw,
+  ClipboardList,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/app/components/ui/card";
 import { Badge } from "@/app/components/ui/badge";
@@ -71,7 +73,27 @@ const platformPerformance = [
   { platform: "TikTok" as const, followers: "22.8K", growth: "+18.9%", engagement: "8.1%", positive: true, icon: "tiktok" as Platform },
 ];
 
-type PerfView = "dashboard" | "content" | "recommendations";
+type PerfView = "dashboard" | "content" | "recommendations" | "audit" | "objectives";
+
+const MOCK_OBJECTIVES = [
+  { id: "obj-1", category: "Growth", label: "Grow Instagram to 10,000 followers", target: 10000, unit: "followers", timeframe: "Q2 2026", current: 6840, color: "#d94e33" },
+  { id: "obj-2", category: "Revenue", label: "Generate 200 qualified leads via content", target: 200, unit: "leads", timeframe: "Q2 2026", current: 112, color: "#f59e0b" },
+  { id: "obj-3", category: "Awareness", label: "Reach 50,000 monthly impressions", target: 50000, unit: "impressions", timeframe: "Q2 2026", current: 31200, color: "#10b981" },
+];
+
+const MOCK_CONTRIBUTION_ROWS = [
+  { title: "5 Yoga Moves for Menopause", pillar: "Movement", objective: "Grow Instagram followers", reach: 4200, conversions: 18, score: "High" as const },
+  { title: "Hormone Reset Meal Plan", pillar: "Nutrition", objective: "Generate leads", reach: 3100, conversions: 42, score: "High" as const },
+  { title: "Running After 45", pillar: "Movement", objective: "Grow Instagram followers", reach: 2800, conversions: 9, score: "Medium" as const },
+  { title: "Perimenopause Signs Quiz", pillar: "Education", objective: "Generate leads", reach: 1950, conversions: 31, score: "Medium" as const },
+  { title: "Daily Meditation for Focus", pillar: "Mindfulness", objective: "Monthly impressions", reach: 5600, conversions: 3, score: "Low" as const },
+];
+
+const MOCK_OBJ_INSIGHTS = [
+  { text: "Instagram growth is trending 12% above pace — consider increasing Reels frequency to maintain momentum.", color: "#d94e33" },
+  { text: "Lead generation is behind target. Your top 3 lead-gen posts are all long-form LinkedIn articles — produce 2 more this month.", color: "#f59e0b" },
+  { text: "Awareness objective is on pace but concentrated in one channel. Diversify to TikTok to reduce single-channel risk.", color: "#10b981" },
+];
 
 export function PerformanceTracking({
   items,
@@ -81,6 +103,8 @@ export function PerformanceTracking({
   const [activeView, setActiveView] = useState<PerfView>("dashboard");
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [aiRecommendations, setAiRecommendations] = useState<{ title: string; description: string; priority: string; category: string }[]>([]);
+  const [isAuditing, setIsAuditing] = useState(false);
+  const [auditFindings, setAuditFindings] = useState<{ title: string; priority: string; action: string }[]>([]);
   const uid = useId();
   const gradientId = `viewsGrad-${uid.replace(/:/g, "")}`;
 
@@ -168,10 +192,27 @@ export function PerformanceTracking({
     }, 2500);
   };
 
+  const handleRunAudit = () => {
+    setIsAuditing(true);
+    setTimeout(() => {
+      setIsAuditing(false);
+      setAuditFindings([
+        { title: "TikTok is underutilized — 0 posts", priority: "High", action: "Create 2 short-form videos for TikTok this month" },
+        { title: "LinkedIn has no content assigned", priority: "High", action: "Repurpose existing educational content for LinkedIn text posts" },
+        { title: "3 ideas haven't been updated in 45+ days", priority: "Medium", action: "Review stale ideas and either advance or archive them" },
+        { title: "Fitness & Strength pillar is under-represented", priority: "Medium", action: "Plan 4 additional posts targeting this pillar next month" },
+        { title: "No Stories content in pipeline", priority: "Low", action: "Add 1–2 Stories per week to increase daily touchpoints" },
+      ]);
+      toast.success("Audit complete — 5 gaps identified");
+    }, 3000);
+  };
+
   const views = [
     { id: "dashboard" as const, label: "Dashboard", icon: BarChart3 },
     { id: "content" as const, label: "Content Performance", icon: TrendingUp },
     { id: "recommendations" as const, label: "AI Recommendations", icon: Sparkles },
+    { id: "audit" as const, label: "Content Audit", icon: ClipboardList },
+    { id: "objectives" as const, label: "Objectives", icon: Target },
   ];
 
   return (
@@ -538,6 +579,291 @@ export function PerformanceTracking({
           )}
         </div>
       )}
+
+      {/* Objectives */}
+      {activeView === "objectives" && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.3 }}
+          className="space-y-6"
+        >
+          {/* Section A — Objective Progress Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {MOCK_OBJECTIVES.map((obj) => {
+              const pct = Math.min(100, Math.round((obj.current / obj.target) * 100));
+              const statusLabel = pct >= 80 ? "On Track" : pct >= 50 ? "In Progress" : "Needs Attention";
+              const statusClass = pct >= 80
+                ? "bg-green-50 text-green-700 border-green-200"
+                : pct >= 50
+                ? "bg-amber-50 text-amber-700 border-amber-200"
+                : "bg-red-50 text-red-700 border-red-200";
+              return (
+                <div key={obj.id} className="bg-white rounded-xl shadow-sm p-5 border border-gray-100">
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="px-2 py-0.5 rounded-full bg-gray-100 text-gray-600 text-xs font-medium">{obj.category}</span>
+                    <span className="text-xs text-gray-400">{obj.timeframe}</span>
+                  </div>
+                  <p className="font-semibold text-sm text-gray-900 mt-1 mb-3">{obj.label}</p>
+                  <div className="w-full h-2 rounded-full bg-gray-100 overflow-hidden mb-1.5">
+                    <div className="h-full rounded-full transition-all" style={{ width: `${pct}%`, backgroundColor: obj.color }} />
+                  </div>
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-xs text-gray-500">{obj.current.toLocaleString()} of {obj.target.toLocaleString()} {obj.unit}</span>
+                    <span className="text-xs text-gray-500 font-semibold">{pct}%</span>
+                  </div>
+                  <span className={cn("inline-flex items-center px-2 py-0.5 rounded-full border text-xs font-medium", statusClass)}>
+                    {statusLabel}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Section B — Content Contribution Table */}
+          <div>
+            <p className="font-semibold text-sm text-gray-900 mb-3">Content Contributing to Objectives</p>
+            <div className="overflow-x-auto rounded-xl border border-gray-100">
+              <table className="w-full text-xs">
+                <thead>
+                  <tr className="bg-gray-50 border-b border-gray-100">
+                    {["Content Title", "Pillar", "Linked Objective", "Reach", "Conversions", "Contribution Score"].map((h) => (
+                      <th key={h} className="px-4 py-2.5 text-left text-[10px] font-bold uppercase tracking-wider text-gray-400">{h}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {MOCK_CONTRIBUTION_ROWS.map((row, i) => {
+                    const scoreColor = row.score === "High" ? "bg-green-500" : row.score === "Medium" ? "bg-amber-400" : "bg-gray-300";
+                    const scoreText = row.score === "High" ? "text-green-700" : row.score === "Medium" ? "text-amber-700" : "text-gray-500";
+                    return (
+                      <tr key={i} className={i % 2 === 1 ? "bg-gray-50/50" : "bg-white"}>
+                        <td className="px-4 py-2.5 font-medium text-gray-800">{row.title}</td>
+                        <td className="px-4 py-2.5 text-gray-500">{row.pillar}</td>
+                        <td className="px-4 py-2.5 text-gray-500 max-w-[180px] truncate">{row.objective}</td>
+                        <td className="px-4 py-2.5 text-gray-700">{row.reach.toLocaleString()}</td>
+                        <td className="px-4 py-2.5 text-gray-700">{row.conversions}</td>
+                        <td className="px-4 py-2.5">
+                          <div className="flex items-center gap-1.5">
+                            <span className={cn("size-2 rounded-full flex-shrink-0", scoreColor)} />
+                            <span className={cn("font-medium", scoreText)}>{row.score}</span>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          {/* Section C — AI Insights */}
+          <div>
+            <p className="text-sm font-semibold text-gray-900 mb-3 flex items-center gap-2">
+              <Sparkles className="size-4 text-[#d94e33]" /> AI Insights
+            </p>
+            <div className="space-y-3">
+              {MOCK_OBJ_INSIGHTS.map((insight, i) => (
+                <div
+                  key={i}
+                  className="bg-gray-50 rounded-lg p-4 text-sm text-gray-700 border-l-4"
+                  style={{ borderLeftColor: insight.color }}
+                >
+                  {insight.text}
+                </div>
+              ))}
+            </div>
+          </div>
+        </motion.div>
+      )}
+
+      {/* Content Audit */}
+      {activeView === "audit" && (() => {
+        const thirtyDaysAgo = new Date();
+        thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+        const staleItems = items.filter(
+          (i) => i.status !== "published" && new Date(i.updatedAt) < thirtyDaysAgo
+        );
+
+        const platformCounts: Record<string, number> = { instagram: 0, tiktok: 0, youtube: 0, facebook: 0, linkedin: 0 };
+        items.forEach((i) => { if (i.platform && i.platform in platformCounts) platformCounts[i.platform]++; });
+
+        const formatGroups: Record<string, number> = { Video: 0, "Carousel/Doc": 0, "Static Image": 0, Text: 0, Stories: 0, Live: 0 };
+        items.forEach((i) => {
+          if (!i.contentType) return;
+          const ct = i.contentType;
+          if (["short-video", "long-form", "shorts", "fb-reel", "reel", "live-stream", "fb-live", "live"].includes(ct)) {
+            if (["live-stream", "fb-live", "live"].includes(ct)) formatGroups["Live"]++;
+            else if (ct === "reel" || ct === "fb-reel") formatGroups["Video"]++;
+            else formatGroups["Video"]++;
+          } else if (["carousel", "photo-carousel", "ln-document"].includes(ct)) formatGroups["Carousel/Doc"]++;
+          else if (["feed-post", "fb-feed-post"].includes(ct)) formatGroups["Static Image"]++;
+          else if (["ln-text-post", "ln-article", "community-post", "fb-link-post"].includes(ct)) formatGroups["Text"]++;
+          else if (["story", "fb-story"].includes(ct)) formatGroups["Stories"]++;
+        });
+
+        const maxPlatform = Math.max(...Object.values(platformCounts), 1);
+        const avgPillar = pillarData.length > 0 ? pillarData.reduce((s, p) => s + p.count, 0) / pillarData.length : 0;
+
+        return (
+          <div className="space-y-4">
+            {/* Run Full AI Audit button */}
+            <div className="flex items-center gap-3">
+              <Button
+                size="sm"
+                className="bg-[#d94e33] hover:bg-[#c4452d] gap-1.5 h-9"
+                onClick={handleRunAudit}
+                disabled={isAuditing}
+              >
+                {isAuditing ? <Loader2 className="size-3.5 animate-spin" /> : <ClipboardList className="size-3.5" />}
+                Run Full AI Audit
+              </Button>
+              {isAuditing && <span className="text-xs text-muted-foreground">Scanning your content library…</span>}
+            </div>
+
+            {/* AI Findings */}
+            {auditFindings.length > 0 && (
+              <div className="space-y-2">
+                <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">AI Findings</p>
+                {auditFindings.map((f, idx) => (
+                  <Card key={idx} className={cn("border-l-4", f.priority === "High" ? "border-l-red-400" : f.priority === "Medium" ? "border-l-amber-400" : "border-l-blue-400", "border-gray-100")}>
+                    <CardContent className="p-3 flex items-start gap-3">
+                      <div className={cn("p-1.5 rounded-lg shrink-0", f.priority === "High" ? "bg-red-50" : f.priority === "Medium" ? "bg-amber-50" : "bg-blue-50")}>
+                        <ClipboardList className={cn("size-3.5", f.priority === "High" ? "text-red-500" : f.priority === "Medium" ? "text-amber-500" : "text-blue-500")} />
+                      </div>
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-0.5">
+                          <span className="text-sm font-bold text-gray-900">{f.title}</span>
+                          <Badge variant="outline" className={cn("text-[9px] font-bold", f.priority === "High" ? "text-red-700 bg-red-50 border-red-200" : f.priority === "Medium" ? "text-amber-700 bg-amber-50 border-amber-200" : "text-blue-700 bg-blue-50 border-blue-200")}>{f.priority}</Badge>
+                        </div>
+                        <p className="text-xs text-gray-500">{f.action}</p>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            )}
+
+            {/* Section 1 — Freshness Check */}
+            <Card className="border-gray-100">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-bold flex items-center gap-2">
+                  <Clock className="size-4 text-[#d94e33]" /> Freshness Check
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {staleItems.length === 0 ? (
+                  <div className="flex items-center gap-2 text-green-600 text-xs">
+                    <CheckCircle className="size-4" /> All active content is up to date
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    <p className="text-xs text-muted-foreground">{staleItems.length} item{staleItems.length !== 1 ? "s" : ""} not updated in 30+ days</p>
+                    {staleItems.map((item) => {
+                      const days = Math.floor((Date.now() - new Date(item.updatedAt).getTime()) / 86400000);
+                      const stageConfig = STAGE_CONFIG[item.stage as keyof typeof STAGE_CONFIG];
+                      const statusConfig = STATUS_CONFIG[item.status as keyof typeof STATUS_CONFIG];
+                      return (
+                        <div key={item.id} className="flex items-center justify-between gap-3 p-2.5 rounded-lg bg-gray-50 border border-gray-100">
+                          <div className="flex-1 min-w-0">
+                            <p className="text-xs font-bold text-gray-800 truncate">{item.title}</p>
+                            <div className="flex items-center gap-1.5 mt-0.5">
+                              <Badge variant="outline" className={cn("text-[9px] px-1.5 py-0", stageConfig?.color)}>{stageConfig?.label}</Badge>
+                              <Badge variant="outline" className={cn("text-[9px] px-1.5 py-0", statusConfig?.color)}>{statusConfig?.label}</Badge>
+                              <span className="text-[10px] text-amber-600">{days}d ago</span>
+                            </div>
+                          </div>
+                          <Button size="sm" variant="outline" className="h-6 text-[10px] shrink-0" onClick={() => onSelectItem(item.id)}>View</Button>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Section 2 — Pillar Coverage Gaps */}
+            <Card className="border-gray-100">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-bold flex items-center gap-2">
+                  <BarChart3 className="size-4 text-[#d94e33]" /> Pillar Coverage Gaps
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <ResponsiveContainer width="100%" height={180}>
+                  <BarChart data={pillarData} layout="vertical">
+                    <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" horizontal={false} />
+                    <XAxis type="number" tick={{ fontSize: 10 }} stroke="#9ca3af" />
+                    <YAxis dataKey="name" type="category" width={90} tick={{ fontSize: 10 }} stroke="#9ca3af" />
+                    <Tooltip contentStyle={{ borderRadius: 8, border: "1px solid #e5e7eb", fontSize: 12 }} />
+                    <Bar dataKey="count" radius={[0, 4, 4, 0]} barSize={14}>
+                      {pillarData.map((entry, idx) => <Cell key={idx} fill={entry.color} />)}
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
+                <div className="flex flex-wrap gap-2 mt-2">
+                  {pillarData.map((p) => p.count < avgPillar * 0.5 && (
+                    <Badge key={p.name} variant="outline" className="text-[9px] text-amber-700 bg-amber-50 border-amber-200">
+                      Gap: {p.name}
+                    </Badge>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Section 3 — Platform Coverage Gaps */}
+            <Card className="border-gray-100">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-bold flex items-center gap-2">
+                  <Share2 className="size-4 text-[#d94e33]" /> Platform Coverage Gaps
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+                  {(["instagram", "tiktok", "youtube", "facebook", "linkedin"] as const).map((platform) => {
+                    const count = platformCounts[platform];
+                    const pConfig = PLATFORM_CONFIG[platform];
+                    return (
+                      <div key={platform} className={cn("p-3 rounded-lg border", count === 0 ? "border-red-100 bg-red-50/30" : "border-gray-100 bg-gray-50/50")}>
+                        <div className="flex items-center justify-between mb-1.5">
+                          <span className={cn("text-xs font-bold", pConfig.color)}>{pConfig.label}</span>
+                          {count === 0
+                            ? <Badge variant="outline" className="text-[9px] text-red-600 bg-red-50 border-red-200">No content</Badge>
+                            : <span className="text-xs font-bold">{count}</span>
+                          }
+                        </div>
+                        <div className="h-1.5 rounded-full bg-gray-200 overflow-hidden">
+                          <div className="h-full rounded-full bg-[#d94e33]" style={{ width: `${(count / maxPlatform) * 100}%` }} />
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Section 4 — Format Gaps */}
+            <Card className="border-gray-100">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-bold flex items-center gap-2">
+                  <FileText className="size-4 text-[#d94e33]" /> Format Gaps
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                  {(Object.entries(formatGroups) as [string, number][]).map(([format, count]) => (
+                    <div key={format} className={cn("p-3 rounded-lg border text-center", count === 0 ? "border-amber-100 bg-amber-50/30" : "border-gray-100 bg-gray-50/50")}>
+                      <div className="text-xl font-bold text-gray-900">{count}</div>
+                      <div className="text-[10px] font-bold text-muted-foreground mt-0.5">{format}</div>
+                      {count === 0 && <Badge variant="outline" className="text-[8px] mt-1 text-amber-700 bg-amber-50 border-amber-200">Untested</Badge>}
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        );
+      })()}
     </div>
   );
 }

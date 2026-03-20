@@ -23,6 +23,7 @@ import {
   AlertTriangle,
   RefreshCcw,
   Plus,
+  Sparkles,
   Trash2,
   Shield,
   Users,
@@ -30,6 +31,7 @@ import {
   ExternalLink,
   Info,
   Zap,
+  Target,
 } from "lucide-react";
 import { Button } from "@/app/components/ui/button";
 import { Card, CardContent } from "@/app/components/ui/card";
@@ -101,7 +103,7 @@ interface CanonicalMeta {
 }
 
 const CANONICAL_META: Record<CanonicalContentType, CanonicalMeta> = {
-  VIDEO_SHORT_VERTICAL:  { label: "Short Video (Vertical)", shortLabel: "Short Video",  icon: <Smartphone className="size-3.5" /> },
+  VIDEO_SHORT_VERTICAL:  { label: "Short Video (Vertical)", shortLabel: "Short Video (Vertical)",  icon: <Smartphone className="size-3.5" /> },
   VIDEO_LONG_HORIZONTAL: { label: "Long-form Video",         shortLabel: "Long Video",   icon: <Monitor className="size-3.5" /> },
   VIDEO_SHORT_HORIZONTAL:{ label: "Horizontal Short Video",  shortLabel: "Horiz. Video", icon: <Film className="size-3.5" /> },
   IMAGE_SINGLE:          { label: "Single Image Post",        shortLabel: "Image Post",   icon: <ImageIcon className="size-3.5" /> },
@@ -126,6 +128,12 @@ const OBJECTIVE_OPTIONS: { value: Objective; label: string; emoji: string }[] = 
 ];
 
 const TRAFFIC_OBJECTIVES: Objective[] = ["traffic", "leads", "sales"];
+
+const objectiveLookup: Record<string, { label: string; category: string }> = {
+  "pillar-1": { label: "Grow Instagram to 10,000 followers", category: "Growth" },
+  "pillar-2": { label: "Generate 200 qualified leads via content", category: "Revenue" },
+  "pillar-3": { label: "Reach 50,000 monthly impressions", category: "Awareness" },
+};
 
 const PRIMARY_CTA_OPTIONS = [
   "Learn more", "Sign up", "Download", "Shop now", "Book now", "Contact us", "Watch more",
@@ -219,7 +227,7 @@ function SectionLabel({ children }: { children: React.ReactNode }) {
 export function BriefBuilder({
   platform,
   contentType,
-  pillars: _pillars,
+  pillars,
   segments: _segments,
   brief,
   sources: _sources,
@@ -237,6 +245,7 @@ export function BriefBuilder({
   const [showMore, setShowMore] = useState(false);
   const [approvalNote, setApprovalNote] = useState(brief?.approvalNote || "");
   const [newRefLink, setNewRefLink] = useState("");
+  const [selectedPillarId, setSelectedPillarId] = useState<string>("");
 
   // ── Initialise brief with sensible defaults ────────────────────────────────
   const currentBrief: ContentBrief = brief || {
@@ -292,7 +301,7 @@ export function BriefBuilder({
         approvedBy: "Brett Lewis",
         approvalNote: approvalNote || undefined,
       });
-      toast.success("Brief approved! You can now continue to Draft.");
+      toast.success("Brief approved! You can now continue to Builder.");
     } else {
       onUpdateBrief({ ...currentBrief, approved: false, approvedAt: undefined, approvedBy: undefined });
     }
@@ -385,83 +394,89 @@ export function BriefBuilder({
       {/* ── Main Form (2/3) ────────────────────────────────────────────────── */}
       <div className="lg:col-span-2 space-y-3">
 
-        {/* SECTION 1 — Core Setup */}
-        <Card className="border-gray-100">
-          <CardContent className="p-4 space-y-4">
-            <SectionLabel>Core Setup</SectionLabel>
-
-            {/* Platform */}
-            <div className="space-y-1.5">
-              <Label className="text-[10px] font-bold text-gray-700">
-                Platform <span className="text-red-500">*</span>
-              </Label>
-              <div className="grid grid-cols-5 gap-1.5">
-                {(["instagram", "tiktok", "youtube", "facebook", "linkedin"] as Platform[]).map((p) => {
-                  const sel = platform === p;
-                  return (
-                    <button
-                      key={p}
-                      disabled={currentBrief.approved}
-                      onClick={() => handlePlatformChange(p)}
-                      className={cn(
-                        "flex flex-col items-center gap-1 py-2 px-1 rounded-lg border-2 text-[9px] font-bold transition-all",
-                        sel
-                          ? "border-[#d94e33] bg-[#d94e33]/5 text-[#d94e33]"
-                          : "border-gray-200 text-gray-500 hover:border-gray-300",
-                        currentBrief.approved && "opacity-60 cursor-not-allowed"
-                      )}
-                    >
-                      <span className={sel ? "text-[#d94e33]" : "text-gray-400"}>
-                        {PLATFORM_ICONS[p]}
-                      </span>
-                      {PLATFORM_CONFIG[p].label}
-                    </button>
-                  );
-                })}
+        {/* SECTION 1 — Format (Locked) */}
+        <div className="rounded-xl border border-gray-200 bg-gray-50 overflow-hidden shadow-sm">
+          <div className="flex items-center justify-between px-4 py-3 bg-gray-100 border-b border-gray-200">
+            <div className="flex items-center gap-2">
+              <div className="flex items-center justify-center size-6 rounded-md bg-gray-200/80">
+                <Lock className="size-3 text-gray-500" />
+              </div>
+              <span className="text-sm text-gray-700" style={{ fontWeight: 700 }}>Format</span>
+            </div>
+            <Badge variant="outline" className="text-[9px] border-gray-300 bg-gray-200/50 text-gray-500 gap-1 px-2 py-0.5">
+              <Lock className="size-2.5" /> Locked
+            </Badge>
+          </div>
+          <div className="p-4">
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <span className="text-[9px] text-gray-400 uppercase tracking-wider" style={{ fontWeight: 700 }}>Platform</span>
+                <div className="flex items-center gap-2.5 h-10 px-3 bg-gray-100 border border-gray-200 rounded-lg">
+                  <span className="text-gray-500">{PLATFORM_ICONS[platform]}</span>
+                  <span className="text-[11px] text-gray-600" style={{ fontWeight: 600 }}>
+                    {PLATFORM_CONFIG[platform].label}
+                  </span>
+                </div>
+              </div>
+              <div className="space-y-1.5">
+                <span className="text-[9px] text-gray-400 uppercase tracking-wider" style={{ fontWeight: 700 }}>Content Type</span>
+                <div className="flex items-center gap-2.5 h-10 px-3 bg-gray-100 border border-gray-200 rounded-lg">
+                  <span className="text-gray-500">
+                    {canonicalType && CANONICAL_META[canonicalType]?.icon}
+                  </span>
+                  <span className="text-[11px] text-gray-600" style={{ fontWeight: 600 }}>
+                    {canonicalType ? CANONICAL_META[canonicalType]?.shortLabel : "Unknown"}
+                  </span>
+                </div>
               </div>
             </div>
-
-            {/* Canonical Content Type */}
-            <div className="space-y-1.5">
-              <Label className="text-[10px] font-bold text-gray-700">
-                Content Type <span className="text-red-500">*</span>
-              </Label>
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-1.5">
-                {PLATFORM_CANONICAL_TYPES[platform].map((ct) => {
-                  const meta = CANONICAL_META[ct];
-                  const sel = canonicalType === ct;
-                  return (
-                    <button
-                      key={ct}
-                      disabled={currentBrief.approved}
-                      onClick={() => handleCanonicalChange(ct)}
-                      className={cn(
-                        "flex items-center gap-2 px-3 py-2 rounded-lg border text-left transition-all",
-                        sel
-                          ? "border-[#d94e33] bg-[#d94e33]/5 text-[#d94e33]"
-                          : "border-gray-200 text-gray-600 hover:border-gray-300",
-                        currentBrief.approved && "opacity-60 cursor-not-allowed"
-                      )}
-                    >
-                      <span className={sel ? "text-[#d94e33]" : "text-gray-400"}>
-                        {meta.icon}
-                      </span>
-                      <span className="text-[10px] font-bold">{meta.shortLabel}</span>
-                    </button>
-                  );
-                })}
-              </div>
-              {canonicalType && (
-                <p className="text-[9px] text-gray-400 mt-0.5">{CANONICAL_META[canonicalType].label}</p>
-              )}
-            </div>
-          </CardContent>
-        </Card>
+            <p className="text-[9px] text-gray-400 mt-2.5 leading-relaxed">
+              Platform and content type are locked from the concept stage and cannot be changed during production.
+            </p>
+          </div>
+        </div>
 
         {/* SECTION 2 — Goal & Message */}
         <Card className="border-gray-100">
           <CardContent className="p-4 space-y-4">
             <SectionLabel>Goal &amp; Message</SectionLabel>
+
+            {/* Content Pillar */}
+            <div className="space-y-1.5">
+              <Label className="text-[10px] font-bold text-gray-700">Content Pillar</Label>
+              <select
+                value={selectedPillarId}
+                onChange={(e) => setSelectedPillarId(e.target.value)}
+                disabled={currentBrief.approved}
+                className={cn(
+                  "w-full h-9 px-3 text-xs border border-gray-200 rounded-md bg-white focus:outline-none focus:ring-1 focus:ring-[#d94e33] focus:border-[#d94e33]",
+                  !selectedPillarId && "text-gray-400",
+                  currentBrief.approved && "opacity-60 cursor-not-allowed"
+                )}
+              >
+                <option value="">Select a pillar…</option>
+                {pillars.map((p) => (
+                  <option key={p.id} value={p.id}>{p.name}</option>
+                ))}
+              </select>
+
+              {/* Objective Context — only when pillar has a linked objective */}
+              {selectedPillarId && objectiveLookup[selectedPillarId] && (() => {
+                const linked = objectiveLookup[selectedPillarId];
+                return (
+                  <div className="rounded-lg border border-[#d94e33]/15 bg-[#d94e33]/5 p-3 space-y-1.5">
+                    <p className="text-[9px] font-bold uppercase tracking-wide text-[#d94e33] flex items-center gap-1">
+                      <Target className="size-3" /> Linked Objective
+                    </p>
+                    <div className="flex items-center gap-2">
+                      <span className="px-2 py-0.5 rounded-full bg-gray-100 text-gray-600 text-[10px] font-medium">{linked.category}</span>
+                      <span className="text-xs font-semibold text-gray-800">{linked.label}</span>
+                    </div>
+                    <p className="text-[10px] text-gray-400 italic">This brief contributes to your Q2 objective.</p>
+                  </div>
+                );
+              })()}
+            </div>
 
             {/* Objective */}
             <div className="space-y-1.5">
@@ -498,12 +513,18 @@ export function BriefBuilder({
                 <Label className="text-[10px] font-bold text-gray-700">
                   Key Message <span className="text-red-500">*</span>
                 </Label>
-                <span className={cn(
-                  "text-[9px]",
-                  keyMessage.length > 160 ? "text-red-500" : keyMessage.length < 10 && keyMessage.length > 0 ? "text-amber-500" : "text-gray-400"
-                )}>
-                  {keyMessage.length}/160
-                </span>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-5 px-1.5 text-[9px] gap-1 text-[#d94e33] hover:text-[#d94e33] hover:bg-[#d94e33]/10"
+                  onClick={() => {
+                    updateKeyMessage("This campaign focuses on empowering users to take control of their workflows with seamless, intuitive tools.");
+                  }}
+                  disabled={currentBrief.approved}
+                >
+                  <Sparkles className="size-2.5" />
+                  AI Assist
+                </Button>
               </div>
               <Textarea
                 value={keyMessage}
@@ -512,16 +533,21 @@ export function BriefBuilder({
                 className="min-h-[64px] resize-none text-xs"
                 disabled={currentBrief.approved}
               />
-              {(keyMessage.length > 0 && keyMessage.length < 10) && (
-                <p className="text-[9px] text-amber-600 flex items-center gap-1">
-                  <AlertTriangle className="size-2.5" /> Too short — aim for at least 10 characters
-                </p>
-              )}
-              {keyMessage.length > 160 && (
-                <p className="text-[9px] text-amber-600 flex items-center gap-1">
-                  <AlertTriangle className="size-2.5" /> Over 160 characters — consider tightening
-                </p>
-              )}
+              <div className="flex items-center justify-between">
+                <div>
+                  {(keyMessage.length > 0 && keyMessage.length < 10) && (
+                    <p className="text-[9px] text-amber-600 flex items-center gap-1">
+                      <AlertTriangle className="size-2.5" /> Too short — aim for at least 10 characters
+                    </p>
+                  )}
+                </div>
+                <span className={cn(
+                  "text-[9px]",
+                  keyMessage.length > 160 ? "text-red-500" : keyMessage.length < 10 && keyMessage.length > 0 ? "text-amber-500" : "text-gray-400"
+                )}>
+                  {keyMessage.length}/160
+                </span>
+              </div>
             </div>
 
             {/* Primary CTA — conditional */}
@@ -556,98 +582,9 @@ export function BriefBuilder({
           </CardContent>
         </Card>
 
-        {/* SECTION 3 — Flags */}
-        <Card className="border-gray-100">
-          <CardContent className="p-4 space-y-3">
-            <SectionLabel>Flags</SectionLabel>
+        {/* SECTION 3 — Flags — moved to Content Builder */}
 
-            {/* Publishing Mode — segmented */}
-            <div className="space-y-1.5">
-              <Label className="text-[10px] font-bold text-gray-700">Publishing Mode</Label>
-              <div className="flex gap-1 p-0.5 bg-gray-100 rounded-lg w-fit">
-                {(["ORGANIC", "PAID_BOOSTED"] as const).map((mode) => (
-                  <button
-                    key={mode}
-                    disabled={currentBrief.approved}
-                    onClick={() => {
-                      update({ publishingMode: mode });
-                      if (mode === "PAID_BOOSTED") ensureLegalApprover();
-                    }}
-                    className={cn(
-                      "px-3 py-1 rounded-md text-[10px] font-bold transition-all",
-                      publishingMode === mode
-                        ? "bg-white shadow-sm text-gray-900"
-                        : "text-gray-500 hover:text-gray-700",
-                      currentBrief.approved && "opacity-60 cursor-not-allowed"
-                    )}
-                  >
-                    {mode === "ORGANIC" ? "Organic" : (
-                      <span className="flex items-center gap-1">
-                        <Zap className="size-2.5" /> Paid / Boosted
-                      </span>
-                    )}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Compact toggle row */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-1">
-              {[
-                {
-                  key: "hasClaims", label: "Contains claims", icon: <Shield className="size-3 text-amber-500" />,
-                  value: hasClaims,
-                  onChange: (v: boolean) => {
-                    onUpdateBrief({ ...currentBrief, compliance: { ...currentBrief.compliance, containsClaims: v } });
-                    if (v) ensureLegalApprover();
-                  },
-                  hint: "Requires legal review",
-                },
-                {
-                  key: "hasTalent", label: "Has talent/faces", icon: <Users className="size-3 text-blue-500" />,
-                  value: hasTalent,
-                  onChange: (v: boolean) => update({ hasTalent: v }),
-                  hint: "Talent release needed",
-                },
-                {
-                  key: "hasMusic", label: "Uses music", icon: <Info className="size-3 text-purple-500" />,
-                  value: hasMusic,
-                  onChange: (v: boolean) => update({ hasMusic: v }),
-                  hint: "License required",
-                },
-                {
-                  key: "needsA11y", label: "Accessibility", icon: <CheckCircle2 className="size-3 text-green-500" />,
-                  value: needsA11y,
-                  onChange: (v: boolean) => update({ needsAccessibility: v }),
-                  hint: needsA11y ? "Captions / alt text required" : "Not required",
-                },
-              ].map((flag) => (
-                <div
-                  key={flag.key}
-                  className={cn(
-                    "flex flex-col gap-1 p-2.5 rounded-lg border transition-colors",
-                    flag.value ? "border-gray-300 bg-gray-50" : "border-gray-100 bg-white"
-                  )}
-                >
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-1">
-                      {flag.icon}
-                      <span className="text-[9px] font-bold text-gray-700">{flag.label}</span>
-                    </div>
-                    <Switch
-                      checked={flag.value}
-                      onCheckedChange={flag.onChange}
-                      disabled={currentBrief.approved}
-                    />
-                  </div>
-                  <p className="text-[8px] text-gray-400 leading-tight">{flag.hint}</p>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* SECTION 4 — Ownership & Timeline */}
+        {/* SECTION 3 — Ownership & Timeline */}
         <Card className="border-gray-100">
           <CardContent className="p-4 space-y-4">
             <SectionLabel>Ownership &amp; Timeline</SectionLabel>
@@ -1108,27 +1045,13 @@ export function BriefBuilder({
               <p className="text-[9px] text-amber-600 pl-5">All fields complete — toggle Approve above</p>
             )}
             <Button className="w-full bg-gray-200 text-gray-400 cursor-not-allowed hover:bg-gray-200 gap-1.5" disabled>
-              <Lock className="size-3.5" /> Continue to Draft
+              <Lock className="size-3.5" /> Continue to Builder
             </Button>
           </div>
         ) : (
           <Button className="w-full bg-[#d94e33] hover:bg-[#c4452d] gap-1.5" onClick={onNext}>
-            <CheckCircle2 className="size-3.5" /> Continue to Draft
+            <CheckCircle2 className="size-3.5" /> Continue to Builder
           </Button>
-        )}
-
-        {/* Canonical type info card */}
-        {canonicalType && (
-          <Card className="border-gray-100 bg-gray-50/50">
-            <CardContent className="p-3 space-y-1">
-              <p className="text-[9px] font-bold uppercase tracking-widest text-gray-400">Format</p>
-              <div className="flex items-center gap-1.5">
-                <span className="text-[#d94e33]">{CANONICAL_META[canonicalType].icon}</span>
-                <p className="text-[10px] font-bold text-gray-700">{CANONICAL_META[canonicalType].label}</p>
-              </div>
-              <p className="text-[9px] text-gray-500">{PLATFORM_CONFIG[platform].label}</p>
-            </CardContent>
-          </Card>
         )}
       </div>
     </div>

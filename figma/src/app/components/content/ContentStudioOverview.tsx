@@ -17,6 +17,8 @@ import {
   ChevronRight,
   Facebook,
   Linkedin,
+  BarChart3,
+  AlertTriangle,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/app/components/ui/card";
 import { Input } from "@/app/components/ui/input";
@@ -30,13 +32,22 @@ import {
   SelectValue,
 } from "@/app/components/ui/select";
 import { cn } from "@/lib/utils";
-import type { ContentItem, ContentPillar, ContentStage, ContentStatus, Platform } from "./types";
+import type { ContentItem, ContentPillar, ContentStage, ContentStatus, Platform, InvestmentPlan, ContentMixTarget } from "./types";
+
+const DEFAULT_MIX: ContentMixTarget[] = [
+  { category: "educational", label: "Educational", targetPercent: 35, color: "#3b82f6", description: "How-tos, tips, tutorials, expert insights" },
+  { category: "entertaining", label: "Entertaining", targetPercent: 25, color: "#f59e0b", description: "Relatable content, humor, storytelling, trends" },
+  { category: "community", label: "Community", targetPercent: 20, color: "#10b981", description: "UGC, Q&As, behind the scenes, audience spotlights" },
+  { category: "promotional", label: "Promotional", targetPercent: 15, color: "#d94e33", description: "Products, services, offers, launches" },
+  { category: "trending", label: "Trending / Reactive", targetPercent: 5, color: "#8b5cf6", description: "Timely content, news hooks, cultural moments" },
+];
 
 interface ContentStudioOverviewProps {
   items: ContentItem[];
   pillars: ContentPillar[];
   onSelectItem: (id: string) => void;
   onNavigateToStep?: (step: string) => void;
+  investmentPlan?: InvestmentPlan | null;
 }
 
 const STAGE_CONFIG: Record<ContentStage, { label: string; color: string; icon: typeof Lightbulb }> = {
@@ -71,6 +82,7 @@ export function ContentStudioOverview({
   pillars,
   onSelectItem,
   onNavigateToStep,
+  investmentPlan,
 }: ContentStudioOverviewProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const [filterStage, setFilterStage] = useState<ContentStage | "all">("all");
@@ -231,6 +243,146 @@ export function ContentStudioOverview({
           <div className="text-2xl font-bold text-gray-900 group-hover:text-green-700">{stats.byStatus.published}</div>
         </button>
       </div>
+
+      {/* Content Mix Widget */}
+      {(() => {
+        const categorized = items.filter((i) => i.contentCategory);
+        if (categorized.length === 0) return null;
+        const counts: Record<string, number> = {};
+        for (const item of categorized) {
+          counts[item.contentCategory!] = (counts[item.contentCategory!] || 0) + 1;
+        }
+        const total = categorized.length;
+        return (
+          <button
+            className="w-full rounded-xl border border-gray-200 bg-white shadow-sm overflow-hidden text-left hover:border-gray-300 transition-colors"
+            onClick={() => onNavigateToStep?.("strategy")}
+          >
+            <div className="flex items-center justify-between px-4 py-3 bg-gray-50/70 border-b border-gray-100">
+              <div className="flex items-center gap-2">
+                <BarChart3 className="size-4 text-[#d94e33]" />
+                <span className="text-sm font-bold text-gray-900">Content Mix</span>
+                <span className="text-xs text-muted-foreground">actual distribution</span>
+              </div>
+              <span className="text-xs text-[#d94e33]">Manage →</span>
+            </div>
+            <div className="px-4 py-3">
+              <div className="flex h-3 rounded-full overflow-hidden gap-px">
+                {DEFAULT_MIX.map((m) => {
+                  const pct = total > 0 ? Math.round(((counts[m.category] || 0) / total) * 100) : 0;
+                  if (pct === 0) return null;
+                  return (
+                    <div
+                      key={m.category}
+                      style={{ width: `${pct}%`, backgroundColor: m.color }}
+                      title={`${m.label}: ${pct}%`}
+                    />
+                  );
+                })}
+              </div>
+              <div className="flex flex-wrap gap-x-4 gap-y-1 mt-2">
+                {DEFAULT_MIX.map((m) => {
+                  const pct = total > 0 ? Math.round(((counts[m.category] || 0) / total) * 100) : 0;
+                  if (pct === 0) return null;
+                  return (
+                    <div key={m.category} className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
+                      <span className="size-2 rounded-full shrink-0" style={{ backgroundColor: m.color }} />
+                      {m.label} {pct}%
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </button>
+        );
+      })()}
+
+      {/* Content Health Widget — only shown when an investment plan exists */}
+      {investmentPlan && (
+        <div className="rounded-xl border border-gray-200 bg-white shadow-sm overflow-hidden">
+          <div className="flex items-center justify-between px-4 py-3 bg-gray-50/70 border-b border-gray-100">
+            <div className="flex items-center gap-2">
+              <BarChart3 className="size-4 text-[#d94e33]" />
+              <div>
+                <span className="text-sm font-bold text-gray-900">Content Health</span>
+                <span className="text-xs text-muted-foreground ml-2">vs. recommended</span>
+              </div>
+            </div>
+            {onNavigateToStep && (
+              <button
+                onClick={() => onNavigateToStep("strategy")}
+                className="text-xs text-[#d94e33] hover:underline"
+              >
+                Optimize →
+              </button>
+            )}
+          </div>
+          <div className="p-4 space-y-3">
+            {investmentPlan.pillarAllocations.map((alloc) => {
+              const pillar = pillars.find((p) => p.id === alloc.pillarId);
+              if (!pillar) return null;
+              const totalItems = items.length;
+              const actualItems = totalItems > 0
+                ? items.filter((i) => i.pillarIds.includes(alloc.pillarId)).length
+                : 0;
+              const actualPercent = totalItems > 0 ? Math.round((actualItems / totalItems) * 100) : 0;
+              const recommendedPercent = alloc.percentage;
+              const diff = Math.abs(actualPercent - recommendedPercent);
+              const isWarning = diff > 10;
+              return (
+                <div key={alloc.pillarId} className="space-y-1">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-1.5">
+                      <span className="size-2.5 rounded-full shrink-0" style={{ backgroundColor: pillar.color }} />
+                      <span className="text-xs font-medium text-gray-700">{pillar.name}</span>
+                      {isWarning && <AlertTriangle className="size-3 text-red-500 shrink-0" />}
+                    </div>
+                    <div className="flex items-center gap-3 text-[10px] text-muted-foreground">
+                      <span>Rec: {recommendedPercent}%</span>
+                      <span className={cn(isWarning && "text-red-500 font-bold")}>Actual: {actualPercent}%</span>
+                    </div>
+                  </div>
+                  <div className="relative h-3 bg-gray-100 rounded-full overflow-hidden">
+                    <div
+                      className="absolute inset-y-0 left-0 rounded-full transition-all duration-500"
+                      style={{ width: `${recommendedPercent}%`, backgroundColor: pillar.color, opacity: 0.3 }}
+                    />
+                    <div
+                      className="absolute inset-y-0 left-0 rounded-full transition-all duration-500"
+                      style={{ width: `${actualPercent}%`, backgroundColor: pillar.color }}
+                    />
+                  </div>
+                </div>
+              );
+            })}
+            {/* Untagged row */}
+            {(() => {
+              const untaggedCount = items.filter((i) => !i.pillarIds || i.pillarIds.length === 0).length;
+              const untaggedPercent = items.length > 0 ? Math.round((untaggedCount / items.length) * 100) : 0;
+              if (untaggedCount === 0) return null;
+              return (
+                <div className="space-y-1">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-1.5">
+                      <span className="size-2.5 rounded-full bg-gray-400 shrink-0" />
+                      <span className="text-xs font-medium text-gray-500">Untagged</span>
+                    </div>
+                    <div className="text-[10px] text-muted-foreground">
+                      <span>{untaggedCount} items ({untaggedPercent}%)</span>
+                    </div>
+                  </div>
+                  <div className="relative h-3 bg-gray-100 rounded-full overflow-hidden">
+                    <div
+                      className="absolute inset-y-0 left-0 rounded-full bg-gray-400 transition-all duration-500"
+                      style={{ width: `${untaggedPercent}%` }}
+                    />
+                  </div>
+                </div>
+              );
+            })()}
+          </div>
+        </div>
+      )}
 
       {/* Filters and Search */}
       <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-4">
