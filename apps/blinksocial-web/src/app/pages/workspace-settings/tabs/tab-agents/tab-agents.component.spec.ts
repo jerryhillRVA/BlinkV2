@@ -92,10 +92,10 @@ describe('TabAgentsComponent', () => {
     expect(badges[1].textContent.trim()).toBe('Content Specialist');
   });
 
-  it('should display persona text truncated', () => {
+  it('should display first responsibility as preview text', () => {
     const personas = fixture.nativeElement.querySelectorAll('.agent-persona');
     expect(personas.length).toBe(2);
-    expect(personas[0].textContent).toContain('RSS feeds');
+    expect(personas[0].textContent).toContain('Daily scanning');
   });
 
   it('should render edit buttons', () => {
@@ -321,12 +321,12 @@ describe('TabAgentsComponent edit panel', () => {
     expect(input.value).toBe('News Aggregator');
   });
 
-  it('should render Full Bio textarea with current value', () => {
+  it('should render Responsibilities textarea with current value', () => {
     fixture.componentInstance.toggleEdit(0);
     fixture.detectChanges();
-    const textarea = fixture.nativeElement.querySelector('.edit-textarea-bio') as HTMLTextAreaElement;
-    expect(textarea).toBeTruthy();
-    expect(textarea.value).toContain('RSS feeds');
+    const textareas = fixture.nativeElement.querySelectorAll('.edit-textarea-bio') as NodeListOf<HTMLTextAreaElement>;
+    expect(textareas.length).toBe(2);
+    expect(textareas[0].value).toContain('Daily scanning');
   });
 
   it('should render Agent Name label with info icon', () => {
@@ -345,11 +345,11 @@ describe('TabAgentsComponent edit panel', () => {
     expect(labels[1].querySelector('.edit-info-icon')).toBeTruthy();
   });
 
-  it('should render Full Bio label with info icon', () => {
+  it('should render Responsibilities label with info icon', () => {
     fixture.componentInstance.toggleEdit(0);
     fixture.detectChanges();
     const labels = fixture.nativeElement.querySelectorAll('.edit-field-label');
-    expect(labels[2].textContent).toContain('Full Bio');
+    expect(labels[2].textContent).toContain('Responsibilities');
     expect(labels[2].querySelector('.edit-info-icon')).toBeTruthy();
   });
 
@@ -391,14 +391,14 @@ describe('TabAgentsComponent edit panel', () => {
     expect(state.skillSettings()?.skills[0].role).toBe('New Role');
   });
 
-  it('should update agent persona on textarea input', () => {
+  it('should update agent responsibilities on textarea input', () => {
     fixture.componentInstance.toggleEdit(0);
     fixture.detectChanges();
-    const textarea = fixture.nativeElement.querySelector('.edit-textarea-bio') as HTMLTextAreaElement;
-    textarea.value = 'Updated bio text';
-    textarea.dispatchEvent(new Event('input'));
+    const textareas = fixture.nativeElement.querySelectorAll('.edit-textarea-bio') as NodeListOf<HTMLTextAreaElement>;
+    textareas[0].value = 'Updated responsibility';
+    textareas[0].dispatchEvent(new Event('input'));
     fixture.detectChanges();
-    expect(state.skillSettings()?.skills[0].persona).toBe('Updated bio text');
+    expect(state.skillSettings()?.skills[0].responsibilities).toEqual(['Updated responsibility']);
   });
 
   it('should update second agent when editing index 1', () => {
@@ -420,11 +420,62 @@ describe('TabAgentsComponent edit panel', () => {
     expect(state.skillSettings()).toBeNull();
   });
 
+  it('should not update list field when settings is null', () => {
+    state.skillSettings.set(null);
+    fixture.componentInstance.updateAgentListField(0, 'responsibilities', 'Test');
+    expect(state.skillSettings()).toBeNull();
+  });
+
   it('should render edit panel with 2-column grid for name and role', () => {
     fixture.componentInstance.toggleEdit(0);
     fixture.detectChanges();
     const grid = fixture.nativeElement.querySelector('.edit-field-grid');
     expect(grid).toBeTruthy();
+  });
+
+  it('should render Expected Outputs textarea with current value', () => {
+    fixture.componentInstance.toggleEdit(0);
+    fixture.detectChanges();
+    const textareas = fixture.nativeElement.querySelectorAll('.edit-textarea-bio') as NodeListOf<HTMLTextAreaElement>;
+    expect(textareas[1]).toBeTruthy();
+  });
+
+  it('should render Expected Outputs label with info icon', () => {
+    fixture.componentInstance.toggleEdit(0);
+    fixture.detectChanges();
+    const labels = fixture.nativeElement.querySelectorAll('.edit-field-label');
+    expect(labels[3].textContent).toContain('Expected Outputs');
+    expect(labels[3].querySelector('.edit-info-icon')).toBeTruthy();
+  });
+
+  it('should return empty string for responsibilitiesPreview with no responsibilities', () => {
+    const agent = { id: 'x', skillId: '', name: 'X', role: '', enabled: true };
+    expect(fixture.componentInstance.responsibilitiesPreview(agent)).toBe('');
+  });
+
+  it('should return first responsibility for responsibilitiesPreview', () => {
+    const agent = { id: 'x', skillId: '', name: 'X', role: '', enabled: true, responsibilities: ['First', 'Second'] };
+    expect(fixture.componentInstance.responsibilitiesPreview(agent)).toBe('First');
+  });
+
+  it('should return joined responsibilities for responsibilitiesDisplay', () => {
+    const agent = { id: 'x', skillId: '', name: 'X', role: '', enabled: true, responsibilities: ['A', 'B'] };
+    expect(fixture.componentInstance.responsibilitiesDisplay(agent)).toBe('A\nB');
+  });
+
+  it('should return joined expectedOutputs for expectedOutputsDisplay', () => {
+    const agent = { id: 'x', skillId: '', name: 'X', role: '', enabled: true, expectedOutputs: ['Out1', 'Out2'] };
+    expect(fixture.componentInstance.expectedOutputsDisplay(agent)).toBe('Out1\nOut2');
+  });
+
+  it('should update expectedOutputs on textarea input', () => {
+    fixture.componentInstance.toggleEdit(0);
+    fixture.detectChanges();
+    const textareas = fixture.nativeElement.querySelectorAll('.edit-textarea-bio') as NodeListOf<HTMLTextAreaElement>;
+    textareas[1].value = 'Output A\nOutput B';
+    textareas[1].dispatchEvent(new Event('input'));
+    fixture.detectChanges();
+    expect(state.skillSettings()?.skills[0].expectedOutputs).toEqual(['Output A', 'Output B']);
   });
 });
 

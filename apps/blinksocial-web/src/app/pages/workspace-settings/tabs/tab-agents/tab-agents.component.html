@@ -3,7 +3,7 @@
     <div class="card-header">
       <div class="card-header-text">
         <h4 class="card-title">Agent Personalities</h4>
-        <p class="card-description">View and manage your AI team members. Expand an agent to edit their full biography.</p>
+        <p class="card-description">View and manage your AI team members. Expand an agent to edit their responsibilities and expected outputs.</p>
       </div>
       <button class="add-agent-btn" type="button" (click)="addAgent()">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16">
@@ -26,8 +26,8 @@
                     <span class="agent-role-badge">{{ agent.role }}</span>
                   }
                 </h3>
-                @if (agent.persona) {
-                  <p class="agent-persona">{{ agent.persona }}</p>
+                @if (agent.responsibilities?.length) {
+                  <p class="agent-persona">{{ responsibilitiesPreview(agent) }}</p>
                 }
               </div>
             </div>
@@ -89,8 +89,8 @@
                   </div>
                 </div>
                 <div class="edit-field-group">
-                  <label class="edit-field-label" for="agent-bio-{{ i }}">
-                    Full Bio
+                  <label class="edit-field-label" for="agent-responsibilities-{{ i }}">
+                    Responsibilities
                     <button class="edit-info-icon" type="button" aria-label="More information">
                       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="14" height="14">
                         <circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/>
@@ -99,10 +99,26 @@
                   </label>
                   <textarea
                     class="edit-textarea-bio"
-                    id="agent-bio-{{ i }}"
-                    placeholder="Describe the agent's personality, responsibilities, and specific goals..."
-                    (input)="updateAgentField(i, 'persona', $any($event.target).value)"
-                  >{{ agent.persona }}</textarea>
+                    id="agent-responsibilities-{{ i }}"
+                    placeholder="What this agent is responsible for..."
+                    (input)="updateAgentListField(i, 'responsibilities', $any($event.target).value)"
+                  >{{ responsibilitiesDisplay(agent) }}</textarea>
+                </div>
+                <div class="edit-field-group">
+                  <label class="edit-field-label" for="agent-outputs-{{ i }}">
+                    Expected Outputs
+                    <button class="edit-info-icon" type="button" aria-label="More information">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="14" height="14">
+                        <circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/>
+                      </svg>
+                    </button>
+                  </label>
+                  <textarea
+                    class="edit-textarea-bio"
+                    id="agent-outputs-{{ i }}"
+                    placeholder="What deliverables this agent produces..."
+                    (input)="updateAgentListField(i, 'expectedOutputs', $any($event.target).value)"
+                  >{{ expectedOutputsDisplay(agent) }}</textarea>
                 </div>
                 <div class="edit-actions">
                   <button class="edit-done-btn" type="button" (click)="toggleEdit(i)">Done</button>

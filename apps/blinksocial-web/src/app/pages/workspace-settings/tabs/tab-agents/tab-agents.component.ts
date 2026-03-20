@@ -36,6 +36,28 @@ export class TabAgentsComponent {
     this.state.skillSettings.set({ ...current, skills });
   }
 
+  updateAgentListField(index: number, field: 'responsibilities' | 'expectedOutputs', value: string): void {
+    const current = this.state.skillSettings();
+    if (!current) return;
+    const items = value.split('\n').map((l) => l.trim()).filter((l) => l.length > 0);
+    const skills = current.skills.map((s, i) =>
+      i === index ? { ...s, [field]: items } : s
+    );
+    this.state.skillSettings.set({ ...current, skills });
+  }
+
+  responsibilitiesPreview(agent: SkillConfigContract): string {
+    return (agent.responsibilities ?? [])[0] ?? '';
+  }
+
+  responsibilitiesDisplay(agent: SkillConfigContract): string {
+    return (agent.responsibilities ?? []).join('\n');
+  }
+
+  expectedOutputsDisplay(agent: SkillConfigContract): string {
+    return (agent.expectedOutputs ?? []).join('\n');
+  }
+
   addAgent(): void {
     const current = this.state.skillSettings();
     if (!current) return;
