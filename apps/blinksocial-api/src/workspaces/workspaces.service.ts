@@ -176,6 +176,13 @@ export class WorkspacesService {
 
     if (this.fs.isConfigured()) {
       try {
+        // Verify workspace exists in registry
+        const registry = await this.readRegistry();
+        const exists = registry?.workspaces.some((w) => w.tenantId === workspaceId);
+        if (!exists) {
+          throw new NotFoundException(`Workspace not found: ${workspaceId}`);
+        }
+
         const content = await this.readSettingsFile(workspaceId, tab);
         const settings = (content ?? {}) as Record<string, unknown>;
 
@@ -228,8 +235,34 @@ export class WorkspacesService {
           }
         }
 
+        if (tab === 'team') {
+          if (!Array.isArray(settings['members'])) {
+            settings['members'] = [];
+          }
+        }
+
+        if (tab === 'calendar') {
+          if (!settings['deadlineTemplates'] || typeof settings['deadlineTemplates'] !== 'object') {
+            settings['deadlineTemplates'] = {};
+          }
+          if (!settings['reminderSettings'] || typeof settings['reminderSettings'] !== 'object') {
+            settings['reminderSettings'] = {
+              milestone72h: true,
+              milestone24h: true,
+              milestoneOverdue: true,
+              publish24h: true,
+            };
+          }
+          if (settings['autoCreateOnPublish'] === undefined) {
+            settings['autoCreateOnPublish'] = false;
+          }
+        }
+
         return settings;
       } catch (error) {
+        if (error instanceof NotFoundException) {
+          throw error;
+        }
         this.logger.error(`Failed to read settings ${workspaceId}/${tab}`, error);
         throw new ServiceUnavailableException(
           'Storage service unavailable. Please try again later.'
@@ -251,6 +284,13 @@ export class WorkspacesService {
 
     if (this.fs.isConfigured()) {
       try {
+        // Verify workspace exists in registry
+        const registry = await this.readRegistry();
+        const exists = registry?.workspaces.some((w) => w.tenantId === workspaceId);
+        if (!exists) {
+          throw new NotFoundException(`Workspace not found: ${workspaceId}`);
+        }
+
         const record = data as Record<string, unknown>;
 
         if (tab === 'general' && Array.isArray(record['audienceSegments'])) {
@@ -277,6 +317,9 @@ export class WorkspacesService {
 
         return data;
       } catch (error) {
+        if (error instanceof NotFoundException) {
+          throw error;
+        }
         this.logger.error(`Failed to write settings ${workspaceId}/${tab}`, error);
         throw new ServiceUnavailableException(
           'Storage service unavailable. Please try again later.'

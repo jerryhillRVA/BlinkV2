@@ -1,7 +1,7 @@
 import { Component, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { WorkspaceSettingsStateService } from '../../workspace-settings-state.service';
-import type { TeamMemberContract } from '@blinksocial/contracts';
+import type { TeamMemberContract, WorkspaceRole } from '@blinksocial/contracts';
 
 @Component({
   selector: 'app-tab-team',
@@ -11,6 +11,8 @@ import type { TeamMemberContract } from '@blinksocial/contracts';
 })
 export class TabTeamComponent {
   protected readonly state = inject(WorkspaceSettingsStateService);
+
+  readonly roles: WorkspaceRole[] = ['Admin', 'Editor', 'Viewer'];
 
   get settings() {
     return this.state.teamSettings();
@@ -40,5 +42,34 @@ export class TabTeamComponent {
       ...current,
       members: [...current.members, newMember],
     });
+  }
+
+  updateMemberField(index: number, field: 'name' | 'email', value: string): void {
+    const current = this.state.teamSettings();
+    if (!current) return;
+    const members = current.members.map((m, i) =>
+      i === index ? { ...m, [field]: value } : m
+    );
+    this.state.teamSettings.set({ ...current, members });
+  }
+
+  updateMemberRole(index: number, value: string): void {
+    const current = this.state.teamSettings();
+    if (!current) return;
+    const members = current.members.map((m, i) =>
+      i === index ? { ...m, role: value as WorkspaceRole } : m
+    );
+    this.state.teamSettings.set({ ...current, members });
+  }
+
+  isExistingMember(member: TeamMemberContract): boolean {
+    return member.status === 'active' || (member.status === 'invited' && !!member.email);
+  }
+
+  removeMember(index: number): void {
+    const current = this.state.teamSettings();
+    if (!current) return;
+    const members = current.members.filter((_, i) => i !== index);
+    this.state.teamSettings.set({ ...current, members });
   }
 }
