@@ -14,6 +14,9 @@ test.describe('New Workspace Navigation', () => {
 test.describe('New Workspace Wizard', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/new-workspace');
+    // Wait for Angular hydration to complete before interacting
+    await page.locator('#workspace-name').waitFor({ state: 'attached' });
+    await page.waitForFunction(() => !document.querySelector('[ngh]'));
   });
 
   test('should show step indicator with 5 steps', async ({ page }) => {
