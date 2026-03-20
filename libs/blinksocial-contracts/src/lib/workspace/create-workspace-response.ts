@@ -1,5 +1,6 @@
 export interface CreateWorkspaceResponseContract {
   id: string;
+  tenantId: string;
   workspaceName: string;
   status: 'active';
   createdAt: string;

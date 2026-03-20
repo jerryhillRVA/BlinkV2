@@ -1,7 +1,17 @@
 import { test, expect } from '@playwright/test';
 
+const mockWorkspacesResponse = {
+  workspaces: [
+    { id: 'hive-collective', name: 'Hive Collective', color: '#d94e33', status: 'active', createdAt: '2026-01-15T10:00:00Z' },
+    { id: 'booze-kills', name: 'Booze Kills', color: '#2b6bff', status: 'active', createdAt: '2026-02-01T10:00:00Z' },
+  ],
+};
+
 test.describe('Page Background', () => {
   test.beforeEach(async ({ page }) => {
+    await page.route('**/api/workspaces', (route) =>
+      route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(mockWorkspacesResponse) })
+    );
     await page.goto('/');
   });
 
@@ -15,6 +25,9 @@ test.describe('Page Background', () => {
 
 test.describe('Dashboard Background', () => {
   test.beforeEach(async ({ page }) => {
+    await page.route('**/api/workspaces', (route) =>
+      route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(mockWorkspacesResponse) })
+    );
     await page.goto('/');
   });
 
@@ -25,6 +38,9 @@ test.describe('Dashboard Background', () => {
 
 test.describe('Welcome Header', () => {
   test.beforeEach(async ({ page }) => {
+    await page.route('**/api/workspaces', (route) =>
+      route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(mockWorkspacesResponse) })
+    );
     await page.goto('/');
   });
 
@@ -50,6 +66,9 @@ test.describe('Welcome Header', () => {
 
 test.describe('Workspace Grid', () => {
   test.beforeEach(async ({ page }) => {
+    await page.route('**/api/workspaces', (route) =>
+      route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(mockWorkspacesResponse) })
+    );
     await page.goto('/');
   });
 
@@ -67,6 +86,9 @@ test.describe('Workspace Grid', () => {
 
 test.describe('New Workspace Card', () => {
   test.beforeEach(async ({ page }) => {
+    await page.route('**/api/workspaces', (route) =>
+      route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(mockWorkspacesResponse) })
+    );
     await page.goto('/');
   });
 
@@ -93,6 +115,9 @@ test.describe('New Workspace Card', () => {
 
 test.describe('Workspace Cards', () => {
   test.beforeEach(async ({ page }) => {
+    await page.route('**/api/workspaces', (route) =>
+      route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(mockWorkspacesResponse) })
+    );
     await page.goto('/');
   });
 

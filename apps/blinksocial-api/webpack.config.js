@@ -23,6 +23,10 @@ module.exports = {
         __dirname,
         '../../libs/blinksocial-models/src/index.ts'
       ),
+      '@blinksocial/core': resolve(
+        __dirname,
+        '../../libs/blinksocial-core/src/index.ts'
+      ),
     },
   },
   plugins: [

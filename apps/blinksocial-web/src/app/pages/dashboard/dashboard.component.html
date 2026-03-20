@@ -31,7 +31,7 @@
       </div>
     </button>
 
-    @for (workspace of workspaces; track workspace.name) {
+    @for (workspace of workspaces(); track workspace.name) {
       <app-workspace-card [workspace]="workspace" />
     }
   </div>
