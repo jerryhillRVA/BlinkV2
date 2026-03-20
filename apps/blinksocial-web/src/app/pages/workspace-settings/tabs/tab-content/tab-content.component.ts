@@ -28,6 +28,13 @@ export class TabContentComponent {
     return this.settings?.audienceOptions ?? [];
   }
 
+  audienceDisplayName(id: string): string {
+    const settings = this.settings as Record<string, unknown> | null;
+    const segments = (settings?.['audienceSegments'] as { id: string; description?: string }[]) ?? [];
+    const match = segments.find((s) => s.id === id);
+    return match?.description ?? id;
+  }
+
   platformDisplayName(id: string): string {
     return PLATFORM_DISPLAY_NAMES[id as Platform] ?? id;
   }

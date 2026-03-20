@@ -6,8 +6,13 @@ import type { CreateWorkspaceRequestContract } from '@blinksocial/contracts';
 export class WorkspacesController {
   constructor(private readonly workspacesService: WorkspacesService) {}
 
+  @Get()
+  list() {
+    return this.workspacesService.list();
+  }
+
   @Post()
-  create(@Body() body: CreateWorkspaceRequestContract) {
+  async create(@Body() body: CreateWorkspaceRequestContract) {
     this.workspacesService.validate(body);
     return this.workspacesService.create(body);
   }

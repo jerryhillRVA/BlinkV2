@@ -1,6 +1,7 @@
 import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
 import { WorkspacesService } from './workspaces.service';
+import { AgenticFilesystemService } from '../agentic-filesystem/agentic-filesystem.service';
 
 function buildValidPayload() {
   return {
@@ -34,6 +35,10 @@ function buildMockDataService() {
   };
 }
 
+function buildMockFsService() {
+  return { isConfigured: () => false };
+}
+
 describe('WorkspacesService', () => {
   let service: WorkspacesService;
 
@@ -41,6 +46,7 @@ describe('WorkspacesService', () => {
     const module = await Test.createTestingModule({
       providers: [
         WorkspacesService,
+        { provide: AgenticFilesystemService, useFactory: buildMockFsService },
         { provide: 'MOCK_DATA_SERVICE', useFactory: buildMockDataService },
       ],
     }).compile();
@@ -60,13 +66,22 @@ describe('WorkspacesService', () => {
   });
 
   describe('create', () => {
-    it('should return response with id, workspaceName, status, createdAt', () => {
+    it('should return response with id, workspaceName, status, createdAt', async () => {
       const payload = buildValidPayload();
-      const result = service.create(payload as never);
+      const result = await service.create(payload as never);
       expect(result.id).toBeDefined();
       expect(result.workspaceName).toBe('Test Workspace');
       expect(result.status).toBe('active');
       expect(result.createdAt).toBeDefined();
+    });
+  });
+
+  describe('list', () => {
+    it('should return mock workspaces when FS is not configured', async () => {
+      const result = await service.list();
+      expect(result.workspaces).toHaveLength(2);
+      expect(result.workspaces[0].name).toBe('Hive Collective');
+      expect(result.workspaces[1].name).toBe('Booze Kills');
     });
   });
 
