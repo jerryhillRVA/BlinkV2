@@ -136,6 +136,7 @@ export interface ContentItem {
   description: string;
   pillarIds: string[];
   segmentIds: string[];
+  objectiveId?: string;
   contentCategory?: ContentCategory;
   createdAt: string;
   updatedAt: string;

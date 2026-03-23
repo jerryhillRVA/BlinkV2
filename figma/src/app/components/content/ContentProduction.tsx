@@ -73,6 +73,7 @@ import type {
   ProductionSource,
   AssetChecklistItem,
   ProductionTask,
+  BusinessObjective,
 } from "./types";
 import { PLATFORM_CONTENT_TYPES, PLATFORM_CONFIG, STAGE_CONFIG, STATUS_CONFIG } from "./types";
 import { CONTENT_TYPE_CONFIG, PRODUCTION_STEPS, TEAM_ROLES } from "./production/production-config";
@@ -94,6 +95,7 @@ interface ContentProductionProps {
   initialEditItem?: ContentItem | null;
   onClearEdit?: () => void;
   onBackToPipeline?: () => void;
+  objectives?: BusinessObjective[];
 }
 
 const TikTokIcon = ({ className }: { className?: string }) => (
@@ -182,6 +184,7 @@ export function ContentProduction({
   initialEditItem,
   onClearEdit,
   onBackToPipeline,
+  objectives = [],
 }: ContentProductionProps) {
   // Production flow state
   const [activeItemId, setActiveItemId] = useState<string | null>(initialEditItem?.id || null);
@@ -667,6 +670,8 @@ export function ContentProduction({
             contentType={selectedContentType}
             pillars={pillars}
             segments={segments}
+            objectives={objectives}
+            objectiveId={currentItem?.objectiveId}
             brief={production.brief}
             sources={production.sources}
             onUpdateBrief={(brief) => saveProductionData({ brief })}

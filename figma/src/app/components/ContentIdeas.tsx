@@ -27,7 +27,7 @@ import { toast } from "sonner";
 import { motion, AnimatePresence } from "motion/react";
 
 import { StrategyResearch } from "./content/StrategyResearch";
-import { IdeationPlanning } from "./content/IdeationPlanning";
+
 import { ContentProduction } from "./content/ContentProduction";
 import { ReviewScheduling } from "./content/ReviewScheduling";
 import { PerformanceTracking } from "./content/PerformanceTracking";
@@ -75,6 +75,7 @@ import type {
   WorkflowStep,
   ResearchSource,
   InvestmentPlan,
+  BusinessObjective,
 } from "./content/types";
 import {
   DEFAULT_PILLARS,
@@ -111,9 +112,11 @@ const WORKFLOW_ICONS: Record<WorkflowStep, typeof Search> = {
 interface ContentIdeasProps {
   initialOpenItem?: { itemId: string; tab: string } | null;
   onClearOpenItem?: () => void;
+  objectives?: BusinessObjective[];
+  onUpdateObjectives?: (objectives: BusinessObjective[]) => void;
 }
 
-export function ContentIdeas({ initialOpenItem, onClearOpenItem }: ContentIdeasProps = {}) {
+export function ContentIdeas({ initialOpenItem, onClearOpenItem, objectives: objectivesProp, onUpdateObjectives }: ContentIdeasProps = {}) {
   // Core data with localStorage persistence
   // Merge strategy: load stored items, then append any MOCK_CONTENT items
   // whose IDs don't already exist (so new mock data always appears).
@@ -163,16 +166,32 @@ export function ContentIdeas({ initialOpenItem, onClearOpenItem }: ContentIdeasP
     return DEFAULT_SEGMENTS;
   });
   const [investmentPlan, setInvestmentPlan] = useState<InvestmentPlan | null>(null);
+  const [localObjectives, setLocalObjectives] = useState<BusinessObjective[]>(() =>
+    loadFromStorage<BusinessObjective[]>("blink_content_objectives", [])
+  );
+  const objectives = objectivesProp ?? localObjectives;
+  const setObjectives = (val: BusinessObjective[]) => {
+    setLocalObjectives(val);
+    onUpdateObjectives?.(val);
+  };
 
   // Persist to localStorage
   useEffect(() => { saveToStorage("blink_content_items", items); }, [items]);
   useEffect(() => { saveToStorage("blink_content_pillars", pillars); }, [pillars]);
   useEffect(() => { saveToStorage("blink_content_segments", segments); }, [segments]);
+  useEffect(() => { saveToStorage("blink_content_objectives", objectives); }, [objectives]);
 
   // Navigation
   const [activeStep, setActiveStep] = useState<WorkflowStep>("overview");
   const [selectedItemId, setSelectedItemId] = useState<string | null>(null);
   const [editingItem, setEditingItem] = useState<ContentItem | null>(null);
+  const [showIdeaDialog, setShowIdeaDialog] = useState(false);
+  const [editingIdea, setEditingIdea] = useState<ContentItem | null>(null);
+  const [ideaTitle, setIdeaTitle] = useState("");
+  const [ideaDescription, setIdeaDescription] = useState("");
+  const [ideaPillars, setIdeaPillars] = useState<string[]>([]);
+  const [ideaSegments, setIdeaSegments] = useState<string[]>([]);
+  const [ideaObjectiveId, setIdeaObjectiveId] = useState<string>("");
   const [showPillarsManager, setShowPillarsManager] = useState(false);
 
   const selectedItem = items.find((i) => i.id === selectedItemId) || null;
@@ -257,6 +276,11 @@ export function ContentIdeas({ initialOpenItem, onClearOpenItem }: ContentIdeasP
 
   const handleEditItem = useCallback(() => {
     if (selectedItem) {
+      if (selectedItem.stage === "idea") {
+        handleEditIdea(selectedItem);
+        setSelectedItemId(null);
+        return;
+      }
       setEditingItem(selectedItem);
       setSelectedItemId(null);
       setActiveStep("production");
@@ -268,6 +292,51 @@ export function ContentIdeas({ initialOpenItem, onClearOpenItem }: ContentIdeasP
     setActiveStep("production");
   };
 
+  const resetIdeaForm = () => {
+    setIdeaTitle("");
+    setIdeaDescription("");
+    setIdeaPillars([]);
+    setIdeaSegments([]);
+    setIdeaObjectiveId("");
+    setEditingIdea(null);
+  };
+
+  const handleOpenNewIdea = () => {
+    resetIdeaForm();
+    setShowIdeaDialog(true);
+  };
+
+  const handleEditIdea = (idea: ContentItem) => {
+    setEditingIdea(idea);
+    setIdeaTitle(idea.title);
+    setIdeaDescription(idea.description);
+    setIdeaPillars(idea.pillarIds);
+    setIdeaSegments(idea.segmentIds);
+    setIdeaObjectiveId(idea.objectiveId || "");
+    setShowIdeaDialog(true);
+  };
+
+  const handleSaveIdea = () => {
+    if (!ideaTitle.trim()) { toast.error("Title is required"); return; }
+    const now = new Date().toISOString();
+    const item: ContentItem = {
+      id: editingIdea?.id || `c-${Date.now()}`,
+      stage: "idea",
+      status: editingIdea?.status || "draft",
+      title: ideaTitle,
+      description: ideaDescription,
+      pillarIds: ideaPillars,
+      segmentIds: ideaSegments,
+      objectiveId: ideaObjectiveId || undefined,
+      createdAt: editingIdea?.createdAt || now,
+      updatedAt: now,
+    };
+    handleSaveItem(item);
+    setShowIdeaDialog(false);
+    resetIdeaForm();
+    toast.success(editingIdea ? "Idea updated" : "Idea captured!");
+  };
+
   const handleSelectItem = (id: string) => {
     const item = items.find((i) => i.id === id);
     if (!item) return;
@@ -276,6 +345,9 @@ export function ContentIdeas({ initialOpenItem, onClearOpenItem }: ContentIdeasP
     if (item.status === "in-progress") {
       setEditingItem(item);
       setActiveStep("production");
+    } else if (item.stage === "idea") {
+      // Ideas open the edit dialog — no navigation
+      handleEditIdea(item);
     } else {
       // Otherwise show the detail view
       setSelectedItemId(id);
@@ -307,7 +379,6 @@ export function ContentIdeas({ initialOpenItem, onClearOpenItem }: ContentIdeasP
       updatedAt: now,
     };
     setItems((prev) => [idea, ...prev]);
-    setActiveStep("ideation");
   }, []);
 
   const handleCreateProductionFromSource = useCallback((source: ResearchSource) => {
@@ -353,6 +424,117 @@ export function ContentIdeas({ initialOpenItem, onClearOpenItem }: ContentIdeasP
     performance: items.filter((i) => i.status === "published").length,
   };
 
+  const ideaDialogJSX = (
+    <Dialog open={showIdeaDialog} onOpenChange={setShowIdeaDialog}>
+      <DialogContent className="max-w-lg">
+        <DialogHeader>
+          <DialogTitle>{editingIdea ? "Edit Idea" : "Capture New Idea"}</DialogTitle>
+          <DialogDescription>
+            {editingIdea ? "Update your content idea details" : "Quickly capture your content concept and categorize it"}
+          </DialogDescription>
+        </DialogHeader>
+        <div className="space-y-4 py-2">
+          <div className="space-y-2">
+            <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Title *</Label>
+            <Input
+              value={ideaTitle}
+              onChange={(e) => setIdeaTitle(e.target.value)}
+              placeholder="What's the big idea?"
+              className="h-10"
+            />
+          </div>
+          <div className="space-y-2">
+            <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Description</Label>
+            <Textarea
+              value={ideaDescription}
+              onChange={(e) => setIdeaDescription(e.target.value)}
+              placeholder="Describe your content idea..."
+              className="min-h-[100px] resize-none"
+            />
+          </div>
+          <div className="space-y-2">
+            <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Content Pillars</Label>
+            <div className="flex flex-wrap gap-2">
+              {pillars.map((p) => {
+                const selected = ideaPillars.includes(p.id);
+                return (
+                  <button
+                    key={p.id}
+                    onClick={() => setIdeaPillars((prev) => selected ? prev.filter((x) => x !== p.id) : [...prev, p.id])}
+                    className={cn(
+                      "px-2.5 py-1 rounded-full text-[10px] font-bold border transition-all",
+                      selected ? "text-white shadow-sm" : "bg-gray-50 border-gray-200 text-gray-600 hover:border-gray-400"
+                    )}
+                    style={selected ? { backgroundColor: p.color, borderColor: p.color } : undefined}
+                  >
+                    {p.name}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+          <div className="space-y-2">
+            <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Audience Segments</Label>
+            <div className="flex flex-wrap gap-2">
+              {segments.map((s) => {
+                const selected = ideaSegments.includes(s.id);
+                return (
+                  <button
+                    key={s.id}
+                    onClick={() => setIdeaSegments((prev) => selected ? prev.filter((x) => x !== s.id) : [...prev, s.id])}
+                    className={cn(
+                      "px-2.5 py-1 rounded-full text-[10px] font-bold border transition-all",
+                      selected ? "bg-blue-600 border-blue-600 text-white shadow-sm" : "bg-gray-50 border-gray-200 text-gray-600 hover:border-blue-400"
+                    )}
+                  >
+                    {s.name}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+          <div className="space-y-2">
+            <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+              Business Objective <span className="font-normal normal-case text-muted-foreground">(optional)</span>
+            </Label>
+            {(() => {
+              const validObjectives = objectives.filter((o) => o.statement.trim().length > 0);
+              return validObjectives.length === 0 ? (
+                <p className="text-[10px] text-muted-foreground">No objectives defined yet — add them in Strategy.</p>
+              ) : (
+                <div className="flex flex-wrap gap-2">
+                  {validObjectives.map((obj) => {
+                    const selected = ideaObjectiveId === obj.id;
+                    return (
+                      <button
+                        key={obj.id}
+                        onClick={() => setIdeaObjectiveId(selected ? "" : obj.id)}
+                        className={cn(
+                          "px-2.5 py-1 rounded-full text-[10px] border transition-all",
+                          selected
+                            ? "border-[#d94e33] bg-[#d94e33]/5 text-[#d94e33] font-medium"
+                            : "bg-gray-50 border-gray-200 text-gray-600 hover:border-gray-300"
+                        )}
+                      >
+                        {obj.statement.length > 40 ? obj.statement.slice(0, 40) + "…" : obj.statement}
+                      </button>
+                    );
+                  })}
+                </div>
+              );
+            })()}
+          </div>
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={() => setShowIdeaDialog(false)}>Cancel</Button>
+          <Button className="bg-[#d94e33] hover:bg-[#c4452d]" onClick={handleSaveIdea}>
+            {editingIdea ? "Update" : "Capture"} Idea
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+
   // If viewing detail
   if (selectedItem) {
     // If it's a Concept, show the ConceptEditor
@@ -362,9 +544,11 @@ export function ContentIdeas({ initialOpenItem, onClearOpenItem }: ContentIdeasP
         (i) => i.conceptId === selectedItem.id && i.stage === "post"
       );
       return (
-        <div className="animate-in fade-in duration-300">
-          <ConceptEditor
-            item={selectedItem}
+        <>
+          {ideaDialogJSX}
+          <div className="animate-in fade-in duration-300">
+            <ConceptEditor
+              item={selectedItem}
             pillars={pillars}
             segments={segments}
             existingProductionItems={existingProductionItems}
@@ -413,29 +597,35 @@ export function ContentIdeas({ initialOpenItem, onClearOpenItem }: ContentIdeasP
               }
             }}
           />
-        </div>
+          </div>
+        </>
       );
     }
-    
+
     // Otherwise show the regular detail view (for Ideas, etc.)
     return (
-      <div className="animate-in fade-in duration-300">
-        <ContentDetail
-          item={selectedItem}
-          pillars={pillars}
-          segments={segments}
-          onBack={() => setSelectedItemId(null)}
-          onEdit={handleEditItem}
-          onDelete={() => handleDeleteItem(selectedItem.id)}
-          onUpdateStatus={(s) => handleUpdateStatus(selectedItem.id, s)}
-          onAdvanceStage={() => handleAdvanceStage(selectedItem.id)}
-        />
-      </div>
+      <>
+        {ideaDialogJSX}
+        <div className="animate-in fade-in duration-300">
+          <ContentDetail
+            item={selectedItem}
+            pillars={pillars}
+            segments={segments}
+            onBack={() => setSelectedItemId(null)}
+            onEdit={handleEditItem}
+            onDelete={() => handleDeleteItem(selectedItem.id)}
+            onUpdateStatus={(s) => handleUpdateStatus(selectedItem.id, s)}
+            onAdvanceStage={() => handleAdvanceStage(selectedItem.id)}
+          />
+        </div>
+      </>
     );
   }
 
   return (
-    <div className="space-y-6 animate-in fade-in duration-500">
+    <>
+      {ideaDialogJSX}
+      <div className="space-y-6 animate-in fade-in duration-500">
       {/* Workflow Step Content */}
       <AnimatePresence mode="wait">
         <motion.div
@@ -454,6 +644,8 @@ export function ContentIdeas({ initialOpenItem, onClearOpenItem }: ContentIdeasP
               onNavigateToStrategy={() => setActiveStep("strategy")}
               onNavigateToPerformance={() => setActiveStep("performance")}
               onMoveToProduction={handleMoveToProduction}
+              onCaptureIdea={handleOpenNewIdea}
+              objectives={objectives}
             />
           )}
 
@@ -463,23 +655,13 @@ export function ContentIdeas({ initialOpenItem, onClearOpenItem }: ContentIdeasP
               segments={segments}
               onUpdatePillars={setPillars}
               onUpdateSegments={setSegments}
-              onNavigateToIdeation={() => setActiveStep("ideation")}
+              onNavigateToIdeation={handleOpenNewIdea}
               onNavigateToProduction={() => setActiveStep("production")}
               onCreateIdeaFromSource={handleCreateIdeaFromSource}
               onCreateProductionFromSource={handleCreateProductionFromSource}
               onSaveInvestmentPlan={setInvestmentPlan}
-            />
-          )}
-
-          {activeStep === "ideation" && (
-            <IdeationPlanning
-              items={items}
-              pillars={pillars}
-              segments={segments}
-              onSaveItem={handleSaveItem}
-              onDeleteItem={handleDeleteItem}
-              onSelectItem={setSelectedItemId}
-              onMoveToProduction={handleMoveToProduction}
+              objectives={objectives}
+              onUpdateObjectives={setObjectives}
             />
           )}
 
@@ -488,6 +670,7 @@ export function ContentIdeas({ initialOpenItem, onClearOpenItem }: ContentIdeasP
               items={items}
               pillars={pillars}
               segments={segments}
+              objectives={objectives}
               onSaveItem={handleSaveItem}
               onDeleteItem={handleDeleteItem}
               onSelectItem={setSelectedItemId}
@@ -521,6 +704,7 @@ export function ContentIdeas({ initialOpenItem, onClearOpenItem }: ContentIdeasP
           )}
         </motion.div>
       </AnimatePresence>
-    </div>
+      </div>
+    </>
   );
 }

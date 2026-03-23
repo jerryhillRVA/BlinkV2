@@ -51,6 +51,7 @@ import type {
   AudienceSegment,
   ProductionSource,
   Objective,
+  BusinessObjective,
 } from "../types";
 import { PLATFORM_CONFIG, PLATFORM_CONTENT_TYPES } from "../types";
 import { getCurrentUserRole, hasPermission } from "./role-permissions";
@@ -71,6 +72,8 @@ interface BriefBuilderProps {
   onNext: () => void;
   onUpdatePlatform?: (platform: Platform) => void;
   onUpdateContentType?: (contentType: ContentType) => void;
+  objectives?: BusinessObjective[];
+  objectiveId?: string;
 }
 
 // ─── Platform → Canonical Type map ───────────────────────────────────────────
@@ -238,6 +241,8 @@ export function BriefBuilder({
   onNext,
   onUpdatePlatform,
   onUpdateContentType,
+  objectives = [],
+  objectiveId,
 }: BriefBuilderProps) {
   const userRole = getCurrentUserRole();
   const canUnlock = hasPermission(userRole, "canUnlockLockedFields");
@@ -389,8 +394,29 @@ export function BriefBuilder({
   };
 
   // ─────────────────────────────────────────────────────────────────────────
+  const linkedObjective = objectiveId ? objectives.find((o) => o.id === objectiveId) : undefined;
+
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 items-start">
+      {/* ── Objective Context Banner ─────────────────────────────────────────── */}
+      {linkedObjective ? (
+        <div className="lg:col-span-3 flex items-center gap-3 px-4 py-3 rounded-xl bg-[#d94e33]/5 border border-[#d94e33]/10 mb-4">
+          <Target className="size-4 text-[#d94e33] shrink-0" />
+          <div className="flex-1 min-w-0">
+            <p className="text-[10px] font-bold uppercase tracking-wider text-[#d94e33]/70">Supporting Objective</p>
+            <p className="text-sm font-bold text-gray-900">{linkedObjective.statement}</p>
+          </div>
+          <span className="text-[10px] px-2 py-0.5 rounded-full bg-[#d94e33]/10 text-[#d94e33] font-bold capitalize shrink-0">
+            {linkedObjective.category}
+          </span>
+        </div>
+      ) : (
+        <div className="lg:col-span-3 flex items-center gap-3 px-4 py-3 rounded-xl bg-amber-50 border border-amber-200 mb-4">
+          <AlertTriangle className="size-4 text-amber-500 shrink-0" />
+          <p className="text-sm text-amber-700">No business objective linked to this content. Consider connecting it to an objective in the Ideation stage.</p>
+        </div>
+      )}
+
       {/* ── Main Form (2/3) ────────────────────────────────────────────────── */}
       <div className="lg:col-span-2 space-y-3">
 

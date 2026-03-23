@@ -45,7 +45,16 @@ export default function App() {
   const [activeTab, setActiveTab] = useState<DashboardTab>("content");
   const [contentResetKey, setContentResetKey] = useState(0); // Key to reset ContentIdeas to overview
   const [calendarOpenItem, setCalendarOpenItem] = useState<{ itemId: string; tab: string } | null>(null);
-  const [objectives, setObjectives] = useState<BusinessObjective[]>(() => DEFAULT_OBJECTIVES());
+  const [objectives, setObjectives] = useState<BusinessObjective[]>(() => {
+    try {
+      const stored = localStorage.getItem("blink_content_objectives");
+      if (stored) {
+        const parsed = JSON.parse(stored) as BusinessObjective[];
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      }
+    } catch {}
+    return DEFAULT_OBJECTIVES();
+  });
 
   const nextStep = () => {
     if (currentStep < STEPS.length) {
@@ -118,7 +127,7 @@ export default function App() {
       case "strategy":
         return <StrategyTab objectives={objectives} onUpdateObjectives={setObjectives} />;
       case "content":
-        return <ContentIdeas key={contentResetKey} initialOpenItem={calendarOpenItem} onClearOpenItem={() => setCalendarOpenItem(null)} />;
+        return <ContentIdeas key={contentResetKey} initialOpenItem={calendarOpenItem} onClearOpenItem={() => setCalendarOpenItem(null)} objectives={objectives} onUpdateObjectives={setObjectives} />;
       case "calendar":
         return <ContentCalendar onOpenItem={(itemId: string, tab: string) => {
           setCalendarOpenItem({ itemId, tab });
@@ -148,7 +157,7 @@ export default function App() {
           </div>
         );
       default:
-        return <ContentIdeas key={contentResetKey} />;
+        return <ContentIdeas key={contentResetKey} objectives={objectives} onUpdateObjectives={setObjectives} />;
     }
   };
 

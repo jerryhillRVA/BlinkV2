@@ -67,6 +67,7 @@ import type {
   FormatNote,
   RiskLevel,
   AudienceSegment,
+  BusinessObjective,
 } from "./types";
 import { PLATFORM_CONTENT_TYPES, DEFAULT_SEGMENTS } from "./types";
 import { Checkbox } from "@/app/components/ui/checkbox";
@@ -99,6 +100,8 @@ interface PipelineViewProps {
   onNavigateToStrategy: () => void;
   onNavigateToPerformance: () => void;
   onMoveToProduction: (id: string) => void;
+  onCaptureIdea?: () => void;
+  objectives?: BusinessObjective[];
 }
 
 export function PipelineView({
@@ -109,6 +112,8 @@ export function PipelineView({
   onNavigateToStrategy,
   onNavigateToPerformance,
   onMoveToProduction,
+  onCaptureIdea,
+  objectives = [],
 }: PipelineViewProps) {
   const [viewMode, setViewMode] = useState<ViewMode>("kanban");
   const [searchQuery, setSearchQuery] = useState("");
@@ -588,6 +593,17 @@ export function PipelineView({
           "{item.hook}"
         </p>
       )}
+      {item.objectiveId && (() => {
+        const obj = objectives.find((o) => o.id === item.objectiveId);
+        return obj ? (
+          <div className="flex items-center gap-1 mt-1.5 w-fit">
+            <div className="flex items-center gap-1 text-[9px] px-1.5 py-0.5 rounded bg-[#d94e33]/5 text-[#d94e33] border border-[#d94e33]/10">
+              <Target className="size-2.5" />
+              {obj.statement.length > 35 ? obj.statement.slice(0, 35) + "…" : obj.statement}
+            </div>
+          </div>
+        ) : null;
+      })()}
       <div className="mt-2 flex items-center justify-between">
         <div className="flex -space-x-1.5">
           {item.pillarIds.slice(0, 2).map((_, idx) => (
@@ -1383,7 +1399,15 @@ export function PipelineView({
                   >
                     <div className="p-3 border-b flex items-center gap-2 font-semibold bg-white/50 backdrop-blur-sm text-sm">
                       {col.icon}
-                      {col.title} ({columnCards.length})
+                      <span className="flex-1">{col.title} ({columnCards.length})</span>
+                      {col.id === "idea" && onCaptureIdea && (
+                        <button
+                          onClick={(e) => { e.stopPropagation(); onCaptureIdea(); }}
+                          className="opacity-60 hover:opacity-100 transition-opacity"
+                        >
+                          <Plus className="size-3.5" />
+                        </button>
+                      )}
                     </div>
                     <div className="p-2 space-y-2 flex-1 overflow-y-auto">
                       {columnCards.length > 0 ? (

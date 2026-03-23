@@ -209,14 +209,29 @@ export function ContentDetail({
             </Card>
           )}
 
-          <Card className="border-gray-100">
-            <CardContent className="p-4">
-              <Label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground mb-1 block">
-                Description
-              </Label>
-              <p className="text-sm text-gray-700 leading-relaxed">{item.description}</p>
-            </CardContent>
-          </Card>
+          {(item.stage === "idea" || item.description) && (
+            <Card className="border-gray-100">
+              <CardContent className="p-4">
+                <Label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground mb-1 block">
+                  Description
+                </Label>
+                {item.description ? (
+                  <p className="text-sm text-gray-700 leading-relaxed">{item.description}</p>
+                ) : (
+                  <p className="text-sm text-muted-foreground italic">No description added yet</p>
+                )}
+              </CardContent>
+            </Card>
+          )}
+          {item.stage === "idea" && !item.description && (
+            <Card className="border-gray-100">
+              <CardContent className="p-8 flex flex-col items-center justify-center text-center gap-2">
+                <Lightbulb className="size-8 text-[#d94e33]/40" />
+                <p className="text-sm font-semibold text-gray-700">No description yet</p>
+                <p className="text-xs text-muted-foreground">Edit this idea to add more detail.</p>
+              </CardContent>
+            </Card>
+          )}
 
           {item.script && (
             <Card className="border-gray-100">

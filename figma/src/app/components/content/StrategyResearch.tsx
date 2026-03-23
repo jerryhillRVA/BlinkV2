@@ -1,4 +1,5 @@
 import React, { useState, useRef } from "react";
+import { AnimatePresence, motion } from "framer-motion";
 import {
   Users,
   Search,
@@ -18,7 +19,6 @@ import {
   Heart,
   BarChart3,
   RefreshCcw,
-  ChevronRight,
   Layers,
   Lightbulb,
   Mic,
@@ -40,14 +40,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/app/components/ui/ca
 import { Badge } from "@/app/components/ui/badge";
 import { Progress } from "@/app/components/ui/progress";
 import { Label } from "@/app/components/ui/label";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-  DialogDescription,
-} from "@/app/components/ui/dialog";
 import {
   Select,
   SelectContent,
@@ -119,7 +111,7 @@ export function StrategyResearch({
   const [activeView, setActiveView] = useState<StrategyView>("brand-voice");
 
   // Objectives management state
-  const [showObjectivesDialog, setShowObjectivesDialog] = useState(false);
+  const [showObjectivesDrawer, setShowObjectivesDrawer] = useState(false);
   const [dialogObjectives, setDialogObjectives] = useState<BusinessObjective[]>([]);
   const [isSuggestingObjectives, setIsSuggestingObjectives] = useState(false);
 
@@ -158,12 +150,12 @@ export function StrategyResearch({
 
   const openObjectivesDialog = () => {
     setDialogObjectives(objectives.length > 0 ? [...objectives] : [newBlankObjective()]);
-    setShowObjectivesDialog(true);
+    setShowObjectivesDrawer(true);
   };
 
   const saveObjectivesDialog = () => {
     onUpdateObjectives?.(dialogObjectives.filter((o) => o.statement.trim()));
-    setShowObjectivesDialog(false);
+    setShowObjectivesDrawer(false);
     toast.success("Objectives updated");
   };
 
@@ -226,20 +218,6 @@ export function StrategyResearch({
   };
 
 
-  const views = [
-    { id: "brand-voice" as const, label: "Brand Voice & Tone", icon: Mic },
-    { id: "pillars" as const, label: "Strategic Pillars", icon: Layers },
-    { id: "audience" as const, label: "Audience", icon: Users },
-    { id: "channel" as const, label: "Channel Strategy", icon: Radio },
-    { id: "content-mix" as const, label: "Content Mix", icon: PieChart },
-    { id: "research" as const, label: "Research Sources", icon: BookOpen },
-    { id: "competitors" as const, label: "Competitor Deep Dive", icon: Eye },
-    { id: "repurposer" as const, label: "Content Repurposer", icon: RefreshCw },
-    { id: "series" as const, label: "Series Builder", icon: ListOrdered },
-    { id: "ab-analyzer" as const, label: "A/B Analyzer", icon: FlaskConical },
-    { id: "seo" as const, label: "SEO & Hashtags", icon: Hash },
-  ];
-
   const sourceTypeConfig: Record<string, { color: string; bg: string }> = {
     article: { color: "text-blue-700", bg: "bg-blue-50 border-blue-200" },
     report: { color: "text-purple-700", bg: "bg-purple-50 border-purple-200" },
@@ -258,10 +236,16 @@ export function StrategyResearch({
             <span className="text-sm font-bold text-gray-900">Business Objectives</span>
           </div>
           <button
-            onClick={openObjectivesDialog}
+            onClick={() => {
+              if (showObjectivesDrawer) {
+                setShowObjectivesDrawer(false);
+              } else {
+                openObjectivesDialog();
+              }
+            }}
             className="text-xs text-[#d94e33] hover:underline font-medium"
           >
-            Edit
+            {showObjectivesDrawer ? "Close" : "Edit"}
           </button>
         </div>
 
@@ -273,6 +257,7 @@ export function StrategyResearch({
             </Button>
           </div>
         ) : (
+          <div className="relative">
           <div className="flex gap-3 overflow-x-auto pb-1">
             {objectives.map((obj) => {
               const cfg = OBJECTIVE_CATEGORY_CONFIG[obj.category];
@@ -301,118 +286,184 @@ export function StrategyResearch({
               );
             })}
           </div>
+          {objectives.length > 2 && (
+            <div className="absolute inset-y-0 right-0 w-8 bg-gradient-to-l from-white to-transparent pointer-events-none" />
+          )}
+          </div>
         )}
-      </div>
 
-      {/* Objectives Management Dialog */}
-      <Dialog open={showObjectivesDialog} onOpenChange={setShowObjectivesDialog}>
-        <DialogContent className="max-w-lg max-h-[80vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>Business Objectives</DialogTitle>
-            <DialogDescription>Manage your business objectives. Changes are saved when you click Save.</DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4 py-2">
-            {dialogObjectives.map((obj) => (
-              <div key={obj.id} className="border border-gray-200 rounded-xl p-4 space-y-3 bg-white relative">
-                <button
-                  className="absolute top-3 right-3 size-6 flex items-center justify-center text-muted-foreground hover:text-destructive rounded"
-                  onClick={() => setDialogObjectives((prev) => prev.filter((o) => o.id !== obj.id))}
-                  disabled={dialogObjectives.length <= 1}
-                >
-                  <X className="size-4" />
-                </button>
-                <div className="space-y-1.5">
-                  <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Category</Label>
-                  <div className="flex flex-wrap gap-2">
-                    {(Object.entries(OBJECTIVE_CATEGORY_CONFIG) as [ObjectiveCategory, { label: string; emoji: string }][]).map(([cat, cfg]) => (
-                      <button
-                        key={cat}
-                        onClick={() => updateDialogObjective(obj.id, { category: cat })}
-                        className={cn(
-                          "flex items-center gap-1 px-2.5 py-1 rounded-full border text-xs transition-all",
-                          obj.category === cat
-                            ? "border-[#d94e33] bg-[#d94e33]/5 text-[#d94e33] font-medium"
-                            : "border-gray-200 text-muted-foreground hover:border-gray-300"
-                        )}
-                      >
-                        {cfg.emoji} {cfg.label}
-                      </button>
-                    ))}
+        <AnimatePresence>
+          {showObjectivesDrawer && (
+            <motion.div
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: "auto", opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              transition={{ duration: 0.25 }}
+              className="overflow-hidden"
+            >
+              <div className="border-t border-gray-100 mt-3 pt-3 space-y-4">
+                {dialogObjectives.map((obj) => (
+                  <div key={obj.id} className="border border-gray-200 rounded-xl p-4 space-y-3 bg-white relative">
+                    <button
+                      className="absolute top-3 right-3 size-6 flex items-center justify-center text-muted-foreground hover:text-destructive rounded"
+                      onClick={() => setDialogObjectives((prev) => prev.filter((o) => o.id !== obj.id))}
+                      disabled={dialogObjectives.length <= 1}
+                    >
+                      <X className="size-4" />
+                    </button>
+                    <div className="space-y-1.5">
+                      <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Category</Label>
+                      <div className="flex flex-wrap gap-2">
+                        {(Object.entries(OBJECTIVE_CATEGORY_CONFIG) as [ObjectiveCategory, { label: string; emoji: string }][]).map(([cat, cfg]) => (
+                          <button
+                            key={cat}
+                            onClick={() => updateDialogObjective(obj.id, { category: cat })}
+                            className={cn(
+                              "flex items-center gap-1 px-2.5 py-1 rounded-full border text-xs transition-all",
+                              obj.category === cat
+                                ? "border-[#d94e33] bg-[#d94e33]/5 text-[#d94e33] font-medium"
+                                : "border-gray-200 text-muted-foreground hover:border-gray-300"
+                            )}
+                          >
+                            {cfg.emoji} {cfg.label}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                    <div className="space-y-1">
+                      <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Objective</Label>
+                      <Input
+                        value={obj.statement}
+                        onChange={(e) => updateDialogObjective(obj.id, { statement: e.target.value })}
+                        placeholder="e.g. Grow Instagram following to 10,000"
+                        className="h-9 text-sm"
+                      />
+                    </div>
+                    <div className="grid grid-cols-3 gap-2">
+                      <div className="space-y-1">
+                        <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Target</Label>
+                        <Input type="number" value={obj.target || ""} onChange={(e) => updateDialogObjective(obj.id, { target: Number(e.target.value) })} placeholder="10000" className="h-8 text-xs" />
+                      </div>
+                      <div className="space-y-1">
+                        <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Unit</Label>
+                        <Input value={obj.unit} onChange={(e) => updateDialogObjective(obj.id, { unit: e.target.value })} placeholder="followers" className="h-8 text-xs" />
+                      </div>
+                      <div className="space-y-1">
+                        <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Timeframe</Label>
+                        <Input value={obj.timeframe} onChange={(e) => updateDialogObjective(obj.id, { timeframe: e.target.value })} placeholder="Q2 2026" className="h-8 text-xs" />
+                      </div>
+                    </div>
                   </div>
+                ))}
+                <div className="flex items-center gap-3">
+                  {dialogObjectives.length < 4 && (
+                    <Button variant="outline" size="sm" className="gap-1.5" onClick={() => setDialogObjectives((prev) => [...prev, newBlankObjective()])}>
+                      <Plus className="size-3.5" /> Add Objective
+                    </Button>
+                  )}
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="gap-1.5 text-[#d94e33] border-[#d94e33] hover:bg-[#d94e33]/5"
+                    onClick={handleSuggestObjectivesInDialog}
+                    disabled={isSuggestingObjectives || dialogObjectives.length >= 4}
+                  >
+                    {isSuggestingObjectives ? <Loader2 className="size-3.5 animate-spin" /> : <Sparkles className="size-3.5" />}
+                    AI Suggest
+                  </Button>
                 </div>
-                <div className="space-y-1">
-                  <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Objective</Label>
-                  <Input
-                    value={obj.statement}
-                    onChange={(e) => updateDialogObjective(obj.id, { statement: e.target.value })}
-                    placeholder="e.g. Grow Instagram following to 10,000"
-                    className="h-9 text-sm"
-                  />
-                </div>
-                <div className="grid grid-cols-3 gap-2">
-                  <div className="space-y-1">
-                    <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Target</Label>
-                    <Input type="number" value={obj.target || ""} onChange={(e) => updateDialogObjective(obj.id, { target: Number(e.target.value) })} placeholder="10000" className="h-8 text-xs" />
-                  </div>
-                  <div className="space-y-1">
-                    <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Unit</Label>
-                    <Input value={obj.unit} onChange={(e) => updateDialogObjective(obj.id, { unit: e.target.value })} placeholder="followers" className="h-8 text-xs" />
-                  </div>
-                  <div className="space-y-1">
-                    <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Timeframe</Label>
-                    <Input value={obj.timeframe} onChange={(e) => updateDialogObjective(obj.id, { timeframe: e.target.value })} placeholder="Q2 2026" className="h-8 text-xs" />
-                  </div>
+                <div className="flex justify-end gap-2">
+                  <Button variant="outline" onClick={() => setShowObjectivesDrawer(false)}>Cancel</Button>
+                  <Button className="bg-[#d94e33] hover:bg-[#c4452d]" onClick={saveObjectivesDialog}>Save</Button>
                 </div>
               </div>
-            ))}
-            <div className="flex items-center gap-3">
-              {dialogObjectives.length < 4 && (
-                <Button variant="outline" size="sm" className="gap-1.5" onClick={() => setDialogObjectives((prev) => [...prev, newBlankObjective()])}>
-                  <Plus className="size-3.5" /> Add Objective
-                </Button>
-              )}
-              <Button
-                variant="outline"
-                size="sm"
-                className="gap-1.5 text-[#d94e33] border-[#d94e33] hover:bg-[#d94e33]/5"
-                onClick={handleSuggestObjectivesInDialog}
-                disabled={isSuggestingObjectives || dialogObjectives.length >= 4}
-              >
-                {isSuggestingObjectives ? <Loader2 className="size-3.5 animate-spin" /> : <Sparkles className="size-3.5" />}
-                AI Suggest
-              </Button>
-            </div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setShowObjectivesDialog(false)}>Cancel</Button>
-            <Button className="bg-[#d94e33] hover:bg-[#c4452d]" onClick={saveObjectivesDialog}>Save</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
 
       {/* Strategy Views */}
-      <div className="flex items-center gap-1 border-b border-gray-200 pb-px overflow-x-auto">
-        {views.map((v) => {
-          const Icon = v.icon;
-          const isActive = activeView === v.id;
-          return (
-            <button
-              key={v.id}
-              onClick={() => setActiveView(v.id)}
-              className={cn(
-                "flex items-center gap-2 px-4 py-2.5 text-sm font-bold transition-all relative whitespace-nowrap",
-                isActive ? "text-[#d94e33]" : "text-muted-foreground hover:text-gray-700"
-              )}
-            >
-              <Icon className={cn("size-4", isActive ? "text-[#d94e33]" : "opacity-60")} />
-              {v.label}
-              {isActive && (
-                <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#d94e33] rounded-full" />
-              )}
-            </button>
-          );
-        })}
-      </div>
+      <div className="flex flex-row gap-6">
+        {/* Left Sidebar */}
+        <div className="w-52 shrink-0">
+          {/* STRATEGY */}
+          <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground px-3 mb-1">Strategy</p>
+          {([
+            { id: "brand-voice" as const, label: "Brand Voice & Tone", icon: Mic },
+            { id: "pillars" as const, label: "Strategic Pillars", icon: Layers },
+            { id: "audience" as const, label: "Audience", icon: Users },
+            { id: "channel" as const, label: "Channel Strategy", icon: Radio },
+            { id: "content-mix" as const, label: "Content Mix", icon: PieChart },
+          ]).map((v) => {
+            const Icon = v.icon;
+            const isActive = activeView === v.id;
+            return (
+              <button
+                key={v.id}
+                onClick={() => setActiveView(v.id)}
+                className={isActive
+                  ? "flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-bold text-[#d94e33] bg-[#d94e33]/5 w-full text-left"
+                  : "flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium text-muted-foreground hover:text-gray-800 hover:bg-gray-100 transition-all w-full text-left"}
+              >
+                <Icon className={isActive ? "size-4 text-[#d94e33]" : "size-4 opacity-50"} />
+                {v.label}
+              </button>
+            );
+          })}
+
+          <div className="border-t border-gray-100 my-2" />
+
+          {/* RESEARCH */}
+          <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground px-3 mb-1">Research</p>
+          {([
+            { id: "research" as const, label: "Research Sources", icon: BookOpen },
+            { id: "competitors" as const, label: "Competitor Deep Dive", icon: Eye },
+          ]).map((v) => {
+            const Icon = v.icon;
+            const isActive = activeView === v.id;
+            return (
+              <button
+                key={v.id}
+                onClick={() => setActiveView(v.id)}
+                className={isActive
+                  ? "flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-bold text-[#d94e33] bg-[#d94e33]/5 w-full text-left"
+                  : "flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium text-muted-foreground hover:text-gray-800 hover:bg-gray-100 transition-all w-full text-left"}
+              >
+                <Icon className={isActive ? "size-4 text-[#d94e33]" : "size-4 opacity-50"} />
+                {v.label}
+              </button>
+            );
+          })}
+
+          <div className="border-t border-gray-100 my-2" />
+
+          {/* CONTENT TOOLS */}
+          <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground px-3 mb-1">Content Tools</p>
+          {([
+            { id: "repurposer" as const, label: "Content Repurposer", icon: RefreshCw },
+            { id: "series" as const, label: "Series Builder", icon: ListOrdered },
+            { id: "ab-analyzer" as const, label: "A/B Analyzer", icon: FlaskConical },
+            { id: "seo" as const, label: "SEO & Hashtags", icon: Hash },
+          ]).map((v) => {
+            const Icon = v.icon;
+            const isActive = activeView === v.id;
+            return (
+              <button
+                key={v.id}
+                onClick={() => setActiveView(v.id)}
+                className={isActive
+                  ? "flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-bold text-[#d94e33] bg-[#d94e33]/5 w-full text-left"
+                  : "flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium text-muted-foreground hover:text-gray-800 hover:bg-gray-100 transition-all w-full text-left"}
+              >
+                <Icon className={isActive ? "size-4 text-[#d94e33]" : "size-4 opacity-50"} />
+                {v.label}
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Content Area */}
+        <div className="flex-1 min-w-0">
 
       {/* Brand Voice & Tone */}
       {activeView === "brand-voice" && (
@@ -796,22 +847,9 @@ export function StrategyResearch({
         />
       )}
 
-      {/* CTA to move to next step */}
-      <Card className="border-[#d94e33]/20 bg-gradient-to-r from-[#d94e33]/5 to-orange-50">
-        <CardContent className="p-4 flex items-center justify-between">
-          <div>
-            <p className="text-sm font-bold text-gray-900">Ready to create content from your research?</p>
-            <p className="text-xs text-muted-foreground mt-0.5">Move to Ideation & Planning to start capturing ideas and building your editorial calendar.</p>
-          </div>
-          <Button
-            size="sm"
-            className="bg-[#d94e33] hover:bg-[#c4452d] gap-1.5 shrink-0"
-            onClick={onNavigateToIdeation}
-          >
-            Go to Ideation <ChevronRight className="size-3.5" />
-          </Button>
-        </CardContent>
-      </Card>
+        </div>{/* end content area */}
+      </div>{/* end flex row */}
+
     </div>
   );
 }
