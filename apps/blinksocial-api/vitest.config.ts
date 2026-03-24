@@ -29,6 +29,10 @@ export default defineConfig({
         __dirname,
         '../../libs/blinksocial-models/src/index.ts'
       ),
+      '@blinksocial/core': path.resolve(
+        __dirname,
+        '../../libs/blinksocial-core/src/index.ts'
+      ),
     },
   },
   test: {

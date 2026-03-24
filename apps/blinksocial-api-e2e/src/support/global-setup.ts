@@ -13,7 +13,7 @@ module.exports = async function () {
   // Start the API server in the background
   const serverProcess = exec('node apps/blinksocial-api/dist/main.js', {
     cwd: process.env.NX_WORKSPACE_ROOT || process.cwd(),
-    env: { ...process.env, PORT: String(port) },
+    env: { ...process.env, PORT: String(port), AGENTIC_FS_URL: '' },
   });
 
   serverProcess.stdout?.on('data', (data) => process.stdout.write(data));

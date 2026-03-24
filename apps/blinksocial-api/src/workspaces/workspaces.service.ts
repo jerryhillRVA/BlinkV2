@@ -461,7 +461,6 @@ export class WorkspacesService {
     try {
       const entries = await this.fs.listDirectory(
         SYSTEM_TENANT,
-        REGISTRY_NAMESPACE,
         REGISTRY_NAMESPACE
       );
       const registryFile = entries.find(
@@ -489,7 +488,7 @@ export class WorkspacesService {
   ): Promise<void> {
     let entries: { name: string; type: string; file_id?: string }[] = [];
     try {
-      entries = await this.fs.listDirectory(SYSTEM_TENANT, REGISTRY_NAMESPACE, REGISTRY_NAMESPACE);
+      entries = await this.fs.listDirectory(SYSTEM_TENANT, REGISTRY_NAMESPACE);
     } catch {
       // Directory doesn't exist yet, will create fresh
     }
