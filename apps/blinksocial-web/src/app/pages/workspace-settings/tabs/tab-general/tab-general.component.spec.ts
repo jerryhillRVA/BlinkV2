@@ -151,4 +151,67 @@ describe('TabGeneralComponent', () => {
     state.generalSettings.set({ workspaceName: 'Test' });
     expect(fixture.componentInstance.brandVoice).toBe('');
   });
+
+  it('should not add segment when settings is null', () => {
+    state.generalSettings.set(null);
+    fixture.componentInstance.addSegment();
+    expect(state.generalSettings()).toBeNull();
+  });
+
+  it('should not remove segment when settings is null', () => {
+    state.generalSettings.set(null);
+    fixture.componentInstance.removeSegment(0);
+    expect(state.generalSettings()).toBeNull();
+  });
+
+  it('should not update segment when settings is null', () => {
+    state.generalSettings.set(null);
+    fixture.componentInstance.updateSegment(0, 'description', 'test');
+    expect(state.generalSettings()).toBeNull();
+  });
+
+  it('should not update segment at invalid index', () => {
+    fixture.componentInstance.updateSegment(99, 'description', 'test');
+    expect(state.generalSettings()?.audienceSegments?.[0].description).toBe('Tech-savvy engineers');
+  });
+
+  it('should render purpose textarea with empty string when purpose is undefined', () => {
+    state.generalSettings.set({ workspaceName: 'Test' });
+    fixture.detectChanges();
+    const textarea = fixture.nativeElement.querySelector('#ws-purpose') as HTMLTextAreaElement;
+    expect(textarea.value).toBe('');
+  });
+
+  it('should render mission textarea with empty string when mission is undefined', () => {
+    state.generalSettings.set({ workspaceName: 'Test' });
+    fixture.detectChanges();
+    const textarea = fixture.nativeElement.querySelector('#ws-mission') as HTMLTextAreaElement;
+    expect(textarea.value).toBe('');
+  });
+
+  it('should update segment description via DOM input event', () => {
+    const input = fixture.nativeElement.querySelector('.segment-row .field-input') as HTMLInputElement;
+    input.value = 'New description';
+    input.dispatchEvent(new Event('input'));
+    expect(state.generalSettings()?.audienceSegments?.[0].description).toBe('New description');
+  });
+
+  it('should update segment age range via DOM change event', () => {
+    const select = fixture.nativeElement.querySelector('.field-select') as HTMLSelectElement;
+    select.value = '35-44';
+    select.dispatchEvent(new Event('change'));
+    expect(state.generalSettings()?.audienceSegments?.[0].ageRange).toBe('35-44');
+  });
+
+  it('should add segment when no existing segments', () => {
+    state.generalSettings.set({ workspaceName: 'Test' });
+    fixture.componentInstance.addSegment();
+    expect(state.generalSettings()?.audienceSegments?.length).toBe(1);
+  });
+
+  it('should remove segment when no existing audienceSegments key', () => {
+    state.generalSettings.set({ workspaceName: 'Test' });
+    fixture.componentInstance.removeSegment(0);
+    expect(state.generalSettings()?.audienceSegments).toEqual([]);
+  });
 });
