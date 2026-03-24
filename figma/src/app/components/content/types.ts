@@ -190,8 +190,18 @@ export interface ContentItem {
   reviewNotes?: string;
   // Performance
   metrics?: ContentMetrics;
+  performanceMetrics?: ContentPerformanceMetrics;
   // Production Blueprint
   production?: ProductionData;
+}
+
+export interface ContentPerformanceMetrics {
+  impressions: number;
+  reach: number;
+  engagementRate: number;
+  saves: number;
+  shares: number;
+  clicks?: number;
 }
 
 export interface ContentMetrics {

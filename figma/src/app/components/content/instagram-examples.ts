@@ -10,6 +10,7 @@ export const INSTAGRAM_EXAMPLES: ContentItem[] = [
     id: "ig1",
     stage: "concept",
     status: "draft",
+    objectiveId: "obj-hive-2",
     title: "Quote card: 'Small habits, big changes' + brand mark",
     description: "Quote card featuring inspirational wellness message with brand mark overlay. Clean, readable design with strong contrast for accessibility.",
     pillarIds: ["p2"],

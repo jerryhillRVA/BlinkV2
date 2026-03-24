@@ -346,7 +346,7 @@ export function BriefBuilder({
   // ── Validation ─────────────────────────────────────────────────────────────
   const errors: string[] = [];
   if (!canonicalType)                                errors.push("Content type is required");
-  if (!objective)                                    errors.push("Objective is required");
+  if (!objective)                                    errors.push("Content Goal is required");
   if (!keyMessage.trim())                            errors.push("Key message is required");
   if (!owner)                                        errors.push("Owner is required");
   if (TRAFFIC_OBJECTIVES.includes(objective) && !primaryCta) errors.push("Primary CTA is required for this objective");
@@ -504,10 +504,10 @@ export function BriefBuilder({
               })()}
             </div>
 
-            {/* Objective */}
+            {/* Content Goal */}
             <div className="space-y-1.5">
               <Label className="text-[10px] font-bold text-gray-700">
-                Objective <span className="text-red-500">*</span>
+                Content Goal <span className="text-red-500">*</span>
               </Label>
               <div className="flex flex-wrap gap-1.5">
                 {OBJECTIVE_OPTIONS.map((opt) => {

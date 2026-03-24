@@ -48,7 +48,12 @@ function newBlankObjective(): BusinessObjective {
 }
 
 export function DEFAULT_OBJECTIVES(): BusinessObjective[] {
-  return [newBlankObjective(), newBlankObjective()];
+  return [
+    { id: "obj-hive-1", category: "growth", statement: "Grow combined social following to 25,000", target: 25000, unit: "followers", timeframe: "Q4 2026", status: "on-track", currentValue: 11400 },
+    { id: "obj-hive-2", category: "engagement", statement: "Achieve 5% average engagement rate across all platforms", target: 5, unit: "%", timeframe: "Q3 2026", status: "at-risk", currentValue: 3.2 },
+    { id: "obj-hive-3", category: "community", statement: "Build an active community of 2,000 members who save and share content", target: 2000, unit: "members", timeframe: "Q4 2026", status: "on-track", currentValue: 780 },
+    { id: "obj-hive-4", category: "awareness", statement: "Reach 500,000 monthly impressions across Instagram and TikTok", target: 500000, unit: "impressions", timeframe: "Q3 2026", status: "behind", currentValue: 187000 },
+  ];
 }
 
 interface StepObjectivesProps {

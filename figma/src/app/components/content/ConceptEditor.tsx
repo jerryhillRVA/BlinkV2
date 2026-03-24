@@ -16,6 +16,7 @@ import {
   Linkedin,
   Sparkles,
   Layers,
+  Target,
 } from "lucide-react";
 import { Button } from "@/app/components/ui/button";
 import { Card, CardContent } from "@/app/components/ui/card";
@@ -46,6 +47,7 @@ import type {
   ContentType,
   ContentObjective,
   CTATypeEnum,
+  BusinessObjective,
 } from "./types";
 import { DEFAULT_SEGMENTS, PLATFORM_CONTENT_TYPES, PLATFORM_CONFIG } from "./types";
 
@@ -64,6 +66,7 @@ interface ConceptEditorProps {
   onDelete: () => void;
   onCreateBrief?: (items: ContentItem[], keepConcept?: boolean, workOnIndex?: number) => void;
   existingProductionItems?: ContentItem[]; // items already in production for this concept
+  objectives?: BusinessObjective[];
 }
 
 function LabelWithTooltip({ label, tooltip, required }: { label: string; tooltip: string; required?: boolean }) {
@@ -142,6 +145,7 @@ export function ConceptEditor({
   onDelete,
   onCreateBrief,
   existingProductionItems,
+  objectives = [],
 }: ConceptEditorProps) {
   const [title, setTitle] = useState(item.title);
   const [description, setDescription] = useState(item.description);
@@ -165,6 +169,7 @@ export function ConceptEditor({
   );
   const [ctaType, setCtaType] = useState<CTATypeEnum | "">(item.cta?.type || "");
   const [ctaText, setCtaText] = useState(item.cta?.text || "");
+  const [selectedObjectiveId, setSelectedObjectiveId] = useState<string>(item.objectiveId || "");
 
   // AI Assist States
   const [isGeneratingDesc, setIsGeneratingDesc] = useState(false);
@@ -187,12 +192,13 @@ export function ConceptEditor({
     segmentIds: audienceSegments.map((s) => s.id),
     hook: hook.trim(),
     objective: objective || undefined,
+    objectiveId: selectedObjectiveId || undefined,
     productionTargets: selectedTargets,
     platform: selectedTargets.length > 0 ? selectedTargets[0].platform : undefined,
     contentType: selectedTargets.length > 0 ? selectedTargets[0].contentType : undefined,
     cta: ctaType ? { type: ctaType as CTATypeEnum, text: ctaText.trim() } : undefined,
     updatedAt: new Date().toISOString(),
-  }), [item, title, description, pillarIds, audienceSegments, hook, objective, selectedTargets, ctaType, ctaText]);
+  }), [item, title, description, pillarIds, audienceSegments, hook, objective, selectedObjectiveId, selectedTargets, ctaType, ctaText]);
 
   // Auto-save with debounce
   useEffect(() => {
@@ -219,7 +225,7 @@ export function ConceptEditor({
         clearTimeout(debounceRef.current);
       }
     };
-  }, [title, description, pillarIds, audienceSegments, hook, objective, selectedTargets, ctaType, ctaText]);
+  }, [title, description, pillarIds, audienceSegments, hook, objective, selectedObjectiveId, selectedTargets, ctaType, ctaText]);
 
   // Flush pending save and exit
   const handleExit = useCallback(() => {
@@ -232,13 +238,21 @@ export function ConceptEditor({
 
   // Validation check
   const validationErrors: string[] = [];
+  if (!selectedObjectiveId) {
+    const hasValidObjectives = objectives.filter((o) => o.statement.trim()).length > 0;
+    if (!hasValidObjectives) {
+      validationErrors.push("No business objectives have been set up yet. Add them in Strategy & Research before moving to production.");
+    } else {
+      validationErrors.push("A Business Objective must be linked before moving to production. Select one above.");
+    }
+  }
   if (!title.trim()) validationErrors.push("Title required");
   if (!description.trim() || description.length < 50 || description.length > 400) {
     validationErrors.push("Description (50-400 chars) required");
   }
   if (pillarIds.length === 0 || pillarIds.length > 3) validationErrors.push("1-3 Content Pillars required");
   if (!hook.trim()) validationErrors.push("Hook required");
-  if (!objective) validationErrors.push("Objective required");
+  if (!objective) validationErrors.push("Content Goal required");
   if (selectedTargets.length === 0) validationErrors.push("At least 1 Production Target required to move to production");
 
   const isValid = validationErrors.length === 0;
@@ -507,8 +521,49 @@ export function ConceptEditor({
               </div>
 
               <div>
+                <div className="mb-1.5">
+                  <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                    Business Objective <span className="text-red-500">*</span>
+                  </Label>
+                  <p className="text-[11px] text-muted-foreground mt-0.5">Required to move to production. Links this concept to a measurable business goal.</p>
+                </div>
+                {(() => {
+                  const validObjectives = objectives.filter((o) => o.statement.trim());
+                  if (validObjectives.length === 0) {
+                    return (
+                      <div className="flex items-center gap-2 p-3 rounded-lg bg-amber-50 border border-amber-200">
+                        <AlertTriangle className="size-3.5 text-amber-500 shrink-0" />
+                        <p className="text-xs text-amber-700">No business objectives have been set up. Add them in Strategy & Research first.</p>
+                      </div>
+                    );
+                  }
+                  return (
+                    <div className="flex flex-wrap gap-1.5">
+                      {validObjectives.map((obj) => {
+                        const selected = selectedObjectiveId === obj.id;
+                        return (
+                          <button
+                            key={obj.id}
+                            onClick={() => setSelectedObjectiveId(selected ? "" : obj.id)}
+                            className={cn(
+                              "px-2 py-1.5 rounded-lg border text-[10px] font-bold transition-all text-left",
+                              selected
+                                ? "border-[#d94e33] bg-[#d94e33]/5 text-[#d94e33]"
+                                : "border-gray-200 text-gray-600 hover:border-gray-300"
+                            )}
+                          >
+                            {obj.statement.length > 50 ? obj.statement.slice(0, 50) + "…" : obj.statement}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  );
+                })()}
+              </div>
+
+              <div>
                 <LabelWithTooltip
-                  label="Objective"
+                  label="Content Goal"
                   tooltip="The primary goal of this content. This guides the creative direction and measures success."
                   required
                 />

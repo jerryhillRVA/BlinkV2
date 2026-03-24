@@ -31,6 +31,7 @@ import { StrategyResearch } from "./content/StrategyResearch";
 import { ContentProduction } from "./content/ContentProduction";
 import { ReviewScheduling } from "./content/ReviewScheduling";
 import { PerformanceTracking } from "./content/PerformanceTracking";
+import { StepPerformance } from "./steps/StepPerformance";
 import { ContentDetail } from "./content/ContentDetail";
 import { ConceptEditor } from "./content/ConceptEditor";
 import { PillarsSegments } from "./content/PillarsSegments";
@@ -551,6 +552,7 @@ export function ContentIdeas({ initialOpenItem, onClearOpenItem, objectives: obj
               item={selectedItem}
             pillars={pillars}
             segments={segments}
+            objectives={objectives}
             existingProductionItems={existingProductionItems}
             onBack={() => setSelectedItemId(null)}
             onSave={(item) => {
@@ -696,10 +698,9 @@ export function ContentIdeas({ initialOpenItem, onClearOpenItem, objectives: obj
           )}
 
           {activeStep === "performance" && (
-            <PerformanceTracking
-              items={items}
-              pillars={pillars}
-              onSelectItem={setSelectedItemId}
+            <StepPerformance
+              objectives={objectives}
+              contentItems={items}
             />
           )}
         </motion.div>

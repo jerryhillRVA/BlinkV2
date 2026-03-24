@@ -52,6 +52,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/app/components/ui/dropdown-menu";
+import { AnimatePresence, motion } from "motion/react";
 import { Input } from "@/app/components/ui/input";
 import { Label } from "@/app/components/ui/label";
 import { Textarea } from "@/app/components/ui/textarea";
@@ -117,9 +118,11 @@ export function PipelineView({
 }: PipelineViewProps) {
   const [viewMode, setViewMode] = useState<ViewMode>("kanban");
   const [searchQuery, setSearchQuery] = useState("");
-  const [filterPillar, setFilterPillar] = useState<string>("all");
-  const [filterPlatform, setFilterPlatform] = useState<Platform | "all">("all");
-  const [filterContentType, setFilterContentType] = useState<string>("all");
+  const [filterPillars, setFilterPillars] = useState<string[]>([]);
+  const [filterPlatforms, setFilterPlatforms] = useState<string[]>([]);
+  const [filterContentTypes, setFilterContentTypes] = useState<string[]>([]);
+  const [filterObjectives, setFilterObjectives] = useState<string[]>([]);
+  const [showFilterDrawer, setShowFilterDrawer] = useState(false);
   const [sortField, setSortField] = useState<SortField>("updatedAt");
   const [sortOrder, setSortOrder] = useState<SortOrder>("desc");
   const [showAddDialog, setShowAddDialog] = useState(false);
@@ -154,6 +157,10 @@ export function PipelineView({
     });
     return Array.from(types).sort();
   }, [items]);
+
+  function toggleFilter<T extends string>(arr: T[], val: T): T[] {
+    return arr.includes(val) ? arr.filter(x => x !== val) : [...arr, val];
+  }
 
   const columns = [
     {
@@ -208,22 +215,27 @@ export function PipelineView({
     }
 
     // Pillar filter
-    if (filterPillar !== "all") {
-      result = result.filter((i) => i.pillarIds.includes(filterPillar));
+    if (filterPillars.length > 0) {
+      result = result.filter(i => filterPillars.some(p => i.pillarIds.includes(p)));
     }
 
     // Platform filter
-    if (filterPlatform !== "all") {
-      result = result.filter((i) => i.platform === filterPlatform);
+    if (filterPlatforms.length > 0) {
+      result = result.filter(i => i.platform && filterPlatforms.includes(i.platform));
     }
 
     // Content type filter
-    if (filterContentType !== "all") {
-      result = result.filter((i) => i.contentType === filterContentType);
+    if (filterContentTypes.length > 0) {
+      result = result.filter(i => i.contentType && filterContentTypes.includes(i.contentType));
+    }
+
+    // Objective filter
+    if (filterObjectives.length > 0) {
+      result = result.filter(i => i.objectiveId && filterObjectives.includes(i.objectiveId));
     }
 
     return result;
-  }, [items, searchQuery, filterPillar, filterPlatform, filterContentType]);
+  }, [items, searchQuery, filterPillars, filterPlatforms, filterContentTypes, filterObjectives]);
 
   const sortedItems = useMemo(() => {
     const sorted = [...filteredItems];
@@ -593,17 +605,6 @@ export function PipelineView({
           "{item.hook}"
         </p>
       )}
-      {item.objectiveId && (() => {
-        const obj = objectives.find((o) => o.id === item.objectiveId);
-        return obj ? (
-          <div className="flex items-center gap-1 mt-1.5 w-fit">
-            <div className="flex items-center gap-1 text-[9px] px-1.5 py-0.5 rounded bg-[#d94e33]/5 text-[#d94e33] border border-[#d94e33]/10">
-              <Target className="size-2.5" />
-              {obj.statement.length > 35 ? obj.statement.slice(0, 35) + "…" : obj.statement}
-            </div>
-          </div>
-        ) : null;
-      })()}
       <div className="mt-2 flex items-center justify-between">
         <div className="flex -space-x-1.5">
           {item.pillarIds.slice(0, 2).map((_, idx) => (
@@ -691,72 +692,10 @@ export function PipelineView({
               className="pl-9 h-9 w-64"
             />
           </div>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="sm" className="gap-2 h-9">
-                <SlidersHorizontal className="size-4" />
-                <span className="hidden sm:inline">Filter</span>
-                {(filterPillar !== "all" || filterPlatform !== "all" || filterContentType !== "all") && (
-                  <Badge className="ml-1 h-4 px-1 text-[9px] bg-[#d94e33] text-white">
-                    {(filterPillar !== "all" ? 1 : 0) + (filterPlatform !== "all" ? 1 : 0) + (filterContentType !== "all" ? 1 : 0)}
-                  </Badge>
-                )}
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-52">
-              <DropdownMenuLabel>Filter by Pillar</DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={() => setFilterPillar("all")}>
-                {filterPillar === "all" && "✓ "}All Pillars
-              </DropdownMenuItem>
-              {pillars.map((pillar) => (
-                <DropdownMenuItem key={pillar.id} onClick={() => setFilterPillar(pillar.id)}>
-                  {filterPillar === pillar.id && "✓ "}{pillar.name}
-                </DropdownMenuItem>
-              ))}
-              <DropdownMenuSeparator />
-              <DropdownMenuLabel>Filter by Platform</DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={() => setFilterPlatform("all")}>
-                {filterPlatform === "all" && "✓ "}All Platforms
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => setFilterPlatform("instagram")}>
-                <Instagram className="size-3.5 mr-2 text-pink-600" />
-                {filterPlatform === "instagram" && "✓ "}Instagram
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => setFilterPlatform("tiktok")}>
-                <TikTokIcon />
-                <span className="ml-2">{filterPlatform === "tiktok" && "✓ "}TikTok</span>
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => setFilterPlatform("youtube")}>
-                <Youtube className="size-3.5 mr-2 text-red-600" />
-                {filterPlatform === "youtube" && "✓ "}YouTube
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => setFilterPlatform("facebook")}>
-                <Facebook className="size-3.5 mr-2 text-blue-600" />
-                {filterPlatform === "facebook" && "✓ "}Facebook
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => setFilterPlatform("linkedin")}>
-                <Linkedin className="size-3.5 mr-2 text-blue-700" />
-                {filterPlatform === "linkedin" && "✓ "}LinkedIn
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuLabel>Filter by Content Type</DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={() => setFilterContentType("all")}>
-                {filterContentType === "all" && "✓ "}All Types
-              </DropdownMenuItem>
-              {availableContentTypes.map((contentType) => (
-                <DropdownMenuItem key={contentType} onClick={() => setFilterContentType(contentType)}>
-                  {filterContentType === contentType && "✓ "}{contentType}
-                </DropdownMenuItem>
-              ))}
-            </DropdownMenuContent>
-          </DropdownMenu>
         </div>
 
         <div className="flex items-center gap-2">
-          {/* View Mode Toggle */}
+          {/* View Mode Toggle (unchanged below) */}
           <div className="flex items-center border rounded-lg p-0.5 bg-gray-50">
             <Button
               variant={viewMode === "kanban" ? "default" : "ghost"}
@@ -1376,6 +1315,48 @@ export function PipelineView({
         </div>
       </div>
 
+      {/* Active filter chips */}
+      {(filterPillars.length + filterPlatforms.length + filterContentTypes.length + filterObjectives.length) > 0 && (
+        <div className="flex flex-wrap gap-2 items-center">
+          {filterPillars.map((pid) => {
+            const pillar = pillars.find(p => p.id === pid);
+            return (
+              <span key={pid} className="flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-[#d94e33]/5 text-[#d94e33] border border-[#d94e33]/20">
+                {pillar?.name || pid}
+                <button onClick={() => setFilterPillars(prev => prev.filter(x => x !== pid))}><X className="size-3" /></button>
+              </span>
+            );
+          })}
+          {filterPlatforms.map((plat) => (
+            <span key={plat} className="flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-[#d94e33]/5 text-[#d94e33] border border-[#d94e33]/20">
+              {plat.charAt(0).toUpperCase() + plat.slice(1)}
+              <button onClick={() => setFilterPlatforms(prev => prev.filter(x => x !== plat))}><X className="size-3" /></button>
+            </span>
+          ))}
+          {filterContentTypes.map((ct) => (
+            <span key={ct} className="flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-[#d94e33]/5 text-[#d94e33] border border-[#d94e33]/20">
+              {ct}
+              <button onClick={() => setFilterContentTypes(prev => prev.filter(x => x !== ct))}><X className="size-3" /></button>
+            </span>
+          ))}
+          {filterObjectives.map((oid) => {
+            const obj = objectives.find(o => o.id === oid);
+            return (
+              <span key={oid} className="flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-[#d94e33]/5 text-[#d94e33] border border-[#d94e33]/20">
+                {obj ? (obj.statement.length > 25 ? obj.statement.slice(0, 25) + "…" : obj.statement) : oid}
+                <button onClick={() => setFilterObjectives(prev => prev.filter(x => x !== oid))}><X className="size-3" /></button>
+              </span>
+            );
+          })}
+          <button
+            className="text-xs text-muted-foreground hover:text-[#d94e33] underline"
+            onClick={() => { setFilterPillars([]); setFilterPlatforms([]); setFilterContentTypes([]); setFilterObjectives([]); }}
+          >
+            Clear all
+          </button>
+        </div>
+      )}
+
       {/* Content Display */}
       {viewMode === "kanban" ? (
         <Card className="border-none shadow-sm overflow-hidden bg-white">
@@ -1387,7 +1368,157 @@ export function PipelineView({
                 {filteredItems.length} items
               </Badge>
             </div>
+            {(() => {
+              const totalActive = filterPillars.length + filterPlatforms.length + filterContentTypes.length + filterObjectives.length;
+              return (
+                <button
+                  onClick={() => setShowFilterDrawer(prev => !prev)}
+                  className={cn(
+                    "flex items-center gap-1.5 text-xs font-medium px-2.5 py-1.5 rounded-md transition-colors",
+                    showFilterDrawer
+                      ? "bg-white/30 text-white"
+                      : "bg-white/10 text-white/80 hover:bg-white/20 hover:text-white"
+                  )}
+                >
+                  <SlidersHorizontal className="size-3.5" />
+                  Filter
+                  {totalActive > 0 && (
+                    <span className="ml-0.5 bg-white text-[#d94e33] text-[9px] font-bold px-1.5 py-0.5 rounded-full leading-none">
+                      {totalActive}
+                    </span>
+                  )}
+                </button>
+              );
+            })()}
           </div>
+
+          {/* Inline collapsible filter panel */}
+          <AnimatePresence initial={false}>
+            {showFilterDrawer && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: "auto" }}
+                exit={{ opacity: 0, height: 0 }}
+                transition={{ duration: 0.25 }}
+                className="overflow-hidden"
+              >
+                <div className="bg-gray-50 border-b border-gray-200 px-4 py-4">
+                  {(() => {
+                    const totalActive = filterPillars.length + filterPlatforms.length + filterContentTypes.length + filterObjectives.length;
+                    return (
+                      <div className="space-y-4">
+                        {/* Header row */}
+                        <div className="flex items-center justify-between">
+                          <p className="text-xs font-bold text-gray-500 uppercase tracking-wider">Filter Content</p>
+                          {totalActive > 0 && (
+                            <button
+                              className="text-xs text-[#d94e33] hover:underline font-medium"
+                              onClick={() => { setFilterPillars([]); setFilterPlatforms([]); setFilterContentTypes([]); setFilterObjectives([]); }}
+                            >
+                              Clear all
+                            </button>
+                          )}
+                        </div>
+
+                        {/* Pillars */}
+                        <div>
+                          <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground mb-2">Pillars</p>
+                          <div className="flex flex-wrap gap-2">
+                            {pillars.map((pillar) => (
+                              <button
+                                key={pillar.id}
+                                onClick={() => setFilterPillars(prev => toggleFilter(prev, pillar.id))}
+                                className={cn(
+                                  "rounded-full text-xs px-3 py-1 border font-medium transition-colors",
+                                  filterPillars.includes(pillar.id)
+                                    ? "bg-[#d94e33] text-white border-[#d94e33]"
+                                    : "bg-gray-100 text-gray-600 border-gray-200 hover:border-[#d94e33]/40"
+                                )}
+                              >
+                                {pillar.name}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+
+                        {/* Platform */}
+                        <div>
+                          <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground mb-2">Platform</p>
+                          <div className="flex flex-wrap gap-2">
+                            {(["instagram", "tiktok", "youtube", "facebook", "linkedin"] as const).map((platform) => (
+                              <button
+                                key={platform}
+                                onClick={() => setFilterPlatforms(prev => toggleFilter(prev, platform))}
+                                className={cn(
+                                  "rounded-full text-xs px-3 py-1 border font-medium transition-colors flex items-center",
+                                  filterPlatforms.includes(platform)
+                                    ? "bg-[#d94e33] text-white border-[#d94e33]"
+                                    : "bg-gray-100 text-gray-600 border-gray-200 hover:border-[#d94e33]/40"
+                                )}
+                              >
+                                <span className="mr-1">
+                                  {platform === "instagram" && <Instagram className="size-3 inline" />}
+                                  {platform === "tiktok" && <svg viewBox="0 0 24 24" className="size-3 inline" fill="currentColor"><path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-2.88 2.5 2.89 2.89 0 0 1-2.89-2.89 2.89 2.89 0 0 1 2.89-2.89c.28 0 .54.04.79.1v-3.5a6.37 6.37 0 0 0-.79-.05A6.34 6.34 0 0 0 3.15 15.2a6.34 6.34 0 0 0 6.34 6.34 6.34 6.34 0 0 0 6.34-6.34V8.88a8.25 8.25 0 0 0 4.81 1.54V6.97a4.83 4.83 0 0 1-1.05-.28z" /></svg>}
+                                  {platform === "youtube" && <Youtube className="size-3 inline" />}
+                                  {platform === "facebook" && <Facebook className="size-3 inline" />}
+                                  {platform === "linkedin" && <Linkedin className="size-3 inline" />}
+                                </span>
+                                {platform.charAt(0).toUpperCase() + platform.slice(1)}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+
+                        {/* Content Type */}
+                        <div>
+                          <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground mb-2">Content Type</p>
+                          <div className="flex flex-wrap gap-2">
+                            {availableContentTypes.map((ct) => (
+                              <button
+                                key={ct}
+                                onClick={() => setFilterContentTypes(prev => toggleFilter(prev, ct))}
+                                className={cn(
+                                  "rounded-full text-xs px-3 py-1 border font-medium transition-colors",
+                                  filterContentTypes.includes(ct)
+                                    ? "bg-[#d94e33] text-white border-[#d94e33]"
+                                    : "bg-gray-100 text-gray-600 border-gray-200 hover:border-[#d94e33]/40"
+                                )}
+                              >
+                                {ct}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+
+                        {/* Business Objective */}
+                        <div>
+                          <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground mb-2">Business Objective</p>
+                          <div className="flex flex-wrap gap-2">
+                            {objectives.filter(o => o.statement.trim()).map((obj) => (
+                              <button
+                                key={obj.id}
+                                onClick={() => setFilterObjectives(prev => toggleFilter(prev, obj.id))}
+                                className={cn(
+                                  "rounded-full text-xs px-3 py-1 border font-medium transition-colors flex items-center",
+                                  filterObjectives.includes(obj.id)
+                                    ? "bg-[#d94e33] text-white border-[#d94e33]"
+                                    : "bg-gray-100 text-gray-600 border-gray-200 hover:border-[#d94e33]/40"
+                                )}
+                              >
+                                <Target className="size-3 mr-1" />
+                                {obj.statement.length > 30 ? obj.statement.slice(0, 30) + "…" : obj.statement}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })()}
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
           <CardContent className="p-4 overflow-x-auto">
             <div className="flex gap-4 min-w-[1000px]">
               {columns.map((col) => {
@@ -1437,6 +1568,29 @@ export function PipelineView({
                 {sortedItems.length} items
               </Badge>
             </div>
+            <div className="flex items-center gap-2">
+              {(() => {
+                const totalActive = filterPillars.length + filterPlatforms.length + filterContentTypes.length + filterObjectives.length;
+                return (
+                  <button
+                    onClick={() => setShowFilterDrawer(prev => !prev)}
+                    className={cn(
+                      "flex items-center gap-1.5 text-xs font-medium px-2.5 py-1.5 rounded-md transition-colors",
+                      showFilterDrawer
+                        ? "bg-white/30 text-white"
+                        : "bg-white/10 text-white/80 hover:bg-white/20 hover:text-white"
+                    )}
+                  >
+                    <SlidersHorizontal className="size-3.5" />
+                    Filter
+                    {totalActive > 0 && (
+                      <span className="ml-0.5 bg-white text-[#d94e33] text-[9px] font-bold px-1.5 py-0.5 rounded-full leading-none">
+                        {totalActive}
+                      </span>
+                    )}
+                  </button>
+                );
+              })()}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" size="sm" className="text-white hover:bg-white/10 h-7 gap-1.5">
@@ -1462,7 +1616,127 @@ export function PipelineView({
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
+            </div>
           </div>
+
+          {/* Inline collapsible filter panel — list view */}
+          <AnimatePresence initial={false}>
+            {showFilterDrawer && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: "auto" }}
+                exit={{ opacity: 0, height: 0 }}
+                transition={{ duration: 0.25 }}
+                className="overflow-hidden"
+              >
+                <div className="bg-gray-50 border-b border-gray-200 px-4 py-4">
+                  {(() => {
+                    const totalActive = filterPillars.length + filterPlatforms.length + filterContentTypes.length + filterObjectives.length;
+                    return (
+                      <div className="space-y-4">
+                        <div className="flex items-center justify-between">
+                          <p className="text-xs font-bold text-gray-500 uppercase tracking-wider">Filter Content</p>
+                          {totalActive > 0 && (
+                            <button
+                              className="text-xs text-[#d94e33] hover:underline font-medium"
+                              onClick={() => { setFilterPillars([]); setFilterPlatforms([]); setFilterContentTypes([]); setFilterObjectives([]); }}
+                            >
+                              Clear all
+                            </button>
+                          )}
+                        </div>
+                        <div>
+                          <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground mb-2">Pillars</p>
+                          <div className="flex flex-wrap gap-2">
+                            {pillars.map((pillar) => (
+                              <button
+                                key={pillar.id}
+                                onClick={() => setFilterPillars(prev => toggleFilter(prev, pillar.id))}
+                                className={cn(
+                                  "rounded-full text-xs px-3 py-1 border font-medium transition-colors",
+                                  filterPillars.includes(pillar.id)
+                                    ? "bg-[#d94e33] text-white border-[#d94e33]"
+                                    : "bg-gray-100 text-gray-600 border-gray-200 hover:border-[#d94e33]/40"
+                                )}
+                              >
+                                {pillar.name}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                        <div>
+                          <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground mb-2">Platform</p>
+                          <div className="flex flex-wrap gap-2">
+                            {(["instagram", "tiktok", "youtube", "facebook", "linkedin"] as const).map((platform) => (
+                              <button
+                                key={platform}
+                                onClick={() => setFilterPlatforms(prev => toggleFilter(prev, platform))}
+                                className={cn(
+                                  "rounded-full text-xs px-3 py-1 border font-medium transition-colors flex items-center",
+                                  filterPlatforms.includes(platform)
+                                    ? "bg-[#d94e33] text-white border-[#d94e33]"
+                                    : "bg-gray-100 text-gray-600 border-gray-200 hover:border-[#d94e33]/40"
+                                )}
+                              >
+                                <span className="mr-1">
+                                  {platform === "instagram" && <Instagram className="size-3 inline" />}
+                                  {platform === "tiktok" && <svg viewBox="0 0 24 24" className="size-3 inline" fill="currentColor"><path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-2.88 2.5 2.89 2.89 0 0 1-2.89-2.89 2.89 2.89 0 0 1 2.89-2.89c.28 0 .54.04.79.1v-3.5a6.37 6.37 0 0 0-.79-.05A6.34 6.34 0 0 0 3.15 15.2a6.34 6.34 0 0 0 6.34 6.34 6.34 6.34 0 0 0 6.34-6.34V8.88a8.25 8.25 0 0 0 4.81 1.54V6.97a4.83 4.83 0 0 1-1.05-.28z" /></svg>}
+                                  {platform === "youtube" && <Youtube className="size-3 inline" />}
+                                  {platform === "facebook" && <Facebook className="size-3 inline" />}
+                                  {platform === "linkedin" && <Linkedin className="size-3 inline" />}
+                                </span>
+                                {platform.charAt(0).toUpperCase() + platform.slice(1)}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                        <div>
+                          <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground mb-2">Content Type</p>
+                          <div className="flex flex-wrap gap-2">
+                            {availableContentTypes.map((ct) => (
+                              <button
+                                key={ct}
+                                onClick={() => setFilterContentTypes(prev => toggleFilter(prev, ct))}
+                                className={cn(
+                                  "rounded-full text-xs px-3 py-1 border font-medium transition-colors",
+                                  filterContentTypes.includes(ct)
+                                    ? "bg-[#d94e33] text-white border-[#d94e33]"
+                                    : "bg-gray-100 text-gray-600 border-gray-200 hover:border-[#d94e33]/40"
+                                )}
+                              >
+                                {ct}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                        <div>
+                          <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground mb-2">Business Objective</p>
+                          <div className="flex flex-wrap gap-2">
+                            {objectives.filter(o => o.statement.trim()).map((obj) => (
+                              <button
+                                key={obj.id}
+                                onClick={() => setFilterObjectives(prev => toggleFilter(prev, obj.id))}
+                                className={cn(
+                                  "rounded-full text-xs px-3 py-1 border font-medium transition-colors flex items-center",
+                                  filterObjectives.includes(obj.id)
+                                    ? "bg-[#d94e33] text-white border-[#d94e33]"
+                                    : "bg-gray-100 text-gray-600 border-gray-200 hover:border-[#d94e33]/40"
+                                )}
+                              >
+                                <Target className="size-3 mr-1" />
+                                {obj.statement.length > 30 ? obj.statement.slice(0, 30) + "…" : obj.statement}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })()}
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
           <CardContent className="p-0">
             <div className="divide-y">
               {sortedItems.length > 0 ? (

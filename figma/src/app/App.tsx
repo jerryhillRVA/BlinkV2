@@ -38,6 +38,9 @@ const STEPS = [
 import { TooltipProvider } from "@/app/components/ui/tooltip";
 import { Toaster } from "sonner";
 
+const DATA_VERSION = "v2";
+const STORAGE_VERSION_KEY = "blink_data_version";
+
 export default function App() {
   const [view, setView] = useState<"home" | "setup" | "dashboard">("home");
   const [currentStep, setCurrentStep] = useState(1);
@@ -46,6 +49,12 @@ export default function App() {
   const [contentResetKey, setContentResetKey] = useState(0); // Key to reset ContentIdeas to overview
   const [calendarOpenItem, setCalendarOpenItem] = useState<{ itemId: string; tab: string } | null>(null);
   const [objectives, setObjectives] = useState<BusinessObjective[]>(() => {
+    const storedVersion = localStorage.getItem(STORAGE_VERSION_KEY);
+    if (storedVersion !== DATA_VERSION) {
+      localStorage.removeItem("blink_content_objectives");
+      localStorage.removeItem("blink_content_items");
+      localStorage.setItem(STORAGE_VERSION_KEY, DATA_VERSION);
+    }
     try {
       const stored = localStorage.getItem("blink_content_objectives");
       if (stored) {
@@ -134,7 +143,7 @@ export default function App() {
           setActiveTab("content");
         }} />;
       case "performance":
-        return <PerformanceTab />;
+        return <PerformanceTab objectives={objectives} />;
       case "features":
         return <FeatureList />;
       case "profile":
