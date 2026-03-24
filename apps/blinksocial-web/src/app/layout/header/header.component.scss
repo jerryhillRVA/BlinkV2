@@ -56,6 +56,9 @@
 }
 
 .avatar-placeholder {
+  appearance: none;
+  border: none;
+  color: inherit;
   width: 36px;
   height: 36px;
   border-radius: 50%;
@@ -85,19 +88,54 @@
   }
 }
 
-.logout-btn {
-  appearance: none;
-  background: none;
-  border: none;
-  padding: 4px;
-  cursor: pointer;
+.profile-menu-container {
+  position: relative;
+}
+
+.profile-menu-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 99;
+}
+
+.profile-menu {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  min-width: 200px;
+  background: var(--blink-surface);
+  border: 1px solid var(--blink-outline-variant);
+  border-radius: 8px;
+  box-shadow: var(--blink-shadow-lg);
+  padding: 4px 0;
+  z-index: 100;
+}
+
+.profile-menu-item {
   display: flex;
   align-items: center;
-  justify-content: center;
-  opacity: 0.85;
-  transition: opacity 0.15s;
+  gap: 8px;
+  width: 100%;
+  padding: 10px 16px;
+  font-size: 14px;
+  color: var(--blink-on-surface);
+  background: none;
+  border: none;
+  cursor: pointer;
+  text-decoration: none;
+  transition: background 0.15s;
 
   &:hover {
-    opacity: 1;
+    background: var(--blink-surface-hover);
   }
+
+  &.logout {
+    color: var(--blink-brand-primary, #d94e33);
+  }
+}
+
+.profile-menu-divider {
+  height: 1px;
+  background: var(--blink-outline-variant);
+  margin: 4px 0;
 }

@@ -1,6 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { Router } from '@angular/router';
-import { of } from 'rxjs';
+import { of, throwError } from 'rxjs';
 import { DashboardComponent } from './dashboard.component';
 import { DashboardApiService } from './dashboard-api.service';
 
@@ -135,5 +135,20 @@ describe('DashboardComponent', () => {
     const fixture = TestBed.createComponent(DashboardComponent);
     fixture.componentInstance.onGoToWorkspace('hive-collective');
     expect(router.navigate).toHaveBeenCalledWith(['/workspace', 'hive-collective', 'settings']);
+  });
+
+  it('should set loading to false on API error', () => {
+    TestBed.resetTestingModule();
+    TestBed.configureTestingModule({
+      imports: [DashboardComponent],
+      providers: [
+        { provide: Router, useValue: { navigate: vi.fn() } },
+        { provide: DashboardApiService, useValue: { listWorkspaces: () => throwError(() => new Error('fail')) } },
+      ],
+    });
+    const fixture = TestBed.createComponent(DashboardComponent);
+    fixture.detectChanges();
+    expect(fixture.componentInstance.loading()).toBe(false);
+    expect(fixture.componentInstance.workspaces()).toEqual([]);
   });
 });

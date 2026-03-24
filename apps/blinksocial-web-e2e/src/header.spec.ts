@@ -24,7 +24,9 @@ test.describe('Header', () => {
     await expect(page.locator('.avatar-placeholder')).toContainText('BL');
   });
 
-  test('should have a logout button', async ({ page }) => {
-    await expect(page.locator('.logout-btn')).toBeVisible();
+  test('should show profile menu with logout when avatar is clicked', async ({ page }) => {
+    await page.locator('.avatar-placeholder').click();
+    await expect(page.locator('.profile-menu')).toBeVisible();
+    await expect(page.locator('.profile-menu-item.logout')).toBeVisible();
   });
 });

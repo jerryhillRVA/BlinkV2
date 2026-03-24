@@ -14,6 +14,13 @@ export const appRoutes: Route[] = [
       ),
   },
   {
+    path: 'profile-settings',
+    loadComponent: () =>
+      import('./pages/profile-settings/profile-settings.component').then(
+        (m) => m.ProfileSettingsComponent
+      ),
+  },
+  {
     path: 'workspace/:id/settings',
     loadComponent: () =>
       import('./pages/workspace-settings/workspace-settings.component').then(
