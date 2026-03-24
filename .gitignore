@@ -55,3 +55,4 @@ __screenshots__/
 test-output
 
 figma/package-lock.json
+playwright-report/
