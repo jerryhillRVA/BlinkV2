@@ -85,6 +85,74 @@ describe('WorkspacesService', () => {
     });
   });
 
+  describe('list (with FS configured)', () => {
+    let fsService: WorkspacesService;
+
+    beforeEach(async () => {
+      const registryContent = {
+        workspaces: [
+          {
+            tenantId: 'test',
+            name: 'Test',
+            status: 'active',
+            plan: 'free',
+            brandColor: '#d94e33',
+            createdAt: '2026-03-24T16:04:50.000Z',
+          },
+        ],
+        totalWorkspaces: 1,
+      };
+
+      const mockFs = {
+        isConfigured: () => true,
+        listDirectory: vi.fn().mockImplementation(
+          (tenant: string, namespace: string, path?: string) => {
+            // readRegistry calls with path='' (root of namespace)
+            if (
+              tenant === 'blinksocial_system' &&
+              namespace === 'registry' &&
+              (!path || path === '')
+            ) {
+              return Promise.resolve([
+                {
+                  name: 'workspaces.json',
+                  type: 'file',
+                  file_id: 'reg-file-1',
+                },
+              ]);
+            }
+            return Promise.resolve([]);
+          }
+        ),
+        batchRetrieve: vi.fn().mockResolvedValue([
+          {
+            file_id: 'reg-file-1',
+            filename: 'workspaces.json',
+            content_type: 'json',
+            content: registryContent,
+          },
+        ]),
+      };
+
+      const module = await Test.createTestingModule({
+        providers: [
+          WorkspacesService,
+          { provide: AgenticFilesystemService, useValue: mockFs },
+          { provide: 'MOCK_DATA_SERVICE', useValue: null },
+        ],
+      }).compile();
+      fsService = module.get(WorkspacesService);
+    });
+
+    it('should list workspaces from registry via AgenticFileSystem', async () => {
+      const result = await fsService.list();
+      expect(result.workspaces).toHaveLength(1);
+      expect(result.workspaces[0].id).toBe('test');
+      expect(result.workspaces[0].name).toBe('Test');
+      expect(result.workspaces[0].color).toBe('#d94e33');
+    });
+  });
+
   describe('getSettings', () => {
     it('should return mock data for known workspace and tab', async () => {
       const result = await service.getSettings('hive-collective', 'general');
