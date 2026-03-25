@@ -1,8 +1,10 @@
 import { TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { provideRouter } from '@angular/router';
 import { TabTeamComponent } from './tab-team.component';
 import { WorkspaceSettingsStateService } from '../../workspace-settings-state.service';
+import { AuthService } from '../../../../core/auth/auth.service';
 
 function makeMockSettings() {
   return {
@@ -11,6 +13,15 @@ function makeMockSettings() {
       { id: 'u2', name: 'Maya Rodriguez', email: 'maya@hivecollective.io', role: 'Viewer' as const, status: 'active' as const, joinedAt: '2026-02-01T10:00:00Z' },
     ],
   };
+}
+
+function setupAuthAsAdmin(authService: AuthService) {
+  authService.currentUser.set({
+    id: 'u1',
+    email: 'blewis@jackreiley.com',
+    displayName: 'Brett Lewis',
+    workspaces: [{ workspaceId: 'test-ws', role: 'Admin' }],
+  });
 }
 
 describe('TabTeamComponent', () => {
@@ -24,11 +35,16 @@ describe('TabTeamComponent', () => {
         WorkspaceSettingsStateService,
         provideHttpClient(),
         provideHttpClientTesting(),
+        provideRouter([]),
       ],
     }).compileComponents();
 
     state = TestBed.inject(WorkspaceSettingsStateService);
+    state.workspaceId.set('test-ws');
     state.teamSettings.set(makeMockSettings());
+
+    const authService = TestBed.inject(AuthService);
+    setupAuthAsAdmin(authService);
 
     fixture = TestBed.createComponent(TabTeamComponent);
     fixture.detectChanges();
@@ -53,14 +69,10 @@ describe('TabTeamComponent', () => {
     expect(title?.textContent).toContain('Workspace Users');
   });
 
-  it('should render Add User button with UserPlus icon', () => {
+  it('should render Add User button for admins', () => {
     const btn = fixture.nativeElement.querySelector('.add-user-btn');
     expect(btn).toBeTruthy();
     expect(btn.textContent).toContain('Add User');
-    const svg = btn.querySelector('svg');
-    expect(svg).toBeTruthy();
-    const text = btn.querySelector('.add-user-btn-text');
-    expect(text).toBeTruthy();
   });
 
   it('should render member rows', () => {
@@ -74,19 +86,19 @@ describe('TabTeamComponent', () => {
     expect(avatars[1].textContent.trim()).toBe('M');
   });
 
-  it('should render name inputs with current values', () => {
-    const inputs = fixture.nativeElement.querySelectorAll('.member-input[type="text"]') as NodeListOf<HTMLInputElement>;
-    expect(inputs[0].value).toBe('Brett Lewis');
-    expect(inputs[1].value).toBe('Maya Rodriguez');
+  it('should render member names', () => {
+    const names = fixture.nativeElement.querySelectorAll('.member-name');
+    expect(names[0].textContent.trim()).toBe('Brett Lewis');
+    expect(names[1].textContent.trim()).toBe('Maya Rodriguez');
   });
 
-  it('should render email inputs with current values', () => {
-    const inputs = fixture.nativeElement.querySelectorAll('.member-input[type="email"]') as NodeListOf<HTMLInputElement>;
-    expect(inputs[0].value).toBe('blewis@jackreiley.com');
-    expect(inputs[1].value).toBe('maya@hivecollective.io');
+  it('should render member emails', () => {
+    const emails = fixture.nativeElement.querySelectorAll('.member-email');
+    expect(emails[0].textContent.trim()).toBe('blewis@jackreiley.com');
+    expect(emails[1].textContent.trim()).toBe('maya@hivecollective.io');
   });
 
-  it('should render role selects with current values', () => {
+  it('should render role selects with current values for admin', () => {
     const selects = fixture.nativeElement.querySelectorAll('.member-select') as NodeListOf<HTMLSelectElement>;
     expect(selects[0].value).toBe('Admin');
     expect(selects[1].value).toBe('Viewer');
@@ -98,78 +110,9 @@ describe('TabTeamComponent', () => {
     expect(rows[1].classList.contains('admin')).toBe(false);
   });
 
-  it('should render remove buttons', () => {
+  it('should render remove buttons for admins', () => {
     const btns = fixture.nativeElement.querySelectorAll('.member-remove-btn');
     expect(btns.length).toBe(2);
-  });
-});
-
-describe('TabTeamComponent interactions', () => {
-  let fixture: ReturnType<typeof TestBed.createComponent<TabTeamComponent>>;
-  let state: WorkspaceSettingsStateService;
-
-  beforeEach(async () => {
-    await TestBed.configureTestingModule({
-      imports: [TabTeamComponent],
-      providers: [
-        WorkspaceSettingsStateService,
-        provideHttpClient(),
-        provideHttpClientTesting(),
-      ],
-    }).compileComponents();
-
-    state = TestBed.inject(WorkspaceSettingsStateService);
-    state.teamSettings.set(makeMockSettings());
-
-    fixture = TestBed.createComponent(TabTeamComponent);
-    fixture.detectChanges();
-  });
-
-  it('should add a new member on Add User click', () => {
-    fixture.componentInstance.addUser();
-    fixture.detectChanges();
-    expect(state.teamSettings()?.members.length).toBe(3);
-    const rows = fixture.nativeElement.querySelectorAll('.member-row');
-    expect(rows.length).toBe(3);
-  });
-
-  it('should add user via DOM click', () => {
-    const btn = fixture.nativeElement.querySelector('.add-user-btn') as HTMLButtonElement;
-    btn.click();
-    fixture.detectChanges();
-    expect(state.teamSettings()?.members.length).toBe(3);
-  });
-
-  it('should update member name on input', () => {
-    const input = fixture.nativeElement.querySelector('.member-input[type="text"]') as HTMLInputElement;
-    input.value = 'Updated Name';
-    input.dispatchEvent(new Event('input'));
-    fixture.detectChanges();
-    expect(state.teamSettings()?.members[0].name).toBe('Updated Name');
-  });
-
-  it('should update member email on input', () => {
-    const input = fixture.nativeElement.querySelector('.member-input[type="email"]') as HTMLInputElement;
-    input.value = 'new@email.com';
-    input.dispatchEvent(new Event('input'));
-    fixture.detectChanges();
-    expect(state.teamSettings()?.members[0].email).toBe('new@email.com');
-  });
-
-  it('should update member role on select change', () => {
-    const select = fixture.nativeElement.querySelector('.member-select') as HTMLSelectElement;
-    select.value = 'Editor';
-    select.dispatchEvent(new Event('change'));
-    fixture.detectChanges();
-    expect(state.teamSettings()?.members[0].role).toBe('Editor');
-  });
-
-  it('should remove member on remove button click', () => {
-    const btn = fixture.nativeElement.querySelector('.member-remove-btn') as HTMLButtonElement;
-    btn.click();
-    fixture.detectChanges();
-    expect(state.teamSettings()?.members.length).toBe(1);
-    expect(state.teamSettings()?.members[0].name).toBe('Maya Rodriguez');
   });
 
   it('should display "User" for Viewer role', () => {
@@ -179,16 +122,9 @@ describe('TabTeamComponent interactions', () => {
   it('should display role name as-is for non-Viewer', () => {
     expect(fixture.componentInstance.displayRole('Admin')).toBe('Admin');
   });
-
-  it('should show ? avatar for empty name', () => {
-    fixture.componentInstance.addUser();
-    fixture.detectChanges();
-    const avatars = fixture.nativeElement.querySelectorAll('.member-avatar');
-    expect(avatars[2].textContent.trim()).toBe('?');
-  });
 });
 
-describe('TabTeamComponent (null settings)', () => {
+describe('TabTeamComponent (add user form)', () => {
   let fixture: ReturnType<typeof TestBed.createComponent<TabTeamComponent>>;
 
   beforeEach(async () => {
@@ -198,6 +134,182 @@ describe('TabTeamComponent (null settings)', () => {
         WorkspaceSettingsStateService,
         provideHttpClient(),
         provideHttpClientTesting(),
+        provideRouter([]),
+      ],
+    }).compileComponents();
+
+    const state = TestBed.inject(WorkspaceSettingsStateService);
+    state.workspaceId.set('test-ws');
+    state.teamSettings.set(makeMockSettings());
+
+    const authService = TestBed.inject(AuthService);
+    setupAuthAsAdmin(authService);
+
+    fixture = TestBed.createComponent(TabTeamComponent);
+    fixture.detectChanges();
+  });
+
+  it('should show add form on button click', () => {
+    fixture.componentInstance.openAddForm();
+    fixture.detectChanges();
+    const form = fixture.nativeElement.querySelector('.add-user-form');
+    expect(form).toBeTruthy();
+  });
+
+  it('should hide add form on cancel', () => {
+    fixture.componentInstance.openAddForm();
+    fixture.detectChanges();
+    fixture.componentInstance.closeAddForm();
+    fixture.detectChanges();
+    const form = fixture.nativeElement.querySelector('.add-user-form');
+    expect(form).toBeNull();
+  });
+});
+
+describe('TabTeamComponent (API interactions)', () => {
+  let fixture: ReturnType<typeof TestBed.createComponent<TabTeamComponent>>;
+  let httpMock: import('@angular/common/http/testing').HttpTestingController;
+
+  beforeEach(async () => {
+    const { HttpTestingController } = await import('@angular/common/http/testing');
+    TestBed.resetTestingModule();
+
+    await TestBed.configureTestingModule({
+      imports: [TabTeamComponent],
+      providers: [
+        WorkspaceSettingsStateService,
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        provideRouter([]),
+      ],
+    }).compileComponents();
+
+    const state = TestBed.inject(WorkspaceSettingsStateService);
+    state.workspaceId.set('test-ws');
+    state.teamSettings.set(makeMockSettings());
+
+    const authService = TestBed.inject(AuthService);
+    setupAuthAsAdmin(authService);
+
+    httpMock = TestBed.inject(HttpTestingController);
+    fixture = TestBed.createComponent(TabTeamComponent);
+    fixture.detectChanges();
+  });
+
+  afterEach(() => {
+    // Flush any pending team reload requests
+    httpMock.match(() => true).forEach((r) => r.flush({}));
+  });
+
+  it('should show error when submitting add user with empty fields', async () => {
+    fixture.componentInstance.openAddForm();
+    fixture.detectChanges();
+    await fixture.componentInstance.submitAddUser();
+    fixture.detectChanges();
+    expect(fixture.componentInstance.addError()).toBe('Email and display name are required');
+  });
+
+  it('should call create user API on valid submit', async () => {
+    fixture.componentInstance.openAddForm();
+    fixture.componentInstance.newUserName = 'New User';
+    fixture.componentInstance.newUserEmail = 'new@test.com';
+    fixture.componentInstance.newUserRole = 'Viewer';
+    fixture.detectChanges();
+
+    const promise = fixture.componentInstance.submitAddUser();
+    const req = httpMock.expectOne('/api/account/test-ws/users');
+    expect(req.request.body.email).toBe('new@test.com');
+    req.flush({
+      user: { id: 'u3', email: 'new@test.com', displayName: 'New User', workspaces: [] },
+      temporaryPassword: 'abc123xyz',
+      message: 'User created',
+    });
+
+    // The component reloads team data after creating — flush the reload
+    httpMock.match('/api/workspaces/test-ws/settings/team').forEach((r) => r.flush({ members: [] }));
+
+    await promise;
+    fixture.detectChanges();
+    expect(fixture.componentInstance.tempPassword()).toBe('abc123xyz');
+    expect(fixture.componentInstance.showAddForm()).toBe(false);
+  });
+
+  it('should dismiss temp password', () => {
+    const state = fixture.debugElement.injector.get(WorkspaceSettingsStateService);
+    state.tempPassword.set('abc123');
+    state.tempPasswordEmail.set('test@test.com');
+    fixture.detectChanges();
+    // Verify banner is shown
+    expect(fixture.nativeElement.querySelector('.temp-password-banner')).toBeTruthy();
+    expect(fixture.nativeElement.querySelector('.temp-password-code')?.textContent).toBe('abc123');
+
+    fixture.componentInstance.dismissTempPassword();
+    fixture.detectChanges();
+    expect(fixture.componentInstance.tempPassword()).toBeNull();
+    expect(fixture.nativeElement.querySelector('.temp-password-banner')).toBeNull();
+  });
+
+  it('should call update role API', async () => {
+    const promise = fixture.componentInstance.updateMemberRole('u2', 'Editor');
+    const req = httpMock.expectOne('/api/account/test-ws/users/u2/role');
+    expect(req.request.body.role).toBe('Editor');
+    req.flush({ message: 'ok' });
+    httpMock.match('/api/workspaces/test-ws/settings/team').forEach((r) => r.flush({ members: [] }));
+    await promise;
+  });
+
+  it('should call remove user API', async () => {
+    const promise = fixture.componentInstance.removeMember('u2');
+    const req = httpMock.expectOne('/api/account/test-ws/users/u2');
+    expect(req.request.method).toBe('DELETE');
+    req.flush({ message: 'ok' });
+    httpMock.match('/api/workspaces/test-ws/settings/team').forEach((r) => r.flush({ members: [] }));
+    await promise;
+  });
+
+  it('should show add error in form', () => {
+    fixture.componentInstance.openAddForm();
+    fixture.componentInstance.addError.set('Some error');
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.add-user-error')?.textContent).toContain('Some error');
+  });
+
+  it('should show loading state in add form', () => {
+    fixture.componentInstance.openAddForm();
+    fixture.componentInstance.addLoading.set(true);
+    fixture.detectChanges();
+    const btn = fixture.nativeElement.querySelector('.add-user-submit');
+    expect(btn?.textContent?.trim()).toContain('Adding');
+  });
+
+  it('should not call APIs when not admin', async () => {
+    const authService = TestBed.inject(AuthService);
+    authService.currentUser.set({
+      id: 'u2',
+      email: 'maya@test.com',
+      displayName: 'Maya',
+      workspaces: [{ workspaceId: 'test-ws', role: 'Viewer' }],
+    });
+    fixture.detectChanges();
+
+    await fixture.componentInstance.updateMemberRole('u1', 'Editor');
+    await fixture.componentInstance.removeMember('u1');
+    // No HTTP requests should be made
+  });
+});
+
+describe('TabTeamComponent (null settings)', () => {
+  let fixture: ReturnType<typeof TestBed.createComponent<TabTeamComponent>>;
+
+  beforeEach(async () => {
+    TestBed.resetTestingModule();
+    await TestBed.configureTestingModule({
+      imports: [TabTeamComponent],
+      providers: [
+        WorkspaceSettingsStateService,
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        provideRouter([]),
       ],
     }).compileComponents();
 
@@ -210,11 +322,14 @@ describe('TabTeamComponent (null settings)', () => {
     expect(el.querySelector('.tab-card')).toBeNull();
     expect(el.textContent.trim()).toBe('');
   });
+
+  it('should return empty members when settings is null', () => {
+    expect(fixture.componentInstance.members).toEqual([]);
+  });
 });
 
-describe('TabTeamComponent (null guard)', () => {
+describe('TabTeamComponent (non-admin)', () => {
   let fixture: ReturnType<typeof TestBed.createComponent<TabTeamComponent>>;
-  let state: WorkspaceSettingsStateService;
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
@@ -223,36 +338,39 @@ describe('TabTeamComponent (null guard)', () => {
         WorkspaceSettingsStateService,
         provideHttpClient(),
         provideHttpClientTesting(),
+        provideRouter([]),
       ],
     }).compileComponents();
 
-    state = TestBed.inject(WorkspaceSettingsStateService);
+    const state = TestBed.inject(WorkspaceSettingsStateService);
+    state.workspaceId.set('test-ws');
+    state.teamSettings.set(makeMockSettings());
+
+    const authService = TestBed.inject(AuthService);
+    authService.currentUser.set({
+      id: 'u2',
+      email: 'maya@hivecollective.io',
+      displayName: 'Maya Rodriguez',
+      workspaces: [{ workspaceId: 'test-ws', role: 'Viewer' }],
+    });
+
     fixture = TestBed.createComponent(TabTeamComponent);
     fixture.detectChanges();
   });
 
-  it('should not add user when settings is null', () => {
-    fixture.componentInstance.addUser();
-    expect(state.teamSettings()).toBeNull();
+  it('should not render Add User button for non-admins', () => {
+    const btn = fixture.nativeElement.querySelector('.add-user-btn');
+    expect(btn).toBeNull();
   });
 
-  it('should not update member when settings is null', () => {
-    fixture.componentInstance.updateMemberField(0, 'name', 'Test');
-    expect(state.teamSettings()).toBeNull();
+  it('should not render remove buttons for non-admins', () => {
+    const btns = fixture.nativeElement.querySelectorAll('.member-remove-btn');
+    expect(btns.length).toBe(0);
   });
 
-  it('should not update role when settings is null', () => {
-    fixture.componentInstance.updateMemberRole(0, 'Editor');
-    expect(state.teamSettings()).toBeNull();
-  });
-
-  it('should not remove member when settings is null', () => {
-    fixture.componentInstance.removeMember(0);
-    expect(state.teamSettings()).toBeNull();
-  });
-
-  it('should return empty members when settings is null', () => {
-    expect(fixture.componentInstance.members).toEqual([]);
+  it('should show role labels instead of selects for non-admins', () => {
+    const labels = fixture.nativeElement.querySelectorAll('.member-role-label');
+    expect(labels.length).toBe(2);
   });
 });
 
@@ -266,11 +384,16 @@ describe('TabTeamComponent (empty members)', () => {
         WorkspaceSettingsStateService,
         provideHttpClient(),
         provideHttpClientTesting(),
+        provideRouter([]),
       ],
     }).compileComponents();
 
     const state = TestBed.inject(WorkspaceSettingsStateService);
+    state.workspaceId.set('test-ws');
     state.teamSettings.set({ members: [] });
+
+    const authService = TestBed.inject(AuthService);
+    setupAuthAsAdmin(authService);
 
     fixture = TestBed.createComponent(TabTeamComponent);
     fixture.detectChanges();
@@ -282,7 +405,12 @@ describe('TabTeamComponent (empty members)', () => {
     expect(rows.length).toBe(0);
   });
 
-  it('should still render Add User button', () => {
+  it('should show empty state message', () => {
+    const empty = fixture.nativeElement.querySelector('.empty-state');
+    expect(empty).toBeTruthy();
+  });
+
+  it('should still render Add User button for admins', () => {
     const btn = fixture.nativeElement.querySelector('.add-user-btn');
     expect(btn).toBeTruthy();
   });

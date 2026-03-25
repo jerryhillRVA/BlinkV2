@@ -1,20 +1,42 @@
-import { Controller, Post, Get, Put, Body, Param } from '@nestjs/common';
+import { Controller, Post, Get, Put, Body, Param, Req } from '@nestjs/common';
+import type { Request } from 'express';
 import { WorkspacesService } from './workspaces.service';
-import type { CreateWorkspaceRequestContract } from '@blinksocial/contracts';
+import { UserService } from '../auth/user.service';
+import type { CreateWorkspaceRequestContract, UserContract } from '@blinksocial/contracts';
 
 @Controller('api/workspaces')
 export class WorkspacesController {
-  constructor(private readonly workspacesService: WorkspacesService) {}
+  constructor(
+    private readonly workspacesService: WorkspacesService,
+    private readonly userService: UserService,
+  ) {}
 
   @Get()
-  list() {
-    return this.workspacesService.list();
+  async list(@Req() req: Request) {
+    const user = (req as Request & { user?: UserContract }).user;
+    const result = await this.workspacesService.list();
+
+    // Filter workspaces to only those the user has access to
+    if (user) {
+      const accessibleIds = new Set((user.workspaces ?? []).map((w) => w.workspaceId));
+      result.workspaces = result.workspaces.filter((w) => accessibleIds.has(w.id));
+    }
+
+    return result;
   }
 
   @Post()
-  async create(@Body() body: CreateWorkspaceRequestContract) {
+  async create(@Req() req: Request, @Body() body: CreateWorkspaceRequestContract) {
     this.workspacesService.validate(body);
-    return this.workspacesService.create(body);
+    const response = await this.workspacesService.create(body);
+
+    // Add the creating user as Admin of the new workspace
+    const user = (req as Request & { user?: UserContract }).user;
+    if (user && response.tenantId) {
+      await this.userService.addWorkspaceAccess(user.id, response.tenantId, 'Admin');
+    }
+
+    return response;
   }
 
   @Get(':id/settings/:tab')

@@ -1,7 +1,9 @@
 import { test, expect } from '@playwright/test';
+import { mockAuthenticatedUser } from './helpers/login';
 
 test.describe('Theme', () => {
   test.beforeEach(async ({ page }) => {
+    await mockAuthenticatedUser(page);
     await page.goto('/');
     await page.evaluate(() => localStorage.removeItem('blink-theme'));
   });

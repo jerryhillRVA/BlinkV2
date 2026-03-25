@@ -1,7 +1,20 @@
 import { test, expect } from '@playwright/test';
+import { mockAuthenticatedUser } from './helpers/login';
 
 test.describe('New Workspace Navigation', () => {
   test.beforeEach(async ({ page }) => {
+    await mockAuthenticatedUser(page);
+    await page.route('**/api/workspaces', (route) =>
+      route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          workspaces: [
+            { id: 'hive-collective', name: 'Hive Collective', color: '#d94e33', status: 'active', createdAt: '2026-01-15T10:00:00Z' },
+          ],
+        }),
+      })
+    );
     await page.goto('/');
   });
 
@@ -13,6 +26,7 @@ test.describe('New Workspace Navigation', () => {
 
 test.describe('New Workspace Wizard', () => {
   test.beforeEach(async ({ page }) => {
+    await mockAuthenticatedUser(page);
     await page.goto('/new-workspace');
     // Wait for Angular hydration to complete before interacting
     await page.locator('#workspace-name').waitFor({ state: 'attached' });

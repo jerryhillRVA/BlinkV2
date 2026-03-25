@@ -5,8 +5,10 @@ import {
   provideHttpClientTesting,
 } from '@angular/common/http/testing';
 import { ActivatedRoute } from '@angular/router';
+import { provideRouter } from '@angular/router';
 import { WorkspaceSettingsComponent } from './workspace-settings.component';
 import { WorkspaceSettingsStateService } from './workspace-settings-state.service';
+import { AuthService } from '../../core/auth/auth.service';
 
 describe('WorkspaceSettingsComponent', () => {
   let fixture: ReturnType<typeof TestBed.createComponent<WorkspaceSettingsComponent>>;
@@ -20,6 +22,7 @@ describe('WorkspaceSettingsComponent', () => {
       providers: [
         provideHttpClient(),
         provideHttpClientTesting(),
+        provideRouter([]),
         {
           provide: ActivatedRoute,
           useValue: {
@@ -28,6 +31,14 @@ describe('WorkspaceSettingsComponent', () => {
         },
       ],
     }).compileComponents();
+
+    const authService = TestBed.inject(AuthService);
+    authService.currentUser.set({
+      id: 'u1',
+      email: 'blewis@jackreiley.com',
+      displayName: 'Brett Lewis',
+      workspaces: [{ workspaceId: 'hive-collective', role: 'Admin' }],
+    });
 
     fixture = TestBed.createComponent(WorkspaceSettingsComponent);
     component = fixture.componentInstance;

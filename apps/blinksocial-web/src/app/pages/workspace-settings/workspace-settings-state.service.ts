@@ -19,6 +19,10 @@ export class WorkspaceSettingsStateService {
   readonly loading = signal(false);
   readonly saving = signal(false);
 
+  /** Temp password from user creation — survives tab reload */
+  readonly tempPassword = signal<string | null>(null);
+  readonly tempPasswordEmail = signal<string | null>(null);
+
   readonly generalSettings = signal<GeneralSettingsContract | null>(null);
   readonly platformSettings = signal<PlatformSettingsContract | null>(null);
   readonly brandVoiceSettings = signal<BrandVoiceSettingsContract | null>(null);

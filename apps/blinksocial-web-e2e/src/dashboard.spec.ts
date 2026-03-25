@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { mockAuthenticatedUser } from './helpers/login';
 
 const mockWorkspacesResponse = {
   workspaces: [
@@ -9,6 +10,7 @@ const mockWorkspacesResponse = {
 
 test.describe('Page Background', () => {
   test.beforeEach(async ({ page }) => {
+    await mockAuthenticatedUser(page);
     await page.route('**/api/workspaces', (route) =>
       route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(mockWorkspacesResponse) })
     );
@@ -25,6 +27,7 @@ test.describe('Page Background', () => {
 
 test.describe('Dashboard Background', () => {
   test.beforeEach(async ({ page }) => {
+    await mockAuthenticatedUser(page);
     await page.route('**/api/workspaces', (route) =>
       route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(mockWorkspacesResponse) })
     );
@@ -38,6 +41,7 @@ test.describe('Dashboard Background', () => {
 
 test.describe('Welcome Header', () => {
   test.beforeEach(async ({ page }) => {
+    await mockAuthenticatedUser(page);
     await page.route('**/api/workspaces', (route) =>
       route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(mockWorkspacesResponse) })
     );
@@ -66,6 +70,7 @@ test.describe('Welcome Header', () => {
 
 test.describe('Workspace Grid', () => {
   test.beforeEach(async ({ page }) => {
+    await mockAuthenticatedUser(page);
     await page.route('**/api/workspaces', (route) =>
       route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(mockWorkspacesResponse) })
     );
@@ -86,6 +91,7 @@ test.describe('Workspace Grid', () => {
 
 test.describe('New Workspace Card', () => {
   test.beforeEach(async ({ page }) => {
+    await mockAuthenticatedUser(page);
     await page.route('**/api/workspaces', (route) =>
       route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(mockWorkspacesResponse) })
     );
@@ -115,6 +121,7 @@ test.describe('New Workspace Card', () => {
 
 test.describe('Workspace Cards', () => {
   test.beforeEach(async ({ page }) => {
+    await mockAuthenticatedUser(page);
     await page.route('**/api/workspaces', (route) =>
       route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(mockWorkspacesResponse) })
     );

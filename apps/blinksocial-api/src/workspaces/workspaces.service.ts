@@ -13,12 +13,15 @@ import type {
   ListWorkspacesResponseContract,
   WorkspaceRegistryContract,
   WorkspaceRegistryEntryContract,
+  TeamSettingsContract,
+  TeamMemberContract,
 } from '@blinksocial/contracts';
 import { CreateWorkspaceResponse } from '@blinksocial/models';
 import { validateCreateWorkspaceRequest } from '@blinksocial/contracts/validation';
 import { generateTenantId } from '@blinksocial/core';
 import { AgenticFilesystemService } from '../agentic-filesystem/agentic-filesystem.service';
 import type { MockDataService } from '../mocks/mock-data.service';
+import { UserService } from '../auth/user.service';
 
 const SYSTEM_TENANT = 'blinksocial_system';
 const REGISTRY_NAMESPACE = 'registry';
@@ -56,6 +59,7 @@ export class WorkspacesService {
     private readonly fs: AgenticFilesystemService,
     @Inject('MOCK_DATA_SERVICE') @Optional()
     private readonly mockDataService: MockDataService | null,
+    private readonly userService: UserService,
   ) {}
 
   validate(data: unknown): void {
@@ -96,7 +100,6 @@ export class WorkspacesService {
         this.fs.uploadJsonFile(tenantId, 'settings', 'calendar.json', {}),
         this.fs.uploadJsonFile(tenantId, 'settings', 'notifications.json', {}),
         this.fs.uploadJsonFile(tenantId, 'settings', 'security.json', {}),
-        this.fs.uploadJsonFile(tenantId, 'settings', 'team.json', {}),
         ...request.audienceSegments.map((seg) =>
           this.fs.uploadJsonFile(tenantId, 'audience-segments', `${seg.id}.json`, seg)
         ),
@@ -236,9 +239,9 @@ export class WorkspacesService {
         }
 
         if (tab === 'team') {
-          if (!Array.isArray(settings['members'])) {
-            settings['members'] = [];
-          }
+          // Serve team data from users.json instead of team.json
+          const teamData = await this.getTeamFromUsers(workspaceId);
+          return teamData;
         }
 
         if (tab === 'calendar') {
@@ -328,6 +331,22 @@ export class WorkspacesService {
     }
 
     throw new NotFoundException(`Workspace not found: ${workspaceId}`);
+  }
+
+  private async getTeamFromUsers(workspaceId: string): Promise<TeamSettingsContract> {
+    const users = await this.userService.listByWorkspace(workspaceId);
+    const members: TeamMemberContract[] = users.map((u) => {
+      const access = u.workspaces.find((w) => w.workspaceId === workspaceId);
+      return {
+        id: u.id,
+        name: u.displayName,
+        email: u.email,
+        role: access?.role ?? 'Viewer',
+        status: u.isActive ? 'active' as const : 'deactivated' as const,
+        joinedAt: access?.joinedAt,
+      };
+    });
+    return { members };
   }
 
   private async readSettingsFile(

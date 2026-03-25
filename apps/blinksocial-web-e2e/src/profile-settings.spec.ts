@@ -1,7 +1,9 @@
 import { test, expect } from '@playwright/test';
+import { mockAuthenticatedUser } from './helpers/login';
 
 test.describe('Profile Settings Page', () => {
   test.beforeEach(async ({ page }) => {
+    await mockAuthenticatedUser(page);
     await page.goto('/profile-settings');
   });
 
@@ -21,7 +23,7 @@ test.describe('Profile Settings Page', () => {
     await expect(card.locator('.card-title')).toHaveText('Profile');
     await expect(card.locator('text=Display Name')).toBeVisible();
     await expect(card.locator('text=Email')).toBeVisible();
-    await expect(card.locator('text=Current Workspace Role')).toBeVisible();
+    await expect(card.locator('text=Current Role')).toBeVisible();
     await expect(card.locator('text=Workspace Access')).toBeVisible();
   });
 
@@ -49,6 +51,7 @@ test.describe('Profile Menu Navigation', () => {
   test('should navigate to profile settings from header menu', async ({
     page,
   }) => {
+    await mockAuthenticatedUser(page);
     await page.goto('/');
     await page.locator('.avatar-placeholder').click();
     await expect(page.locator('.profile-menu')).toBeVisible();
@@ -58,6 +61,7 @@ test.describe('Profile Menu Navigation', () => {
   });
 
   test('should show Logout in profile menu', async ({ page }) => {
+    await mockAuthenticatedUser(page);
     await page.goto('/');
     await page.locator('.avatar-placeholder').click();
     await expect(
@@ -66,6 +70,7 @@ test.describe('Profile Menu Navigation', () => {
   });
 
   test('should close menu when clicking outside', async ({ page }) => {
+    await mockAuthenticatedUser(page);
     await page.goto('/');
     await page.locator('.avatar-placeholder').click();
     await expect(page.locator('.profile-menu')).toBeVisible();
