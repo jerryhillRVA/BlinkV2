@@ -179,3 +179,28 @@
     cursor: not-allowed;
   }
 }
+
+.admin-only-message {
+  text-align: center;
+  padding: 80px 24px;
+  color: var(--blink-on-surface-muted);
+
+  svg {
+    margin-bottom: 16px;
+    opacity: 0.4;
+  }
+
+  h2 {
+    font-size: 20px;
+    font-weight: 600;
+    color: var(--blink-on-surface-strong);
+    margin: 0 0 8px;
+  }
+
+  p {
+    font-size: 14px;
+    max-width: 400px;
+    margin: 0 auto;
+    line-height: 1.5;
+  }
+}

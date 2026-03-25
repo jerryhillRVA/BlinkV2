@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { mockAuthenticatedUser } from './helpers/login';
 
 const mockGeneralSettings = {
   workspaceName: 'Hive Collective',
@@ -22,6 +23,21 @@ const mockPlatformSettings = {
 
 test.describe('Workspace Settings Navigation', () => {
   test('should navigate from dashboard to settings when "Go to Workspace" is clicked', async ({ page }) => {
+    await mockAuthenticatedUser(page);
+    // Mock workspace list for dashboard
+    await page.route('**/api/workspaces', (route) => {
+      if (route.request().url().includes('/settings/')) return route.fallback();
+      return route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          workspaces: [
+            { id: 'hive-collective', name: 'Hive Collective', color: '#d94e33', status: 'active', createdAt: '2026-01-15T10:00:00Z' },
+            { id: 'booze-kills', name: 'Booze Kills', color: '#2b6bff', status: 'active', createdAt: '2026-02-01T10:00:00Z' },
+          ],
+        }),
+      });
+    });
     await page.goto('/');
     // Mock settings API
     await page.route('**/api/workspaces/hive-collective/settings/general', (route) =>
@@ -38,6 +54,7 @@ test.describe('Workspace Settings Navigation', () => {
   });
 
   test('should navigate back to dashboard when header logo is clicked', async ({ page }) => {
+    await mockAuthenticatedUser(page);
     await page.route('**/api/workspaces/hive-collective/settings/general', (route) =>
       route.fulfill({
         status: 200,
@@ -53,6 +70,7 @@ test.describe('Workspace Settings Navigation', () => {
 
 test.describe('Workspace Settings Page', () => {
   test.beforeEach(async ({ page }) => {
+    await mockAuthenticatedUser(page);
     // Mock the general settings API (loaded by default)
     await page.route('**/api/workspaces/hive-collective/settings/general', (route) =>
       route.fulfill({
@@ -97,6 +115,7 @@ test.describe('Workspace Settings Page', () => {
 
 test.describe('Workspace Settings Tab Navigation', () => {
   test.beforeEach(async ({ page }) => {
+    await mockAuthenticatedUser(page);
     await page.route('**/api/workspaces/hive-collective/settings/general', (route) =>
       route.fulfill({
         status: 200,
@@ -129,7 +148,7 @@ test.describe('Workspace Settings Tab Navigation', () => {
       route.fulfill({
         status: 200,
         contentType: 'application/json',
-        body: JSON.stringify({ members: [{ id: 'm1', name: 'Brett Lewis', email: 'brett@hive.co', role: 'Admin', status: 'active' }] }),
+        body: JSON.stringify({ members: [{ id: 'm1', name: 'Blink Admin', email: 'blinkadmin@blinksocial.com', role: 'Admin', status: 'active' }] }),
       })
     );
     await page.route('**/api/workspaces/hive-collective/settings/notifications', (route) =>
@@ -201,6 +220,7 @@ test.describe('Workspace Settings Tab Navigation', () => {
 
 test.describe('Workspace Settings Save', () => {
   test('should call API when save button is clicked', async ({ page }) => {
+    await mockAuthenticatedUser(page);
     await page.route('**/api/workspaces/hive-collective/settings/general', (route) => {
       if (route.request().method() === 'GET') {
         return route.fulfill({

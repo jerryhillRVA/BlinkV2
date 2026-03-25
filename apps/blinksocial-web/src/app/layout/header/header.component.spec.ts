@@ -1,11 +1,23 @@
 import { TestBed } from '@angular/core/testing';
 import { provideRouter, Router } from '@angular/router';
+import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { HeaderComponent } from './header.component';
 import { ThemeService } from '../../core/theme/theme.service';
+import { AuthService } from '../../core/auth/auth.service';
 import { Component } from '@angular/core';
 
 @Component({ template: '' })
 class DummyComponent {}
+
+function setupAuth(authService: AuthService) {
+  authService.currentUser.set({
+    id: 'u1',
+    email: 'blewis@jackreiley.com',
+    displayName: 'Brett Lewis',
+    workspaces: [{ workspaceId: 'abc123', role: 'Admin' }],
+  });
+}
 
 describe('HeaderComponent', () => {
   beforeEach(async () => {
@@ -19,8 +31,12 @@ describe('HeaderComponent', () => {
           { path: 'profile-settings', component: DummyComponent },
           { path: 'workspace/:id/settings', component: DummyComponent },
         ]),
+        provideHttpClient(),
+        provideHttpClientTesting(),
       ],
     }).compileComponents();
+
+    setupAuth(TestBed.inject(AuthService));
   });
 
   afterEach(() => {
@@ -72,6 +88,31 @@ describe('HeaderComponent', () => {
     fixture.detectChanges();
     const el: HTMLElement = fixture.nativeElement;
     expect(el.querySelector('.avatar-placeholder')?.textContent?.trim()).toBe('BL');
+  });
+
+  it('should show workspace settings from user workspaces when not on workspace page', () => {
+    const fixture = TestBed.createComponent(HeaderComponent);
+    fixture.detectChanges();
+    const el: HTMLElement = fixture.nativeElement;
+    (el.querySelector('.avatar-placeholder') as HTMLElement).click();
+    fixture.detectChanges();
+    const wsItem = el.querySelector('a[href*="/workspace/"]');
+    expect(wsItem).toBeTruthy();
+    expect(wsItem?.getAttribute('href')).toContain('abc123');
+  });
+
+  it('should fallback to first workspace role when not on workspace page', () => {
+    const fixture = TestBed.createComponent(HeaderComponent);
+    fixture.detectChanges();
+    expect(fixture.componentInstance.currentRole()).toBe('Admin');
+  });
+
+  it('should use lastWorkspaceId when set', () => {
+    const authService = TestBed.inject(AuthService);
+    authService.lastWorkspaceId.set('last-ws');
+    const fixture = TestBed.createComponent(HeaderComponent);
+    fixture.detectChanges();
+    expect(fixture.componentInstance.settingsWorkspaceId()).toBe('last-ws');
   });
 
   it('should have a logout option in the profile menu that emits event', () => {
@@ -136,7 +177,7 @@ describe('HeaderComponent', () => {
       expect(texts).toContain('Logout');
     });
 
-    it('should not show "Workspace Settings" when not in a workspace', () => {
+    it('should show "Workspace Settings" even when not in a workspace (uses first available)', () => {
       const fixture = TestBed.createComponent(HeaderComponent);
       fixture.detectChanges();
       const el: HTMLElement = fixture.nativeElement;
@@ -144,7 +185,7 @@ describe('HeaderComponent', () => {
       fixture.detectChanges();
       const items = el.querySelectorAll('.profile-menu-item');
       const texts = Array.from(items).map((i) => i.textContent?.trim());
-      expect(texts).not.toContain('Workspace Settings');
+      expect(texts).toContain('Workspace Settings');
     });
 
     it('should hide profile menu when clicking avatar again', () => {
@@ -226,6 +267,7 @@ describe('HeaderComponent', () => {
     beforeEach(async () => {
       localStorage.clear();
       document.documentElement.removeAttribute('data-theme');
+      TestBed.resetTestingModule();
 
       await TestBed.configureTestingModule({
         imports: [HeaderComponent],
@@ -235,8 +277,12 @@ describe('HeaderComponent', () => {
             { path: 'workspace/:id/settings', component: DummyComponent },
             { path: 'profile-settings', component: DummyComponent },
           ]),
+          provideHttpClient(),
+          provideHttpClientTesting(),
         ],
       }).compileComponents();
+
+      setupAuth(TestBed.inject(AuthService));
     });
 
     it('should show "Workspace Settings" when on a workspace route', async () => {

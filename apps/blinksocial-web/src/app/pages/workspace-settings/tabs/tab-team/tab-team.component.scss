@@ -163,3 +163,189 @@
     color: var(--blink-on-surface-strong);
   }
 }
+
+.member-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.member-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--blink-on-surface-strong);
+}
+
+.member-email {
+  font-size: 12px;
+  color: var(--blink-on-surface-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.member-role-label {
+  font-size: 13px;
+  color: var(--blink-on-surface-medium);
+  min-width: 90px;
+  text-align: center;
+}
+
+// ─── Add User Form ───
+
+.add-user-form {
+  padding: 16px 24px;
+  border-top: 1px solid var(--blink-outline-variant);
+  border-bottom: 1px solid var(--blink-outline-variant);
+  background: var(--blink-surface-container-low);
+}
+
+.add-user-fields {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+
+  .member-input,
+  .member-select {
+    flex: 1;
+  }
+}
+
+.add-user-error {
+  padding: 8px 12px;
+  background: #fef2f2;
+  color: #991b1b;
+  border: 1px solid #fecaca;
+  border-radius: 6px;
+  font-size: 12px;
+  margin-bottom: 12px;
+}
+
+.add-user-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.add-user-cancel {
+  padding: 6px 16px;
+  border: 1px solid var(--blink-outline-variant);
+  border-radius: 6px;
+  background: var(--blink-surface);
+  color: var(--blink-on-surface);
+  font-size: 13px;
+  cursor: pointer;
+  transition: background 0.15s;
+
+  &:hover:not(:disabled) {
+    background: var(--blink-surface-hover);
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+}
+
+.add-user-submit {
+  padding: 6px 16px;
+  border: none;
+  border-radius: 6px;
+  background: var(--blink-brand-primary, #d94e33);
+  color: white;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.15s;
+
+  &:hover:not(:disabled) {
+    opacity: 0.9;
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+}
+
+// ─── Temp Password Banner ───
+
+.temp-password-banner {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 16px;
+  margin-bottom: 16px;
+  background: #ecfdf5;
+  border: 1px solid #a7f3d0;
+  border-radius: 12px;
+}
+
+.temp-password-content {
+  flex: 1;
+  display: flex;
+  gap: 12px;
+  font-size: 13px;
+  line-height: 1.5;
+  color: #065f46;
+
+  svg {
+    flex-shrink: 0;
+    margin-top: 2px;
+  }
+
+  strong {
+    color: #064e3b;
+  }
+
+  p {
+    margin: 4px 0 0;
+  }
+}
+
+.temp-password-code {
+  display: inline-block;
+  margin-top: 4px;
+  padding: 4px 10px;
+  background: white;
+  border: 1px solid #a7f3d0;
+  border-radius: 4px;
+  font-family: monospace;
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  color: #064e3b;
+  user-select: all;
+}
+
+.temp-password-hint {
+  font-size: 11px;
+  color: #047857;
+}
+
+.temp-password-dismiss {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: #065f46;
+  cursor: pointer;
+  flex-shrink: 0;
+
+  &:hover {
+    background: rgba(0, 0, 0, 0.05);
+  }
+}
+
+.empty-state {
+  text-align: center;
+  padding: 24px;
+  color: var(--blink-on-surface-muted);
+  font-size: 13px;
+}

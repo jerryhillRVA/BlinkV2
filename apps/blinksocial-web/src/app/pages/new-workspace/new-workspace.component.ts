@@ -12,6 +12,7 @@ import { StepReviewComponent } from './steps/step-review/step-review.component';
 import { NewWorkspaceFormService } from './new-workspace-form.service';
 import { NewWorkspaceApiService } from './new-workspace-api.service';
 import { ToastService } from '../../core/toast/toast.service';
+import { AuthService } from '../../core/auth/auth.service';
 
 @Component({
   selector: 'app-new-workspace',
@@ -31,6 +32,7 @@ export class NewWorkspaceComponent {
   private readonly router = inject(Router);
   private readonly apiService = inject(NewWorkspaceApiService);
   private readonly toastService = inject(ToastService);
+  private readonly authService = inject(AuthService);
   protected readonly formService = inject(NewWorkspaceFormService);
 
   currentStep = signal(1);
@@ -79,8 +81,11 @@ export class NewWorkspaceComponent {
 
     this.apiService.createWorkspace(this.formService.formData()).subscribe({
       next: () => {
-        this.isSubmitting.set(false);
-        this.router.navigate(['/']);
+        // Refresh auth status to pick up new workspace access, then navigate
+        this.authService.checkStatus().then(() => {
+          this.isSubmitting.set(false);
+          this.router.navigate(['/']);
+        });
       },
       error: (err) => {
         this.isSubmitting.set(false);

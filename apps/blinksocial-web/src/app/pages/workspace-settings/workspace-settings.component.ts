@@ -1,4 +1,4 @@
-import { Component, inject, OnInit } from '@angular/core';
+import { Component, inject, computed, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute } from '@angular/router';
 import { WorkspaceSettingsStateService } from './workspace-settings-state.service';
@@ -10,6 +10,7 @@ import { TabTeamComponent } from './tabs/tab-team/tab-team.component';
 import { TabNotificationsComponent } from './tabs/tab-notifications/tab-notifications.component';
 import { TabCalendarComponent } from './tabs/tab-calendar/tab-calendar.component';
 import { TabSecurityComponent } from './tabs/tab-security/tab-security.component';
+import { AuthService } from '../../core/auth/auth.service';
 import type { SettingsTab } from '@blinksocial/contracts';
 
 interface TabDef {
@@ -39,6 +40,12 @@ interface TabDef {
 export class WorkspaceSettingsComponent implements OnInit {
   private readonly route = inject(ActivatedRoute);
   protected readonly state = inject(WorkspaceSettingsStateService);
+  protected readonly authService = inject(AuthService);
+
+  readonly isAdmin = computed(() => {
+    const wsId = this.state.workspaceId();
+    return wsId ? this.authService.isAdmin(wsId) : false;
+  });
 
   readonly tabs: TabDef[] = [
     { id: 'general', label: 'General', saveLabel: 'Save Workspace Identity', icon: 'M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zM2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z' },

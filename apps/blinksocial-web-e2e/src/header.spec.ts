@@ -1,7 +1,9 @@
 import { test, expect } from '@playwright/test';
+import { mockAuthenticatedUser } from './helpers/login';
 
 test.describe('Header', () => {
   test.beforeEach(async ({ page }) => {
+    await mockAuthenticatedUser(page);
     await page.goto('/');
   });
 
@@ -16,12 +18,12 @@ test.describe('Header', () => {
   });
 
   test('should display user name and role', async ({ page }) => {
-    await expect(page.locator('.user-name')).toHaveText('Brett Lewis');
+    await expect(page.locator('.user-name')).toHaveText('Blink Admin');
     await expect(page.locator('.user-role')).toHaveText('Admin');
   });
 
-  test('should display avatar with "BL" initials', async ({ page }) => {
-    await expect(page.locator('.avatar-placeholder')).toContainText('BL');
+  test('should display avatar with "BA" initials', async ({ page }) => {
+    await expect(page.locator('.avatar-placeholder')).toContainText('BA');
   });
 
   test('should show profile menu with logout when avatar is clicked', async ({ page }) => {

@@ -1,5 +1,9 @@
-<app-header />
-<main class="main-content">
+@if (authService.isAuthenticated()) {
+  <app-header (logout)="authService.logout()" />
+  <main class="main-content">
+    <router-outlet />
+  </main>
+  <app-footer />
+} @else {
   <router-outlet />
-</main>
-<app-footer />
+}

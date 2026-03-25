@@ -2,14 +2,14 @@ import { Ajv, type ErrorObject } from 'ajv';
 import addFormatsModule from 'ajv-formats';
 import type { ValidationErrorContract } from './create-workspace-response.js';
 
-import enumsSchema from './schemas/enums.schema.json' with { type: 'json' };
-import generalSchema from './schemas/general.schema.json' with { type: 'json' };
-import platformsSchema from './schemas/platforms.schema.json' with { type: 'json' };
-import brandVoiceSchema from './schemas/brand-voice.schema.json' with { type: 'json' };
-import skillsSchema from './schemas/skills.schema.json' with { type: 'json' };
-import contentPillarSchema from './schemas/content-pillar.schema.json' with { type: 'json' };
-import audienceSegmentSchema from './schemas/audience-segment.schema.json' with { type: 'json' };
-import createWorkspaceRequestSchema from './schemas/create-workspace-request.schema.json' with { type: 'json' };
+import enumsSchema from '../schemas/workspaces/enums.schema.json' with { type: 'json' };
+import generalSchema from '../schemas/workspaces/general.schema.json' with { type: 'json' };
+import platformsSchema from '../schemas/workspaces/platforms.schema.json' with { type: 'json' };
+import brandVoiceSchema from '../schemas/workspaces/brand-voice.schema.json' with { type: 'json' };
+import skillsSchema from '../schemas/workspaces/skills.schema.json' with { type: 'json' };
+import contentPillarSchema from '../schemas/workspaces/content-pillar.schema.json' with { type: 'json' };
+import audienceSegmentSchema from '../schemas/workspaces/audience-segment.schema.json' with { type: 'json' };
+import createWorkspaceRequestSchema from '../schemas/workspaces/create-workspace-request.schema.json' with { type: 'json' };
 
 // CJS default export under nodenext: runtime resolves to the callable plugin
 const addFormats = addFormatsModule as unknown as (ajv: Ajv) => Ajv;

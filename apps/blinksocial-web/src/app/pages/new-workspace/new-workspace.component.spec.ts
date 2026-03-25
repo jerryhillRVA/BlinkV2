@@ -146,7 +146,7 @@ describe('NewWorkspaceComponent', () => {
     expect(router.navigate).toHaveBeenCalledWith(['/']);
   });
 
-  it('should call API and navigate on successful submit', () => {
+  it('should call API and navigate on successful submit', async () => {
     const fixture = TestBed.createComponent(NewWorkspaceComponent);
     const httpMock = TestBed.inject(HttpTestingController);
     fixture.componentInstance.currentStep.set(5);
@@ -160,12 +160,21 @@ describe('NewWorkspaceComponent', () => {
 
     const req = httpMock.expectOne('/api/workspaces');
     expect(req.request.method).toBe('POST');
-    req.flush({ id: '123', workspaceName: 'Test', status: 'active', createdAt: '2026-01-01' });
+    req.flush({ id: '123', tenantId: 'test', workspaceName: 'Test', status: 'active', createdAt: '2026-01-01' });
+
+    // Flush the auth status refresh that happens after workspace creation
+    // Use a microtask flush to allow the .then() chain to execute
+    await new Promise((r) => setTimeout(r, 0));
+    httpMock.match('/api/auth/status').forEach((r) =>
+      r.flush({ authenticated: true, needsBootstrap: false, user: { id: 'u1', email: 'a@b.com', displayName: 'Test', workspaces: [] } })
+    );
+    await new Promise((r) => setTimeout(r, 0));
     fixture.detectChanges();
 
     expect(fixture.componentInstance.isSubmitting()).toBe(false);
     expect(router.navigate).toHaveBeenCalledWith(['/']);
-    httpMock.verify();
+    // Flush any remaining requests
+    httpMock.match(() => true).forEach((r) => r.flush({}));
   });
 
   it('should show toast error on failed submit', () => {
