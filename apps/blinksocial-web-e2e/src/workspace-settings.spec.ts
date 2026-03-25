@@ -196,7 +196,8 @@ test.describe('Workspace Settings Tab Navigation', () => {
   test('should switch to Team tab', async ({ page }) => {
     await page.locator('.tab-button', { hasText: 'Team' }).click();
     await expect(page.locator('.tab-button.active')).toContainText('Team');
-    await expect(page.locator('.save-button')).toContainText('Save Team Settings');
+    // Team tab has its own add/remove UI instead of a generic save button
+    await expect(page.locator('.card-title')).toContainText('Workspace Users');
   });
 
   test('should switch to Notifications tab', async ({ page }) => {

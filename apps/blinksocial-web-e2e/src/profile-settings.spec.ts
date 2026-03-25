@@ -23,7 +23,7 @@ test.describe('Profile Settings Page', () => {
     await expect(card.locator('.card-title')).toHaveText('Profile');
     await expect(card.locator('text=Display Name')).toBeVisible();
     await expect(card.locator('text=Email')).toBeVisible();
-    await expect(card.locator('text=Current Workspace Role')).toBeVisible();
+    await expect(card.locator('text=Current Role')).toBeVisible();
     await expect(card.locator('text=Workspace Access')).toBeVisible();
   });
 
