@@ -10,10 +10,11 @@ import type {
   CreateUserResponseContract,
 } from '@blinksocial/contracts';
 import { AuthService } from '../../../../core/auth/auth.service';
+import { DropdownComponent, type DropdownOption } from '../../../../shared/dropdown/dropdown.component';
 
 @Component({
   selector: 'app-tab-team',
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, DropdownComponent],
   templateUrl: './tab-team.component.html',
   styleUrl: './tab-team.component.scss',
 })
@@ -23,6 +24,11 @@ export class TabTeamComponent {
   private readonly http = inject(HttpClient);
 
   readonly roles: WorkspaceRole[] = ['Admin', 'Editor', 'Viewer'];
+
+  readonly roleDropdownOptions: DropdownOption[] = this.roles.map((role) => ({
+    value: role,
+    label: this.displayRole(role),
+  }));
 
   // Add user form state
   readonly showAddForm = signal(false);
@@ -47,6 +53,10 @@ export class TabTeamComponent {
 
   get isAdmin(): boolean {
     return this.authService.isAdmin(this.state.workspaceId());
+  }
+
+  setNewUserRole(value: string): void {
+    this.newUserRole = value as WorkspaceRole;
   }
 
   displayRole(role: string): string {

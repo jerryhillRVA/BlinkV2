@@ -4,7 +4,7 @@
   border-radius: 12px;
   border: 1px solid var(--blink-outline-variant);
   box-shadow: var(--blink-shadow-sm);
-  overflow: hidden;
+  overflow: visible;
 }
 
 .card-header {
@@ -128,20 +128,8 @@
   }
 }
 
-.member-select {
-  padding: 6px 10px;
-  border: 1px solid var(--blink-outline-variant);
-  border-radius: 8px;
-  background: var(--blink-surface);
-  color: var(--blink-on-surface);
-  font-size: 13px;
-  cursor: pointer;
-  outline: none;
-  min-width: 90px;
-
-  &:focus {
-    border-color: var(--blink-brand-primary);
-  }
+.member-role {
+  flex-shrink: 0;
 }
 
 .member-remove-btn {
@@ -207,8 +195,11 @@
   gap: 8px;
   margin-bottom: 12px;
 
-  .member-input,
-  .member-select {
+  .member-input {
+    flex: 1;
+  }
+
+  app-dropdown {
     flex: 1;
   }
 }

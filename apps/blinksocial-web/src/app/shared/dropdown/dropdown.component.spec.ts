@@ -158,6 +158,39 @@ describe('DropdownComponent', () => {
   });
 });
 
+describe('DropdownComponent (compact size)', () => {
+  let fixture: ReturnType<typeof TestBed.createComponent<DropdownComponent>>;
+
+  beforeEach(async () => {
+    await TestBed.configureTestingModule({
+      imports: [DropdownComponent],
+    }).compileComponents();
+
+    fixture = TestBed.createComponent(DropdownComponent);
+    fixture.componentRef.setInput('options', OPTIONS);
+    fixture.componentRef.setInput('value', 'youtube');
+    fixture.componentRef.setInput('size', 'compact');
+    fixture.detectChanges();
+  });
+
+  it('should apply compact class to wrapper', () => {
+    const wrapper = fixture.nativeElement.querySelector('.dropdown-wrapper');
+    expect(wrapper.classList.contains('dropdown-compact')).toBe(true);
+  });
+
+  it('should still render trigger with selected label', () => {
+    const trigger = fixture.nativeElement.querySelector('.dropdown-trigger');
+    expect(trigger.textContent).toContain('YouTube');
+  });
+
+  it('should not apply compact class when size is default', () => {
+    fixture.componentRef.setInput('size', 'default');
+    fixture.detectChanges();
+    const wrapper = fixture.nativeElement.querySelector('.dropdown-wrapper');
+    expect(wrapper.classList.contains('dropdown-compact')).toBe(false);
+  });
+});
+
 describe('DropdownComponent (click outside)', () => {
   let fixture: ReturnType<typeof TestBed.createComponent<DropdownComponent>>;
 

@@ -98,10 +98,15 @@ describe('TabTeamComponent', () => {
     expect(emails[1].textContent.trim()).toBe('maya@hivecollective.io');
   });
 
-  it('should render role selects with current values for admin', () => {
-    const selects = fixture.nativeElement.querySelectorAll('.member-select') as NodeListOf<HTMLSelectElement>;
-    expect(selects[0].value).toBe('Admin');
-    expect(selects[1].value).toBe('Viewer');
+  it('should render role dropdowns for admin', () => {
+    const dropdowns = fixture.nativeElement.querySelectorAll('app-dropdown');
+    expect(dropdowns.length).toBe(2);
+  });
+
+  it('should display role labels in dropdowns using displayRole mapping', () => {
+    const triggers = fixture.nativeElement.querySelectorAll('.member-role app-dropdown .dropdown-trigger');
+    expect(triggers[0].textContent).toContain('Admin');
+    expect(triggers[1].textContent).toContain('User');
   });
 
   it('should highlight admin row', () => {
@@ -154,6 +159,13 @@ describe('TabTeamComponent (add user form)', () => {
     fixture.detectChanges();
     const form = fixture.nativeElement.querySelector('.add-user-form');
     expect(form).toBeTruthy();
+  });
+
+  it('should render dropdown for role selection in add form', () => {
+    fixture.componentInstance.openAddForm();
+    fixture.detectChanges();
+    const dropdown = fixture.nativeElement.querySelector('.add-user-fields app-dropdown');
+    expect(dropdown).toBeTruthy();
   });
 
   it('should hide add form on cancel', () => {
@@ -368,9 +380,11 @@ describe('TabTeamComponent (non-admin)', () => {
     expect(btns.length).toBe(0);
   });
 
-  it('should show role labels instead of selects for non-admins', () => {
+  it('should show role labels instead of dropdowns for non-admins', () => {
     const labels = fixture.nativeElement.querySelectorAll('.member-role-label');
     expect(labels.length).toBe(2);
+    const dropdowns = fixture.nativeElement.querySelectorAll('app-dropdown');
+    expect(dropdowns.length).toBe(0);
   });
 });
 

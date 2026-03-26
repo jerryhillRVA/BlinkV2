@@ -70,15 +70,12 @@
             [(ngModel)]="newUserEmail"
             [disabled]="addLoading()"
           />
-          <select
-            class="member-select"
-            [(ngModel)]="newUserRole"
-            [disabled]="addLoading()"
-          >
-            @for (role of roles; track role) {
-              <option [value]="role">{{ displayRole(role) }}</option>
-            }
-          </select>
+          <app-dropdown
+            [options]="roleDropdownOptions"
+            [value]="newUserRole"
+            (valueChange)="setNewUserRole($event)"
+            size="compact"
+          />
         </div>
         <div class="add-user-actions">
           <button class="add-user-cancel" type="button" (click)="closeAddForm()" [disabled]="addLoading()">Cancel</button>
@@ -105,15 +102,14 @@
               <span class="member-email">{{ member.email }}</span>
             </div>
             @if (isAdmin) {
-              <select
-                class="member-select"
-                [value]="member.role"
-                (change)="updateMemberRole(member.id, $any($event.target).value)"
-              >
-                @for (role of roles; track role) {
-                  <option [value]="role" [selected]="role === member.role">{{ displayRole(role) }}</option>
-                }
-              </select>
+              <div class="member-role">
+                <app-dropdown
+                  [options]="roleDropdownOptions"
+                  [value]="member.role"
+                  (valueChange)="updateMemberRole(member.id, $event)"
+                  size="compact"
+                />
+              </div>
             } @else {
               <span class="member-role-label">{{ displayRole(member.role) }}</span>
             }
