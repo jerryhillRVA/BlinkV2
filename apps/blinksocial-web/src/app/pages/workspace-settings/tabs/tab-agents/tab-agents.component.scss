@@ -3,7 +3,7 @@
   backdrop-filter: blur(8px);
   border-radius: 12px;
   box-shadow: var(--blink-shadow-sm);
-  overflow: hidden;
+  overflow: visible;
 }
 
 .card-header {
@@ -68,7 +68,7 @@
   border-radius: 16px;
   background: var(--blink-surface-elevated);
   box-shadow: var(--blink-shadow-sm);
-  overflow: hidden;
+  overflow: visible;
 }
 
 .agent-row-inner {
@@ -191,6 +191,7 @@
 .agent-edit-panel {
   border-top: 1px solid var(--blink-outline-variant);
   background: var(--blink-surface-container-low);
+  border-radius: 0 0 16px 16px;
 }
 
 .edit-form {
@@ -221,21 +222,42 @@
   gap: 8px;
 }
 
-.edit-info-icon {
+.tooltip-trigger {
   appearance: none;
   background: none;
   border: none;
   padding: 0;
+  cursor: pointer;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  border-radius: 50%;
   color: var(--blink-on-surface-muted);
-  cursor: pointer;
   transition: color 0.15s;
+  position: relative;
 
   &:hover {
     color: var(--blink-brand-primary);
+  }
+
+  &:hover::after {
+    content: attr(data-tooltip);
+    position: absolute;
+    bottom: calc(100% + 8px);
+    left: 50%;
+    transform: translateX(-50%);
+    background: #111827;
+    color: #fff;
+    font-size: 11px;
+    font-weight: 500;
+    line-height: 1.5;
+    padding: 8px 12px;
+    border-radius: 8px;
+    white-space: normal;
+    width: max-content;
+    max-width: 320px;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    z-index: 50;
+    pointer-events: none;
   }
 }
 
