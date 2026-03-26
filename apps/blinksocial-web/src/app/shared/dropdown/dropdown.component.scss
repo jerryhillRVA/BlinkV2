@@ -80,3 +80,27 @@
   color: var(--blink-on-surface-muted);
   flex-shrink: 0;
 }
+
+// Compact variant
+.dropdown-compact {
+  .dropdown-trigger {
+    height: 34px;
+    padding: 6px 10px;
+    font-size: 13px;
+    border: 1px solid var(--blink-outline-variant);
+    border-radius: 8px;
+    background: var(--blink-surface);
+    min-width: 90px;
+    width: auto;
+  }
+
+  .dropdown-options {
+    min-width: 120px;
+    width: auto;
+  }
+
+  .dropdown-option {
+    padding: 8px 12px;
+    font-size: 13px;
+  }
+}

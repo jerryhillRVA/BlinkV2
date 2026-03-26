@@ -15,6 +15,7 @@ export class DropdownComponent {
 
   options = input.required<DropdownOption[]>();
   value = input.required<string>();
+  size = input<'default' | 'compact'>('default');
   valueChange = output<string>();
 
   open = signal(false);
