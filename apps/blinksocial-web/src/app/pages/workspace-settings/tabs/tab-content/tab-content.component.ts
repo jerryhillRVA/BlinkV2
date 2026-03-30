@@ -4,10 +4,11 @@ import { WorkspaceSettingsStateService } from '../../workspace-settings-state.se
 import { PLATFORM_OPTIONS, PLATFORM_DISPLAY_NAMES } from '@blinksocial/contracts';
 import type { Platform } from '@blinksocial/contracts';
 import type { ContentPillarContract } from '@blinksocial/contracts';
+import { TooltipComponent } from '../../../../shared/tooltip/tooltip.component';
 
 @Component({
   selector: 'app-tab-content',
-  imports: [CommonModule],
+  imports: [CommonModule, TooltipComponent],
   templateUrl: './tab-content.component.html',
   styleUrl: './tab-content.component.scss',
 })

@@ -5,6 +5,8 @@ export * from './brand-voice.js';
 export * from './content-pillar.js';
 export * from './audience-segment.js';
 export * from './skill-config.js';
+export * from './business-objective.js';
+export * from './brand-positioning.js';
 export * from './create-workspace-request.js';
 export * from './create-workspace-response.js';
 export * from './workspace-registry.js';

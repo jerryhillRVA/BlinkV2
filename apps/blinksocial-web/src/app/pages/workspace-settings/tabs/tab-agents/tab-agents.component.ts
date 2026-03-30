@@ -3,10 +3,11 @@ import { CommonModule } from '@angular/common';
 import { WorkspaceSettingsStateService } from '../../workspace-settings-state.service';
 import { expandPanel } from '../../../../core/animations/expand-panel.animation';
 import type { SkillConfigContract } from '@blinksocial/contracts';
+import { TooltipComponent } from '../../../../shared/tooltip/tooltip.component';
 
 @Component({
   selector: 'app-tab-agents',
-  imports: [CommonModule],
+  imports: [CommonModule, TooltipComponent],
   templateUrl: './tab-agents.component.html',
   styleUrl: './tab-agents.component.scss',
   animations: [expandPanel],

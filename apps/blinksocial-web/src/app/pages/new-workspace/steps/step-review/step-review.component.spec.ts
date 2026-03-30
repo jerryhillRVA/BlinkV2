@@ -44,7 +44,7 @@ describe('StepReviewComponent', () => {
     expect(el.querySelector('.review-summary')).toBeTruthy();
   });
 
-  it('should show summary stats (workspace, pillars, platforms, agents)', () => {
+  it('should show summary stats (workspace, pillars, platforms, objectives)', () => {
     const fixture = TestBed.createComponent(StepReviewComponent);
     fixture.detectChanges();
     const el: HTMLElement = fixture.nativeElement;

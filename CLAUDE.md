@@ -78,11 +78,13 @@ Routes are defined in `app.routes.ts` using `loadComponent` for lazy loading:
 
 ### Frontend Testing
 
-- **Unit tests**: Vitest via `@angular/build:unit-test` executor
+This project follows a **three-tier testing strategy** — unit tests (mocked), integration tests (real), and E2E tests. When adding or modifying frontend functionality, write tests at all applicable tiers.
+
+- **Unit tests**: Vitest via `@angular/build:unit-test` executor. These are the majority of tests and use mocks for services/HTTP.
 - `vitest/globals` provides `describe`, `it`, `expect`, `vi` without imports
 - Tests use `TestBed.configureTestingModule({ imports: [MyComponent] })` (standalone components go in `imports`, not `declarations`)
 - **Coverage**: 90% threshold on statements, branches, functions, and lines (enforced by `@vitest/coverage-v8` — configured in `project.json`, fails the test run when not met)
-- **E2E tests**: Playwright (`apps/blinksocial-web-e2e/src/`)
+- **E2E tests**: Playwright (`apps/blinksocial-web-e2e/src/`) — validates full user flows across browsers
 
 ### E2E Test Organization
 
@@ -100,10 +102,10 @@ When adding a new page or component, create a corresponding `<feature>.spec.ts` 
 Husky runs on every commit via `.husky/pre-commit`:
 
 1. `nx affected -t lint` — lints only changed projects (fast fail)
-2. `nx affected -t test -- --watch=false` — runs unit tests with coverage enforcement
+2. `nx affected -t test -- --watch=false` — runs unit tests (mocked) and integration tests (real, skipped if external service unavailable)
 3. `nx affected -t e2e` — runs E2E tests (Playwright for web, Jest for API)
 
-This means every commit is validated against lint rules, 90% coverage thresholds, and E2E acceptance tests. If any step fails, the commit is blocked.
+This means every commit is validated against lint rules, coverage thresholds, integration contracts, and E2E acceptance tests. If any step fails, the commit is blocked.
 
 ---
 
@@ -149,10 +151,15 @@ feature/
 
 ### API Testing
 
-- **E2E tests**: Jest with SWC transpiler (`apps/blinksocial-api-e2e/`)
-- Tests use `axios` for HTTP requests against a running server
-- Global setup waits for port 3000 to be available; global teardown kills it
-- **Unit tests**: Use `@nestjs/testing` `Test.createTestingModule()` (not yet implemented)
+This project uses a **three-tier testing strategy**. When adding or modifying functionality, write tests at all applicable tiers:
+
+1. **Unit tests (mocked)** — Fast, comprehensive, mock external dependencies. Use `@nestjs/testing` `Test.createTestingModule()` with mock providers for services like `AgenticFilesystemService`, `UserService`, etc. These form the majority of tests and run on every commit.
+
+2. **Integration tests (real)** — A small set of tests that validate real external service contracts (e.g., AgenticFilesystem API). Must be **idempotent** — clean up all created artifacts in `afterAll`. Use `describe.skip` when the external service is unavailable (e.g., `AGENTIC_FS_URL` not set) so they skip gracefully. See `agentic-filesystem.integration.spec.ts` for the pattern.
+
+3. **E2E tests** — Jest with SWC transpiler (`apps/blinksocial-api-e2e/`). Tests use `axios` for HTTP requests against a running server. Global setup waits for port 3000 to be available; global teardown kills it.
+
+All three tiers run at commit time via Husky pre-commit hooks (`nx affected -t test` and `nx affected -t e2e`). The combination of mocked unit tests, real integration tests, and full E2E tests provides high confidence that changes work correctly at every level.
 
 ### Build
 
@@ -203,6 +210,8 @@ In component SCSS, always use `var(--blink-*)` tokens:
 - **Borders**: `--blink-outline`, `--blink-outline-variant`, `--blink-outline-dashed`
 - **Shadows**: `--blink-shadow-sm`, `--blink-shadow-md`, `--blink-shadow-lg`
 - **Icons**: `--blink-icon-purple`, `--blink-icon-green`, `--blink-icon-blue`, `--blink-icon-orange` (each has a `-bg` variant)
+- **Typography** (M3-aligned scale): `--blink-display-large` (57px), `--blink-display-medium` (45px), `--blink-display-small` (36px), `--blink-headline-large` (32px), `--blink-headline-medium` (28px), `--blink-headline-small` (24px), `--blink-title-large` (22px), `--blink-title-medium` (16px), `--blink-title-small` (14px), `--blink-body-large` (18px), `--blink-body-medium` (14px), `--blink-body-small` (12px), `--blink-label-large` (14px), `--blink-label-medium` (12px), `--blink-label-small` (11px). **Use `var(--blink-*)` typography tokens for font sizes** — never hardcode px values in component SCSS.
+- **Tooltip**: `--blink-tooltip-bg`, `--blink-tooltip-text`
 
 To add new tokens, add them to both `light-tokens` and `dark-tokens` mixins in `_blink-tokens.scss`.
 

@@ -1,6 +1,6 @@
 .step-indicator {
   width: 100%;
-  padding: 32px 0;
+  padding: 32px 0 80px;
 }
 
 .step-track {
@@ -47,19 +47,21 @@
 
 .step-inactive {
   background: var(--blink-surface);
-  border-color: var(--blink-on-surface-tertiary);
-  color: var(--blink-on-surface-tertiary);
+  border-color: var(--blink-on-surface-medium);
+  color: var(--blink-on-surface-medium);
 }
 
 .step-label {
   position: absolute;
   top: 48px;
-  white-space: nowrap;
-  font-size: 11px;
+  text-align: center;
+  width: 80px;
+  font-size: 9px;
   font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.05em;
-  color: var(--blink-on-surface-tertiary);
+  letter-spacing: 0.08em;
+  line-height: 1.3;
+  color: var(--blink-on-surface-medium);
 }
 
 .step-label-active {
@@ -69,8 +71,8 @@
 .step-line {
   flex: 1;
   height: 2px;
-  margin: 20px 16px 0;
-  background: var(--blink-outline-variant);
+  margin: 20px 4px 0;
+  background: var(--blink-outline-dashed);
   overflow: hidden;
   transition: background 0.5s ease-in-out;
 }

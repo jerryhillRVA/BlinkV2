@@ -5,9 +5,11 @@ import {
   WizardStep,
 } from './step-indicator/step-indicator.component';
 import { StepWorkspaceBasicsComponent } from './steps/step-workspace-basics/step-workspace-basics.component';
+import { StepObjectivesComponent } from './steps/step-objectives/step-objectives.component';
+import { StepBrandPositioningComponent } from './steps/step-brand-positioning/step-brand-positioning.component';
+import { StepAudienceComponent } from './steps/step-audience/step-audience.component';
 import { StepPlatformConfigComponent } from './steps/step-platform-config/step-platform-config.component';
 import { StepContentStrategyComponent } from './steps/step-content-strategy/step-content-strategy.component';
-import { StepAgentsComponent } from './steps/step-agents/step-agents.component';
 import { StepReviewComponent } from './steps/step-review/step-review.component';
 import { NewWorkspaceFormService } from './new-workspace-form.service';
 import { NewWorkspaceApiService } from './new-workspace-api.service';
@@ -19,9 +21,11 @@ import { AuthService } from '../../core/auth/auth.service';
   imports: [
     StepIndicatorComponent,
     StepWorkspaceBasicsComponent,
+    StepObjectivesComponent,
+    StepBrandPositioningComponent,
+    StepAudienceComponent,
     StepPlatformConfigComponent,
     StepContentStrategyComponent,
-    StepAgentsComponent,
     StepReviewComponent,
   ],
   providers: [NewWorkspaceFormService],
@@ -39,11 +43,13 @@ export class NewWorkspaceComponent {
   isSubmitting = signal(false);
 
   readonly STEPS: WizardStep[] = [
-    { id: 1, title: 'Workspace' },
-    { id: 2, title: 'Platforms' },
-    { id: 3, title: 'Content' },
-    { id: 4, title: 'Agents' },
-    { id: 5, title: 'Review' },
+    { id: 1, title: 'Strategic Foundation' },
+    { id: 2, title: 'Business Objectives' },
+    { id: 3, title: 'Brand & Voice' },
+    { id: 4, title: 'Audience' },
+    { id: 5, title: 'Platforms' },
+    { id: 6, title: 'Content Strategy' },
+    { id: 7, title: 'Review' },
   ];
 
   get isFirstStep(): boolean {

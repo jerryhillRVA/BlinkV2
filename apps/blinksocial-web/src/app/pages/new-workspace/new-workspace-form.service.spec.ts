@@ -1,5 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { NewWorkspaceFormService } from './new-workspace-form.service';
+import { CreateWorkspaceRequest } from '@blinksocial/models';
 
 describe('NewWorkspaceFormService', () => {
   let service: NewWorkspaceFormService;
@@ -15,8 +16,11 @@ describe('NewWorkspaceFormService', () => {
     expect(service).toBeTruthy();
   });
 
-  it('should have default audience segment', () => {
+  // --- Audience Segments ---
+
+  it('should have default audience segment with name field', () => {
     expect(service.audienceSegments().length).toBe(1);
+    expect(service.audienceSegments()[0]).toEqual({ id: 1, name: '' });
   });
 
   it('should add and remove segments', () => {
@@ -31,6 +35,79 @@ describe('NewWorkspaceFormService', () => {
     service.removeSegment(service.audienceSegments()[0].id);
     expect(service.audienceSegments().length).toBe(1);
   });
+
+  it('should update segment name', () => {
+    const segId = service.audienceSegments()[0].id;
+    service.updateSegmentName(segId, 'Tech professionals');
+    expect(service.audienceSegments()[0].name).toBe('Tech professionals');
+  });
+
+  it('should handle updateSegmentName with non-matching id', () => {
+    service.updateSegmentName(9999, 'No match');
+    expect(service.audienceSegments()[0].name).toBe('');
+  });
+
+  // --- Business Objectives ---
+
+  it('should have 1 default business objective', () => {
+    expect(service.businessObjectives().length).toBe(1);
+    expect(service.businessObjectives()[0].category).toBe('growth');
+    expect(service.businessObjectives()[0].statement).toBe('');
+  });
+
+  it('should add and remove objectives', () => {
+    service.addObjective();
+    expect(service.businessObjectives().length).toBe(2);
+    const id = service.businessObjectives()[1].id;
+    service.removeObjective(id);
+    expect(service.businessObjectives().length).toBe(1);
+  });
+
+  it('should not remove last objective', () => {
+    service.removeObjective(service.businessObjectives()[0].id);
+    expect(service.businessObjectives().length).toBe(1);
+  });
+
+  it('should update objective fields', () => {
+    const id = service.businessObjectives()[0].id;
+    service.updateObjective(id, 'statement', 'Grow audience by 50%');
+    expect(service.businessObjectives()[0].statement).toBe('Grow audience by 50%');
+    service.updateObjective(id, 'category', 'engagement');
+    expect(service.businessObjectives()[0].category).toBe('engagement');
+  });
+
+  // --- Brand Positioning ---
+
+  it('should have default brand positioning with empty strings', () => {
+    const bp = service.brandPositioning();
+    expect(bp.targetCustomer).toBe('');
+    expect(bp.problemSolved).toBe('');
+    expect(bp.solution).toBe('');
+    expect(bp.differentiator).toBe('');
+    expect(bp.positioningStatement).toBe('');
+  });
+
+  it('should update brand positioning fields', () => {
+    service.updateBrandPositioning('targetCustomer', 'Developers');
+    expect(service.brandPositioning().targetCustomer).toBe('Developers');
+  });
+
+  // --- Tone Tags ---
+
+  it('should have default empty tone tags', () => {
+    expect(service.toneTags()).toEqual([]);
+  });
+
+  it('should toggle tone tags', () => {
+    service.toggleToneTag('professional');
+    expect(service.toneTags()).toContain('professional');
+    expect(service.isToneTagSelected('professional')).toBe(true);
+    service.toggleToneTag('professional');
+    expect(service.toneTags()).not.toContain('professional');
+    expect(service.isToneTagSelected('professional')).toBe(false);
+  });
+
+  // --- Platforms ---
 
   it('should have default enabled platforms', () => {
     expect(service.enabledPlatforms().has('YouTube')).toBe(true);
@@ -53,6 +130,8 @@ describe('NewWorkspaceFormService', () => {
     expect(service.aiDisclaimer()).toBe(false);
   });
 
+  // --- Content Pillars ---
+
   it('should have 2 default pillars', () => {
     expect(service.contentPillars().length).toBe(2);
   });
@@ -63,6 +142,13 @@ describe('NewWorkspaceFormService', () => {
     const id = service.contentPillars()[2].id;
     service.removePillar(id);
     expect(service.contentPillars().length).toBe(2);
+  });
+
+  it('should not remove last pillar', () => {
+    service.removePillar(service.contentPillars()[0].id);
+    expect(service.contentPillars().length).toBe(1);
+    service.removePillar(service.contentPillars()[0].id);
+    expect(service.contentPillars().length).toBe(1);
   });
 
   it('should toggle audience on pillar', () => {
@@ -79,70 +165,6 @@ describe('NewWorkspaceFormService', () => {
     expect(service.contentPillars()[0].platforms).toContain('Instagram');
     service.togglePillarPlatform(pillarId, 'Instagram');
     expect(service.contentPillars()[0].platforms).not.toContain('Instagram');
-  });
-
-  it('should have 2 default agents', () => {
-    expect(service.agents().length).toBe(2);
-  });
-
-  it('should add and remove agents', () => {
-    service.addAgent();
-    expect(service.agents().length).toBe(3);
-    const id = service.agents()[2].id;
-    service.removeAgent(id);
-    expect(service.agents().length).toBe(2);
-  });
-
-  it('should assemble formData with workspaceName', () => {
-    service.workspaceName.set('My Workspace');
-    const data = service.formData();
-    expect(data.general.workspaceName).toBe('My Workspace');
-    expect(data.platforms.globalRules.defaultPlatform).toBe('youtube');
-    expect(data.platforms.globalRules.maxIdeasPerMonth).toBe(30);
-    expect(data.contentPillars.length).toBe(2);
-    expect(data.audienceSegments.length).toBe(1);
-    expect(data.skills.skills.length).toBe(2);
-  });
-
-  it('should map pillar platforms to equal-weight distribution', () => {
-    service.workspaceName.set('Test');
-    const data = service.formData();
-    const pillar = data.contentPillars[0];
-    expect(pillar.platformDistribution).toBeDefined();
-    const weights = Object.values(pillar.platformDistribution as Record<string, number>);
-    expect(weights.every((w) => w === 0.5)).toBe(true);
-  });
-
-  it('should assign colors to content pillars', () => {
-    service.workspaceName.set('Test');
-    const data = service.formData();
-    expect(data.contentPillars[0].color).toMatch(/^#[0-9a-fA-F]{6}$/);
-  });
-
-  it('should generate skillId from agent name', () => {
-    service.workspaceName.set('Test');
-    const data = service.formData();
-    expect(data.skills.skills[0].skillId).toBe('reporting-agent');
-  });
-
-  it('should map brand voice to tone guidelines', () => {
-    service.workspaceName.set('Test');
-    service.brandVoice.set('professional, bold, casual');
-    const data = service.formData();
-    expect(data.brandVoice.brandVoiceDescription).toBe('professional, bold, casual');
-    expect(data.brandVoice.toneGuidelines).toEqual(['professional', 'bold', 'casual']);
-  });
-
-  it('should update segment description', () => {
-    const segId = service.audienceSegments()[0].id;
-    service.updateSegmentDescription(segId, 'Tech professionals');
-    expect(service.audienceSegments()[0].description).toBe('Tech professionals');
-  });
-
-  it('should update segment age range', () => {
-    const segId = service.audienceSegments()[0].id;
-    service.updateSegmentAgeRange(segId, '35-44');
-    expect(service.audienceSegments()[0].ageRange).toBe('35-44');
   });
 
   it('should update pillar name', () => {
@@ -163,42 +185,85 @@ describe('NewWorkspaceFormService', () => {
     expect(service.contentPillars()[0].description).toBe('New description');
   });
 
-  it('should update agent name', () => {
-    const agentId = service.agents()[0].id;
-    service.updateAgentName(agentId, 'New Agent');
-    expect(service.agents()[0].name).toBe('New Agent');
+  it('should update pillar objective', () => {
+    const pillarId = service.contentPillars()[0].id;
+    service.updatePillarObjective(pillarId, 'obj-1');
+    expect(service.contentPillars()[0].objectiveId).toBe('obj-1');
   });
 
-  it('should update agent role', () => {
-    const agentId = service.agents()[0].id;
-    service.updateAgentRole(agentId, 'New Role');
-    expect(service.agents()[0].role).toBe('New Role');
+  it('should handle update methods on non-matching pillar ids', () => {
+    const original = service.contentPillars()[0].name;
+    service.updatePillarName(9999, 'No match');
+    expect(service.contentPillars()[0].name).toBe(original);
   });
 
-  it('should update agent responsibilities', () => {
-    const agentId = service.agents()[0].id;
-    service.updateAgentResponsibilities(agentId, 'New responsibilities');
-    expect(service.agents()[0].responsibilities).toBe('New responsibilities');
+  // --- formData ---
+
+  it('should assemble formData with workspaceName', () => {
+    service.workspaceName.set('My Workspace');
+    const data = service.formData();
+    expect(data.general.workspaceName).toBe('My Workspace');
+    expect(data.platforms.globalRules.defaultPlatform).toBe('youtube');
+    expect(data.platforms.globalRules.maxIdeasPerMonth).toBe(30);
+    expect(data.contentPillars.length).toBe(2);
+    expect(data.audienceSegments.length).toBe(1);
   });
 
-  it('should update agent outputs', () => {
-    const agentId = service.agents()[0].id;
-    service.updateAgentOutputs(agentId, 'New outputs');
-    expect(service.agents()[0].outputs).toBe('New outputs');
+  it('should map pillar platforms to equal-weight distribution', () => {
+    service.workspaceName.set('Test');
+    const data = service.formData();
+    const pillar = data.contentPillars[0];
+    expect(pillar.platformDistribution).toBeDefined();
+    const weights = Object.values(pillar.platformDistribution as Record<string, number>);
+    expect(weights.every((w) => w === 0.5)).toBe(true);
   });
 
-  it('should not remove last agent', () => {
-    service.removeAgent(service.agents()[0].id);
-    expect(service.agents().length).toBe(1);
-    service.removeAgent(service.agents()[0].id);
-    expect(service.agents().length).toBe(1);
+  it('should assign colors to content pillars', () => {
+    service.workspaceName.set('Test');
+    const data = service.formData();
+    expect(data.contentPillars[0].color).toMatch(/^#[0-9a-fA-F]{6}$/);
   });
 
-  it('should not remove last pillar', () => {
-    service.removePillar(service.contentPillars()[0].id);
-    expect(service.contentPillars().length).toBe(1);
-    service.removePillar(service.contentPillars()[0].id);
-    expect(service.contentPillars().length).toBe(1);
+  it('should map brand voice to tone guidelines', () => {
+    service.workspaceName.set('Test');
+    service.brandVoice.set('professional, bold, casual');
+    const data = service.formData();
+    expect(data.brandVoice.brandVoiceDescription).toBe('professional, bold, casual');
+    expect(data.brandVoice.toneGuidelines).toEqual(['professional', 'bold', 'casual']);
+  });
+
+  it('should pass tone tags through to formData brandVoice input', () => {
+    service.workspaceName.set('Test');
+    service.toggleToneTag('witty');
+    service.toggleToneTag('bold');
+    // Verify toneTags signal state (formData passes them to constructor)
+    expect(service.toneTags()).toEqual(['witty', 'bold']);
+    // Verify formData still assembles without error
+    const data = service.formData();
+    expect(data.brandVoice).toBeDefined();
+  });
+
+  it('should include business objectives in formData when statements provided', () => {
+    service.workspaceName.set('Test');
+    service.updateObjective(service.businessObjectives()[0].id, 'statement', 'Grow 50%');
+    const data = service.formData();
+    expect(data.businessObjectives).toBeDefined();
+    expect(data.businessObjectives!.length).toBe(1);
+    expect(data.businessObjectives![0].statement).toBe('Grow 50%');
+  });
+
+  it('should omit business objectives from formData when no statements', () => {
+    service.workspaceName.set('Test');
+    const data = service.formData();
+    expect(data.businessObjectives).toBeUndefined();
+  });
+
+  it('should include brand positioning in formData', () => {
+    service.workspaceName.set('Test');
+    service.updateBrandPositioning('targetCustomer', 'Developers');
+    const data = service.formData();
+    expect(data.brandPositioning).toBeDefined();
+    expect(data.brandPositioning!.targetCustomer).toBe('Developers');
   });
 
   it('should set purpose and mission to undefined when empty', () => {
@@ -226,53 +291,24 @@ describe('NewWorkspaceFormService', () => {
     service.workspaceName.set('Test');
     service.contentPillars.set([{
       id: 1, name: 'Solo', themes: '', description: 'Desc',
-      audienceSegments: [], platforms: [],
+      audienceSegments: [], platforms: [], objectiveId: '',
     }]);
     const data = service.formData();
     expect(Object.keys(data.contentPillars[0].platformDistribution as Record<string, number>)).toHaveLength(0);
   });
 
-  it('should use fallback name for segment with empty description', () => {
+  it('should use fallback name for segment with empty name', () => {
     service.workspaceName.set('Test');
-    service.audienceSegments.set([{ id: 1, description: '', ageRange: '25-34' }]);
+    service.audienceSegments.set([{ id: 1, name: '' }]);
     const data = service.formData();
     expect(data.audienceSegments[0].name).toBe('Segment 1');
   });
 
-  it('should use description as name for segment with filled description', () => {
+  it('should use name for segment with filled name', () => {
     service.workspaceName.set('Test');
-    service.audienceSegments.set([{ id: 1, description: 'Engineers', ageRange: '25-34' }]);
+    service.audienceSegments.set([{ id: 1, name: 'Engineers' }]);
     const data = service.formData();
     expect(data.audienceSegments[0].name).toBe('Engineers');
-  });
-
-  it('should use fallback skillId when agent name is empty', () => {
-    service.workspaceName.set('Test');
-    service.agents.set([{ id: 1, name: '', role: 'Test', responsibilities: '', outputs: '' }]);
-    const data = service.formData();
-    expect(data.skills.skills[0].skillId).toBe('agent-1');
-  });
-
-  it('should handle updateSegmentDescription with non-matching id', () => {
-    service.updateSegmentDescription(9999, 'No match');
-    expect(service.audienceSegments()[0].description).toBe('');
-  });
-
-  it('should handle updateSegmentAgeRange with non-matching id', () => {
-    service.updateSegmentAgeRange(9999, '45-54');
-    expect(service.audienceSegments()[0].ageRange).toBe('25-34');
-  });
-
-  it('should handle update methods on non-matching pillar ids', () => {
-    const original = service.contentPillars()[0].name;
-    service.updatePillarName(9999, 'No match');
-    expect(service.contentPillars()[0].name).toBe(original);
-  });
-
-  it('should handle update methods on non-matching agent ids', () => {
-    const original = service.agents()[0].name;
-    service.updateAgentName(9999, 'No match');
-    expect(service.agents()[0].name).toBe(original);
   });
 
   it('should fall back to Platform.Tbd for unknown display name in enabled platforms', () => {
@@ -286,11 +322,13 @@ describe('NewWorkspaceFormService', () => {
     service.workspaceName.set('Test');
     service.contentPillars.set([{
       id: 1, name: 'Test', themes: ',,,', description: 'Desc',
-      audienceSegments: [], platforms: [],
+      audienceSegments: [], platforms: [], objectiveId: '',
     }]);
     const data = service.formData();
     expect(data.contentPillars[0].themes).toEqual([]);
   });
+
+  // --- Step Validation (7 steps) ---
 
   describe('stepValidation', () => {
     it('should return error for step 1 when workspace name is empty', () => {
@@ -323,14 +361,68 @@ describe('NewWorkspaceFormService', () => {
       expect(result.valid).toBe(true);
     });
 
-    it('should return valid for steps 2-4 (no required fields)', () => {
-      expect(service.stepValidation(2).valid).toBe(true);
-      expect(service.stepValidation(3).valid).toBe(true);
-      expect(service.stepValidation(4).valid).toBe(true);
+    it('should return error for step 2 when no objective has a statement', () => {
+      const result = service.stepValidation(2);
+      expect(result.valid).toBe(false);
+      if (!result.valid) {
+        expect(result.error).toContain('objective');
+      }
     });
 
-    it('should return valid for step 5 (review step, no own validation)', () => {
-      expect(service.stepValidation(5).valid).toBe(true);
+    it('should return valid for step 2 when at least one objective has a statement', () => {
+      service.updateObjective(service.businessObjectives()[0].id, 'statement', 'Grow audience');
+      const result = service.stepValidation(2);
+      expect(result.valid).toBe(true);
     });
+
+    it('should return valid for step 3 (brand, no required fields)', () => {
+      expect(service.stepValidation(3).valid).toBe(true);
+    });
+
+    it('should return error for step 4 when no segment has a name', () => {
+      const result = service.stepValidation(4);
+      expect(result.valid).toBe(false);
+      if (!result.valid) {
+        expect(result.error).toContain('segment');
+      }
+    });
+
+    it('should return valid for step 4 when at least one segment has a name', () => {
+      service.updateSegmentName(service.audienceSegments()[0].id, 'Developers');
+      const result = service.stepValidation(4);
+      expect(result.valid).toBe(true);
+    });
+
+    it('should return valid for steps 5-6 (no required fields)', () => {
+      expect(service.stepValidation(5).valid).toBe(true);
+      expect(service.stepValidation(6).valid).toBe(true);
+    });
+
+    it('should return valid for step 7 (review step, no own validation)', () => {
+      expect(service.stepValidation(7).valid).toBe(true);
+    });
+  });
+
+  // --- CreateWorkspaceRequest with skills (model coverage) ---
+
+  it('should construct CreateWorkspaceRequest with optional skills', () => {
+    service.workspaceName.set('Test');
+    const baseData = service.formData();
+    const requestWithSkills = new CreateWorkspaceRequest({
+      ...baseData,
+      skills: {
+        skills: [
+          {
+            id: 'sk-1',
+            skillId: 'reporting-agent',
+            name: 'Reporting Agent',
+            role: 'Reporter',
+          },
+        ],
+      },
+    });
+    expect(requestWithSkills.skills).toBeDefined();
+    expect(requestWithSkills.skills!.skills.length).toBe(1);
+    expect(requestWithSkills.skills!.skills[0].skillId).toBe('reporting-agent');
   });
 });

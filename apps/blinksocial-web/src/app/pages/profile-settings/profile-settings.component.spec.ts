@@ -150,6 +150,30 @@ describe('ProfileSettingsComponent', () => {
       expect(input.type).toBe('password');
     });
 
+    it('should bind password inputs via ngModel', async () => {
+      const fixture = TestBed.createComponent(ProfileSettingsComponent);
+      fixture.detectChanges();
+      await fixture.whenStable();
+
+      const currentPwd = fixture.nativeElement.querySelector('#current-password') as HTMLInputElement;
+      const newPwd = fixture.nativeElement.querySelector('#new-password') as HTMLInputElement;
+      const confirmPwd = fixture.nativeElement.querySelector('#confirm-password') as HTMLInputElement;
+
+      currentPwd.value = 'oldpass';
+      currentPwd.dispatchEvent(new Event('input'));
+      newPwd.value = 'newpass123';
+      newPwd.dispatchEvent(new Event('input'));
+      confirmPwd.value = 'newpass123';
+      confirmPwd.dispatchEvent(new Event('input'));
+
+      fixture.detectChanges();
+      await fixture.whenStable();
+
+      expect(fixture.componentInstance.currentPassword).toBe('oldpass');
+      expect(fixture.componentInstance.newPassword).toBe('newpass123');
+      expect(fixture.componentInstance.confirmPassword).toBe('newpass123');
+    });
+
     it('should show minimum 8 characters hint', () => {
       const fixture = TestBed.createComponent(ProfileSettingsComponent);
       fixture.detectChanges();

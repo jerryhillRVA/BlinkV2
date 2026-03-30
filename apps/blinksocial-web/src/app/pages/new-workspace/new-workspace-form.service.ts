@@ -5,10 +5,12 @@ import {
   displayNameToPlatform,
   type AudienceSegmentContract,
   type ContentPillarContract,
-  type SkillConfigContract,
+  type BusinessObjectiveContract,
+  type BrandPositioningContract,
 } from '@blinksocial/contracts';
 import { CreateWorkspaceRequest } from '@blinksocial/models';
-import { UIAudienceSegment, UIContentPillar, UIAgent } from '../../models';
+import type { UIBusinessObjective, UIBrandPositioning } from '../../models';
+import { UIAudienceSegment, UIContentPillar } from '../../models';
 
 const PILLAR_COLORS = [
   '#d94e33', '#3b82f6', '#10b981', '#f59e0b',
@@ -17,23 +19,40 @@ const PILLAR_COLORS = [
 
 @Injectable()
 export class NewWorkspaceFormService {
-  // Step 1
+  // Step 1 — Strategic Foundation
   readonly workspaceName = signal('');
   readonly purpose = signal('');
   readonly mission = signal('');
-  readonly brandVoice = signal('');
-  readonly audienceSegments = signal<UIAudienceSegment[]>([
-    { id: 1, description: '', ageRange: '25-34' },
+
+  // Step 2 — Business Objectives
+  readonly businessObjectives = signal<UIBusinessObjective[]>([
+    { id: 1, category: 'growth', statement: '', target: '', unit: '', timeframe: '' },
   ]);
 
-  // Step 2
+  // Step 3 — Brand & Voice
+  readonly brandPositioning = signal<UIBrandPositioning>({
+    targetCustomer: '',
+    problemSolved: '',
+    solution: '',
+    differentiator: '',
+    positioningStatement: '',
+  });
+  readonly brandVoice = signal('');
+  readonly toneTags = signal<string[]>([]);
+
+  // Step 4 — Audience
+  readonly audienceSegments = signal<UIAudienceSegment[]>([
+    { id: 1, name: '' },
+  ]);
+
+  // Step 5 — Platforms
   readonly enabledPlatforms = signal<Set<string>>(new Set(['YouTube', 'LinkedIn']));
   readonly defaultPlatform = signal('YouTube');
   readonly maxIdeasPerMonth = signal(30);
   readonly contentWarning = signal(false);
   readonly aiDisclaimer = signal(true);
 
-  // Step 3
+  // Step 6 — Content Strategy
   readonly contentPillars = signal<UIContentPillar[]>([
     {
       id: 1,
@@ -42,6 +61,7 @@ export class NewWorkspaceFormService {
       description: 'Timely updates on industry shifts and breaking tech news.',
       audienceSegments: ['Engineers', 'Founders'],
       platforms: ['YouTube', 'LinkedIn'],
+      objectiveId: '',
     },
     {
       id: 2,
@@ -50,28 +70,7 @@ export class NewWorkspaceFormService {
       description: 'Practical tutorials and educational deep-dives.',
       audienceSegments: ['Social Media Managers', 'Engineers'],
       platforms: ['YouTube', 'Instagram'],
-    },
-  ]);
-
-  // Step 4
-  readonly agents = signal<UIAgent[]>([
-    {
-      id: 1,
-      name: 'Reporting Agent',
-      role: 'News Aggregator',
-      responsibilities:
-        'Scan RSS feeds daily, identify emerging trends, and summarize complex tech articles for the engineering team.',
-      outputs:
-        'Daily news digests, weekly trend reports, and Slack alerts for high-priority news.',
-    },
-    {
-      id: 2,
-      name: 'Creative Agent',
-      role: 'Content Specialist',
-      responsibilities:
-        'Write engaging captions, select strategic hashtags, suggest visual imagery, and create social story outlines.',
-      outputs:
-        'Social media post drafts, creative content concepts, and hashtag strategy documents.',
+      objectiveId: '',
     },
   ]);
 
@@ -87,9 +86,8 @@ export class NewWorkspaceFormService {
 
     const segments: AudienceSegmentContract[] = this.audienceSegments().map((s, i) => ({
       id: `seg-${i + 1}`,
-      name: s.description || `Segment ${i + 1}`,
-      description: s.description || `Segment ${i + 1}`,
-      demographics: s.ageRange,
+      name: s.name || `Segment ${i + 1}`,
+      description: s.name || `Segment ${i + 1}`,
     }));
 
     const pillars: ContentPillarContract[] = this.contentPillars().map((p, i) => {
@@ -112,23 +110,31 @@ export class NewWorkspaceFormService {
           (_, si) => `seg-${si + 1}`
         ),
         platformDistribution,
+        objectiveIds: p.objectiveId ? [p.objectiveId] : undefined,
       };
     });
 
-    const skills: SkillConfigContract[] = this.agents().map((a, i) => ({
-      id: `skill-config-${i + 1}`,
-      skillId: a.name.toLowerCase().replace(/\s+/g, '-') || `agent-${i + 1}`,
-      name: a.name,
-      role: a.role,
-      responsibilities: a.responsibilities
-        .split('\n')
-        .map((l) => l.trim())
-        .filter(Boolean),
-      expectedOutputs: a.outputs
-        .split('\n')
-        .map((l) => l.trim())
-        .filter(Boolean),
-    }));
+    const objectives: BusinessObjectiveContract[] = this.businessObjectives()
+      .filter((o) => o.statement.trim())
+      .map((o, i) => ({
+        id: `obj-${i + 1}`,
+        category: (o.category || 'growth') as BusinessObjectiveContract['category'],
+        statement: o.statement,
+        target: Number(o.target) || 0,
+        unit: o.unit,
+        timeframe: o.timeframe,
+        status: 'on-track' as const,
+      }));
+
+    const positioning: BrandPositioningContract = {
+      targetCustomer: this.brandPositioning().targetCustomer || undefined,
+      problemSolved: this.brandPositioning().problemSolved || undefined,
+      solution: this.brandPositioning().solution || undefined,
+      differentiator: this.brandPositioning().differentiator || undefined,
+      positioningStatement: this.brandPositioning().positioningStatement || undefined,
+    };
+
+    const tags = this.toneTags();
 
     return new CreateWorkspaceRequest({
       general: {
@@ -150,10 +156,12 @@ export class NewWorkspaceFormService {
         toneGuidelines: this.brandVoice()
           ? this.brandVoice().split(',').map((t) => t.trim()).filter(Boolean)
           : undefined,
+        toneTags: tags.length > 0 ? tags : undefined,
       },
       contentPillars: pillars,
       audienceSegments: segments,
-      skills: { skills },
+      businessObjectives: objectives.length > 0 ? objectives : undefined,
+      brandPositioning: positioning,
     });
   });
 
@@ -170,16 +178,67 @@ export class NewWorkspaceFormService {
         }
         return { valid: true };
       }
+      case 2: {
+        const hasStatement = this.businessObjectives().some((o) => o.statement.trim());
+        if (!hasStatement) {
+          return { valid: false, error: 'At least one objective with a statement is required.' };
+        }
+        return { valid: true };
+      }
+      case 4: {
+        const hasName = this.audienceSegments().some((s) => s.name.trim());
+        if (!hasName) {
+          return { valid: false, error: 'At least one audience segment with a name is required.' };
+        }
+        return { valid: true };
+      }
       default:
         return { valid: true };
     }
   }
 
-  // Step 1 helpers
+  // Step 2 helpers — Business Objectives
+  addObjective(): void {
+    if (this.businessObjectives().length >= 4) return;
+    this.businessObjectives.update((objs) => [
+      ...objs,
+      { id: Date.now(), category: 'growth', statement: '', target: '', unit: '', timeframe: '' },
+    ]);
+  }
+
+  removeObjective(id: number): void {
+    if (this.businessObjectives().length > 1) {
+      this.businessObjectives.update((objs) => objs.filter((o) => o.id !== id));
+    }
+  }
+
+  updateObjective(id: number, field: keyof UIBusinessObjective, value: string): void {
+    this.businessObjectives.update((objs) =>
+      objs.map((o) => (o.id === id ? { ...o, [field]: value } : o))
+    );
+  }
+
+  // Step 3 helpers — Brand Positioning & Voice
+  updateBrandPositioning(field: keyof UIBrandPositioning, value: string): void {
+    this.brandPositioning.update((bp) => ({ ...bp, [field]: value }));
+  }
+
+  toggleToneTag(tag: string): void {
+    this.toneTags.update((tags) =>
+      tags.includes(tag) ? tags.filter((t) => t !== tag) : [...tags, tag]
+    );
+  }
+
+  isToneTagSelected(tag: string): boolean {
+    return this.toneTags().includes(tag);
+  }
+
+  // Step 4 helpers — Audience Segments
   addSegment(): void {
+    if (this.audienceSegments().length >= 6) return;
     this.audienceSegments.update((s) => [
       ...s,
-      { id: Date.now(), description: '', ageRange: '25-34' },
+      { id: Date.now(), name: '' },
     ]);
   }
 
@@ -189,7 +248,13 @@ export class NewWorkspaceFormService {
     }
   }
 
-  // Step 2 helpers
+  updateSegmentName(segmentId: number, name: string): void {
+    this.audienceSegments.update((segs) =>
+      segs.map((s) => (s.id === segmentId ? { ...s, name } : s))
+    );
+  }
+
+  // Step 5 helpers — Platforms
   isEnabled(platform: string): boolean {
     return this.enabledPlatforms().has(platform);
   }
@@ -214,7 +279,7 @@ export class NewWorkspaceFormService {
     this.aiDisclaimer.update((v) => !v);
   }
 
-  // Step 3 helpers
+  // Step 6 helpers — Content Strategy
   readonly AUDIENCES = [
     'Engineers', 'Founders', 'Social Media Managers',
     'Tech Enthusiasts', 'Executives',
@@ -232,6 +297,7 @@ export class NewWorkspaceFormService {
         description: '',
         audienceSegments: [],
         platforms: [],
+        objectiveId: '',
       },
     ]);
   }
@@ -266,39 +332,18 @@ export class NewWorkspaceFormService {
     );
   }
 
+  updatePillarObjective(pillarId: number, objectiveId: string): void {
+    this.contentPillars.update((pillars) =>
+      pillars.map((p) => (p.id === pillarId ? { ...p, objectiveId } : p))
+    );
+  }
+
   isAudienceSelected(pillar: UIContentPillar, segment: string): boolean {
     return pillar.audienceSegments.includes(segment);
   }
 
   isPlatformSelected(pillar: UIContentPillar, platform: string): boolean {
     return pillar.platforms.includes(platform);
-  }
-
-  // Step 4 helpers
-  addAgent(): void {
-    this.agents.update((a) => [
-      ...a,
-      { id: Date.now(), name: '', role: '', responsibilities: '', outputs: '' },
-    ]);
-  }
-
-  removeAgent(id: number): void {
-    if (this.agents().length > 1) {
-      this.agents.update((a) => a.filter((x) => x.id !== id));
-    }
-  }
-
-  // Field update helpers for template bindings
-  updateSegmentDescription(segmentId: number, description: string): void {
-    this.audienceSegments.update((segs) =>
-      segs.map((s) => (s.id === segmentId ? { ...s, description } : s))
-    );
-  }
-
-  updateSegmentAgeRange(segmentId: number, ageRange: string): void {
-    this.audienceSegments.update((segs) =>
-      segs.map((s) => (s.id === segmentId ? { ...s, ageRange } : s))
-    );
   }
 
   updatePillarName(pillarId: number, name: string): void {
@@ -316,30 +361,6 @@ export class NewWorkspaceFormService {
   updatePillarDescription(pillarId: number, description: string): void {
     this.contentPillars.update((ps) =>
       ps.map((p) => (p.id === pillarId ? { ...p, description } : p))
-    );
-  }
-
-  updateAgentName(agentId: number, name: string): void {
-    this.agents.update((as) =>
-      as.map((a) => (a.id === agentId ? { ...a, name } : a))
-    );
-  }
-
-  updateAgentRole(agentId: number, role: string): void {
-    this.agents.update((as) =>
-      as.map((a) => (a.id === agentId ? { ...a, role } : a))
-    );
-  }
-
-  updateAgentResponsibilities(agentId: number, responsibilities: string): void {
-    this.agents.update((as) =>
-      as.map((a) => (a.id === agentId ? { ...a, responsibilities } : a))
-    );
-  }
-
-  updateAgentOutputs(agentId: number, outputs: string): void {
-    this.agents.update((as) =>
-      as.map((a) => (a.id === agentId ? { ...a, outputs } : a))
     );
   }
 }

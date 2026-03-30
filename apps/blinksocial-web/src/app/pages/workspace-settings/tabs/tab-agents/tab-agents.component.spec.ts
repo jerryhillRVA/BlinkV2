@@ -329,34 +329,28 @@ describe('TabAgentsComponent edit panel', () => {
     expect(textareas[0].value).toContain('Daily scanning');
   });
 
-  it('should render Agent Name label with tooltip trigger', () => {
+  it('should render Agent Name label with tooltip', () => {
     fixture.componentInstance.toggleEdit(0);
     fixture.detectChanges();
     const labels = fixture.nativeElement.querySelectorAll('.edit-field-label');
     expect(labels[0].textContent).toContain('Agent Name');
-    const trigger = labels[0].querySelector('.tooltip-trigger');
-    expect(trigger).toBeTruthy();
-    expect(trigger.getAttribute('data-tooltip')).toBeTruthy();
+    expect(labels[0].querySelector('app-tooltip')).toBeTruthy();
   });
 
-  it('should render Role label with tooltip trigger', () => {
+  it('should render Role label with tooltip', () => {
     fixture.componentInstance.toggleEdit(0);
     fixture.detectChanges();
     const labels = fixture.nativeElement.querySelectorAll('.edit-field-label');
     expect(labels[1].textContent).toContain('Role');
-    const trigger = labels[1].querySelector('.tooltip-trigger');
-    expect(trigger).toBeTruthy();
-    expect(trigger.getAttribute('data-tooltip')).toBeTruthy();
+    expect(labels[1].querySelector('app-tooltip')).toBeTruthy();
   });
 
-  it('should render Responsibilities label with tooltip trigger', () => {
+  it('should render Responsibilities label with tooltip', () => {
     fixture.componentInstance.toggleEdit(0);
     fixture.detectChanges();
     const labels = fixture.nativeElement.querySelectorAll('.edit-field-label');
     expect(labels[2].textContent).toContain('Responsibilities');
-    const trigger = labels[2].querySelector('.tooltip-trigger');
-    expect(trigger).toBeTruthy();
-    expect(trigger.getAttribute('data-tooltip')).toBeTruthy();
+    expect(labels[2].querySelector('app-tooltip')).toBeTruthy();
   });
 
   it('should render Done button', () => {
@@ -446,14 +440,12 @@ describe('TabAgentsComponent edit panel', () => {
     expect(textareas[1]).toBeTruthy();
   });
 
-  it('should render Expected Outputs label with tooltip trigger', () => {
+  it('should render Expected Outputs label with tooltip', () => {
     fixture.componentInstance.toggleEdit(0);
     fixture.detectChanges();
     const labels = fixture.nativeElement.querySelectorAll('.edit-field-label');
     expect(labels[3].textContent).toContain('Expected Outputs');
-    const trigger = labels[3].querySelector('.tooltip-trigger');
-    expect(trigger).toBeTruthy();
-    expect(trigger.getAttribute('data-tooltip')).toBeTruthy();
+    expect(labels[3].querySelector('app-tooltip')).toBeTruthy();
   });
 
   it('should return empty string for responsibilitiesPreview with no responsibilities', () => {

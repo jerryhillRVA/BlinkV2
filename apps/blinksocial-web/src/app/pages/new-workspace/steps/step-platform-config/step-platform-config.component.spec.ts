@@ -131,4 +131,40 @@ describe('StepPlatformConfigComponent', () => {
     const details = el.querySelectorAll('.platform-details');
     expect(details.length).toBe(8);
   });
+
+  it('should update default platform via select change', () => {
+    const fixture = TestBed.createComponent(StepPlatformConfigComponent);
+    fixture.detectChanges();
+    const select = fixture.nativeElement.querySelector('#default-platform') as HTMLSelectElement;
+    select.value = 'Instagram';
+    select.dispatchEvent(new Event('change'));
+    expect(formService.defaultPlatform()).toBe('Instagram');
+  });
+
+  it('should update max ideas via input', () => {
+    const fixture = TestBed.createComponent(StepPlatformConfigComponent);
+    fixture.detectChanges();
+    const input = fixture.nativeElement.querySelector('#max-ideas') as HTMLInputElement;
+    input.value = '50';
+    input.dispatchEvent(new Event('input'));
+    expect(formService.maxIdeasPerMonth()).toBe(50);
+  });
+
+  it('should toggle content warning via template button', () => {
+    const fixture = TestBed.createComponent(StepPlatformConfigComponent);
+    fixture.detectChanges();
+    const btn = fixture.nativeElement.querySelector('.toggle-content-warning') as HTMLButtonElement;
+    btn.click();
+    fixture.detectChanges();
+    expect(formService.contentWarning()).toBe(true);
+  });
+
+  it('should toggle AI disclaimer via template button', () => {
+    const fixture = TestBed.createComponent(StepPlatformConfigComponent);
+    fixture.detectChanges();
+    const btn = fixture.nativeElement.querySelector('.toggle-ai-disclaimer') as HTMLButtonElement;
+    btn.click();
+    fixture.detectChanges();
+    expect(formService.aiDisclaimer()).toBe(false);
+  });
 });

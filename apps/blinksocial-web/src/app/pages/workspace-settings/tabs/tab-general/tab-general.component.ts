@@ -2,10 +2,11 @@ import { Component, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { WorkspaceSettingsStateService } from '../../workspace-settings-state.service';
 import type { AudienceSegment } from '@blinksocial/contracts';
+import { TooltipComponent } from '../../../../shared/tooltip/tooltip.component';
 
 @Component({
   selector: 'app-tab-general',
-  imports: [CommonModule],
+  imports: [CommonModule, TooltipComponent],
   templateUrl: './tab-general.component.html',
   styleUrl: './tab-general.component.scss',
 })

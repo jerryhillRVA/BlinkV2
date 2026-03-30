@@ -48,6 +48,7 @@ const MOCK_WORKSPACES: ListWorkspacesResponseContract = {
 
 const VALID_TABS = new Set([
   'general', 'platforms', 'brand-voice', 'skills',
+  'business-objectives', 'brand-positioning',
   'team', 'notifications', 'calendar', 'security',
 ]);
 
@@ -96,7 +97,9 @@ export class WorkspacesService {
         this.fs.uploadJsonFile(tenantId, 'settings', 'general.json', request.general),
         this.fs.uploadJsonFile(tenantId, 'settings', 'brand-voice.json', request.brandVoice),
         this.fs.uploadJsonFile(tenantId, 'settings', 'platforms.json', request.platforms),
-        this.fs.uploadJsonFile(tenantId, 'settings', 'skills.json', request.skills),
+        this.fs.uploadJsonFile(tenantId, 'settings', 'skills.json', request.skills ?? { skills: [] }),
+        this.fs.uploadJsonFile(tenantId, 'settings', 'business-objectives.json', request.businessObjectives ?? []),
+        this.fs.uploadJsonFile(tenantId, 'settings', 'brand-positioning.json', request.brandPositioning ?? {}),
         this.fs.uploadJsonFile(tenantId, 'settings', 'calendar.json', {}),
         this.fs.uploadJsonFile(tenantId, 'settings', 'notifications.json', {}),
         this.fs.uploadJsonFile(tenantId, 'settings', 'security.json', {}),

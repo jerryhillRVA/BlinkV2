@@ -84,8 +84,8 @@ describe('TabPlatformsComponent', () => {
     expect(input.value).toBe('30');
   });
 
-  it('should render tooltip triggers', () => {
-    const tooltips = fixture.nativeElement.querySelectorAll('.tooltip-trigger');
+  it('should render tooltips', () => {
+    const tooltips = fixture.nativeElement.querySelectorAll('app-tooltip');
     expect(tooltips.length).toBe(2);
   });
 

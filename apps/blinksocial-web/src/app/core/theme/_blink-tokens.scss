@@ -28,6 +28,23 @@
   --blink-on-surface-tertiary: #9ca3af;
   --blink-on-surface-faint: #bbb;
 
+  // Typography scale (M3-aligned)
+  --blink-display-large: 57px;
+  --blink-display-medium: 45px;
+  --blink-display-small: 36px;
+  --blink-headline-large: 32px;
+  --blink-headline-medium: 28px;
+  --blink-headline-small: 24px;
+  --blink-title-large: 22px;
+  --blink-title-medium: 16px;
+  --blink-title-small: 14px;
+  --blink-body-large: 18px;
+  --blink-body-medium: 14px;
+  --blink-body-small: 12px;
+  --blink-label-large: 14px;
+  --blink-label-medium: 12px;
+  --blink-label-small: 11px;
+
   // Borders / Outlines
   --blink-outline: rgba(0, 0, 0, 0.1);
   --blink-outline-variant: #f3f4f6;
@@ -37,6 +54,10 @@
   --blink-shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.06);
   --blink-shadow-md: 0 2px 8px rgba(0, 0, 0, 0.1);
   --blink-shadow-lg: 0 20px 40px rgba(0, 0, 0, 0.1);
+
+  // Tooltip
+  --blink-tooltip-bg: var(--blink-on-surface-strong);
+  --blink-tooltip-text: var(--blink-surface);
 
   // Header
   --blink-header-avatar-bg: rgba(255, 255, 255, 0.25);
@@ -131,6 +152,10 @@
   --blink-shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.3);
   --blink-shadow-md: 0 2px 8px rgba(0, 0, 0, 0.4);
   --blink-shadow-lg: 0 20px 40px rgba(0, 0, 0, 0.5);
+
+  // Tooltip
+  --blink-tooltip-bg: var(--blink-on-surface-strong);
+  --blink-tooltip-text: var(--blink-surface);
 
   // Header
   --blink-header-avatar-bg: rgba(255, 255, 255, 0.2);

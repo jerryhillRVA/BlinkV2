@@ -10,4 +10,5 @@ export interface BrandVoiceSettingsContract {
   photographyGuidelines?: string;
   contentPillars?: ContentPillarContract[];
   audienceOptions?: string[];
+  toneTags?: string[];
 }

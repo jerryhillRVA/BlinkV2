@@ -112,6 +112,22 @@ describe('LoginComponent', () => {
     expect(component.loading()).toBe(false);
   });
 
+  it('should bind email and password inputs via ngModel', async () => {
+    const el: HTMLElement = fixture.nativeElement;
+    const emailInput = el.querySelector('input[type="email"]') as HTMLInputElement;
+    const passwordInput = el.querySelector('input[type="password"]') as HTMLInputElement;
+
+    emailInput.value = 'user@example.com';
+    emailInput.dispatchEvent(new Event('input'));
+    passwordInput.value = 'secret123';
+    passwordInput.dispatchEvent(new Event('input'));
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    expect(fixture.componentInstance.email).toBe('user@example.com');
+    expect(fixture.componentInstance.password).toBe('secret123');
+  });
+
   it('should show loading state during login', () => {
     const component = fixture.componentInstance;
     component.email = 'test@test.com';
