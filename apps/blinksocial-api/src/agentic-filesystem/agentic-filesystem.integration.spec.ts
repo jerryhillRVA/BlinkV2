@@ -6,19 +6,17 @@ const TEST_NAMESPACE = '__test_ns__';
 
 (SKIP ? describe.skip : describe)('AgenticFilesystemService (integration)', () => {
   let service: AgenticFilesystemService;
-  const fileIdsToCleanup: string[] = [];
 
   beforeAll(() => {
     service = new AgenticFilesystemService();
   });
 
   afterAll(async () => {
-    for (const fileId of fileIdsToCleanup) {
-      try {
-        await service.deleteFile(TEST_TENANT, fileId);
-      } catch {
-        // best-effort cleanup
-      }
+    // Delete the entire test tenant — removes all files, namespaces, and the tenant itself
+    try {
+      await service.deleteTenant(TEST_TENANT);
+    } catch {
+      // best-effort cleanup
     }
   });
 
@@ -49,7 +47,6 @@ const TEST_NAMESPACE = '__test_ns__';
     const filename = `test-replace-${Date.now()}.json`;
 
     const uploaded = await service.uploadJsonFile(TEST_TENANT, TEST_NAMESPACE, filename, { version: 1 });
-    fileIdsToCleanup.push(uploaded.file_id);
 
     await service.replaceJsonFile(TEST_TENANT, uploaded.file_id, filename, { version: 2 });
 
@@ -61,7 +58,6 @@ const TEST_NAMESPACE = '__test_ns__';
     const filename = `test-list-${Date.now()}.json`;
 
     const uploaded = await service.uploadJsonFile(TEST_TENANT, TEST_NAMESPACE, filename, { listed: true });
-    fileIdsToCleanup.push(uploaded.file_id);
 
     const entries = await service.listDirectory(TEST_TENANT, TEST_NAMESPACE);
     const found = entries.find((e) => e.file_id === uploaded.file_id);
