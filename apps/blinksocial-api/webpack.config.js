@@ -35,7 +35,11 @@ module.exports = {
       compiler: 'tsc',
       main: './src/main.ts',
       tsConfig: './tsconfig.app.json',
-      assets: ['./src/assets', { input: './src/mocks/data', output: 'data', glob: '**/*' }],
+      assets: [
+        './src/assets',
+        { input: './src/mocks/data', output: 'data', glob: '**/*' },
+        { input: './src/skills/definitions', output: 'skills/definitions', glob: '**/*' },
+      ],
       optimization: false,
       outputHashing: 'none',
       generatePackageJson: false,

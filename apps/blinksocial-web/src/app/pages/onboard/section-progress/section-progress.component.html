@@ -1,0 +1,17 @@
+<div class="progress-bar">
+  @for (section of sections(); track section.id) {
+    <div class="progress-step"
+         [class.covered]="section.covered"
+         [class.active]="section.id === currentSection() && !section.covered"
+         [attr.title]="section.name">
+      <div class="step-dot">
+        @if (section.covered) {
+          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="20 6 9 17 4 12"/>
+          </svg>
+        }
+      </div>
+      <span class="step-label">{{ section.name }}</span>
+    </div>
+  }
+</div>

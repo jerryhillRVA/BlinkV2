@@ -143,3 +143,37 @@
   max-width: 240px;
   line-height: 1.4;
 }
+
+.card-onboard {
+  .onboard-circle {
+    background: var(--blink-icon-blue-bg, var(--blink-surface-variant));
+    color: var(--blink-icon-blue, var(--blink-on-surface-faint));
+  }
+
+  &:hover:not(.card-disabled) {
+    .onboard-circle {
+      background: var(--blink-icon-blue-bg, var(--blink-brand-primary-lighter-bg));
+      color: var(--blink-icon-blue, var(--blink-brand-primary));
+    }
+
+    .plus-icon {
+      color: var(--blink-icon-blue, var(--blink-brand-primary));
+    }
+
+    .new-label {
+      color: var(--blink-icon-blue, var(--blink-brand-primary));
+    }
+  }
+}
+
+.card-disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  pointer-events: none;
+
+  &:hover {
+    border-color: var(--blink-outline-dashed);
+    background: var(--blink-surface-container);
+    transform: none;
+  }
+}

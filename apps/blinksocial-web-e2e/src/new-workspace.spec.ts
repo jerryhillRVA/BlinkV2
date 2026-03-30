@@ -19,7 +19,7 @@ test.describe('New Workspace Navigation', () => {
   });
 
   test('should navigate to wizard when "New Workspace" card is clicked', async ({ page }) => {
-    await page.locator('.card-new').click();
+    await page.locator('.card-new:not(.card-onboard)').click();
     await expect(page).toHaveURL('/new-workspace');
   });
 });

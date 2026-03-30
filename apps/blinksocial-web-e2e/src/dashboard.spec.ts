@@ -99,21 +99,21 @@ test.describe('New Workspace Card', () => {
   });
 
   test('should have a plus circle', async ({ page }) => {
-    await expect(page.locator('.plus-circle')).toBeVisible();
+    await expect(page.locator('.card-new:not(.card-onboard) .plus-circle')).toBeVisible();
   });
 
   test('should display "New Workspace" label', async ({ page }) => {
-    await expect(page.locator('.new-label')).toHaveText('New Workspace');
+    await expect(page.locator('.card-new:not(.card-onboard) .new-label')).toHaveText('New Workspace');
   });
 
   test('should display description text', async ({ page }) => {
-    await expect(page.locator('.new-description')).toContainText(
+    await expect(page.locator('.card-new:not(.card-onboard) .new-description')).toContainText(
       'Initialize a new content strategy'
     );
   });
 
   test('should change border color on hover', async ({ page }) => {
-    const card = page.locator('.card-new');
+    const card = page.locator('.card-new:not(.card-onboard)');
     await card.hover();
     await expect(card).toHaveCSS('border-color', 'rgb(217, 78, 51)');
   });

@@ -1,4 +1,4 @@
-import { Component, inject, OnInit, signal } from '@angular/core';
+import { Component, inject, OnInit, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import {
@@ -6,6 +6,7 @@ import {
   Workspace,
 } from './workspace-card/workspace-card.component';
 import { DashboardApiService } from './dashboard-api.service';
+import { AuthService } from '../../core/auth/auth.service';
 
 @Component({
   selector: 'app-dashboard',
@@ -16,6 +17,9 @@ import { DashboardApiService } from './dashboard-api.service';
 export class DashboardComponent implements OnInit {
   private readonly router = inject(Router);
   private readonly dashboardApi = inject(DashboardApiService);
+  private readonly authService = inject(AuthService);
+
+  readonly canOnboard = computed(() => this.authService.isAnyWorkspaceAdmin());
 
   workspaces = signal<Workspace[]>([]);
   loading = signal(true);
@@ -40,6 +44,12 @@ export class DashboardComponent implements OnInit {
 
   onCreateWorkspace() {
     this.router.navigate(['/new-workspace']);
+  }
+
+  onOnboardWorkspace() {
+    if (this.canOnboard()) {
+      this.router.navigate(['/onboard']);
+    }
   }
 
   onGoToWorkspace(id: string) {
