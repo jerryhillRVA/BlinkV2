@@ -59,6 +59,28 @@ export class AgenticFilesystemService {
     return response.data;
   }
 
+  async uploadTextFile(
+    tenant: string,
+    namespace: string,
+    filename: string,
+    content: string,
+    tags?: string[]
+  ): Promise<FileUploadResult> {
+    const url = `${this.baseUrl}/v1/${tenant}/files`;
+    const blob = new Blob([content], { type: 'text/markdown' });
+
+    const formData = new FormData();
+    formData.append('file', blob, filename);
+    formData.append('namespace', namespace);
+    formData.append('path', '');
+    if (tags && tags.length > 0) {
+      formData.append('tags', tags.join(','));
+    }
+
+    const response = await axios.post(url, formData);
+    return response.data;
+  }
+
   async replaceJsonFile(
     tenant: string,
     fileId: string,
@@ -110,5 +132,9 @@ export class AgenticFilesystemService {
   async listTenants(): Promise<string[]> {
     const response = await axios.get(`${this.baseUrl}/admin/tenants`);
     return response.data.tenants;
+  }
+
+  async deleteTenant(tenant: string): Promise<void> {
+    await axios.delete(`${this.baseUrl}/admin/tenants/${tenant}`);
   }
 }

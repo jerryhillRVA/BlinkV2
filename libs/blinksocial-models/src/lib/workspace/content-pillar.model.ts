@@ -8,6 +8,8 @@ export class ContentPillar implements ContentPillarContract {
   readonly themes?: string[];
   readonly audienceSegmentIds?: string[];
   readonly platformDistribution?: Record<string, number>;
+  readonly targetPlatforms?: string[];
+  readonly objectiveIds?: string[];
 
   constructor(data: ContentPillarContract) {
     this.id = data.id;
@@ -17,5 +19,7 @@ export class ContentPillar implements ContentPillarContract {
     this.themes = data.themes;
     this.audienceSegmentIds = data.audienceSegmentIds;
     this.platformDistribution = data.platformDistribution;
+    this.targetPlatforms = data.targetPlatforms;
+    this.objectiveIds = data.objectiveIds;
   }
 }

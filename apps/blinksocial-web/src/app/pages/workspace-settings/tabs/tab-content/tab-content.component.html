@@ -19,11 +19,7 @@
             <div class="pillar-field">
               <span class="pillar-label">
                 Pillar Name
-                <button class="tooltip-trigger" type="button" aria-label="More information" data-tooltip="A short name for this content pillar.">
-                  <svg class="tooltip-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/>
-                  </svg>
-                </button>
+                <app-tooltip text="A short name for this content pillar." />
               </span>
               <label class="sr-only" [attr.for]="'pillar-name-' + i">Pillar Name</label>
               <input
@@ -38,11 +34,7 @@
             <div class="pillar-field">
               <span class="pillar-label">
                 Themes
-                <button class="tooltip-trigger" type="button" aria-label="More information" data-tooltip="Comma-separated topics this pillar covers.">
-                  <svg class="tooltip-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/>
-                  </svg>
-                </button>
+                <app-tooltip text="Comma-separated topics this pillar covers." />
               </span>
               <label class="sr-only" [attr.for]="'pillar-themes-' + i">Themes</label>
               <input
@@ -58,11 +50,7 @@
           <div class="pillar-field">
             <span class="pillar-label">
               Description
-              <button class="tooltip-trigger" type="button" aria-label="More information" data-tooltip="Purpose and focus of this content pillar.">
-                <svg class="tooltip-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/>
-                </svg>
-              </button>
+              <app-tooltip text="Purpose and focus of this content pillar." />
             </span>
             <label class="sr-only" [attr.for]="'pillar-desc-' + i">Description</label>
             <textarea
@@ -81,11 +69,7 @@
                   <path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>
                 </svg>
                 Audience Mapping
-                <button class="tooltip-trigger" type="button" aria-label="More information" data-tooltip="Select which audience segments this pillar targets.">
-                  <svg class="tooltip-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/>
-                  </svg>
-                </button>
+                <app-tooltip text="Select which audience segments this pillar targets." />
               </span>
               <div class="pill-group">
                 @for (audience of audienceOptions; track audience) {
@@ -112,11 +96,7 @@
                   <line x1="8.59" x2="15.42" y1="13.51" y2="17.49"/><line x1="15.41" x2="8.59" y1="6.51" y2="10.49"/>
                 </svg>
                 Target Platforms
-                <button class="tooltip-trigger" type="button" aria-label="More information" data-tooltip="Select which platforms this pillar targets.">
-                  <svg class="tooltip-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/>
-                  </svg>
-                </button>
+                <app-tooltip text="Select which platforms this pillar targets." />
               </span>
               <div class="pill-group">
                 @for (platform of platformOptions; track platform) {

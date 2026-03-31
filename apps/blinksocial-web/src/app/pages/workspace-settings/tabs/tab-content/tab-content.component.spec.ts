@@ -97,8 +97,8 @@ describe('TabContentComponent', () => {
     expect(textareas[0].value).toBe('Breaking tech news.');
   });
 
-  it('should render tooltip triggers', () => {
-    const tooltips = fixture.nativeElement.querySelectorAll('.tooltip-trigger');
+  it('should render tooltips', () => {
+    const tooltips = fixture.nativeElement.querySelectorAll('app-tooltip');
     expect(tooltips.length).toBeGreaterThan(0);
   });
 
@@ -504,5 +504,62 @@ describe('TabContentComponent (empty pillars)', () => {
 
   it('should still render Add Pillar button', () => {
     expect(fixture.nativeElement.querySelector('.add-pillar-btn')).toBeTruthy();
+  });
+});
+
+describe('TabContentComponent audienceDisplayName', () => {
+  let component: TabContentComponent;
+
+  beforeEach(async () => {
+    await TestBed.configureTestingModule({
+      imports: [TabContentComponent],
+      providers: [
+        WorkspaceSettingsStateService,
+        provideHttpClient(),
+        provideHttpClientTesting(),
+      ],
+    }).compileComponents();
+
+    const state = TestBed.inject(WorkspaceSettingsStateService);
+    state.brandVoiceSettings.set({
+      brandVoiceDescription: 'Test',
+      contentPillars: [],
+      audienceOptions: ['seg-1', 'seg-2'],
+      audienceSegments: [
+        { id: 'seg-1', name: 'The Overwhelmed Time-Pressed Professional Executive', description: 'A very long description' },
+        { id: 'seg-2', name: 'The Beginner' },
+      ],
+    } as never);
+
+    const fixture = TestBed.createComponent(TabContentComponent);
+    fixture.detectChanges();
+    component = fixture.componentInstance;
+  });
+
+  it('should use name field for display when available', () => {
+    expect(component.audienceDisplayName('seg-2')).toBe('The Beginner');
+  });
+
+  it('should truncate long names with ellipsis', () => {
+    const result = component.audienceDisplayName('seg-1');
+    expect(result.endsWith('...')).toBe(true);
+    expect(result.length).toBe(40);
+  });
+
+  it('should return raw id when segment is not found', () => {
+    expect(component.audienceDisplayName('unknown-id')).toBe('unknown-id');
+  });
+
+  it('should fall back to description when name is missing', () => {
+    const state = TestBed.inject(WorkspaceSettingsStateService);
+    state.brandVoiceSettings.set({
+      brandVoiceDescription: 'Test',
+      contentPillars: [],
+      audienceOptions: ['seg-x'],
+      audienceSegments: [
+        { id: 'seg-x', description: 'Short desc' },
+      ],
+    } as never);
+    expect(component.audienceDisplayName('seg-x')).toBe('Short desc');
   });
 });

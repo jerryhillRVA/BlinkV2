@@ -4,6 +4,8 @@ import type { BrandVoiceSettingsContract } from './brand-voice.js';
 import type { ContentPillarContract } from './content-pillar.js';
 import type { AudienceSegmentContract } from './audience-segment.js';
 import type { SkillSettingsContract } from './skill-config.js';
+import type { BusinessObjectiveContract } from './business-objective.js';
+import type { BrandPositioningContract } from './brand-positioning.js';
 
 export interface CreateWorkspaceRequestContract {
   general: GeneralSettingsContract;
@@ -11,5 +13,7 @@ export interface CreateWorkspaceRequestContract {
   brandVoice: BrandVoiceSettingsContract;
   contentPillars: ContentPillarContract[];
   audienceSegments: AudienceSegmentContract[];
-  skills: SkillSettingsContract;
+  skills?: SkillSettingsContract;
+  businessObjectives?: BusinessObjectiveContract[];
+  brandPositioning?: BrandPositioningContract;
 }

@@ -1,0 +1,23 @@
+{
+  "$id": "https://blinksocial.io/schemas/business-objective.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "BusinessObjective",
+  "type": "object",
+  "required": ["id", "category", "statement", "target", "unit", "timeframe"],
+  "properties": {
+    "id": { "type": "string" },
+    "category": {
+      "type": "string",
+      "enum": ["growth", "revenue", "awareness", "trust", "community", "engagement"]
+    },
+    "statement": { "type": "string", "maxLength": 500 },
+    "target": { "type": "number", "minimum": 0 },
+    "unit": { "type": "string", "maxLength": 50 },
+    "timeframe": { "type": "string", "maxLength": 100 },
+    "currentValue": { "type": "number" },
+    "status": {
+      "type": "string",
+      "enum": ["on-track", "at-risk", "behind", "achieved"]
+    }
+  }
+}

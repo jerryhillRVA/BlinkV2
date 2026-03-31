@@ -44,6 +44,11 @@ export class WorkspacesController {
     return this.workspacesService.getSettings(id, tab);
   }
 
+  @Post(':id/finalize')
+  async finalizeWorkspace(@Param('id') id: string) {
+    return this.workspacesService.finalizeWorkspace(id);
+  }
+
   @Put(':id/settings/:tab')
   updateSettings(
     @Param('id') id: string,

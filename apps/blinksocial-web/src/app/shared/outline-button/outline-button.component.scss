@@ -1,0 +1,29 @@
+:host {
+  display: inline-flex;
+}
+
+.outline-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  height: 34px;
+  border: 1px solid var(--blink-brand-primary);
+  border-radius: 6px;
+  background: transparent;
+  color: var(--blink-brand-primary);
+  font-size: var(--blink-body-medium);
+  font-weight: 500;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background 0.2s;
+
+  &:hover:not(:disabled) {
+    background: var(--blink-brand-primary-hover-bg);
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+}

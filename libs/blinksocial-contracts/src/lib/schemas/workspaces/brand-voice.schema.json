@@ -10,6 +10,7 @@
     "logoUrl": { "type": "string", "format": "uri" },
     "visualGuidelines": { "type": "string", "maxLength": 2000 },
     "typographyGuidelines": { "type": "string", "maxLength": 1000 },
-    "photographyGuidelines": { "type": "string", "maxLength": 1000 }
+    "photographyGuidelines": { "type": "string", "maxLength": 1000 },
+    "toneTags": { "type": "array", "items": { "type": "string", "maxLength": 50 }, "maxItems": 8 }
   }
 }

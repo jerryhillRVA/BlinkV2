@@ -5,6 +5,7 @@ export class UIContentPillar {
   readonly description: string;
   readonly audienceSegments: string[];
   readonly platforms: string[];
+  readonly objectiveId: string;
 
   constructor(data: {
     id: number;
@@ -13,6 +14,7 @@ export class UIContentPillar {
     description: string;
     audienceSegments: string[];
     platforms: string[];
+    objectiveId?: string;
   }) {
     this.id = data.id;
     this.name = data.name;
@@ -20,5 +22,6 @@ export class UIContentPillar {
     this.description = data.description;
     this.audienceSegments = data.audienceSegments;
     this.platforms = data.platforms;
+    this.objectiveId = data.objectiveId ?? '';
   }
 }

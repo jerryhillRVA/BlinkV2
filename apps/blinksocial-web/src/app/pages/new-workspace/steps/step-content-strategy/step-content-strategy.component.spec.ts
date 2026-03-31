@@ -37,7 +37,7 @@ describe('StepContentStrategyComponent', () => {
     const fixture = TestBed.createComponent(StepContentStrategyComponent);
     fixture.detectChanges();
     const el: HTMLElement = fixture.nativeElement;
-    expect(el.querySelector('.add-pillar')?.textContent).toContain('Add Pillar');
+    expect(el.querySelector('app-outline-button .outline-btn')?.textContent).toContain('Add Pillar');
   });
 
   it('should start with 2 pre-filled pillar cards', () => {
@@ -60,7 +60,7 @@ describe('StepContentStrategyComponent', () => {
     const fixture = TestBed.createComponent(StepContentStrategyComponent);
     fixture.detectChanges();
     const el: HTMLElement = fixture.nativeElement;
-    (el.querySelector('.add-pillar') as HTMLButtonElement).click();
+    (el.querySelector('app-outline-button .outline-btn') as HTMLButtonElement).click();
     fixture.detectChanges();
     expect(el.querySelectorAll('.pillar-card').length).toBe(3);
   });

@@ -4,10 +4,11 @@ import { WorkspaceSettingsStateService } from '../../workspace-settings-state.se
 import { PLATFORM_OPTIONS, PLATFORM_DISPLAY_NAMES } from '@blinksocial/contracts';
 import type { Platform } from '@blinksocial/contracts';
 import type { ContentPillarContract } from '@blinksocial/contracts';
+import { TooltipComponent } from '../../../../shared/tooltip/tooltip.component';
 
 @Component({
   selector: 'app-tab-content',
-  imports: [CommonModule],
+  imports: [CommonModule, TooltipComponent],
   templateUrl: './tab-content.component.html',
   styleUrl: './tab-content.component.scss',
 })
@@ -30,9 +31,13 @@ export class TabContentComponent {
 
   audienceDisplayName(id: string): string {
     const settings = this.settings as Record<string, unknown> | null;
-    const segments = (settings?.['audienceSegments'] as { id: string; description?: string }[]) ?? [];
+    const segments = (settings?.['audienceSegments'] as { id: string; name?: string; description?: string }[]) ?? [];
     const match = segments.find((s) => s.id === id);
-    return match?.description ?? id;
+    if (!match) return id;
+    // Prefer the persona name (e.g. "The Time-Pressed Professional") over the description
+    // which may contain long content-hook text
+    const label = match.name ?? match.description ?? id;
+    return label.length > 40 ? label.substring(0, 37) + '...' : label;
   }
 
   platformDisplayName(id: string): string {

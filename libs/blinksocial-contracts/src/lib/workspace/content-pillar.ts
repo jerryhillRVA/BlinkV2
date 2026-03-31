@@ -7,4 +7,5 @@ export interface ContentPillarContract {
   audienceSegmentIds?: string[];
   platformDistribution?: Record<string, number>;
   targetPlatforms?: string[];
+  objectiveIds?: string[];
 }

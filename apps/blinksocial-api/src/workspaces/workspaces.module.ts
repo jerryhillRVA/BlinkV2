@@ -9,5 +9,6 @@ import { WorkspacesService } from './workspaces.service';
   imports: [AgenticFilesystemModule, MockDataModule, AuthModule],
   controllers: [WorkspacesController],
   providers: [WorkspacesService],
+  exports: [WorkspacesService],
 })
 export class WorkspacesModule {}

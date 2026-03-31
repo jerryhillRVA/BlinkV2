@@ -1,5 +1,5 @@
 import { TestBed } from '@angular/core/testing';
-import { Router } from '@angular/router';
+import { Router, ActivatedRoute, convertToParamMap } from '@angular/router';
 import { provideHttpClient } from '@angular/common/http';
 import {
   HttpTestingController,
@@ -13,18 +13,28 @@ describe('NewWorkspaceComponent', () => {
   let router: Router;
   let toastService: ToastService;
 
-  beforeEach(async () => {
-    await TestBed.configureTestingModule({
+  function setup(queryParams: Record<string, string> = {}) {
+    TestBed.configureTestingModule({
       imports: [NewWorkspaceComponent],
       providers: [
         { provide: Router, useValue: { navigate: vi.fn() } },
         { provide: ToastService, useValue: { showError: vi.fn(), showSuccess: vi.fn() } },
+        {
+          provide: ActivatedRoute,
+          useValue: {
+            snapshot: { queryParamMap: convertToParamMap(queryParams) },
+          },
+        },
         provideHttpClient(),
         provideHttpClientTesting(),
       ],
-    }).compileComponents();
+    });
     router = TestBed.inject(Router);
     toastService = TestBed.inject(ToastService);
+  }
+
+  beforeEach(async () => {
+    setup();
   });
 
   it('should create', () => {
@@ -57,12 +67,12 @@ describe('NewWorkspaceComponent', () => {
     expect(el.querySelector('.page-header-icon svg')).toBeTruthy();
   });
 
-  it('should render step indicator with 5 steps', () => {
+  it('should render step indicator with 7 steps', () => {
     const fixture = TestBed.createComponent(NewWorkspaceComponent);
     fixture.detectChanges();
     const el: HTMLElement = fixture.nativeElement;
     const circles = el.querySelectorAll('.step-circle');
-    expect(circles.length).toBe(5);
+    expect(circles.length).toBe(7);
   });
 
   it('should show wizard card container', () => {
@@ -80,7 +90,7 @@ describe('NewWorkspaceComponent', () => {
     expect(backBtn.disabled).toBe(true);
   });
 
-  it('should show "Next" on steps 1-4', () => {
+  it('should show "Next" on steps 1-6', () => {
     const fixture = TestBed.createComponent(NewWorkspaceComponent);
     fixture.detectChanges();
     const el: HTMLElement = fixture.nativeElement;
@@ -88,9 +98,9 @@ describe('NewWorkspaceComponent', () => {
     expect(nextBtn?.textContent).toContain('Next');
   });
 
-  it('should show "Finish" on step 5', () => {
+  it('should show "Finish" on step 7', () => {
     const fixture = TestBed.createComponent(NewWorkspaceComponent);
-    fixture.componentInstance.currentStep.set(5);
+    fixture.componentInstance.currentStep.set(7);
     fixture.detectChanges();
     const el: HTMLElement = fixture.nativeElement;
     const nextBtn = el.querySelector('.wizard-next');
@@ -98,22 +108,22 @@ describe('NewWorkspaceComponent', () => {
     expect(nextBtn?.textContent).not.toContain('Finish & Launch');
   });
 
-  it('should enable Back button on step 5', () => {
+  it('should enable Back button on step 7', () => {
     const fixture = TestBed.createComponent(NewWorkspaceComponent);
-    fixture.componentInstance.currentStep.set(5);
+    fixture.componentInstance.currentStep.set(7);
     fixture.detectChanges();
     const el: HTMLElement = fixture.nativeElement;
     const backBtn = el.querySelector('.wizard-back') as HTMLButtonElement;
     expect(backBtn.disabled).toBe(false);
   });
 
-  it('should go back from step 5 to step 4', () => {
+  it('should go back from step 7 to step 6', () => {
     const fixture = TestBed.createComponent(NewWorkspaceComponent);
-    fixture.componentInstance.currentStep.set(5);
+    fixture.componentInstance.currentStep.set(7);
     fixture.detectChanges();
     const backBtn = fixture.nativeElement.querySelector('.wizard-back') as HTMLButtonElement;
     backBtn.click();
-    expect(fixture.componentInstance.currentStep()).toBe(4);
+    expect(fixture.componentInstance.currentStep()).toBe(6);
   });
 
   it('should advance step when Next is clicked with valid data', () => {
@@ -149,7 +159,7 @@ describe('NewWorkspaceComponent', () => {
   it('should call API and navigate on successful submit', async () => {
     const fixture = TestBed.createComponent(NewWorkspaceComponent);
     const httpMock = TestBed.inject(HttpTestingController);
-    fixture.componentInstance.currentStep.set(5);
+    fixture.componentInstance.currentStep.set(7);
     fixture.detectChanges();
 
     const nextBtn = fixture.nativeElement.querySelector('.wizard-next') as HTMLButtonElement;
@@ -180,7 +190,7 @@ describe('NewWorkspaceComponent', () => {
   it('should show toast error on failed submit', () => {
     const fixture = TestBed.createComponent(NewWorkspaceComponent);
     const httpMock = TestBed.inject(HttpTestingController);
-    fixture.componentInstance.currentStep.set(5);
+    fixture.componentInstance.currentStep.set(7);
     fixture.detectChanges();
 
     const nextBtn = fixture.nativeElement.querySelector('.wizard-next') as HTMLButtonElement;
@@ -199,7 +209,7 @@ describe('NewWorkspaceComponent', () => {
   it('should show fallback toast error when error has no message', () => {
     const fixture = TestBed.createComponent(NewWorkspaceComponent);
     const httpMock = TestBed.inject(HttpTestingController);
-    fixture.componentInstance.currentStep.set(5);
+    fixture.componentInstance.currentStep.set(7);
     fixture.detectChanges();
 
     const nextBtn = fixture.nativeElement.querySelector('.wizard-next') as HTMLButtonElement;
@@ -235,7 +245,7 @@ describe('NewWorkspaceComponent', () => {
 
   it('should show "Submitting..." text when submitting', () => {
     const fixture = TestBed.createComponent(NewWorkspaceComponent);
-    fixture.componentInstance.currentStep.set(5);
+    fixture.componentInstance.currentStep.set(7);
     fixture.detectChanges();
 
     const nextBtn = fixture.nativeElement.querySelector('.wizard-next') as HTMLButtonElement;
@@ -244,5 +254,184 @@ describe('NewWorkspaceComponent', () => {
 
     expect(fixture.componentInstance.isSubmitting()).toBe(true);
     expect(nextBtn.textContent?.trim()).toContain('Submitting...');
+  });
+
+  it('should load wizard state when resume query param is present', () => {
+    TestBed.resetTestingModule();
+    setup({ resume: 'tenant-123' });
+    const httpMock = TestBed.inject(HttpTestingController);
+    const fixture = TestBed.createComponent(NewWorkspaceComponent);
+    fixture.detectChanges();
+
+    expect(fixture.componentInstance.resumeWorkspaceId()).toBe('tenant-123');
+
+    const req = httpMock.expectOne('/api/workspaces/tenant-123/settings/wizard-state');
+    expect(req.request.method).toBe('GET');
+    req.flush({
+      currentStep: 3,
+      completedSteps: [1, 2],
+      formData: {
+        general: { workspaceName: 'Resumed WS' },
+      },
+    });
+    fixture.detectChanges();
+
+    const formService = fixture.debugElement.injector.get(NewWorkspaceFormService);
+    expect(formService.workspaceName()).toBe('Resumed WS');
+    expect(fixture.componentInstance.currentStep()).toBe(3);
+    httpMock.verify();
+  });
+
+  it('should call finalizeWorkspace when resuming and submitting', () => {
+    TestBed.resetTestingModule();
+    setup({ resume: 'tenant-123' });
+    const httpMock = TestBed.inject(HttpTestingController);
+    const fixture = TestBed.createComponent(NewWorkspaceComponent);
+    fixture.detectChanges();
+
+    const wizardReq = httpMock.expectOne('/api/workspaces/tenant-123/settings/wizard-state');
+    wizardReq.flush({
+      currentStep: 7,
+      completedSteps: [1, 2, 3, 4, 5, 6],
+      formData: { general: { workspaceName: 'Test' } },
+    });
+    fixture.detectChanges();
+
+    fixture.componentInstance.currentStep.set(7);
+    fixture.detectChanges();
+
+    const nextBtn = fixture.nativeElement.querySelector('.wizard-next') as HTMLButtonElement;
+    nextBtn.click();
+    fixture.detectChanges();
+
+    // The component now saves wizard state before finalizing
+    const saveReq = httpMock.expectOne('/api/workspaces/tenant-123/settings/wizard-state');
+    expect(saveReq.request.method).toBe('PUT');
+    saveReq.flush({});
+    fixture.detectChanges();
+
+    const finalizeReq = httpMock.expectOne('/api/workspaces/tenant-123/finalize');
+    expect(finalizeReq.request.method).toBe('POST');
+    finalizeReq.flush({});
+
+    httpMock.match('/api/auth/status').forEach((r) =>
+      r.flush({ authenticated: true, needsBootstrap: false, user: { id: 'u1', email: 'a@b.com', displayName: 'Test', workspaces: [] } })
+    );
+    httpMock.match(() => true).forEach((r) => r.flush({}));
+  });
+
+  it('should show toast error on wizard state load failure', () => {
+    TestBed.resetTestingModule();
+    setup({ resume: 'bad-id' });
+    const httpMock = TestBed.inject(HttpTestingController);
+    const fixture = TestBed.createComponent(NewWorkspaceComponent);
+    fixture.detectChanges();
+
+    const req = httpMock.expectOne('/api/workspaces/bad-id/settings/wizard-state');
+    req.flush({ message: 'Not found' }, { status: 404, statusText: 'Not Found' });
+    fixture.detectChanges();
+
+    expect(toastService.showError).toHaveBeenCalledWith('Not found');
+    httpMock.verify();
+  });
+
+  it('should save wizard state after advancing steps when resuming', () => {
+    TestBed.resetTestingModule();
+    setup({ resume: 'tenant-123' });
+    const httpMock = TestBed.inject(HttpTestingController);
+    const fixture = TestBed.createComponent(NewWorkspaceComponent);
+    fixture.detectChanges();
+
+    const wizardReq = httpMock.expectOne('/api/workspaces/tenant-123/settings/wizard-state');
+    wizardReq.flush({
+      currentStep: 1,
+      completedSteps: [],
+      formData: { general: { workspaceName: 'Test WS' } },
+    });
+    fixture.detectChanges();
+
+    // Advance from step 1 to 2
+    fixture.componentInstance.currentStep.set(1);
+    fixture.componentInstance.onNext();
+    fixture.detectChanges();
+
+    const saveReq = httpMock.expectOne('/api/workspaces/tenant-123/settings/wizard-state');
+    expect(saveReq.request.method).toBe('PUT');
+    expect(saveReq.request.body.currentStep).toBe(2);
+    saveReq.flush({});
+    httpMock.verify();
+  });
+
+  it('should not save wizard state when not resuming', () => {
+    const httpMock = TestBed.inject(HttpTestingController);
+    const fixture = TestBed.createComponent(NewWorkspaceComponent);
+    fixture.detectChanges();
+    const formService = fixture.debugElement.injector.get(NewWorkspaceFormService);
+    formService.workspaceName.set('Test');
+    fixture.componentInstance.onNext();
+    // Should only have no wizard-state PUT since no resume
+    httpMock.expectNone('/api/workspaces');
+  });
+
+  it('should show finalize error toast when finalize fails', () => {
+    TestBed.resetTestingModule();
+    setup({ resume: 'tenant-err' });
+    const httpMock = TestBed.inject(HttpTestingController);
+    const fixture = TestBed.createComponent(NewWorkspaceComponent);
+    fixture.detectChanges();
+
+    const wizardReq = httpMock.expectOne('/api/workspaces/tenant-err/settings/wizard-state');
+    wizardReq.flush({ currentStep: 7, completedSteps: [1,2,3,4,5,6], formData: { general: { workspaceName: 'Err' } } });
+    fixture.detectChanges();
+
+    fixture.componentInstance.currentStep.set(7);
+    fixture.detectChanges();
+    fixture.componentInstance.onNext();
+    fixture.detectChanges();
+
+    // The component now saves wizard state before finalizing
+    const saveReq = httpMock.expectOne('/api/workspaces/tenant-err/settings/wizard-state');
+    saveReq.flush({});
+    fixture.detectChanges();
+
+    const finalReq = httpMock.expectOne('/api/workspaces/tenant-err/finalize');
+    finalReq.flush({ message: 'Finalize failed' }, { status: 500, statusText: 'Error' });
+    fixture.detectChanges();
+
+    expect(fixture.componentInstance.isSubmitting()).toBe(false);
+    expect(toastService.showError).toHaveBeenCalledWith('Finalize failed');
+    httpMock.verify();
+  });
+
+  it('should still finalize even when wizard state save fails', () => {
+    TestBed.resetTestingModule();
+    setup({ resume: 'tenant-save-fail' });
+    const httpMock = TestBed.inject(HttpTestingController);
+    const fixture = TestBed.createComponent(NewWorkspaceComponent);
+    fixture.detectChanges();
+
+    const wizardReq = httpMock.expectOne('/api/workspaces/tenant-save-fail/settings/wizard-state');
+    wizardReq.flush({ currentStep: 7, completedSteps: [1,2,3,4,5,6], formData: { general: { workspaceName: 'SF' } } });
+    fixture.detectChanges();
+
+    fixture.componentInstance.currentStep.set(7);
+    fixture.detectChanges();
+    fixture.componentInstance.onNext();
+    fixture.detectChanges();
+
+    // Save fails
+    const saveReq = httpMock.expectOne('/api/workspaces/tenant-save-fail/settings/wizard-state');
+    saveReq.flush({}, { status: 500, statusText: 'Error' });
+    fixture.detectChanges();
+
+    // But finalize should still be called
+    const finalReq = httpMock.expectOne('/api/workspaces/tenant-save-fail/finalize');
+    expect(finalReq.request.method).toBe('POST');
+    finalReq.flush({});
+
+    httpMock.match('/api/auth/status').forEach((r) =>
+      r.flush({ authenticated: true, needsBootstrap: false, user: { id: 'u1', email: 'a@b.com', displayName: 'Test', workspaces: [] } })
+    );
+    httpMock.match(() => true).forEach((r) => r.flush({}));
   });
 });

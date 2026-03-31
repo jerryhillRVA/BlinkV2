@@ -1,66 +1,6 @@
 <div class="step-agents">
   <div class="step-header">
     <h2>Agent Personalities</h2>
-    <p class="step-subtitle">Define the identity and focus areas for your AI team members.</p>
-  </div>
-
-  <div class="actions-row">
-    <button class="add-agent" (click)="formService.addAgent()">
-      <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
-      Add Agent
-    </button>
-  </div>
-
-  <div class="agents-list">
-    @for (agent of formService.agents(); track agent.id; let i = $index) {
-      <div class="agent-card">
-        <div class="agent-header">
-          <div class="agent-header-left">
-            <span class="agent-number">{{ i + 1 }}</span>
-            <h3 class="agent-title">Agent Details</h3>
-          </div>
-          @if (formService.agents().length > 1) {
-            <button class="remove-agent" (click)="formService.removeAgent(agent.id)">
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
-            </button>
-          }
-        </div>
-
-        <div class="agent-fields">
-          <div class="agent-row-2">
-            <div class="field-group">
-              <span class="field-label">
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-                Agent Name
-              </span>
-              <input type="text" class="field-input agent-name" [value]="agent.name" placeholder="e.g. Reporting Bot" [attr.aria-label]="'Agent name for agent ' + (i + 1)" (input)="formService.updateAgentName(agent.id, $any($event.target).value)" />
-            </div>
-            <div class="field-group">
-              <span class="field-label">
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 20V4a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/><rect width="20" height="14" x="2" y="6" rx="2"/></svg>
-                Role Description
-              </span>
-              <input type="text" class="field-input agent-role" [value]="agent.role" placeholder="e.g. News Aggregator & Researcher" [attr.aria-label]="'Role for agent ' + (i + 1)" (input)="formService.updateAgentRole(agent.id, $any($event.target).value)" />
-            </div>
-          </div>
-
-          <div class="field-group">
-            <span class="field-label">
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="6" height="6" rx="1"/><path d="m3 17 2 2 4-4"/><path d="M13 6h8"/><path d="M13 12h8"/><path d="M13 18h8"/></svg>
-              Core Responsibilities
-            </span>
-            <textarea class="field-textarea agent-responsibilities" [value]="agent.responsibilities" placeholder="What specific tasks will this agent perform?" [attr.aria-label]="'Responsibilities for agent ' + (i + 1)" (input)="formService.updateAgentResponsibilities(agent.id, $any($event.target).value)"></textarea>
-          </div>
-
-          <div class="field-group">
-            <span class="field-label">
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M10 9H8"/><path d="M16 13H8"/><path d="M16 17H8"/></svg>
-              Desired Outputs
-            </span>
-            <textarea class="field-textarea agent-outputs" [value]="agent.outputs" placeholder="What tangible results should this agent produce?" [attr.aria-label]="'Outputs for agent ' + (i + 1)" (input)="formService.updateAgentOutputs(agent.id, $any($event.target).value)"></textarea>
-          </div>
-        </div>
-      </div>
-    }
+    <p class="step-subtitle">Agent configuration has moved to Workspace Settings.</p>
   </div>
 </div>

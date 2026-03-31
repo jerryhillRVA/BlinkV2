@@ -6,6 +6,9 @@ import { WorkspacesModule } from '../workspaces/workspaces.module';
 import { AuthModule } from '../auth/auth.module';
 import { AccountModule } from '../account/account.module';
 import { AuthGuard } from '../auth/auth.guard';
+import { LlmModule } from '../llm/llm.module';
+import { SkillsModule } from '../skills/skills.module';
+import { OnboardingModule } from '../onboarding/onboarding.module';
 import { AngularSsrModule } from '../angular-ssr/angular-ssr.module';
 
 @Module({
@@ -15,6 +18,9 @@ import { AngularSsrModule } from '../angular-ssr/angular-ssr.module';
     AuthModule,
     AccountModule,
     WorkspacesModule,
+    LlmModule,
+    SkillsModule,
+    OnboardingModule,
     // AngularSsrModule must be last — it registers a catch-all middleware
     AngularSsrModule,
   ],

@@ -3,7 +3,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "title": "CreateWorkspaceRequest",
   "type": "object",
-  "required": ["general", "platforms", "brandVoice", "contentPillars", "audienceSegments", "skills"],
+  "required": ["general", "platforms", "brandVoice", "contentPillars", "audienceSegments"],
   "properties": {
     "general": { "$ref": "https://blinksocial.io/schemas/settings/general.schema.json" },
     "platforms": { "$ref": "https://blinksocial.io/schemas/settings/platforms.schema.json" },
@@ -16,6 +16,12 @@
       "type": "array",
       "items": { "$ref": "https://blinksocial.io/schemas/audience-segment.schema.json" }
     },
-    "skills": { "$ref": "https://blinksocial.io/schemas/settings/skills.schema.json" }
+    "skills": { "$ref": "https://blinksocial.io/schemas/settings/skills.schema.json" },
+    "businessObjectives": {
+      "type": "array",
+      "items": { "$ref": "https://blinksocial.io/schemas/business-objective.schema.json" },
+      "maxItems": 4
+    },
+    "brandPositioning": { "$ref": "https://blinksocial.io/schemas/brand-positioning.schema.json" }
   }
 }
