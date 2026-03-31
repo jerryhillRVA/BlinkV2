@@ -2,7 +2,7 @@ export interface CreateWorkspaceResponseContract {
   id: string;
   tenantId: string;
   workspaceName: string;
-  status: 'active';
+  status: 'active' | 'onboarding' | 'creating';
   createdAt: string;
 }
 

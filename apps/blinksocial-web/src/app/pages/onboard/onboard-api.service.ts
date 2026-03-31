@@ -7,6 +7,7 @@ import type {
   SendMessageResponseContract,
   GetSessionResponseContract,
   GenerateBlueprintResponseContract,
+  CreateWorkspaceFromBlueprintResponseContract,
 } from '@blinksocial/contracts';
 
 @Injectable({ providedIn: 'root' })
@@ -44,6 +45,23 @@ export class OnboardApiService {
     return this.http.post<GenerateBlueprintResponseContract>(
       `/api/onboarding/sessions/${sessionId}/generate`,
       {},
+    );
+  }
+
+  createWorkspaceFromBlueprint(
+    sessionId: string,
+  ): Observable<CreateWorkspaceFromBlueprintResponseContract> {
+    return this.http.post<CreateWorkspaceFromBlueprintResponseContract>(
+      `/api/onboarding/sessions/${sessionId}/create-workspace`,
+      {},
+    );
+  }
+
+  resumeSession(
+    tenantId: string,
+  ): Observable<GetSessionResponseContract> {
+    return this.http.get<GetSessionResponseContract>(
+      `/api/onboarding/sessions/by-workspace/${tenantId}`,
     );
   }
 }

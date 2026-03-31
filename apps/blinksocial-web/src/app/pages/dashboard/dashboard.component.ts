@@ -5,12 +5,13 @@ import {
   WorkspaceCardComponent,
   Workspace,
 } from './workspace-card/workspace-card.component';
+import { InProgressCardComponent } from './in-progress-card/in-progress-card.component';
 import { DashboardApiService } from './dashboard-api.service';
 import { AuthService } from '../../core/auth/auth.service';
 
 @Component({
   selector: 'app-dashboard',
-  imports: [CommonModule, WorkspaceCardComponent],
+  imports: [CommonModule, WorkspaceCardComponent, InProgressCardComponent],
   templateUrl: './dashboard.component.html',
   styleUrl: './dashboard.component.scss',
 })
@@ -24,6 +25,14 @@ export class DashboardComponent implements OnInit {
   workspaces = signal<Workspace[]>([]);
   loading = signal(true);
 
+  readonly activeWorkspaces = computed(() =>
+    this.workspaces().filter((w) => !w.status || w.status === 'active')
+  );
+
+  readonly inProgressWorkspaces = computed(() =>
+    this.workspaces().filter((w) => w.status === 'onboarding' || w.status === 'creating')
+  );
+
   ngOnInit(): void {
     this.dashboardApi.listWorkspaces().subscribe({
       next: (response) => {
@@ -32,6 +41,7 @@ export class DashboardComponent implements OnInit {
             id: w.id,
             name: w.name,
             color: w.color,
+            status: w.status ?? 'active',
           }))
         );
         this.loading.set(false);

@@ -1,0 +1,85 @@
+.in-progress-card {
+  background: var(--blink-surface);
+  border: 1px solid var(--blink-outline-variant);
+  border-radius: 16px;
+  overflow: hidden;
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--blink-shadow-md);
+  }
+}
+
+.accent-bar {
+  height: 4px;
+
+  &.badge-onboarding {
+    background: var(--blink-brand-primary);
+  }
+
+  &.badge-creating {
+    background: var(--blink-icon-blue);
+  }
+}
+
+.card-body {
+  padding: 16px 20px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.status-badge {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  padding: 4px 8px;
+  border-radius: 6px;
+  white-space: nowrap;
+
+  &.badge-onboarding {
+    background: var(--blink-brand-primary-lightest-bg);
+    color: var(--blink-brand-primary);
+  }
+
+  &.badge-creating {
+    background: var(--blink-icon-blue-bg);
+    color: var(--blink-icon-blue);
+  }
+}
+
+.workspace-name {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--blink-on-surface-strong);
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.resume-btn {
+  appearance: none;
+  border: 1px solid var(--blink-outline-variant);
+  background: var(--blink-surface);
+  color: var(--blink-on-surface-medium);
+  padding: 6px 12px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  transition: all 0.2s;
+
+  &:hover {
+    background: var(--blink-brand-primary-lightest-bg);
+    border-color: var(--blink-brand-primary);
+    color: var(--blink-brand-primary);
+  }
+}

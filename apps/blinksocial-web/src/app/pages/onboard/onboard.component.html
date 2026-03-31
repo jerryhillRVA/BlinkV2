@@ -10,88 +10,116 @@
     <p class="page-subtitle">AI-guided discovery for your content strategy</p>
   </header>
 
-  @if (state.sections().length > 0) {
-    <app-section-progress
-      [sections]="state.sections()"
-      [currentSection]="state.currentSection()" />
-  }
-
-  @if (state.error()) {
-    <div class="error-banner">
-      <span>{{ state.error() }}</span>
-      <button (click)="state.error.set(null)">Dismiss</button>
-    </div>
-  }
-
-  @if (state.status() !== 'complete') {
-    <div class="chat-area">
-      <div class="message-list" #messageList>
-        @for (msg of state.messages(); track msg.timestamp) {
-          <app-chat-message [message]="msg" />
-        }
-        @if (state.isLoading()) {
-          <div class="typing-indicator">
-            <div class="avatar">
-              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/>
-                <path d="M5 3v4"/><path d="M19 17v4"/><path d="M3 5h4"/><path d="M17 19h4"/>
-              </svg>
-            </div>
-            <div class="dots">
-              <span></span><span></span><span></span>
-            </div>
-          </div>
-        }
+  @if (!sessionStarted()) {
+    <div class="name-input-card">
+      <div class="name-input-icon">
+        <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect width="8" height="4" x="8" y="2" rx="1" ry="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="m9 14 2 2 4-4"/>
+        </svg>
       </div>
-
-      <div class="input-area">
-        @if (state.readyToGenerate() && state.status() === 'active') {
-          <button class="generate-btn" (click)="onGenerateBlueprint()" [disabled]="state.isLoading()">
-            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/>
-            </svg>
-            Generate Blueprint
-          </button>
-        }
-        <div class="input-row">
-          <textarea
-            [(ngModel)]="userInput"
-            placeholder="Type your response..."
-            (keydown)="onKeyDown($event)"
-            [disabled]="state.isLoading() || state.status() === 'generating'"
-            rows="1"
-            class="message-input"
-          ></textarea>
-          <button
-            class="send-btn"
-            (click)="onSendMessage()"
-            [disabled]="!userInput.trim() || state.isLoading()">
-            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M14.536 21.686a.5.5 0 0 0 .937-.024l6.5-19a.496.496 0 0 0-.635-.635l-19 6.5a.5.5 0 0 0-.024.937l7.93 3.18a2 2 0 0 1 1.112 1.11Z"/>
-              <path d="m21.854 2.147-10.94 10.939"/>
-            </svg>
-          </button>
-        </div>
-      </div>
+      <h2 class="name-input-title">Name Your Workspace</h2>
+      <p class="name-input-subtitle">Give your workspace a name before we begin the discovery process.</p>
+      <input
+        class="name-input-field"
+        type="text"
+        placeholder="e.g., Acme Corp, My Brand"
+        [value]="workspaceName()"
+        (input)="workspaceName.set($any($event.target).value)"
+        (keydown.enter)="onStartSession()"
+      />
+      <button
+        class="start-session-btn"
+        (click)="onStartSession()"
+        [disabled]="!workspaceName().trim()">
+        Start Discovery
+      </button>
     </div>
   } @else {
-    <div class="blueprint-section">
-      @if (state.markdownDocument()) {
-        <app-blueprint-preview
-          [markdownContent]="state.markdownDocument()!"
-          [clientName]="state.blueprint()?.clientName ?? ''"
-          (download)="onDownloadBlueprint()" />
-      }
-    </div>
-  }
+    @if (state.sections().length > 0) {
+      <app-section-progress
+        [sections]="state.sections()"
+        [currentSection]="state.currentSection()" />
+    }
 
-  @if (state.status() === 'generating') {
-    <div class="generating-overlay">
-      <div class="generating-content">
-        <div class="spinner"></div>
-        <h3>Generating Your Blink Blueprint</h3>
-        <p>This may take a moment as we craft your personalized content strategy...</p>
+    @if (state.error()) {
+      <div class="error-banner">
+        <span>{{ state.error() }}</span>
+        <button (click)="state.error.set(null)">Dismiss</button>
       </div>
-    </div>
+    }
+
+    @if (state.status() !== 'complete') {
+      <div class="chat-area">
+        <div class="message-list" #messageList>
+          @for (msg of state.messages(); track msg.timestamp) {
+            <app-chat-message [message]="msg" />
+          }
+          @if (state.isLoading()) {
+            <div class="typing-indicator">
+              <div class="avatar">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/>
+                  <path d="M5 3v4"/><path d="M19 17v4"/><path d="M3 5h4"/><path d="M17 19h4"/>
+                </svg>
+              </div>
+              <div class="dots">
+                <span></span><span></span><span></span>
+              </div>
+            </div>
+          }
+        </div>
+
+        <div class="input-area">
+          @if (state.readyToGenerate() && state.status() === 'active') {
+            <button class="generate-btn" (click)="onGenerateBlueprint()" [disabled]="state.isLoading()">
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/>
+              </svg>
+              Generate Blueprint
+            </button>
+          }
+          <div class="input-row">
+            <textarea
+              [(ngModel)]="userInput"
+              placeholder="Type your response..."
+              (keydown)="onKeyDown($event)"
+              [disabled]="state.isLoading() || state.status() === 'generating'"
+              rows="1"
+              class="message-input"
+            ></textarea>
+            <button
+              class="send-btn"
+              (click)="onSendMessage()"
+              [disabled]="!userInput.trim() || state.isLoading()">
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M14.536 21.686a.5.5 0 0 0 .937-.024l6.5-19a.496.496 0 0 0-.635-.635l-19 6.5a.5.5 0 0 0-.024.937l7.93 3.18a2 2 0 0 1 1.112 1.11Z"/>
+                <path d="m21.854 2.147-10.94 10.939"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+      </div>
+    } @else {
+      <div class="blueprint-section">
+        @if (state.markdownDocument()) {
+          <app-blueprint-preview
+            [markdownContent]="state.markdownDocument()!"
+            [clientName]="state.blueprint()?.clientName ?? ''"
+            [isCreating]="state.isCreatingWorkspace()"
+            (download)="onDownloadBlueprint()"
+            (createWorkspace)="onCreateWorkspace()" />
+        }
+      </div>
+    }
+
+    @if (state.status() === 'generating') {
+      <div class="generating-overlay">
+        <div class="generating-content">
+          <div class="spinner"></div>
+          <h3>Generating Your Blink Blueprint</h3>
+          <p>This may take a moment as we craft your personalized content strategy...</p>
+        </div>
+      </div>
+    }
   }
 </div>

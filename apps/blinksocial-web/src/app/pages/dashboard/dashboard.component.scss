@@ -58,6 +58,34 @@
   max-width: 720px;
 }
 
+.in-progress-section {
+  position: relative;
+  margin-bottom: 32px;
+}
+
+.section-title {
+  margin: 0 0 16px;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--blink-on-surface-medium);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.in-progress-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+
+  @media (min-width: 768px) {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  @media (min-width: 1024px) {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
 .workspace-grid {
   position: relative;
   display: grid;

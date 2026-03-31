@@ -29,7 +29,11 @@ export class OnboardingController {
   ) {
     const user = this.extractUser(req);
     this.assertAdminAccess(user);
-    return this.onboardingService.createSession(user.id, body.businessName);
+    return this.onboardingService.createSession(
+      user.id,
+      body.workspaceName,
+      body.businessName,
+    );
   }
 
   @Post('sessions/:id/messages')
@@ -50,6 +54,16 @@ export class OnboardingController {
     return this.onboardingService.getSession(sessionId, user.id);
   }
 
+  @Get('sessions/by-workspace/:tenantId')
+  async resumeSession(
+    @Req() req: Request,
+    @Param('tenantId') tenantId: string,
+  ) {
+    const user = this.extractUser(req);
+    this.assertAdminAccess(user);
+    return this.onboardingService.resumeSession(tenantId, user.id);
+  }
+
   @Post('sessions/:id/generate')
   async generateBlueprint(
     @Req() req: Request,
@@ -58,6 +72,19 @@ export class OnboardingController {
     const user = this.extractUser(req);
     this.assertAdminAccess(user);
     return this.onboardingService.generateBlueprint(sessionId, user.id);
+  }
+
+  @Post('sessions/:id/create-workspace')
+  async createWorkspaceFromBlueprint(
+    @Req() req: Request,
+    @Param('id') sessionId: string,
+  ) {
+    const user = this.extractUser(req);
+    this.assertAdminAccess(user);
+    return this.onboardingService.createWorkspaceFromBlueprint(
+      sessionId,
+      user.id,
+    );
   }
 
   private extractUser(req: Request): UserContract {

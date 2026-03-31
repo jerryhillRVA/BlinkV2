@@ -236,6 +236,90 @@
   }
 }
 
+.name-input-card {
+  max-width: 480px;
+  margin: 40px auto 0;
+  padding: 40px;
+  background: var(--blink-surface);
+  border: 1px solid var(--blink-outline-variant);
+  border-radius: 20px;
+  box-shadow: var(--blink-shadow-md);
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.name-input-icon {
+  width: 56px;
+  height: 56px;
+  border-radius: 16px;
+  background: var(--blink-brand-primary-light-bg);
+  color: var(--blink-brand-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 16px;
+}
+
+.name-input-title {
+  margin: 0 0 8px;
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--blink-on-surface-strong);
+}
+
+.name-input-subtitle {
+  margin: 0 0 24px;
+  font-size: 14px;
+  color: var(--blink-on-surface-muted);
+}
+
+.name-input-field {
+  width: 100%;
+  padding: 12px 16px;
+  border: 1px solid var(--blink-outline-variant);
+  border-radius: 10px;
+  font-size: 15px;
+  font-family: inherit;
+  background: var(--blink-surface);
+  color: var(--blink-on-surface);
+  outline: none;
+  transition: border-color 0.2s;
+  margin-bottom: 16px;
+
+  &:focus {
+    border-color: var(--blink-brand-primary);
+  }
+
+  &::placeholder {
+    color: var(--blink-on-surface-muted);
+  }
+}
+
+.start-session-btn {
+  appearance: none;
+  width: 100%;
+  padding: 12px;
+  border: none;
+  border-radius: 10px;
+  background: var(--blink-brand-gradient);
+  color: white;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: opacity 0.2s;
+
+  &:hover:not(:disabled) {
+    opacity: 0.9;
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+}
+
 .blueprint-section {
   flex: 1;
   overflow-y: auto;

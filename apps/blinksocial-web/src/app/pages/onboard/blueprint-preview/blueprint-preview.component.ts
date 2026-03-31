@@ -13,7 +13,9 @@ export class BlueprintPreviewComponent {
 
   markdownContent = input.required<string>();
   clientName = input<string>('');
+  isCreating = input<boolean>(false);
   download = output<void>();
+  createWorkspace = output<void>();
 
   renderedHtml = computed<SafeHtml>(() => {
     const html = marked.parse(this.markdownContent(), { async: false }) as string;
@@ -22,5 +24,9 @@ export class BlueprintPreviewComponent {
 
   onDownload(): void {
     this.download.emit();
+  }
+
+  onCreateWorkspace(): void {
+    this.createWorkspace.emit();
   }
 }

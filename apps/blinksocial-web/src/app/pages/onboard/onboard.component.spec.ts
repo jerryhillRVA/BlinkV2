@@ -1,14 +1,16 @@
 import { TestBed } from '@angular/core/testing';
 import { OnboardComponent } from './onboard.component';
-import { provideRouter, Router } from '@angular/router';
+import { provideRouter, Router, ActivatedRoute } from '@angular/router';
 import { provideHttpClient } from '@angular/common/http';
 import {
   provideHttpClientTesting,
   HttpTestingController,
 } from '@angular/common/http/testing';
+import { convertToParamMap } from '@angular/router';
 
 const mockSessionResponse = {
   sessionId: 'test-123',
+  workspaceId: 'ws-123',
   status: 'active',
   initialMessage: 'Welcome to the discovery session!',
   sections: [
@@ -26,35 +28,50 @@ describe('OnboardComponent', () => {
   let httpMock: HttpTestingController;
   let router: Router;
 
-  beforeEach(async () => {
-    await TestBed.configureTestingModule({
+  function setup(queryParams: Record<string, string> = {}) {
+    TestBed.configureTestingModule({
       imports: [OnboardComponent],
       providers: [
         provideRouter([{ path: '', component: OnboardComponent }]),
         provideHttpClient(),
         provideHttpClientTesting(),
+        {
+          provide: ActivatedRoute,
+          useValue: {
+            snapshot: { queryParamMap: convertToParamMap(queryParams) },
+          },
+        },
       ],
-    }).compileComponents();
+    });
 
     httpMock = TestBed.inject(HttpTestingController);
     router = TestBed.inject(Router);
-  });
+  }
 
   afterEach(() => {
     httpMock.verify();
   });
 
-  function createAndInitComponent() {
-    const fixture = TestBed.createComponent(OnboardComponent);
-    fixture.detectChanges();
+  function startSession(fixture: ReturnType<typeof TestBed.createComponent<OnboardComponent>>) {
+    fixture.componentInstance.workspaceName.set('Test Workspace');
+    fixture.componentInstance.onStartSession();
     const req = httpMock.expectOne('/api/onboarding/sessions');
     req.flush(mockSessionResponse);
     fixture.detectChanges();
+  }
+
+  function createAndInitComponent() {
+    setup();
+    const fixture = TestBed.createComponent(OnboardComponent);
+    fixture.detectChanges();
+    startSession(fixture);
     return fixture;
   }
 
   it('should create', () => {
-    const fixture = createAndInitComponent();
+    setup();
+    const fixture = TestBed.createComponent(OnboardComponent);
+    fixture.detectChanges();
     expect(fixture.componentInstance).toBeTruthy();
   });
 
@@ -62,6 +79,44 @@ describe('OnboardComponent', () => {
     const fixture = createAndInitComponent();
     const title = fixture.nativeElement.querySelector('.page-title');
     expect(title.textContent).toContain('Project Onboarding');
+  });
+
+  it('should show name input card before session starts', () => {
+    setup();
+    const fixture = TestBed.createComponent(OnboardComponent);
+    fixture.detectChanges();
+    const card = fixture.nativeElement.querySelector('.name-input-card');
+    expect(card).toBeTruthy();
+    expect(fixture.nativeElement.querySelector('.chat-area')).toBeFalsy();
+  });
+
+  it('should disable start button when name is empty', () => {
+    setup();
+    const fixture = TestBed.createComponent(OnboardComponent);
+    fixture.detectChanges();
+    const btn = fixture.nativeElement.querySelector('.start-session-btn') as HTMLButtonElement;
+    expect(btn.disabled).toBe(true);
+  });
+
+  it('should not start session with empty name', () => {
+    setup();
+    const fixture = TestBed.createComponent(OnboardComponent);
+    fixture.detectChanges();
+    fixture.componentInstance.onStartSession();
+    expect(fixture.componentInstance.sessionStarted()).toBe(false);
+  });
+
+  it('should start session when name is provided and button clicked', () => {
+    setup();
+    const fixture = TestBed.createComponent(OnboardComponent);
+    fixture.detectChanges();
+    fixture.componentInstance.workspaceName.set('My Workspace');
+    fixture.componentInstance.onStartSession();
+    expect(fixture.componentInstance.sessionStarted()).toBe(true);
+    const req = httpMock.expectOne('/api/onboarding/sessions');
+    req.flush(mockSessionResponse);
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.chat-area')).toBeTruthy();
   });
 
   it('should show initial agent message after session starts', () => {
@@ -369,20 +424,26 @@ describe('OnboardComponent', () => {
     }
   });
 
-  it('should call startSession in ngOnInit', () => {
+  it('should call startSession when name is provided', () => {
+    setup();
     const fixture = TestBed.createComponent(OnboardComponent);
-    const spy = vi.spyOn(fixture.componentInstance['state'], 'startSession');
     fixture.detectChanges();
+    const spy = vi.spyOn(fixture.componentInstance['state'], 'startSession');
+    fixture.componentInstance.workspaceName.set('My Workspace');
+    fixture.componentInstance.onStartSession();
 
     const req = httpMock.expectOne('/api/onboarding/sessions');
     req.flush(mockSessionResponse);
 
-    expect(spy).toHaveBeenCalled();
+    expect(spy).toHaveBeenCalledWith('My Workspace');
   });
 
   it('should handle session creation error gracefully', () => {
+    setup();
     const fixture = TestBed.createComponent(OnboardComponent);
     fixture.detectChanges();
+    fixture.componentInstance.workspaceName.set('Test');
+    fixture.componentInstance.onStartSession();
 
     const req = httpMock.expectOne('/api/onboarding/sessions');
     req.flush(
@@ -421,5 +482,37 @@ describe('OnboardComponent', () => {
       currentSection: 'business',
       readyToGenerate: false,
     });
+  });
+
+  it('should call createWorkspaceFromBlueprint on state service', () => {
+    const fixture = createAndInitComponent();
+    // eslint-disable-next-line @typescript-eslint/no-empty-function
+    const spy = vi.spyOn(fixture.componentInstance['state'], 'createWorkspaceFromBlueprint').mockImplementation(() => {});
+    fixture.componentInstance.onCreateWorkspace();
+    expect(spy).toHaveBeenCalled();
+  });
+
+  it('should resume session when workspace query param is present', () => {
+    TestBed.resetTestingModule();
+    setup({ workspace: 'tenant-abc' });
+    httpMock = TestBed.inject(HttpTestingController);
+    const fixture = TestBed.createComponent(OnboardComponent);
+    fixture.detectChanges();
+
+    expect(fixture.componentInstance.sessionStarted()).toBe(true);
+
+    const req = httpMock.expectOne('/api/onboarding/sessions/by-workspace/tenant-abc');
+    req.flush({
+      sessionId: 'resumed-session',
+      status: 'active',
+      messages: [{ role: 'assistant', content: 'Hello', timestamp: '2026-01-01T00:00:00Z' }],
+      sections: mockSessionResponse.sections,
+      currentSection: 'business',
+      readyToGenerate: false,
+      blueprint: null,
+    });
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('.chat-area')).toBeTruthy();
   });
 });

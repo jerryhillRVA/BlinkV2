@@ -1,11 +1,13 @@
 import { TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting, HttpTestingController } from '@angular/common/http/testing';
+import { provideRouter, Router } from '@angular/router';
 import { OnboardStateService } from './onboard-state.service';
 
 describe('OnboardStateService', () => {
   let service: OnboardStateService;
   let httpMock: HttpTestingController;
+  let router: Router;
 
   beforeEach(() => {
     TestBed.configureTestingModule({
@@ -13,11 +15,13 @@ describe('OnboardStateService', () => {
         OnboardStateService,
         provideHttpClient(),
         provideHttpClientTesting(),
+        provideRouter([]),
       ],
     });
 
     service = TestBed.inject(OnboardStateService);
     httpMock = TestBed.inject(HttpTestingController);
+    router = TestBed.inject(Router);
   });
 
   afterEach(() => {
@@ -51,16 +55,17 @@ describe('OnboardStateService', () => {
   });
 
   it('should start session successfully', () => {
-    service.startSession('Acme Corp');
+    service.startSession('Acme Corp', 'Acme Corp');
 
     expect(service.isLoading()).toBe(true);
 
     const req = httpMock.expectOne('/api/onboarding/sessions');
     expect(req.request.method).toBe('POST');
-    expect(req.request.body).toEqual({ businessName: 'Acme Corp' });
+    expect(req.request.body).toEqual({ workspaceName: 'Acme Corp', businessName: 'Acme Corp' });
 
     req.flush({
       sessionId: 'sess-1',
+      workspaceId: 'ws-1',
       status: 'active',
       initialMessage: 'Welcome to Blink!',
       sections: [
@@ -76,13 +81,14 @@ describe('OnboardStateService', () => {
     expect(service.sections().length).toBe(1);
   });
 
-  it('should start session without business name', () => {
-    service.startSession();
+  it('should start session with workspace name only', () => {
+    service.startSession('My Workspace');
 
     const req = httpMock.expectOne('/api/onboarding/sessions');
-    expect(req.request.body).toEqual({});
+    expect(req.request.body).toEqual({ workspaceName: 'My Workspace', businessName: undefined });
     req.flush({
       sessionId: 'sess-2',
+      workspaceId: 'ws-2',
       status: 'active',
       initialMessage: 'Hello!',
       sections: [],
@@ -92,7 +98,7 @@ describe('OnboardStateService', () => {
   });
 
   it('should handle session creation error', () => {
-    service.startSession();
+    service.startSession('Test');
 
     const req = httpMock.expectOne('/api/onboarding/sessions');
     req.flush(
@@ -220,5 +226,100 @@ describe('OnboardStateService', () => {
     service.downloadBlueprint();
     expect(spy).not.toHaveBeenCalled();
     vi.restoreAllMocks();
+  });
+
+  it('should have isCreatingWorkspace initially false', () => {
+    expect(service.isCreatingWorkspace()).toBe(false);
+  });
+
+  it('should create workspace from blueprint successfully', () => {
+    const navigateSpy = vi.spyOn(router, 'navigate');
+    service.sessionId.set('sess-1');
+    service.createWorkspaceFromBlueprint();
+
+    expect(service.isCreatingWorkspace()).toBe(true);
+
+    const req = httpMock.expectOne('/api/onboarding/sessions/sess-1/create-workspace');
+    expect(req.request.method).toBe('POST');
+    req.flush({ workspaceId: 'ws-new', tenantId: 'tenant-new', wizardData: {} });
+
+    expect(service.isCreatingWorkspace()).toBe(false);
+    expect(navigateSpy).toHaveBeenCalledWith(['/new-workspace'], {
+      queryParams: { resume: 'tenant-new' },
+    });
+  });
+
+  it('should handle create workspace from blueprint error', () => {
+    service.sessionId.set('sess-1');
+    service.createWorkspaceFromBlueprint();
+
+    const req = httpMock.expectOne('/api/onboarding/sessions/sess-1/create-workspace');
+    req.flush(
+      { message: 'No blueprint found' },
+      { status: 400, statusText: 'Bad Request' },
+    );
+
+    expect(service.isCreatingWorkspace()).toBe(false);
+    expect(service.error()).toBeTruthy();
+  });
+
+  it('should not create workspace from blueprint without session', () => {
+    service.createWorkspaceFromBlueprint();
+    httpMock.expectNone('/api/onboarding/sessions');
+  });
+
+  it('should resume session successfully', () => {
+    service.resumeSession('tenant-abc');
+
+    expect(service.isLoading()).toBe(true);
+
+    const req = httpMock.expectOne('/api/onboarding/sessions/by-workspace/tenant-abc');
+    expect(req.request.method).toBe('GET');
+    req.flush({
+      sessionId: 'resumed-1',
+      status: 'active',
+      messages: [{ role: 'assistant', content: 'Hello', timestamp: '2026-01-01T00:00:00Z' }],
+      sections: [{ id: 'business', name: 'Business', covered: true }],
+      currentSection: 'audience',
+      readyToGenerate: false,
+      blueprint: null,
+    });
+
+    expect(service.isLoading()).toBe(false);
+    expect(service.sessionId()).toBe('resumed-1');
+    expect(service.messages().length).toBe(1);
+    expect(service.sections().length).toBe(1);
+    expect(service.currentSection()).toBe('audience');
+  });
+
+  it('should handle resume session error', () => {
+    service.resumeSession('bad-tenant');
+
+    const req = httpMock.expectOne('/api/onboarding/sessions/by-workspace/bad-tenant');
+    req.flush(
+      { message: 'Not found' },
+      { status: 404, statusText: 'Not Found' },
+    );
+
+    expect(service.isLoading()).toBe(false);
+    expect(service.error()).toBeTruthy();
+  });
+
+  it('should resume session with blueprint', () => {
+    service.resumeSession('tenant-xyz');
+
+    const req = httpMock.expectOne('/api/onboarding/sessions/by-workspace/tenant-xyz');
+    req.flush({
+      sessionId: 'resumed-2',
+      status: 'complete',
+      messages: [],
+      sections: [],
+      currentSection: 'business',
+      readyToGenerate: true,
+      blueprint: { clientName: 'Test Co', strategicSummary: 'Summary' },
+    });
+
+    expect(service.blueprint()).toBeTruthy();
+    expect(service.status()).toBe('complete');
   });
 });

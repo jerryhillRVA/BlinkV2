@@ -2,10 +2,12 @@ import { Injectable, computed, signal } from '@angular/core';
 import {
   Platform,
   PLATFORM_DISPLAY_OPTIONS,
+  PLATFORM_DISPLAY_NAMES,
   displayNameToPlatform,
   type AudienceSegmentContract,
   type ContentPillarContract,
   type SkillConfigContract,
+  type CreateWorkspaceRequestContract,
 } from '@blinksocial/contracts';
 import { CreateWorkspaceRequest } from '@blinksocial/models';
 import { UIAudienceSegment, UIContentPillar, UIAgent } from '../../models';
@@ -341,5 +343,98 @@ export class NewWorkspaceFormService {
     this.agents.update((as) =>
       as.map((a) => (a.id === agentId ? { ...a, outputs } : a))
     );
+  }
+
+  /** Maps a Platform enum value to its display name (e.g., 'youtube' -> 'YouTube'). */
+  private platformToDisplayName(platformId: string): string {
+    const displayName = PLATFORM_DISPLAY_NAMES[platformId as Platform];
+    return displayName ?? platformId;
+  }
+
+  /** Populates all form signals from a CreateWorkspaceRequestContract (e.g., from wizard state resume). */
+  populateFromWizardData(formData: Partial<CreateWorkspaceRequestContract>): void {
+    // Step 1: General
+    if (formData.general?.workspaceName) {
+      this.workspaceName.set(formData.general.workspaceName);
+    }
+    if (formData.general?.purpose) {
+      this.purpose.set(formData.general.purpose);
+    }
+    if (formData.general?.mission) {
+      this.mission.set(formData.general.mission);
+    }
+
+    // Brand voice
+    if (formData.brandVoice?.brandVoiceDescription) {
+      this.brandVoice.set(formData.brandVoice.brandVoiceDescription);
+    }
+
+    // Audience segments
+    if (formData.audienceSegments && formData.audienceSegments.length > 0) {
+      this.audienceSegments.set(
+        formData.audienceSegments.map((seg, i) => ({
+          id: i + 1,
+          description: seg.description ?? seg.name ?? '',
+          ageRange: seg.demographics ?? '25-34',
+        }))
+      );
+    }
+
+    // Step 2: Platforms
+    if (formData.platforms?.platforms && formData.platforms.platforms.length > 0) {
+      const displayNames = new Set(
+        formData.platforms.platforms
+          .filter((p) => p.enabled !== false)
+          .map((p) => this.platformToDisplayName(p.platformId))
+      );
+      this.enabledPlatforms.set(displayNames);
+    }
+
+    if (formData.platforms?.globalRules?.defaultPlatform) {
+      this.defaultPlatform.set(
+        this.platformToDisplayName(formData.platforms.globalRules.defaultPlatform)
+      );
+    }
+
+    if (formData.platforms?.globalRules?.maxIdeasPerMonth != null) {
+      this.maxIdeasPerMonth.set(formData.platforms.globalRules.maxIdeasPerMonth);
+    }
+
+    if (formData.platforms?.globalRules?.contentWarningToggle != null) {
+      this.contentWarning.set(formData.platforms.globalRules.contentWarningToggle);
+    }
+
+    if (formData.platforms?.globalRules?.aiDisclaimerToggle != null) {
+      this.aiDisclaimer.set(formData.platforms.globalRules.aiDisclaimerToggle);
+    }
+
+    // Step 3: Content Pillars
+    if (formData.contentPillars && formData.contentPillars.length > 0) {
+      this.contentPillars.set(
+        formData.contentPillars.map((p, i) => ({
+          id: i + 1,
+          name: p.name ?? '',
+          themes: (p.themes ?? []).join(', '),
+          description: p.description ?? '',
+          audienceSegments: p.audienceSegmentIds ?? [],
+          platforms: Object.keys(p.platformDistribution ?? {}).map(
+            (pid) => this.platformToDisplayName(pid)
+          ),
+        }))
+      );
+    }
+
+    // Step 4: Agents / Skills
+    if (formData.skills?.skills && formData.skills.skills.length > 0) {
+      this.agents.set(
+        formData.skills.skills.map((s, i) => ({
+          id: i + 1,
+          name: s.name ?? '',
+          role: s.role ?? '',
+          responsibilities: (s.responsibilities ?? []).join('\n'),
+          outputs: (s.expectedOutputs ?? []).join('\n'),
+        }))
+      );
+    }
   }
 }

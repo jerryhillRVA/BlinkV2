@@ -1,5 +1,5 @@
 import { TestBed } from '@angular/core/testing';
-import { Router } from '@angular/router';
+import { Router, ActivatedRoute, convertToParamMap } from '@angular/router';
 import { provideHttpClient } from '@angular/common/http';
 import {
   HttpTestingController,
@@ -13,18 +13,28 @@ describe('NewWorkspaceComponent', () => {
   let router: Router;
   let toastService: ToastService;
 
-  beforeEach(async () => {
-    await TestBed.configureTestingModule({
+  function setup(queryParams: Record<string, string> = {}) {
+    TestBed.configureTestingModule({
       imports: [NewWorkspaceComponent],
       providers: [
         { provide: Router, useValue: { navigate: vi.fn() } },
         { provide: ToastService, useValue: { showError: vi.fn(), showSuccess: vi.fn() } },
+        {
+          provide: ActivatedRoute,
+          useValue: {
+            snapshot: { queryParamMap: convertToParamMap(queryParams) },
+          },
+        },
         provideHttpClient(),
         provideHttpClientTesting(),
       ],
-    }).compileComponents();
+    });
     router = TestBed.inject(Router);
     toastService = TestBed.inject(ToastService);
+  }
+
+  beforeEach(async () => {
+    setup();
   });
 
   it('should create', () => {
@@ -244,5 +254,141 @@ describe('NewWorkspaceComponent', () => {
 
     expect(fixture.componentInstance.isSubmitting()).toBe(true);
     expect(nextBtn.textContent?.trim()).toContain('Submitting...');
+  });
+
+  it('should load wizard state when resume query param is present', () => {
+    TestBed.resetTestingModule();
+    setup({ resume: 'tenant-123' });
+    const httpMock = TestBed.inject(HttpTestingController);
+    const fixture = TestBed.createComponent(NewWorkspaceComponent);
+    fixture.detectChanges();
+
+    expect(fixture.componentInstance.resumeWorkspaceId()).toBe('tenant-123');
+
+    const req = httpMock.expectOne('/api/workspaces/tenant-123/settings/wizard-state');
+    expect(req.request.method).toBe('GET');
+    req.flush({
+      currentStep: 3,
+      completedSteps: [1, 2],
+      formData: {
+        general: { workspaceName: 'Resumed WS' },
+      },
+    });
+    fixture.detectChanges();
+
+    const formService = fixture.debugElement.injector.get(NewWorkspaceFormService);
+    expect(formService.workspaceName()).toBe('Resumed WS');
+    expect(fixture.componentInstance.currentStep()).toBe(3);
+    httpMock.verify();
+  });
+
+  it('should call finalizeWorkspace when resuming and submitting', () => {
+    TestBed.resetTestingModule();
+    setup({ resume: 'tenant-123' });
+    const httpMock = TestBed.inject(HttpTestingController);
+    const fixture = TestBed.createComponent(NewWorkspaceComponent);
+    fixture.detectChanges();
+
+    const wizardReq = httpMock.expectOne('/api/workspaces/tenant-123/settings/wizard-state');
+    wizardReq.flush({
+      currentStep: 5,
+      completedSteps: [1, 2, 3, 4],
+      formData: { general: { workspaceName: 'Test' } },
+    });
+    fixture.detectChanges();
+
+    fixture.componentInstance.currentStep.set(5);
+    fixture.detectChanges();
+
+    const nextBtn = fixture.nativeElement.querySelector('.wizard-next') as HTMLButtonElement;
+    nextBtn.click();
+    fixture.detectChanges();
+
+    const finalizeReq = httpMock.expectOne('/api/workspaces/tenant-123/finalize');
+    expect(finalizeReq.request.method).toBe('POST');
+    finalizeReq.flush({});
+
+    httpMock.match('/api/auth/status').forEach((r) =>
+      r.flush({ authenticated: true, needsBootstrap: false, user: { id: 'u1', email: 'a@b.com', displayName: 'Test', workspaces: [] } })
+    );
+    httpMock.match(() => true).forEach((r) => r.flush({}));
+  });
+
+  it('should show toast error on wizard state load failure', () => {
+    TestBed.resetTestingModule();
+    setup({ resume: 'bad-id' });
+    const httpMock = TestBed.inject(HttpTestingController);
+    const fixture = TestBed.createComponent(NewWorkspaceComponent);
+    fixture.detectChanges();
+
+    const req = httpMock.expectOne('/api/workspaces/bad-id/settings/wizard-state');
+    req.flush({ message: 'Not found' }, { status: 404, statusText: 'Not Found' });
+    fixture.detectChanges();
+
+    expect(toastService.showError).toHaveBeenCalledWith('Not found');
+    httpMock.verify();
+  });
+
+  it('should save wizard state after advancing steps when resuming', () => {
+    TestBed.resetTestingModule();
+    setup({ resume: 'tenant-123' });
+    const httpMock = TestBed.inject(HttpTestingController);
+    const fixture = TestBed.createComponent(NewWorkspaceComponent);
+    fixture.detectChanges();
+
+    const wizardReq = httpMock.expectOne('/api/workspaces/tenant-123/settings/wizard-state');
+    wizardReq.flush({
+      currentStep: 1,
+      completedSteps: [],
+      formData: { general: { workspaceName: 'Test WS' } },
+    });
+    fixture.detectChanges();
+
+    // Advance from step 1 to 2
+    fixture.componentInstance.currentStep.set(1);
+    fixture.componentInstance.onNext();
+    fixture.detectChanges();
+
+    const saveReq = httpMock.expectOne('/api/workspaces/tenant-123/settings/wizard-state');
+    expect(saveReq.request.method).toBe('PUT');
+    expect(saveReq.request.body.currentStep).toBe(2);
+    saveReq.flush({});
+    httpMock.verify();
+  });
+
+  it('should not save wizard state when not resuming', () => {
+    const httpMock = TestBed.inject(HttpTestingController);
+    const fixture = TestBed.createComponent(NewWorkspaceComponent);
+    fixture.detectChanges();
+    const formService = fixture.debugElement.injector.get(NewWorkspaceFormService);
+    formService.workspaceName.set('Test');
+    fixture.componentInstance.onNext();
+    // Should only have no wizard-state PUT since no resume
+    httpMock.expectNone('/api/workspaces');
+  });
+
+  it('should show finalize error toast when finalize fails', () => {
+    TestBed.resetTestingModule();
+    setup({ resume: 'tenant-err' });
+    const httpMock = TestBed.inject(HttpTestingController);
+    const fixture = TestBed.createComponent(NewWorkspaceComponent);
+    fixture.detectChanges();
+
+    const wizardReq = httpMock.expectOne('/api/workspaces/tenant-err/settings/wizard-state');
+    wizardReq.flush({ currentStep: 5, completedSteps: [1,2,3,4], formData: { general: { workspaceName: 'Err' } } });
+    fixture.detectChanges();
+
+    fixture.componentInstance.currentStep.set(5);
+    fixture.detectChanges();
+    fixture.componentInstance.onNext();
+    fixture.detectChanges();
+
+    const finalReq = httpMock.expectOne('/api/workspaces/tenant-err/finalize');
+    finalReq.flush({ message: 'Finalize failed' }, { status: 500, statusText: 'Error' });
+    fixture.detectChanges();
+
+    expect(fixture.componentInstance.isSubmitting()).toBe(false);
+    expect(toastService.showError).toHaveBeenCalledWith('Finalize failed');
+    httpMock.verify();
   });
 });

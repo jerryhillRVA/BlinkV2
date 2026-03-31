@@ -51,4 +51,32 @@ describe('NewWorkspaceApiService', () => {
     expect(req.request.method).toBe('POST');
     req.flush({ id: '123', workspaceName: 'Test', status: 'active', createdAt: '2026-01-01' });
   });
+
+  it('should GET wizard state', () => {
+    service.getWizardState('ws-123').subscribe((res) => {
+      expect(res.currentStep).toBe(2);
+    });
+
+    const req = httpMock.expectOne('/api/workspaces/ws-123/settings/wizard-state');
+    expect(req.request.method).toBe('GET');
+    req.flush({ currentStep: 2, completedSteps: [1], formData: {} });
+  });
+
+  it('should PUT wizard state', () => {
+    const state = { currentStep: 3, completedSteps: [1, 2], formData: {} };
+    service.saveWizardState('ws-123', state).subscribe();
+
+    const req = httpMock.expectOne('/api/workspaces/ws-123/settings/wizard-state');
+    expect(req.request.method).toBe('PUT');
+    expect(req.request.body.currentStep).toBe(3);
+    req.flush({});
+  });
+
+  it('should POST finalize workspace', () => {
+    service.finalizeWorkspace('ws-123').subscribe();
+
+    const req = httpMock.expectOne('/api/workspaces/ws-123/finalize');
+    expect(req.request.method).toBe('POST');
+    req.flush({});
+  });
 });

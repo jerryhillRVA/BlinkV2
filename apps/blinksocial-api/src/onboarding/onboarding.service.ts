@@ -1,6 +1,9 @@
 import { Injectable, Logger, BadRequestException } from '@nestjs/common';
 import { SkillRunnerService } from '../skills/skill-runner.service';
 import { SessionStore, type OnboardingSessionState } from './session-store';
+import { WorkspacesService } from '../workspaces/workspaces.service';
+import { UserService } from '../auth/user.service';
+import { AgenticFilesystemService } from '../agentic-filesystem/agentic-filesystem.service';
 import type {
   DiscoverySectionId,
   DiscoverySectionContract,
@@ -11,7 +14,9 @@ import type {
   GetSessionResponseContract,
   GenerateBlueprintResponseContract,
   BlueprintDocumentContract,
+  CreateWorkspaceFromBlueprintResponseContract,
 } from '@blinksocial/contracts';
+import { WorkspaceBuilderService } from './workspace-builder.service';
 
 const SKILL_ID = 'onboarding-consultant';
 
@@ -30,13 +35,41 @@ export class OnboardingService {
   constructor(
     private readonly skillRunner: SkillRunnerService,
     private readonly sessionStore: SessionStore,
+    private readonly workspacesService: WorkspacesService,
+    private readonly userService: UserService,
+    private readonly fs: AgenticFilesystemService,
+    private readonly workspaceBuilder: WorkspaceBuilderService,
   ) {}
 
   async createSession(
     userId: string,
+    workspaceName: string,
     businessName?: string,
   ): Promise<CreateSessionResponseContract> {
     const session = this.sessionStore.create(userId);
+
+    // Create workspace on AFS in 'onboarding' status
+    let workspaceId = '';
+    let tenantId = '';
+    try {
+      const wsResponse = await this.workspacesService.createInStatus(
+        workspaceName,
+        'onboarding',
+      );
+      workspaceId = wsResponse.id;
+      tenantId = wsResponse.tenantId;
+
+      // Add user as Admin of the new workspace
+      await this.userService.addWorkspaceAccess(userId, tenantId, 'Admin');
+
+      this.sessionStore.update(session.id, {
+        workspaceId,
+        tenantId,
+      });
+    } catch (error) {
+      this.logger.error('Failed to create onboarding workspace on AFS', error);
+      // Continue without AFS — the session still works in-memory
+    }
 
     // Generate the initial greeting
     const context = this.buildStateContext(session, businessName);
@@ -57,7 +90,7 @@ export class OnboardingService {
 
     // Save the initial messages
     const now = new Date().toISOString();
-    this.sessionStore.update(session.id, {
+    const updatedSession = this.sessionStore.update(session.id, {
       messages: [
         {
           role: 'user',
@@ -76,8 +109,12 @@ export class OnboardingService {
         (turnResponse.currentSection as DiscoverySectionId) || 'business',
     });
 
+    // Persist session to AFS (fire-and-forget)
+    this.persistSessionToAfs(updatedSession);
+
     return {
       sessionId: session.id,
+      workspaceId,
       status: 'active',
       initialMessage: turnResponse.agentMessage,
       sections: this.buildSectionsResponse(session),
@@ -177,6 +214,9 @@ export class OnboardingService {
       readyToGenerate,
     });
 
+    // Persist session to AFS (fire-and-forget)
+    this.persistSessionToAfs(updatedSession);
+
     return {
       agentMessage: turnResponse.agentMessage,
       sections: this.buildSectionsResponse(updatedSession),
@@ -257,10 +297,25 @@ export class OnboardingService {
 
       const markdownDocument = this.renderBlueprintMarkdown(blueprint);
 
-      this.sessionStore.update(sessionId, {
+      const updatedSession = this.sessionStore.update(sessionId, {
         status: 'complete',
         blueprint,
       });
+
+      // Save blueprint.md to AFS and persist session (fire-and-forget)
+      if (updatedSession.tenantId && this.fs.isConfigured()) {
+        this.fs
+          .uploadTextFile(
+            updatedSession.tenantId,
+            'settings',
+            'blueprint.md',
+            markdownDocument,
+          )
+          .catch((err) =>
+            this.logger.error('Failed to save blueprint.md to AFS', err),
+          );
+      }
+      this.persistSessionToAfs(updatedSession);
 
       return { blueprint, markdownDocument };
     } catch (error) {
@@ -270,6 +325,114 @@ export class OnboardingService {
       );
       throw error;
     }
+  }
+
+  async resumeSession(
+    tenantId: string,
+    userId: string,
+  ): Promise<GetSessionResponseContract> {
+    // Check if session is already in memory
+    const existing = this.sessionStore.findByTenantId(tenantId);
+    if (existing) {
+      if (existing.userId !== userId) {
+        throw new BadRequestException('Session does not belong to this user');
+      }
+      return {
+        sessionId: existing.id,
+        status: existing.status,
+        messages: existing.messages,
+        sections: this.buildSectionsResponse(existing),
+        currentSection: existing.currentSection,
+        readyToGenerate: existing.readyToGenerate,
+        blueprint: existing.blueprint,
+      };
+    }
+
+    // Load from AFS via workspace settings
+    try {
+      const content = await this.workspacesService.getSettings(tenantId, 'onboarding-session');
+      if (!content || typeof content !== 'object' || !('id' in (content as Record<string, unknown>))) {
+        throw new BadRequestException('No onboarding session found for this workspace');
+      }
+
+      const sessionData = content as OnboardingSessionState;
+      if (sessionData.userId !== userId) {
+        throw new BadRequestException('Session does not belong to this user');
+      }
+
+      // Restore into in-memory store
+      this.sessionStore.restore(sessionData);
+
+      return {
+        sessionId: sessionData.id,
+        status: sessionData.status,
+        messages: sessionData.messages,
+        sections: this.buildSectionsResponse(sessionData),
+        currentSection: sessionData.currentSection,
+        readyToGenerate: sessionData.readyToGenerate,
+        blueprint: sessionData.blueprint,
+      };
+    } catch (error) {
+      if (error instanceof BadRequestException) throw error;
+      this.logger.error(`Failed to resume session for tenant ${tenantId}`, error);
+      throw new BadRequestException('Failed to load onboarding session');
+    }
+  }
+
+  async createWorkspaceFromBlueprint(
+    sessionId: string,
+    userId: string,
+  ): Promise<CreateWorkspaceFromBlueprintResponseContract> {
+    const session = this.sessionStore.get(sessionId);
+    if (!session) {
+      throw new BadRequestException('Session not found');
+    }
+    if (session.userId !== userId) {
+      throw new BadRequestException('Session does not belong to this user');
+    }
+    if (!session.blueprint) {
+      throw new BadRequestException('Session does not have a blueprint yet');
+    }
+
+    const workspaceName =
+      session.blueprint.clientName || 'New Workspace';
+
+    const result = await this.workspaceBuilder.buildFromBlueprint(
+      session.blueprint,
+      workspaceName,
+      userId,
+      session.id,
+    );
+
+    // Add user as Admin of the new workspace
+    await this.userService.addWorkspaceAccess(userId, result.tenantId, 'Admin');
+
+    return result;
+  }
+
+  private persistSessionToAfs(session: OnboardingSessionState): void {
+    if (!session.tenantId || !this.fs.isConfigured()) {
+      this.logger.debug(
+        `Skipping AFS persist: tenantId=${session.tenantId}, configured=${this.fs.isConfigured()}`,
+      );
+      return;
+    }
+
+    this.logger.debug(`Persisting session ${session.id} to AFS tenant ${session.tenantId}`);
+    this.fs
+      .uploadJsonFile(
+        session.tenantId,
+        'settings',
+        'onboarding-session.json',
+        session,
+      )
+      .then(() => this.logger.debug(`Session ${session.id} persisted to AFS`))
+      .catch((err) =>
+        this.logger.error(
+          `Failed to persist session ${session.id} to AFS: ${err?.message ?? err}`,
+          err?.response?.data ?? err?.stack,
+        ),
+      );
   }
 
   private buildStateContext(
@@ -301,12 +464,37 @@ export class OnboardingService {
       return parsed as unknown as AgentTurnResponse;
     }
 
-    // Fallback: treat the entire response as the agent message
+    // Try harder: extract JSON from the raw content (may be wrapped in markdown)
+    const jsonPatterns = [
+      /```json\s*\n?([\s\S]*?)\n?```/,
+      /```\s*\n?([\s\S]*?)\n?```/,
+      /(\{[\s\S]*"agentMessage"[\s\S]*\})/,
+    ];
+
+    for (const pattern of jsonPatterns) {
+      const match = rawContent.match(pattern);
+      if (match) {
+        try {
+          const extracted = JSON.parse(match[1].trim());
+          if (extracted && typeof extracted.agentMessage === 'string') {
+            this.logger.debug('Extracted JSON from raw LLM response via pattern match');
+            return extracted as AgentTurnResponse;
+          }
+        } catch {
+          // Continue to next pattern
+        }
+      }
+    }
+
+    // Final fallback: treat the entire response as the agent message
     this.logger.warn(
       'LLM response was not valid JSON — using raw content as agent message',
     );
+    const truncated = rawContent.length > 1500
+      ? rawContent.substring(0, 1500) + '\n\n[Response was truncated. Please continue the conversation.]'
+      : rawContent;
     return {
-      agentMessage: rawContent,
+      agentMessage: truncated,
       sectionsUpdated: {},
       sectionsCovered: [],
       readyToGenerate: false,

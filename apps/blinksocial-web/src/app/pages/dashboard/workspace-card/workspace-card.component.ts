@@ -5,6 +5,7 @@ export interface Workspace {
   id: string;
   name: string;
   color: string;
+  status?: string;
 }
 
 @Component({

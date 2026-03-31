@@ -1,4 +1,5 @@
 import { TestBed } from '@angular/core/testing';
+import { Platform } from '@blinksocial/contracts';
 import { NewWorkspaceFormService } from './new-workspace-form.service';
 
 describe('NewWorkspaceFormService', () => {
@@ -290,6 +291,172 @@ describe('NewWorkspaceFormService', () => {
     }]);
     const data = service.formData();
     expect(data.contentPillars[0].themes).toEqual([]);
+  });
+
+  describe('populateFromWizardData', () => {
+    it('should populate workspace name from general', () => {
+      service.populateFromWizardData({ general: { workspaceName: 'My WS' } });
+      expect(service.workspaceName()).toBe('My WS');
+    });
+
+    it('should populate purpose and mission', () => {
+      service.populateFromWizardData({
+        general: { workspaceName: 'Test', purpose: 'A purpose', mission: 'A mission' },
+      });
+      expect(service.purpose()).toBe('A purpose');
+      expect(service.mission()).toBe('A mission');
+    });
+
+    it('should populate brand voice', () => {
+      service.populateFromWizardData({
+        brandVoice: { brandVoiceDescription: 'professional, bold' },
+      });
+      expect(service.brandVoice()).toBe('professional, bold');
+    });
+
+    it('should populate audience segments', () => {
+      service.populateFromWizardData({
+        audienceSegments: [
+          { id: 'seg-1', name: 'Engineers', description: 'Software engineers', demographics: '25-34' },
+          { id: 'seg-2', name: 'Founders', description: 'Startup founders', demographics: '30-45' },
+        ],
+      });
+      expect(service.audienceSegments().length).toBe(2);
+      expect(service.audienceSegments()[0].description).toBe('Software engineers');
+      expect(service.audienceSegments()[1].ageRange).toBe('30-45');
+    });
+
+    it('should populate enabled platforms from platform IDs', () => {
+      service.populateFromWizardData({
+        platforms: {
+          platforms: [
+            { platformId: Platform.YouTube, enabled: true },
+            { platformId: Platform.Instagram, enabled: true },
+          ],
+          globalRules: { defaultPlatform: Platform.YouTube, maxIdeasPerMonth: 20 },
+        },
+      });
+      expect(service.enabledPlatforms().has('YouTube')).toBe(true);
+      expect(service.enabledPlatforms().has('Instagram')).toBe(true);
+      expect(service.defaultPlatform()).toBe('YouTube');
+      expect(service.maxIdeasPerMonth()).toBe(20);
+    });
+
+    it('should populate content pillars with themes as comma-join', () => {
+      service.populateFromWizardData({
+        contentPillars: [
+          {
+            id: 'p-1',
+            name: 'News',
+            description: 'Industry news',
+            color: '#d94e33',
+            themes: ['AI', 'Tech', 'Startups'],
+            audienceSegmentIds: ['seg-1'],
+            platformDistribution: { youtube: 0.5, linkedin: 0.5 },
+          },
+        ],
+      });
+      expect(service.contentPillars().length).toBe(1);
+      expect(service.contentPillars()[0].name).toBe('News');
+      expect(service.contentPillars()[0].themes).toBe('AI, Tech, Startups');
+      expect(service.contentPillars()[0].platforms).toContain('YouTube');
+      expect(service.contentPillars()[0].platforms).toContain('LinkedIn');
+    });
+
+    it('should populate agents from skills', () => {
+      service.populateFromWizardData({
+        skills: {
+          skills: [
+            {
+              id: 'sk-1',
+              skillId: 'reporter',
+              name: 'Reporter',
+              role: 'Journalist',
+              responsibilities: ['Research', 'Write articles'],
+              expectedOutputs: ['Daily digest', 'Weekly report'],
+            },
+          ],
+        },
+      });
+      expect(service.agents().length).toBe(1);
+      expect(service.agents()[0].name).toBe('Reporter');
+      expect(service.agents()[0].responsibilities).toBe('Research\nWrite articles');
+      expect(service.agents()[0].outputs).toBe('Daily digest\nWeekly report');
+    });
+
+    it('should handle empty formData gracefully', () => {
+      service.populateFromWizardData({});
+      // Should keep defaults
+      expect(service.workspaceName()).toBe('');
+      expect(service.audienceSegments().length).toBe(1);
+    });
+
+    it('should handle unknown platform IDs gracefully', () => {
+      service.populateFromWizardData({
+        platforms: {
+          platforms: [
+            { platformId: 'unknown-platform' as never, enabled: true },
+          ],
+          globalRules: { defaultPlatform: 'unknown-platform' as never, maxIdeasPerMonth: 5 },
+        },
+      });
+      // Unknown platform should fall back to the raw string
+      expect(service.enabledPlatforms().has('unknown-platform')).toBe(true);
+      expect(service.defaultPlatform()).toBe('unknown-platform');
+    });
+
+    it('should filter out disabled platforms', () => {
+      service.populateFromWizardData({
+        platforms: {
+          platforms: [
+            { platformId: Platform.YouTube, enabled: true },
+            { platformId: Platform.Instagram, enabled: false },
+          ],
+          globalRules: { defaultPlatform: Platform.YouTube, maxIdeasPerMonth: 10 },
+        },
+      });
+      expect(service.enabledPlatforms().has('YouTube')).toBe(true);
+      expect(service.enabledPlatforms().has('Instagram')).toBe(false);
+    });
+
+    it('should handle audience segment with name fallback when description is missing', () => {
+      service.populateFromWizardData({
+        audienceSegments: [
+          { id: 'seg-1', name: 'Developers', description: '' },
+        ],
+      });
+      // When description is empty, should still set it (empty string)
+      expect(service.audienceSegments()[0].description).toBe('');
+    });
+
+    it('should handle pillar with empty themes array', () => {
+      service.populateFromWizardData({
+        contentPillars: [
+          {
+            id: 'p-1', name: 'Empty', description: 'No themes', color: '#000',
+            themes: [], audienceSegmentIds: [], platformDistribution: {},
+          },
+        ],
+      });
+      expect(service.contentPillars()[0].themes).toBe('');
+      expect(service.contentPillars()[0].platforms).toEqual([]);
+    });
+
+    it('should populate content warning and AI disclaimer toggles', () => {
+      service.populateFromWizardData({
+        platforms: {
+          platforms: [],
+          globalRules: {
+            defaultPlatform: Platform.YouTube,
+            maxIdeasPerMonth: 10,
+            contentWarningToggle: true,
+            aiDisclaimerToggle: false,
+          },
+        },
+      });
+      expect(service.contentWarning()).toBe(true);
+      expect(service.aiDisclaimer()).toBe(false);
+    });
   });
 
   describe('stepValidation', () => {

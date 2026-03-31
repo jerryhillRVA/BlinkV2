@@ -10,6 +10,8 @@ import type {
 export interface OnboardingSessionState {
   id: string;
   userId: string;
+  workspaceId?: string;
+  tenantId?: string;
   status: OnboardingSessionStatus;
   createdAt: string;
   updatedAt: string;
@@ -71,6 +73,20 @@ export class SessionStore {
     };
     this.sessions.set(id, updated);
     return updated;
+  }
+
+  findByTenantId(tenantId: string): OnboardingSessionState | null {
+    for (const session of this.sessions.values()) {
+      if (session.tenantId === tenantId) {
+        return session;
+      }
+    }
+    return null;
+  }
+
+  restore(session: OnboardingSessionState): void {
+    this.sessions.set(session.id, session);
+    this.logger.debug(`Session restored: ${session.id} for tenant ${session.tenantId}`);
   }
 
   delete(id: string): void {

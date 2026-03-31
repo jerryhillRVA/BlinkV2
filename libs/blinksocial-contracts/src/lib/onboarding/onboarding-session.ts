@@ -1,5 +1,6 @@
 import type { DiscoverySectionContract, DiscoverySectionId } from './discovery-section.js';
 import type { OnboardingMessageContract } from './onboarding-message.js';
+import type { CreateWorkspaceRequestContract } from '../workspace/create-workspace-request.js';
 
 export type OnboardingSessionStatus =
   | 'active'
@@ -8,12 +9,14 @@ export type OnboardingSessionStatus =
   | 'abandoned';
 
 export interface CreateSessionRequestContract {
+  workspaceName: string;
   businessName?: string;
   websiteUrl?: string;
 }
 
 export interface CreateSessionResponseContract {
   sessionId: string;
+  workspaceId: string;
   status: 'active';
   initialMessage: string;
   sections: DiscoverySectionContract[];
@@ -108,4 +111,10 @@ export interface BlueprintDocumentContract {
   channelsAndCadence: BlueprintChannelContract[];
   performanceScorecard: BlueprintMetricContract[];
   quickWins: string[];
+}
+
+export interface CreateWorkspaceFromBlueprintResponseContract {
+  workspaceId: string;
+  tenantId: string;
+  wizardData: CreateWorkspaceRequestContract;
 }

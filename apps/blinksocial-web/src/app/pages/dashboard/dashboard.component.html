@@ -17,6 +17,17 @@
     </p>
   </header>
 
+  @if (inProgressWorkspaces().length > 0) {
+    <div class="in-progress-section">
+      <h2 class="section-title">In Progress</h2>
+      <div class="in-progress-grid">
+        @for (workspace of inProgressWorkspaces(); track workspace.id) {
+          <app-in-progress-card [workspace]="workspace" />
+        }
+      </div>
+    </div>
+  }
+
   <div class="workspace-grid">
     <button class="card card-new" (click)="onCreateWorkspace()">
       <div class="new-content">
@@ -47,7 +58,7 @@
       </div>
     </button>
 
-    @for (workspace of workspaces(); track workspace.name) {
+    @for (workspace of activeWorkspaces(); track workspace.name) {
       <app-workspace-card [workspace]="workspace" (goToWorkspace)="onGoToWorkspace($event)" />
     }
   </div>

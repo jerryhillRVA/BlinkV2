@@ -5,10 +5,11 @@ import {
   ViewChild,
   ElementRef,
   AfterViewChecked,
+  signal,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Router } from '@angular/router';
+import { Router, ActivatedRoute } from '@angular/router';
 import { OnboardStateService } from './onboard-state.service';
 import { ChatMessageComponent } from './chat-message/chat-message.component';
 import { SectionProgressComponent } from './section-progress/section-progress.component';
@@ -29,15 +30,29 @@ import { BlueprintPreviewComponent } from './blueprint-preview/blueprint-preview
 })
 export class OnboardComponent implements OnInit, AfterViewChecked {
   private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
   protected readonly state = inject(OnboardStateService);
 
   @ViewChild('messageList') private messageListRef!: ElementRef<HTMLDivElement>;
 
   userInput = '';
+  workspaceName = signal('');
+  sessionStarted = signal(false);
   private shouldScrollToBottom = false;
 
   ngOnInit(): void {
-    this.state.startSession();
+    const resumeWorkspace = this.route.snapshot.queryParamMap.get('workspace');
+    if (resumeWorkspace) {
+      this.sessionStarted.set(true);
+      this.state.resumeSession(resumeWorkspace);
+    }
+  }
+
+  onStartSession(): void {
+    const name = this.workspaceName().trim();
+    if (!name) return;
+    this.sessionStarted.set(true);
+    this.state.startSession(name);
   }
 
   ngAfterViewChecked(): void {
@@ -69,6 +84,10 @@ export class OnboardComponent implements OnInit, AfterViewChecked {
 
   onDownloadBlueprint(): void {
     this.state.downloadBlueprint();
+  }
+
+  onCreateWorkspace(): void {
+    this.state.createWorkspaceFromBlueprint();
   }
 
   onBackToDashboard(): void {

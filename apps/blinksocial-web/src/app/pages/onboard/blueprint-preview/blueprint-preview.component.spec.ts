@@ -4,11 +4,17 @@ import { Component } from '@angular/core';
 
 @Component({
   imports: [BlueprintPreviewComponent],
-  template: `<app-blueprint-preview [markdownContent]="md" (download)="downloaded = true" />`,
+  template: `<app-blueprint-preview
+    [markdownContent]="md"
+    [isCreating]="isCreating"
+    (download)="downloaded = true"
+    (createWorkspace)="workspaceCreated = true" />`,
 })
 class TestHostComponent {
   md = '# Test Blueprint\n\nSome content here.';
   downloaded = false;
+  workspaceCreated = false;
+  isCreating = false;
 }
 
 describe('BlueprintPreviewComponent', () => {
@@ -53,5 +59,30 @@ describe('BlueprintPreviewComponent', () => {
     fixture.detectChanges();
     const title = fixture.nativeElement.querySelector('.preview-title h3');
     expect(title.textContent).toContain('Your Blink Blueprint');
+  });
+
+  it('should show create workspace button', () => {
+    const fixture = TestBed.createComponent(TestHostComponent);
+    fixture.detectChanges();
+    const btn = fixture.nativeElement.querySelector('.create-workspace-btn');
+    expect(btn).toBeTruthy();
+    expect(btn.textContent).toContain('Create Workspace from Blueprint');
+  });
+
+  it('should emit createWorkspace event on button click', () => {
+    const fixture = TestBed.createComponent(TestHostComponent);
+    fixture.detectChanges();
+    const btn = fixture.nativeElement.querySelector('.create-workspace-btn');
+    btn.click();
+    expect(fixture.componentInstance.workspaceCreated).toBe(true);
+  });
+
+  it('should disable create workspace button when isCreating is true', () => {
+    const fixture = TestBed.createComponent(TestHostComponent);
+    fixture.componentInstance.isCreating = true;
+    fixture.detectChanges();
+    const btn = fixture.nativeElement.querySelector('.create-workspace-btn') as HTMLButtonElement;
+    expect(btn.disabled).toBe(true);
+    expect(btn.textContent).toContain('Creating...');
   });
 });

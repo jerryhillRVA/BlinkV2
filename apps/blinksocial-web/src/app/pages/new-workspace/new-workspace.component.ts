@@ -1,5 +1,5 @@
-import { Component, inject, signal } from '@angular/core';
-import { Router } from '@angular/router';
+import { Component, inject, signal, OnInit } from '@angular/core';
+import { Router, ActivatedRoute } from '@angular/router';
 import {
   StepIndicatorComponent,
   WizardStep,
@@ -28,8 +28,9 @@ import { AuthService } from '../../core/auth/auth.service';
   templateUrl: './new-workspace.component.html',
   styleUrl: './new-workspace.component.scss',
 })
-export class NewWorkspaceComponent {
+export class NewWorkspaceComponent implements OnInit {
   private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
   private readonly apiService = inject(NewWorkspaceApiService);
   private readonly toastService = inject(ToastService);
   private readonly authService = inject(AuthService);
@@ -37,6 +38,7 @@ export class NewWorkspaceComponent {
 
   currentStep = signal(1);
   isSubmitting = signal(false);
+  resumeWorkspaceId = signal<string | null>(null);
 
   readonly STEPS: WizardStep[] = [
     { id: 1, title: 'Workspace' },
@@ -54,6 +56,28 @@ export class NewWorkspaceComponent {
     return this.currentStep() === this.STEPS.length;
   }
 
+  ngOnInit(): void {
+    const resumeId = this.route.snapshot.queryParamMap.get('resume');
+    if (resumeId) {
+      this.resumeWorkspaceId.set(resumeId);
+      this.apiService.getWizardState(resumeId).subscribe({
+        next: (state) => {
+          if (state.formData) {
+            this.formService.populateFromWizardData(state.formData);
+          }
+          if (state.currentStep) {
+            this.currentStep.set(state.currentStep);
+          }
+        },
+        error: (err) => {
+          this.toastService.showError(
+            err?.error?.message ?? 'Failed to load wizard state.'
+          );
+        },
+      });
+    }
+  }
+
   onNext(): void {
     const validation = this.formService.stepValidation(this.currentStep());
     if (!validation.valid) {
@@ -64,7 +88,9 @@ export class NewWorkspaceComponent {
     if (this.isLastStep) {
       this.submitWorkspace();
     } else {
-      this.currentStep.update((s) => s + 1);
+      const nextStep = this.currentStep() + 1;
+      this.currentStep.set(nextStep);
+      this.saveWizardState(nextStep);
     }
   }
 
@@ -76,23 +102,53 @@ export class NewWorkspaceComponent {
     this.router.navigate(['/']);
   }
 
+  private saveWizardState(step: number): void {
+    const workspaceId = this.resumeWorkspaceId();
+    if (!workspaceId) return;
+
+    this.apiService.saveWizardState(workspaceId, {
+      currentStep: step,
+      completedSteps: Array.from({ length: step - 1 }, (_, i) => i + 1),
+      formData: this.formService.formData(),
+    }).subscribe();
+  }
+
   private submitWorkspace(): void {
     this.isSubmitting.set(true);
 
-    this.apiService.createWorkspace(this.formService.formData()).subscribe({
-      next: () => {
-        // Refresh auth status to pick up new workspace access, then navigate
-        this.authService.checkStatus().then(() => {
+    const workspaceId = this.resumeWorkspaceId();
+    if (workspaceId) {
+      // Finalize existing workspace
+      this.apiService.finalizeWorkspace(workspaceId).subscribe({
+        next: () => {
+          this.authService.checkStatus().then(() => {
+            this.isSubmitting.set(false);
+            this.router.navigate(['/']);
+          });
+        },
+        error: (err) => {
           this.isSubmitting.set(false);
-          this.router.navigate(['/']);
-        });
-      },
-      error: (err) => {
-        this.isSubmitting.set(false);
-        this.toastService.showError(
-          err?.error?.message ?? 'Failed to create workspace. Please try again.'
-        );
-      },
-    });
+          this.toastService.showError(
+            err?.error?.message ?? 'Failed to finalize workspace. Please try again.'
+          );
+        },
+      });
+    } else {
+      // Create new workspace from scratch
+      this.apiService.createWorkspace(this.formService.formData()).subscribe({
+        next: () => {
+          this.authService.checkStatus().then(() => {
+            this.isSubmitting.set(false);
+            this.router.navigate(['/']);
+          });
+        },
+        error: (err) => {
+          this.isSubmitting.set(false);
+          this.toastService.showError(
+            err?.error?.message ?? 'Failed to create workspace. Please try again.'
+          );
+        },
+      });
+    }
   }
 }

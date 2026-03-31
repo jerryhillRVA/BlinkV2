@@ -49,6 +49,7 @@ const MOCK_WORKSPACES: ListWorkspacesResponseContract = {
 const VALID_TABS = new Set([
   'general', 'platforms', 'brand-voice', 'skills',
   'team', 'notifications', 'calendar', 'security',
+  'wizard-state', 'onboarding-session',
 ]);
 
 @Injectable()
@@ -134,6 +135,134 @@ export class WorkspacesService {
       this.logger.error('Failed to create workspace', error);
       throw new ServiceUnavailableException(
         'Storage service unavailable. Please try again later.'
+      );
+    }
+  }
+
+  /**
+   * Create a workspace with only a name and status (minimal — used by onboarding).
+   * If a full CreateWorkspaceRequestContract is provided, all settings are persisted.
+   */
+  async createInStatus(
+    workspaceName: string,
+    status: 'onboarding' | 'creating',
+    fullRequest?: CreateWorkspaceRequestContract,
+  ): Promise<CreateWorkspaceResponse> {
+    const tenantId = await this.resolveUniqueTenantId(workspaceName);
+    const brandColor = fullRequest?.general?.brandColor ?? '#d94e33';
+
+    if (!this.fs.isConfigured()) {
+      return new CreateWorkspaceResponse({
+        id: randomUUID(),
+        tenantId,
+        workspaceName,
+        status,
+        createdAt: new Date().toISOString(),
+      });
+    }
+
+    try {
+      if (fullRequest) {
+        // Full workspace creation with given status
+        const generalWithStatus = { ...fullRequest.general, status };
+        await Promise.all([
+          this.fs.uploadJsonFile(tenantId, 'settings', 'general.json', generalWithStatus),
+          this.fs.uploadJsonFile(tenantId, 'settings', 'brand-voice.json', fullRequest.brandVoice),
+          this.fs.uploadJsonFile(tenantId, 'settings', 'platforms.json', fullRequest.platforms),
+          this.fs.uploadJsonFile(tenantId, 'settings', 'skills.json', fullRequest.skills),
+          this.fs.uploadJsonFile(tenantId, 'settings', 'calendar.json', {}),
+          this.fs.uploadJsonFile(tenantId, 'settings', 'notifications.json', {}),
+          this.fs.uploadJsonFile(tenantId, 'settings', 'security.json', {}),
+          ...fullRequest.audienceSegments.map((seg) =>
+            this.fs.uploadJsonFile(tenantId, 'audience-segments', `${seg.id}.json`, seg)
+          ),
+          ...fullRequest.contentPillars.map((pillar) =>
+            this.fs.uploadJsonFile(tenantId, 'content-pillars', `${pillar.id}.json`, pillar)
+          ),
+        ]);
+      } else {
+        // Minimal workspace — only general.json with name + status
+        await this.fs.uploadJsonFile(tenantId, 'settings', 'general.json', {
+          workspaceName,
+          status,
+        });
+      }
+
+      await this.updateRegistry({
+        tenantId,
+        name: workspaceName,
+        status,
+        plan: 'free',
+        brandColor,
+        createdAt: new Date().toISOString(),
+      });
+
+      return new CreateWorkspaceResponse({
+        id: randomUUID(),
+        tenantId,
+        workspaceName,
+        status,
+        createdAt: new Date().toISOString(),
+      });
+    } catch (error) {
+      if (
+        error instanceof BadRequestException ||
+        error instanceof ServiceUnavailableException
+      ) {
+        throw error;
+      }
+      this.logger.error('Failed to create workspace in status', error);
+      throw new ServiceUnavailableException(
+        'Storage service unavailable. Please try again later.',
+      );
+    }
+  }
+
+  /**
+   * Transition a workspace from 'creating' to 'active', and remove wizard-state.json.
+   */
+  async finalizeWorkspace(workspaceId: string): Promise<{ status: string }> {
+    if (!this.fs.isConfigured()) {
+      return { status: 'active' };
+    }
+
+    try {
+      // Update general.json — read, change status, write back
+      const generalContent = await this.readSettingsFile(workspaceId, 'general');
+      if (generalContent) {
+        const general = generalContent as Record<string, unknown>;
+        general['status'] = 'active';
+        await this.writeSettingsFile(workspaceId, 'general', general);
+      }
+
+      // Update registry entry status
+      const registry = await this.readRegistry();
+      if (registry) {
+        const entry = registry.workspaces.find((w) => w.tenantId === workspaceId);
+        if (entry) {
+          entry.status = 'active';
+          await this.writeRegistry(registry);
+        }
+      }
+
+      // Delete wizard-state.json if it exists
+      try {
+        const entries = await this.fs.listDirectory(workspaceId, 'settings');
+        const wizardFile = entries.find(
+          (e) => e.type === 'file' && e.name === 'wizard-state.json',
+        );
+        if (wizardFile?.file_id) {
+          await this.fs.deleteFile(workspaceId, wizardFile.file_id);
+        }
+      } catch {
+        // wizard-state.json may not exist, that's fine
+      }
+
+      return { status: 'active' };
+    } catch (error) {
+      this.logger.error(`Failed to finalize workspace ${workspaceId}`, error);
+      throw new ServiceUnavailableException(
+        'Storage service unavailable. Please try again later.',
       );
     }
   }
@@ -540,6 +669,39 @@ export class WorkspacesService {
         workspaces: [entry],
         totalWorkspaces: 1,
       };
+      await this.fs.uploadJsonFile(
+        SYSTEM_TENANT,
+        REGISTRY_NAMESPACE,
+        REGISTRY_FILENAME,
+        registry
+      );
+    }
+  }
+
+  private async writeRegistry(
+    registry: WorkspaceRegistryContract
+  ): Promise<void> {
+    let entries: { name: string; type: string; file_id?: string }[] = [];
+    try {
+      entries = await this.fs.listDirectory(SYSTEM_TENANT, REGISTRY_NAMESPACE);
+    } catch {
+      // Directory doesn't exist yet
+    }
+
+    const registryFile = entries.find(
+      (e) => e.type === 'file' && e.name === REGISTRY_FILENAME
+    );
+
+    registry.totalWorkspaces = registry.workspaces.length;
+
+    if (registryFile && registryFile.file_id) {
+      await this.fs.replaceJsonFile(
+        SYSTEM_TENANT,
+        registryFile.file_id,
+        REGISTRY_FILENAME,
+        registry
+      );
+    } else {
       await this.fs.uploadJsonFile(
         SYSTEM_TENANT,
         REGISTRY_NAMESPACE,

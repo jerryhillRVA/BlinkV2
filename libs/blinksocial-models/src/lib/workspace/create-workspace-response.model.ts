@@ -8,7 +8,7 @@ export class CreateWorkspaceResponse implements CreateWorkspaceResponseContract 
   readonly id: string;
   readonly tenantId: string;
   readonly workspaceName: string;
-  readonly status: 'active';
+  readonly status: 'active' | 'onboarding' | 'creating';
   readonly createdAt: string;
 
   constructor(data: CreateWorkspaceResponseContract) {
