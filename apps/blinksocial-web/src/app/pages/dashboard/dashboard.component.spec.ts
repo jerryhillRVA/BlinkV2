@@ -8,6 +8,9 @@ const mockWorkspacesResponse = {
   workspaces: [
     { id: 'hive-collective', name: 'Hive Collective', color: '#d94e33', status: 'active', createdAt: '2026-01-15T10:00:00Z' },
     { id: 'booze-kills', name: 'Booze Kills', color: '#2b6bff', status: 'active', createdAt: '2026-02-01T10:00:00Z' },
+    { id: 'onboard-ws', name: 'Onboarding WS', color: '#10b981', status: 'onboarding', createdAt: '2026-03-01T10:00:00Z' },
+    { id: 'creating-ws', name: 'Creating WS', color: '#f59e0b', status: 'creating', createdAt: '2026-03-15T10:00:00Z' },
+    { id: 'no-status-ws', name: 'No Status WS', color: '#888', createdAt: '2026-03-20T10:00:00Z' },
   ],
 };
 
@@ -55,24 +58,41 @@ describe('DashboardComponent', () => {
     );
   });
 
-  it('should have new-workspace card as first child in grid', () => {
+  it('should have combined new-workspace card as first child in grid', () => {
     const fixture = TestBed.createComponent(DashboardComponent);
     fixture.detectChanges();
     const el: HTMLElement = fixture.nativeElement;
     const grid = el.querySelector('.workspace-grid');
     const firstChild = grid?.firstElementChild;
-    expect(firstChild?.classList.contains('card-new')).toBe(true);
+    expect(firstChild?.classList.contains('card-new-combined')).toBe(true);
   });
 
-  it('should render 2 workspace cards after API response', () => {
+  it('should render 3 active workspace cards after API response (including no-status workspace)', () => {
     const fixture = TestBed.createComponent(DashboardComponent);
     fixture.detectChanges();
     const el: HTMLElement = fixture.nativeElement;
     const cards = el.querySelectorAll('app-workspace-card');
+    expect(cards.length).toBe(3);
+  });
+
+  it('should render 2 in-progress cards after API response', () => {
+    const fixture = TestBed.createComponent(DashboardComponent);
+    fixture.detectChanges();
+    const el: HTMLElement = fixture.nativeElement;
+    const cards = el.querySelectorAll('app-in-progress-card');
     expect(cards.length).toBe(2);
   });
 
-  it('should populate workspaces signal from API', () => {
+  it('should show in-progress section when in-progress workspaces exist', () => {
+    const fixture = TestBed.createComponent(DashboardComponent);
+    fixture.detectChanges();
+    const el: HTMLElement = fixture.nativeElement;
+    const section = el.querySelector('.in-progress-section');
+    expect(section).toBeTruthy();
+    expect(el.querySelector('.section-title')?.textContent).toContain('In Progress');
+  });
+
+  it('should populate workspaces signal from API with status', () => {
     const fixture = TestBed.createComponent(DashboardComponent);
     fixture.detectChanges();
     const component = fixture.componentInstance;
@@ -80,9 +100,18 @@ describe('DashboardComponent', () => {
     expect(ws[0].id).toBe('hive-collective');
     expect(ws[0].name).toBe('Hive Collective');
     expect(ws[0].color).toBe('#d94e33');
+    expect(ws[0].status).toBe('active');
     expect(ws[1].id).toBe('booze-kills');
     expect(ws[1].name).toBe('Booze Kills');
     expect(ws[1].color).toBe('#2b6bff');
+  });
+
+  it('should split workspaces into active and in-progress', () => {
+    const fixture = TestBed.createComponent(DashboardComponent);
+    fixture.detectChanges();
+    const component = fixture.componentInstance;
+    expect(component.activeWorkspaces().length).toBe(3);
+    expect(component.inProgressWorkspaces().length).toBe(2);
   });
 
   it('should set loading to false after API response', () => {
@@ -103,7 +132,7 @@ describe('DashboardComponent', () => {
     fixture.detectChanges();
     const el: HTMLElement = fixture.nativeElement;
     expect(el.querySelector('.new-description')?.textContent).toContain(
-      'Initialize a new content strategy'
+      'Set up a new content strategy'
     );
   });
 
@@ -114,13 +143,13 @@ describe('DashboardComponent', () => {
     expect(el.querySelector('.dashboard-bg')).toBeTruthy();
   });
 
-  it('should call onCreateWorkspace when new card is clicked', () => {
+  it('should call onCreateWorkspace when wizard action button is clicked', () => {
     const fixture = TestBed.createComponent(DashboardComponent);
     fixture.detectChanges();
     const component = fixture.componentInstance;
     const spy = vi.spyOn(component, 'onCreateWorkspace');
     const el: HTMLElement = fixture.nativeElement;
-    const btn = el.querySelector('.card-new') as HTMLButtonElement;
+    const btn = el.querySelector('.action-wizard') as HTMLButtonElement;
     btn.click();
     expect(spy).toHaveBeenCalled();
   });

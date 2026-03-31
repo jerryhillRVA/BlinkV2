@@ -18,8 +18,8 @@ test.describe('New Workspace Navigation', () => {
     await page.goto('/');
   });
 
-  test('should navigate to wizard when "New Workspace" card is clicked', async ({ page }) => {
-    await page.locator('.card-new').click();
+  test('should navigate to wizard when "Use the setup wizard" is clicked', async ({ page }) => {
+    await page.locator('.action-wizard').click();
     await expect(page).toHaveURL('/new-workspace');
   });
 });

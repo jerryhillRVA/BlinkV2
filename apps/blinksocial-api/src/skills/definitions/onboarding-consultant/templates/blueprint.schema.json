@@ -1,0 +1,135 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "BlueprintDocument",
+  "type": "object",
+  "required": [
+    "clientName",
+    "deliveredDate",
+    "strategicSummary",
+    "businessObjectives",
+    "brandVoice",
+    "audienceProfiles",
+    "competitorLandscape",
+    "contentPillars",
+    "channelsAndCadence",
+    "performanceScorecard",
+    "quickWins"
+  ],
+  "properties": {
+    "clientName": { "type": "string" },
+    "deliveredDate": { "type": "string" },
+    "strategicSummary": { "type": "string", "minLength": 100 },
+    "businessObjectives": {
+      "type": "array",
+      "minItems": 2,
+      "items": {
+        "type": "object",
+        "required": ["objective", "category", "timeHorizon", "metric"],
+        "properties": {
+          "objective": { "type": "string" },
+          "category": { "type": "string" },
+          "timeHorizon": { "type": "string" },
+          "metric": { "type": "string" }
+        }
+      }
+    },
+    "brandVoice": {
+      "type": "object",
+      "required": ["positioningStatement", "contentMission", "voiceAttributes", "doList", "dontList"],
+      "properties": {
+        "positioningStatement": { "type": "string" },
+        "contentMission": { "type": "string" },
+        "voiceAttributes": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["attribute", "description"],
+            "properties": {
+              "attribute": { "type": "string" },
+              "description": { "type": "string" }
+            }
+          }
+        },
+        "doList": { "type": "array", "items": { "type": "string" } },
+        "dontList": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "audienceProfiles": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["name", "demographics", "painPoints", "channels", "contentHook"],
+        "properties": {
+          "name": { "type": "string" },
+          "demographics": { "type": "string" },
+          "painPoints": { "type": "array", "items": { "type": "string" } },
+          "channels": { "type": "array", "items": { "type": "string" } },
+          "contentHook": { "type": "string" }
+        }
+      }
+    },
+    "competitorLandscape": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["name", "platforms", "strengths", "gaps", "relevancy"],
+        "properties": {
+          "name": { "type": "string" },
+          "platforms": { "type": "array", "items": { "type": "string" } },
+          "strengths": { "type": "array", "items": { "type": "string" } },
+          "gaps": { "type": "array", "items": { "type": "string" } },
+          "relevancy": { "type": "string" }
+        }
+      }
+    },
+    "contentPillars": {
+      "type": "array",
+      "minItems": 2,
+      "items": {
+        "type": "object",
+        "required": ["name", "description", "formats", "sharePercent"],
+        "properties": {
+          "name": { "type": "string" },
+          "description": { "type": "string" },
+          "formats": { "type": "array", "items": { "type": "string" } },
+          "sharePercent": { "type": "number", "minimum": 5, "maximum": 60 }
+        }
+      }
+    },
+    "channelsAndCadence": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["channel", "role", "frequency", "bestTimes", "contentTypes"],
+        "properties": {
+          "channel": { "type": "string" },
+          "role": { "type": "string" },
+          "frequency": { "type": "string" },
+          "bestTimes": { "type": "string" },
+          "contentTypes": { "type": "array", "items": { "type": "string" } }
+        }
+      }
+    },
+    "performanceScorecard": {
+      "type": "array",
+      "minItems": 3,
+      "items": {
+        "type": "object",
+        "required": ["metric", "baseline", "thirtyDayTarget", "ninetyDayTarget"],
+        "properties": {
+          "metric": { "type": "string" },
+          "baseline": { "type": "string" },
+          "thirtyDayTarget": { "type": "string" },
+          "ninetyDayTarget": { "type": "string" }
+        }
+      }
+    },
+    "quickWins": {
+      "type": "array",
+      "minItems": 3,
+      "items": { "type": "string" }
+    }
+  }
+}

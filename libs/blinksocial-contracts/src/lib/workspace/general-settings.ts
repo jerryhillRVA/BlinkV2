@@ -16,5 +16,5 @@ export interface GeneralSettingsContract {
   logoUrl?: string;
   website?: string;
   contactEmail?: string;
-  status?: 'active' | 'archived';
+  status?: 'active' | 'archived' | 'onboarding' | 'creating';
 }

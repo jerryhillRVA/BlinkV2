@@ -50,6 +50,7 @@ const VALID_TABS = new Set([
   'general', 'platforms', 'brand-voice', 'skills',
   'business-objectives', 'brand-positioning',
   'team', 'notifications', 'calendar', 'security',
+  'wizard-state', 'onboarding-session',
 ]);
 
 @Injectable()
@@ -141,6 +142,214 @@ export class WorkspacesService {
     }
   }
 
+  /**
+   * Create a workspace with only a name and status (minimal — used by onboarding).
+   * If a full CreateWorkspaceRequestContract is provided, all settings are persisted.
+   */
+  async createInStatus(
+    workspaceName: string,
+    status: 'onboarding' | 'creating',
+    fullRequest?: CreateWorkspaceRequestContract,
+  ): Promise<CreateWorkspaceResponse> {
+    const tenantId = await this.resolveUniqueTenantId(workspaceName);
+    const brandColor = fullRequest?.general?.brandColor ?? '#d94e33';
+
+    if (!this.fs.isConfigured()) {
+      return new CreateWorkspaceResponse({
+        id: randomUUID(),
+        tenantId,
+        workspaceName,
+        status,
+        createdAt: new Date().toISOString(),
+      });
+    }
+
+    try {
+      if (fullRequest) {
+        // Full workspace creation with given status
+        const generalWithStatus = { ...fullRequest.general, status };
+        await Promise.all([
+          this.fs.uploadJsonFile(tenantId, 'settings', 'general.json', generalWithStatus),
+          this.fs.uploadJsonFile(tenantId, 'settings', 'brand-voice.json', fullRequest.brandVoice),
+          this.fs.uploadJsonFile(tenantId, 'settings', 'platforms.json', fullRequest.platforms),
+          this.fs.uploadJsonFile(tenantId, 'settings', 'skills.json', fullRequest.skills ?? { skills: [] }),
+          this.fs.uploadJsonFile(tenantId, 'settings', 'business-objectives.json', fullRequest.businessObjectives ?? []),
+          this.fs.uploadJsonFile(tenantId, 'settings', 'brand-positioning.json', fullRequest.brandPositioning ?? {}),
+          this.fs.uploadJsonFile(tenantId, 'settings', 'calendar.json', {}),
+          this.fs.uploadJsonFile(tenantId, 'settings', 'notifications.json', {}),
+          this.fs.uploadJsonFile(tenantId, 'settings', 'security.json', {}),
+          ...fullRequest.audienceSegments.map((seg) =>
+            this.fs.uploadJsonFile(tenantId, 'audience-segments', `${seg.id}.json`, seg)
+          ),
+          ...fullRequest.contentPillars.map((pillar) =>
+            this.fs.uploadJsonFile(tenantId, 'content-pillars', `${pillar.id}.json`, pillar)
+          ),
+        ]);
+      } else {
+        // Minimal workspace — only general.json with name + status
+        await this.fs.uploadJsonFile(tenantId, 'settings', 'general.json', {
+          workspaceName,
+          status,
+        });
+      }
+
+      await this.updateRegistry({
+        tenantId,
+        name: workspaceName,
+        status,
+        plan: 'free',
+        brandColor,
+        createdAt: new Date().toISOString(),
+      });
+
+      return new CreateWorkspaceResponse({
+        id: randomUUID(),
+        tenantId,
+        workspaceName,
+        status,
+        createdAt: new Date().toISOString(),
+      });
+    } catch (error) {
+      if (
+        error instanceof BadRequestException ||
+        error instanceof ServiceUnavailableException
+      ) {
+        throw error;
+      }
+      this.logger.error('Failed to create workspace in status', error);
+      throw new ServiceUnavailableException(
+        'Storage service unavailable. Please try again later.',
+      );
+    }
+  }
+
+  /**
+   * Transition a workspace's status (e.g., 'onboarding' → 'creating').
+   * Updates both general.json and the registry entry.
+   */
+  async transitionStatus(
+    workspaceId: string,
+    newStatus: 'onboarding' | 'creating' | 'active',
+  ): Promise<void> {
+    if (!this.fs.isConfigured()) return;
+
+    try {
+      const generalContent = await this.readSettingsFile(workspaceId, 'general');
+      if (generalContent) {
+        const general = generalContent as Record<string, unknown>;
+        general['status'] = newStatus;
+        await this.writeSettingsFile(workspaceId, 'general', general);
+      }
+
+      const registry = await this.readRegistry();
+      if (registry) {
+        const entry = registry.workspaces.find((w) => w.tenantId === workspaceId);
+        if (entry) {
+          entry.status = newStatus;
+          await this.writeRegistry(registry);
+        }
+      }
+    } catch (error) {
+      this.logger.error(
+        `Failed to transition workspace ${workspaceId} to ${newStatus}`,
+        error,
+      );
+    }
+  }
+
+  /**
+   * Transition a workspace from 'creating' to 'active'.
+   * Reads wizard-state.json, persists its formData to individual settings files,
+   * then deletes wizard-state.json.
+   */
+  async finalizeWorkspace(workspaceId: string): Promise<{ status: string }> {
+    if (!this.fs.isConfigured()) {
+      return { status: 'active' };
+    }
+
+    try {
+      // 1. Read wizard-state.json and persist its formData to individual settings files
+      const wizardContent = await this.readSettingsFile(workspaceId, 'wizard-state');
+      if (wizardContent) {
+        const wizardState = wizardContent as {
+          formData?: CreateWorkspaceRequestContract;
+        };
+        if (wizardState.formData) {
+          const request = wizardState.formData;
+          // Merge wizard formData into general.json (preserve existing fields, add purpose/mission/etc.)
+          const existingGeneral = (await this.readSettingsFile(workspaceId, 'general') ?? {}) as Record<string, unknown>;
+          const mergedGeneral = {
+            ...existingGeneral,
+            ...request.general,
+            status: 'active',
+          };
+
+          await Promise.all([
+            this.writeSettingsFile(workspaceId, 'general', mergedGeneral),
+            request.brandVoice
+              ? this.writeSettingsFile(workspaceId, 'brand-voice', request.brandVoice)
+              : Promise.resolve(),
+            request.platforms
+              ? this.writeSettingsFile(workspaceId, 'platforms', request.platforms)
+              : Promise.resolve(),
+            request.skills
+              ? this.writeSettingsFile(workspaceId, 'skills', request.skills)
+              : Promise.resolve(),
+            this.writeSettingsFile(workspaceId, 'business-objectives', request.businessObjectives ?? []),
+            this.writeSettingsFile(workspaceId, 'brand-positioning', request.brandPositioning ?? {}),
+            this.writeSettingsFile(workspaceId, 'calendar', {}),
+            this.writeSettingsFile(workspaceId, 'notifications', {}),
+            this.writeSettingsFile(workspaceId, 'security', {}),
+            ...(request.audienceSegments ?? []).map((seg) =>
+              this.fs.uploadJsonFile(workspaceId, 'audience-segments', `${seg.id}.json`, seg)
+            ),
+            ...(request.contentPillars ?? []).map((pillar) =>
+              this.fs.uploadJsonFile(workspaceId, 'content-pillars', `${pillar.id}.json`, pillar)
+            ),
+          ]);
+        }
+      } else {
+        // No wizard-state found — just update status in general.json
+        const generalContent = await this.readSettingsFile(workspaceId, 'general');
+        if (generalContent) {
+          const general = generalContent as Record<string, unknown>;
+          general['status'] = 'active';
+          await this.writeSettingsFile(workspaceId, 'general', general);
+        }
+      }
+
+      // 2. Update registry entry status
+      const registry = await this.readRegistry();
+      if (registry) {
+        const entry = registry.workspaces.find((w) => w.tenantId === workspaceId);
+        if (entry) {
+          entry.status = 'active';
+          await this.writeRegistry(registry);
+        }
+      }
+
+      // 3. Delete wizard-state.json if it exists
+      try {
+        const entries = await this.fs.listDirectory(workspaceId, 'settings');
+        const wizardFile = entries.find(
+          (e) => e.type === 'file' && e.name === 'wizard-state.json',
+        );
+        if (wizardFile?.file_id) {
+          await this.fs.deleteFile(workspaceId, wizardFile.file_id);
+        }
+      } catch {
+        // wizard-state.json may not exist, that's fine
+      }
+
+      return { status: 'active' };
+    } catch (error) {
+      this.logger.error(`Failed to finalize workspace ${workspaceId}`, error);
+      throw new ServiceUnavailableException(
+        'Storage service unavailable. Please try again later.',
+      );
+    }
+  }
+
   async list(): Promise<ListWorkspacesResponseContract> {
     if (!this.fs.isConfigured()) {
       return MOCK_WORKSPACES;
@@ -170,14 +379,6 @@ export class WorkspacesService {
   async getSettings(workspaceId: string, tab: string): Promise<unknown> {
     if (!VALID_TABS.has(tab)) {
       throw new NotFoundException(`Unknown settings tab: ${tab}`);
-    }
-
-    if (this.mockDataService?.isMockWorkspace(workspaceId)) {
-      const data = await this.mockDataService.getSettings(workspaceId, tab);
-      if (data === null) {
-        throw new NotFoundException(`Settings not found for ${workspaceId}/${tab}`);
-      }
-      return data;
     }
 
     if (this.fs.isConfigured()) {
@@ -276,6 +477,15 @@ export class WorkspacesService {
       }
     }
 
+    // Fall back to mock data only when AFS is not configured
+    if (!this.fs.isConfigured() && this.mockDataService?.isMockWorkspace(workspaceId)) {
+      const data = await this.mockDataService.getSettings(workspaceId, tab);
+      if (data === null) {
+        throw new NotFoundException(`Settings not found for ${workspaceId}/${tab}`);
+      }
+      return data;
+    }
+
     throw new NotFoundException(`Workspace not found: ${workspaceId}`);
   }
 
@@ -284,7 +494,7 @@ export class WorkspacesService {
       throw new NotFoundException(`Unknown settings tab: ${tab}`);
     }
 
-    if (this.mockDataService?.isMockWorkspace(workspaceId)) {
+    if (!this.fs.isConfigured() && this.mockDataService?.isMockWorkspace(workspaceId)) {
       return data;
     }
 
@@ -543,6 +753,39 @@ export class WorkspacesService {
         workspaces: [entry],
         totalWorkspaces: 1,
       };
+      await this.fs.uploadJsonFile(
+        SYSTEM_TENANT,
+        REGISTRY_NAMESPACE,
+        REGISTRY_FILENAME,
+        registry
+      );
+    }
+  }
+
+  private async writeRegistry(
+    registry: WorkspaceRegistryContract
+  ): Promise<void> {
+    let entries: { name: string; type: string; file_id?: string }[] = [];
+    try {
+      entries = await this.fs.listDirectory(SYSTEM_TENANT, REGISTRY_NAMESPACE);
+    } catch {
+      // Directory doesn't exist yet
+    }
+
+    const registryFile = entries.find(
+      (e) => e.type === 'file' && e.name === REGISTRY_FILENAME
+    );
+
+    registry.totalWorkspaces = registry.workspaces.length;
+
+    if (registryFile && registryFile.file_id) {
+      await this.fs.replaceJsonFile(
+        SYSTEM_TENANT,
+        registryFile.file_id,
+        REGISTRY_FILENAME,
+        registry
+      );
+    } else {
       await this.fs.uploadJsonFile(
         SYSTEM_TENANT,
         REGISTRY_NAMESPACE,

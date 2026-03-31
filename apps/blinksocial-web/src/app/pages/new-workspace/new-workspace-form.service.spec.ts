@@ -1,4 +1,5 @@
 import { TestBed } from '@angular/core/testing';
+import { Platform } from '@blinksocial/contracts';
 import { NewWorkspaceFormService } from './new-workspace-form.service';
 import { CreateWorkspaceRequest } from '@blinksocial/models';
 
@@ -197,6 +198,57 @@ describe('NewWorkspaceFormService', () => {
     expect(service.contentPillars()[0].name).toBe(original);
   });
 
+  // --- Agents ---
+
+  it('should have 2 default agents', () => {
+    expect(service.agents().length).toBe(2);
+  });
+
+  it('should add and remove agents', () => {
+    service.addAgent();
+    expect(service.agents().length).toBe(3);
+    const id = service.agents()[2].id;
+    service.removeAgent(id);
+    expect(service.agents().length).toBe(2);
+  });
+
+  it('should not remove last agent', () => {
+    service.removeAgent(service.agents()[0].id);
+    expect(service.agents().length).toBe(1);
+    service.removeAgent(service.agents()[0].id);
+    expect(service.agents().length).toBe(1);
+  });
+
+  it('should update agent name', () => {
+    const agentId = service.agents()[0].id;
+    service.updateAgentName(agentId, 'New Agent');
+    expect(service.agents()[0].name).toBe('New Agent');
+  });
+
+  it('should update agent role', () => {
+    const agentId = service.agents()[0].id;
+    service.updateAgentRole(agentId, 'New Role');
+    expect(service.agents()[0].role).toBe('New Role');
+  });
+
+  it('should update agent responsibilities', () => {
+    const agentId = service.agents()[0].id;
+    service.updateAgentResponsibilities(agentId, 'New responsibilities');
+    expect(service.agents()[0].responsibilities).toBe('New responsibilities');
+  });
+
+  it('should update agent outputs', () => {
+    const agentId = service.agents()[0].id;
+    service.updateAgentOutputs(agentId, 'New outputs');
+    expect(service.agents()[0].outputs).toBe('New outputs');
+  });
+
+  it('should handle update methods on non-matching agent ids', () => {
+    const original = service.agents()[0].name;
+    service.updateAgentName(9999, 'No match');
+    expect(service.agents()[0].name).toBe(original);
+  });
+
   // --- formData ---
 
   it('should assemble formData with workspaceName', () => {
@@ -224,6 +276,12 @@ describe('NewWorkspaceFormService', () => {
     expect(data.contentPillars[0].color).toMatch(/^#[0-9a-fA-F]{6}$/);
   });
 
+  it('should generate skillId from agent name', () => {
+    service.workspaceName.set('Test');
+    const data = service.formData();
+    expect(data.skills!.skills[0].skillId).toBe('reporting-agent');
+  });
+
   it('should map brand voice to tone guidelines', () => {
     service.workspaceName.set('Test');
     service.brandVoice.set('professional, bold, casual');
@@ -236,9 +294,7 @@ describe('NewWorkspaceFormService', () => {
     service.workspaceName.set('Test');
     service.toggleToneTag('witty');
     service.toggleToneTag('bold');
-    // Verify toneTags signal state (formData passes them to constructor)
     expect(service.toneTags()).toEqual(['witty', 'bold']);
-    // Verify formData still assembles without error
     const data = service.formData();
     expect(data.brandVoice).toBeDefined();
   });
@@ -311,6 +367,13 @@ describe('NewWorkspaceFormService', () => {
     expect(data.audienceSegments[0].name).toBe('Engineers');
   });
 
+  it('should use fallback skillId when agent name is empty', () => {
+    service.workspaceName.set('Test');
+    service.agents.set([{ id: 1, name: '', role: 'Test', responsibilities: '', outputs: '' }]);
+    const data = service.formData();
+    expect(data.skills!.skills[0].skillId).toBe('agent-1');
+  });
+
   it('should fall back to Platform.Tbd for unknown display name in enabled platforms', () => {
     service.workspaceName.set('Test');
     service.enabledPlatforms.set(new Set(['Unknown Platform']));
@@ -326,6 +389,231 @@ describe('NewWorkspaceFormService', () => {
     }]);
     const data = service.formData();
     expect(data.contentPillars[0].themes).toEqual([]);
+  });
+
+  // --- populateFromWizardData ---
+
+  describe('populateFromWizardData', () => {
+    it('should populate workspace name from general', () => {
+      service.populateFromWizardData({ general: { workspaceName: 'My WS' } });
+      expect(service.workspaceName()).toBe('My WS');
+    });
+
+    it('should populate purpose and mission', () => {
+      service.populateFromWizardData({
+        general: { workspaceName: 'Test', purpose: 'A purpose', mission: 'A mission' },
+      });
+      expect(service.purpose()).toBe('A purpose');
+      expect(service.mission()).toBe('A mission');
+    });
+
+    it('should populate brand voice', () => {
+      service.populateFromWizardData({
+        brandVoice: { brandVoiceDescription: 'professional, bold' },
+      });
+      expect(service.brandVoice()).toBe('professional, bold');
+    });
+
+    it('should populate tone tags', () => {
+      service.populateFromWizardData({
+        brandVoice: { toneTags: ['witty', 'bold', 'casual'] },
+      });
+      expect(service.toneTags()).toEqual(['witty', 'bold', 'casual']);
+    });
+
+    it('should populate business objectives', () => {
+      service.populateFromWizardData({
+        businessObjectives: [
+          { id: 'obj-1', category: 'growth', statement: 'Grow 50%', target: 50, unit: '%', timeframe: 'Q1', status: 'on-track' },
+        ],
+      });
+      expect(service.businessObjectives().length).toBe(1);
+      expect(service.businessObjectives()[0].statement).toBe('Grow 50%');
+      expect(service.businessObjectives()[0].target).toBe('50');
+    });
+
+    it('should populate brand positioning', () => {
+      service.populateFromWizardData({
+        brandPositioning: {
+          targetCustomer: 'Developers',
+          problemSolved: 'Slow builds',
+          solution: 'Fast CI',
+          differentiator: 'Speed',
+          positioningStatement: 'The fastest CI for devs',
+        },
+      });
+      expect(service.brandPositioning().targetCustomer).toBe('Developers');
+      expect(service.brandPositioning().positioningStatement).toBe('The fastest CI for devs');
+    });
+
+    it('should populate audience segments with name and demographics', () => {
+      service.populateFromWizardData({
+        audienceSegments: [
+          { id: 'seg-1', name: 'Engineers', description: 'Software engineers', demographics: '25-34' },
+          { id: 'seg-2', name: 'Founders', description: 'Startup founders', demographics: '30-45' },
+        ],
+      });
+      expect(service.audienceSegments().length).toBe(2);
+      expect(service.audienceSegments()[0].name).toBe('Engineers');
+      expect(service.audienceSegments()[0].demographics).toBe('25-34');
+      expect(service.audienceSegments()[1].name).toBe('Founders');
+      expect(service.audienceSegments()[1].demographics).toBe('30-45');
+    });
+
+    it('should populate enabled platforms from platform IDs', () => {
+      service.populateFromWizardData({
+        platforms: {
+          platforms: [
+            { platformId: Platform.YouTube, enabled: true },
+            { platformId: Platform.Instagram, enabled: true },
+          ],
+          globalRules: { defaultPlatform: Platform.YouTube, maxIdeasPerMonth: 20 },
+        },
+      });
+      expect(service.enabledPlatforms().has('YouTube')).toBe(true);
+      expect(service.enabledPlatforms().has('Instagram')).toBe(true);
+      expect(service.defaultPlatform()).toBe('YouTube');
+      expect(service.maxIdeasPerMonth()).toBe(20);
+    });
+
+    it('should populate content pillars with themes as comma-join and objectiveId', () => {
+      service.populateFromWizardData({
+        contentPillars: [
+          {
+            id: 'p-1',
+            name: 'News',
+            description: 'Industry news',
+            color: '#d94e33',
+            themes: ['AI', 'Tech', 'Startups'],
+            audienceSegmentIds: ['seg-1'],
+            platformDistribution: { youtube: 0.5, linkedin: 0.5 },
+            objectiveIds: ['obj-1'],
+          },
+        ],
+      });
+      expect(service.contentPillars().length).toBe(1);
+      expect(service.contentPillars()[0].name).toBe('News');
+      expect(service.contentPillars()[0].themes).toBe('AI, Tech, Startups');
+      expect(service.contentPillars()[0].platforms).toContain('YouTube');
+      expect(service.contentPillars()[0].platforms).toContain('LinkedIn');
+      expect(service.contentPillars()[0].objectiveId).toBe('obj-1');
+    });
+
+    it('should populate agents from skills', () => {
+      service.populateFromWizardData({
+        skills: {
+          skills: [
+            {
+              id: 'sk-1',
+              skillId: 'reporter',
+              name: 'Reporter',
+              role: 'Journalist',
+              responsibilities: ['Research', 'Write articles'],
+              expectedOutputs: ['Daily digest', 'Weekly report'],
+            },
+          ],
+        },
+      });
+      expect(service.agents().length).toBe(1);
+      expect(service.agents()[0].name).toBe('Reporter');
+      expect(service.agents()[0].responsibilities).toBe('Research\nWrite articles');
+      expect(service.agents()[0].outputs).toBe('Daily digest\nWeekly report');
+    });
+
+    it('should handle empty formData gracefully', () => {
+      service.populateFromWizardData({});
+      expect(service.workspaceName()).toBe('');
+      expect(service.audienceSegments().length).toBe(1);
+    });
+
+    it('should handle unknown platform IDs gracefully', () => {
+      service.populateFromWizardData({
+        platforms: {
+          platforms: [
+            { platformId: 'unknown-platform' as never, enabled: true },
+          ],
+          globalRules: { defaultPlatform: 'unknown-platform' as never, maxIdeasPerMonth: 5 },
+        },
+      });
+      expect(service.enabledPlatforms().has('unknown-platform')).toBe(true);
+      expect(service.defaultPlatform()).toBe('unknown-platform');
+    });
+
+    it('should filter out disabled platforms', () => {
+      service.populateFromWizardData({
+        platforms: {
+          platforms: [
+            { platformId: Platform.YouTube, enabled: true },
+            { platformId: Platform.Instagram, enabled: false },
+          ],
+          globalRules: { defaultPlatform: Platform.YouTube, maxIdeasPerMonth: 10 },
+        },
+      });
+      expect(service.enabledPlatforms().has('YouTube')).toBe(true);
+      expect(service.enabledPlatforms().has('Instagram')).toBe(false);
+    });
+
+    it('should handle pillar with empty themes array', () => {
+      service.populateFromWizardData({
+        contentPillars: [
+          {
+            id: 'p-1', name: 'Empty', description: 'No themes', color: '#000',
+            themes: [], audienceSegmentIds: [], platformDistribution: {},
+          },
+        ],
+      });
+      expect(service.contentPillars()[0].themes).toBe('');
+      expect(service.contentPillars()[0].platforms).toEqual([]);
+    });
+
+    it('should use targetPlatforms when platformDistribution is empty', () => {
+      service.populateFromWizardData({
+        contentPillars: [
+          {
+            id: 'p1', name: 'Tips', description: 'desc', color: '#fff',
+            themes: ['a'], targetPlatforms: ['youtube', 'linkedin'],
+          },
+        ],
+      });
+      expect(service.contentPillars()[0].platforms).toEqual(['YouTube', 'LinkedIn']);
+    });
+
+    it('should default to empty platforms when both platformDistribution and targetPlatforms are absent', () => {
+      service.populateFromWizardData({
+        contentPillars: [
+          { id: 'p1', name: 'Tips', description: 'desc', color: '#fff', themes: ['a'] },
+        ],
+      });
+      expect(service.contentPillars()[0].platforms).toEqual([]);
+    });
+
+    it('should populate content warning and AI disclaimer toggles', () => {
+      service.populateFromWizardData({
+        platforms: {
+          platforms: [],
+          globalRules: {
+            defaultPlatform: Platform.YouTube,
+            maxIdeasPerMonth: 10,
+            contentWarningToggle: true,
+            aiDisclaimerToggle: false,
+          },
+        },
+      });
+      expect(service.contentWarning()).toBe(true);
+      expect(service.aiDisclaimer()).toBe(false);
+    });
+
+    it('should default objectiveId to empty string when objectiveIds absent', () => {
+      service.populateFromWizardData({
+        contentPillars: [
+          {
+            id: 'p-1', name: 'News', description: 'desc', color: '#000',
+            themes: ['a'], audienceSegmentIds: [], platformDistribution: {},
+          },
+        ],
+      });
+      expect(service.contentPillars()[0].objectiveId).toBe('');
+    });
   });
 
   // --- Step Validation (7 steps) ---

@@ -1,6 +1,6 @@
 {
   "apiPort": 8000,
-  "qdrantPort": 6444,
+  "qdrantPort": 6333,
   "redisPort": 6379,
   "tikaPort": 9998
 }

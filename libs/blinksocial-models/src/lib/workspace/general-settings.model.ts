@@ -10,7 +10,7 @@ export class GeneralSettings implements GeneralSettingsContract {
   readonly logoUrl?: string;
   readonly website?: string;
   readonly contactEmail?: string;
-  readonly status?: 'active' | 'archived';
+  readonly status?: 'active' | 'archived' | 'onboarding' | 'creating';
 
   constructor(data: GeneralSettingsContract) {
     this.workspaceName = data.workspaceName;

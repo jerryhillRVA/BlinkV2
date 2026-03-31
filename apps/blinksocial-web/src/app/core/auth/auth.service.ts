@@ -21,6 +21,16 @@ export class AuthService {
   readonly isLoading = signal(true);
   readonly needsBootstrap = signal(false);
 
+  /** True if user is Admin of any workspace, or is the bootstrap user (no workspaces yet) */
+  readonly isAnyWorkspaceAdmin = computed(() => {
+    const user = this.currentUser();
+    if (!user) return false;
+    return (
+      user.workspaces.length === 0 ||
+      user.workspaces.some((w) => w.role === 'Admin')
+    );
+  });
+
   /** Track last visited workspace for navigation */
   readonly lastWorkspaceId = signal<string | null>(null);
 

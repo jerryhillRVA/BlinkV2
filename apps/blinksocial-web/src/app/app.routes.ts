@@ -1,5 +1,6 @@
 import { Route } from '@angular/router';
 import { authGuard } from './core/auth/auth.guard';
+import { adminGuard } from './core/auth/admin.guard';
 
 export const appRoutes: Route[] = [
   {
@@ -12,6 +13,14 @@ export const appRoutes: Route[] = [
     canActivate: [authGuard],
     loadComponent: () =>
       import('./pages/dashboard/dashboard.component').then((m) => m.DashboardComponent),
+  },
+  {
+    path: 'onboard',
+    canActivate: [authGuard, adminGuard],
+    loadComponent: () =>
+      import('./pages/onboard/onboard.component').then(
+        (m) => m.OnboardComponent
+      ),
   },
   {
     path: 'new-workspace',
