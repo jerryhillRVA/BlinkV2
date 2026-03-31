@@ -91,7 +91,7 @@ export class NewWorkspaceFormService {
       id: `seg-${i + 1}`,
       name: s.description || `Segment ${i + 1}`,
       description: s.description || `Segment ${i + 1}`,
-      demographics: s.ageRange,
+      demographics: s.demographics ?? s.ageRange,
     }));
 
     const pillars: ContentPillarContract[] = this.contentPillars().map((p, i) => {
@@ -375,7 +375,9 @@ export class NewWorkspaceFormService {
         formData.audienceSegments.map((seg, i) => ({
           id: i + 1,
           description: seg.description ?? seg.name ?? '',
-          ageRange: seg.demographics ?? '25-34',
+          ageRange: (seg as unknown as { ageRange?: string }).ageRange
+            ?? seg.demographics ?? '25-34',
+          demographics: seg.demographics,
         }))
       );
     }
@@ -411,16 +413,31 @@ export class NewWorkspaceFormService {
     // Step 3: Content Pillars
     if (formData.contentPillars && formData.contentPillars.length > 0) {
       this.contentPillars.set(
-        formData.contentPillars.map((p, i) => ({
-          id: i + 1,
-          name: p.name ?? '',
-          themes: (p.themes ?? []).join(', '),
-          description: p.description ?? '',
-          audienceSegments: p.audienceSegmentIds ?? [],
-          platforms: Object.keys(p.platformDistribution ?? {}).map(
-            (pid) => this.platformToDisplayName(pid)
-          ),
-        }))
+        formData.contentPillars.map((p, i) => {
+          // Resolve platforms from platformDistribution or targetPlatforms
+          let platformDisplayNames: string[];
+          const distKeys = Object.keys(p.platformDistribution ?? {});
+          if (distKeys.length > 0) {
+            platformDisplayNames = distKeys.map(
+              (pid) => this.platformToDisplayName(pid)
+            );
+          } else if (p.targetPlatforms && p.targetPlatforms.length > 0) {
+            platformDisplayNames = p.targetPlatforms.map(
+              (pid) => this.platformToDisplayName(pid)
+            );
+          } else {
+            platformDisplayNames = [];
+          }
+
+          return {
+            id: i + 1,
+            name: p.name ?? '',
+            themes: (p.themes ?? []).join(', '),
+            description: p.description ?? '',
+            audienceSegments: p.audienceSegmentIds ?? [],
+            platforms: platformDisplayNames,
+          };
+        })
       );
     }
 

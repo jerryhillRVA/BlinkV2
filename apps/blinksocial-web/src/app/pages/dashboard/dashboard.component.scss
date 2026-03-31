@@ -172,29 +172,81 @@
   line-height: 1.4;
 }
 
-.card-onboard {
-  .onboard-circle {
-    background: var(--blink-icon-blue-bg, var(--blink-surface-variant));
-    color: var(--blink-icon-blue, var(--blink-on-surface-faint));
+.card-new-combined {
+  cursor: default;
+  flex-direction: column;
+  gap: 0;
+  padding: 32px 28px 24px;
+
+  .new-content {
+    margin-bottom: 20px;
   }
 
-  &:hover:not(.card-disabled) {
-    .onboard-circle {
-      background: var(--blink-icon-blue-bg, var(--blink-brand-primary-lighter-bg));
-      color: var(--blink-icon-blue, var(--blink-brand-primary));
-    }
+  &:hover {
+    transform: none;
+    border-color: var(--blink-outline-dashed);
+    background: var(--blink-surface-container);
 
+    .plus-circle {
+      background: var(--blink-surface-variant);
+    }
     .plus-icon {
-      color: var(--blink-icon-blue, var(--blink-brand-primary));
+      color: var(--blink-on-surface-faint);
     }
-
     .new-label {
-      color: var(--blink-icon-blue, var(--blink-brand-primary));
+      color: var(--blink-on-surface-label);
     }
   }
 }
 
-.card-disabled {
+.new-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 100%;
+}
+
+.new-action-btn {
+  appearance: none;
+  font: inherit;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 12px 16px;
+  border-radius: 12px;
+  border: 1px solid var(--blink-outline-variant);
+  background: var(--blink-surface);
+  color: var(--blink-on-surface);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s, border-color 0.2s, color 0.2s;
+
+  svg {
+    flex-shrink: 0;
+    color: var(--blink-on-surface-muted);
+    transition: color 0.2s;
+  }
+
+  &.action-wizard:hover {
+    background: var(--blink-brand-primary-lightest-bg);
+    border-color: var(--blink-brand-primary);
+    color: var(--blink-brand-primary);
+
+    svg { color: var(--blink-brand-primary); }
+  }
+
+  &.action-onboard:hover:not(.action-disabled) {
+    background: var(--blink-icon-blue-bg, var(--blink-brand-primary-lightest-bg));
+    border-color: var(--blink-icon-blue, var(--blink-brand-primary));
+    color: var(--blink-icon-blue, var(--blink-brand-primary));
+
+    svg { color: var(--blink-icon-blue, var(--blink-brand-primary)); }
+  }
+}
+
+.action-disabled {
   opacity: 0.45;
   cursor: not-allowed;
   pointer-events: none;

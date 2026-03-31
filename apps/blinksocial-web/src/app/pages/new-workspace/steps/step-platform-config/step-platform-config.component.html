@@ -11,9 +11,9 @@
       <div class="global-grid">
         <div class="field-group">
           <label class="field-label-sm" for="default-platform">Default Platform</label>
-          <select id="default-platform" class="field-select" [value]="formService.defaultPlatform()" (change)="formService.defaultPlatform.set($any($event.target).value)">
+          <select id="default-platform" class="field-select" (change)="formService.defaultPlatform.set($any($event.target).value)">
             @for (p of PLATFORMS; track p) {
-              <option [value]="p">{{ p }}</option>
+              <option [value]="p" [selected]="formService.defaultPlatform() === p">{{ p }}</option>
             }
           </select>
         </div>

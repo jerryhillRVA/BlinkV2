@@ -442,6 +442,45 @@ describe('NewWorkspaceFormService', () => {
       expect(service.contentPillars()[0].platforms).toEqual([]);
     });
 
+    it('should prefer ageRange over demographics when both present in segments', () => {
+      service.populateFromWizardData({
+        audienceSegments: [
+          { id: 'seg-1', name: 'Eng Managers', description: 'Eng Managers', demographics: '30-40', ageRange: '35-44' } as never,
+        ],
+      });
+      expect(service.audienceSegments()[0].ageRange).toBe('35-44');
+    });
+
+    it('should use targetPlatforms when platformDistribution is empty', () => {
+      service.populateFromWizardData({
+        contentPillars: [
+          {
+            id: 'p1', name: 'Tips', description: 'desc', color: '#fff',
+            themes: ['a'], targetPlatforms: ['youtube', 'linkedin'],
+          },
+        ],
+      });
+      expect(service.contentPillars()[0].platforms).toEqual(['YouTube', 'LinkedIn']);
+    });
+
+    it('should default to empty platforms when both platformDistribution and targetPlatforms are absent', () => {
+      service.populateFromWizardData({
+        contentPillars: [
+          { id: 'p1', name: 'Tips', description: 'desc', color: '#fff', themes: ['a'] },
+        ],
+      });
+      expect(service.contentPillars()[0].platforms).toEqual([]);
+    });
+
+    it('should fall back to demographics when ageRange is not present', () => {
+      service.populateFromWizardData({
+        audienceSegments: [
+          { id: 's1', name: 'CTOs', description: 'CTOs', demographics: '45-54' },
+        ],
+      });
+      expect(service.audienceSegments()[0].ageRange).toBe('45-54');
+    });
+
     it('should populate content warning and AI disclaimer toggles', () => {
       service.populateFromWizardData({
         platforms: {

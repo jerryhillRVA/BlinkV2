@@ -21,7 +21,7 @@ export class AnthropicProvider implements LlmProvider {
     this.model = process.env['ANTHROPIC_MODEL'] || DEFAULT_MODEL;
 
     if (apiKey) {
-      this.client = new Anthropic({ apiKey });
+      this.client = new Anthropic({ apiKey, maxRetries: 3 });
       this.logger.log(`Anthropic provider initialized with model: ${this.model}`);
     } else {
       this.client = null;

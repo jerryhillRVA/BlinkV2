@@ -84,7 +84,7 @@
               placeholder="Type your response..."
               (keydown)="onKeyDown($event)"
               [disabled]="state.isLoading() || state.status() === 'generating'"
-              rows="1"
+              rows="3"
               class="message-input"
             ></textarea>
             <button

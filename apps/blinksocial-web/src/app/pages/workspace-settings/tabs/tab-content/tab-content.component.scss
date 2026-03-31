@@ -205,11 +205,12 @@
   }
 }
 
-// Mapping section
+// Mapping section — stack vertically so both sections get full width
 
 .pillar-mapping-section {
+  grid-template-columns: 1fr;
   padding-top: 8px;
-  gap: 24px;
+  gap: 16px;
 }
 
 .mapping-label {
@@ -234,15 +235,18 @@
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  padding: 2px 10px;
+  padding: 4px 12px;
   border-radius: 9999px;
-  font-size: 10px;
+  font-size: 11px;
   font-weight: 500;
   border: 1px solid var(--blink-pill-border);
   background: var(--blink-pill-bg);
   color: var(--blink-pill-text);
   cursor: pointer;
   transition: all 0.15s;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
   white-space: nowrap;
 
   &:hover {

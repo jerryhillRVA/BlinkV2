@@ -304,6 +304,12 @@ describe('NewWorkspaceComponent', () => {
     nextBtn.click();
     fixture.detectChanges();
 
+    // The component now saves wizard state before finalizing
+    const saveReq = httpMock.expectOne('/api/workspaces/tenant-123/settings/wizard-state');
+    expect(saveReq.request.method).toBe('PUT');
+    saveReq.flush({});
+    fixture.detectChanges();
+
     const finalizeReq = httpMock.expectOne('/api/workspaces/tenant-123/finalize');
     expect(finalizeReq.request.method).toBe('POST');
     finalizeReq.flush({});
@@ -383,6 +389,11 @@ describe('NewWorkspaceComponent', () => {
     fixture.componentInstance.onNext();
     fixture.detectChanges();
 
+    // The component now saves wizard state before finalizing
+    const saveReq = httpMock.expectOne('/api/workspaces/tenant-err/settings/wizard-state');
+    saveReq.flush({});
+    fixture.detectChanges();
+
     const finalReq = httpMock.expectOne('/api/workspaces/tenant-err/finalize');
     finalReq.flush({ message: 'Finalize failed' }, { status: 500, statusText: 'Error' });
     fixture.detectChanges();
@@ -390,5 +401,37 @@ describe('NewWorkspaceComponent', () => {
     expect(fixture.componentInstance.isSubmitting()).toBe(false);
     expect(toastService.showError).toHaveBeenCalledWith('Finalize failed');
     httpMock.verify();
+  });
+
+  it('should still finalize even when wizard state save fails', () => {
+    TestBed.resetTestingModule();
+    setup({ resume: 'tenant-save-fail' });
+    const httpMock = TestBed.inject(HttpTestingController);
+    const fixture = TestBed.createComponent(NewWorkspaceComponent);
+    fixture.detectChanges();
+
+    const wizardReq = httpMock.expectOne('/api/workspaces/tenant-save-fail/settings/wizard-state');
+    wizardReq.flush({ currentStep: 5, completedSteps: [1,2,3,4], formData: { general: { workspaceName: 'SF' } } });
+    fixture.detectChanges();
+
+    fixture.componentInstance.currentStep.set(5);
+    fixture.detectChanges();
+    fixture.componentInstance.onNext();
+    fixture.detectChanges();
+
+    // Save fails
+    const saveReq = httpMock.expectOne('/api/workspaces/tenant-save-fail/settings/wizard-state');
+    saveReq.flush({}, { status: 500, statusText: 'Error' });
+    fixture.detectChanges();
+
+    // But finalize should still be called
+    const finalReq = httpMock.expectOne('/api/workspaces/tenant-save-fail/finalize');
+    expect(finalReq.request.method).toBe('POST');
+    finalReq.flush({});
+
+    httpMock.match('/api/auth/status').forEach((r) =>
+      r.flush({ authenticated: true, needsBootstrap: false, user: { id: 'u1', email: 'a@b.com', displayName: 'Test', workspaces: [] } })
+    );
+    httpMock.match(() => true).forEach((r) => r.flush({}));
   });
 });

@@ -219,7 +219,43 @@ export class WorkspacesService {
   }
 
   /**
-   * Transition a workspace from 'creating' to 'active', and remove wizard-state.json.
+   * Transition a workspace's status (e.g., 'onboarding' → 'creating').
+   * Updates both general.json and the registry entry.
+   */
+  async transitionStatus(
+    workspaceId: string,
+    newStatus: 'onboarding' | 'creating' | 'active',
+  ): Promise<void> {
+    if (!this.fs.isConfigured()) return;
+
+    try {
+      const generalContent = await this.readSettingsFile(workspaceId, 'general');
+      if (generalContent) {
+        const general = generalContent as Record<string, unknown>;
+        general['status'] = newStatus;
+        await this.writeSettingsFile(workspaceId, 'general', general);
+      }
+
+      const registry = await this.readRegistry();
+      if (registry) {
+        const entry = registry.workspaces.find((w) => w.tenantId === workspaceId);
+        if (entry) {
+          entry.status = newStatus;
+          await this.writeRegistry(registry);
+        }
+      }
+    } catch (error) {
+      this.logger.error(
+        `Failed to transition workspace ${workspaceId} to ${newStatus}`,
+        error,
+      );
+    }
+  }
+
+  /**
+   * Transition a workspace from 'creating' to 'active'.
+   * Reads wizard-state.json, persists its formData to individual settings files,
+   * then deletes wizard-state.json.
    */
   async finalizeWorkspace(workspaceId: string): Promise<{ status: string }> {
     if (!this.fs.isConfigured()) {
@@ -227,15 +263,55 @@ export class WorkspacesService {
     }
 
     try {
-      // Update general.json — read, change status, write back
-      const generalContent = await this.readSettingsFile(workspaceId, 'general');
-      if (generalContent) {
-        const general = generalContent as Record<string, unknown>;
-        general['status'] = 'active';
-        await this.writeSettingsFile(workspaceId, 'general', general);
+      // 1. Read wizard-state.json and persist its formData to individual settings files
+      const wizardContent = await this.readSettingsFile(workspaceId, 'wizard-state');
+      if (wizardContent) {
+        const wizardState = wizardContent as {
+          formData?: CreateWorkspaceRequestContract;
+        };
+        if (wizardState.formData) {
+          const request = wizardState.formData;
+          // Merge wizard formData into general.json (preserve existing fields, add purpose/mission/etc.)
+          const existingGeneral = (await this.readSettingsFile(workspaceId, 'general') ?? {}) as Record<string, unknown>;
+          const mergedGeneral = {
+            ...existingGeneral,
+            ...request.general,
+            status: 'active',
+          };
+
+          await Promise.all([
+            this.writeSettingsFile(workspaceId, 'general', mergedGeneral),
+            request.brandVoice
+              ? this.writeSettingsFile(workspaceId, 'brand-voice', request.brandVoice)
+              : Promise.resolve(),
+            request.platforms
+              ? this.writeSettingsFile(workspaceId, 'platforms', request.platforms)
+              : Promise.resolve(),
+            request.skills
+              ? this.writeSettingsFile(workspaceId, 'skills', request.skills)
+              : Promise.resolve(),
+            this.writeSettingsFile(workspaceId, 'calendar', {}),
+            this.writeSettingsFile(workspaceId, 'notifications', {}),
+            this.writeSettingsFile(workspaceId, 'security', {}),
+            ...(request.audienceSegments ?? []).map((seg) =>
+              this.fs.uploadJsonFile(workspaceId, 'audience-segments', `${seg.id}.json`, seg)
+            ),
+            ...(request.contentPillars ?? []).map((pillar) =>
+              this.fs.uploadJsonFile(workspaceId, 'content-pillars', `${pillar.id}.json`, pillar)
+            ),
+          ]);
+        }
+      } else {
+        // No wizard-state found — just update status in general.json
+        const generalContent = await this.readSettingsFile(workspaceId, 'general');
+        if (generalContent) {
+          const general = generalContent as Record<string, unknown>;
+          general['status'] = 'active';
+          await this.writeSettingsFile(workspaceId, 'general', general);
+        }
       }
 
-      // Update registry entry status
+      // 2. Update registry entry status
       const registry = await this.readRegistry();
       if (registry) {
         const entry = registry.workspaces.find((w) => w.tenantId === workspaceId);
@@ -245,7 +321,7 @@ export class WorkspacesService {
         }
       }
 
-      // Delete wizard-state.json if it exists
+      // 3. Delete wizard-state.json if it exists
       try {
         const entries = await this.fs.listDirectory(workspaceId, 'settings');
         const wizardFile = entries.find(

@@ -118,20 +118,14 @@ export class NewWorkspaceComponent implements OnInit {
 
     const workspaceId = this.resumeWorkspaceId();
     if (workspaceId) {
-      // Finalize existing workspace
-      this.apiService.finalizeWorkspace(workspaceId).subscribe({
-        next: () => {
-          this.authService.checkStatus().then(() => {
-            this.isSubmitting.set(false);
-            this.router.navigate(['/']);
-          });
-        },
-        error: (err) => {
-          this.isSubmitting.set(false);
-          this.toastService.showError(
-            err?.error?.message ?? 'Failed to finalize workspace. Please try again.'
-          );
-        },
+      // Save the final wizard state before finalizing so the backend can persist all data
+      this.apiService.saveWizardState(workspaceId, {
+        currentStep: this.STEPS.length,
+        completedSteps: this.STEPS.map((s) => s.id),
+        formData: this.formService.formData(),
+      }).subscribe({
+        next: () => this.doFinalize(workspaceId),
+        error: () => this.doFinalize(workspaceId), // Finalize anyway on save failure
       });
     } else {
       // Create new workspace from scratch
@@ -150,5 +144,22 @@ export class NewWorkspaceComponent implements OnInit {
         },
       });
     }
+  }
+
+  private doFinalize(workspaceId: string): void {
+    this.apiService.finalizeWorkspace(workspaceId).subscribe({
+      next: () => {
+        this.authService.checkStatus().then(() => {
+          this.isSubmitting.set(false);
+          this.router.navigate(['/']);
+        });
+      },
+      error: (err) => {
+        this.isSubmitting.set(false);
+        this.toastService.showError(
+          err?.error?.message ?? 'Failed to finalize workspace. Please try again.'
+        );
+      },
+    });
   }
 }

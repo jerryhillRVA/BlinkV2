@@ -60,6 +60,7 @@ export class OnboardStateService {
     if (!sid) return;
 
     const now = new Date().toISOString();
+    const msgsBefore = this.messages();
     this.messages.update((msgs) => [
       ...msgs,
       { role: 'user', content, timestamp: now },
@@ -83,6 +84,9 @@ export class OnboardStateService {
         this.isLoading.set(false);
       },
       error: (err) => {
+        // Roll back the optimistic user message so failed messages don't
+        // accumulate in the chat without a corresponding assistant response
+        this.messages.set(msgsBefore);
         this.error.set(err?.error?.message ?? 'Failed to send message');
         this.isLoading.set(false);
       },

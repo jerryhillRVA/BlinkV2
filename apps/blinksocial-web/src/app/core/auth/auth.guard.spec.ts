@@ -51,4 +51,22 @@ describe('authGuard', () => {
     );
     expect(result).not.toBe(true);
   });
+
+  it('should wait for status check when still loading', async () => {
+    authService.isLoading.set(true);
+    // checkStatus will resolve and then the guard checks authentication
+    const checkStatusSpy = vi.spyOn(authService, 'checkStatus').mockResolvedValue();
+    authService.currentUser.set({
+      id: 'u1',
+      email: 'a@b.com',
+      displayName: 'Test',
+      workspaces: [],
+    });
+
+    const result = await TestBed.runInInjectionContext(() =>
+      authGuard({} as ActivatedRouteSnapshot, {} as RouterStateSnapshot)
+    );
+    expect(checkStatusSpy).toHaveBeenCalled();
+    expect(result).toBe(true);
+  });
 });

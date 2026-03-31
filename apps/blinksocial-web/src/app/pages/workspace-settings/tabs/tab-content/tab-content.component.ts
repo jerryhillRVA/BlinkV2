@@ -30,9 +30,13 @@ export class TabContentComponent {
 
   audienceDisplayName(id: string): string {
     const settings = this.settings as Record<string, unknown> | null;
-    const segments = (settings?.['audienceSegments'] as { id: string; description?: string }[]) ?? [];
+    const segments = (settings?.['audienceSegments'] as { id: string; name?: string; description?: string }[]) ?? [];
     const match = segments.find((s) => s.id === id);
-    return match?.description ?? id;
+    if (!match) return id;
+    // Prefer the persona name (e.g. "The Time-Pressed Professional") over the description
+    // which may contain long content-hook text
+    const label = match.name ?? match.description ?? id;
+    return label.length > 40 ? label.substring(0, 37) + '...' : label;
   }
 
   platformDisplayName(id: string): string {

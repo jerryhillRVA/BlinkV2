@@ -48,7 +48,24 @@ export class OnboardingService {
   ): Promise<CreateSessionResponseContract> {
     const session = this.sessionStore.create(userId);
 
-    // Create workspace on AFS in 'onboarding' status
+    // Generate the initial greeting BEFORE creating the workspace on AFS.
+    // This ensures we don't create orphan workspaces when the LLM call fails.
+    const initialUserMessage = businessName
+      ? `I'd like to start a discovery session for my business: ${businessName}`
+      : `I'd like to start a discovery session for my business.`;
+
+    const context = this.buildStateContext(session, businessName);
+    const result = await this.skillRunner.run({
+      skillId: SKILL_ID,
+      conversationHistory: [
+        { role: 'user', content: initialUserMessage },
+      ],
+      additionalContext: context,
+    });
+
+    const turnResponse = this.parseTurnResponse(result.content, result.parsed);
+
+    // LLM succeeded — now create the workspace on AFS
     let workspaceId = '';
     let tenantId = '';
     try {
@@ -71,34 +88,11 @@ export class OnboardingService {
       // Continue without AFS — the session still works in-memory
     }
 
-    // Generate the initial greeting
-    const context = this.buildStateContext(session, businessName);
-    const result = await this.skillRunner.run({
-      skillId: SKILL_ID,
-      conversationHistory: [
-        {
-          role: 'user',
-          content: businessName
-            ? `I'd like to start a discovery session for my business: ${businessName}`
-            : `I'd like to start a discovery session for my business.`,
-        },
-      ],
-      additionalContext: context,
-    });
-
-    const turnResponse = this.parseTurnResponse(result.content, result.parsed);
-
     // Save the initial messages
     const now = new Date().toISOString();
     const updatedSession = this.sessionStore.update(session.id, {
       messages: [
-        {
-          role: 'user',
-          content: businessName
-            ? `I'd like to start a discovery session for my business: ${businessName}`
-            : `I'd like to start a discovery session for my business.`,
-          timestamp: now,
-        },
+        { role: 'user', content: initialUserMessage, timestamp: now },
         {
           role: 'assistant',
           content: turnResponse.agentMessage,
@@ -288,12 +282,8 @@ export class OnboardingService {
           (session.discoveryData['business']?.['businessName'] as string) ||
           'Client';
       }
-      if (!blueprint.deliveredDate) {
-        blueprint.deliveredDate = new Date().toLocaleDateString('en-US', {
-          month: 'long',
-          year: 'numeric',
-        });
-      }
+      // Always set deliveredDate to today — LLM may return stale dates
+      blueprint.deliveredDate = new Date().toISOString().slice(0, 10);
 
       const markdownDocument = this.renderBlueprintMarkdown(blueprint);
 
@@ -397,11 +387,14 @@ export class OnboardingService {
     const workspaceName =
       session.blueprint.clientName || 'New Workspace';
 
+    // Pass the existing onboarding tenant ID so the builder reuses it
+    // instead of creating a duplicate workspace
     const result = await this.workspaceBuilder.buildFromBlueprint(
       session.blueprint,
       workspaceName,
       userId,
       session.id,
+      session.tenantId,
     );
 
     // Add user as Admin of the new workspace
