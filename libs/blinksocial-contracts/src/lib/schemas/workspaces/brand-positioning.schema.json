@@ -1,0 +1,13 @@
+{
+  "$id": "https://blinksocial.io/schemas/brand-positioning.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "BrandPositioning",
+  "type": "object",
+  "properties": {
+    "targetCustomer": { "type": "string", "maxLength": 500 },
+    "problemSolved": { "type": "string", "maxLength": 500 },
+    "solution": { "type": "string", "maxLength": 500 },
+    "differentiator": { "type": "string", "maxLength": 500 },
+    "positioningStatement": { "type": "string", "maxLength": 2000 }
+  }
+}

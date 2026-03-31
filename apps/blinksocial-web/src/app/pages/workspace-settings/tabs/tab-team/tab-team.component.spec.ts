@@ -176,6 +176,25 @@ describe('TabTeamComponent (add user form)', () => {
     const form = fixture.nativeElement.querySelector('.add-user-form');
     expect(form).toBeNull();
   });
+
+  it('should bind email input via ngModel in add form', async () => {
+    fixture.componentInstance.openAddForm();
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    const emailInput = fixture.nativeElement.querySelector('.add-user-fields input[type="email"]') as HTMLInputElement;
+    emailInput.value = 'new@example.com';
+    emailInput.dispatchEvent(new Event('input'));
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    expect(fixture.componentInstance.newUserEmail).toBe('new@example.com');
+  });
+
+  it('should set new user role via setNewUserRole', () => {
+    fixture.componentInstance.setNewUserRole('Editor');
+    expect(fixture.componentInstance.newUserRole).toBe('Editor');
+  });
 });
 
 describe('TabTeamComponent (API interactions)', () => {

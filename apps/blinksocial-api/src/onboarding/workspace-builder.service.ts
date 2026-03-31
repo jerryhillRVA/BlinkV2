@@ -109,45 +109,6 @@ export class WorkspaceBuilderService {
     };
   }
 
-  /** Valid age range buckets for the UI dropdown. */
-  private static readonly VALID_AGE_RANGES = [
-    '13-17', '18-24', '25-34', '35-44', '45-54', '55-64', '65+',
-  ];
-
-  /**
-   * Attempt to extract a valid ageRange from a demographics string like
-   * "Ages 30-45, $150-200k salary…" → '35-44' (best-fit bucket by midpoint).
-   */
-  private extractAgeRange(demographics?: string): string {
-    if (!demographics) return '25-34';
-    // Match patterns like "Ages 30-45", "ages 28–38", "Age: 35-50", "aged 20-35"
-    const match = demographics.match(/age[sd]?\s*:?\s*(\d{1,2})\s*[-–]\s*(\d{1,2})/i);
-    if (!match) return '25-34';
-    const low = parseInt(match[1], 10);
-    const high = parseInt(match[2], 10);
-    const midpoint = (low + high) / 2;
-    // Pick the bucket whose midpoint is closest to the demographic midpoint
-    const buckets = [
-      { range: '13-17', mid: 15 },
-      { range: '18-24', mid: 21 },
-      { range: '25-34', mid: 29.5 },
-      { range: '35-44', mid: 39.5 },
-      { range: '45-54', mid: 49.5 },
-      { range: '55-64', mid: 59.5 },
-      { range: '65+', mid: 70 },
-    ];
-    let best = buckets[0];
-    let bestDist = Math.abs(midpoint - best.mid);
-    for (const b of buckets) {
-      const dist = Math.abs(midpoint - b.mid);
-      if (dist < bestDist) {
-        best = b;
-        bestDist = dist;
-      }
-    }
-    return best.range;
-  }
-
   private sanitizeWizardData(
     raw: Record<string, unknown>,
     workspaceName: string,
@@ -184,11 +145,11 @@ export class WorkspaceBuilderService {
       }
     }
 
-    // Fix skills: ensure it's { skills: [...] } not just an array
+    // Fix skills: ensure it's { skills: [...] } not just an array (skills is optional)
     if (Array.isArray(data.skills)) {
       data.skills = { skills: data.skills } as CreateWorkspaceRequestContract['skills'];
     } else if (data.skills && !(data.skills as Record<string, unknown>).skills) {
-      data.skills = { skills: [] } as CreateWorkspaceRequestContract['skills'];
+      data.skills = undefined;
     }
 
     // Truncate content pillar descriptions to 500 chars and ensure targetPlatforms
@@ -208,16 +169,12 @@ export class WorkspaceBuilderService {
       }) as CreateWorkspaceRequestContract['contentPillars'];
     }
 
-    // Ensure audience segments is an array, fix ageRange from demographics, use name for description
+    // Ensure audience segments is an array, use name for description
     if (!Array.isArray(data.audienceSegments)) {
       data.audienceSegments = [];
     }
     data.audienceSegments = data.audienceSegments.map((seg) => {
       const s = { ...seg } as Record<string, unknown>;
-      // Extract ageRange from demographics text if ageRange is not set
-      if (!s.ageRange && s.demographics) {
-        s.ageRange = this.extractAgeRange(s.demographics as string);
-      }
       // If description looks like a content hook (starts with "Content that..."),
       // swap it with the segment name which should be the persona name
       if (

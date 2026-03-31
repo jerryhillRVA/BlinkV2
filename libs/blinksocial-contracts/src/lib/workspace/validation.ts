@@ -9,6 +9,8 @@ import brandVoiceSchema from '../schemas/workspaces/brand-voice.schema.json' wit
 import skillsSchema from '../schemas/workspaces/skills.schema.json' with { type: 'json' };
 import contentPillarSchema from '../schemas/workspaces/content-pillar.schema.json' with { type: 'json' };
 import audienceSegmentSchema from '../schemas/workspaces/audience-segment.schema.json' with { type: 'json' };
+import businessObjectiveSchema from '../schemas/workspaces/business-objective.schema.json' with { type: 'json' };
+import brandPositioningSchema from '../schemas/workspaces/brand-positioning.schema.json' with { type: 'json' };
 import createWorkspaceRequestSchema from '../schemas/workspaces/create-workspace-request.schema.json' with { type: 'json' };
 
 // CJS default export under nodenext: runtime resolves to the callable plugin
@@ -27,6 +29,8 @@ function getAjv(): Ajv {
     ajvInstance.addSchema(skillsSchema);
     ajvInstance.addSchema(contentPillarSchema);
     ajvInstance.addSchema(audienceSegmentSchema);
+    ajvInstance.addSchema(businessObjectiveSchema);
+    ajvInstance.addSchema(brandPositioningSchema);
     ajvInstance.addSchema(createWorkspaceRequestSchema);
   }
   return ajvInstance;

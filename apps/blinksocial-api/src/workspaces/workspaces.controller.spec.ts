@@ -3,6 +3,7 @@ import { Test } from '@nestjs/testing';
 import { WorkspacesController } from './workspaces.controller';
 import { WorkspacesService } from './workspaces.service';
 import { AgenticFilesystemService } from '../agentic-filesystem/agentic-filesystem.service';
+import { UserService } from '../auth/user.service';
 
 function buildValidPayload() {
   return {
@@ -40,6 +41,13 @@ function buildMockFsService() {
   return { isConfigured: () => false };
 }
 
+function buildMockUserService() {
+  return {
+    listByWorkspace: vi.fn().mockResolvedValue([]),
+    addWorkspaceAccess: vi.fn().mockResolvedValue(undefined),
+  };
+}
+
 describe('WorkspacesController', () => {
   let controller: WorkspacesController;
 
@@ -50,27 +58,31 @@ describe('WorkspacesController', () => {
         WorkspacesService,
         { provide: AgenticFilesystemService, useFactory: buildMockFsService },
         { provide: 'MOCK_DATA_SERVICE', useFactory: buildMockDataService },
+        { provide: UserService, useFactory: buildMockUserService },
       ],
     }).compile();
     controller = module.get(WorkspacesController);
   });
 
   it('should return 201 with valid request', async () => {
-    const result = await controller.create(buildValidPayload() as never);
+    const mockReq = { user: { id: 'u1', workspaces: [] } } as never;
+    const result = await controller.create(mockReq, buildValidPayload() as never);
     expect(result.id).toBeDefined();
     expect(result.workspaceName).toBe('Test Workspace');
     expect(result.status).toBe('active');
   });
 
   it('should throw BadRequestException with invalid request', async () => {
+    const mockReq = { user: { id: 'u1', workspaces: [] } } as never;
     const payload = buildValidPayload();
     delete (payload.general as Record<string, unknown>)['workspaceName'];
-    await expect(controller.create(payload as never)).rejects.toThrow(BadRequestException);
+    await expect(controller.create(mockReq, payload as never)).rejects.toThrow(BadRequestException);
   });
 
   describe('list', () => {
     it('should return mock workspaces when FS is not configured', async () => {
-      const result = await controller.list();
+      const mockReq = { user: undefined } as never;
+      const result = await controller.list(mockReq);
       expect(result.workspaces).toHaveLength(2);
     });
   });

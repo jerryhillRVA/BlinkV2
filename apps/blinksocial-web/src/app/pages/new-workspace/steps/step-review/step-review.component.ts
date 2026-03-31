@@ -22,7 +22,7 @@ export class StepReviewComponent {
     return platforms.length > 0 ? platforms.join(', ') : 'None';
   }
 
-  get agentCount(): number {
-    return this.formService.agents().length;
+  get objectiveCount(): number {
+    return this.formService.businessObjectives().filter((o) => o.statement.trim()).length;
   }
 }

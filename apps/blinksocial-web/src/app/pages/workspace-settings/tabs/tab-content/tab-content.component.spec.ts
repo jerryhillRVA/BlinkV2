@@ -97,8 +97,8 @@ describe('TabContentComponent', () => {
     expect(textareas[0].value).toBe('Breaking tech news.');
   });
 
-  it('should render tooltip triggers', () => {
-    const tooltips = fixture.nativeElement.querySelectorAll('.tooltip-trigger');
+  it('should render tooltips', () => {
+    const tooltips = fixture.nativeElement.querySelectorAll('app-tooltip');
     expect(tooltips.length).toBeGreaterThan(0);
   });
 

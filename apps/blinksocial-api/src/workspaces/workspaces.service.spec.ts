@@ -2,6 +2,7 @@ import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
 import { WorkspacesService } from './workspaces.service';
 import { AgenticFilesystemService } from '../agentic-filesystem/agentic-filesystem.service';
+import { UserService } from '../auth/user.service';
 
 function buildValidPayload() {
   return {
@@ -39,6 +40,13 @@ function buildMockFsService() {
   return { isConfigured: () => false };
 }
 
+function buildMockUserService() {
+  return {
+    listByWorkspace: vi.fn().mockResolvedValue([]),
+    addWorkspaceAccess: vi.fn().mockResolvedValue(undefined),
+  };
+}
+
 describe('WorkspacesService', () => {
   let service: WorkspacesService;
 
@@ -48,6 +56,7 @@ describe('WorkspacesService', () => {
         WorkspacesService,
         { provide: AgenticFilesystemService, useFactory: buildMockFsService },
         { provide: 'MOCK_DATA_SERVICE', useFactory: buildMockDataService },
+        { provide: UserService, useFactory: buildMockUserService },
       ],
     }).compile();
     service = module.get(WorkspacesService);
@@ -139,6 +148,7 @@ describe('WorkspacesService', () => {
           WorkspacesService,
           { provide: AgenticFilesystemService, useValue: mockFs },
           { provide: 'MOCK_DATA_SERVICE', useValue: null },
+          { provide: UserService, useFactory: buildMockUserService },
         ],
       }).compile();
       fsService = module.get(WorkspacesService);

@@ -47,8 +47,8 @@ test.describe('Dashboard Onboard Card', () => {
 
   test('should show the Onboard New Workspace card', async ({ page }) => {
     await page.goto('/');
-    await expect(page.locator('.card-onboard')).toBeVisible();
-    await expect(page.locator('.card-onboard .new-label')).toHaveText('Onboard New Workspace');
+    await expect(page.locator('.action-onboard')).toBeVisible();
+    await expect(page.locator('.action-onboard')).toContainText('Engage an onboarding agent');
   });
 
   test('should navigate to /onboard when card is clicked', async ({ page }) => {
@@ -56,7 +56,7 @@ test.describe('Dashboard Onboard Card', () => {
       route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(mockCreateSessionResponse) })
     );
     await page.goto('/');
-    await page.locator('.card-onboard').click();
+    await page.locator('.action-onboard').click();
     await expect(page).toHaveURL(/\/onboard/);
   });
 });
@@ -71,6 +71,15 @@ test.describe('Onboard Page', () => {
     });
   });
 
+  /** Helper to start a discovery session from the name input screen. */
+  async function startSession(page: import('@playwright/test').Page) {
+    await page.goto('/onboard');
+    await page.locator('.name-input-field').fill('E2E Test Corp');
+    await page.locator('.start-session-btn').click();
+    // Wait for the chat UI to appear
+    await page.locator('app-chat-message').first().waitFor({ state: 'visible' });
+  }
+
   test('should show the page header', async ({ page }) => {
     await page.goto('/onboard');
     await expect(page.locator('.page-title')).toHaveText('Project Onboarding');
@@ -78,13 +87,13 @@ test.describe('Onboard Page', () => {
   });
 
   test('should display the initial agent message', async ({ page }) => {
-    await page.goto('/onboard');
+    await startSession(page);
     await expect(page.locator('app-chat-message').first()).toBeVisible();
     await expect(page.locator('.assistant .content').first()).toContainText('Welcome!');
   });
 
   test('should show 7 section progress steps', async ({ page }) => {
-    await page.goto('/onboard');
+    await startSession(page);
     await expect(page.locator('.progress-step')).toHaveCount(7);
   });
 
@@ -101,7 +110,7 @@ test.describe('Onboard Page', () => {
     await page.route('**/api/onboarding/sessions/e2e-session-1/messages', (route) =>
       route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(mockSendMessageResponse) })
     );
-    await page.goto('/onboard');
+    await startSession(page);
 
     // Wait for the initial message to appear
     await expect(page.locator('app-chat-message')).toHaveCount(1);
@@ -118,7 +127,7 @@ test.describe('Onboard Page', () => {
     await page.route('**/api/onboarding/sessions/e2e-session-1/messages', (route) =>
       route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(mockSendMessageResponse) })
     );
-    await page.goto('/onboard');
+    await startSession(page);
     await expect(page.locator('app-chat-message')).toHaveCount(1);
 
     await page.locator('.message-input').fill('My business is a yoga studio');
@@ -128,7 +137,7 @@ test.describe('Onboard Page', () => {
   });
 
   test('should disable send button when input is empty', async ({ page }) => {
-    await page.goto('/onboard');
+    await startSession(page);
     await expect(page.locator('.send-btn')).toBeDisabled();
   });
 });

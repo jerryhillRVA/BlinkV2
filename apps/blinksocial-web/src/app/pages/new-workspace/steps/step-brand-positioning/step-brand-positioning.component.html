@@ -1,0 +1,78 @@
+<div class="step-brand-positioning">
+  <div class="step-header">
+    <h2>Brand Positioning &amp; Voice</h2>
+    <p class="step-subtitle">Define how you communicate and what makes you different.</p>
+  </div>
+
+  <!-- Section A: Brand Positioning -->
+  <div class="section">
+    <div class="section-header">
+      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="section-icon"><circle cx="12" cy="12" r="10"/><line x1="22" x2="18" y1="12" y2="12"/><line x1="6" x2="2" y1="12" y2="12"/><line x1="12" x2="12" y1="6" y2="2"/><line x1="12" x2="12" y1="22" y2="18"/></svg>
+      <span class="section-label">Brand Positioning</span>
+      <app-tooltip text="Your positioning defines who you serve, what problem you solve, and why you're different. This guides every piece of content." />
+    </div>
+
+    <div class="positioning-fields">
+      <div class="field-group">
+        <span class="field-label">Who is your target customer?</span>
+        <input type="text" class="field-input" placeholder="e.g. Women 40+ navigating midlife wellness" [value]="formService.brandPositioning().targetCustomer" (input)="formService.updateBrandPositioning('targetCustomer', $any($event.target).value)" />
+      </div>
+      <div class="field-group">
+        <span class="field-label">What problem do they have?</span>
+        <input type="text" class="field-input" placeholder="e.g. Overwhelmed by conflicting fitness advice" [value]="formService.brandPositioning().problemSolved" (input)="formService.updateBrandPositioning('problemSolved', $any($event.target).value)" />
+      </div>
+      <div class="field-group">
+        <span class="field-label">What's your solution?</span>
+        <input type="text" class="field-input" placeholder="e.g. A movement-first wellness community with expert guidance" [value]="formService.brandPositioning().solution" (input)="formService.updateBrandPositioning('solution', $any($event.target).value)" />
+      </div>
+      <div class="field-group">
+        <span class="field-label">What makes you different?</span>
+        <input type="text" class="field-input" placeholder="e.g. We combine clinical expertise with authentic community" [value]="formService.brandPositioning().differentiator" (input)="formService.updateBrandPositioning('differentiator', $any($event.target).value)" />
+      </div>
+
+      <app-outline-button (clicked)="generatePositioningStatement()" [disabled]="isGenerating()">
+        @if (isGenerating()) {
+          <svg class="spin" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>
+          Generating...
+        } @else {
+          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"/></svg>
+          Generate Positioning Statement
+        }
+      </app-outline-button>
+    </div>
+
+    @if (formService.brandPositioning().positioningStatement) {
+      <div class="field-group">
+        <span class="field-label">Positioning Statement</span>
+        <textarea class="field-textarea" [value]="formService.brandPositioning().positioningStatement" (input)="formService.updateBrandPositioning('positioningStatement', $any($event.target).value)"></textarea>
+      </div>
+    }
+  </div>
+
+  <div class="section-divider"></div>
+
+  <!-- Section B: Voice & Tone -->
+  <div class="section">
+    <div class="section-header">
+      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="section-icon-muted"><path d="m11 7.601-5.994 8.19a1 1 0 0 0 .1 1.298l.817.818a1 1 0 0 0 1.314.087L15.09 12"/><path d="M16.5 21.174C15.5 20.5 14.372 20 13 20c-2.058 0-3.928 2.356-6 2-2.072-.356-2.775-3.369-1.5-4.5"/><circle cx="16" cy="7" r="5"/></svg>
+      <span class="section-label">Brand Voice &amp; Tone</span>
+      <app-tooltip text="How does your brand sound? Describe your personality and communication style." />
+    </div>
+
+    <div class="voice-fields">
+      <textarea class="field-textarea" placeholder="e.g. Professional but approachable. We explain complex topics simply without being condescending." [value]="formService.brandVoice()" (input)="formService.brandVoice.set($any($event.target).value)"></textarea>
+
+      <div class="tone-tags">
+        @for (tag of TONE_OPTIONS; track tag) {
+          <button
+            class="tone-tag"
+            [class.tone-selected]="formService.isToneTagSelected(tag)"
+            (click)="formService.toggleToneTag(tag)"
+          >
+            {{ tag }}
+          </button>
+        }
+      </div>
+    </div>
+  </div>
+</div>

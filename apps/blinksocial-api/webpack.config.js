@@ -29,6 +29,12 @@ module.exports = {
       ),
     },
   },
+  module: {
+    // The Angular SSR middleware uses a dynamic import() to load the pre-built
+    // server bundle at runtime. Webpack can't resolve it at compile time and
+    // emits a "Critical dependency" warning, which Nx treats as flaky output.
+    exprContextCritical: false,
+  },
   plugins: [
     new NxAppWebpackPlugin({
       target: 'node',

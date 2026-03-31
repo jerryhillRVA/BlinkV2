@@ -5,6 +5,8 @@ export { BrandVoiceSettings } from './brand-voice.model.js';
 export { ContentPillar } from './content-pillar.model.js';
 export { AudienceSegment } from './audience-segment.model.js';
 export { SkillConfig, SkillSettings } from './skill-config.model.js';
+export { BusinessObjective } from './business-objective.model.js';
+export { BrandPositioning } from './brand-positioning.model.js';
 export { CreateWorkspaceRequest } from './create-workspace-request.model.js';
 export { CreateWorkspaceResponse, ValidationError, CreateWorkspaceError } from './create-workspace-response.model.js';
 export { TeamMember, TeamSettings } from './team-settings.model.js';

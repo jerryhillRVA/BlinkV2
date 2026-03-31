@@ -1,6 +1,10 @@
 <div class="new-workspace">
+  <div class="wizard-bg" aria-hidden="true">
+    <img src="dashboard-bg.jpg" alt="" />
+  </div>
+
   <button class="back-home" (click)="goHome()">
-    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
       <rect width="7" height="7" x="3" y="3" rx="1"/>
       <rect width="7" height="7" x="14" y="3" rx="1"/>
       <rect width="7" height="7" x="14" y="14" rx="1"/>
@@ -17,7 +21,7 @@
       </svg>
     </div>
     <h1 class="page-title">Setup Your Workspace</h1>
-    <p class="page-subtitle">Configure your content strategy, platforms, and AI agents step by step.</p>
+    <p class="page-subtitle">Follow the steps below to initialize your Blink Social workspace.</p>
   </header>
 
   <app-step-indicator [steps]="STEPS" [currentStep]="currentStep()" />
@@ -26,10 +30,12 @@
     <div class="wizard-content">
       @switch (currentStep()) {
         @case (1) { <app-step-workspace-basics /> }
-        @case (2) { <app-step-platform-config /> }
-        @case (3) { <app-step-content-strategy /> }
-        @case (4) { <app-step-agents /> }
-        @case (5) { <app-step-review /> }
+        @case (2) { <app-step-objectives /> }
+        @case (3) { <app-step-brand-positioning /> }
+        @case (4) { <app-step-audience /> }
+        @case (5) { <app-step-platform-config /> }
+        @case (6) { <app-step-content-strategy /> }
+        @case (7) { <app-step-review /> }
       }
     </div>
 

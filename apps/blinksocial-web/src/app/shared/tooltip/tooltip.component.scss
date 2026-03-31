@@ -1,0 +1,20 @@
+:host {
+  display: inline-flex;
+}
+
+.tooltip-trigger {
+  appearance: none;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--blink-on-surface-muted);
+  transition: color 0.15s;
+
+  &:hover {
+    color: var(--blink-brand-primary);
+  }
+}

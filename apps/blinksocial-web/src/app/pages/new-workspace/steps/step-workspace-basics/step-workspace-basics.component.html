@@ -1,7 +1,7 @@
 <div class="step-workspace-basics">
   <div class="step-header">
-    <h2>Workspace Identity</h2>
-    <p class="step-subtitle">Define the core purpose and strategic foundation of your workspace.</p>
+    <h2>Strategic Foundation</h2>
+    <p class="step-subtitle">Define the purpose and mission your content strategy will serve.</p>
   </div>
 
   <div class="fields">
@@ -10,6 +10,7 @@
       <label class="field-label" for="workspace-name">
         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z"/><path d="m12 15-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z"/><path d="M9 12H4s.55-3.03 2-4c1.62-1.08 5 0 5 0"/><path d="M12 15v5s3.03-.55 4-2c1.08-1.62 0-5 0-5"/></svg>
         Workspace Name
+        <app-tooltip text="The public name for your workspace as it appears in the dashboard and reports." />
       </label>
       <input id="workspace-name" type="text" class="field-input" placeholder="e.g. Hive Collective Main" [value]="formService.workspaceName()" (input)="formService.workspaceName.set($any($event.target).value)" />
     </div>
@@ -19,6 +20,7 @@
       <label class="field-label" for="workspace-purpose">
         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>
         Workspace Purpose
+        <app-tooltip text="Why this workspace exists and the primary goal it serves." />
       </label>
       <textarea id="workspace-purpose" class="field-textarea" placeholder="What is the primary reason this workspace exists?" [value]="formService.purpose()" (input)="formService.purpose.set($any($event.target).value)"></textarea>
     </div>
@@ -28,55 +30,10 @@
       <label class="field-label" for="mission">
         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/></svg>
         Mission
+        <app-tooltip text="Your long-term objective and the impact you want to achieve." />
       </label>
       <textarea id="mission" class="field-textarea" placeholder="What do you aim to achieve in the long term?" [value]="formService.mission()" (input)="formService.mission.set($any($event.target).value)"></textarea>
     </div>
 
-    <!-- Audience Segment Targets -->
-    <div class="audience-section">
-      <div class="audience-header">
-        <span class="field-label">
-          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-          Audience Segment Targets
-        </span>
-        <button class="add-segment" (click)="formService.addSegment()">
-          <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
-          Add Segment
-        </button>
-      </div>
-
-      <div class="segments-list">
-        @for (segment of formService.audienceSegments(); track segment.id) {
-          <div class="segment-row">
-            <div class="segment-field">
-              <span class="segment-label">Description</span>
-              <input type="text" class="field-input segment-input" placeholder="e.g. Young professionals in tech" [value]="segment.description" (input)="formService.updateSegmentDescription(segment.id, $any($event.target).value)" />
-            </div>
-            <div class="segment-field segment-age">
-              <span class="segment-label">Age Range</span>
-              <select class="field-select" (change)="formService.updateSegmentAgeRange(segment.id, $any($event.target).value)">
-                @for (range of AGE_RANGES; track range) {
-                  <option [value]="range" [selected]="range === segment.ageRange">{{ range }}</option>
-                }
-              </select>
-            </div>
-            @if (formService.audienceSegments().length > 1) {
-              <button class="remove-segment" (click)="formService.removeSegment(segment.id)">
-                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
-              </button>
-            }
-          </div>
-        }
-      </div>
-    </div>
-
-    <!-- Brand Voice -->
-    <div class="field-group">
-      <label class="field-label" for="brand-voice">
-        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 8-9.04 9.06a2.82 2.82 0 1 0 3.98 3.98L16 12"/><circle cx="17" cy="7" r="5"/></svg>
-        Brand Voice
-      </label>
-      <textarea id="brand-voice" class="field-textarea" placeholder="Professional, funny, authoritative, etc..." [value]="formService.brandVoice()" (input)="formService.brandVoice.set($any($event.target).value)"></textarea>
-    </div>
   </div>
 </div>

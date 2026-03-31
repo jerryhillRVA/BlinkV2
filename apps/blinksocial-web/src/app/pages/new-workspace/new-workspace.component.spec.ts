@@ -67,12 +67,12 @@ describe('NewWorkspaceComponent', () => {
     expect(el.querySelector('.page-header-icon svg')).toBeTruthy();
   });
 
-  it('should render step indicator with 5 steps', () => {
+  it('should render step indicator with 7 steps', () => {
     const fixture = TestBed.createComponent(NewWorkspaceComponent);
     fixture.detectChanges();
     const el: HTMLElement = fixture.nativeElement;
     const circles = el.querySelectorAll('.step-circle');
-    expect(circles.length).toBe(5);
+    expect(circles.length).toBe(7);
   });
 
   it('should show wizard card container', () => {
@@ -90,7 +90,7 @@ describe('NewWorkspaceComponent', () => {
     expect(backBtn.disabled).toBe(true);
   });
 
-  it('should show "Next" on steps 1-4', () => {
+  it('should show "Next" on steps 1-6', () => {
     const fixture = TestBed.createComponent(NewWorkspaceComponent);
     fixture.detectChanges();
     const el: HTMLElement = fixture.nativeElement;
@@ -98,9 +98,9 @@ describe('NewWorkspaceComponent', () => {
     expect(nextBtn?.textContent).toContain('Next');
   });
 
-  it('should show "Finish" on step 5', () => {
+  it('should show "Finish" on step 7', () => {
     const fixture = TestBed.createComponent(NewWorkspaceComponent);
-    fixture.componentInstance.currentStep.set(5);
+    fixture.componentInstance.currentStep.set(7);
     fixture.detectChanges();
     const el: HTMLElement = fixture.nativeElement;
     const nextBtn = el.querySelector('.wizard-next');
@@ -108,22 +108,22 @@ describe('NewWorkspaceComponent', () => {
     expect(nextBtn?.textContent).not.toContain('Finish & Launch');
   });
 
-  it('should enable Back button on step 5', () => {
+  it('should enable Back button on step 7', () => {
     const fixture = TestBed.createComponent(NewWorkspaceComponent);
-    fixture.componentInstance.currentStep.set(5);
+    fixture.componentInstance.currentStep.set(7);
     fixture.detectChanges();
     const el: HTMLElement = fixture.nativeElement;
     const backBtn = el.querySelector('.wizard-back') as HTMLButtonElement;
     expect(backBtn.disabled).toBe(false);
   });
 
-  it('should go back from step 5 to step 4', () => {
+  it('should go back from step 7 to step 6', () => {
     const fixture = TestBed.createComponent(NewWorkspaceComponent);
-    fixture.componentInstance.currentStep.set(5);
+    fixture.componentInstance.currentStep.set(7);
     fixture.detectChanges();
     const backBtn = fixture.nativeElement.querySelector('.wizard-back') as HTMLButtonElement;
     backBtn.click();
-    expect(fixture.componentInstance.currentStep()).toBe(4);
+    expect(fixture.componentInstance.currentStep()).toBe(6);
   });
 
   it('should advance step when Next is clicked with valid data', () => {
@@ -159,7 +159,7 @@ describe('NewWorkspaceComponent', () => {
   it('should call API and navigate on successful submit', async () => {
     const fixture = TestBed.createComponent(NewWorkspaceComponent);
     const httpMock = TestBed.inject(HttpTestingController);
-    fixture.componentInstance.currentStep.set(5);
+    fixture.componentInstance.currentStep.set(7);
     fixture.detectChanges();
 
     const nextBtn = fixture.nativeElement.querySelector('.wizard-next') as HTMLButtonElement;
@@ -190,7 +190,7 @@ describe('NewWorkspaceComponent', () => {
   it('should show toast error on failed submit', () => {
     const fixture = TestBed.createComponent(NewWorkspaceComponent);
     const httpMock = TestBed.inject(HttpTestingController);
-    fixture.componentInstance.currentStep.set(5);
+    fixture.componentInstance.currentStep.set(7);
     fixture.detectChanges();
 
     const nextBtn = fixture.nativeElement.querySelector('.wizard-next') as HTMLButtonElement;
@@ -209,7 +209,7 @@ describe('NewWorkspaceComponent', () => {
   it('should show fallback toast error when error has no message', () => {
     const fixture = TestBed.createComponent(NewWorkspaceComponent);
     const httpMock = TestBed.inject(HttpTestingController);
-    fixture.componentInstance.currentStep.set(5);
+    fixture.componentInstance.currentStep.set(7);
     fixture.detectChanges();
 
     const nextBtn = fixture.nativeElement.querySelector('.wizard-next') as HTMLButtonElement;
@@ -245,7 +245,7 @@ describe('NewWorkspaceComponent', () => {
 
   it('should show "Submitting..." text when submitting', () => {
     const fixture = TestBed.createComponent(NewWorkspaceComponent);
-    fixture.componentInstance.currentStep.set(5);
+    fixture.componentInstance.currentStep.set(7);
     fixture.detectChanges();
 
     const nextBtn = fixture.nativeElement.querySelector('.wizard-next') as HTMLButtonElement;
@@ -291,13 +291,13 @@ describe('NewWorkspaceComponent', () => {
 
     const wizardReq = httpMock.expectOne('/api/workspaces/tenant-123/settings/wizard-state');
     wizardReq.flush({
-      currentStep: 5,
-      completedSteps: [1, 2, 3, 4],
+      currentStep: 7,
+      completedSteps: [1, 2, 3, 4, 5, 6],
       formData: { general: { workspaceName: 'Test' } },
     });
     fixture.detectChanges();
 
-    fixture.componentInstance.currentStep.set(5);
+    fixture.componentInstance.currentStep.set(7);
     fixture.detectChanges();
 
     const nextBtn = fixture.nativeElement.querySelector('.wizard-next') as HTMLButtonElement;
@@ -381,10 +381,10 @@ describe('NewWorkspaceComponent', () => {
     fixture.detectChanges();
 
     const wizardReq = httpMock.expectOne('/api/workspaces/tenant-err/settings/wizard-state');
-    wizardReq.flush({ currentStep: 5, completedSteps: [1,2,3,4], formData: { general: { workspaceName: 'Err' } } });
+    wizardReq.flush({ currentStep: 7, completedSteps: [1,2,3,4,5,6], formData: { general: { workspaceName: 'Err' } } });
     fixture.detectChanges();
 
-    fixture.componentInstance.currentStep.set(5);
+    fixture.componentInstance.currentStep.set(7);
     fixture.detectChanges();
     fixture.componentInstance.onNext();
     fixture.detectChanges();
@@ -411,10 +411,10 @@ describe('NewWorkspaceComponent', () => {
     fixture.detectChanges();
 
     const wizardReq = httpMock.expectOne('/api/workspaces/tenant-save-fail/settings/wizard-state');
-    wizardReq.flush({ currentStep: 5, completedSteps: [1,2,3,4], formData: { general: { workspaceName: 'SF' } } });
+    wizardReq.flush({ currentStep: 7, completedSteps: [1,2,3,4,5,6], formData: { general: { workspaceName: 'SF' } } });
     fixture.detectChanges();
 
-    fixture.componentInstance.currentStep.set(5);
+    fixture.componentInstance.currentStep.set(7);
     fixture.detectChanges();
     fixture.componentInstance.onNext();
     fixture.detectChanges();

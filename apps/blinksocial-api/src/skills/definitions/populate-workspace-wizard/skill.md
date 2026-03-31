@@ -40,6 +40,7 @@ Return ONLY a valid JSON object (no markdown fences, no explanation) matching Cr
 ### brandVoice (BrandVoiceSettingsContract)
 - `brandVoiceDescription`: from `brandVoice.positioningStatement`
 - `toneGuidelines`: from `brandVoice.voiceAttributes` — map each to `"{attribute}: {description}"`
+- `toneTags`: extract 3-6 short tone descriptor words from `brandVoice.voiceAttributes` (e.g., "professional", "bold", "witty", "empathetic")
 
 ### platforms (PlatformSettingsContract)
 - `globalRules.defaultPlatform`: the first channel mapped to a valid Platform enum value
@@ -54,6 +55,23 @@ Return ONLY a valid JSON object (no markdown fences, no explanation) matching Cr
 - `demographics`: from `demographics`
 - `painPoints`: from `painPoints`
 
+### businessObjectives (BusinessObjectiveContract[]) — OPTIONAL
+- Extract 1-3 business objectives from `strategicSummary` and any growth/performance goals mentioned
+- `id`: kebab-case (e.g., "grow-audience")
+- `category`: one of `growth`, `revenue`, `awareness`, `trust`, `community`, `engagement`
+- `statement`: concise objective statement
+- `target`: numeric target (0 if unknown)
+- `unit`: measurement unit (e.g., "%", "followers", "views")
+- `timeframe`: time period (e.g., "Q1 2026", "6 months")
+- `status`: `"on-track"`
+
+### brandPositioning (BrandPositioningContract) — OPTIONAL
+- `targetCustomer`: primary target from `audienceProfiles` (first profile name)
+- `problemSolved`: inferred from audience `painPoints`
+- `solution`: from `brandVoice.contentMission`
+- `differentiator`: from `brandVoice.positioningStatement`
+- `positioningStatement`: from `brandVoice.positioningStatement`
+
 ### contentPillars (ContentPillarContract[])
 - One per `contentPillars` entry
 - `id`: kebab-case of `name`
@@ -61,8 +79,9 @@ Return ONLY a valid JSON object (no markdown fences, no explanation) matching Cr
 - `description`: from `description`
 - `color`: assign from the pillar color palette in the mapping guide (cycle through colors)
 - `themes`: from `formats`
+- `objectiveIds`: array of related business objective IDs (if business objectives were generated), or omit
 
-### skills (SkillSettingsContract)
+### skills (SkillSettingsContract) — OPTIONAL
 - Generate 2-4 default agent skills based on the blueprint content:
   1. **Content Writer** — persona based on brand voice, responsible for drafting posts
   2. **Social Strategist** — persona based on strategic summary, responsible for planning
@@ -77,3 +96,4 @@ Each skill needs: `id` (kebab-case), `skillId` (same), `name`, `role`, `persona`
 - If a channel name does not map to a known platform, use "tbd"
 - IDs must be kebab-case (lowercase, hyphens instead of spaces)
 - Truncate strategicSummary to 500 chars for purpose field
+- The `skills`, `businessObjectives`, and `brandPositioning` fields are all optional — include them when the blueprint provides enough data to generate meaningful values

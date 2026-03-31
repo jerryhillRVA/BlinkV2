@@ -1,0 +1,37 @@
+<div class="step-audience">
+  <div class="step-header">
+    <h2>Audience Segments</h2>
+    <p class="step-subtitle">Name the groups you're creating content for. You'll define full segment details in the Strategy section.</p>
+  </div>
+
+  <div class="callout">
+    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="callout-icon"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
+    <p>Keep this simple — just names for now. Detailed personas, pain points, and journey stages are built in the Strategy section.</p>
+  </div>
+
+  <div class="segments-list">
+    @for (segment of formService.audienceSegments(); track segment.id) {
+      <div class="segment-row">
+        <input
+          type="text"
+          class="field-input segment-input"
+          placeholder="e.g. Early-stage founders"
+          [value]="segment.name"
+          (input)="formService.updateSegmentName(segment.id, $any($event.target).value)"
+        />
+        <button class="remove-segment" (click)="formService.removeSegment(segment.id)">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+        </button>
+      </div>
+    }
+  </div>
+
+  @if (formService.audienceSegments().length < 6) {
+    <div class="add-segment-wrapper">
+      <app-outline-button (clicked)="formService.addSegment()">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
+        Add Segment
+      </app-outline-button>
+    </div>
+  }
+</div>

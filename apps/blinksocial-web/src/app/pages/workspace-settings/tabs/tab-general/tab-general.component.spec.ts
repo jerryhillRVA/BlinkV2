@@ -52,8 +52,8 @@ describe('TabGeneralComponent', () => {
     expect(icons.length).toBe(5);
   });
 
-  it('should render tooltip triggers in field labels', () => {
-    const tooltips = fixture.nativeElement.querySelectorAll('.tooltip-trigger');
+  it('should render tooltips in field labels', () => {
+    const tooltips = fixture.nativeElement.querySelectorAll('app-tooltip');
     expect(tooltips.length).toBe(5);
   });
 

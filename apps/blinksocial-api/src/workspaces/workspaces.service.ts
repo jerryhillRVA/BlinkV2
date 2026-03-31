@@ -48,6 +48,7 @@ const MOCK_WORKSPACES: ListWorkspacesResponseContract = {
 
 const VALID_TABS = new Set([
   'general', 'platforms', 'brand-voice', 'skills',
+  'business-objectives', 'brand-positioning',
   'team', 'notifications', 'calendar', 'security',
   'wizard-state', 'onboarding-session',
 ]);
@@ -97,7 +98,9 @@ export class WorkspacesService {
         this.fs.uploadJsonFile(tenantId, 'settings', 'general.json', request.general),
         this.fs.uploadJsonFile(tenantId, 'settings', 'brand-voice.json', request.brandVoice),
         this.fs.uploadJsonFile(tenantId, 'settings', 'platforms.json', request.platforms),
-        this.fs.uploadJsonFile(tenantId, 'settings', 'skills.json', request.skills),
+        this.fs.uploadJsonFile(tenantId, 'settings', 'skills.json', request.skills ?? { skills: [] }),
+        this.fs.uploadJsonFile(tenantId, 'settings', 'business-objectives.json', request.businessObjectives ?? []),
+        this.fs.uploadJsonFile(tenantId, 'settings', 'brand-positioning.json', request.brandPositioning ?? {}),
         this.fs.uploadJsonFile(tenantId, 'settings', 'calendar.json', {}),
         this.fs.uploadJsonFile(tenantId, 'settings', 'notifications.json', {}),
         this.fs.uploadJsonFile(tenantId, 'settings', 'security.json', {}),
@@ -169,7 +172,9 @@ export class WorkspacesService {
           this.fs.uploadJsonFile(tenantId, 'settings', 'general.json', generalWithStatus),
           this.fs.uploadJsonFile(tenantId, 'settings', 'brand-voice.json', fullRequest.brandVoice),
           this.fs.uploadJsonFile(tenantId, 'settings', 'platforms.json', fullRequest.platforms),
-          this.fs.uploadJsonFile(tenantId, 'settings', 'skills.json', fullRequest.skills),
+          this.fs.uploadJsonFile(tenantId, 'settings', 'skills.json', fullRequest.skills ?? { skills: [] }),
+          this.fs.uploadJsonFile(tenantId, 'settings', 'business-objectives.json', fullRequest.businessObjectives ?? []),
+          this.fs.uploadJsonFile(tenantId, 'settings', 'brand-positioning.json', fullRequest.brandPositioning ?? {}),
           this.fs.uploadJsonFile(tenantId, 'settings', 'calendar.json', {}),
           this.fs.uploadJsonFile(tenantId, 'settings', 'notifications.json', {}),
           this.fs.uploadJsonFile(tenantId, 'settings', 'security.json', {}),
@@ -290,6 +295,8 @@ export class WorkspacesService {
             request.skills
               ? this.writeSettingsFile(workspaceId, 'skills', request.skills)
               : Promise.resolve(),
+            this.writeSettingsFile(workspaceId, 'business-objectives', request.businessObjectives ?? []),
+            this.writeSettingsFile(workspaceId, 'brand-positioning', request.brandPositioning ?? {}),
             this.writeSettingsFile(workspaceId, 'calendar', {}),
             this.writeSettingsFile(workspaceId, 'notifications', {}),
             this.writeSettingsFile(workspaceId, 'security', {}),
@@ -372,14 +379,6 @@ export class WorkspacesService {
   async getSettings(workspaceId: string, tab: string): Promise<unknown> {
     if (!VALID_TABS.has(tab)) {
       throw new NotFoundException(`Unknown settings tab: ${tab}`);
-    }
-
-    if (this.mockDataService?.isMockWorkspace(workspaceId)) {
-      const data = await this.mockDataService.getSettings(workspaceId, tab);
-      if (data === null) {
-        throw new NotFoundException(`Settings not found for ${workspaceId}/${tab}`);
-      }
-      return data;
     }
 
     if (this.fs.isConfigured()) {
@@ -478,6 +477,15 @@ export class WorkspacesService {
       }
     }
 
+    // Fall back to mock data only when AFS is not configured
+    if (!this.fs.isConfigured() && this.mockDataService?.isMockWorkspace(workspaceId)) {
+      const data = await this.mockDataService.getSettings(workspaceId, tab);
+      if (data === null) {
+        throw new NotFoundException(`Settings not found for ${workspaceId}/${tab}`);
+      }
+      return data;
+    }
+
     throw new NotFoundException(`Workspace not found: ${workspaceId}`);
   }
 
@@ -486,7 +494,7 @@ export class WorkspacesService {
       throw new NotFoundException(`Unknown settings tab: ${tab}`);
     }
 
-    if (this.mockDataService?.isMockWorkspace(workspaceId)) {
+    if (!this.fs.isConfigured() && this.mockDataService?.isMockWorkspace(workspaceId)) {
       return data;
     }
 

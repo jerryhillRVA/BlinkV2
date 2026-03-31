@@ -133,4 +133,8 @@ export class AgenticFilesystemService {
     const response = await axios.get(`${this.baseUrl}/admin/tenants`);
     return response.data.tenants;
   }
+
+  async deleteTenant(tenant: string): Promise<void> {
+    await axios.delete(`${this.baseUrl}/admin/tenants/${tenant}`);
+  }
 }
