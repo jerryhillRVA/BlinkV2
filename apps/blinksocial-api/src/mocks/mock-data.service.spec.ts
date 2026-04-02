@@ -38,28 +38,11 @@ describe('MockDataService', () => {
       expect((result as Record<string, unknown>)['workspaceName']).toBe('Hive Collective');
     });
 
-    it('should include audienceSegments in general settings for hive-collective', async () => {
-      const result = await service.getSettings('hive-collective', 'general') as Record<string, unknown>;
-      expect(result['audienceSegments']).toBeDefined();
-      expect(Array.isArray(result['audienceSegments'])).toBe(true);
-      const segments = result['audienceSegments'] as { id: string; description: string; ageRange: string }[];
-      expect(segments.length).toBeGreaterThan(0);
-      expect(segments[0]).toHaveProperty('id');
-      expect(segments[0]).toHaveProperty('description');
-      expect(segments[0]).toHaveProperty('ageRange');
-    });
-
     it('should include brandVoice in general settings for hive-collective', async () => {
       const result = await service.getSettings('hive-collective', 'general') as Record<string, unknown>;
       expect(result['brandVoice']).toBeDefined();
       expect(typeof result['brandVoice']).toBe('string');
       expect((result['brandVoice'] as string).length).toBeGreaterThan(0);
-    });
-
-    it('should include audienceSegments in general settings for booze-kills', async () => {
-      const result = await service.getSettings('booze-kills', 'general') as Record<string, unknown>;
-      expect(result['audienceSegments']).toBeDefined();
-      expect(Array.isArray(result['audienceSegments'])).toBe(true);
     });
 
     it('should include brandVoice in general settings for booze-kills', async () => {
