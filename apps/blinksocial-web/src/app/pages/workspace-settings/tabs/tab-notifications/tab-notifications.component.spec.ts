@@ -20,7 +20,7 @@ describe('TabNotificationsComponent', () => {
 
     state = TestBed.inject(WorkspaceSettingsStateService);
     state.notificationSettings.set({
-      channels: { email: true, inApp: true, slack: false, slackWebhookUrl: null },
+      channels: { email: true, inApp: true, slack: false },
       triggers: {
         researchResults: true,
         contentPublished: true,
@@ -39,68 +39,53 @@ describe('TabNotificationsComponent', () => {
     expect(fixture.componentInstance).toBeTruthy();
   });
 
-  it('should render channel toggles', () => {
-    const sections = fixture.nativeElement.querySelectorAll('.tab-section');
-    expect(sections.length).toBe(2);
+  it('should render card title "Notification Settings"', () => {
+    const title = fixture.nativeElement.querySelector('.card-title');
+    expect(title?.textContent).toContain('Notification Settings');
   });
 
-  it('should show channel labels', () => {
-    expect(fixture.nativeElement.textContent).toContain('Email');
-    expect(fixture.nativeElement.textContent).toContain('In-App');
-    expect(fixture.nativeElement.textContent).toContain('Slack');
+  it('should render 2 toggle rows', () => {
+    const rows = fixture.nativeElement.querySelectorAll('.toggle-row');
+    expect(rows.length).toBe(2);
   });
 
-  it('should show trigger labels', () => {
-    expect(fixture.nativeElement.textContent).toContain('Research Results');
-    expect(fixture.nativeElement.textContent).toContain('Content Published');
+  it('should render Content Published and Critical Errors labels', () => {
+    const labels = fixture.nativeElement.querySelectorAll('.toggle-label');
+    expect(labels[0].textContent).toContain('Content Published');
+    expect(labels[1].textContent).toContain('Critical Errors');
   });
 
-  it('should toggle channel on click', () => {
-    const toggles = fixture.nativeElement.querySelectorAll('.toggle-switch');
-    // Slack is off (3rd toggle in first section)
-    toggles[2].click();
-    fixture.detectChanges();
-    expect(state.notificationSettings()?.channels.slack).toBe(true);
+  it('should toggle contentPublished trigger on click', () => {
+    const switches = fixture.nativeElement.querySelectorAll('.toggle-switch');
+    switches[0].click();
+    expect(state.notificationSettings()?.triggers.contentPublished).toBe(false);
   });
 
-  it('should toggle trigger on click', () => {
-    const toggles = fixture.nativeElement.querySelectorAll('.toggle-switch');
-    // qaReviewRequired is off (7th toggle overall, index 6)
-    toggles[6].click();
-    fixture.detectChanges();
+  it('should toggle qaReviewRequired trigger on click', () => {
+    const switches = fixture.nativeElement.querySelectorAll('.toggle-switch');
+    switches[1].click();
     expect(state.notificationSettings()?.triggers.qaReviewRequired).toBe(true);
   });
 
-  it('should not toggle channel when settings is null', () => {
+  it('should not toggle when settings is null', () => {
     state.notificationSettings.set(null);
-    fixture.componentInstance.toggleChannel('email');
+    fixture.componentInstance.toggleTrigger('contentPublished');
     expect(state.notificationSettings()).toBeNull();
   });
 
-  it('should not toggle trigger when settings is null', () => {
-    state.notificationSettings.set(null);
-    fixture.componentInstance.toggleTrigger('researchResults');
-    expect(state.notificationSettings()).toBeNull();
-  });
-
-  it('should toggle all channel types', () => {
-    const toggles = fixture.nativeElement.querySelectorAll('.toggle-switch');
-    // Toggle email off
-    toggles[0].click();
-    expect(state.notificationSettings()?.channels.email).toBe(false);
-    // Toggle inApp off
-    toggles[1].click();
-    expect(state.notificationSettings()?.channels.inApp).toBe(false);
-  });
-
-  it('should toggle remaining triggers', () => {
-    const toggles = fixture.nativeElement.querySelectorAll('.toggle-switch');
-    // Toggle weeklyDigest on (index 8)
-    toggles[8].click();
-    expect(state.notificationSettings()?.triggers.weeklyDigest).toBe(true);
-    // Toggle approachingDeadlines off (index 7)
-    toggles[7].click();
-    expect(state.notificationSettings()?.triggers.approachingDeadlines).toBe(false);
+  it('should handle empty notification settings loaded via state service', () => {
+    // Simulate what happens when AFS returns {} for notifications.json
+    // The state service defaults missing channels/triggers
+    state.notificationSettings.set({
+      channels: { email: false, inApp: false, slack: false },
+      triggers: {
+        researchResults: false, contentPublished: false, teamMentions: false,
+        qaReviewRequired: false, approachingDeadlines: false, weeklyDigest: false,
+      },
+    });
+    fixture.detectChanges();
+    fixture.componentInstance.toggleTrigger('contentPublished');
+    expect(state.notificationSettings()?.triggers.contentPublished).toBe(true);
   });
 });
 
@@ -122,9 +107,7 @@ describe('TabNotificationsComponent (null settings)', () => {
   });
 
   it('should render nothing when settings is null', () => {
-    const el = fixture.nativeElement;
-    expect(el.querySelector('.tab-section')).toBeNull();
-    expect(el.querySelector('.toggle-switch')).toBeNull();
-    expect(el.textContent.trim()).toBe('');
+    expect(fixture.nativeElement.querySelector('.tab-card')).toBeNull();
+    expect(fixture.nativeElement.textContent.trim()).toBe('');
   });
 });

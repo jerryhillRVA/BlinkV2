@@ -15,18 +15,6 @@ export class TabNotificationsComponent {
     return this.state.notificationSettings();
   }
 
-  toggleChannel(channel: string): void {
-    const current = this.state.notificationSettings();
-    if (!current) return;
-    this.state.notificationSettings.set({
-      ...current,
-      channels: {
-        ...current.channels,
-        [channel]: !current.channels[channel as keyof typeof current.channels],
-      },
-    });
-  }
-
   toggleTrigger(trigger: string): void {
     const current = this.state.notificationSettings();
     if (!current) return;

@@ -64,57 +64,6 @@
       </div>
 
       <div class="field-group">
-        <div class="segment-header">
-          <span class="field-label">
-            <svg class="field-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>
-            </svg>
-            Audience Segment Targets
-            <app-tooltip text="Define and manage the specific demographic segments you are targeting." />
-          </span>
-          <button class="add-segment-btn" type="button" (click)="addSegment()">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="12" height="12">
-              <path d="M5 12h14"/><path d="M12 5v14"/>
-            </svg>
-            Add Segment
-          </button>
-        </div>
-        <div class="segments-list">
-          @for (segment of segments; track segment.id; let i = $index) {
-            <div class="segment-row">
-              <label class="segment-field">
-                <span class="segment-label">Demographic Description</span>
-                <input
-                  class="field-input"
-                  type="text"
-                  placeholder="e.g. Tech-savvy engineers interested in AI automation"
-                  [value]="segment.description"
-                  (input)="updateSegment(i, 'description', $any($event.target).value)"
-                />
-              </label>
-              <label class="segment-field segment-age">
-                <span class="segment-label">Age Range</span>
-                <select
-                  class="field-select"
-                  [value]="segment.ageRange"
-                  (change)="updateSegment(i, 'ageRange', $any($event.target).value)"
-                >
-                  @for (range of ageRanges; track range) {
-                    <option [value]="range">{{ range }}</option>
-                  }
-                </select>
-              </label>
-              <button class="remove-segment-btn" type="button" (click)="removeSegment(i)" aria-label="Remove segment">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="12" height="12">
-                  <path d="M18 6 6 18"/><path d="m6 6 12 12"/>
-                </svg>
-              </button>
-            </div>
-          }
-        </div>
-      </div>
-
-      <div class="field-group">
         <label class="field-label" for="ws-brand-voice">
           <svg class="field-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <path d="m12 8-9.04 9.06a2.82 2.82 0 1 0 3.98 3.98L16 12"/><circle cx="17" cy="7" r="5"/>

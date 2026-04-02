@@ -70,18 +70,18 @@ describe('WorkspaceSettingsComponent', () => {
     expect(subtitle?.textContent).toContain('Manage your Blink Social');
   });
 
-  it('should render all 8 tab buttons', () => {
+  it('should render all 7 tab buttons', () => {
     fixture.detectChanges();
     httpMock.expectOne('/api/workspaces/hive-collective/settings/general');
     const tabs = fixture.nativeElement.querySelectorAll('.tab-button');
-    expect(tabs.length).toBe(8);
+    expect(tabs.length).toBe(7);
   });
 
   it('should render SVG icons in each tab button', () => {
     fixture.detectChanges();
     httpMock.expectOne('/api/workspaces/hive-collective/settings/general');
     const icons = fixture.nativeElement.querySelectorAll('.tab-button .tab-icon');
-    expect(icons.length).toBe(8);
+    expect(icons.length).toBe(7);
   });
 
   it('should render blurred background image', () => {
@@ -105,7 +105,7 @@ describe('WorkspaceSettingsComponent', () => {
     fixture.detectChanges();
 
     const tabButtons = fixture.nativeElement.querySelectorAll('.tab-button');
-    tabButtons[4].click(); // Team tab
+    tabButtons[3].click(); // Team tab
     fixture.detectChanges();
 
     httpMock.expectOne('/api/workspaces/hive-collective/settings/team');
@@ -191,20 +191,6 @@ describe('WorkspaceSettingsComponent', () => {
     });
     fixture.detectChanges();
     expect(fixture.nativeElement.querySelector('app-tab-platforms')).toBeTruthy();
-  });
-
-  it('should render content tab', () => {
-    fixture.detectChanges();
-    httpMock.expectOne('/api/workspaces/hive-collective/settings/general').flush({});
-    fixture.detectChanges();
-
-    component.onTabChange('content');
-    fixture.detectChanges();
-    httpMock.expectOne('/api/workspaces/hive-collective/settings/brand-voice').flush({
-      brandVoiceDescription: 'Test',
-    });
-    fixture.detectChanges();
-    expect(fixture.nativeElement.querySelector('app-tab-content')).toBeTruthy();
   });
 
   it('should render agents tab', () => {

@@ -1,32 +1,41 @@
-.tab-section {
-  background: var(--blink-surface);
-  border: 1px solid var(--blink-outline-variant);
+.tab-card {
+  background: var(--blink-surface-card);
+  backdrop-filter: blur(8px);
   border-radius: 12px;
-  padding: 24px;
-  margin-bottom: 16px;
+  box-shadow: var(--blink-shadow-sm);
+  overflow: hidden;
 }
 
-.section-title {
+.card-header {
+  padding: 24px 24px 0;
+}
+
+.card-title {
   font-size: 18px;
   font-weight: 600;
   color: var(--blink-on-surface-strong);
-  margin: 0 0 16px;
+  margin: 0;
+}
+
+.card-content {
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
 }
 
 .toggle-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 10px 0;
-  border-bottom: 1px solid var(--blink-outline-variant);
-
-  &:last-child {
-    border-bottom: none;
-  }
+  padding: 16px;
+  border: 1px solid var(--blink-outline-variant);
+  border-radius: 12px;
 }
 
 .toggle-label {
-  font-size: 14px;
+  font-size: 16px;
+  font-weight: 500;
   color: var(--blink-on-surface);
 }
 

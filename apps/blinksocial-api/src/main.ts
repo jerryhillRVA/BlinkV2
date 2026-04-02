@@ -2,7 +2,7 @@ import { config } from 'dotenv';
 import { resolve } from 'path';
 
 // Load .env from workspace root (handles both dev serve and production)
-config({ path: resolve(process.cwd(), '.env'), override: true });
+config({ path: resolve(process.cwd(), '.env') });
 
 import { Logger } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';

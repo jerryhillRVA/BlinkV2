@@ -1,65 +1,21 @@
 @if (settings) {
-  <div class="tab-section">
-    <h2 class="section-title">Notification Channels</h2>
-
-    <div class="toggle-row">
-      <span class="toggle-label">Email</span>
-      <button class="toggle-switch" [class.on]="settings.channels.email" (click)="toggleChannel('email')">
-        <span class="toggle-knob"></span>
-      </button>
+  <div class="tab-card">
+    <div class="card-header">
+      <h2 class="card-title">Notification Settings</h2>
     </div>
-    <div class="toggle-row">
-      <span class="toggle-label">In-App</span>
-      <button class="toggle-switch" [class.on]="settings.channels.inApp" (click)="toggleChannel('inApp')">
-        <span class="toggle-knob"></span>
-      </button>
-    </div>
-    <div class="toggle-row">
-      <span class="toggle-label">Slack</span>
-      <button class="toggle-switch" [class.on]="settings.channels.slack" (click)="toggleChannel('slack')">
-        <span class="toggle-knob"></span>
-      </button>
-    </div>
-  </div>
-
-  <div class="tab-section">
-    <h2 class="section-title">Notification Triggers</h2>
-
-    <div class="toggle-row">
-      <span class="toggle-label">Research Results</span>
-      <button class="toggle-switch" [class.on]="settings.triggers.researchResults" (click)="toggleTrigger('researchResults')">
-        <span class="toggle-knob"></span>
-      </button>
-    </div>
-    <div class="toggle-row">
-      <span class="toggle-label">Content Published</span>
-      <button class="toggle-switch" [class.on]="settings.triggers.contentPublished" (click)="toggleTrigger('contentPublished')">
-        <span class="toggle-knob"></span>
-      </button>
-    </div>
-    <div class="toggle-row">
-      <span class="toggle-label">Team Mentions</span>
-      <button class="toggle-switch" [class.on]="settings.triggers.teamMentions" (click)="toggleTrigger('teamMentions')">
-        <span class="toggle-knob"></span>
-      </button>
-    </div>
-    <div class="toggle-row">
-      <span class="toggle-label">QA Review Required</span>
-      <button class="toggle-switch" [class.on]="settings.triggers.qaReviewRequired" (click)="toggleTrigger('qaReviewRequired')">
-        <span class="toggle-knob"></span>
-      </button>
-    </div>
-    <div class="toggle-row">
-      <span class="toggle-label">Approaching Deadlines</span>
-      <button class="toggle-switch" [class.on]="settings.triggers.approachingDeadlines" (click)="toggleTrigger('approachingDeadlines')">
-        <span class="toggle-knob"></span>
-      </button>
-    </div>
-    <div class="toggle-row">
-      <span class="toggle-label">Weekly Digest</span>
-      <button class="toggle-switch" [class.on]="settings.triggers.weeklyDigest" (click)="toggleTrigger('weeklyDigest')">
-        <span class="toggle-knob"></span>
-      </button>
+    <div class="card-content">
+      <div class="toggle-row">
+        <span class="toggle-label">Content Published</span>
+        <button class="toggle-switch" [class.on]="settings.triggers.contentPublished" (click)="toggleTrigger('contentPublished')">
+          <span class="toggle-knob"></span>
+        </button>
+      </div>
+      <div class="toggle-row">
+        <span class="toggle-label">Critical Errors</span>
+        <button class="toggle-switch" [class.on]="settings.triggers.qaReviewRequired" (click)="toggleTrigger('qaReviewRequired')">
+          <span class="toggle-knob"></span>
+        </button>
+      </div>
     </div>
   </div>
 }

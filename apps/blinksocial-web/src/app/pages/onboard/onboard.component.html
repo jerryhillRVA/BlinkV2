@@ -1,11 +1,24 @@
 <div class="onboard-page">
+  <div class="wizard-bg" aria-hidden="true">
+    <img src="dashboard-bg.jpg" alt="" />
+  </div>
+
+  <button class="back-home" (click)="onBackToDashboard()">
+    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <rect width="7" height="7" x="3" y="3" rx="1"/>
+      <rect width="7" height="7" x="14" y="3" rx="1"/>
+      <rect width="7" height="7" x="14" y="14" rx="1"/>
+      <rect width="7" height="7" x="3" y="14" rx="1"/>
+    </svg>
+    Back to Home
+  </button>
+
   <header class="onboard-header">
-    <button class="back-btn" (click)="onBackToDashboard()">
-      <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <path d="m12 19-7-7 7-7"/><path d="M19 12H5"/>
+    <div class="page-header-icon">
+      <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <rect width="8" height="4" x="8" y="2" rx="1" ry="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="m9 14 2 2 4-4"/>
       </svg>
-      Dashboard
-    </button>
+    </div>
     <h1 class="page-title">Project Onboarding</h1>
     <p class="page-subtitle">AI-guided discovery for your content strategy</p>
   </header>

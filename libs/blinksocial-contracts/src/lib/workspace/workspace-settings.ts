@@ -1,1 +1,1 @@
-export type SettingsTab = 'general' | 'platforms' | 'brand-voice' | 'content' | 'agents' | 'team' | 'notifications' | 'calendar' | 'security';
+export type SettingsTab = 'general' | 'platforms' | 'brand-voice' | 'agents' | 'team' | 'notifications' | 'calendar' | 'security';

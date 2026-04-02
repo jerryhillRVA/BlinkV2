@@ -102,7 +102,7 @@ test.describe('Onboard Page', () => {
       route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(mockWorkspacesResponse) })
     );
     await page.goto('/onboard');
-    await page.locator('.back-btn').click();
+    await page.locator('.back-home').click();
     await expect(page).toHaveURL('/');
   });
 

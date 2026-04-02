@@ -459,7 +459,7 @@ describe('OnboardComponent', () => {
   it('should handle back button click via DOM', () => {
     const fixture = createAndInitComponent();
     const navigateSpy = vi.spyOn(router, 'navigate');
-    const backBtn = fixture.nativeElement.querySelector('.back-btn');
+    const backBtn = fixture.nativeElement.querySelector('.back-home');
     backBtn.click();
     expect(navigateSpy).toHaveBeenCalledWith(['/']);
   });

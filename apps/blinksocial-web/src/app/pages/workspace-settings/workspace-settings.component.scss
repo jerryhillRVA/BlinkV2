@@ -154,12 +154,19 @@
 }
 
 .tab-actions {
-  margin-top: 24px;
   display: flex;
   justify-content: flex-end;
+  padding: 20px 24px;
+  margin-top: 16px;
+  background: var(--blink-surface-container-low);
+  border: 1px solid var(--blink-outline-variant);
+  border-radius: 12px;
 }
 
 .save-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
   padding: 10px 24px;
   border: none;
   border-radius: 8px;

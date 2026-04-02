@@ -24,9 +24,6 @@ describe('TabGeneralComponent', () => {
       purpose: 'Test purpose',
       mission: 'Test mission',
       brandVoice: 'Warm and encouraging',
-      audienceSegments: [
-        { id: 'seg-1', description: 'Tech-savvy engineers', ageRange: '25-34' },
-      ],
     });
 
     fixture = TestBed.createComponent(TabGeneralComponent);
@@ -49,12 +46,12 @@ describe('TabGeneralComponent', () => {
 
   it('should render icons in field labels', () => {
     const icons = fixture.nativeElement.querySelectorAll('.field-label .field-icon');
-    expect(icons.length).toBe(5);
+    expect(icons.length).toBe(4);
   });
 
   it('should render tooltips in field labels', () => {
     const tooltips = fixture.nativeElement.querySelectorAll('app-tooltip');
-    expect(tooltips.length).toBe(5);
+    expect(tooltips.length).toBe(4);
   });
 
   it('should render workspace name input', () => {
@@ -106,73 +103,9 @@ describe('TabGeneralComponent', () => {
     expect(state.generalSettings()).toBeNull();
   });
 
-  it('should render existing audience segments', () => {
-    const rows = fixture.nativeElement.querySelectorAll('.segment-row');
-    expect(rows.length).toBe(1);
-    const input = rows[0].querySelector('.field-input') as HTMLInputElement;
-    expect(input.value).toBe('Tech-savvy engineers');
-  });
-
-  it('should add a new segment', () => {
-    fixture.componentInstance.addSegment();
-    fixture.detectChanges();
-    const rows = fixture.nativeElement.querySelectorAll('.segment-row');
-    expect(rows.length).toBe(2);
-  });
-
-  it('should remove a segment', () => {
-    fixture.componentInstance.removeSegment(0);
-    fixture.detectChanges();
-    const rows = fixture.nativeElement.querySelectorAll('.segment-row');
-    expect(rows.length).toBe(0);
-  });
-
-  it('should update segment description', () => {
-    fixture.componentInstance.updateSegment(0, 'description', 'Updated description');
-    expect(state.generalSettings()?.audienceSegments?.[0].description).toBe('Updated description');
-  });
-
-  it('should update segment age range', () => {
-    fixture.componentInstance.updateSegment(0, 'ageRange', '35-44');
-    expect(state.generalSettings()?.audienceSegments?.[0].ageRange).toBe('35-44');
-  });
-
-  it('should render add segment button', () => {
-    const btn = fixture.nativeElement.querySelector('.add-segment-btn');
-    expect(btn?.textContent).toContain('Add Segment');
-  });
-
-  it('should return empty segments when settings has none', () => {
-    state.generalSettings.set({ workspaceName: 'Test' });
-    expect(fixture.componentInstance.segments).toEqual([]);
-  });
-
   it('should return empty brand voice when settings has none', () => {
     state.generalSettings.set({ workspaceName: 'Test' });
     expect(fixture.componentInstance.brandVoice).toBe('');
-  });
-
-  it('should not add segment when settings is null', () => {
-    state.generalSettings.set(null);
-    fixture.componentInstance.addSegment();
-    expect(state.generalSettings()).toBeNull();
-  });
-
-  it('should not remove segment when settings is null', () => {
-    state.generalSettings.set(null);
-    fixture.componentInstance.removeSegment(0);
-    expect(state.generalSettings()).toBeNull();
-  });
-
-  it('should not update segment when settings is null', () => {
-    state.generalSettings.set(null);
-    fixture.componentInstance.updateSegment(0, 'description', 'test');
-    expect(state.generalSettings()).toBeNull();
-  });
-
-  it('should not update segment at invalid index', () => {
-    fixture.componentInstance.updateSegment(99, 'description', 'test');
-    expect(state.generalSettings()?.audienceSegments?.[0].description).toBe('Tech-savvy engineers');
   });
 
   it('should render purpose textarea with empty string when purpose is undefined', () => {
@@ -189,29 +122,9 @@ describe('TabGeneralComponent', () => {
     expect(textarea.value).toBe('');
   });
 
-  it('should update segment description via DOM input event', () => {
-    const input = fixture.nativeElement.querySelector('.segment-row .field-input') as HTMLInputElement;
-    input.value = 'New description';
-    input.dispatchEvent(new Event('input'));
-    expect(state.generalSettings()?.audienceSegments?.[0].description).toBe('New description');
-  });
-
-  it('should update segment age range via DOM change event', () => {
-    const select = fixture.nativeElement.querySelector('.field-select') as HTMLSelectElement;
-    select.value = '35-44';
-    select.dispatchEvent(new Event('change'));
-    expect(state.generalSettings()?.audienceSegments?.[0].ageRange).toBe('35-44');
-  });
-
-  it('should add segment when no existing segments', () => {
-    state.generalSettings.set({ workspaceName: 'Test' });
-    fixture.componentInstance.addSegment();
-    expect(state.generalSettings()?.audienceSegments?.length).toBe(1);
-  });
-
-  it('should remove segment when no existing audienceSegments key', () => {
-    state.generalSettings.set({ workspaceName: 'Test' });
-    fixture.componentInstance.removeSegment(0);
-    expect(state.generalSettings()?.audienceSegments).toEqual([]);
+  it('should not render when settings is null', () => {
+    state.generalSettings.set(null);
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.tab-card')).toBeFalsy();
   });
 });

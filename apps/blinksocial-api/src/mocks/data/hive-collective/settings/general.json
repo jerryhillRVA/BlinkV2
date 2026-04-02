@@ -8,5 +8,10 @@
   "logoUrl": "https://cdn.hivecollective.io/logo-2026.svg",
   "website": "https://hivecollective.io",
   "contactEmail": "hello@hivecollective.io",
-  "status": "active"
+  "status": "active",
+  "audienceSegments": [
+    { "id": "seg-1", "description": "Tech-savvy engineers interested in AI automation.", "ageRange": "25-34" },
+    { "id": "seg-2", "description": "Social media managers looking for workflow efficiency.", "ageRange": "18-24" }
+  ],
+  "brandVoice": "Warm, encouraging, and evidence-based. We speak directly to our audience using 'you' — like a knowledgeable friend who also happens to be a certified trainer. We celebrate strength at every age without being condescending."
 }

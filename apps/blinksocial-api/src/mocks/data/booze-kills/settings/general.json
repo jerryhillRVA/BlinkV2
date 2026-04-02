@@ -8,5 +8,10 @@
   "logoUrl": "https://cdn.boozekills.org/logo.svg",
   "website": "https://boozekills.org",
   "contactEmail": "team@boozekills.org",
-  "status": "active"
+  "status": "active",
+  "audienceSegments": [
+    { "id": "seg-1", "description": "College students curious about reducing alcohol intake.", "ageRange": "18-24" },
+    { "id": "seg-2", "description": "Young professionals reconsidering their relationship with drinking.", "ageRange": "25-34" }
+  ],
+  "brandVoice": "Direct, unflinching, and empathetic. We don't sugarcoat the data but we never shame. We speak peer-to-peer, not top-down."
 }

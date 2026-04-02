@@ -74,13 +74,6 @@ describe('WorkspaceSettingsStateService', () => {
     expect(service.brandVoiceSettings()?.brandVoiceDescription).toBe('Test voice');
   });
 
-  it('should load content tab using brand-voice API endpoint', () => {
-    service.loadTab('content');
-    const req = httpMock.expectOne('/api/workspaces/hive-collective/settings/brand-voice');
-    req.flush({ brandVoiceDescription: 'Content voice' });
-    expect(service.brandVoiceSettings()?.brandVoiceDescription).toBe('Content voice');
-  });
-
   it('should load team settings from API', () => {
     service.loadTab('team');
     const req = httpMock.expectOne('/api/workspaces/hive-collective/settings/team');
@@ -183,7 +176,6 @@ describe('WorkspaceSettingsStateService', () => {
 
     service.brandVoiceSettings.set({ brandVoiceDescription: 'Voice' });
     expect(service.getCurrentTabData('brand-voice')).toBeDefined();
-    expect(service.getCurrentTabData('content')).toBeDefined();
 
     service.skillSettings.set({ skills: [] });
     expect(service.getCurrentTabData('agents')).toBeDefined();
@@ -207,7 +199,6 @@ describe('WorkspaceSettingsStateService', () => {
     expect(freshService.getCurrentTabData('general')).toBeNull();
     expect(freshService.getCurrentTabData('platforms')).toBeNull();
     expect(freshService.getCurrentTabData('brand-voice')).toBeNull();
-    expect(freshService.getCurrentTabData('content')).toBeNull();
     expect(freshService.getCurrentTabData('agents')).toBeNull();
     expect(freshService.getCurrentTabData('team')).toBeNull();
     expect(freshService.getCurrentTabData('notifications')).toBeNull();
@@ -226,10 +217,6 @@ describe('WorkspaceSettingsStateService', () => {
     service.saveTab('brand-voice');
     const bvReq = httpMock.expectOne('/api/workspaces/hive-collective/settings/brand-voice');
     bvReq.flush({ brandVoiceDescription: 'Test' });
-
-    service.saveTab('content');
-    const contentReq = httpMock.expectOne('/api/workspaces/hive-collective/settings/brand-voice');
-    contentReq.flush({ brandVoiceDescription: 'Test' });
 
     service.skillSettings.set({ skills: [] });
     service.saveTab('agents');
@@ -260,7 +247,6 @@ describe('WorkspaceSettingsStateService', () => {
   it('should not save any tab type when data is null', () => {
     service.saveTab('platforms');
     service.saveTab('brand-voice');
-    service.saveTab('content');
     service.saveTab('agents');
     service.saveTab('team');
     service.saveTab('notifications');

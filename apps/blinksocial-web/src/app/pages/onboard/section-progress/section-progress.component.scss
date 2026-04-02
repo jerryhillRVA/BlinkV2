@@ -1,50 +1,32 @@
 .progress-bar {
   display: flex;
   align-items: flex-start;
-  gap: 4px;
-  padding: 16px 24px;
-  overflow-x: auto;
-  scrollbar-width: none;
-
-  &::-webkit-scrollbar {
-    display: none;
-  }
+  justify-content: center;
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 32px 16px 80px;
 }
 
 .progress-step {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 6px;
-  flex: 1;
-  min-width: 80px;
   position: relative;
-
-  &:not(:last-child)::after {
-    content: '';
-    position: absolute;
-    top: 12px;
-    left: calc(50% + 14px);
-    right: calc(-50% + 14px);
-    height: 2px;
-    background: var(--blink-outline-variant);
-  }
-
-  &.covered:not(:last-child)::after {
-    background: var(--blink-brand-primary);
-  }
+  z-index: 1;
 }
 
 .step-dot {
-  width: 24px;
-  height: 24px;
+  width: 40px;
+  height: 40px;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  border: 2px solid var(--blink-outline-variant);
+  font-size: var(--blink-body-medium);
+  font-weight: 600;
+  border: 2px solid var(--blink-on-surface-medium);
   background: var(--blink-surface);
-  transition: all 0.2s;
+  transition: all 0.3s;
   position: relative;
   z-index: 1;
 
@@ -56,24 +38,41 @@
 
   .active & {
     border-color: var(--blink-brand-primary);
-    background: var(--blink-brand-primary-lightest-bg);
+    background: var(--blink-surface);
+    color: var(--blink-brand-primary);
   }
 }
 
 .step-label {
-  font-size: 11px;
-  font-weight: 500;
-  color: var(--blink-on-surface-muted);
+  position: absolute;
+  top: 48px;
   text-align: center;
+  width: 80px;
+  font-size: 9px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
   line-height: 1.3;
+  color: var(--blink-on-surface-medium);
 
   .covered & {
     color: var(--blink-brand-primary);
-    font-weight: 600;
   }
 
   .active & {
-    color: var(--blink-on-surface);
-    font-weight: 600;
+    color: var(--blink-brand-primary);
   }
+}
+
+.step-line {
+  flex: 1;
+  height: 2px;
+  margin: 20px 4px 0;
+  background: var(--blink-outline-dashed);
+  overflow: hidden;
+  transition: background 0.5s ease-in-out;
+}
+
+.step-line-filled {
+  background: var(--blink-brand-primary);
 }
