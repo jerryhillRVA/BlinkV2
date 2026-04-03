@@ -1,0 +1,12 @@
+{
+  "members": [
+    {
+      "id": "u-brett",
+      "name": "Brett Lewis",
+      "email": "blewis@jackreiley.com",
+      "role": "Admin",
+      "status": "active",
+      "joinedAt": "2026-02-01T10:00:00Z"
+    }
+  ]
+}

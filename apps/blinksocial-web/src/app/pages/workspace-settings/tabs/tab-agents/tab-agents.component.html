@@ -3,7 +3,7 @@
     <div class="card-header">
       <div class="card-header-text">
         <h4 class="card-title">Agent Personalities</h4>
-        <p class="card-description">View and manage your AI team members. Expand an agent to edit their responsibilities and expected outputs.</p>
+        <p class="card-description">View and manage your AI team members. Expand an agent to edit their full biography.</p>
       </div>
       <button class="add-agent-btn" type="button" (click)="addAgent()">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16">
@@ -26,9 +26,7 @@
                     <span class="agent-role-badge">{{ agent.role }}</span>
                   }
                 </h3>
-                @if (agent.responsibilities?.length) {
-                  <p class="agent-persona">{{ responsibilitiesPreview(agent) }}</p>
-                }
+                <p class="agent-persona">{{ bioPreview(agent) }}</p>
               </div>
             </div>
             <div class="agent-actions">
@@ -81,28 +79,17 @@
                   </div>
                 </div>
                 <div class="edit-field-group">
-                  <label class="edit-field-label" for="agent-responsibilities-{{ i }}">
-                    Responsibilities
-                    <app-tooltip text="Key tasks and duties this agent is responsible for." />
+                  <label class="edit-field-label" for="agent-bio-{{ i }}">
+                    Full Bio
+                    <app-tooltip text="The comprehensive biography and operational instructions for this agent." />
                   </label>
                   <textarea
                     class="edit-textarea-bio"
-                    id="agent-responsibilities-{{ i }}"
-                    placeholder="What this agent is responsible for..."
-                    (input)="updateAgentListField(i, 'responsibilities', $any($event.target).value)"
-                  >{{ responsibilitiesDisplay(agent) }}</textarea>
-                </div>
-                <div class="edit-field-group">
-                  <label class="edit-field-label" for="agent-outputs-{{ i }}">
-                    Expected Outputs
-                    <app-tooltip text="The deliverables and outputs this agent produces." />
-                  </label>
-                  <textarea
-                    class="edit-textarea-bio"
-                    id="agent-outputs-{{ i }}"
-                    placeholder="What deliverables this agent produces..."
-                    (input)="updateAgentListField(i, 'expectedOutputs', $any($event.target).value)"
-                  >{{ expectedOutputsDisplay(agent) }}</textarea>
+                    id="agent-bio-{{ i }}"
+                    placeholder="Describe the agent's personality, responsibilities, and specific goals..."
+                    [value]="agent.persona ?? ''"
+                    (input)="updateAgentField(i, 'persona', $any($event.target).value)"
+                  ></textarea>
                 </div>
                 <div class="edit-actions">
                   <button class="edit-done-btn" type="button" (click)="toggleEdit(i)">Done</button>

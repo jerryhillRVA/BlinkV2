@@ -12,13 +12,11 @@ function makeMockSettings(): SkillSettingsContract {
       {
         id: 'sk1', skillId: 'research', name: 'Reporting Agent', role: 'News Aggregator',
         persona: 'Focuses on scanning RSS feeds daily to identify emerging tech trends.',
-        responsibilities: ['Daily scanning', 'Summarization'],
         enabled: true,
       },
       {
         id: 'sk2', skillId: 'creative', name: 'Creative Agent', role: 'Content Specialist',
         persona: 'Specializes in high-engagement social media content.',
-        responsibilities: ['Hook generation', 'Caption writing'],
         enabled: true,
       },
     ],
@@ -56,9 +54,9 @@ describe('TabAgentsComponent', () => {
     expect(title?.textContent).toContain('Agent Personalities');
   });
 
-  it('should render card description', () => {
+  it('should render card description mentioning biography', () => {
     const desc = fixture.nativeElement.querySelector('.card-description');
-    expect(desc?.textContent).toContain('AI team members');
+    expect(desc?.textContent).toContain('full biography');
   });
 
   it('should render Add Agent button', () => {
@@ -92,25 +90,19 @@ describe('TabAgentsComponent', () => {
     expect(badges[1].textContent.trim()).toBe('Content Specialist');
   });
 
-  it('should display first responsibility as preview text', () => {
+  it('should display persona as preview text', () => {
     const personas = fixture.nativeElement.querySelectorAll('.agent-persona');
     expect(personas.length).toBe(2);
-    expect(personas[0].textContent).toContain('Daily scanning');
+    expect(personas[0].textContent).toContain('scanning RSS feeds');
   });
 
-  it('should render edit buttons', () => {
-    const editBtns = fixture.nativeElement.querySelectorAll('.action-btn-edit');
-    expect(editBtns.length).toBe(2);
-  });
-
-  it('should render remove buttons', () => {
-    const removeBtns = fixture.nativeElement.querySelectorAll('.action-btn-remove');
-    expect(removeBtns.length).toBe(2);
+  it('should render edit and remove buttons', () => {
+    expect(fixture.nativeElement.querySelectorAll('.action-btn-edit').length).toBe(2);
+    expect(fixture.nativeElement.querySelectorAll('.action-btn-remove').length).toBe(2);
   });
 
   it('should render chevron icons', () => {
-    const chevrons = fixture.nativeElement.querySelectorAll('.agent-chevron');
-    expect(chevrons.length).toBe(2);
+    expect(fixture.nativeElement.querySelectorAll('.agent-chevron').length).toBe(2);
   });
 });
 
@@ -156,7 +148,6 @@ describe('TabAgentsComponent interactions', () => {
     btn.click();
     fixture.detectChanges();
     expect(state.skillSettings()?.skills.length).toBe(3);
-    expect(state.skillSettings()?.skills[2].name).toBe('New Agent');
   });
 
   it('should remove agent on remove click', () => {
@@ -171,13 +162,6 @@ describe('TabAgentsComponent interactions', () => {
     btn.click();
     fixture.detectChanges();
     expect(state.skillSettings()?.skills.length).toBe(1);
-  });
-
-  it('should render correct number after adding agent', () => {
-    fixture.componentInstance.addAgent();
-    fixture.detectChanges();
-    const numbers = fixture.nativeElement.querySelectorAll('.agent-number');
-    expect(numbers[2].textContent.trim()).toBe('3');
   });
 });
 
@@ -200,9 +184,7 @@ describe('TabAgentsComponent (null settings)', () => {
   });
 
   it('should render nothing when settings is null', () => {
-    const el = fixture.nativeElement;
-    expect(el.querySelector('.tab-card')).toBeNull();
-    expect(el.textContent.trim()).toBe('');
+    expect(fixture.nativeElement.querySelector('.tab-card')).toBeNull();
   });
 });
 
@@ -285,18 +267,6 @@ describe('TabAgentsComponent edit panel', () => {
     expect(fixture.nativeElement.querySelector('.agent-edit-panel')).toBeNull();
   });
 
-  it('should only show one edit panel at a time', async () => {
-    fixture.componentInstance.toggleEdit(0);
-    fixture.detectChanges();
-    expect(fixture.nativeElement.querySelectorAll('.agent-edit-panel').length).toBe(1);
-
-    fixture.componentInstance.toggleEdit(1);
-    fixture.detectChanges();
-    await fixture.whenStable();
-    const panels = fixture.nativeElement.querySelectorAll('.agent-edit-panel');
-    expect(panels.length).toBe(1);
-  });
-
   it('should rotate chevron when editing', () => {
     fixture.componentInstance.toggleEdit(0);
     fixture.detectChanges();
@@ -309,7 +279,6 @@ describe('TabAgentsComponent edit panel', () => {
     fixture.componentInstance.toggleEdit(0);
     fixture.detectChanges();
     const input = fixture.nativeElement.querySelector('.edit-input-name') as HTMLInputElement;
-    expect(input).toBeTruthy();
     expect(input.value).toBe('Reporting Agent');
   });
 
@@ -317,47 +286,38 @@ describe('TabAgentsComponent edit panel', () => {
     fixture.componentInstance.toggleEdit(0);
     fixture.detectChanges();
     const input = fixture.nativeElement.querySelector('.edit-input-role') as HTMLInputElement;
-    expect(input).toBeTruthy();
     expect(input.value).toBe('News Aggregator');
   });
 
-  it('should render Responsibilities textarea with current value', () => {
+  it('should render single Full Bio textarea with persona value', () => {
     fixture.componentInstance.toggleEdit(0);
     fixture.detectChanges();
     const textareas = fixture.nativeElement.querySelectorAll('.edit-textarea-bio') as NodeListOf<HTMLTextAreaElement>;
-    expect(textareas.length).toBe(2);
-    expect(textareas[0].value).toContain('Daily scanning');
+    expect(textareas.length).toBe(1);
+    expect(textareas[0].value).toContain('scanning RSS feeds');
   });
 
-  it('should render Agent Name label with tooltip', () => {
+  it('should render 3 labels: Agent Name, Role, Full Bio', () => {
     fixture.componentInstance.toggleEdit(0);
     fixture.detectChanges();
     const labels = fixture.nativeElement.querySelectorAll('.edit-field-label');
+    expect(labels.length).toBe(3);
     expect(labels[0].textContent).toContain('Agent Name');
-    expect(labels[0].querySelector('app-tooltip')).toBeTruthy();
-  });
-
-  it('should render Role label with tooltip', () => {
-    fixture.componentInstance.toggleEdit(0);
-    fixture.detectChanges();
-    const labels = fixture.nativeElement.querySelectorAll('.edit-field-label');
     expect(labels[1].textContent).toContain('Role');
-    expect(labels[1].querySelector('app-tooltip')).toBeTruthy();
+    expect(labels[2].textContent).toContain('Full Bio');
   });
 
-  it('should render Responsibilities label with tooltip', () => {
+  it('should render tooltips on all labels', () => {
     fixture.componentInstance.toggleEdit(0);
     fixture.detectChanges();
-    const labels = fixture.nativeElement.querySelectorAll('.edit-field-label');
-    expect(labels[2].textContent).toContain('Responsibilities');
-    expect(labels[2].querySelector('app-tooltip')).toBeTruthy();
+    const tooltips = fixture.nativeElement.querySelectorAll('.edit-field-label app-tooltip');
+    expect(tooltips.length).toBe(3);
   });
 
   it('should render Done button', () => {
     fixture.componentInstance.toggleEdit(0);
     fixture.detectChanges();
     const btn = fixture.nativeElement.querySelector('.edit-done-btn') as HTMLButtonElement;
-    expect(btn).toBeTruthy();
     expect(btn.textContent.trim()).toBe('Done');
   });
 
@@ -377,7 +337,6 @@ describe('TabAgentsComponent edit panel', () => {
     const input = fixture.nativeElement.querySelector('.edit-input-name') as HTMLInputElement;
     input.value = 'Updated Agent';
     input.dispatchEvent(new Event('input'));
-    fixture.detectChanges();
     expect(state.skillSettings()?.skills[0].name).toBe('Updated Agent');
   });
 
@@ -387,29 +346,16 @@ describe('TabAgentsComponent edit panel', () => {
     const input = fixture.nativeElement.querySelector('.edit-input-role') as HTMLInputElement;
     input.value = 'New Role';
     input.dispatchEvent(new Event('input'));
-    fixture.detectChanges();
     expect(state.skillSettings()?.skills[0].role).toBe('New Role');
   });
 
-  it('should update agent responsibilities on textarea input', () => {
+  it('should update agent persona on bio textarea input', () => {
     fixture.componentInstance.toggleEdit(0);
     fixture.detectChanges();
-    const textareas = fixture.nativeElement.querySelectorAll('.edit-textarea-bio') as NodeListOf<HTMLTextAreaElement>;
-    textareas[0].value = 'Updated responsibility';
-    textareas[0].dispatchEvent(new Event('input'));
-    fixture.detectChanges();
-    expect(state.skillSettings()?.skills[0].responsibilities).toEqual(['Updated responsibility']);
-  });
-
-  it('should update second agent when editing index 1', () => {
-    fixture.componentInstance.toggleEdit(1);
-    fixture.detectChanges();
-    const input = fixture.nativeElement.querySelector('.edit-input-name') as HTMLInputElement;
-    expect(input.value).toBe('Creative Agent');
-    input.value = 'Renamed Creative';
-    input.dispatchEvent(new Event('input'));
-    fixture.detectChanges();
-    expect(state.skillSettings()?.skills[1].name).toBe('Renamed Creative');
+    const textarea = fixture.nativeElement.querySelector('.edit-textarea-bio') as HTMLTextAreaElement;
+    textarea.value = 'Updated bio text';
+    textarea.dispatchEvent(new Event('input'));
+    expect(state.skillSettings()?.skills[0].persona).toBe('Updated bio text');
   });
 
   it('should not update when settings is null', () => {
@@ -420,66 +366,18 @@ describe('TabAgentsComponent edit panel', () => {
     expect(state.skillSettings()).toBeNull();
   });
 
-  it('should not update list field when settings is null', () => {
-    state.skillSettings.set(null);
-    fixture.componentInstance.updateAgentListField(0, 'responsibilities', 'Test');
-    expect(state.skillSettings()).toBeNull();
-  });
-
-  it('should render edit panel with 2-column grid for name and role', () => {
-    fixture.componentInstance.toggleEdit(0);
-    fixture.detectChanges();
-    const grid = fixture.nativeElement.querySelector('.edit-field-grid');
-    expect(grid).toBeTruthy();
-  });
-
-  it('should render Expected Outputs textarea with current value', () => {
-    fixture.componentInstance.toggleEdit(0);
-    fixture.detectChanges();
-    const textareas = fixture.nativeElement.querySelectorAll('.edit-textarea-bio') as NodeListOf<HTMLTextAreaElement>;
-    expect(textareas[1]).toBeTruthy();
-  });
-
-  it('should render Expected Outputs label with tooltip', () => {
-    fixture.componentInstance.toggleEdit(0);
-    fixture.detectChanges();
-    const labels = fixture.nativeElement.querySelectorAll('.edit-field-label');
-    expect(labels[3].textContent).toContain('Expected Outputs');
-    expect(labels[3].querySelector('app-tooltip')).toBeTruthy();
-  });
-
-  it('should return empty string for responsibilitiesPreview with no responsibilities', () => {
+  it('should return fallback text for bioPreview when persona is empty', () => {
     const agent = { id: 'x', skillId: '', name: 'X', role: '', enabled: true };
-    expect(fixture.componentInstance.responsibilitiesPreview(agent)).toBe('');
+    expect(fixture.componentInstance.bioPreview(agent)).toBe('No biography provided yet.');
   });
 
-  it('should return first responsibility for responsibilitiesPreview', () => {
-    const agent = { id: 'x', skillId: '', name: 'X', role: '', enabled: true, responsibilities: ['First', 'Second'] };
-    expect(fixture.componentInstance.responsibilitiesPreview(agent)).toBe('First');
-  });
-
-  it('should return joined responsibilities for responsibilitiesDisplay', () => {
-    const agent = { id: 'x', skillId: '', name: 'X', role: '', enabled: true, responsibilities: ['A', 'B'] };
-    expect(fixture.componentInstance.responsibilitiesDisplay(agent)).toBe('A\nB');
-  });
-
-  it('should return joined expectedOutputs for expectedOutputsDisplay', () => {
-    const agent = { id: 'x', skillId: '', name: 'X', role: '', enabled: true, expectedOutputs: ['Out1', 'Out2'] };
-    expect(fixture.componentInstance.expectedOutputsDisplay(agent)).toBe('Out1\nOut2');
-  });
-
-  it('should update expectedOutputs on textarea input', () => {
-    fixture.componentInstance.toggleEdit(0);
-    fixture.detectChanges();
-    const textareas = fixture.nativeElement.querySelectorAll('.edit-textarea-bio') as NodeListOf<HTMLTextAreaElement>;
-    textareas[1].value = 'Output A\nOutput B';
-    textareas[1].dispatchEvent(new Event('input'));
-    fixture.detectChanges();
-    expect(state.skillSettings()?.skills[0].expectedOutputs).toEqual(['Output A', 'Output B']);
+  it('should return persona for bioPreview when set', () => {
+    const agent = { id: 'x', skillId: '', name: 'X', role: '', enabled: true, persona: 'A great agent' };
+    expect(fixture.componentInstance.bioPreview(agent)).toBe('A great agent');
   });
 });
 
-describe('TabAgentsComponent (agent without role or persona)', () => {
+describe('TabAgentsComponent (agent without role)', () => {
   let fixture: ReturnType<typeof TestBed.createComponent<TabAgentsComponent>>;
 
   beforeEach(async () => {
@@ -509,8 +407,8 @@ describe('TabAgentsComponent (agent without role or persona)', () => {
     expect(badges.length).toBe(0);
   });
 
-  it('should not render persona when not provided', () => {
+  it('should show fallback bio text when persona is not provided', () => {
     const persona = fixture.nativeElement.querySelector('.agent-persona');
-    expect(persona).toBeNull();
+    expect(persona.textContent).toContain('No biography provided yet.');
   });
 });

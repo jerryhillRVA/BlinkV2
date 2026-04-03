@@ -90,9 +90,9 @@ test.describe('Workspace Settings Page', () => {
     await expect(page.locator('.settings-subtitle')).toContainText('Manage your Blink Social');
   });
 
-  test('should have 8 tab buttons', async ({ page }) => {
+  test('should have 7 tab buttons', async ({ page }) => {
     const tabs = page.locator('.tab-button');
-    await expect(tabs).toHaveCount(8);
+    await expect(tabs).toHaveCount(7);
   });
 
   test('should default to General tab active', async ({ page }) => {
@@ -181,11 +181,7 @@ test.describe('Workspace Settings Tab Navigation', () => {
     await expect(page.locator('.save-button')).toContainText('Save Platform Settings');
   });
 
-  test('should switch to Content tab', async ({ page }) => {
-    await page.locator('.tab-button', { hasText: 'Content' }).click();
-    await expect(page.locator('.tab-button.active')).toContainText('Content');
-    await expect(page.locator('.save-button')).toContainText('Save Content Strategy');
-  });
+
 
   test('should switch to Agents tab', async ({ page }) => {
     await page.locator('.tab-button', { hasText: 'Agents' }).click();

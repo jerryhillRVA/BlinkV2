@@ -46,7 +46,6 @@ export class WorkspaceSettingsStateService {
     general: () => this.generalSettings(),
     platforms: () => this.platformSettings(),
     'brand-voice': () => this.brandVoiceSettings(),
-    content: () => this.brandVoiceSettings(),
     agents: () => this.skillSettings(),
     team: () => this.teamSettings(),
     notifications: () => this.notificationSettings(),
@@ -58,7 +57,6 @@ export class WorkspaceSettingsStateService {
     general: 'general',
     platforms: 'platforms',
     'brand-voice': 'brand-voice',
-    content: 'brand-voice',
     agents: 'skills',
     team: 'team',
     notifications: 'notifications',
@@ -113,7 +111,6 @@ export class WorkspaceSettingsStateService {
         this.platformSettings.set(data as PlatformSettingsContract);
         break;
       case 'brand-voice':
-      case 'content':
         this.brandVoiceSettings.set(data as BrandVoiceSettingsContract);
         break;
       case 'agents':
@@ -122,9 +119,17 @@ export class WorkspaceSettingsStateService {
       case 'team':
         this.teamSettings.set(data as TeamSettingsContract);
         break;
-      case 'notifications':
-        this.notificationSettings.set(data as NotificationSettingsContract);
+      case 'notifications': {
+        const notif = data as Partial<NotificationSettingsContract>;
+        this.notificationSettings.set({
+          channels: notif.channels ?? { email: false, inApp: false, slack: false },
+          triggers: notif.triggers ?? {
+            researchResults: false, contentPublished: false, teamMentions: false,
+            qaReviewRequired: false, approachingDeadlines: false, weeklyDigest: false,
+          },
+        });
         break;
+      }
       case 'calendar':
         this.calendarSettings.set(data as CalendarSettingsContract);
         break;
