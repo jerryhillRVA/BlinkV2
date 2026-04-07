@@ -1,6 +1,6 @@
 import { Component, DestroyRef, inject, signal } from '@angular/core';
-import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { IconComponent } from '../../shared/icon/icon.component';
 import type { AudienceSegment, SegmentJourneyStage, JourneyStage } from '../../strategy-research.types';
 import { AI_SIMULATION_DELAY_MS } from '../../strategy-research.constants';
 import { DEFAULT_SEGMENTS } from '../../strategy-research.mock-data';
@@ -17,7 +17,7 @@ const STAGE_LABELS: Record<JourneyStage, string> = {
 
 @Component({
   selector: 'app-audience',
-  imports: [CommonModule, FormsModule],
+  imports: [FormsModule, IconComponent],
   templateUrl: './audience.component.html',
   styleUrl: './audience.component.scss',
 })

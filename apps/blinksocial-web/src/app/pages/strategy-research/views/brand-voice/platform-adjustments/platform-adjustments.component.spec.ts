@@ -43,7 +43,7 @@ describe('PlatformAdjustmentsComponent', () => {
   it('should suggest platform tone with AI', () => {
     component.suggestTone('instagram');
     expect(component.suggestingPlatform()).toBe('instagram');
-    vi.advanceTimersByTime(1500);
+    vi.advanceTimersByTime(2500);
     expect(component.suggestingPlatform()).toBeNull();
     const ig = component.adjustments().find(p => p.platform === 'instagram');
     expect(ig?.adjustment).toContain('Warm, visual storytelling');
@@ -51,11 +51,11 @@ describe('PlatformAdjustmentsComponent', () => {
 
   it('should suggest for different platforms', () => {
     component.suggestTone('tiktok');
-    vi.advanceTimersByTime(1500);
+    vi.advanceTimersByTime(2500);
     expect(component.adjustments().find(p => p.platform === 'tiktok')?.adjustment).toContain('Fast-paced');
 
     component.suggestTone('youtube');
-    vi.advanceTimersByTime(1500);
+    vi.advanceTimersByTime(2500);
     expect(component.adjustments().find(p => p.platform === 'youtube')?.adjustment).toContain('Thorough');
   });
 
@@ -65,7 +65,7 @@ describe('PlatformAdjustmentsComponent', () => {
     const cards = nativeElement.querySelectorAll('.platform-card');
     expect(cards[0].querySelector('.spinner')).toBeTruthy();
     expect(cards[0].textContent).toContain('Suggesting...');
-    vi.advanceTimersByTime(1500);
+    vi.advanceTimersByTime(2500);
   });
 
   it('should render platform labels', () => {
@@ -79,6 +79,6 @@ describe('PlatformAdjustmentsComponent', () => {
   it('should clean up timer on destroy', () => {
     component.suggestTone('instagram');
     fixture.destroy();
-    vi.advanceTimersByTime(1500);
+    vi.advanceTimersByTime(2500);
   });
 });

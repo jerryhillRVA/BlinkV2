@@ -1,5 +1,4 @@
 import { Component, DestroyRef, inject, signal, computed } from '@angular/core';
-import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import type { ResearchSource, ContentPillar } from '../../strategy-research.types';
 import { AI_SIMULATION_DELAY_MS } from '../../strategy-research.constants';
@@ -16,7 +15,7 @@ const TYPE_COLORS: Record<ResearchSource['type'], { bg: string; text: string }> 
 
 @Component({
   selector: 'app-research-sources',
-  imports: [CommonModule, FormsModule],
+  imports: [FormsModule],
   templateUrl: './research-sources.component.html',
   styleUrl: './research-sources.component.scss',
 })

@@ -1,6 +1,6 @@
 import { Component, DestroyRef, inject, signal } from '@angular/core';
-import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { IconComponent } from '../../shared/icon/icon.component';
 import type { ContentPillar, PillarGoal } from '../../strategy-research.types';
 import { PRESET_COLORS, AI_SIMULATION_DELAY_MS } from '../../strategy-research.constants';
 import { DEFAULT_PILLARS } from '../../strategy-research.mock-data';
@@ -8,7 +8,7 @@ import { safeTimeout, generateId } from '../../strategy-research.utils';
 
 @Component({
   selector: 'app-strategic-pillars',
-  imports: [CommonModule, FormsModule],
+  imports: [FormsModule, IconComponent],
   templateUrl: './strategic-pillars.component.html',
   styleUrl: './strategic-pillars.component.scss',
 })

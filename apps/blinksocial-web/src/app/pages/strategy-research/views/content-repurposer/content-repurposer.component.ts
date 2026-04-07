@@ -1,5 +1,4 @@
 import { Component, DestroyRef, inject, signal } from '@angular/core';
-import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import type { Platform } from '../../strategy-research.types';
 import { PLATFORM_OPTIONS, AI_SIMULATION_DELAY_MS } from '../../strategy-research.constants';
@@ -20,7 +19,7 @@ const MOCK_OUTPUTS: RepurposedOutput[] = [
 
 @Component({
   selector: 'app-content-repurposer',
-  imports: [CommonModule, FormsModule],
+  imports: [FormsModule],
   templateUrl: './content-repurposer.component.html',
   styleUrl: './content-repurposer.component.scss',
 })

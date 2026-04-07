@@ -1,5 +1,4 @@
 import { Component, DestroyRef, inject, signal, computed } from '@angular/core';
-import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import type { ContentMixTarget, ContentCategory } from '../../strategy-research.types';
 import { AI_SIMULATION_DELAY_MS } from '../../strategy-research.constants';
@@ -19,7 +18,7 @@ const DEFAULT_MIX: ContentMixEntry[] = [
 
 @Component({
   selector: 'app-content-mix',
-  imports: [CommonModule, FormsModule],
+  imports: [FormsModule],
   templateUrl: './content-mix.component.html',
   styleUrl: './content-mix.component.scss',
 })

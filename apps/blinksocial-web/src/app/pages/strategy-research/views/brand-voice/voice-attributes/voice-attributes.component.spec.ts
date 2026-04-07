@@ -26,10 +26,16 @@ describe('VoiceAttributesComponent', () => {
     expect(component).toBeTruthy();
   });
 
-  it('should generate attributes with AI', () => {
+  it('should initialize with mock attributes', () => {
+    expect(component.attributes().length).toBe(4);
+    expect(component.attributes()[0].label).toBe('Empowering');
+  });
+
+  it('should generate additional attributes with AI', () => {
+    component.attributes.set([]);
     component.generateAttributes();
     expect(component.isGenerating()).toBe(true);
-    vi.advanceTimersByTime(2000);
+    vi.advanceTimersByTime(2500);
     expect(component.isGenerating()).toBe(false);
     expect(component.attributes().length).toBe(4);
     expect(component.attributes()[0].label).toBe('Empowering');
@@ -48,6 +54,7 @@ describe('VoiceAttributesComponent', () => {
   });
 
   it('should save a new attribute', () => {
+    component.attributes.set([]);
     component.startAdd();
     component.editAttribute.set({
       id: component.editingId()!,
@@ -63,6 +70,7 @@ describe('VoiceAttributesComponent', () => {
   });
 
   it('should not save attribute with empty label', () => {
+    component.attributes.set([]);
     component.startAdd();
     component.editAttribute.set({
       id: component.editingId()!,
@@ -76,6 +84,7 @@ describe('VoiceAttributesComponent', () => {
   });
 
   it('should edit an existing attribute', () => {
+    component.attributes.set([]);
     component.startAdd();
     component.editAttribute.set({
       id: component.editingId()!,
@@ -102,6 +111,7 @@ describe('VoiceAttributesComponent', () => {
   });
 
   it('should remove an attribute', () => {
+    component.attributes.set([]);
     component.startAdd();
     component.editAttribute.set({
       id: component.editingId()!,
@@ -116,8 +126,6 @@ describe('VoiceAttributesComponent', () => {
   });
 
   it('should render attribute cards', () => {
-    component.generateAttributes();
-    vi.advanceTimersByTime(2000);
     fixture.detectChanges();
     const cards = nativeElement.querySelectorAll('.attribute-card');
     expect(cards.length).toBe(4);
@@ -132,6 +140,6 @@ describe('VoiceAttributesComponent', () => {
   it('should clean up timer on destroy', () => {
     component.generateAttributes();
     fixture.destroy();
-    vi.advanceTimersByTime(2000);
+    vi.advanceTimersByTime(2500);
   });
 });

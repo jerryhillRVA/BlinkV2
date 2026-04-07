@@ -1,7 +1,7 @@
 import { Component, DestroyRef, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import type { Platform } from '../../../strategy-research.types';
-import { PLATFORM_LABELS } from '../../../strategy-research.constants';
+import { AI_SIMULATION_DELAY_MS, PLATFORM_LABELS } from '../../../strategy-research.constants';
 import { safeTimeout } from '../../../strategy-research.utils';
 
 const ALL_PLATFORMS: Platform[] = ['instagram', 'tiktok', 'youtube', 'facebook', 'linkedin'];
@@ -40,6 +40,6 @@ export class PlatformAdjustmentsComponent {
       const suggestion = MOCK_PLATFORM_SUGGESTIONS[platform] ?? '';
       this.updateAdjustment(platform, suggestion);
       this.suggestingPlatform.set(null);
-    }, 1500, this.destroyRef);
+    }, AI_SIMULATION_DELAY_MS, this.destroyRef);
   }
 }

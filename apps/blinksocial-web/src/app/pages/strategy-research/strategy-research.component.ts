@@ -1,5 +1,4 @@
 import { Component, inject, signal } from '@angular/core';
-import { CommonModule } from '@angular/common';
 import { ActivatedRoute } from '@angular/router';
 import { ObjectivesStripComponent } from './objectives-strip/objectives-strip.component';
 import { BrandVoiceComponent } from './views/brand-voice/brand-voice.component';
@@ -16,10 +15,15 @@ import { SeoHashtagsComponent } from './views/seo-hashtags/seo-hashtags.componen
 import type { StrategyView, BusinessObjective, SidebarItem } from './strategy-research.types';
 import { SIDEBAR_ITEMS } from './strategy-research.constants';
 
+const SIDEBAR_SECTIONS: { label: string; items: SidebarItem[] }[] = [
+  { label: 'Strategy', items: SIDEBAR_ITEMS.filter(i => i.section === 'strategy') },
+  { label: 'Research', items: SIDEBAR_ITEMS.filter(i => i.section === 'research') },
+  { label: 'Content Tools', items: SIDEBAR_ITEMS.filter(i => i.section === 'content-tools') },
+];
+
 @Component({
   selector: 'app-strategy-research',
   imports: [
-    CommonModule,
     ObjectivesStripComponent,
     BrandVoiceComponent,
     StrategicPillarsComponent,
@@ -42,11 +46,7 @@ export class StrategyResearchComponent {
   readonly activeView = signal<StrategyView>('brand-voice');
   readonly objectives = signal<BusinessObjective[]>([]);
 
-  readonly sidebarSections: { label: string; items: SidebarItem[] }[] = [
-    { label: 'Strategy', items: SIDEBAR_ITEMS.filter(i => i.section === 'strategy') },
-    { label: 'Research', items: SIDEBAR_ITEMS.filter(i => i.section === 'research') },
-    { label: 'Content Tools', items: SIDEBAR_ITEMS.filter(i => i.section === 'content-tools') },
-  ];
+  readonly sidebarSections = SIDEBAR_SECTIONS;
 
   setActiveView(view: StrategyView): void {
     this.activeView.set(view);

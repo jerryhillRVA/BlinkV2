@@ -177,8 +177,8 @@ describe('AudienceComponent', () => {
       const segmentId = component.segments()[0].id;
       component.toggleJourney(segmentId);
       fixture.detectChanges();
-      const rotatedSvg = fixture.nativeElement.querySelector('.btn-journey-toggle svg.rotated');
-      expect(rotatedSvg).toBeTruthy();
+      const rotatedIcon = fixture.nativeElement.querySelector('.btn-journey-toggle app-icon.rotated');
+      expect(rotatedIcon).toBeTruthy();
     });
   });
 

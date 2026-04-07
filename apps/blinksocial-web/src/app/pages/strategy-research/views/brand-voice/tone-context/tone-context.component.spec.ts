@@ -21,19 +21,19 @@ describe('ToneContextComponent', () => {
     expect(component).toBeTruthy();
   });
 
-  it('should show empty state when no tone contexts', () => {
-    expect(nativeElement.querySelector('.empty-state')?.textContent).toContain('No tone contexts yet');
-    expect(nativeElement.querySelector('.tone-table')).toBeFalsy();
-  });
-
-  it('should generate tone contexts', () => {
-    component.generateToneContexts();
+  it('should initialize with mock tone contexts', () => {
     expect(component.toneContexts().length).toBe(4);
     expect(component.toneContexts()[0].context).toBe('Educational');
   });
 
-  it('should render tone table after generating', () => {
-    component.generateToneContexts();
+  it('should show empty state when no tone contexts', () => {
+    component.toneContexts.set([]);
+    fixture.detectChanges();
+    expect(nativeElement.querySelector('.empty-state')?.textContent).toContain('No tone contexts yet');
+    expect(nativeElement.querySelector('.tone-table')).toBeFalsy();
+  });
+
+  it('should render tone table with initial data', () => {
     fixture.detectChanges();
     expect(nativeElement.querySelector('.tone-table')).toBeTruthy();
     expect(nativeElement.querySelectorAll('.tone-table tbody tr').length).toBe(4);
@@ -46,6 +46,7 @@ describe('ToneContextComponent', () => {
   });
 
   it('should save a new tone', () => {
+    component.toneContexts.set([]);
     component.startAdd();
     component.editTone.set({
       id: component.editingId()!,
@@ -59,6 +60,7 @@ describe('ToneContextComponent', () => {
   });
 
   it('should not save with empty context', () => {
+    component.toneContexts.set([]);
     component.startAdd();
     component.editTone.set({ id: component.editingId()!, context: '   ', tone: 'Tone', example: '' });
     component.save();
@@ -66,10 +68,6 @@ describe('ToneContextComponent', () => {
   });
 
   it('should edit an existing tone', () => {
-    component.startAdd();
-    component.editTone.set({ id: component.editingId()!, context: 'Original', tone: 'T', example: '' });
-    component.save();
-
     component.startEdit(component.toneContexts()[0]);
     component.updateField('context', 'Updated');
     component.save();
@@ -83,11 +81,9 @@ describe('ToneContextComponent', () => {
   });
 
   it('should remove a tone', () => {
-    component.startAdd();
-    component.editTone.set({ id: component.editingId()!, context: 'X', tone: 'T', example: '' });
-    component.save();
+    const initialLength = component.toneContexts().length;
     component.remove(component.toneContexts()[0].id);
-    expect(component.toneContexts().length).toBe(0);
+    expect(component.toneContexts().length).toBe(initialLength - 1);
   });
 
   it('should update edit tone fields', () => {

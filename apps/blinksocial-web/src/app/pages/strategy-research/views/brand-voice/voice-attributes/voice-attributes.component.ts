@@ -1,6 +1,8 @@
 import { Component, DestroyRef, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { IconComponent } from '../../../shared/icon/icon.component';
 import type { VoiceAttribute } from '../../../strategy-research.types';
+import { AI_SIMULATION_DELAY_MS } from '../../../strategy-research.constants';
 import { safeTimeout, generateId } from '../../../strategy-research.utils';
 
 const MOCK_VOICE_ATTRIBUTES: VoiceAttribute[] = [
@@ -12,14 +14,14 @@ const MOCK_VOICE_ATTRIBUTES: VoiceAttribute[] = [
 
 @Component({
   selector: 'app-voice-attributes',
-  imports: [FormsModule],
+  imports: [FormsModule, IconComponent],
   templateUrl: './voice-attributes.component.html',
   styleUrl: './voice-attributes.component.scss',
 })
 export class VoiceAttributesComponent {
   private readonly destroyRef = inject(DestroyRef);
 
-  readonly attributes = signal<VoiceAttribute[]>([]);
+  readonly attributes = signal<VoiceAttribute[]>(MOCK_VOICE_ATTRIBUTES);
   readonly isGenerating = signal(false);
   readonly editingId = signal<string | null>(null);
   readonly editAttribute = signal<VoiceAttribute>({ id: '', label: '', description: '', doExample: '', dontExample: '' });
@@ -29,7 +31,7 @@ export class VoiceAttributesComponent {
     safeTimeout(() => {
       this.attributes.update(attrs => [...attrs, ...MOCK_VOICE_ATTRIBUTES]);
       this.isGenerating.set(false);
-    }, 2000, this.destroyRef);
+    }, AI_SIMULATION_DELAY_MS, this.destroyRef);
   }
 
   startAdd(): void {

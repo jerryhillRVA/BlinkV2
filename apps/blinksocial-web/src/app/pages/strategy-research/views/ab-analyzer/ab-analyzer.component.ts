@@ -1,5 +1,4 @@
 import { Component, DestroyRef, inject, signal } from '@angular/core';
-import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import type { Platform } from '../../strategy-research.types';
 import { PLATFORM_OPTIONS, AB_GOAL_OPTIONS, AI_SIMULATION_DELAY_MS } from '../../strategy-research.constants';
@@ -40,7 +39,7 @@ const MOCK_ANALYSIS: AnalysisResult = {
 
 @Component({
   selector: 'app-ab-analyzer',
-  imports: [CommonModule, FormsModule],
+  imports: [FormsModule],
   templateUrl: './ab-analyzer.component.html',
   styleUrl: './ab-analyzer.component.scss',
 })

@@ -39,7 +39,7 @@ describe('VoiceMissionComponent', () => {
     component.draftMission();
     expect(component.isDrafting()).toBe(true);
 
-    vi.advanceTimersByTime(2000);
+    vi.advanceTimersByTime(2500);
     expect(component.isDrafting()).toBe(false);
     expect(component.missionStatement()).toContain('Empower women over 40');
   });
@@ -53,7 +53,7 @@ describe('VoiceMissionComponent', () => {
     expect(btn.disabled).toBe(true);
     expect(nativeElement.querySelector('.spinner')).toBeTruthy();
 
-    vi.advanceTimersByTime(2000);
+    vi.advanceTimersByTime(2500);
     fixture.detectChanges();
 
     expect(btn.textContent).toContain('AI Draft');
@@ -78,7 +78,7 @@ describe('VoiceMissionComponent', () => {
     component.draftMission();
     expect(component.isDrafting()).toBe(true);
     fixture.destroy();
-    vi.advanceTimersByTime(2000);
+    vi.advanceTimersByTime(2500);
     // No error thrown - timer was cleaned up
   });
 });

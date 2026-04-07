@@ -1,5 +1,4 @@
 import { Component, DestroyRef, inject, signal } from '@angular/core';
-import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import type { ChannelStrategyEntry, Platform } from '../../strategy-research.types';
 import { PLATFORM_LABELS, PLATFORM_ICONS, AI_SIMULATION_DELAY_MS } from '../../strategy-research.constants';
@@ -12,7 +11,7 @@ const CONTENT_TYPE_OPTIONS = [
 
 @Component({
   selector: 'app-channel-strategy',
-  imports: [CommonModule, FormsModule],
+  imports: [FormsModule],
   templateUrl: './channel-strategy.component.html',
   styleUrl: './channel-strategy.component.scss',
 })

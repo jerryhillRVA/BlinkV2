@@ -1,19 +1,19 @@
-import { Component, DestroyRef, EventEmitter, inject, Input, Output, signal } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, DestroyRef, inject, input, output, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { IconComponent } from '../shared/icon/icon.component';
 import type { BusinessObjective, ObjectiveCategory } from '../strategy-research.types';
 import { OBJECTIVE_CATEGORY_CONFIG, AI_SIMULATION_DELAY_MS } from '../strategy-research.constants';
 import { safeTimeout, generateId } from '../strategy-research.utils';
 
 @Component({
   selector: 'app-objectives-strip',
-  imports: [CommonModule, FormsModule],
+  imports: [FormsModule, IconComponent],
   templateUrl: './objectives-strip.component.html',
   styleUrl: './objectives-strip.component.scss',
 })
 export class ObjectivesStripComponent {
-  @Input() objectives: BusinessObjective[] = [];
-  @Output() objectivesChange = new EventEmitter<BusinessObjective[]>();
+  readonly objectives = input<BusinessObjective[]>([]);
+  readonly objectivesChange = output<BusinessObjective[]>();
 
   private readonly destroyRef = inject(DestroyRef);
 
@@ -37,8 +37,9 @@ export class ObjectivesStripComponent {
   }
 
   openDrawer(): void {
-    this.dialogObjectives = this.objectives.length > 0
-      ? this.objectives.map(o => ({ ...o }))
+    const current = this.objectives();
+    this.dialogObjectives = current.length > 0
+      ? current.map(o => ({ ...o }))
       : [this.createBlankObjective()];
     this.showDrawer.set(true);
   }

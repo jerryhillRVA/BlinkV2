@@ -1,5 +1,6 @@
 import { Component, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { IconComponent } from '../../../shared/icon/icon.component';
 import type { ToneContext } from '../../../strategy-research.types';
 import { generateId } from '../../../strategy-research.utils';
 
@@ -12,12 +13,12 @@ const MOCK_TONE_CONTEXTS: ToneContext[] = [
 
 @Component({
   selector: 'app-tone-context',
-  imports: [FormsModule],
+  imports: [FormsModule, IconComponent],
   templateUrl: './tone-context.component.html',
   styleUrl: './tone-context.component.scss',
 })
 export class ToneContextComponent {
-  readonly toneContexts = signal<ToneContext[]>([]);
+  readonly toneContexts = signal<ToneContext[]>(MOCK_TONE_CONTEXTS);
   readonly editingId = signal<string | null>(null);
   readonly editTone = signal<ToneContext>({ id: '', context: '', tone: '', example: '' });
 

@@ -1,8 +1,6 @@
 <section class="card">
   <div class="card-header">
-    <svg class="card-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-      <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
-    </svg>
+    <app-icon name="message" class="card-icon" />
     <h3 class="card-title">Tone by Context</h3>
   </div>
   <p class="card-description">Map how your tone shifts across different content contexts.</p>
@@ -26,10 +24,10 @@
               <td class="example-cell">{{ tone.example }}</td>
               <td class="actions-col">
                 <button class="btn-icon-only" (click)="startEdit(tone)" title="Edit">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg>
+                  <app-icon name="edit" />
                 </button>
                 <button class="btn-icon-only btn-danger" (click)="remove(tone.id)" title="Remove">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
+                  <app-icon name="trash" />
                 </button>
               </td>
             </tr>
@@ -69,7 +67,7 @@
 
   <div class="card-actions">
     <button class="btn btn-secondary" (click)="startAdd()">
-      <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      <app-icon name="plus" class="btn-icon" />
       Add Context
     </button>
   </div>
