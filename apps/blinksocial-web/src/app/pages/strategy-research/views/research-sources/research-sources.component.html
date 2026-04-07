@@ -54,7 +54,7 @@
 
         <div class="source-pillars">
           @for (pillarId of source.pillarIds; track pillarId) {
-            <span class="pillar-chip" [style.background]="getPillarColor(pillarId) + '1a'" [style.color]="getPillarColor(pillarId)">
+            <span class="pillar-chip" [style.--chip-color]="getPillarColor(pillarId)">
               {{ getPillarName(pillarId) }}
             </span>
           }

@@ -83,13 +83,11 @@ export class ResearchSourcesComponent {
     }, 2500);
   }
 
-  createIdea(source: ResearchSource): void {
+  createIdea(_source: ResearchSource): void {
     // Placeholder for future implementation
-    console.log('Create idea from:', source.title);
   }
 
-  startProduction(source: ResearchSource): void {
+  startProduction(_source: ResearchSource): void {
     // Placeholder for future implementation
-    console.log('Start production from:', source.title);
   }
 }

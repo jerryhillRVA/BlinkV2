@@ -5,13 +5,8 @@ import {
   type ContentPillar,
   type PillarGoal,
   DEFAULT_PILLARS,
+  PRESET_COLORS,
 } from '../../strategy-research.types';
-
-const PRESET_COLORS = [
-  '#d94e33', '#e8533f', '#f59e0b', '#10b981',
-  '#3b82f6', '#8b5cf6', '#ec4899', '#6366f1',
-  '#14b8a6', '#f97316',
-];
 
 @Component({
   selector: 'app-strategic-pillars',

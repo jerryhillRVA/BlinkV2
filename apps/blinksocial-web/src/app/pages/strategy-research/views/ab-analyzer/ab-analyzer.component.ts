@@ -1,7 +1,7 @@
 import { Component, DestroyRef, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { type Platform } from '../../strategy-research.types';
+import { type Platform, PLATFORM_OPTIONS, AB_GOAL_OPTIONS } from '../../strategy-research.types';
 
 interface ScoreBreakdown {
   hookStrength: { a: number; b: number };
@@ -35,15 +35,6 @@ const MOCK_ANALYSIS: AnalysisResult = {
   improvedVersion: 'Your strongest decade starts now. Join 2,000+ women who\'ve reclaimed their energy, strength, and confidence after 40. Start your free 7-day movement plan today.',
 };
 
-const GOAL_OPTIONS = ['Engagement', 'Conversions', 'Brand Awareness', 'Follower Growth', 'Traffic'];
-
-const PLATFORM_OPTIONS: { id: Platform; label: string }[] = [
-  { id: 'instagram', label: 'Instagram' },
-  { id: 'tiktok', label: 'TikTok' },
-  { id: 'youtube', label: 'YouTube' },
-  { id: 'linkedin', label: 'LinkedIn' },
-  { id: 'facebook', label: 'Facebook' },
-];
 
 @Component({
   selector: 'app-ab-analyzer',
@@ -66,10 +57,10 @@ export class AbAnalyzerComponent {
   readonly isAnalyzing = signal(false);
   readonly analysis = signal<AnalysisResult | null>(null);
 
-  selectedGoal = GOAL_OPTIONS[0];
+  selectedGoal = AB_GOAL_OPTIONS[0];
   selectedPlatform: Platform = 'instagram';
 
-  readonly goalOptions = GOAL_OPTIONS;
+  readonly goalOptions = AB_GOAL_OPTIONS;
   readonly platformOptions = PLATFORM_OPTIONS;
 
   readonly scoreMetrics: { key: keyof ScoreBreakdown; label: string }[] = [

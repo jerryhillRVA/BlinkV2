@@ -1,7 +1,7 @@
 import { Component, DestroyRef, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { type Platform, DEFAULT_PILLARS } from '../../strategy-research.types';
+import { type Platform, DEFAULT_PILLARS, PLATFORM_OPTIONS, SEO_GOAL_OPTIONS, toggleSetItem } from '../../strategy-research.types';
 
 type HashtagTab = 'reach' | 'niche' | 'community';
 
@@ -39,16 +39,6 @@ const MOCK_SEO: SeoData = {
   ],
 };
 
-const GOAL_OPTIONS = ['Engagement', 'Reach', 'Conversions', 'Brand Awareness', 'Traffic'];
-
-const PLATFORM_OPTIONS: { id: Platform; label: string }[] = [
-  { id: 'instagram', label: 'Instagram' },
-  { id: 'tiktok', label: 'TikTok' },
-  { id: 'youtube', label: 'YouTube' },
-  { id: 'linkedin', label: 'LinkedIn' },
-  { id: 'facebook', label: 'Facebook' },
-];
-
 @Component({
   selector: 'app-seo-hashtags',
   imports: [CommonModule, FormsModule],
@@ -72,10 +62,10 @@ export class SeoHashtagsComponent {
 
   selectedPillar = DEFAULT_PILLARS[0].name;
   selectedPlatform: Platform = 'instagram';
-  selectedGoal = GOAL_OPTIONS[0];
+  selectedGoal = SEO_GOAL_OPTIONS[0];
 
   readonly pillarOptions = DEFAULT_PILLARS.map(p => p.name);
-  readonly goalOptions = GOAL_OPTIONS;
+  readonly goalOptions = SEO_GOAL_OPTIONS;
   readonly platformOptions = PLATFORM_OPTIONS;
   readonly hashtagTabs: { id: HashtagTab; label: string }[] = [
     { id: 'reach', label: 'Reach' },
@@ -104,15 +94,7 @@ export class SeoHashtagsComponent {
   }
 
   toggleCheckItem(index: number): void {
-    this.checkedItems.update(set => {
-      const next = new Set(set);
-      if (next.has(index)) {
-        next.delete(index);
-      } else {
-        next.add(index);
-      }
-      return next;
-    });
+    this.checkedItems.update(set => toggleSetItem(set, index));
   }
 
   isChecked(index: number): boolean {

@@ -215,18 +215,12 @@ describe('ResearchSourcesComponent', () => {
 
   it('should call createIdea without error', () => {
     const source = component.sources()[0];
-    const spy = vi.spyOn(console, 'log');
-    component.createIdea(source);
-    expect(spy).toHaveBeenCalledWith('Create idea from:', source.title);
-    spy.mockRestore();
+    expect(() => component.createIdea(source)).not.toThrow();
   });
 
   it('should call startProduction without error', () => {
     const source = component.sources()[0];
-    const spy = vi.spyOn(console, 'log');
-    component.startProduction(source);
-    expect(spy).toHaveBeenCalledWith('Start production from:', source.title);
-    spy.mockRestore();
+    expect(() => component.startProduction(source)).not.toThrow();
   });
 
   // --- DOM interactions for template function coverage ---
@@ -241,19 +235,13 @@ describe('ResearchSourcesComponent', () => {
   });
 
   it('should trigger createIdea via Create Idea button click in DOM', () => {
-    const spy = vi.spyOn(console, 'log');
     const createBtn = nativeElement.querySelector('.btn-create-idea') as HTMLButtonElement;
-    createBtn.click();
-    expect(spy).toHaveBeenCalled();
-    spy.mockRestore();
+    expect(() => createBtn.click()).not.toThrow();
   });
 
   it('should trigger startProduction via Start Production button click in DOM', () => {
-    const spy = vi.spyOn(console, 'log');
     const prodBtn = nativeElement.querySelector('.btn-start-prod') as HTMLButtonElement;
-    prodBtn.click();
-    expect(spy).toHaveBeenCalled();
-    spy.mockRestore();
+    expect(() => prodBtn.click()).not.toThrow();
   });
 
   it('should change filter via select ngModelChange in DOM', () => {
@@ -285,10 +273,10 @@ describe('ResearchSourcesComponent', () => {
     expect(dates[0].textContent?.trim().length).toBeGreaterThan(0);
   });
 
-  it('should render pillar chips with correct style attributes', () => {
+  it('should render pillar chips with CSS variable for color', () => {
     const chips = nativeElement.querySelectorAll('.pillar-chip') as NodeListOf<HTMLElement>;
     expect(chips.length).toBeGreaterThan(0);
-    // Should have inline styles for background and color
-    expect(chips[0].style.color).toBeTruthy();
+    // Should have --chip-color CSS variable set via inline style
+    expect(chips[0].style.getPropertyValue('--chip-color')).toBeTruthy();
   });
 });

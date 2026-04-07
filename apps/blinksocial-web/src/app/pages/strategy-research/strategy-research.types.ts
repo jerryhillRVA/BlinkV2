@@ -163,6 +163,70 @@ export const SIDEBAR_ITEMS: SidebarItem[] = [
   { id: 'seo', label: 'SEO & Hashtags', section: 'content-tools', iconPath: 'M4 9h16M4 15h16M10 3 8 21M16 3l-2 18' },
 ];
 
+// ── Shared platform constants ───────────────────────────────────────────────
+
+export const PLATFORM_OPTIONS: { id: Platform; label: string }[] = [
+  { id: 'instagram', label: 'Instagram' },
+  { id: 'tiktok', label: 'TikTok' },
+  { id: 'youtube', label: 'YouTube' },
+  { id: 'linkedin', label: 'LinkedIn' },
+  { id: 'facebook', label: 'Facebook' },
+];
+
+export const PLATFORM_LABELS: Record<Platform, string> = {
+  instagram: 'Instagram',
+  tiktok: 'TikTok',
+  youtube: 'YouTube',
+  facebook: 'Facebook',
+  linkedin: 'LinkedIn',
+};
+
+export const PLATFORM_ICONS: Record<Platform, string> = {
+  instagram: 'M7.8 2h8.4C19.4 2 22 4.6 22 7.8v8.4a5.8 5.8 0 0 1-5.8 5.8H7.8C4.6 22 2 19.4 2 16.2V7.8A5.8 5.8 0 0 1 7.8 2Zm-.2 2A3.6 3.6 0 0 0 4 7.6v8.8C4 18.39 5.61 20 7.6 20h8.8a3.6 3.6 0 0 0 3.6-3.6V7.6C20 5.61 18.39 4 16.4 4H7.6ZM16.5 6.5a1 1 0 1 1 0 2 1 1 0 0 1 0-2ZM12 7a5 5 0 1 1 0 10 5 5 0 0 1 0-10Zm0 2a3 3 0 1 0 0 6 3 3 0 0 0 0-6Z',
+  tiktok: 'M9 12a4 4 0 1 0 4 4V4a5 5 0 0 0 5 5',
+  youtube: 'M2.5 17a24.12 24.12 0 0 1 0-10 2 2 0 0 1 1.4-1.4 49.56 49.56 0 0 1 16.2 0A2 2 0 0 1 21.5 7a24.12 24.12 0 0 1 0 10 2 2 0 0 1-1.4 1.4 49.55 49.55 0 0 1-16.2 0A2 2 0 0 1 2.5 17ZM10 15l5-3-5-3v6Z',
+  facebook: 'M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z',
+  linkedin: 'M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6zM2 9h4v12H2zM4 6a2 2 0 1 0 0-4 2 2 0 0 0 0 4z',
+};
+
+// ── Goal option sets (intentionally different per tool context) ─────────────
+
+/** A/B Analyzer: performance metrics for comparing content variants */
+export const AB_GOAL_OPTIONS = ['Engagement', 'Conversions', 'Brand Awareness', 'Follower Growth', 'Traffic'];
+/** SEO & Hashtags: discoverability-focused goals */
+export const SEO_GOAL_OPTIONS = ['Engagement', 'Reach', 'Conversions', 'Brand Awareness', 'Traffic'];
+/** Series Builder: business-level campaign goals */
+export const SERIES_GOAL_OPTIONS = ['Grow Followers', 'Drive Sales', 'Build Authority', 'Increase Engagement', 'Launch Product'];
+
+// ── Accent colors (token-based for dark mode support) ───────────────────────
+
+export const PRESET_COLORS = [
+  'var(--blink-brand-primary)',
+  'var(--blink-accent-coral)',
+  'var(--blink-accent-amber)',
+  'var(--blink-accent-green)',
+  'var(--blink-accent-blue)',
+  'var(--blink-accent-purple)',
+  'var(--blink-accent-pink)',
+  'var(--blink-accent-indigo)',
+  'var(--blink-accent-teal)',
+  'var(--blink-accent-orange)',
+];
+
+// ── Utility ─────────────────────────────────────────────────────────────────
+
+export function toggleSetItem<T>(set: Set<T>, item: T): Set<T> {
+  const next = new Set(set);
+  if (next.has(item)) {
+    next.delete(item);
+  } else {
+    next.add(item);
+  }
+  return next;
+}
+
+// ── Objective category config ───────────────────────────────────────────────
+
 export const OBJECTIVE_CATEGORY_CONFIG: Record<ObjectiveCategory, { label: string; emoji: string }> = {
   growth: { label: 'Growth', emoji: '📈' },
   revenue: { label: 'Revenue', emoji: '💰' },
@@ -173,11 +237,11 @@ export const OBJECTIVE_CATEGORY_CONFIG: Record<ObjectiveCategory, { label: strin
 };
 
 export const DEFAULT_PILLARS: ContentPillar[] = [
-  { id: 'p1', name: 'Yoga & Movement', description: 'Yoga flows, stretching routines, and mindful movement practices', color: '#d94e33' },
-  { id: 'p2', name: 'Wellness & Mindfulness', description: 'Stress management, meditation, sleep, and mental health', color: '#10b981' },
-  { id: 'p3', name: 'Fitness & Strength', description: 'Strength training, cardio, and fitness routines for women 40+', color: '#3b82f6' },
-  { id: 'p4', name: 'Nutrition & Recipes', description: 'Healthy eating, meal prep, and nutrition for hormonal health', color: '#f59e0b' },
-  { id: 'p5', name: 'Aging & Confidence', description: 'Body positivity, aging gracefully, and empowerment content', color: '#8b5cf6' },
+  { id: 'p1', name: 'Yoga & Movement', description: 'Yoga flows, stretching routines, and mindful movement practices', color: 'var(--blink-brand-primary)' },
+  { id: 'p2', name: 'Wellness & Mindfulness', description: 'Stress management, meditation, sleep, and mental health', color: 'var(--blink-accent-green)' },
+  { id: 'p3', name: 'Fitness & Strength', description: 'Strength training, cardio, and fitness routines for women 40+', color: 'var(--blink-accent-blue)' },
+  { id: 'p4', name: 'Nutrition & Recipes', description: 'Healthy eating, meal prep, and nutrition for hormonal health', color: 'var(--blink-accent-amber)' },
+  { id: 'p5', name: 'Aging & Confidence', description: 'Body positivity, aging gracefully, and empowerment content', color: 'var(--blink-accent-purple)' },
 ];
 
 export const DEFAULT_SEGMENTS: AudienceSegment[] = [

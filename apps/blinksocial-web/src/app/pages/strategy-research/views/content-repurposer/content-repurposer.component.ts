@@ -1,21 +1,13 @@
 import { Component, DestroyRef, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { type Platform } from '../../strategy-research.types';
+import { type Platform, PLATFORM_OPTIONS, toggleSetItem } from '../../strategy-research.types';
 
 interface RepurposedOutput {
   platform: Platform;
   format: string;
   content: string;
 }
-
-const PLATFORM_OPTIONS: { id: Platform; label: string }[] = [
-  { id: 'instagram', label: 'Instagram' },
-  { id: 'tiktok', label: 'TikTok' },
-  { id: 'youtube', label: 'YouTube' },
-  { id: 'linkedin', label: 'LinkedIn' },
-  { id: 'facebook', label: 'Facebook' },
-];
 
 const MOCK_OUTPUTS: RepurposedOutput[] = [
   { platform: 'instagram', format: 'Carousel', content: 'Slide 1: Your strongest decade starts NOW.\nSlide 2: 3 movements that changed everything for women 40+\nSlide 3: Wall push-ups - 10 reps\nSlide 4: Chair squats - 12 reps\nSlide 5: Band pulls - 15 reps\nSlide 6: Start your free 7-day plan (link in bio)' },
@@ -55,15 +47,7 @@ export class ContentRepurposerComponent {
   }
 
   togglePlatform(platform: Platform): void {
-    this.selectedPlatforms.update(set => {
-      const next = new Set(set);
-      if (next.has(platform)) {
-        next.delete(platform);
-      } else {
-        next.add(platform);
-      }
-      return next;
-    });
+    this.selectedPlatforms.update(set => toggleSetItem(set, platform));
   }
 
   repurpose(): void {

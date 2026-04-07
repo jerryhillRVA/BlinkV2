@@ -1,7 +1,7 @@
 import { Component, DestroyRef, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { type Platform } from '../../strategy-research.types';
+import { type Platform, PLATFORM_OPTIONS, SERIES_GOAL_OPTIONS } from '../../strategy-research.types';
 
 type PostRole = 'Hook' | 'Value' | 'Proof' | 'Pivot' | 'Conversion';
 
@@ -22,22 +22,6 @@ interface SeriesOverview {
   goal: string;
   posts: SeriesPost[];
 }
-
-const GOAL_OPTIONS = [
-  'Grow Followers',
-  'Drive Sales',
-  'Build Authority',
-  'Increase Engagement',
-  'Launch Product',
-];
-
-const PLATFORM_OPTIONS: { id: Platform; label: string }[] = [
-  { id: 'instagram', label: 'Instagram' },
-  { id: 'tiktok', label: 'TikTok' },
-  { id: 'youtube', label: 'YouTube' },
-  { id: 'linkedin', label: 'LinkedIn' },
-  { id: 'facebook', label: 'Facebook' },
-];
 
 const MOCK_SERIES: SeriesOverview = {
   title: '5-Day Strength After 40 Challenge',
@@ -108,11 +92,11 @@ export class SeriesBuilderComponent {
   readonly isGenerating = signal(false);
   readonly series = signal<SeriesOverview | null>(null);
 
-  selectedGoal = GOAL_OPTIONS[0];
+  selectedGoal = SERIES_GOAL_OPTIONS[0];
   seriesLength = 5;
   selectedPlatform: Platform = 'instagram';
 
-  readonly goalOptions = GOAL_OPTIONS;
+  readonly goalOptions = SERIES_GOAL_OPTIONS;
   readonly platformOptions = PLATFORM_OPTIONS;
   readonly lengthOptions = [3, 5, 7];
 

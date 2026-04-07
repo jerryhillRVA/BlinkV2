@@ -8,11 +8,11 @@ interface ContentMixEntry extends ContentMixTarget {
 }
 
 const DEFAULT_MIX: ContentMixEntry[] = [
-  { category: 'educational', label: 'Educational', targetPercent: 35, color: '#3b82f6', description: 'Tutorials, tips, how-tos', actualPercent: 32 },
-  { category: 'entertaining', label: 'Entertaining', targetPercent: 25, color: '#f59e0b', description: 'Fun, relatable, trending content', actualPercent: 28 },
-  { category: 'community', label: 'Community', targetPercent: 20, color: '#10b981', description: 'Q&A, polls, user-generated content', actualPercent: 18 },
+  { category: 'educational', label: 'Educational', targetPercent: 35, color: 'var(--blink-accent-blue)', description: 'Tutorials, tips, how-tos', actualPercent: 32 },
+  { category: 'entertaining', label: 'Entertaining', targetPercent: 25, color: 'var(--blink-accent-amber)', description: 'Fun, relatable, trending content', actualPercent: 28 },
+  { category: 'community', label: 'Community', targetPercent: 20, color: 'var(--blink-accent-green)', description: 'Q&A, polls, user-generated content', actualPercent: 18 },
   { category: 'promotional', label: 'Promotional', targetPercent: 15, color: 'var(--blink-brand-primary)', description: 'Product launches, offers, CTAs', actualPercent: 17 },
-  { category: 'trending', label: 'Trending', targetPercent: 5, color: '#8b5cf6', description: 'Trend-jacking, viral formats', actualPercent: 5 },
+  { category: 'trending', label: 'Trending', targetPercent: 5, color: 'var(--blink-accent-purple)', description: 'Trend-jacking, viral formats', actualPercent: 5 },
 ];
 
 @Component({

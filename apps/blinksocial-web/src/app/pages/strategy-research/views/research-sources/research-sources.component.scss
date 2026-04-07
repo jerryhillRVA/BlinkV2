@@ -161,6 +161,8 @@
   border-radius: 999px;
   font-size: var(--blink-label-small);
   font-weight: 500;
+  background: color-mix(in srgb, var(--chip-color) 10%, transparent);
+  color: var(--chip-color);
 }
 
 .source-actions {

@@ -6,6 +6,7 @@ import {
   type SegmentJourneyStage,
   type JourneyStage,
   DEFAULT_SEGMENTS,
+  toggleSetItem,
 } from '../../strategy-research.types';
 
 const JOURNEY_STAGES: JourneyStage[] = ['awareness', 'consideration', 'conversion', 'retention'];
@@ -57,15 +58,7 @@ export class AudienceComponent {
   editDescription = '';
 
   toggleJourney(segmentId: string): void {
-    this.expandedSegments.update(set => {
-      const next = new Set(set);
-      if (next.has(segmentId)) {
-        next.delete(segmentId);
-      } else {
-        next.add(segmentId);
-      }
-      return next;
-    });
+    this.expandedSegments.update(set => toggleSetItem(set, segmentId));
   }
 
   isExpanded(segmentId: string): boolean {

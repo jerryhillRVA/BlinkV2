@@ -1,6 +1,6 @@
 import { Component, DestroyRef, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import type { Platform } from '../../../strategy-research.types';
+import { type Platform, PLATFORM_LABELS } from '../../../strategy-research.types';
 
 const ALL_PLATFORMS: Platform[] = ['instagram', 'tiktok', 'youtube', 'facebook', 'linkedin'];
 
@@ -24,13 +24,7 @@ export class PlatformAdjustmentsComponent {
   readonly adjustments = signal(ALL_PLATFORMS.map(p => ({ platform: p, adjustment: '' })));
   readonly suggestingPlatform = signal<Platform | null>(null);
 
-  readonly platformLabels: Record<Platform, string> = {
-    instagram: 'Instagram',
-    tiktok: 'TikTok',
-    youtube: 'YouTube',
-    facebook: 'Facebook',
-    linkedin: 'LinkedIn',
-  };
+  readonly platformLabels = PLATFORM_LABELS;
 
   private suggestTimerId: ReturnType<typeof setTimeout> | null = null;
 
