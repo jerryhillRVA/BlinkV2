@@ -1,0 +1,130 @@
+<div class="seo-hashtags">
+  <div class="input-panel">
+    <h4 class="input-panel__title">SEO & Hashtag Strategy</h4>
+    <div class="input-panel__fields">
+      <div class="input-panel__field">
+        <span>Content Pillar</span>
+        <select [(ngModel)]="selectedPillar">
+          @for (p of pillarOptions; track p) {
+            <option [value]="p">{{ p }}</option>
+          }
+        </select>
+      </div>
+      <div class="input-panel__field">
+        <span>Platform</span>
+        <select [(ngModel)]="selectedPlatform">
+          @for (p of platformOptions; track p.id) {
+            <option [value]="p.id">{{ p.label }}</option>
+          }
+        </select>
+      </div>
+      <div class="input-panel__field">
+        <span>Content Goal</span>
+        <select [(ngModel)]="selectedGoal">
+          @for (g of goalOptions; track g) {
+            <option [value]="g">{{ g }}</option>
+          }
+        </select>
+      </div>
+    </div>
+    <button class="btn btn--primary" (click)="generate()" [disabled]="isGenerating()">
+      @if (isGenerating()) {
+        <span class="spinner"></span>
+      }
+      @if (!isGenerating()) {
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M4 9h16M4 15h16M10 3 8 21M16 3l-2 18"/>
+        </svg>
+      }
+      {{ isGenerating() ? 'Generating...' : 'Generate SEO Strategy' }}
+    </button>
+  </div>
+
+  @if (seoData(); as data) {
+    <div class="results">
+      <div class="hashtag-card">
+        <h4 class="card-title">Hashtag Sets</h4>
+        <div class="tab-bar">
+          @for (tab of hashtagTabs; track tab.id) {
+            <button
+              class="tab-btn"
+              [class.tab-btn--active]="activeTab() === tab.id"
+              (click)="setTab(tab.id)"
+            >
+              {{ tab.label }}
+            </button>
+          }
+        </div>
+        <div class="hashtag-chips">
+          @for (h of getActiveHashtags(); track h.tag) {
+            <button
+              class="hashtag-chip"
+              (click)="copyTag(h.tag)"
+              title="Click to copy"
+            >
+              <span class="hashtag-chip__tag">{{ h.tag }}</span>
+              <span class="hashtag-chip__count">{{ h.posts }}</span>
+            </button>
+          }
+        </div>
+      </div>
+
+      <div class="keywords-card">
+        <h4 class="card-title">Bio & Profile Keywords</h4>
+        <div class="keyword-chips">
+          @for (kw of data.keywords; track kw) {
+            <span class="keyword-chip">{{ kw }}</span>
+          }
+        </div>
+        <div class="example-bio">
+          <span class="example-bio__label">Example Bio:</span>
+          <p class="example-bio__text">{{ data.exampleBio }}</p>
+        </div>
+      </div>
+
+      <div class="checklist-card">
+        <h4 class="card-title">Caption SEO Checklist</h4>
+        <div class="checklist">
+          @for (item of data.checklist; track $index; let i = $index) {
+            <div
+              class="checklist-item"
+              [class.checklist-item--checked]="isChecked(i)"
+              (click)="toggleCheckItem(i)"
+              (keydown.enter)="toggleCheckItem(i)"
+              tabindex="0"
+              role="checkbox"
+              [attr.aria-checked]="isChecked(i)"
+            >
+              <div class="checklist-checkbox">
+                @if (isChecked(i)) {
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M20 6 9 17l-5-5"/>
+                  </svg>
+                }
+              </div>
+              <span class="checklist-text">{{ item }}</span>
+            </div>
+          }
+        </div>
+      </div>
+
+      <div class="trending-card">
+        <h4 class="card-title">Trending Angles</h4>
+        <div class="trending-grid">
+          @for (t of data.trending; track t.title) {
+            <div class="trending-item">
+              <div class="trending-item__header">
+                <h5 class="trending-item__title">{{ t.title }}</h5>
+                <span class="virality-badge" [ngClass]="getViralityClass(t.virality)">{{ t.virality }}</span>
+              </div>
+              <div class="trending-item__hook">
+                <span class="hook-label">Hook:</span>
+                <span class="hook-text">{{ t.hook }}</span>
+              </div>
+            </div>
+          }
+        </div>
+      </div>
+    </div>
+  }
+</div>

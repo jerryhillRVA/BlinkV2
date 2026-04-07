@@ -1,0 +1,133 @@
+<div class="channel-strategy">
+  <div class="section-header">
+    <h2>Channel Strategy</h2>
+  </div>
+
+  <div class="platforms-list">
+    @for (channel of channels(); track channel.platform) {
+      <div class="platform-card" [class.inactive]="!channel.active">
+        <!-- Card Header -->
+        <div class="platform-header" (click)="toggleExpand(channel.platform)" (keydown.enter)="toggleExpand(channel.platform)" tabindex="0" role="button">
+          <div class="platform-title">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path [attr.d]="platformIcons[channel.platform]"></path>
+            </svg>
+            <span class="platform-name">{{ platformLabels[channel.platform] }}</span>
+          </div>
+
+          <div class="platform-actions" (click)="$event.stopPropagation()" (keydown.enter)="$event.stopPropagation()" tabindex="-1" role="group">
+            <button
+              class="btn-ai-generate"
+              (click)="aiGenerate(channel.platform)"
+              [disabled]="generatingPlatform() === channel.platform"
+            >
+              @if (generatingPlatform() === channel.platform) {
+                <span class="spinner"></span>
+                Generating...
+              } @else {
+                AI Generate
+              }
+            </button>
+
+            <label class="toggle-switch">
+              <input
+                type="checkbox"
+                [checked]="channel.active"
+                (change)="toggleActive(channel.platform)"
+              />
+              <span class="toggle-slider"></span>
+            </label>
+
+            <svg
+              width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+              stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+              class="chevron"
+              [class.rotated]="isExpanded(channel.platform)"
+            >
+              <polyline points="6 9 12 15 18 9"></polyline>
+            </svg>
+          </div>
+        </div>
+
+        <!-- Card Content -->
+        @if (isExpanded(channel.platform)) {
+          <div class="platform-content">
+            @if (channel.active) {
+              <div class="strategy-form">
+                <div class="form-row">
+                  <div class="form-group">
+                    <span>Role</span>
+                    <input
+                      type="text"
+                      [ngModel]="channel.role"
+                      (ngModelChange)="updateChannel(channel.platform, 'role', $event)"
+                      placeholder="Platform role..."
+                    />
+                  </div>
+                  <div class="form-group">
+                    <span>Posting Cadence</span>
+                    <input
+                      type="text"
+                      [ngModel]="channel.postingCadence"
+                      (ngModelChange)="updateChannel(channel.platform, 'postingCadence', $event)"
+                      placeholder="e.g. 3x/week"
+                    />
+                  </div>
+                </div>
+
+                <div class="form-group">
+                  <span>Primary Audience</span>
+                  <input
+                    type="text"
+                    [ngModel]="channel.primaryAudience"
+                    (ngModelChange)="updateChannel(channel.platform, 'primaryAudience', $event)"
+                    placeholder="Target audience..."
+                  />
+                </div>
+
+                <div class="form-group">
+                  <span>Content Types</span>
+                  <div class="chip-toggles">
+                    @for (ct of contentTypeOptions; track ct) {
+                      <button
+                        class="chip-toggle"
+                        [class.active]="isContentTypeActive(channel, ct)"
+                        (click)="toggleContentType(channel.platform, ct)"
+                      >
+                        {{ ct }}
+                      </button>
+                    }
+                  </div>
+                </div>
+
+                <div class="form-group">
+                  <span>Tone Adjustment</span>
+                  <textarea
+                    [ngModel]="channel.toneAdjustment"
+                    (ngModelChange)="updateChannel(channel.platform, 'toneAdjustment', $event)"
+                    rows="2"
+                    placeholder="Platform-specific tone..."
+                  ></textarea>
+                </div>
+
+                <div class="form-group">
+                  <span>Notes</span>
+                  <textarea
+                    [ngModel]="channel.notes"
+                    (ngModelChange)="updateChannel(channel.platform, 'notes', $event)"
+                    rows="2"
+                    placeholder="Additional notes..."
+                  ></textarea>
+                </div>
+              </div>
+            } @else {
+              <div class="inactive-message">
+                <p>Mark as active to define strategy for {{ platformLabels[channel.platform] }}.</p>
+              </div>
+            }
+          </div>
+        }
+      </div>
+    }
+  </div>
+</div>

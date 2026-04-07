@@ -1,0 +1,79 @@
+.strategy-page {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.strategy-layout {
+  display: flex;
+  gap: 24px;
+}
+
+// ── Sidebar ──
+.strategy-sidebar {
+  width: 208px;
+  flex-shrink: 0;
+}
+
+.sidebar-section-label {
+  font-size: var(--blink-label-small);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--blink-on-surface-muted);
+  padding: 0 12px;
+  margin: 0 0 4px;
+}
+
+.sidebar-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 8px 12px;
+  border-radius: 8px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  font-size: var(--blink-body-medium);
+  font-weight: 500;
+  color: var(--blink-on-surface-muted);
+  text-align: left;
+  transition: all 0.15s ease;
+
+  &:hover {
+    color: var(--blink-on-surface-strong);
+    background: var(--blink-surface-hover);
+  }
+
+  &.active {
+    font-weight: 700;
+    color: var(--blink-brand-primary);
+    background: var(--blink-brand-primary-lightest-bg);
+
+    .sidebar-icon {
+      opacity: 1;
+      color: var(--blink-brand-primary);
+    }
+  }
+}
+
+.sidebar-icon {
+  flex-shrink: 0;
+  opacity: 0.5;
+}
+
+.sidebar-divider {
+  height: 1px;
+  background: var(--blink-outline-variant);
+  margin: 8px 0;
+}
+
+// ── Content Area ──
+.strategy-content {
+  flex: 1;
+  min-width: 0;
+}

@@ -1,0 +1,150 @@
+<div class="strategic-pillars">
+  <div class="section-header">
+    <h2>Strategic Pillars</h2>
+    <button class="btn-add" (click)="openAddForm()">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="12" y1="5" x2="12" y2="19"></line>
+        <line x1="5" y1="12" x2="19" y2="12"></line>
+      </svg>
+      Add Pillar
+    </button>
+  </div>
+
+  <!-- Add Form -->
+  @if (showAddForm()) {
+    <div class="add-form">
+      <h3>New Pillar</h3>
+      <div class="form-group">
+        <span>Name</span>
+        <input type="text" [(ngModel)]="newPillarName" placeholder="Pillar name" />
+      </div>
+      <div class="form-group">
+        <span>Description</span>
+        <textarea [(ngModel)]="newPillarDescription" placeholder="Describe this pillar..." rows="3"></textarea>
+      </div>
+      <div class="form-group">
+        <span>Color</span>
+        <div class="color-picker">
+          @for (color of presetColors; track color) {
+            <button
+              class="color-swatch"
+              [class.selected]="newPillarColor === color"
+              [style.background]="color"
+              (click)="newPillarColor = color"
+              [attr.aria-label]="'Select color ' + color"
+            ></button>
+          }
+        </div>
+      </div>
+      <div class="form-actions">
+        <button class="btn-cancel" (click)="cancelAdd()">Cancel</button>
+        <button class="btn-save" (click)="addPillar()">Add Pillar</button>
+      </div>
+    </div>
+  }
+
+  <!-- Pillar Cards Grid -->
+  <div class="pillars-grid">
+    @for (pillar of pillars(); track pillar.id) {
+      <div class="pillar-card" [style.border-top-color]="pillar.color">
+        @if (editingId() === pillar.id) {
+          <!-- Edit Mode -->
+          <div class="edit-form">
+            <div class="form-group">
+              <span>Name</span>
+              <input type="text" [(ngModel)]="editName" />
+            </div>
+            <div class="form-group">
+              <span>Description</span>
+              <textarea [(ngModel)]="editDescription" rows="3"></textarea>
+            </div>
+            <div class="form-group">
+              <span>Color</span>
+              <div class="color-picker">
+                @for (color of presetColors; track color) {
+                  <button
+                    class="color-swatch"
+                    [class.selected]="editColor === color"
+                    [style.background]="color"
+                    (click)="editColor = color"
+                    [attr.aria-label]="'Select color ' + color"
+                  ></button>
+                }
+              </div>
+            </div>
+            <div class="form-actions">
+              <button class="btn-cancel" (click)="cancelEdit()">Cancel</button>
+              <button class="btn-save" (click)="saveEdit(pillar.id)">Save</button>
+            </div>
+          </div>
+        } @else {
+          <!-- View Mode -->
+          <div class="card-header">
+            <h3>{{ pillar.name }}</h3>
+            <div class="card-actions">
+              <button class="btn-icon" (click)="startEdit(pillar)" title="Edit">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"></path>
+                </svg>
+              </button>
+              <button class="btn-icon btn-delete" (click)="deletePillar(pillar.id)" title="Delete">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M3 6h18"></path>
+                  <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path>
+                  <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path>
+                </svg>
+              </button>
+            </div>
+          </div>
+          <p class="card-description">{{ pillar.description }}</p>
+
+          @if (pillar.goals && pillar.goals.length > 0) {
+            <div class="goals-section">
+              <h4>Goals</h4>
+              @for (goal of pillar.goals; track goal.id) {
+                <div class="goal-item">
+                  <div class="goal-label">
+                    <span>{{ goal.metric }}</span>
+                    <span class="goal-value">{{ goal.current ?? 0 }} / {{ goal.target }} {{ goal.unit }}</span>
+                  </div>
+                  <div class="progress-bar">
+                    <div
+                      class="progress-fill"
+                      [style.width.%]="getGoalProgress(goal)"
+                      [style.background]="pillar.color"
+                    ></div>
+                  </div>
+                </div>
+              }
+            </div>
+          }
+        }
+      </div>
+    }
+  </div>
+
+  <!-- Content Distribution Analysis -->
+  <div class="distribution-section">
+    <h3>Content Distribution Analysis</h3>
+    <div class="distribution-controls">
+      <div class="form-group inline">
+        <span>Posts per week</span>
+        <input
+          type="number"
+          [ngModel]="postsPerWeek()"
+          (ngModelChange)="postsPerWeek.set($event)"
+          min="1"
+          max="50"
+        />
+      </div>
+      <button class="btn-analyze" (click)="analyzeDistribution()" [disabled]="isAnalyzing()">
+        @if (isAnalyzing()) {
+          <span class="spinner"></span>
+          Analyzing...
+        } @else {
+          Analyze
+        }
+      </button>
+    </div>
+  </div>
+</div>

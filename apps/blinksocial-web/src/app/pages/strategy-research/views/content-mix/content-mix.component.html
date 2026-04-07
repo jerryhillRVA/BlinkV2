@@ -1,0 +1,102 @@
+<div class="content-mix">
+  <div class="section-header">
+    <h2>Content Mix</h2>
+  </div>
+
+  <div class="mix-grid">
+    <!-- Target Content Mix Card -->
+    <div class="mix-card">
+      <div class="card-header">
+        <h3>Target Content Mix</h3>
+        <div class="card-actions">
+          <button class="btn-reset" (click)="reset()">Reset</button>
+          <button class="btn-ai" (click)="aiSuggest()" [disabled]="isSuggesting()">
+            @if (isSuggesting()) {
+              <span class="spinner"></span>
+              Suggesting...
+            } @else {
+              AI Suggest
+            }
+          </button>
+        </div>
+      </div>
+
+      <div class="total-indicator" [class.invalid]="!isValid()">
+        Total: {{ total() }}%
+        @if (!isValid()) {
+          <span class="warning">(must equal 100%)</span>
+        }
+      </div>
+
+      <div class="categories">
+        @for (item of mix(); track item.category) {
+          <div class="category-row">
+            <div class="category-info">
+              <div class="category-color" [style.background]="item.color"></div>
+              <div class="category-text">
+                <span class="category-label">{{ item.label }}</span>
+                <span class="category-desc">{{ item.description }}</span>
+              </div>
+            </div>
+            <div class="category-control">
+              <input
+                type="range"
+                min="0"
+                max="100"
+                [ngModel]="item.targetPercent"
+                (ngModelChange)="updateTarget(item.category, $event)"
+                class="range-input"
+              />
+              <span class="percent-display">{{ item.targetPercent }}%</span>
+            </div>
+          </div>
+        }
+      </div>
+    </div>
+
+    <!-- Actual vs Target Card -->
+    <div class="mix-card">
+      <div class="card-header">
+        <h3>Actual vs Target</h3>
+      </div>
+
+      <div class="comparison">
+        @for (item of mix(); track item.category) {
+          <div class="comparison-row">
+            <div class="comparison-label">
+              <div class="category-color" [style.background]="item.color"></div>
+              <span>{{ item.label }}</span>
+            </div>
+            <div class="bars-container">
+              <div class="bar-group">
+                <div class="bar-row">
+                  <span class="bar-label">Target</span>
+                  <div class="bar-track">
+                    <div
+                      class="bar-fill target-bar"
+                      [style.width.%]="item.targetPercent"
+                      [style.background]="item.color"
+                    ></div>
+                  </div>
+                  <span class="bar-value">{{ item.targetPercent }}%</span>
+                </div>
+                <div class="bar-row">
+                  <span class="bar-label">Actual</span>
+                  <div class="bar-track">
+                    <div
+                      class="bar-fill actual-bar"
+                      [style.width.%]="item.actualPercent"
+                      [style.background]="item.color"
+                      [style.opacity]="0.6"
+                    ></div>
+                  </div>
+                  <span class="bar-value">{{ item.actualPercent }}%</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        }
+      </div>
+    </div>
+  </div>
+</div>

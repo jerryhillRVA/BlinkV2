@@ -1,0 +1,149 @@
+<div class="objectives-strip">
+  <div class="strip-header">
+    <div class="strip-title">
+      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
+           fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+           class="title-icon">
+        <circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/>
+      </svg>
+      <span class="title-text">Business Objectives</span>
+    </div>
+    <button class="edit-btn" (click)="toggleDrawer()">
+      {{ showDrawer() ? 'Close' : 'Edit' }}
+    </button>
+  </div>
+
+  <!-- Empty State -->
+  @if (objectives.length === 0 && !showDrawer()) {
+    <div class="empty-state">
+      <p class="empty-text">No objectives defined. Add objectives to root your strategy in measurable goals.</p>
+      <button class="add-objectives-btn" (click)="openDrawer()">Add Objectives &rarr;</button>
+    </div>
+  }
+
+  <!-- Objective Cards -->
+  @if (objectives.length > 0) {
+    <div class="objectives-scroll">
+      @for (obj of objectives; track obj.id) {
+        <div class="objective-card">
+          <div class="obj-category">
+            {{ categoryConfig[obj.category].emoji }} {{ categoryConfig[obj.category].label }}
+          </div>
+          <p class="obj-statement">{{ obj.statement || '(No statement)' }}</p>
+          <div class="obj-progress-track">
+            <div class="obj-progress-fill"
+                 [class]="'status-bar-' + obj.status"
+                 [style.width.%]="getProgressPercent(obj)">
+            </div>
+          </div>
+          <div class="obj-footer">
+            <span class="obj-status-badge" [class]="'status-' + obj.status">
+              {{ getStatusLabel(obj.status) }}
+            </span>
+            <span class="obj-timeframe">{{ obj.timeframe }}</span>
+          </div>
+        </div>
+      }
+      @if (objectives.length > 2) {
+        <div class="scroll-fade" aria-hidden="true"></div>
+      }
+    </div>
+  }
+
+  <!-- Drawer -->
+  @if (showDrawer()) {
+    <div class="drawer">
+      @for (obj of dialogObjectives; track obj.id) {
+        <div class="drawer-card">
+          @if (dialogObjectives.length > 1) {
+            <button class="remove-btn" (click)="removeObjective(obj.id)">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
+                   fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M18 6 6 18"/><path d="m6 6 12 12"/>
+              </svg>
+            </button>
+          }
+
+          <div class="field-group">
+            <span class="field-label">Category</span>
+            <div class="category-chips">
+              @for (entry of categories; track entry[0]) {
+                <button class="category-chip"
+                        [class.selected]="obj.category === entry[0]"
+                        (click)="updateObjective(obj.id, { category: entry[0] })">
+                  {{ entry[1].emoji }} {{ entry[1].label }}
+                </button>
+              }
+            </div>
+          </div>
+
+          <div class="field-group">
+            <span class="field-label">Objective</span>
+            <input type="text" class="field-input"
+                   [ngModel]="obj.statement"
+                   (ngModelChange)="updateObjective(obj.id, { statement: $event })"
+                   placeholder="e.g. Grow Instagram following to 10,000" />
+          </div>
+
+          <div class="field-row">
+            <div class="field-group">
+              <span class="field-label">Target</span>
+              <input type="number" class="field-input field-sm"
+                     [ngModel]="obj.target || ''"
+                     (ngModelChange)="updateObjective(obj.id, { target: +$event })"
+                     placeholder="10000" />
+            </div>
+            <div class="field-group">
+              <span class="field-label">Unit</span>
+              <input type="text" class="field-input field-sm"
+                     [ngModel]="obj.unit"
+                     (ngModelChange)="updateObjective(obj.id, { unit: $event })"
+                     placeholder="followers" />
+            </div>
+            <div class="field-group">
+              <span class="field-label">Timeframe</span>
+              <input type="text" class="field-input field-sm"
+                     [ngModel]="obj.timeframe"
+                     (ngModelChange)="updateObjective(obj.id, { timeframe: $event })"
+                     placeholder="Q2 2026" />
+            </div>
+          </div>
+        </div>
+      }
+
+      <div class="drawer-actions-top">
+        @if (dialogObjectives.length < 4) {
+          <button class="btn-outline" (click)="addObjective()">
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"
+                 fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M5 12h14"/><path d="M12 5v14"/>
+            </svg>
+            Add Objective
+          </button>
+        }
+        <button class="btn-outline btn-brand"
+                (click)="suggestObjectives()"
+                [disabled]="isSuggesting() || dialogObjectives.length >= 4">
+          @if (isSuggesting()) {
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"
+                 fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                 class="spin">
+              <path d="M21 12a9 9 0 1 1-6.219-8.56"/>
+            </svg>
+          } @else {
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"
+                 fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/>
+            </svg>
+          }
+          AI Suggest
+        </button>
+      </div>
+
+      <div class="drawer-actions-bottom">
+        <button class="btn-outline" (click)="closeDrawer()">Cancel</button>
+        <button class="btn-primary" (click)="saveObjectives()">Save</button>
+      </div>
+    </div>
+  }
+</div>

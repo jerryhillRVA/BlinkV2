@@ -17,4 +17,5 @@ export interface Workspace {
 export class WorkspaceCardComponent {
   @Input() workspace!: Workspace;
   @Output() goToWorkspace = new EventEmitter<string>();
+  @Output() goToStrategy = new EventEmitter<string>();
 }
