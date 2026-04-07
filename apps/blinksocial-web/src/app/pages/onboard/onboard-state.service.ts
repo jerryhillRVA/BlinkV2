@@ -1,4 +1,4 @@
-import { Injectable, OnDestroy, inject, signal, computed } from '@angular/core';
+import { Injectable, inject, signal, computed } from '@angular/core';
 import { Router } from '@angular/router';
 import { OnboardApiService } from './onboard-api.service';
 import type {
@@ -9,23 +9,8 @@ import type {
   OnboardingSessionStatus,
 } from '@blinksocial/contracts';
 
-interface ProgressStage {
-  readonly threshold: number;
-  readonly label: string;
-}
-
-const GENERATION_STAGES: ProgressStage[] = [
-  { threshold: 0, label: 'Analyzing discovery data...' },
-  { threshold: 15, label: 'Crafting strategic summary...' },
-  { threshold: 35, label: 'Building audience profiles...' },
-  { threshold: 55, label: 'Designing content pillars...' },
-  { threshold: 75, label: 'Finalizing your blueprint...' },
-];
-
-const PROGRESS_TICK_MS = 500;
-
 @Injectable()
-export class OnboardStateService implements OnDestroy {
+export class OnboardStateService {
   private readonly api = inject(OnboardApiService);
   private readonly router = inject(Router);
 
@@ -41,11 +26,6 @@ export class OnboardStateService implements OnDestroy {
   readonly error = signal<string | null>(null);
 
   readonly isCreatingWorkspace = signal(false);
-
-  readonly generationProgress = signal(0);
-  readonly generationStage = signal('');
-
-  private progressTimerId: ReturnType<typeof setInterval> | null = null;
 
   readonly completedSections = computed(() =>
     this.sections().filter((s) => s.covered).length,
@@ -113,10 +93,6 @@ export class OnboardStateService implements OnDestroy {
     });
   }
 
-  ngOnDestroy(): void {
-    this.stopProgressSimulation();
-  }
-
   generateBlueprint(): void {
     const sid = this.sessionId();
     if (!sid) return;
@@ -124,18 +100,15 @@ export class OnboardStateService implements OnDestroy {
     this.isLoading.set(true);
     this.status.set('generating');
     this.error.set(null);
-    this.startProgressSimulation();
 
     this.api.generateBlueprint(sid).subscribe({
       next: (res) => {
-        this.completeProgress();
         this.blueprint.set(res.blueprint);
         this.markdownDocument.set(res.markdownDocument);
         this.status.set('complete');
         this.isLoading.set(false);
       },
       error: (err) => {
-        this.resetProgress();
         this.error.set(
           err?.error?.message ?? 'Failed to generate blueprint',
         );
@@ -143,51 +116,6 @@ export class OnboardStateService implements OnDestroy {
         this.isLoading.set(false);
       },
     });
-  }
-
-  private startProgressSimulation(): void {
-    this.generationProgress.set(2);
-    this.generationStage.set(GENERATION_STAGES[0].label);
-
-    this.progressTimerId = setInterval(() => {
-      const current = this.generationProgress();
-      if (current >= 95) return;
-
-      const remaining = 95 - current;
-      const increment = Math.max(0.3, remaining * 0.04);
-      const next = Math.min(95, current + increment);
-
-      this.generationProgress.set(Math.round(next * 10) / 10);
-      this.updateStageLabel(next);
-    }, PROGRESS_TICK_MS);
-  }
-
-  private updateStageLabel(progress: number): void {
-    for (let i = GENERATION_STAGES.length - 1; i >= 0; i--) {
-      if (progress >= GENERATION_STAGES[i].threshold) {
-        this.generationStage.set(GENERATION_STAGES[i].label);
-        return;
-      }
-    }
-  }
-
-  private completeProgress(): void {
-    this.stopProgressSimulation();
-    this.generationProgress.set(100);
-    this.generationStage.set('Complete!');
-  }
-
-  private resetProgress(): void {
-    this.stopProgressSimulation();
-    this.generationProgress.set(0);
-    this.generationStage.set('');
-  }
-
-  private stopProgressSimulation(): void {
-    if (this.progressTimerId !== null) {
-      clearInterval(this.progressTimerId);
-      this.progressTimerId = null;
-    }
   }
 
   downloadBlueprint(): void {

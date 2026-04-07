@@ -10,7 +10,6 @@ describe('OnboardStateService', () => {
   let router: Router;
 
   beforeEach(() => {
-    vi.useFakeTimers();
     TestBed.configureTestingModule({
       providers: [
         OnboardStateService,
@@ -26,7 +25,6 @@ describe('OnboardStateService', () => {
   });
 
   afterEach(() => {
-    vi.useRealTimers();
     httpMock.verify();
   });
 
@@ -158,68 +156,6 @@ describe('OnboardStateService', () => {
     expect(service.error()).toBeTruthy();
   });
 
-  it('should have initial progress state', () => {
-    expect(service.generationProgress()).toBe(0);
-    expect(service.generationStage()).toBe('');
-  });
-
-  it('should start progress simulation when generating', () => {
-    service.sessionId.set('sess-1');
-    service.generateBlueprint();
-
-    expect(service.generationProgress()).toBeGreaterThan(0);
-    expect(service.generationStage()).toBeTruthy();
-
-    const req = httpMock.expectOne('/api/onboarding/sessions/sess-1/generate');
-    req.flush({
-      blueprint: { clientName: 'Acme', strategicSummary: 'Test' },
-      markdownDocument: '# Blueprint\n\nContent here',
-    });
-  });
-
-  it('should advance progress over time', () => {
-    service.sessionId.set('sess-1');
-    service.generateBlueprint();
-
-    const initialProgress = service.generationProgress();
-    vi.advanceTimersByTime(3000);
-    expect(service.generationProgress()).toBeGreaterThan(initialProgress);
-
-    const req = httpMock.expectOne('/api/onboarding/sessions/sess-1/generate');
-    req.flush({
-      blueprint: { clientName: 'Acme', strategicSummary: 'Test' },
-      markdownDocument: '# Blueprint',
-    });
-  });
-
-  it('should never exceed 95% before response arrives', () => {
-    service.sessionId.set('sess-1');
-    service.generateBlueprint();
-
-    vi.advanceTimersByTime(120000);
-    expect(service.generationProgress()).toBeLessThanOrEqual(95);
-
-    const req = httpMock.expectOne('/api/onboarding/sessions/sess-1/generate');
-    req.flush({
-      blueprint: { clientName: 'Acme', strategicSummary: 'Test' },
-      markdownDocument: '# Blueprint',
-    });
-  });
-
-  it('should complete to 100% when response arrives', () => {
-    service.sessionId.set('sess-1');
-    service.generateBlueprint();
-
-    const req = httpMock.expectOne('/api/onboarding/sessions/sess-1/generate');
-    req.flush({
-      blueprint: { clientName: 'Acme', strategicSummary: 'Test' },
-      markdownDocument: '# Blueprint\n\nContent here',
-    });
-
-    expect(service.generationProgress()).toBe(100);
-    expect(service.generationStage()).toBe('Complete!');
-  });
-
   it('should generate blueprint successfully', () => {
     service.sessionId.set('sess-1');
     service.generateBlueprint();
@@ -246,24 +182,6 @@ describe('OnboardStateService', () => {
   it('should not generate blueprint without session', () => {
     service.generateBlueprint();
     httpMock.expectNone('/api/onboarding/sessions');
-  });
-
-  it('should reset progress on error', () => {
-    service.sessionId.set('sess-1');
-    service.generateBlueprint();
-
-    expect(service.generationProgress()).toBeGreaterThan(0);
-
-    const req = httpMock.expectOne(
-      '/api/onboarding/sessions/sess-1/generate',
-    );
-    req.flush(
-      { message: 'Generation failed' },
-      { status: 500, statusText: 'Error' },
-    );
-
-    expect(service.generationProgress()).toBe(0);
-    expect(service.generationStage()).toBe('');
   });
 
   it('should handle blueprint generation error', () => {

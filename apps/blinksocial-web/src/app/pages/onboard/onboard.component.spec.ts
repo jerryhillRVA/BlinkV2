@@ -329,27 +329,6 @@ describe('OnboardComponent', () => {
     expect(overlay).toBeTruthy();
   });
 
-  it('should display progress bar in generating overlay', () => {
-    const fixture = createAndInitComponent();
-    fixture.componentInstance['state'].status.set('generating');
-    fixture.componentInstance['state'].generationProgress.set(45);
-    fixture.componentInstance['state'].generationStage.set('Building audience profiles...');
-    fixture.detectChanges();
-
-    const progressTrack = fixture.nativeElement.querySelector('.progress-track');
-    expect(progressTrack).toBeTruthy();
-
-    const progressFill = fixture.nativeElement.querySelector('.progress-fill');
-    expect(progressFill).toBeTruthy();
-    expect(progressFill.style.width).toBe('45%');
-
-    const percentage = fixture.nativeElement.querySelector('.progress-percentage');
-    expect(percentage.textContent).toContain('45%');
-
-    const stage = fixture.nativeElement.querySelector('.progress-stage');
-    expect(stage.textContent).toContain('Building audience profiles...');
-  });
-
   it('should call downloadBlueprint on state service', () => {
     const fixture = createAndInitComponent();
     const spy = vi.spyOn(fixture.componentInstance['state'], 'downloadBlueprint');
