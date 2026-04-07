@@ -1,6 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { ObjectivesStripComponent } from './objectives-strip.component';
 import type { BusinessObjective } from '../strategy-research.types';
+import { AI_SIMULATION_DELAY_MS } from '../strategy-research.constants';
 
 describe('ObjectivesStripComponent', () => {
   let fixture: ReturnType<typeof TestBed.createComponent<ObjectivesStripComponent>>;
@@ -134,5 +135,46 @@ describe('ObjectivesStripComponent', () => {
     fixture.detectChanges();
     const editBtn = fixture.nativeElement.querySelector('.edit-btn');
     expect(editBtn.textContent.trim()).toBe('Edit');
+  });
+
+  it('should close drawer via closeDrawer', () => {
+    component.openDrawer();
+    expect(component.showDrawer()).toBe(true);
+    component.closeDrawer();
+    expect(component.showDrawer()).toBe(false);
+  });
+
+  it('should update objective in dialogObjectives', () => {
+    fixture.componentRef.setInput('objectives', mockObjectives);
+    component.openDrawer();
+    component.updateObjective('o1', { statement: 'Updated statement' });
+    const updated = component.dialogObjectives.find(o => o.id === 'o1');
+    expect(updated?.statement).toBe('Updated statement');
+  });
+
+  it('should return correct status labels', () => {
+    expect(component.getStatusLabel('on-track')).toBe('On Track');
+    expect(component.getStatusLabel('at-risk')).toBe('At Risk');
+    expect(component.getStatusLabel('behind')).toBe('Behind');
+    expect(component.getStatusLabel('achieved')).toBe('Achieved');
+  });
+
+  it('should suggest objectives with AI simulation', () => {
+    vi.useFakeTimers();
+    component.openDrawer();
+    component.suggestObjectives();
+    expect(component.isSuggesting()).toBe(true);
+    vi.advanceTimersByTime(AI_SIMULATION_DELAY_MS);
+    expect(component.isSuggesting()).toBe(false);
+    expect(component.dialogObjectives.length).toBeGreaterThan(1);
+    vi.useRealTimers();
+  });
+
+  it('should remove objective when more than one exists', () => {
+    fixture.componentRef.setInput('objectives', mockObjectives);
+    component.openDrawer();
+    const initialLength = component.dialogObjectives.length;
+    component.removeObjective('o1');
+    expect(component.dialogObjectives.length).toBe(initialLength - 1);
   });
 });

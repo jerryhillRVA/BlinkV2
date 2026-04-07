@@ -1,7 +1,9 @@
 import { Component, DestroyRef, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { type Platform, PLATFORM_OPTIONS, SERIES_GOAL_OPTIONS } from '../../strategy-research.types';
+import type { Platform } from '../../strategy-research.types';
+import { PLATFORM_OPTIONS, SERIES_GOAL_OPTIONS, AI_SIMULATION_DELAY_MS } from '../../strategy-research.constants';
+import { safeTimeout } from '../../strategy-research.utils';
 
 type PostRole = 'Hook' | 'Value' | 'Proof' | 'Pivot' | 'Conversion';
 
@@ -81,13 +83,6 @@ const MOCK_SERIES: SeriesOverview = {
 })
 export class SeriesBuilderComponent {
   private readonly destroyRef = inject(DestroyRef);
-  private timerId: ReturnType<typeof setTimeout> | null = null;
-
-  constructor() {
-    this.destroyRef.onDestroy(() => {
-      if (this.timerId !== null) clearTimeout(this.timerId);
-    });
-  }
 
   readonly isGenerating = signal(false);
   readonly series = signal<SeriesOverview | null>(null);
@@ -114,7 +109,7 @@ export class SeriesBuilderComponent {
   buildSeries(): void {
     this.isGenerating.set(true);
     this.series.set(null);
-    this.timerId = setTimeout(() => {
+    safeTimeout(() => {
       this.series.set({
         ...MOCK_SERIES,
         platform: this.selectedPlatform,
@@ -123,8 +118,7 @@ export class SeriesBuilderComponent {
         posts: MOCK_SERIES.posts.slice(0, this.seriesLength),
       });
       this.isGenerating.set(false);
-      this.timerId = null;
-    }, 2500);
+    }, AI_SIMULATION_DELAY_MS, this.destroyRef);
   }
 
   createInIdeation(_postNumber: number): void {

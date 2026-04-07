@@ -1,12 +1,10 @@
 import { Component, DestroyRef, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import {
-  type ContentPillar,
-  type PillarGoal,
-  DEFAULT_PILLARS,
-  PRESET_COLORS,
-} from '../../strategy-research.types';
+import type { ContentPillar, PillarGoal } from '../../strategy-research.types';
+import { PRESET_COLORS, AI_SIMULATION_DELAY_MS } from '../../strategy-research.constants';
+import { DEFAULT_PILLARS } from '../../strategy-research.mock-data';
+import { safeTimeout, generateId } from '../../strategy-research.utils';
 
 @Component({
   selector: 'app-strategic-pillars',
@@ -16,13 +14,6 @@ import {
 })
 export class StrategicPillarsComponent {
   private readonly destroyRef = inject(DestroyRef);
-  private timerId: ReturnType<typeof setTimeout> | null = null;
-
-  constructor() {
-    this.destroyRef.onDestroy(() => {
-      if (this.timerId !== null) clearTimeout(this.timerId);
-    });
-  }
 
   readonly pillars = signal<ContentPillar[]>([...DEFAULT_PILLARS]);
   readonly showAddForm = signal(false);
@@ -57,7 +48,7 @@ export class StrategicPillarsComponent {
   addPillar(): void {
     if (!this.newPillarName.trim()) return;
     const pillar: ContentPillar = {
-      id: `p-${Date.now()}`,
+      id: generateId('p'),
       name: this.newPillarName.trim(),
       description: this.newPillarDescription.trim(),
       color: this.newPillarColor,
@@ -101,9 +92,8 @@ export class StrategicPillarsComponent {
 
   analyzeDistribution(): void {
     this.isAnalyzing.set(true);
-    this.timerId = setTimeout(() => {
+    safeTimeout(() => {
       this.isAnalyzing.set(false);
-      this.timerId = null;
-    }, 2500);
+    }, AI_SIMULATION_DELAY_MS, this.destroyRef);
   }
 }

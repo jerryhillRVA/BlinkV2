@@ -1,13 +1,10 @@
 import { Component, DestroyRef, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import {
-  type AudienceSegment,
-  type SegmentJourneyStage,
-  type JourneyStage,
-  DEFAULT_SEGMENTS,
-  toggleSetItem,
-} from '../../strategy-research.types';
+import type { AudienceSegment, SegmentJourneyStage, JourneyStage } from '../../strategy-research.types';
+import { AI_SIMULATION_DELAY_MS } from '../../strategy-research.constants';
+import { DEFAULT_SEGMENTS } from '../../strategy-research.mock-data';
+import { safeTimeout, toggleSetItem } from '../../strategy-research.utils';
 
 const JOURNEY_STAGES: JourneyStage[] = ['awareness', 'consideration', 'conversion', 'retention'];
 
@@ -26,13 +23,6 @@ const STAGE_LABELS: Record<JourneyStage, string> = {
 })
 export class AudienceComponent {
   private readonly destroyRef = inject(DestroyRef);
-  private timerId: ReturnType<typeof setTimeout> | null = null;
-
-  constructor() {
-    this.destroyRef.onDestroy(() => {
-      if (this.timerId !== null) clearTimeout(this.timerId);
-    });
-  }
 
   readonly segments = signal<AudienceSegment[]>(
     DEFAULT_SEGMENTS.map(s => ({
@@ -92,7 +82,7 @@ export class AudienceComponent {
 
   mapJourney(segmentId: string): void {
     this.mappingSegmentId.set(segmentId);
-    this.timerId = setTimeout(() => {
+    safeTimeout(() => {
       this.segments.update(list =>
         list.map(s => {
           if (s.id !== segmentId) return s;
@@ -115,8 +105,7 @@ export class AudienceComponent {
         next.add(segmentId);
         return next;
       });
-      this.timerId = null;
-    }, 2500);
+    }, AI_SIMULATION_DELAY_MS, this.destroyRef);
   }
 
   getStage(segment: AudienceSegment, stage: JourneyStage): SegmentJourneyStage | undefined {

@@ -1,5 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { ContentMixComponent } from './content-mix.component';
+import { AI_SIMULATION_DELAY_MS } from '../../strategy-research.constants';
 
 describe('ContentMixComponent', () => {
   let component: ContentMixComponent;
@@ -161,13 +162,13 @@ describe('ContentMixComponent', () => {
     component.aiSuggest();
     expect(component.isSuggesting()).toBe(true);
 
-    vi.advanceTimersByTime(2500);
+    vi.advanceTimersByTime(AI_SIMULATION_DELAY_MS);
     expect(component.isSuggesting()).toBe(false);
   });
 
   it('should update mix values after AI suggest', () => {
     component.aiSuggest();
-    vi.advanceTimersByTime(2500);
+    vi.advanceTimersByTime(AI_SIMULATION_DELAY_MS);
 
     const edu = component.mix().find(m => m.category === 'educational')!;
     expect(edu.targetPercent).toBe(30);
@@ -186,7 +187,7 @@ describe('ContentMixComponent', () => {
     expect(btn.textContent).toContain('Suggesting...');
     expect(btn.querySelector('.spinner')).toBeTruthy();
 
-    vi.advanceTimersByTime(2500);
+    vi.advanceTimersByTime(AI_SIMULATION_DELAY_MS);
     fixture.detectChanges();
 
     expect(btn.disabled).toBe(false);
@@ -245,7 +246,7 @@ describe('ContentMixComponent', () => {
     const aiBtn = nativeElement.querySelector('.btn-ai') as HTMLButtonElement;
     aiBtn.click();
     expect(component.isSuggesting()).toBe(true);
-    vi.advanceTimersByTime(2500);
+    vi.advanceTimersByTime(AI_SIMULATION_DELAY_MS);
     fixture.detectChanges();
     expect(component.isSuggesting()).toBe(false);
   });

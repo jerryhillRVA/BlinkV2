@@ -1,7 +1,9 @@
 import { Component, DestroyRef, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { type ContentMixTarget, type ContentCategory } from '../../strategy-research.types';
+import type { ContentMixTarget, ContentCategory } from '../../strategy-research.types';
+import { AI_SIMULATION_DELAY_MS } from '../../strategy-research.constants';
+import { safeTimeout } from '../../strategy-research.utils';
 
 interface ContentMixEntry extends ContentMixTarget {
   actualPercent: number;
@@ -23,13 +25,6 @@ const DEFAULT_MIX: ContentMixEntry[] = [
 })
 export class ContentMixComponent {
   private readonly destroyRef = inject(DestroyRef);
-  private timerId: ReturnType<typeof setTimeout> | null = null;
-
-  constructor() {
-    this.destroyRef.onDestroy(() => {
-      if (this.timerId !== null) clearTimeout(this.timerId);
-    });
-  }
 
   readonly mix = signal<ContentMixEntry[]>(DEFAULT_MIX.map(m => ({ ...m })));
   readonly isSuggesting = signal(false);
@@ -55,12 +50,11 @@ export class ContentMixComponent {
       educational: 30, entertaining: 25, community: 25, promotional: 10, trending: 10,
     };
     this.isSuggesting.set(true);
-    this.timerId = setTimeout(() => {
+    safeTimeout(() => {
       this.mix.update(list =>
         list.map(m => ({ ...m, targetPercent: suggestedTargets[m.category] ?? m.targetPercent }))
       );
       this.isSuggesting.set(false);
-      this.timerId = null;
-    }, 2500);
+    }, AI_SIMULATION_DELAY_MS, this.destroyRef);
   }
 }

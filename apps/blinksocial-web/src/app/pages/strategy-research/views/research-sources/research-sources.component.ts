@@ -1,12 +1,10 @@
 import { Component, DestroyRef, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import {
-  type ResearchSource,
-  type ContentPillar,
-  MOCK_RESEARCH_SOURCES,
-  DEFAULT_PILLARS,
-} from '../../strategy-research.types';
+import type { ResearchSource, ContentPillar } from '../../strategy-research.types';
+import { AI_SIMULATION_DELAY_MS } from '../../strategy-research.constants';
+import { MOCK_RESEARCH_SOURCES, DEFAULT_PILLARS } from '../../strategy-research.mock-data';
+import { safeTimeout, generateId } from '../../strategy-research.utils';
 
 const TYPE_COLORS: Record<ResearchSource['type'], { bg: string; text: string }> = {
   article: { bg: 'var(--blink-icon-blue-bg)', text: 'var(--blink-icon-blue)' },
@@ -24,13 +22,6 @@ const TYPE_COLORS: Record<ResearchSource['type'], { bg: string; text: string }> 
 })
 export class ResearchSourcesComponent {
   private readonly destroyRef = inject(DestroyRef);
-  private timerId: ReturnType<typeof setTimeout> | null = null;
-
-  constructor() {
-    this.destroyRef.onDestroy(() => {
-      if (this.timerId !== null) clearTimeout(this.timerId);
-    });
-  }
 
   readonly sources = signal<ResearchSource[]>([...MOCK_RESEARCH_SOURCES]);
   readonly pillars = signal<ContentPillar[]>([...DEFAULT_PILLARS]);
@@ -66,9 +57,9 @@ export class ResearchSourcesComponent {
 
   discoverSources(): void {
     this.isDiscovering.set(true);
-    this.timerId = setTimeout(() => {
+    safeTimeout(() => {
       const newSource: ResearchSource = {
-        id: `rs-${Date.now()}`,
+        id: generateId('rs'),
         title: 'AI-Discovered: Perimenopause Exercise Guidelines 2026',
         url: 'https://example.com/ai-discovered',
         type: 'report',
@@ -79,8 +70,7 @@ export class ResearchSourcesComponent {
       };
       this.sources.update(list => [newSource, ...list]);
       this.isDiscovering.set(false);
-      this.timerId = null;
-    }, 2500);
+    }, AI_SIMULATION_DELAY_MS, this.destroyRef);
   }
 
   createIdea(_source: ResearchSource): void {

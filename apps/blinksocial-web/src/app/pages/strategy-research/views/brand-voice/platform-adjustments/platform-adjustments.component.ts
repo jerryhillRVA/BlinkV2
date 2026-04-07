@@ -1,6 +1,8 @@
 import { Component, DestroyRef, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { type Platform, PLATFORM_LABELS } from '../../../strategy-research.types';
+import type { Platform } from '../../../strategy-research.types';
+import { PLATFORM_LABELS } from '../../../strategy-research.constants';
+import { safeTimeout } from '../../../strategy-research.utils';
 
 const ALL_PLATFORMS: Platform[] = ['instagram', 'tiktok', 'youtube', 'facebook', 'linkedin'];
 
@@ -26,14 +28,6 @@ export class PlatformAdjustmentsComponent {
 
   readonly platformLabels = PLATFORM_LABELS;
 
-  private suggestTimerId: ReturnType<typeof setTimeout> | null = null;
-
-  constructor() {
-    this.destroyRef.onDestroy(() => {
-      if (this.suggestTimerId !== null) clearTimeout(this.suggestTimerId);
-    });
-  }
-
   updateAdjustment(platform: Platform, value: string): void {
     this.adjustments.update(list =>
       list.map(p => p.platform === platform ? { ...p, adjustment: value } : p)
@@ -42,11 +36,10 @@ export class PlatformAdjustmentsComponent {
 
   suggestTone(platform: Platform): void {
     this.suggestingPlatform.set(platform);
-    this.suggestTimerId = setTimeout(() => {
+    safeTimeout(() => {
       const suggestion = MOCK_PLATFORM_SUGGESTIONS[platform] ?? '';
       this.updateAdjustment(platform, suggestion);
       this.suggestingPlatform.set(null);
-      this.suggestTimerId = null;
-    }, 1500);
+    }, 1500, this.destroyRef);
   }
 }

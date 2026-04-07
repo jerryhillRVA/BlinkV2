@@ -1,6 +1,7 @@
 import { Component, DestroyRef, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import type { VoiceAttribute } from '../../../strategy-research.types';
+import { safeTimeout, generateId } from '../../../strategy-research.utils';
 
 const MOCK_VOICE_ATTRIBUTES: VoiceAttribute[] = [
   { id: 'va1', label: 'Empowering', description: 'We lift women up, never talk down to them.', doExample: 'You have everything it takes — let\'s unlock it together.', dontExample: 'You need to fix your relationship with your body.' },
@@ -23,25 +24,16 @@ export class VoiceAttributesComponent {
   readonly editingId = signal<string | null>(null);
   readonly editAttribute = signal<VoiceAttribute>({ id: '', label: '', description: '', doExample: '', dontExample: '' });
 
-  private generateTimerId: ReturnType<typeof setTimeout> | null = null;
-
-  constructor() {
-    this.destroyRef.onDestroy(() => {
-      if (this.generateTimerId !== null) clearTimeout(this.generateTimerId);
-    });
-  }
-
   generateAttributes(): void {
     this.isGenerating.set(true);
-    this.generateTimerId = setTimeout(() => {
+    safeTimeout(() => {
       this.attributes.update(attrs => [...attrs, ...MOCK_VOICE_ATTRIBUTES]);
       this.isGenerating.set(false);
-      this.generateTimerId = null;
-    }, 2000);
+    }, 2000, this.destroyRef);
   }
 
   startAdd(): void {
-    const newId = `va-${Date.now()}`;
+    const newId = generateId('va');
     this.editingId.set(newId);
     this.editAttribute.set({ id: newId, label: '', description: '', doExample: '', dontExample: '' });
   }

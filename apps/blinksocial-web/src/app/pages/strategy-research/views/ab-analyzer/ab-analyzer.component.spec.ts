@@ -1,5 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { AbAnalyzerComponent } from './ab-analyzer.component';
+import { AI_SIMULATION_DELAY_MS } from '../../strategy-research.constants';
 
 describe('AbAnalyzerComponent', () => {
   let component: AbAnalyzerComponent;
@@ -213,7 +214,7 @@ describe('AbAnalyzerComponent', () => {
       component.updateVariantA('Text A');
       component.updateVariantB('Text B');
       component.analyze();
-      vi.advanceTimersByTime(2500);
+      vi.advanceTimersByTime(AI_SIMULATION_DELAY_MS);
       expect(component.analysis()).not.toBeNull();
       expect(component.isAnalyzing()).toBe(false);
     });
@@ -222,7 +223,7 @@ describe('AbAnalyzerComponent', () => {
       component.updateVariantA('Text A');
       component.updateVariantB('Text B');
       component.analyze();
-      vi.advanceTimersByTime(2500);
+      vi.advanceTimersByTime(AI_SIMULATION_DELAY_MS);
       fixture.detectChanges();
       const results = fixture.nativeElement.querySelector('.results');
       expect(results).toBeTruthy();
@@ -232,7 +233,7 @@ describe('AbAnalyzerComponent', () => {
       component.updateVariantA('Text A');
       component.updateVariantB('Text B');
       component.analyze();
-      vi.advanceTimersByTime(2500);
+      vi.advanceTimersByTime(AI_SIMULATION_DELAY_MS);
       fixture.detectChanges();
       const winnerVariant = fixture.nativeElement.querySelector('.winner-banner__variant');
       expect(winnerVariant.textContent).toContain('Variant A');
@@ -244,7 +245,7 @@ describe('AbAnalyzerComponent', () => {
       component.updateVariantA('Text A');
       component.updateVariantB('Text B');
       component.analyze();
-      vi.advanceTimersByTime(2500);
+      vi.advanceTimersByTime(AI_SIMULATION_DELAY_MS);
       fixture.detectChanges();
       const verdict = fixture.nativeElement.querySelector('.winner-banner__verdict');
       expect(verdict.textContent).toContain('Variant A leads');
@@ -254,7 +255,7 @@ describe('AbAnalyzerComponent', () => {
       component.updateVariantA('Text A');
       component.updateVariantB('Text B');
       component.analyze();
-      vi.advanceTimersByTime(2500);
+      vi.advanceTimersByTime(AI_SIMULATION_DELAY_MS);
       fixture.detectChanges();
       const swCards = fixture.nativeElement.querySelectorAll('.sw-card');
       expect(swCards.length).toBe(2);
@@ -268,7 +269,7 @@ describe('AbAnalyzerComponent', () => {
       component.updateVariantA('Text A');
       component.updateVariantB('Text B');
       component.analyze();
-      vi.advanceTimersByTime(2500);
+      vi.advanceTimersByTime(AI_SIMULATION_DELAY_MS);
       fixture.detectChanges();
       const listItems = fixture.nativeElement.querySelectorAll('.sw-list li');
       // variantA: 2 strengths + 1 weakness, variantB: 1 strength + 2 weaknesses = 6
@@ -279,7 +280,7 @@ describe('AbAnalyzerComponent', () => {
       component.updateVariantA('Text A');
       component.updateVariantB('Text B');
       component.analyze();
-      vi.advanceTimersByTime(2500);
+      vi.advanceTimersByTime(AI_SIMULATION_DELAY_MS);
       fixture.detectChanges();
       const scoreRows = fixture.nativeElement.querySelectorAll('.score-row');
       expect(scoreRows.length).toBe(4);
@@ -289,7 +290,7 @@ describe('AbAnalyzerComponent', () => {
       component.updateVariantA('Text A');
       component.updateVariantB('Text B');
       component.analyze();
-      vi.advanceTimersByTime(2500);
+      vi.advanceTimersByTime(AI_SIMULATION_DELAY_MS);
       fixture.detectChanges();
       const improvedCard = fixture.nativeElement.querySelector('.improved-card');
       expect(improvedCard).toBeTruthy();
@@ -327,7 +328,7 @@ describe('AbAnalyzerComponent', () => {
       component.updateVariantA('Text A');
       component.updateVariantB('Text B');
       component.analyze();
-      vi.advanceTimersByTime(2500);
+      vi.advanceTimersByTime(AI_SIMULATION_DELAY_MS);
       component.useImprovedVersion();
       expect(component.variantA()).toContain('Your strongest decade starts now');
     });
@@ -336,7 +337,7 @@ describe('AbAnalyzerComponent', () => {
       component.updateVariantA('Text A');
       component.updateVariantB('Text B');
       component.analyze();
-      vi.advanceTimersByTime(2500);
+      vi.advanceTimersByTime(AI_SIMULATION_DELAY_MS);
       fixture.detectChanges();
       const useButton = fixture.nativeElement.querySelector('.improved-card .btn--sm');
       expect(useButton).toBeTruthy();
@@ -353,7 +354,7 @@ describe('AbAnalyzerComponent', () => {
       component.updateVariantA('Text A');
       component.updateVariantB('Text B');
       component.analyze();
-      vi.advanceTimersByTime(2500);
+      vi.advanceTimersByTime(AI_SIMULATION_DELAY_MS);
       fixture.detectChanges();
 
       const barFillsA = fixture.nativeElement.querySelectorAll('.bar-fill--a') as NodeListOf<HTMLElement>;
@@ -369,7 +370,7 @@ describe('AbAnalyzerComponent', () => {
       component.updateVariantA('Text A');
       component.updateVariantB('Text B');
       component.analyze();
-      vi.advanceTimersByTime(2500);
+      vi.advanceTimersByTime(AI_SIMULATION_DELAY_MS);
       fixture.detectChanges();
 
       const barValues = fixture.nativeElement.querySelectorAll('.bar-value');
@@ -382,7 +383,7 @@ describe('AbAnalyzerComponent', () => {
       component.updateVariantA('Text A');
       component.updateVariantB('Text B');
       component.analyze();
-      vi.advanceTimersByTime(2500);
+      vi.advanceTimersByTime(AI_SIMULATION_DELAY_MS);
       fixture.detectChanges();
 
       const labels = fixture.nativeElement.querySelectorAll('.score-row__label');
@@ -402,7 +403,7 @@ describe('AbAnalyzerComponent', () => {
       button.click();
       expect(component.isAnalyzing()).toBe(true);
 
-      vi.advanceTimersByTime(2500);
+      vi.advanceTimersByTime(AI_SIMULATION_DELAY_MS);
       fixture.detectChanges();
       expect(component.analysis()).not.toBeNull();
     });
@@ -425,7 +426,7 @@ describe('AbAnalyzerComponent', () => {
       component.updateVariantA('Text A');
       component.updateVariantB('Text B');
       component.analyze();
-      vi.advanceTimersByTime(2500);
+      vi.advanceTimersByTime(AI_SIMULATION_DELAY_MS);
       fixture.detectChanges();
 
       const swCards = fixture.nativeElement.querySelectorAll('.sw-card');
@@ -438,7 +439,7 @@ describe('AbAnalyzerComponent', () => {
       component.updateVariantA('Text A');
       component.updateVariantB('Text B');
       component.analyze();
-      vi.advanceTimersByTime(2500);
+      vi.advanceTimersByTime(AI_SIMULATION_DELAY_MS);
       fixture.detectChanges();
 
       const swCards = fixture.nativeElement.querySelectorAll('.sw-card');
@@ -451,7 +452,7 @@ describe('AbAnalyzerComponent', () => {
       component.updateVariantA('Text A');
       component.updateVariantB('Text B');
       component.analyze();
-      vi.advanceTimersByTime(2500);
+      vi.advanceTimersByTime(AI_SIMULATION_DELAY_MS);
       fixture.detectChanges();
 
       const badge = fixture.nativeElement.querySelector('.confidence-badge');
@@ -462,7 +463,7 @@ describe('AbAnalyzerComponent', () => {
       component.updateVariantA('Text A');
       component.updateVariantB('Text B');
       component.analyze();
-      vi.advanceTimersByTime(2500);
+      vi.advanceTimersByTime(AI_SIMULATION_DELAY_MS);
       fixture.detectChanges();
 
       const svg = fixture.nativeElement.querySelector('.btn--primary svg');
@@ -497,7 +498,7 @@ describe('AbAnalyzerComponent', () => {
       expect(fixture.nativeElement.querySelector('.spinner')).toBeTruthy();
       expect(fixture.nativeElement.querySelector('.btn--primary svg')).toBeFalsy();
 
-      vi.advanceTimersByTime(2500);
+      vi.advanceTimersByTime(AI_SIMULATION_DELAY_MS);
       fixture.detectChanges();
 
       // After analysis: SVG visible, spinner hidden
@@ -516,7 +517,7 @@ describe('AbAnalyzerComponent', () => {
       component.updateVariantA('Text A');
       component.updateVariantB('Text B');
       component.analyze();
-      vi.advanceTimersByTime(2500);
+      vi.advanceTimersByTime(AI_SIMULATION_DELAY_MS);
       fixture.detectChanges();
 
       // variantA strengths
@@ -537,7 +538,7 @@ describe('AbAnalyzerComponent', () => {
       component.updateVariantA('Text A');
       component.updateVariantB('Text B');
       component.analyze();
-      vi.advanceTimersByTime(2500);
+      vi.advanceTimersByTime(AI_SIMULATION_DELAY_MS);
       fixture.detectChanges();
 
       const scoreRows = fixture.nativeElement.querySelectorAll('.score-row');

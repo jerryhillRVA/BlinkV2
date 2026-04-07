@@ -1,5 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { SeoHashtagsComponent } from './seo-hashtags.component';
+import { AI_SIMULATION_DELAY_MS } from '../../strategy-research.constants';
 
 describe('SeoHashtagsComponent', () => {
   let component: SeoHashtagsComponent;
@@ -130,14 +131,14 @@ describe('SeoHashtagsComponent', () => {
 
     it('should set seoData after timeout', () => {
       component.generate();
-      vi.advanceTimersByTime(2500);
+      vi.advanceTimersByTime(AI_SIMULATION_DELAY_MS);
       expect(component.seoData()).not.toBeNull();
       expect(component.isGenerating()).toBe(false);
     });
 
     it('should render results section after generation completes', () => {
       component.generate();
-      vi.advanceTimersByTime(2500);
+      vi.advanceTimersByTime(AI_SIMULATION_DELAY_MS);
       fixture.detectChanges();
       const results = fixture.nativeElement.querySelector('.results');
       expect(results).toBeTruthy();
@@ -145,7 +146,7 @@ describe('SeoHashtagsComponent', () => {
 
     it('should display hashtag card with tabs', () => {
       component.generate();
-      vi.advanceTimersByTime(2500);
+      vi.advanceTimersByTime(AI_SIMULATION_DELAY_MS);
       fixture.detectChanges();
       const tabBtns = fixture.nativeElement.querySelectorAll('.tab-btn');
       expect(tabBtns.length).toBe(3);
@@ -153,7 +154,7 @@ describe('SeoHashtagsComponent', () => {
 
     it('should display hashtag chips for reach tab', () => {
       component.generate();
-      vi.advanceTimersByTime(2500);
+      vi.advanceTimersByTime(AI_SIMULATION_DELAY_MS);
       fixture.detectChanges();
       const chips = fixture.nativeElement.querySelectorAll('.hashtag-chip');
       expect(chips.length).toBe(3);
@@ -161,7 +162,7 @@ describe('SeoHashtagsComponent', () => {
 
     it('should display keyword chips', () => {
       component.generate();
-      vi.advanceTimersByTime(2500);
+      vi.advanceTimersByTime(AI_SIMULATION_DELAY_MS);
       fixture.detectChanges();
       const keywords = fixture.nativeElement.querySelectorAll('.keyword-chip');
       expect(keywords.length).toBe(4);
@@ -169,7 +170,7 @@ describe('SeoHashtagsComponent', () => {
 
     it('should display example bio', () => {
       component.generate();
-      vi.advanceTimersByTime(2500);
+      vi.advanceTimersByTime(AI_SIMULATION_DELAY_MS);
       fixture.detectChanges();
       const bio = fixture.nativeElement.querySelector('.example-bio__text');
       expect(bio).toBeTruthy();
@@ -178,7 +179,7 @@ describe('SeoHashtagsComponent', () => {
 
     it('should display checklist items', () => {
       component.generate();
-      vi.advanceTimersByTime(2500);
+      vi.advanceTimersByTime(AI_SIMULATION_DELAY_MS);
       fixture.detectChanges();
       const items = fixture.nativeElement.querySelectorAll('.checklist-item');
       expect(items.length).toBe(8);
@@ -186,7 +187,7 @@ describe('SeoHashtagsComponent', () => {
 
     it('should display trending angles', () => {
       component.generate();
-      vi.advanceTimersByTime(2500);
+      vi.advanceTimersByTime(AI_SIMULATION_DELAY_MS);
       fixture.detectChanges();
       const trending = fixture.nativeElement.querySelectorAll('.trending-item');
       expect(trending.length).toBe(2);
@@ -194,7 +195,7 @@ describe('SeoHashtagsComponent', () => {
 
     it('should display virality badges on trending items', () => {
       component.generate();
-      vi.advanceTimersByTime(2500);
+      vi.advanceTimersByTime(AI_SIMULATION_DELAY_MS);
       fixture.detectChanges();
       const badges = fixture.nativeElement.querySelectorAll('.virality-badge');
       expect(badges.length).toBe(2);
@@ -220,7 +221,7 @@ describe('SeoHashtagsComponent', () => {
 
     it('should update displayed hashtags when tab changes', () => {
       component.generate();
-      vi.advanceTimersByTime(2500);
+      vi.advanceTimersByTime(AI_SIMULATION_DELAY_MS);
       fixture.detectChanges();
 
       component.setTab('niche');
@@ -232,7 +233,7 @@ describe('SeoHashtagsComponent', () => {
 
     it('should highlight the active tab button', () => {
       component.generate();
-      vi.advanceTimersByTime(2500);
+      vi.advanceTimersByTime(AI_SIMULATION_DELAY_MS);
       fixture.detectChanges();
       const activeTabs = fixture.nativeElement.querySelectorAll('.tab-btn--active');
       expect(activeTabs.length).toBe(1);
@@ -247,7 +248,7 @@ describe('SeoHashtagsComponent', () => {
 
     it('should return reach hashtags by default', () => {
       component.generate();
-      vi.advanceTimersByTime(2500);
+      vi.advanceTimersByTime(AI_SIMULATION_DELAY_MS);
       const hashtags = component.getActiveHashtags();
       expect(hashtags.length).toBe(3);
       expect(hashtags[0].tag).toBe('#fitness');
@@ -255,7 +256,7 @@ describe('SeoHashtagsComponent', () => {
 
     it('should return niche hashtags when niche tab is active', () => {
       component.generate();
-      vi.advanceTimersByTime(2500);
+      vi.advanceTimersByTime(AI_SIMULATION_DELAY_MS);
       component.setTab('niche');
       const hashtags = component.getActiveHashtags();
       expect(hashtags.length).toBe(3);
@@ -264,7 +265,7 @@ describe('SeoHashtagsComponent', () => {
 
     it('should return community hashtags when community tab is active', () => {
       component.generate();
-      vi.advanceTimersByTime(2500);
+      vi.advanceTimersByTime(AI_SIMULATION_DELAY_MS);
       component.setTab('community');
       const hashtags = component.getActiveHashtags();
       expect(hashtags.length).toBe(3);
@@ -296,7 +297,7 @@ describe('SeoHashtagsComponent', () => {
 
     it('should render checkmark SVG for checked items in DOM', () => {
       component.generate();
-      vi.advanceTimersByTime(2500);
+      vi.advanceTimersByTime(AI_SIMULATION_DELAY_MS);
       fixture.detectChanges();
 
       component.toggleCheckItem(0);
@@ -364,7 +365,7 @@ describe('SeoHashtagsComponent', () => {
   describe('DOM interactions', () => {
     it('should switch tab when clicking tab button in DOM', () => {
       component.generate();
-      vi.advanceTimersByTime(2500);
+      vi.advanceTimersByTime(AI_SIMULATION_DELAY_MS);
       fixture.detectChanges();
 
       const tabBtns = fixture.nativeElement.querySelectorAll('.tab-btn') as NodeListOf<HTMLButtonElement>;
@@ -378,7 +379,7 @@ describe('SeoHashtagsComponent', () => {
 
     it('should copy tag when clicking hashtag chip in DOM', () => {
       component.generate();
-      vi.advanceTimersByTime(2500);
+      vi.advanceTimersByTime(AI_SIMULATION_DELAY_MS);
       fixture.detectChanges();
 
       const writeTextSpy = vi.fn().mockResolvedValue(undefined);
@@ -395,7 +396,7 @@ describe('SeoHashtagsComponent', () => {
 
     it('should toggle checklist item when clicking in DOM', () => {
       component.generate();
-      vi.advanceTimersByTime(2500);
+      vi.advanceTimersByTime(AI_SIMULATION_DELAY_MS);
       fixture.detectChanges();
 
       const item = fixture.nativeElement.querySelector('.checklist-item') as HTMLElement;
@@ -408,7 +409,7 @@ describe('SeoHashtagsComponent', () => {
 
     it('should uncheck checklist item when clicking again in DOM', () => {
       component.generate();
-      vi.advanceTimersByTime(2500);
+      vi.advanceTimersByTime(AI_SIMULATION_DELAY_MS);
       fixture.detectChanges();
 
       const item = fixture.nativeElement.querySelector('.checklist-item') as HTMLElement;
@@ -426,7 +427,7 @@ describe('SeoHashtagsComponent', () => {
       button.click();
       expect(component.isGenerating()).toBe(true);
 
-      vi.advanceTimersByTime(2500);
+      vi.advanceTimersByTime(AI_SIMULATION_DELAY_MS);
       fixture.detectChanges();
       expect(component.seoData()).not.toBeNull();
     });
@@ -451,7 +452,7 @@ describe('SeoHashtagsComponent', () => {
 
     it('should switch to community tab and display community hashtags', () => {
       component.generate();
-      vi.advanceTimersByTime(2500);
+      vi.advanceTimersByTime(AI_SIMULATION_DELAY_MS);
       fixture.detectChanges();
 
       component.setTab('community');
@@ -464,7 +465,7 @@ describe('SeoHashtagsComponent', () => {
 
     it('should render virality classes correctly on trending items', () => {
       component.generate();
-      vi.advanceTimersByTime(2500);
+      vi.advanceTimersByTime(AI_SIMULATION_DELAY_MS);
       fixture.detectChanges();
 
       const badges = fixture.nativeElement.querySelectorAll('.virality-badge');
@@ -474,7 +475,7 @@ describe('SeoHashtagsComponent', () => {
 
     it('should render checklist checkbox SVG only for checked items', () => {
       component.generate();
-      vi.advanceTimersByTime(2500);
+      vi.advanceTimersByTime(AI_SIMULATION_DELAY_MS);
       fixture.detectChanges();
 
       // No items checked initially
@@ -490,7 +491,7 @@ describe('SeoHashtagsComponent', () => {
 
     it('should display trending item titles and hooks', () => {
       component.generate();
-      vi.advanceTimersByTime(2500);
+      vi.advanceTimersByTime(AI_SIMULATION_DELAY_MS);
       fixture.detectChanges();
 
       const titles = fixture.nativeElement.querySelectorAll('.trending-item__title');
@@ -532,7 +533,7 @@ describe('SeoHashtagsComponent', () => {
       expect(fixture.nativeElement.querySelector('.spinner')).toBeTruthy();
       expect(fixture.nativeElement.querySelector('.btn--primary svg')).toBeFalsy();
 
-      vi.advanceTimersByTime(2500);
+      vi.advanceTimersByTime(AI_SIMULATION_DELAY_MS);
       fixture.detectChanges();
       expect(fixture.nativeElement.querySelector('.spinner')).toBeFalsy();
       expect(fixture.nativeElement.querySelector('.btn--primary svg')).toBeTruthy();
@@ -540,7 +541,7 @@ describe('SeoHashtagsComponent', () => {
 
     it('should render all keyword chips with text', () => {
       component.generate();
-      vi.advanceTimersByTime(2500);
+      vi.advanceTimersByTime(AI_SIMULATION_DELAY_MS);
       fixture.detectChanges();
 
       const kwChips = fixture.nativeElement.querySelectorAll('.keyword-chip');
@@ -550,7 +551,7 @@ describe('SeoHashtagsComponent', () => {
 
     it('should render checklist text for all items', () => {
       component.generate();
-      vi.advanceTimersByTime(2500);
+      vi.advanceTimersByTime(AI_SIMULATION_DELAY_MS);
       fixture.detectChanges();
 
       const texts = fixture.nativeElement.querySelectorAll('.checklist-text');

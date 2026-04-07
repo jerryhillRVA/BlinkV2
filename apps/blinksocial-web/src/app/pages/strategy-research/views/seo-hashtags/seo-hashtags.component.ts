@@ -1,7 +1,10 @@
 import { Component, DestroyRef, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { type Platform, DEFAULT_PILLARS, PLATFORM_OPTIONS, SEO_GOAL_OPTIONS, toggleSetItem } from '../../strategy-research.types';
+import type { Platform } from '../../strategy-research.types';
+import { PLATFORM_OPTIONS, SEO_GOAL_OPTIONS, AI_SIMULATION_DELAY_MS } from '../../strategy-research.constants';
+import { DEFAULT_PILLARS } from '../../strategy-research.mock-data';
+import { safeTimeout, toggleSetItem } from '../../strategy-research.utils';
 
 type HashtagTab = 'reach' | 'niche' | 'community';
 
@@ -47,13 +50,6 @@ const MOCK_SEO: SeoData = {
 })
 export class SeoHashtagsComponent {
   private readonly destroyRef = inject(DestroyRef);
-  private timerId: ReturnType<typeof setTimeout> | null = null;
-
-  constructor() {
-    this.destroyRef.onDestroy(() => {
-      if (this.timerId !== null) clearTimeout(this.timerId);
-    });
-  }
 
   readonly isGenerating = signal(false);
   readonly seoData = signal<SeoData | null>(null);
@@ -76,11 +72,10 @@ export class SeoHashtagsComponent {
   generate(): void {
     this.isGenerating.set(true);
     this.seoData.set(null);
-    this.timerId = setTimeout(() => {
+    safeTimeout(() => {
       this.seoData.set(MOCK_SEO);
       this.isGenerating.set(false);
-      this.timerId = null;
-    }, 2500);
+    }, AI_SIMULATION_DELAY_MS, this.destroyRef);
   }
 
   setTab(tab: HashtagTab): void {

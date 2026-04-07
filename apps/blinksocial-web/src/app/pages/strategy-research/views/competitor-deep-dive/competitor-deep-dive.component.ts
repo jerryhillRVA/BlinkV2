@@ -1,14 +1,10 @@
 import { Component, DestroyRef, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import {
-  type CompetitorInsight,
-  type Platform,
-  MOCK_COMPETITOR_INSIGHTS,
-  PLATFORM_LABELS,
-  PLATFORM_ICONS,
-  toggleSetItem,
-} from '../../strategy-research.types';
+import type { CompetitorInsight, Platform } from '../../strategy-research.types';
+import { PLATFORM_LABELS, PLATFORM_ICONS, AI_SIMULATION_DELAY_MS } from '../../strategy-research.constants';
+import { MOCK_COMPETITOR_INSIGHTS } from '../../strategy-research.mock-data';
+import { safeTimeout, generateId, toggleSetItem } from '../../strategy-research.utils';
 
 @Component({
   selector: 'app-competitor-deep-dive',
@@ -18,13 +14,6 @@ import {
 })
 export class CompetitorDeepDiveComponent {
   private readonly destroyRef = inject(DestroyRef);
-  private timerId: ReturnType<typeof setTimeout> | null = null;
-
-  constructor() {
-    this.destroyRef.onDestroy(() => {
-      if (this.timerId !== null) clearTimeout(this.timerId);
-    });
-  }
 
   readonly competitors = signal<CompetitorInsight[]>([...MOCK_COMPETITOR_INSIGHTS]);
   readonly showAddForm = signal(false);
@@ -59,10 +48,9 @@ export class CompetitorDeepDiveComponent {
 
   runAiScan(): void {
     this.isScanning.set(true);
-    this.timerId = setTimeout(() => {
+    safeTimeout(() => {
       this.isScanning.set(false);
-      this.timerId = null;
-    }, 2500);
+    }, AI_SIMULATION_DELAY_MS, this.destroyRef);
   }
 
   runTeardown(_id: string): void {
@@ -84,7 +72,7 @@ export class CompetitorDeepDiveComponent {
   addCompetitor(): void {
     if (!this.newCompetitor.trim()) return;
     const insight: CompetitorInsight = {
-      id: `ci-${Date.now()}`,
+      id: generateId('ci'),
       competitor: this.newCompetitor.trim(),
       platform: this.newPlatform,
       contentType: this.newContentType.trim() || 'General',

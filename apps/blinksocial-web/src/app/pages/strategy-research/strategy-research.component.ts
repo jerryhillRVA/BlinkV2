@@ -13,12 +13,8 @@ import { ContentRepurposerComponent } from './views/content-repurposer/content-r
 import { SeriesBuilderComponent } from './views/series-builder/series-builder.component';
 import { AbAnalyzerComponent } from './views/ab-analyzer/ab-analyzer.component';
 import { SeoHashtagsComponent } from './views/seo-hashtags/seo-hashtags.component';
-import {
-  type StrategyView,
-  type BusinessObjective,
-  type SidebarItem,
-  SIDEBAR_ITEMS,
-} from './strategy-research.types';
+import type { StrategyView, BusinessObjective, SidebarItem } from './strategy-research.types';
+import { SIDEBAR_ITEMS } from './strategy-research.constants';
 
 @Component({
   selector: 'app-strategy-research',

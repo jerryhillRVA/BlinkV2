@@ -1,5 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { ResearchSourcesComponent } from './research-sources.component';
+import { AI_SIMULATION_DELAY_MS } from '../../strategy-research.constants';
 
 describe('ResearchSourcesComponent', () => {
   let component: ResearchSourcesComponent;
@@ -178,7 +179,7 @@ describe('ResearchSourcesComponent', () => {
     component.discoverSources();
     expect(component.isDiscovering()).toBe(true);
 
-    vi.advanceTimersByTime(2500);
+    vi.advanceTimersByTime(AI_SIMULATION_DELAY_MS);
     expect(component.isDiscovering()).toBe(false);
     expect(component.sources().length).toBe(initialCount + 1);
     expect(component.sources()[0].title).toContain('AI-Discovered');
@@ -193,7 +194,7 @@ describe('ResearchSourcesComponent', () => {
     expect(btn.textContent).toContain('Discovering...');
     expect(btn.querySelector('.spinner')).toBeTruthy();
 
-    vi.advanceTimersByTime(2500);
+    vi.advanceTimersByTime(AI_SIMULATION_DELAY_MS);
     fixture.detectChanges();
 
     expect(btn.disabled).toBe(false);
@@ -202,7 +203,7 @@ describe('ResearchSourcesComponent', () => {
 
   it('should add discovered source at beginning of list', () => {
     component.discoverSources();
-    vi.advanceTimersByTime(2500);
+    vi.advanceTimersByTime(AI_SIMULATION_DELAY_MS);
 
     const first = component.sources()[0];
     expect(first.title).toContain('AI-Discovered');
@@ -229,7 +230,7 @@ describe('ResearchSourcesComponent', () => {
     const btn = nativeElement.querySelector('.btn-discover') as HTMLButtonElement;
     btn.click();
     expect(component.isDiscovering()).toBe(true);
-    vi.advanceTimersByTime(2500);
+    vi.advanceTimersByTime(AI_SIMULATION_DELAY_MS);
     fixture.detectChanges();
     expect(component.isDiscovering()).toBe(false);
   });

@@ -1,5 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { CompetitorDeepDiveComponent } from './competitor-deep-dive.component';
+import { AI_SIMULATION_DELAY_MS } from '../../strategy-research.constants';
 
 describe('CompetitorDeepDiveComponent', () => {
   let component: CompetitorDeepDiveComponent;
@@ -117,7 +118,7 @@ describe('CompetitorDeepDiveComponent', () => {
     component.runAiScan();
     expect(component.isScanning()).toBe(true);
 
-    vi.advanceTimersByTime(2500);
+    vi.advanceTimersByTime(AI_SIMULATION_DELAY_MS);
     expect(component.isScanning()).toBe(false);
   });
 
@@ -130,7 +131,7 @@ describe('CompetitorDeepDiveComponent', () => {
     expect(scanBtn.textContent).toContain('Scanning...');
     expect(scanBtn.querySelector('.spinner')).toBeTruthy();
 
-    vi.advanceTimersByTime(2500);
+    vi.advanceTimersByTime(AI_SIMULATION_DELAY_MS);
     fixture.detectChanges();
 
     expect(scanBtn.disabled).toBe(false);
@@ -236,7 +237,7 @@ describe('CompetitorDeepDiveComponent', () => {
     const scanBtn = nativeElement.querySelector('.action-bar .btn--primary') as HTMLButtonElement;
     scanBtn.click();
     expect(component.isScanning()).toBe(true);
-    vi.advanceTimersByTime(2500);
+    vi.advanceTimersByTime(AI_SIMULATION_DELAY_MS);
     expect(component.isScanning()).toBe(false);
   });
 

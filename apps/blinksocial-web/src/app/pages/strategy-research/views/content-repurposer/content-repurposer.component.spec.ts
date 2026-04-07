@@ -1,5 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { ContentRepurposerComponent } from './content-repurposer.component';
+import { AI_SIMULATION_DELAY_MS } from '../../strategy-research.constants';
 
 describe('ContentRepurposerComponent', () => {
   let component: ContentRepurposerComponent;
@@ -111,7 +112,7 @@ describe('ContentRepurposerComponent', () => {
     expect(component.isGenerating()).toBe(true);
     expect(component.outputs().length).toBe(0);
 
-    vi.advanceTimersByTime(2500);
+    vi.advanceTimersByTime(AI_SIMULATION_DELAY_MS);
     expect(component.isGenerating()).toBe(false);
     expect(component.outputs().length).toBeGreaterThan(0);
   });
@@ -121,7 +122,7 @@ describe('ContentRepurposerComponent', () => {
     component.sourceContent.set('Test content');
     component.repurpose();
 
-    vi.advanceTimersByTime(2500);
+    vi.advanceTimersByTime(AI_SIMULATION_DELAY_MS);
     const outputs = component.outputs();
     outputs.forEach(o => {
       expect(o.platform).toBe('instagram');
@@ -133,7 +134,7 @@ describe('ContentRepurposerComponent', () => {
     component.sourceContent.set('Test content');
     component.repurpose();
 
-    vi.advanceTimersByTime(2500);
+    vi.advanceTimersByTime(AI_SIMULATION_DELAY_MS);
     expect(component.outputs().length).toBe(2);
   });
 
@@ -147,7 +148,7 @@ describe('ContentRepurposerComponent', () => {
     expect(btn.textContent).toContain('Repurposing...');
     expect(nativeElement.querySelector('.spinner')).toBeTruthy();
 
-    vi.advanceTimersByTime(2500);
+    vi.advanceTimersByTime(AI_SIMULATION_DELAY_MS);
     fixture.detectChanges();
 
     expect(btn.disabled).toBe(false);
@@ -163,7 +164,7 @@ describe('ContentRepurposerComponent', () => {
   it('should render output cards after repurposing', () => {
     component.sourceContent.set('Test content');
     component.repurpose();
-    vi.advanceTimersByTime(2500);
+    vi.advanceTimersByTime(AI_SIMULATION_DELAY_MS);
     fixture.detectChanges();
 
     const outputCards = nativeElement.querySelectorAll('.output-card');
@@ -178,7 +179,7 @@ describe('ContentRepurposerComponent', () => {
   it('should set copiedIndex and reset after timeout', () => {
     component.sourceContent.set('Test content');
     component.repurpose();
-    vi.advanceTimersByTime(2500);
+    vi.advanceTimersByTime(AI_SIMULATION_DELAY_MS);
 
     // Mock clipboard
     Object.assign(navigator, { clipboard: { writeText: vi.fn() } });
@@ -198,7 +199,7 @@ describe('ContentRepurposerComponent', () => {
   it('should show "Copied!" text when copiedIndex matches', () => {
     component.sourceContent.set('Test content');
     component.repurpose();
-    vi.advanceTimersByTime(2500);
+    vi.advanceTimersByTime(AI_SIMULATION_DELAY_MS);
 
     Object.assign(navigator, { clipboard: { writeText: vi.fn() } });
     component.copyContent(0);
@@ -250,7 +251,7 @@ describe('ContentRepurposerComponent', () => {
     btn.click();
     expect(component.isGenerating()).toBe(true);
 
-    vi.advanceTimersByTime(2500);
+    vi.advanceTimersByTime(AI_SIMULATION_DELAY_MS);
     fixture.detectChanges();
     expect(component.outputs().length).toBeGreaterThan(0);
   });
@@ -258,7 +259,7 @@ describe('ContentRepurposerComponent', () => {
   it('should render Save as Idea button for each output card', () => {
     component.sourceContent.set('Test content');
     component.repurpose();
-    vi.advanceTimersByTime(2500);
+    vi.advanceTimersByTime(AI_SIMULATION_DELAY_MS);
     fixture.detectChanges();
 
     const ghostBtns = nativeElement.querySelectorAll('.btn--ghost');
@@ -268,7 +269,7 @@ describe('ContentRepurposerComponent', () => {
   it('should call saveAsIdea when clicking Save as Idea button in DOM', () => {
     component.sourceContent.set('Test content');
     component.repurpose();
-    vi.advanceTimersByTime(2500);
+    vi.advanceTimersByTime(AI_SIMULATION_DELAY_MS);
     fixture.detectChanges();
 
     const spy = vi.spyOn(component, 'saveAsIdea');
@@ -280,7 +281,7 @@ describe('ContentRepurposerComponent', () => {
   it('should call copyContent when clicking Copy button in DOM', () => {
     component.sourceContent.set('Test content');
     component.repurpose();
-    vi.advanceTimersByTime(2500);
+    vi.advanceTimersByTime(AI_SIMULATION_DELAY_MS);
     fixture.detectChanges();
 
     Object.assign(navigator, { clipboard: { writeText: vi.fn() } });
@@ -317,7 +318,7 @@ describe('ContentRepurposerComponent', () => {
   it('should render output card platform and format', () => {
     component.sourceContent.set('Test content');
     component.repurpose();
-    vi.advanceTimersByTime(2500);
+    vi.advanceTimersByTime(AI_SIMULATION_DELAY_MS);
     fixture.detectChanges();
 
     const platforms = nativeElement.querySelectorAll('.output-card__platform');
@@ -329,7 +330,7 @@ describe('ContentRepurposerComponent', () => {
   it('should show "Copy" text when copiedIndex does not match', () => {
     component.sourceContent.set('Test content');
     component.repurpose();
-    vi.advanceTimersByTime(2500);
+    vi.advanceTimersByTime(AI_SIMULATION_DELAY_MS);
     fixture.detectChanges();
 
     const copyBtn = nativeElement.querySelector('.output-card__actions .btn--secondary');
@@ -339,7 +340,7 @@ describe('ContentRepurposerComponent', () => {
   it('should handle copyContent with clipboard unavailable', () => {
     component.sourceContent.set('Test content');
     component.repurpose();
-    vi.advanceTimersByTime(2500);
+    vi.advanceTimersByTime(AI_SIMULATION_DELAY_MS);
 
     Object.defineProperty(navigator, 'clipboard', {
       value: undefined,
@@ -356,7 +357,7 @@ describe('ContentRepurposerComponent', () => {
     component.selectedPlatforms.set(new Set(['instagram', 'tiktok', 'youtube', 'linkedin']));
     component.sourceContent.set('Test content');
     component.repurpose();
-    vi.advanceTimersByTime(2500);
+    vi.advanceTimersByTime(AI_SIMULATION_DELAY_MS);
 
     expect(component.outputs().length).toBe(4);
   });
@@ -364,7 +365,7 @@ describe('ContentRepurposerComponent', () => {
   it('should render pre element with content text', () => {
     component.sourceContent.set('Test content');
     component.repurpose();
-    vi.advanceTimersByTime(2500);
+    vi.advanceTimersByTime(AI_SIMULATION_DELAY_MS);
     fixture.detectChanges();
 
     const preElement = nativeElement.querySelector('.output-card__text');
@@ -393,7 +394,7 @@ describe('ContentRepurposerComponent', () => {
   it('should render output cards with all action buttons', () => {
     component.sourceContent.set('Test content');
     component.repurpose();
-    vi.advanceTimersByTime(2500);
+    vi.advanceTimersByTime(AI_SIMULATION_DELAY_MS);
     fixture.detectChanges();
 
     const outputCards = nativeElement.querySelectorAll('.output-card');

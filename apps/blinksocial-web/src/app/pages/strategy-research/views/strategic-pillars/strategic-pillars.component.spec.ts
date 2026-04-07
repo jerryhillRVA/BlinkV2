@@ -1,5 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { StrategicPillarsComponent } from './strategic-pillars.component';
+import { AI_SIMULATION_DELAY_MS } from '../../strategy-research.constants';
 
 describe('StrategicPillarsComponent', () => {
   let component: StrategicPillarsComponent;
@@ -201,7 +202,7 @@ describe('StrategicPillarsComponent', () => {
     component.analyzeDistribution();
     expect(component.isAnalyzing()).toBe(true);
 
-    vi.advanceTimersByTime(2500);
+    vi.advanceTimersByTime(AI_SIMULATION_DELAY_MS);
     expect(component.isAnalyzing()).toBe(false);
   });
 
@@ -214,7 +215,7 @@ describe('StrategicPillarsComponent', () => {
     expect(btn.textContent).toContain('Analyzing...');
     expect(nativeElement.querySelector('.btn-analyze .spinner')).toBeTruthy();
 
-    vi.advanceTimersByTime(2500);
+    vi.advanceTimersByTime(AI_SIMULATION_DELAY_MS);
     fixture.detectChanges();
 
     expect(btn.disabled).toBe(false);
@@ -457,7 +458,7 @@ describe('StrategicPillarsComponent', () => {
     const analyzeBtn = nativeElement.querySelector('.btn-analyze') as HTMLButtonElement;
     analyzeBtn.click();
     expect(component.isAnalyzing()).toBe(true);
-    vi.advanceTimersByTime(2500);
+    vi.advanceTimersByTime(AI_SIMULATION_DELAY_MS);
     expect(component.isAnalyzing()).toBe(false);
   });
 

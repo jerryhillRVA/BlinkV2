@@ -1,13 +1,9 @@
 import { Component, DestroyRef, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import {
-  type ChannelStrategyEntry,
-  type Platform,
-  PLATFORM_LABELS,
-  PLATFORM_ICONS,
-  toggleSetItem,
-} from '../../strategy-research.types';
+import type { ChannelStrategyEntry, Platform } from '../../strategy-research.types';
+import { PLATFORM_LABELS, PLATFORM_ICONS, AI_SIMULATION_DELAY_MS } from '../../strategy-research.constants';
+import { safeTimeout, toggleSetItem } from '../../strategy-research.utils';
 
 const CONTENT_TYPE_OPTIONS = [
   'Reels', 'Stories', 'Carousels', 'Long-form', 'Shorts',
@@ -22,13 +18,6 @@ const CONTENT_TYPE_OPTIONS = [
 })
 export class ChannelStrategyComponent {
   private readonly destroyRef = inject(DestroyRef);
-  private timerId: ReturnType<typeof setTimeout> | null = null;
-
-  constructor() {
-    this.destroyRef.onDestroy(() => {
-      if (this.timerId !== null) clearTimeout(this.timerId);
-    });
-  }
 
   readonly channels = signal<ChannelStrategyEntry[]>([
     { platform: 'instagram', active: true, role: 'Primary engagement and community building', primaryContentTypes: ['Reels', 'Stories', 'Carousels'], toneAdjustment: 'Warm, casual, motivational', postingCadence: '5x/week', primaryAudience: 'Active 40s', primaryGoal: 'Engagement', notes: '' },
@@ -87,7 +76,7 @@ export class ChannelStrategyComponent {
 
   aiGenerate(platform: Platform): void {
     this.generatingPlatform.set(platform);
-    this.timerId = setTimeout(() => {
+    safeTimeout(() => {
       this.channels.update(list =>
         list.map(c => {
           if (c.platform !== platform) return c;
@@ -105,7 +94,6 @@ export class ChannelStrategyComponent {
         })
       );
       this.generatingPlatform.set(null);
-      this.timerId = null;
-    }, 2500);
+    }, AI_SIMULATION_DELAY_MS, this.destroyRef);
   }
 }

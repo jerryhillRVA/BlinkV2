@@ -1,7 +1,9 @@
 import { Component, DestroyRef, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { type Platform, PLATFORM_OPTIONS, toggleSetItem } from '../../strategy-research.types';
+import type { Platform } from '../../strategy-research.types';
+import { PLATFORM_OPTIONS, AI_SIMULATION_DELAY_MS } from '../../strategy-research.constants';
+import { safeTimeout, toggleSetItem } from '../../strategy-research.utils';
 
 interface RepurposedOutput {
   platform: Platform;
@@ -24,15 +26,6 @@ const MOCK_OUTPUTS: RepurposedOutput[] = [
 })
 export class ContentRepurposerComponent {
   private readonly destroyRef = inject(DestroyRef);
-  private repurposeTimerId: ReturnType<typeof setTimeout> | null = null;
-  private copiedTimerId: ReturnType<typeof setTimeout> | null = null;
-
-  constructor() {
-    this.destroyRef.onDestroy(() => {
-      if (this.repurposeTimerId !== null) clearTimeout(this.repurposeTimerId);
-      if (this.copiedTimerId !== null) clearTimeout(this.copiedTimerId);
-    });
-  }
 
   readonly sourceContent = signal('');
   readonly selectedPlatforms = signal<Set<Platform>>(new Set(['instagram', 'tiktok']));
@@ -54,13 +47,12 @@ export class ContentRepurposerComponent {
     if (!this.sourceContent().trim()) return;
     this.isGenerating.set(true);
     this.outputs.set([]);
-    this.repurposeTimerId = setTimeout(() => {
+    safeTimeout(() => {
       const selected = this.selectedPlatforms();
       const filtered = MOCK_OUTPUTS.filter(o => selected.has(o.platform));
       this.outputs.set(filtered.length > 0 ? filtered : MOCK_OUTPUTS.slice(0, 2));
       this.isGenerating.set(false);
-      this.repurposeTimerId = null;
-    }, 2500);
+    }, AI_SIMULATION_DELAY_MS, this.destroyRef);
   }
 
   copyContent(index: number): void {
@@ -68,10 +60,9 @@ export class ContentRepurposerComponent {
     if (output) {
       navigator.clipboard?.writeText(output.content);
       this.copiedIndex.set(index);
-      this.copiedTimerId = setTimeout(() => {
+      safeTimeout(() => {
         this.copiedIndex.set(null);
-        this.copiedTimerId = null;
-      }, 2000);
+      }, 2000, this.destroyRef);
     }
   }
 

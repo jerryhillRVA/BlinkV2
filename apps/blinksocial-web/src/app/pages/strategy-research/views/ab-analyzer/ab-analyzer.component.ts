@@ -1,7 +1,9 @@
 import { Component, DestroyRef, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { type Platform, PLATFORM_OPTIONS, AB_GOAL_OPTIONS } from '../../strategy-research.types';
+import type { Platform } from '../../strategy-research.types';
+import { PLATFORM_OPTIONS, AB_GOAL_OPTIONS, AI_SIMULATION_DELAY_MS } from '../../strategy-research.constants';
+import { safeTimeout } from '../../strategy-research.utils';
 
 interface ScoreBreakdown {
   hookStrength: { a: number; b: number };
@@ -44,13 +46,6 @@ const MOCK_ANALYSIS: AnalysisResult = {
 })
 export class AbAnalyzerComponent {
   private readonly destroyRef = inject(DestroyRef);
-  private timerId: ReturnType<typeof setTimeout> | null = null;
-
-  constructor() {
-    this.destroyRef.onDestroy(() => {
-      if (this.timerId !== null) clearTimeout(this.timerId);
-    });
-  }
 
   readonly variantA = signal('');
   readonly variantB = signal('');
@@ -82,11 +77,10 @@ export class AbAnalyzerComponent {
     if (!this.variantA().trim() || !this.variantB().trim()) return;
     this.isAnalyzing.set(true);
     this.analysis.set(null);
-    this.timerId = setTimeout(() => {
+    safeTimeout(() => {
       this.analysis.set(MOCK_ANALYSIS);
       this.isAnalyzing.set(false);
-      this.timerId = null;
-    }, 2500);
+    }, AI_SIMULATION_DELAY_MS, this.destroyRef);
   }
 
   getBarWidth(score: number): string {

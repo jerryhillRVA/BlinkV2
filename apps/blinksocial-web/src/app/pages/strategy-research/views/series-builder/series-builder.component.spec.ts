@@ -1,5 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { SeriesBuilderComponent } from './series-builder.component';
+import { AI_SIMULATION_DELAY_MS } from '../../strategy-research.constants';
 
 describe('SeriesBuilderComponent', () => {
   let component: SeriesBuilderComponent;
@@ -175,7 +176,7 @@ describe('SeriesBuilderComponent', () => {
 
     it('should set series result after timeout', () => {
       component.buildSeries();
-      vi.advanceTimersByTime(2500);
+      vi.advanceTimersByTime(AI_SIMULATION_DELAY_MS);
       expect(component.series()).not.toBeNull();
       expect(component.isGenerating()).toBe(false);
     });
@@ -183,28 +184,28 @@ describe('SeriesBuilderComponent', () => {
     it('should use selected platform in result', () => {
       component.selectedPlatform = 'tiktok';
       component.buildSeries();
-      vi.advanceTimersByTime(2500);
+      vi.advanceTimersByTime(AI_SIMULATION_DELAY_MS);
       expect(component.series()!.platform).toBe('tiktok');
     });
 
     it('should use selected goal in result', () => {
       component.selectedGoal = 'Drive Sales';
       component.buildSeries();
-      vi.advanceTimersByTime(2500);
+      vi.advanceTimersByTime(AI_SIMULATION_DELAY_MS);
       expect(component.series()!.goal).toBe('Drive Sales');
     });
 
     it('should use selected series length in result', () => {
       component.seriesLength = 3;
       component.buildSeries();
-      vi.advanceTimersByTime(2500);
+      vi.advanceTimersByTime(AI_SIMULATION_DELAY_MS);
       expect(component.series()!.postCount).toBe(3);
       expect(component.series()!.posts.length).toBe(3);
     });
 
     it('should render series output after generation completes', () => {
       component.buildSeries();
-      vi.advanceTimersByTime(2500);
+      vi.advanceTimersByTime(AI_SIMULATION_DELAY_MS);
       fixture.detectChanges();
       const output = fixture.nativeElement.querySelector('.series-output');
       expect(output).toBeTruthy();
@@ -212,7 +213,7 @@ describe('SeriesBuilderComponent', () => {
 
     it('should display overview card with title and narrative arc', () => {
       component.buildSeries();
-      vi.advanceTimersByTime(2500);
+      vi.advanceTimersByTime(AI_SIMULATION_DELAY_MS);
       fixture.detectChanges();
       const title = fixture.nativeElement.querySelector('.overview-card__title');
       expect(title.textContent).toContain('5-Day Strength After 40 Challenge');
@@ -222,7 +223,7 @@ describe('SeriesBuilderComponent', () => {
 
     it('should display badges for platform, count, and goal', () => {
       component.buildSeries();
-      vi.advanceTimersByTime(2500);
+      vi.advanceTimersByTime(AI_SIMULATION_DELAY_MS);
       fixture.detectChanges();
       const badges = fixture.nativeElement.querySelectorAll('.badge');
       expect(badges.length).toBe(3);
@@ -230,7 +231,7 @@ describe('SeriesBuilderComponent', () => {
 
     it('should display post cards with correct content', () => {
       component.buildSeries();
-      vi.advanceTimersByTime(2500);
+      vi.advanceTimersByTime(AI_SIMULATION_DELAY_MS);
       fixture.detectChanges();
       const postCards = fixture.nativeElement.querySelectorAll('.post-card');
       expect(postCards.length).toBe(5);
@@ -238,7 +239,7 @@ describe('SeriesBuilderComponent', () => {
 
     it('should display post numbers', () => {
       component.buildSeries();
-      vi.advanceTimersByTime(2500);
+      vi.advanceTimersByTime(AI_SIMULATION_DELAY_MS);
       fixture.detectChanges();
       const postNumbers = fixture.nativeElement.querySelectorAll('.post-number');
       expect(postNumbers.length).toBe(5);
@@ -247,7 +248,7 @@ describe('SeriesBuilderComponent', () => {
 
     it('should display role tags with correct classes', () => {
       component.buildSeries();
-      vi.advanceTimersByTime(2500);
+      vi.advanceTimersByTime(AI_SIMULATION_DELAY_MS);
       fixture.detectChanges();
       const roleTags = fixture.nativeElement.querySelectorAll('.role-tag');
       expect(roleTags.length).toBe(5);
@@ -256,7 +257,7 @@ describe('SeriesBuilderComponent', () => {
 
     it('should display hook, caption direction, and CTA for each post', () => {
       component.buildSeries();
-      vi.advanceTimersByTime(2500);
+      vi.advanceTimersByTime(AI_SIMULATION_DELAY_MS);
       fixture.detectChanges();
       const hooks = fixture.nativeElement.querySelectorAll('.hook-text');
       expect(hooks.length).toBe(5);
@@ -268,7 +269,7 @@ describe('SeriesBuilderComponent', () => {
 
     it('should display bridge connectors between posts (not after last)', () => {
       component.buildSeries();
-      vi.advanceTimersByTime(2500);
+      vi.advanceTimersByTime(AI_SIMULATION_DELAY_MS);
       fixture.detectChanges();
       const connectors = fixture.nativeElement.querySelectorAll('.bridge-connector');
       expect(connectors.length).toBe(4); // 5 posts - 1
@@ -276,7 +277,7 @@ describe('SeriesBuilderComponent', () => {
 
     it('should display Create in Ideation button for each post', () => {
       component.buildSeries();
-      vi.advanceTimersByTime(2500);
+      vi.advanceTimersByTime(AI_SIMULATION_DELAY_MS);
       fixture.detectChanges();
       const ideationBtns = fixture.nativeElement.querySelectorAll('.post-card__actions .btn--sm');
       expect(ideationBtns.length).toBe(5);
@@ -285,7 +286,7 @@ describe('SeriesBuilderComponent', () => {
     it('should limit posts to 3 when series length is 3', () => {
       component.seriesLength = 3;
       component.buildSeries();
-      vi.advanceTimersByTime(2500);
+      vi.advanceTimersByTime(AI_SIMULATION_DELAY_MS);
       fixture.detectChanges();
       const postCards = fixture.nativeElement.querySelectorAll('.post-card');
       expect(postCards.length).toBe(3);
@@ -301,7 +302,7 @@ describe('SeriesBuilderComponent', () => {
 
     it('should be callable via button click in DOM', () => {
       component.buildSeries();
-      vi.advanceTimersByTime(2500);
+      vi.advanceTimersByTime(AI_SIMULATION_DELAY_MS);
       fixture.detectChanges();
       const ideationBtn = fixture.nativeElement.querySelector('.post-card__actions .btn--sm');
       expect(() => ideationBtn.click()).not.toThrow();
@@ -316,7 +317,7 @@ describe('SeriesBuilderComponent', () => {
       button.click();
       expect(component.isGenerating()).toBe(true);
 
-      vi.advanceTimersByTime(2500);
+      vi.advanceTimersByTime(AI_SIMULATION_DELAY_MS);
       fixture.detectChanges();
       expect(component.series()).not.toBeNull();
     });
@@ -347,7 +348,7 @@ describe('SeriesBuilderComponent', () => {
 
     it('should render role tag classes correctly in DOM', () => {
       component.buildSeries();
-      vi.advanceTimersByTime(2500);
+      vi.advanceTimersByTime(AI_SIMULATION_DELAY_MS);
       fixture.detectChanges();
 
       const roleTags = fixture.nativeElement.querySelectorAll('.role-tag');
@@ -360,7 +361,7 @@ describe('SeriesBuilderComponent', () => {
 
     it('should render bridge connector SVGs between posts', () => {
       component.buildSeries();
-      vi.advanceTimersByTime(2500);
+      vi.advanceTimersByTime(AI_SIMULATION_DELAY_MS);
       fixture.detectChanges();
 
       const connectors = fixture.nativeElement.querySelectorAll('.bridge-connector');
@@ -371,7 +372,7 @@ describe('SeriesBuilderComponent', () => {
 
     it('should not render bridge connector after the last post', () => {
       component.buildSeries();
-      vi.advanceTimersByTime(2500);
+      vi.advanceTimersByTime(AI_SIMULATION_DELAY_MS);
       fixture.detectChanges();
 
       const postCards = fixture.nativeElement.querySelectorAll('.post-card');
@@ -382,7 +383,7 @@ describe('SeriesBuilderComponent', () => {
 
     it('should display CTA text for each post', () => {
       component.buildSeries();
-      vi.advanceTimersByTime(2500);
+      vi.advanceTimersByTime(AI_SIMULATION_DELAY_MS);
       fixture.detectChanges();
 
       const ctaTexts = fixture.nativeElement.querySelectorAll('.cta-text');
@@ -391,7 +392,7 @@ describe('SeriesBuilderComponent', () => {
 
     it('should display overview badges with correct content', () => {
       component.buildSeries();
-      vi.advanceTimersByTime(2500);
+      vi.advanceTimersByTime(AI_SIMULATION_DELAY_MS);
       fixture.detectChanges();
 
       const badges = fixture.nativeElement.querySelectorAll('.badge');
@@ -418,7 +419,7 @@ describe('SeriesBuilderComponent', () => {
     it('should render 3 posts and 2 connectors for series length 3', () => {
       component.seriesLength = 3;
       component.buildSeries();
-      vi.advanceTimersByTime(2500);
+      vi.advanceTimersByTime(AI_SIMULATION_DELAY_MS);
       fixture.detectChanges();
 
       const postCards = fixture.nativeElement.querySelectorAll('.post-card');
@@ -430,7 +431,7 @@ describe('SeriesBuilderComponent', () => {
     it('should call createInIdeation for each post via button click', () => {
       const spy = vi.spyOn(component, 'createInIdeation');
       component.buildSeries();
-      vi.advanceTimersByTime(2500);
+      vi.advanceTimersByTime(AI_SIMULATION_DELAY_MS);
       fixture.detectChanges();
 
       const ideationBtns = fixture.nativeElement.querySelectorAll('.post-card__actions .btn--sm');
@@ -462,7 +463,7 @@ describe('SeriesBuilderComponent', () => {
       expect(fixture.nativeElement.querySelector('.spinner')).toBeTruthy();
       expect(fixture.nativeElement.querySelector('.btn--primary svg')).toBeFalsy();
 
-      vi.advanceTimersByTime(2500);
+      vi.advanceTimersByTime(AI_SIMULATION_DELAY_MS);
       fixture.detectChanges();
       expect(fixture.nativeElement.querySelector('.spinner')).toBeFalsy();
       expect(fixture.nativeElement.querySelector('.btn--primary svg')).toBeTruthy();
@@ -470,7 +471,7 @@ describe('SeriesBuilderComponent', () => {
 
     it('should render narrative arc text', () => {
       component.buildSeries();
-      vi.advanceTimersByTime(2500);
+      vi.advanceTimersByTime(AI_SIMULATION_DELAY_MS);
       fixture.detectChanges();
 
       const arc = fixture.nativeElement.querySelector('.overview-card__arc');
@@ -479,7 +480,7 @@ describe('SeriesBuilderComponent', () => {
 
     it('should render caption direction and CTA labels', () => {
       component.buildSeries();
-      vi.advanceTimersByTime(2500);
+      vi.advanceTimersByTime(AI_SIMULATION_DELAY_MS);
       fixture.detectChanges();
 
       const directionLabels = fixture.nativeElement.querySelectorAll('.direction-label');

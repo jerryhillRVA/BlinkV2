@@ -1,11 +1,9 @@
 import { Component, DestroyRef, EventEmitter, inject, Input, Output, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import {
-  type BusinessObjective,
-  type ObjectiveCategory,
-  OBJECTIVE_CATEGORY_CONFIG,
-} from '../strategy-research.types';
+import type { BusinessObjective, ObjectiveCategory } from '../strategy-research.types';
+import { OBJECTIVE_CATEGORY_CONFIG, AI_SIMULATION_DELAY_MS } from '../strategy-research.constants';
+import { safeTimeout, generateId } from '../strategy-research.utils';
 
 @Component({
   selector: 'app-objectives-strip',
@@ -18,13 +16,6 @@ export class ObjectivesStripComponent {
   @Output() objectivesChange = new EventEmitter<BusinessObjective[]>();
 
   private readonly destroyRef = inject(DestroyRef);
-  private timerId: ReturnType<typeof setTimeout> | null = null;
-
-  constructor() {
-    this.destroyRef.onDestroy(() => {
-      if (this.timerId !== null) clearTimeout(this.timerId);
-    });
-  }
 
   readonly showDrawer = signal(false);
   readonly isSuggesting = signal(false);
@@ -90,20 +81,19 @@ export class ObjectivesStripComponent {
 
   suggestObjectives(): void {
     this.isSuggesting.set(true);
-    this.timerId = setTimeout(() => {
+    safeTimeout(() => {
       const suggested: BusinessObjective[] = [
-        { id: `obj-${Date.now()}-1`, category: 'growth', statement: 'Grow combined social following to 25,000', target: 25000, unit: 'followers', timeframe: 'Q4 2026', status: 'on-track' },
-        { id: `obj-${Date.now()}-2`, category: 'engagement', statement: 'Achieve 5% average engagement rate across platforms', target: 5, unit: '%', timeframe: 'Q3 2026', status: 'on-track' },
+        { id: generateId('obj'), category: 'growth', statement: 'Grow combined social following to 25,000', target: 25000, unit: 'followers', timeframe: 'Q4 2026', status: 'on-track' },
+        { id: generateId('obj'), category: 'engagement', statement: 'Achieve 5% average engagement rate across platforms', target: 5, unit: '%', timeframe: 'Q3 2026', status: 'on-track' },
       ];
       this.dialogObjectives = [...this.dialogObjectives, ...suggested].slice(0, 4);
       this.isSuggesting.set(false);
-      this.timerId = null;
-    }, 2500);
+    }, AI_SIMULATION_DELAY_MS, this.destroyRef);
   }
 
   private createBlankObjective(): BusinessObjective {
     return {
-      id: `obj-${Date.now()}-${Math.random().toString(36).slice(2)}`,
+      id: generateId('obj'),
       category: 'growth',
       statement: '',
       target: 0,

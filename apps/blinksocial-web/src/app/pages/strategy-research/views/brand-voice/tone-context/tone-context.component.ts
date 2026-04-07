@@ -1,6 +1,7 @@
 import { Component, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import type { ToneContext } from '../../../strategy-research.types';
+import { generateId } from '../../../strategy-research.utils';
 
 const MOCK_TONE_CONTEXTS: ToneContext[] = [
   { id: 'tc1', context: 'Educational', tone: 'Clear, authoritative, relatable', example: 'Here\'s what\'s actually happening in your body during perimenopause — and what you can do about it today.' },
@@ -21,7 +22,7 @@ export class ToneContextComponent {
   readonly editTone = signal<ToneContext>({ id: '', context: '', tone: '', example: '' });
 
   startAdd(): void {
-    const newId = `tc-${Date.now()}`;
+    const newId = generateId('tc');
     this.editingId.set(newId);
     this.editTone.set({ id: newId, context: '', tone: '', example: '' });
   }

@@ -1,5 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { ChannelStrategyComponent } from './channel-strategy.component';
+import { AI_SIMULATION_DELAY_MS } from '../../strategy-research.constants';
 
 describe('ChannelStrategyComponent', () => {
   let component: ChannelStrategyComponent;
@@ -188,7 +189,7 @@ describe('ChannelStrategyComponent', () => {
     component.aiGenerate('facebook');
     expect(component.generatingPlatform()).toBe('facebook');
 
-    vi.advanceTimersByTime(2500);
+    vi.advanceTimersByTime(AI_SIMULATION_DELAY_MS);
     expect(component.generatingPlatform()).toBeNull();
 
     const fb = component.getChannel('facebook');
@@ -209,7 +210,7 @@ describe('ChannelStrategyComponent', () => {
     expect(genBtn.textContent).toContain('Generating...');
     expect(genBtn.querySelector('.spinner')).toBeTruthy();
 
-    vi.advanceTimersByTime(2500);
+    vi.advanceTimersByTime(AI_SIMULATION_DELAY_MS);
     fixture.detectChanges();
 
     expect(genBtn.disabled).toBe(false);
@@ -267,7 +268,7 @@ describe('ChannelStrategyComponent', () => {
     const genBtn = nativeElement.querySelector('.btn-ai-generate') as HTMLButtonElement;
     genBtn.click();
     expect(component.generatingPlatform()).toBe('instagram');
-    vi.advanceTimersByTime(2500);
+    vi.advanceTimersByTime(AI_SIMULATION_DELAY_MS);
     expect(component.generatingPlatform()).toBeNull();
   });
 
@@ -323,7 +324,7 @@ describe('ChannelStrategyComponent', () => {
     // Click tiktok generate button (index 1)
     genBtns[1].click();
     expect(component.generatingPlatform()).toBe('tiktok');
-    vi.advanceTimersByTime(2500);
+    vi.advanceTimersByTime(AI_SIMULATION_DELAY_MS);
     fixture.detectChanges();
   });
 

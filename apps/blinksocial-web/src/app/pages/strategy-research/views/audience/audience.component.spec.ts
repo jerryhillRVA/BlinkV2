@@ -1,5 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { AudienceComponent } from './audience.component';
+import { AI_SIMULATION_DELAY_MS } from '../../strategy-research.constants';
 
 describe('AudienceComponent', () => {
   let component: AudienceComponent;
@@ -382,7 +383,7 @@ describe('AudienceComponent', () => {
     it('should populate journey stages after timeout', () => {
       const segmentId = component.segments()[0].id;
       component.mapJourney(segmentId);
-      vi.advanceTimersByTime(2500);
+      vi.advanceTimersByTime(AI_SIMULATION_DELAY_MS);
       const segment = component.segments().find(s => s.id === segmentId)!;
       expect(segment.journeyStages![0].primaryGoal).toContain('AI-generated goal');
     });
@@ -390,21 +391,21 @@ describe('AudienceComponent', () => {
     it('should set mappingSegmentId to null after completion', () => {
       const segmentId = component.segments()[0].id;
       component.mapJourney(segmentId);
-      vi.advanceTimersByTime(2500);
+      vi.advanceTimersByTime(AI_SIMULATION_DELAY_MS);
       expect(component.mappingSegmentId()).toBeNull();
     });
 
     it('should auto-expand the segment after mapping', () => {
       const segmentId = component.segments()[0].id;
       component.mapJourney(segmentId);
-      vi.advanceTimersByTime(2500);
+      vi.advanceTimersByTime(AI_SIMULATION_DELAY_MS);
       expect(component.isExpanded(segmentId)).toBe(true);
     });
 
     it('should populate content types for all stages', () => {
       const segmentId = component.segments()[0].id;
       component.mapJourney(segmentId);
-      vi.advanceTimersByTime(2500);
+      vi.advanceTimersByTime(AI_SIMULATION_DELAY_MS);
       const segment = component.segments().find(s => s.id === segmentId)!;
       for (const stage of segment.journeyStages!) {
         expect(stage.contentTypes).toEqual(['Short-form video', 'Carousel', 'Story']);
@@ -414,7 +415,7 @@ describe('AudienceComponent', () => {
     it('should populate hook angles for all stages', () => {
       const segmentId = component.segments()[0].id;
       component.mapJourney(segmentId);
-      vi.advanceTimersByTime(2500);
+      vi.advanceTimersByTime(AI_SIMULATION_DELAY_MS);
       const segment = component.segments().find(s => s.id === segmentId)!;
       for (const stage of segment.journeyStages!) {
         expect(stage.hookAngles).toEqual(['Pain point', 'Transformation', 'Quick tip']);
@@ -424,7 +425,7 @@ describe('AudienceComponent', () => {
     it('should populate success metrics for all stages', () => {
       const segmentId = component.segments()[0].id;
       component.mapJourney(segmentId);
-      vi.advanceTimersByTime(2500);
+      vi.advanceTimersByTime(AI_SIMULATION_DELAY_MS);
       const segment = component.segments().find(s => s.id === segmentId)!;
       expect(segment.journeyStages![0].successMetric).toContain('Awareness engagement rate');
     });
@@ -433,7 +434,7 @@ describe('AudienceComponent', () => {
       const segmentId = component.segments()[0].id;
       const secondSegment = component.segments()[1];
       component.mapJourney(segmentId);
-      vi.advanceTimersByTime(2500);
+      vi.advanceTimersByTime(AI_SIMULATION_DELAY_MS);
       const updatedSecond = component.segments().find(s => s.id === secondSegment.id)!;
       expect(updatedSecond.journeyStages![0].primaryGoal).toBe('');
     });
@@ -441,7 +442,7 @@ describe('AudienceComponent', () => {
     it('should render mapped stage data in DOM after mapping and expanding', () => {
       const segmentId = component.segments()[0].id;
       component.mapJourney(segmentId);
-      vi.advanceTimersByTime(2500);
+      vi.advanceTimersByTime(AI_SIMULATION_DELAY_MS);
       fixture.detectChanges();
       const stageFields = fixture.nativeElement.querySelectorAll('.stage-field');
       expect(stageFields.length).toBeGreaterThan(0);
@@ -452,7 +453,7 @@ describe('AudienceComponent', () => {
     it('should show goal, content types, hook angles, and success metric for mapped stages', () => {
       const segmentId = component.segments()[0].id;
       component.mapJourney(segmentId);
-      vi.advanceTimersByTime(2500);
+      vi.advanceTimersByTime(AI_SIMULATION_DELAY_MS);
       fixture.detectChanges();
       // 4 stages x 4 fields = 16 stage-field divs
       const stageFields = fixture.nativeElement.querySelectorAll('.stage-field');
@@ -477,7 +478,7 @@ describe('AudienceComponent', () => {
     it('should return correct stage data after mapping', () => {
       const segmentId = component.segments()[0].id;
       component.mapJourney(segmentId);
-      vi.advanceTimersByTime(2500);
+      vi.advanceTimersByTime(AI_SIMULATION_DELAY_MS);
       const segment = component.segments()[0];
       const stage = component.getStage(segment, 'conversion');
       expect(stage).toBeTruthy();
@@ -520,7 +521,7 @@ describe('AudienceComponent', () => {
       expect(aiBtn.disabled).toBe(true);
       expect(aiBtn.textContent).toContain('Mapping...');
 
-      vi.advanceTimersByTime(2500);
+      vi.advanceTimersByTime(AI_SIMULATION_DELAY_MS);
       fixture.detectChanges();
       expect(component.mappingSegmentId()).toBeNull();
     });
@@ -558,7 +559,7 @@ describe('AudienceComponent', () => {
       const spinner = firstCard.querySelector('.spinner');
       expect(spinner).toBeTruthy();
 
-      vi.advanceTimersByTime(2500);
+      vi.advanceTimersByTime(AI_SIMULATION_DELAY_MS);
       fixture.detectChanges();
     });
 
@@ -573,7 +574,7 @@ describe('AudienceComponent', () => {
       expect(btn.disabled).toBe(false);
       expect(btn.textContent).toContain('Map Journey');
 
-      vi.advanceTimersByTime(2500);
+      vi.advanceTimersByTime(AI_SIMULATION_DELAY_MS);
     });
   });
 });
