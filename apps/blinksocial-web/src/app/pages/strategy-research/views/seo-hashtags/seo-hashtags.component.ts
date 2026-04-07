@@ -1,4 +1,4 @@
-import { Component, signal } from '@angular/core';
+import { Component, DestroyRef, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { type Platform, DEFAULT_PILLARS } from '../../strategy-research.types';
@@ -56,6 +56,15 @@ const PLATFORM_OPTIONS: { id: Platform; label: string }[] = [
   styleUrl: './seo-hashtags.component.scss',
 })
 export class SeoHashtagsComponent {
+  private readonly destroyRef = inject(DestroyRef);
+  private timerId: ReturnType<typeof setTimeout> | null = null;
+
+  constructor() {
+    this.destroyRef.onDestroy(() => {
+      if (this.timerId !== null) clearTimeout(this.timerId);
+    });
+  }
+
   readonly isGenerating = signal(false);
   readonly seoData = signal<SeoData | null>(null);
   readonly activeTab = signal<HashtagTab>('reach');
@@ -77,9 +86,10 @@ export class SeoHashtagsComponent {
   generate(): void {
     this.isGenerating.set(true);
     this.seoData.set(null);
-    setTimeout(() => {
+    this.timerId = setTimeout(() => {
       this.seoData.set(MOCK_SEO);
       this.isGenerating.set(false);
+      this.timerId = null;
     }, 2500);
   }
 

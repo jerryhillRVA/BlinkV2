@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, Output, signal } from '@angular/core';
+import { Component, DestroyRef, EventEmitter, inject, Input, Output, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import {
@@ -16,6 +16,15 @@ import {
 export class ObjectivesStripComponent {
   @Input() objectives: BusinessObjective[] = [];
   @Output() objectivesChange = new EventEmitter<BusinessObjective[]>();
+
+  private readonly destroyRef = inject(DestroyRef);
+  private timerId: ReturnType<typeof setTimeout> | null = null;
+
+  constructor() {
+    this.destroyRef.onDestroy(() => {
+      if (this.timerId !== null) clearTimeout(this.timerId);
+    });
+  }
 
   readonly showDrawer = signal(false);
   readonly isSuggesting = signal(false);
@@ -81,13 +90,14 @@ export class ObjectivesStripComponent {
 
   suggestObjectives(): void {
     this.isSuggesting.set(true);
-    setTimeout(() => {
+    this.timerId = setTimeout(() => {
       const suggested: BusinessObjective[] = [
         { id: `obj-${Date.now()}-1`, category: 'growth', statement: 'Grow combined social following to 25,000', target: 25000, unit: 'followers', timeframe: 'Q4 2026', status: 'on-track' },
         { id: `obj-${Date.now()}-2`, category: 'engagement', statement: 'Achieve 5% average engagement rate across platforms', target: 5, unit: '%', timeframe: 'Q3 2026', status: 'on-track' },
       ];
       this.dialogObjectives = [...this.dialogObjectives, ...suggested].slice(0, 4);
       this.isSuggesting.set(false);
+      this.timerId = null;
     }, 2500);
   }
 

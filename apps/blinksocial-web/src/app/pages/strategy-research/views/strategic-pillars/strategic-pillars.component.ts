@@ -1,4 +1,4 @@
-import { Component, signal } from '@angular/core';
+import { Component, DestroyRef, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import {
@@ -20,6 +20,15 @@ const PRESET_COLORS = [
   styleUrl: './strategic-pillars.component.scss',
 })
 export class StrategicPillarsComponent {
+  private readonly destroyRef = inject(DestroyRef);
+  private timerId: ReturnType<typeof setTimeout> | null = null;
+
+  constructor() {
+    this.destroyRef.onDestroy(() => {
+      if (this.timerId !== null) clearTimeout(this.timerId);
+    });
+  }
+
   readonly pillars = signal<ContentPillar[]>([...DEFAULT_PILLARS]);
   readonly showAddForm = signal(false);
   readonly editingId = signal<string | null>(null);
@@ -97,8 +106,9 @@ export class StrategicPillarsComponent {
 
   analyzeDistribution(): void {
     this.isAnalyzing.set(true);
-    setTimeout(() => {
+    this.timerId = setTimeout(() => {
       this.isAnalyzing.set(false);
+      this.timerId = null;
     }, 2500);
   }
 }

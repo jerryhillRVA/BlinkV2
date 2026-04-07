@@ -1,4 +1,4 @@
-import { Component, signal } from '@angular/core';
+import { Component, DestroyRef, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { type Platform } from '../../strategy-research.types';
@@ -96,6 +96,15 @@ const MOCK_SERIES: SeriesOverview = {
   styleUrl: './series-builder.component.scss',
 })
 export class SeriesBuilderComponent {
+  private readonly destroyRef = inject(DestroyRef);
+  private timerId: ReturnType<typeof setTimeout> | null = null;
+
+  constructor() {
+    this.destroyRef.onDestroy(() => {
+      if (this.timerId !== null) clearTimeout(this.timerId);
+    });
+  }
+
   readonly isGenerating = signal(false);
   readonly series = signal<SeriesOverview | null>(null);
 
@@ -121,7 +130,7 @@ export class SeriesBuilderComponent {
   buildSeries(): void {
     this.isGenerating.set(true);
     this.series.set(null);
-    setTimeout(() => {
+    this.timerId = setTimeout(() => {
       this.series.set({
         ...MOCK_SERIES,
         platform: this.selectedPlatform,
@@ -130,6 +139,7 @@ export class SeriesBuilderComponent {
         posts: MOCK_SERIES.posts.slice(0, this.seriesLength),
       });
       this.isGenerating.set(false);
+      this.timerId = null;
     }, 2500);
   }
 

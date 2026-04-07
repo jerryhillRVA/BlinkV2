@@ -1,4 +1,4 @@
-import { Component, signal } from '@angular/core';
+import { Component, DestroyRef, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import {
@@ -34,6 +34,15 @@ const PLATFORM_ICONS: Record<Platform, string> = {
   styleUrl: './channel-strategy.component.scss',
 })
 export class ChannelStrategyComponent {
+  private readonly destroyRef = inject(DestroyRef);
+  private timerId: ReturnType<typeof setTimeout> | null = null;
+
+  constructor() {
+    this.destroyRef.onDestroy(() => {
+      if (this.timerId !== null) clearTimeout(this.timerId);
+    });
+  }
+
   readonly channels = signal<ChannelStrategyEntry[]>([
     { platform: 'instagram', active: true, role: 'Primary engagement and community building', primaryContentTypes: ['Reels', 'Stories', 'Carousels'], toneAdjustment: 'Warm, casual, motivational', postingCadence: '5x/week', primaryAudience: 'Active 40s', primaryGoal: 'Engagement', notes: '' },
     { platform: 'tiktok', active: true, role: 'Reach and trend-driven discovery', primaryContentTypes: ['Shorts', 'Tutorials'], toneAdjustment: 'Fun, energetic, relatable', postingCadence: '4x/week', primaryAudience: 'Active 40s', primaryGoal: 'Awareness', notes: '' },
@@ -99,7 +108,7 @@ export class ChannelStrategyComponent {
 
   aiGenerate(platform: Platform): void {
     this.generatingPlatform.set(platform);
-    setTimeout(() => {
+    this.timerId = setTimeout(() => {
       this.channels.update(list =>
         list.map(c => {
           if (c.platform !== platform) return c;
@@ -117,6 +126,7 @@ export class ChannelStrategyComponent {
         })
       );
       this.generatingPlatform.set(null);
+      this.timerId = null;
     }, 2500);
   }
 }

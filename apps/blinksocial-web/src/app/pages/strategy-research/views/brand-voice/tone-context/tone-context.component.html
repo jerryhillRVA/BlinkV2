@@ -1,0 +1,76 @@
+<section class="card">
+  <div class="card-header">
+    <svg class="card-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+    </svg>
+    <h3 class="card-title">Tone by Context</h3>
+  </div>
+  <p class="card-description">Map how your tone shifts across different content contexts.</p>
+
+  @if (toneContexts().length > 0) {
+    <div class="tone-table-wrapper">
+      <table class="tone-table">
+        <thead>
+          <tr>
+            <th>Context</th>
+            <th>Tone</th>
+            <th>Example</th>
+            <th class="actions-col">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (tone of toneContexts(); track tone.id) {
+            <tr>
+              <td class="context-cell">{{ tone.context }}</td>
+              <td>{{ tone.tone }}</td>
+              <td class="example-cell">{{ tone.example }}</td>
+              <td class="actions-col">
+                <button class="btn-icon-only" (click)="startEdit(tone)" title="Edit">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg>
+                </button>
+                <button class="btn-icon-only btn-danger" (click)="remove(tone.id)" title="Remove">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
+                </button>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+
+  @if (toneContexts().length === 0) {
+    <p class="empty-state">No tone contexts yet. Add one or generate with AI.</p>
+  }
+
+  @if (editingId()) {
+    <div class="inline-form">
+      <div class="form-row">
+        <input class="form-input" placeholder="Context (e.g. Educational)"
+          [ngModel]="editTone().context"
+          (ngModelChange)="updateField('context', $event)" />
+      </div>
+      <div class="form-row">
+        <input class="form-input" placeholder="Tone description"
+          [ngModel]="editTone().tone"
+          (ngModelChange)="updateField('tone', $event)" />
+      </div>
+      <div class="form-row">
+        <input class="form-input" placeholder="Example sentence"
+          [ngModel]="editTone().example"
+          (ngModelChange)="updateField('example', $event)" />
+      </div>
+      <div class="form-actions">
+        <button class="btn btn-primary" (click)="save()">Save</button>
+        <button class="btn btn-secondary" (click)="cancelEdit()">Cancel</button>
+      </div>
+    </div>
+  }
+
+  <div class="card-actions">
+    <button class="btn btn-secondary" (click)="startAdd()">
+      <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      Add Context
+    </button>
+  </div>
+</section>

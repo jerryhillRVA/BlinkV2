@@ -1,4 +1,4 @@
-import { Component, signal } from '@angular/core';
+import { Component, DestroyRef, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import {
@@ -14,6 +14,15 @@ import {
   styleUrl: './competitor-deep-dive.component.scss',
 })
 export class CompetitorDeepDiveComponent {
+  private readonly destroyRef = inject(DestroyRef);
+  private timerId: ReturnType<typeof setTimeout> | null = null;
+
+  constructor() {
+    this.destroyRef.onDestroy(() => {
+      if (this.timerId !== null) clearTimeout(this.timerId);
+    });
+  }
+
   readonly competitors = signal<CompetitorInsight[]>([...MOCK_COMPETITOR_INSIGHTS]);
   readonly showAddForm = signal(false);
   readonly expandedIds = signal<Set<string>>(new Set());
@@ -68,7 +77,10 @@ export class CompetitorDeepDiveComponent {
 
   runAiScan(): void {
     this.isScanning.set(true);
-    setTimeout(() => this.isScanning.set(false), 2500);
+    this.timerId = setTimeout(() => {
+      this.isScanning.set(false);
+      this.timerId = null;
+    }, 2500);
   }
 
   runTeardown(_id: string): void {

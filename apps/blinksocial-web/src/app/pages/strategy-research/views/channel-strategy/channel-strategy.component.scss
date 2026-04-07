@@ -122,7 +122,7 @@
     border-color: var(--blink-brand-primary);
 
     &::before {
-      background: #fff;
+      background: var(--blink-surface);
       transform: translateX(16px);
     }
   }
@@ -207,7 +207,7 @@
   &.active {
     background: var(--blink-brand-primary);
     border-color: var(--blink-brand-primary);
-    color: #fff;
+    color: var(--blink-on-brand);
   }
 }
 

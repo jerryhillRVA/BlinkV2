@@ -1,4 +1,4 @@
-import { Component, signal } from '@angular/core';
+import { Component, DestroyRef, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import {
@@ -24,6 +24,15 @@ const STAGE_LABELS: Record<JourneyStage, string> = {
   styleUrl: './audience.component.scss',
 })
 export class AudienceComponent {
+  private readonly destroyRef = inject(DestroyRef);
+  private timerId: ReturnType<typeof setTimeout> | null = null;
+
+  constructor() {
+    this.destroyRef.onDestroy(() => {
+      if (this.timerId !== null) clearTimeout(this.timerId);
+    });
+  }
+
   readonly segments = signal<AudienceSegment[]>(
     DEFAULT_SEGMENTS.map(s => ({
       ...s,
@@ -90,7 +99,7 @@ export class AudienceComponent {
 
   mapJourney(segmentId: string): void {
     this.mappingSegmentId.set(segmentId);
-    setTimeout(() => {
+    this.timerId = setTimeout(() => {
       this.segments.update(list =>
         list.map(s => {
           if (s.id !== segmentId) return s;
@@ -113,6 +122,7 @@ export class AudienceComponent {
         next.add(segmentId);
         return next;
       });
+      this.timerId = null;
     }, 2500);
   }
 

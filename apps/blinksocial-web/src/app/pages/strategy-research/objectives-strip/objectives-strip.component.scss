@@ -89,7 +89,7 @@
 }
 
 .obj-category {
-  font-size: 10px;
+  font-size: var(--blink-label-small);
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.08em;
@@ -121,9 +121,9 @@
   transition: width 0.3s ease;
 }
 
-.status-bar-on-track { background: #22c55e; }
-.status-bar-at-risk { background: #fbbf24; }
-.status-bar-behind { background: #ef4444; }
+.status-bar-on-track { background: var(--blink-status-success); }
+.status-bar-at-risk { background: var(--blink-status-warning); }
+.status-bar-behind { background: var(--blink-status-danger); }
 .status-bar-achieved { background: var(--blink-brand-primary); }
 
 .obj-footer {
@@ -133,20 +133,20 @@
 }
 
 .obj-status-badge {
-  font-size: 10px;
+  font-size: var(--blink-label-small);
   font-weight: 500;
   padding: 2px 6px;
   border-radius: 4px;
   border: 1px solid;
 }
 
-.status-on-track { background: #f0fdf4; color: #15803d; border-color: #bbf7d0; }
-.status-at-risk { background: #fffbeb; color: #b45309; border-color: #fde68a; }
-.status-behind { background: #fef2f2; color: #b91c1c; border-color: #fecaca; }
+.status-on-track { background: var(--blink-status-success-bg); color: var(--blink-status-success-text); border-color: var(--blink-status-success-border); }
+.status-at-risk { background: var(--blink-status-warning-bg); color: var(--blink-status-warning-text); border-color: var(--blink-status-warning-border); }
+.status-behind { background: var(--blink-status-danger-bg); color: var(--blink-status-danger-text); border-color: var(--blink-status-danger-border); }
 .status-achieved { background: var(--blink-brand-primary-lightest-bg); color: var(--blink-brand-primary); border-color: var(--blink-brand-primary-lighter-bg); }
 
 .obj-timeframe {
-  font-size: 10px;
+  font-size: var(--blink-label-small);
   color: var(--blink-on-surface-muted);
 }
 
@@ -193,7 +193,7 @@
   border-radius: 4px;
 
   &:hover {
-    color: #ef4444;
+    color: var(--blink-status-danger);
   }
 }
 
@@ -323,14 +323,14 @@
   border: none;
   border-radius: 6px;
   background: var(--blink-brand-primary);
-  color: white;
+  color: var(--blink-on-brand);
   cursor: pointer;
   font-size: var(--blink-body-small);
   font-weight: 600;
   transition: background 0.15s;
 
   &:hover {
-    background: #c4452d;
+    background: var(--blink-brand-primary-active);
   }
 }
 

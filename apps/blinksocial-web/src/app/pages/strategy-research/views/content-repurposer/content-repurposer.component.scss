@@ -105,7 +105,7 @@
 
   &--primary {
     background: var(--blink-brand-primary);
-    color: #fff;
+    color: var(--blink-on-brand);
 
     &:hover:not(:disabled) {
       opacity: 0.9;
@@ -142,7 +142,7 @@
   width: 14px;
   height: 14px;
   border: 2px solid rgba(255, 255, 255, 0.3);
-  border-top-color: #fff;
+  border-top-color: var(--blink-on-brand);
   border-radius: 50%;
   animation: spin 0.6s linear infinite;
 }

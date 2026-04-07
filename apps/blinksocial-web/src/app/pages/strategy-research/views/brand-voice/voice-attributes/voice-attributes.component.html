@@ -1,0 +1,85 @@
+<section class="card">
+  <div class="card-header">
+    <svg class="card-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/>
+      <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
+      <line x1="12" y1="19" x2="12" y2="22"/>
+    </svg>
+    <h3 class="card-title">Voice Attributes</h3>
+  </div>
+  <p class="card-description">Define key traits that characterize your brand voice, with do and don't examples.</p>
+
+  <div class="attributes-grid">
+    @for (attr of attributes(); track attr.id) {
+      <div class="attribute-card">
+        <div class="attribute-header">
+          <span class="attribute-label">{{ attr.label }}</span>
+          <div class="attribute-actions">
+            <button class="btn-icon-only" (click)="startEdit(attr)" title="Edit">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg>
+            </button>
+            <button class="btn-icon-only btn-danger" (click)="remove(attr.id)" title="Remove">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
+            </button>
+          </div>
+        </div>
+        <p class="attribute-description">{{ attr.description }}</p>
+        <div class="example-row do">
+          <span class="example-badge do-badge">Do</span>
+          <span class="example-text">{{ attr.doExample }}</span>
+        </div>
+        <div class="example-row dont">
+          <span class="example-badge dont-badge">Don't</span>
+          <span class="example-text">{{ attr.dontExample }}</span>
+        </div>
+      </div>
+    }
+  </div>
+
+  @if (editingId()) {
+    <div class="inline-form">
+      <div class="form-row">
+        <input class="form-input" placeholder="Attribute label"
+          [ngModel]="editAttribute().label"
+          (ngModelChange)="updateField('label', $event)" />
+      </div>
+      <div class="form-row">
+        <input class="form-input" placeholder="Description"
+          [ngModel]="editAttribute().description"
+          (ngModelChange)="updateField('description', $event)" />
+      </div>
+      <div class="form-row">
+        <input class="form-input" placeholder="Do example"
+          [ngModel]="editAttribute().doExample"
+          (ngModelChange)="updateField('doExample', $event)" />
+      </div>
+      <div class="form-row">
+        <input class="form-input" placeholder="Don't example"
+          [ngModel]="editAttribute().dontExample"
+          (ngModelChange)="updateField('dontExample', $event)" />
+      </div>
+      <div class="form-actions">
+        <button class="btn btn-primary" (click)="save()">Save</button>
+        <button class="btn btn-secondary" (click)="cancelEdit()">Cancel</button>
+      </div>
+    </div>
+  }
+
+  <div class="card-actions">
+    <button class="btn btn-secondary" (click)="startAdd()">
+      <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      Add Attribute
+    </button>
+    <button class="btn btn-ai" (click)="generateAttributes()" [disabled]="isGenerating()">
+      @if (!isGenerating()) {
+        <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"/>
+        </svg>
+      }
+      @if (isGenerating()) {
+        <span class="spinner"></span>
+      }
+      {{ isGenerating() ? 'Generating...' : 'AI Generate' }}
+    </button>
+  </div>
+</section>

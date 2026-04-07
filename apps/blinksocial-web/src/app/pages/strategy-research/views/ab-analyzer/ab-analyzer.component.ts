@@ -1,4 +1,4 @@
-import { Component, signal } from '@angular/core';
+import { Component, DestroyRef, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { type Platform } from '../../strategy-research.types';
@@ -52,6 +52,15 @@ const PLATFORM_OPTIONS: { id: Platform; label: string }[] = [
   styleUrl: './ab-analyzer.component.scss',
 })
 export class AbAnalyzerComponent {
+  private readonly destroyRef = inject(DestroyRef);
+  private timerId: ReturnType<typeof setTimeout> | null = null;
+
+  constructor() {
+    this.destroyRef.onDestroy(() => {
+      if (this.timerId !== null) clearTimeout(this.timerId);
+    });
+  }
+
   readonly variantA = signal('');
   readonly variantB = signal('');
   readonly isAnalyzing = signal(false);
@@ -82,9 +91,10 @@ export class AbAnalyzerComponent {
     if (!this.variantA().trim() || !this.variantB().trim()) return;
     this.isAnalyzing.set(true);
     this.analysis.set(null);
-    setTimeout(() => {
+    this.timerId = setTimeout(() => {
       this.analysis.set(MOCK_ANALYSIS);
       this.isAnalyzing.set(false);
+      this.timerId = null;
     }, 2500);
   }
 

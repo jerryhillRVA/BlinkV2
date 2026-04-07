@@ -1,4 +1,4 @@
-import { Component, signal, computed } from '@angular/core';
+import { Component, DestroyRef, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import {
@@ -23,6 +23,15 @@ const TYPE_COLORS: Record<ResearchSource['type'], { bg: string; text: string }> 
   styleUrl: './research-sources.component.scss',
 })
 export class ResearchSourcesComponent {
+  private readonly destroyRef = inject(DestroyRef);
+  private timerId: ReturnType<typeof setTimeout> | null = null;
+
+  constructor() {
+    this.destroyRef.onDestroy(() => {
+      if (this.timerId !== null) clearTimeout(this.timerId);
+    });
+  }
+
   readonly sources = signal<ResearchSource[]>([...MOCK_RESEARCH_SOURCES]);
   readonly pillars = signal<ContentPillar[]>([...DEFAULT_PILLARS]);
   readonly filterPillarId = signal<string>('all');
@@ -57,7 +66,7 @@ export class ResearchSourcesComponent {
 
   discoverSources(): void {
     this.isDiscovering.set(true);
-    setTimeout(() => {
+    this.timerId = setTimeout(() => {
       const newSource: ResearchSource = {
         id: `rs-${Date.now()}`,
         title: 'AI-Discovered: Perimenopause Exercise Guidelines 2026',
@@ -70,6 +79,7 @@ export class ResearchSourcesComponent {
       };
       this.sources.update(list => [newSource, ...list]);
       this.isDiscovering.set(false);
+      this.timerId = null;
     }, 2500);
   }
 
