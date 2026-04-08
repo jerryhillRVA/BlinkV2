@@ -73,6 +73,25 @@
   }
 }
 
+.btn-primary {
+  background: var(--blink-brand-primary);
+  color: #fff;
+  border-color: var(--blink-brand-primary);
+
+  &:hover {
+    background: var(--blink-brand-primary-active, #c4452d);
+    border-color: var(--blink-brand-primary-active, #c4452d);
+  }
+}
+
+.btn-sm {
+  height: 32px;
+  padding: 0 12px;
+  font-size: var(--blink-label-medium);
+  border-radius: 6px;
+  gap: 6px;
+}
+
 .btn-icon {
   width: 0.875rem;
   height: 0.875rem;

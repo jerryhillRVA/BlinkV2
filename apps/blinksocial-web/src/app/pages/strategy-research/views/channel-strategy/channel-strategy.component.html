@@ -1,6 +1,6 @@
 <div class="channel-strategy">
   <div class="section-header">
-    <h2>Channel Strategy</h2>
+    <h2 class="has-mock-data" title="Mock data">Channel Strategy</h2>
   </div>
 
   <div class="platforms-list">
@@ -75,14 +75,25 @@
                   </div>
                 </div>
 
-                <div class="form-group">
-                  <span>Primary Audience</span>
-                  <input
-                    type="text"
-                    [ngModel]="channel.primaryAudience"
-                    (ngModelChange)="updateChannel(channel.platform, 'primaryAudience', $event)"
-                    placeholder="Target audience..."
-                  />
+                <div class="form-row">
+                  <div class="form-group">
+                    <span>Primary Audience</span>
+                    <input
+                      type="text"
+                      [ngModel]="channel.primaryAudience"
+                      (ngModelChange)="updateChannel(channel.platform, 'primaryAudience', $event)"
+                      placeholder="Target audience..."
+                    />
+                  </div>
+                  <div class="form-group">
+                    <span>Primary Goal</span>
+                    <input
+                      type="text"
+                      [ngModel]="channel.primaryGoal"
+                      (ngModelChange)="updateChannel(channel.platform, 'primaryGoal', $event)"
+                      placeholder="e.g. Engagement, Awareness..."
+                    />
+                  </div>
                 </div>
 
                 <div class="form-group">
@@ -111,7 +122,7 @@
                 </div>
 
                 <div class="form-group">
-                  <span>Notes</span>
+                  <span>Strategy Notes</span>
                   <textarea
                     [ngModel]="channel.notes"
                     (ngModelChange)="updateChannel(channel.platform, 'notes', $event)"

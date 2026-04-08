@@ -1,9 +1,36 @@
-<section class="card">
-  <div class="card-header">
-    <app-icon name="microphone" class="card-icon" />
-    <h3 class="card-title">Voice Attributes</h3>
-  </div>
-  <p class="card-description">Define key traits that characterize your brand voice, with do and don't examples.</p>
+<section class="bv-section">
+  <header class="bv-section-header">
+    <div>
+      <p class="bv-section-label has-mock-data" title="Mock data">Brand Personality</p>
+      <p class="bv-section-subtitle">3–5 defining traits that shape how your brand communicates</p>
+    </div>
+    <div class="bv-section-actions">
+      <button class="btn btn-ai btn-sm" (click)="generateAttributes()" [disabled]="isGenerating()">
+        @if (!isGenerating()) {
+          <app-icon name="sparkles" class="btn-icon" />
+        }
+        @if (isGenerating()) {
+          <span class="spinner"></span>
+        }
+        {{ isGenerating() ? 'Generating...' : 'AI Generate' }}
+      </button>
+      <button class="btn btn-primary btn-sm" (click)="startAdd()">
+        <app-icon name="plus" class="btn-icon" />
+        Add Attribute
+      </button>
+    </div>
+  </header>
+
+  @if (attributes().length === 0 && !editingId()) {
+    <div class="empty-state-box">
+      <svg class="empty-state-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/>
+        <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
+        <line x1="12" x2="12" y1="19" y2="22"/>
+      </svg>
+      <p>No voice attributes defined yet. Add attributes or use AI Generate.</p>
+    </div>
+  }
 
   <div class="attributes-grid">
     @for (attr of attributes(); track attr.id) {
@@ -61,19 +88,4 @@
     </div>
   }
 
-  <div class="card-actions">
-    <button class="btn btn-secondary" (click)="startAdd()">
-      <app-icon name="plus" class="btn-icon" />
-      Add Attribute
-    </button>
-    <button class="btn btn-ai" (click)="generateAttributes()" [disabled]="isGenerating()">
-      @if (!isGenerating()) {
-        <app-icon name="sparkles" class="btn-icon" />
-      }
-      @if (isGenerating()) {
-        <span class="spinner"></span>
-      }
-      {{ isGenerating() ? 'Generating...' : 'AI Generate' }}
-    </button>
-  </div>
 </section>

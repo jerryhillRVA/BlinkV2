@@ -337,6 +337,21 @@ describe('ChannelStrategyComponent', () => {
     expect(component.channels().find(c => c.platform === 'instagram')!.primaryAudience).toBe('Updated audience via DOM');
   });
 
+  it('should update primaryGoal via input ngModelChange in DOM', () => {
+    const inputs = nativeElement.querySelectorAll('.strategy-form input[type="text"]') as NodeListOf<HTMLInputElement>;
+    // primaryGoal is the 4th text input (role, postingCadence, primaryAudience, primaryGoal)
+    inputs[3].value = 'Engagement & Growth';
+    inputs[3].dispatchEvent(new Event('input'));
+    fixture.detectChanges();
+    expect(component.channels().find(c => c.platform === 'instagram')!.primaryGoal).toBe('Engagement & Growth');
+  });
+
+  it('should render the Strategy Notes label', () => {
+    const labels = Array.from(nativeElement.querySelectorAll('.form-group span')).map(s => s.textContent?.trim());
+    expect(labels).toContain('Strategy Notes');
+    expect(labels).toContain('Primary Goal');
+  });
+
   it('should update postingCadence via input ngModelChange in DOM', () => {
     const inputs = nativeElement.querySelectorAll('.strategy-form input[type="text"]') as NodeListOf<HTMLInputElement>;
     inputs[1].value = '10x/week';

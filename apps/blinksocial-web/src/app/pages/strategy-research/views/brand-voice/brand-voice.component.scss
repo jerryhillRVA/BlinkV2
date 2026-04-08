@@ -3,3 +3,38 @@
   flex-direction: column;
   gap: 1.5rem;
 }
+
+.page-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.page-header-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px;
+  border-radius: 8px;
+  background: var(--blink-brand-primary-light-bg);
+  color: var(--blink-brand-primary);
+}
+
+.page-header-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.page-header-title {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--blink-on-surface-strong);
+}
+
+.page-header-subtitle {
+  margin: 0;
+  font-size: var(--blink-body-small);
+  color: var(--blink-on-surface-muted);
+}

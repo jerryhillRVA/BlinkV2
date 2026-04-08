@@ -15,7 +15,7 @@ export const SIDEBAR_ITEMS: SidebarItem[] = [
   { id: 'content-mix', label: 'Content Mix', section: 'strategy', iconPath: 'M21.21 15.89A10 10 0 1 1 8 2.83M22 12A10 10 0 0 0 12 2v10z' },
   // Research
   { id: 'research', label: 'Research Sources', section: 'research', iconPath: 'M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2zM22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z' },
-  { id: 'competitors', label: 'Competitor Deep Dive', section: 'research', iconPath: 'M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7zM12 9a3 3 0 1 0 0 6 3 3 0 0 0 0-6z' },
+  { id: 'competitors', label: 'Competitor Deep Dive', section: 'research', iconPath: 'M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8zM12 9a3 3 0 1 0 0 6 3 3 0 0 0 0-6z' },
   // Content Tools
   { id: 'repurposer', label: 'Content Repurposer', section: 'content-tools', iconPath: 'M21 2v6h-6M3 12a9 9 0 0 1 15-6.7L21 8M3 22v-6h6M21 12a9 9 0 0 1-15 6.7L3 16' },
   { id: 'series', label: 'Series Builder', section: 'content-tools', iconPath: 'M10 6h11M10 12h11M10 18h11M3 6l2 2 4-4M3 12l2 2 4-4M3 18l2 2 4-4' },

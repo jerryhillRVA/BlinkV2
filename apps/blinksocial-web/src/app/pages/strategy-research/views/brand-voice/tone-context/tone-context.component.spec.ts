@@ -29,7 +29,7 @@ describe('ToneContextComponent', () => {
   it('should show empty state when no tone contexts', () => {
     component.toneContexts.set([]);
     fixture.detectChanges();
-    expect(nativeElement.querySelector('.empty-state')?.textContent).toContain('No tone contexts yet');
+    expect(nativeElement.querySelector('.empty-state-box')?.textContent).toContain('No tone contexts defined');
     expect(nativeElement.querySelector('.tone-table')).toBeFalsy();
   });
 
@@ -91,5 +91,11 @@ describe('ToneContextComponent', () => {
     expect(component.editTone().context).toBe('New Context');
     component.updateField('tone', 'New Tone');
     expect(component.editTone().tone).toBe('New Tone');
+  });
+
+  it('should re-populate tone contexts via generateToneContexts()', () => {
+    component.toneContexts.set([]);
+    component.generateToneContexts();
+    expect(component.toneContexts().length).toBeGreaterThan(0);
   });
 });

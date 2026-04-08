@@ -2,8 +2,6 @@
 @use './app/core/theme/blink-theme' as theme;
 @use './app/core/theme/blink-tokens' as tokens;
 
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
-
 html {
   @include mat.theme(theme.$light-theme);
   @include tokens.light-tokens;
@@ -24,8 +22,8 @@ html,
 body {
   margin: 0;
   padding: 0;
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
-    sans-serif;
+  font-family: ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji',
+    'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
   background-color: var(--blink-surface-dim);
   color: var(--blink-on-surface);
   -webkit-font-smoothing: antialiased;
@@ -37,6 +35,119 @@ a {
   text-decoration: none;
 }
 
+// Page entrance animation — applied to every routed top-level component
+// element. Each routed element is freshly created on navigation, so the
+// keyframe runs once per mount: fade in + 8px slide-up.
+app-dashboard,
+app-onboard,
+app-new-workspace,
+app-profile-settings,
+app-workspace-settings,
+app-strategy-research {
+  display: block;
+  animation: page-enter 400ms ease-out both;
+}
+
+@keyframes page-enter {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  app-dashboard,
+  app-onboard,
+  app-new-workspace,
+  app-profile-settings,
+  app-workspace-settings,
+  app-strategy-research {
+    animation: none;
+  }
+}
+
+.bv-section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.bv-section-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.bv-section-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.empty-state-box {
+  border: 1px dashed var(--blink-outline-variant);
+  border-radius: 8px;
+  padding: 24px;
+  text-align: center;
+  color: var(--blink-on-surface-muted);
+
+  p {
+    margin: 0;
+    font-size: var(--blink-body-small);
+  }
+}
+
+.empty-state-icon {
+  width: 24px;
+  height: 24px;
+  color: var(--blink-on-surface-faint, var(--blink-on-surface-muted));
+  margin: 0 auto 8px;
+  display: block;
+}
+
+// Mock-data visual cue. Apply `class="has-mock-data"` to a meaningful
+// heading/label inside any component that's rendering mock (non-API)
+// data. Renders a subtle `※` after the element so developers know at a
+// glance which sections are placeholder data. Title attribute can be
+// added on the element itself for a hover hint.
+.has-mock-data::after {
+  content: '\00a0※';
+  margin-left: 2px;
+  color: var(--blink-on-surface-muted);
+  opacity: 0.55;
+  font-size: 0.85em;
+  font-weight: 400;
+  vertical-align: baseline;
+  pointer-events: none;
+}
+
+.bv-section-label {
+  margin: 0;
+  font-size: var(--blink-label-small);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--blink-on-surface-muted);
+}
+
+.bv-section-subtitle {
+  margin: 2px 0 0;
+  font-size: var(--blink-body-small);
+  color: var(--blink-on-surface-muted);
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
 // Global tooltip (managed by TooltipService, appended to body)
 .blink-tooltip-popup {
   position: fixed;
@@ -46,7 +157,7 @@ a {
   font-size: var(--mat-sys-label-small-size, 11px);
   font-weight: var(--mat-sys-label-small-weight, 500);
   line-height: var(--mat-sys-label-small-line-height, 1.5);
-  font-family: var(--mat-sys-label-small-font, 'Inter', sans-serif);
+  font-family: inherit;
   padding: 8px 12px;
   border-radius: 8px;
   white-space: normal;

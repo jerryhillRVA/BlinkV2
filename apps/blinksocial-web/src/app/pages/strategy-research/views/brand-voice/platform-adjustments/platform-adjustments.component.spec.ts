@@ -26,12 +26,12 @@ describe('PlatformAdjustmentsComponent', () => {
     expect(component).toBeTruthy();
   });
 
-  it('should render 5 platform cards', () => {
-    expect(nativeElement.querySelectorAll('.platform-card').length).toBe(5);
+  it('should render 5 platform rows', () => {
+    expect(nativeElement.querySelectorAll('.platform-row').length).toBe(5);
   });
 
-  it('should render 5 platform textareas', () => {
-    expect(nativeElement.querySelectorAll('.platform-textarea').length).toBe(5);
+  it('should render 5 platform inputs', () => {
+    expect(nativeElement.querySelectorAll('.platform-input').length).toBe(5);
   });
 
   it('should update platform adjustment', () => {
@@ -62,9 +62,9 @@ describe('PlatformAdjustmentsComponent', () => {
   it('should show spinner for suggested platform', () => {
     component.suggestTone('instagram');
     fixture.detectChanges();
-    const cards = nativeElement.querySelectorAll('.platform-card');
-    expect(cards[0].querySelector('.spinner')).toBeTruthy();
-    expect(cards[0].textContent).toContain('Suggesting...');
+    const rows = nativeElement.querySelectorAll('.platform-row');
+    expect(rows[0].querySelector('.spinner')).toBeTruthy();
+    expect(rows[0].textContent).toContain('Suggesting...');
     vi.advanceTimersByTime(2500);
   });
 

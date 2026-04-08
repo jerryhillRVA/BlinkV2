@@ -1,15 +1,19 @@
 import { TestBed } from '@angular/core/testing';
 import { VoiceMissionComponent } from './voice-mission.component';
+import { ToastService } from '../../../../../core/toast/toast.service';
 
 describe('VoiceMissionComponent', () => {
   let component: VoiceMissionComponent;
   let fixture: ReturnType<typeof TestBed.createComponent<VoiceMissionComponent>>;
   let nativeElement: HTMLElement;
+  let toastSpy: { showSuccess: ReturnType<typeof vi.fn>; showError: ReturnType<typeof vi.fn> };
 
   beforeEach(async () => {
     vi.useFakeTimers();
+    toastSpy = { showSuccess: vi.fn(), showError: vi.fn() };
     await TestBed.configureTestingModule({
       imports: [VoiceMissionComponent],
+      providers: [{ provide: ToastService, useValue: toastSpy }],
     }).compileComponents();
 
     fixture = TestBed.createComponent(VoiceMissionComponent);
@@ -56,8 +60,20 @@ describe('VoiceMissionComponent', () => {
     vi.advanceTimersByTime(2500);
     fixture.detectChanges();
 
-    expect(btn.textContent).toContain('AI Draft');
+    expect(btn.textContent).toContain('Draft Mission');
     expect(btn.disabled).toBe(false);
+  });
+
+  it('should save mission and show toast', () => {
+    component.missionStatement.set('Our mission');
+    component.saveMission();
+    expect(toastSpy.showSuccess).toHaveBeenCalledWith('Mission statement saved');
+  });
+
+  it('should not save empty mission', () => {
+    component.missionStatement.set('   ');
+    component.saveMission();
+    expect(toastSpy.showSuccess).not.toHaveBeenCalled();
   });
 
   it('should show AI Draft SVG icon when not drafting', () => {

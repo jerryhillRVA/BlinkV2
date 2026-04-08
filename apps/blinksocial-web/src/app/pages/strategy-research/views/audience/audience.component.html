@@ -1,6 +1,10 @@
 <div class="audience">
   <div class="section-header">
-    <h2>Audience Segments</h2>
+    <h2 class="has-mock-data" title="Mock data">Audience Segments</h2>
+    <button class="btn-add" (click)="addSegment()">
+      <app-icon name="plus" />
+      Add Segment
+    </button>
   </div>
 
   <div class="segments-grid">
@@ -105,4 +109,121 @@
       </div>
     }
   </div>
+
+  <!-- ── AI Audience Analyzer ─────────────────────────────────────── -->
+  <div class="analyzer-bar">
+    <select class="analyzer-select" [ngModel]="selectedAnalyzeId()" (ngModelChange)="selectedAnalyzeId.set($event)">
+      @for (segment of segments(); track segment.id) {
+        <option [value]="segment.id">{{ segment.name || 'Untitled segment' }}</option>
+      }
+    </select>
+    <button class="btn-analyze" (click)="analyzeAudience()" [disabled]="isAnalyzing()">
+      @if (isAnalyzing()) {
+        <span class="spinner"></span>
+      } @else {
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"/>
+        </svg>
+      }
+      AI Analyze Audience
+    </button>
+  </div>
+
+  @if (isAnalyzing()) {
+    <div class="analyzer-loading">
+      <span class="spinner spinner--lg"></span>
+      <p class="loading-title">Analyzing {{ currentSegmentName() }} audience...</p>
+      <p class="loading-subtitle">Identifying interests, pain points, and activity patterns</p>
+    </div>
+  } @else if (currentInsight(); as insight) {
+    <div class="insights-grid has-mock-data" title="Mock data">
+      <!-- Interests -->
+      <div class="insight-card">
+        <h4 class="insight-title insight-title--pink">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></svg>
+          Interests
+        </h4>
+        <div class="chip-row">
+          @for (interest of insight.interests; track interest) {
+            <span class="chip chip--pink">{{ interest }}</span>
+          }
+        </div>
+      </div>
+
+      <!-- Pain Points -->
+      <div class="insight-card">
+        <h4 class="insight-title insight-title--amber">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.46 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" x2="12" y1="9" y2="13"/><line x1="12" x2="12.01" y1="17" y2="17"/></svg>
+          Pain Points
+        </h4>
+        <ul class="bullet-list">
+          @for (point of insight.painPoints; track point) {
+            <li>
+              <span class="bullet bullet--amber"></span>
+              {{ point }}
+            </li>
+          }
+        </ul>
+      </div>
+
+      <!-- Peak Activity Times -->
+      <div class="insight-card">
+        <h4 class="insight-title insight-title--blue">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+          Peak Activity Times
+        </h4>
+        <div class="time-list">
+          @for (time of insight.peakActivityTimes; track time.day + time.hour) {
+            <div class="time-row">
+              <div class="time-info">
+                <strong>{{ time.day }}</strong>
+                <span>{{ time.hour }}</span>
+              </div>
+              <span class="engagement-badge" [class]="engagementClass(time.engagement)">{{ time.engagement }}</span>
+            </div>
+          }
+        </div>
+      </div>
+
+      <!-- Platform Preferences -->
+      <div class="insight-card">
+        <h4 class="insight-title insight-title--purple">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M2 12h20"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+          Platform Preferences
+        </h4>
+        <div class="platform-list">
+          @for (pp of insight.preferredPlatforms; track pp.platform) {
+            <div class="platform-row">
+              <div class="platform-row-head">
+                <span class="platform-name">{{ platformLabels[pp.platform] }}</span>
+                <span class="platform-pct">{{ pp.preference }}%</span>
+              </div>
+              <div class="platform-bar"><div class="platform-bar-fill" [style.width.%]="pp.preference"></div></div>
+            </div>
+          }
+        </div>
+      </div>
+
+      <!-- Content Preferences (full width) -->
+      <div class="insight-card insight-card--full">
+        <h4 class="insight-title insight-title--brand">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+          Content Preferences
+        </h4>
+        <div class="chip-row">
+          @for (pref of insight.contentPreferences; track pref) {
+            <span class="chip chip--brand">{{ pref }}</span>
+          }
+        </div>
+      </div>
+    </div>
+  } @else {
+    <div class="analyzer-empty">
+      <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+      </svg>
+      <p>Select a segment and run AI Analysis to see audience insights.</p>
+      <p class="empty-sub">Insights include interests, pain points, activity times, and platform preferences.</p>
+    </div>
+  }
 </div>

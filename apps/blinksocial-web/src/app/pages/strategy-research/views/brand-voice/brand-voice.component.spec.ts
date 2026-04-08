@@ -27,14 +27,21 @@ describe('BrandVoiceComponent', () => {
     expect(nativeElement.querySelector('app-vocabulary-guide')).toBeTruthy();
   });
 
-  it('should render all five section titles', () => {
-    const titles = nativeElement.querySelectorAll('.card-title');
-    const titleTexts = Array.from(titles).map(el => el.textContent?.trim());
-    expect(titleTexts).toContain('Mission Statement');
-    expect(titleTexts).toContain('Voice Attributes');
-    expect(titleTexts).toContain('Tone by Context');
-    expect(titleTexts).toContain('Platform Tone Adjustments');
-    expect(titleTexts).toContain('Vocabulary Guide');
+  it('should render all five section labels', () => {
+    const labels = nativeElement.querySelectorAll('.bv-section-label');
+    const labelTexts = Array.from(labels).map(el => el.textContent?.trim());
+    expect(labelTexts).toContain('Content Mission Statement');
+    expect(labelTexts).toContain('Brand Personality');
+    expect(labelTexts).toContain('Tone Shifts');
+    expect(labelTexts).toContain('Platform Nuances');
+    expect(labelTexts).toContain('Vocabulary Guide');
+  });
+
+  it('should render page header with title and subtitle', () => {
+    const header = nativeElement.querySelector('.page-header');
+    expect(header).toBeTruthy();
+    expect(nativeElement.querySelector('.page-header-title')?.textContent).toContain('Brand Voice');
+    expect(nativeElement.querySelector('.page-header-subtitle')?.textContent).toContain('Define how your brand');
   });
 
   it('should use flex column layout', () => {

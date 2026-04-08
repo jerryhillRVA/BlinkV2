@@ -330,6 +330,122 @@ describe('AudienceComponent', () => {
     });
   });
 
+  describe('AI Audience Analyzer', () => {
+    it('should default selectedAnalyzeId to the first segment', () => {
+      expect(component.selectedAnalyzeId()).toBe(component.segments()[0].id);
+    });
+
+    it('analyzeAudience() should toggle isAnalyzing and populate insights', () => {
+      vi.useFakeTimers();
+      component.selectedAnalyzeId.set(component.segments()[0].id);
+      component.analyzeAudience();
+      expect(component.isAnalyzing()).toBe(true);
+      vi.advanceTimersByTime(2500);
+      expect(component.isAnalyzing()).toBe(false);
+      const insight = component.currentInsight();
+      expect(insight).toBeTruthy();
+      expect(insight?.interests.length).toBeGreaterThan(0);
+      vi.useRealTimers();
+    });
+
+    it('analyzeAudience() should be a no-op when no segment is selected', () => {
+      component.selectedAnalyzeId.set('');
+      component.analyzeAudience();
+      expect(component.isAnalyzing()).toBe(false);
+    });
+
+    it('currentSegmentName() returns the selected segment name', () => {
+      const seg = component.segments()[0];
+      component.selectedAnalyzeId.set(seg.id);
+      expect(component.currentSegmentName()).toBe(seg.name);
+    });
+
+    it('engagementClass() maps levels to css classes', () => {
+      expect(component.engagementClass('Very High')).toBe('engagement--very-high');
+      expect(component.engagementClass('High')).toBe('engagement--high');
+      expect(component.engagementClass('Medium')).toBe('engagement--medium');
+    });
+
+    it('renders empty state by default', () => {
+      const empty = fixture.nativeElement.querySelector('.analyzer-empty');
+      expect(empty).toBeTruthy();
+    });
+
+    it('renders loading state while analyzing', () => {
+      vi.useFakeTimers();
+      component.analyzeAudience();
+      fixture.detectChanges();
+      expect(fixture.nativeElement.querySelector('.analyzer-loading')).toBeTruthy();
+      vi.advanceTimersByTime(2500);
+      vi.useRealTimers();
+    });
+
+    it('renders the insights grid with all five cards after analysis', () => {
+      vi.useFakeTimers();
+      component.selectedAnalyzeId.set(component.segments()[0].id);
+      component.analyzeAudience();
+      vi.advanceTimersByTime(2500);
+      fixture.detectChanges();
+
+      const grid = fixture.nativeElement.querySelector('.insights-grid');
+      expect(grid).toBeTruthy();
+      const cards = fixture.nativeElement.querySelectorAll('.insight-card');
+      expect(cards.length).toBe(5);
+
+      const titles = Array.from(fixture.nativeElement.querySelectorAll('.insight-title'))
+        .map((el) => (el as HTMLElement).textContent?.trim());
+      expect(titles.some((t) => t?.includes('Interests'))).toBe(true);
+      expect(titles.some((t) => t?.includes('Pain Points'))).toBe(true);
+      expect(titles.some((t) => t?.includes('Peak Activity Times'))).toBe(true);
+      expect(titles.some((t) => t?.includes('Platform Preferences'))).toBe(true);
+      expect(titles.some((t) => t?.includes('Content Preferences'))).toBe(true);
+
+      // Bullets, badges, and platform bars should render
+      expect(fixture.nativeElement.querySelectorAll('.bullet-list li').length).toBeGreaterThan(0);
+      expect(fixture.nativeElement.querySelectorAll('.engagement-badge').length).toBeGreaterThan(0);
+      expect(fixture.nativeElement.querySelectorAll('.platform-bar-fill').length).toBeGreaterThan(0);
+      vi.useRealTimers();
+    });
+
+    it('analyzer button click invokes analyzeAudience', () => {
+      const spy = vi.spyOn(component, 'analyzeAudience');
+      const btn = fixture.nativeElement.querySelector('.btn-analyze') as HTMLButtonElement;
+      btn.click();
+      expect(spy).toHaveBeenCalled();
+    });
+
+    it('analyzeAudience() falls back to mock data for unknown segment ids', () => {
+      vi.useFakeTimers();
+      component.addSegment(); // creates a brand-new segment with no mock insight match
+      const newId = component.segments().at(-1)!.id;
+      component.selectedAnalyzeId.set(newId);
+      component.analyzeAudience();
+      vi.advanceTimersByTime(2500);
+      const insight = component.currentInsight();
+      expect(insight).toBeTruthy();
+      expect(insight?.segmentId).toBe(newId);
+      expect(insight?.interests.length).toBeGreaterThan(0);
+      vi.useRealTimers();
+    });
+  });
+
+  describe('addSegment()', () => {
+    it('should append a new empty segment', () => {
+      const before = component.segments().length;
+      component.addSegment();
+      expect(component.segments().length).toBe(before + 1);
+      const last = component.segments().at(-1)!;
+      expect(last.name).toBe('');
+      expect(last.description).toBe('');
+    });
+
+    it('should put the new segment into edit mode', () => {
+      component.addSegment();
+      const last = component.segments().at(-1)!;
+      expect(component.editingId()).toBe(last.id);
+    });
+  });
+
   describe('deleteSegment()', () => {
     it('should remove segment by id', () => {
       const initialCount = component.segments().length;

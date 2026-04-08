@@ -1,22 +1,11 @@
-<section class="card">
-  <div class="card-header">
-    <svg class="card-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-      <circle cx="12" cy="12" r="10"/>
-      <path d="m16 12-4-4-4 4M12 16V8"/>
-    </svg>
-    <h3 class="card-title">Mission Statement</h3>
-  </div>
-  <p class="card-description">Define the core purpose and promise of your brand voice.</p>
-  <textarea
-    class="mission-textarea"
-    placeholder="Enter your brand's mission statement..."
-    [ngModel]="missionStatement()"
-    (ngModelChange)="updateMission($event)"
-    rows="4"
-  ></textarea>
-  <div class="card-actions">
+<section class="bv-section">
+  <header class="bv-section-header">
+    <div>
+      <p class="bv-section-label has-mock-data" title="Mock data">Content Mission Statement</p>
+      <p class="bv-section-subtitle">Complete this sentence: We create content to help [audience] [achieve outcome] by [our approach].</p>
+    </div>
     <button
-      class="btn btn-ai"
+      class="btn btn-ai btn-sm"
       (click)="draftMission()"
       [disabled]="isDrafting()"
     >
@@ -28,7 +17,26 @@
       @if (isDrafting()) {
         <span class="spinner"></span>
       }
-      {{ isDrafting() ? 'Drafting...' : 'AI Draft' }}
+      {{ isDrafting() ? 'Drafting...' : 'Draft Mission' }}
+    </button>
+  </header>
+  <textarea
+    class="mission-textarea"
+    placeholder="Enter your brand's mission statement..."
+    [ngModel]="missionStatement()"
+    (ngModelChange)="updateMission($event)"
+    rows="4"
+  ></textarea>
+  <div class="card-actions">
+    <button
+      class="btn btn-primary btn-sm"
+      (click)="saveMission()"
+      [disabled]="!missionStatement().trim()"
+    >
+      <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M20 6 9 17l-5-5"/>
+      </svg>
+      Save Mission
     </button>
   </div>
 </section>

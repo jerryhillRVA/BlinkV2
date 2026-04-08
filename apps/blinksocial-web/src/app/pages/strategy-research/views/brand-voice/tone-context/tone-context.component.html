@@ -1,9 +1,20 @@
-<section class="card">
-  <div class="card-header">
-    <app-icon name="message" class="card-icon" />
-    <h3 class="card-title">Tone by Context</h3>
-  </div>
-  <p class="card-description">Map how your tone shifts across different content contexts.</p>
+<section class="bv-section">
+  <header class="bv-section-header">
+    <div>
+      <p class="bv-section-label has-mock-data" title="Mock data">Tone Shifts</p>
+      <p class="bv-section-subtitle">How your voice adapts in different content situations</p>
+    </div>
+    <div class="bv-section-actions">
+      <button class="btn btn-ai btn-sm" (click)="generateToneContexts()">
+        <app-icon name="sparkles" class="btn-icon" />
+        AI Generate
+      </button>
+      <button class="btn btn-primary btn-sm" (click)="startAdd()">
+        <app-icon name="plus" class="btn-icon" />
+        Add Context
+      </button>
+    </div>
+  </header>
 
   @if (toneContexts().length > 0) {
     <div class="tone-table-wrapper">
@@ -13,7 +24,7 @@
             <th>Context</th>
             <th>Tone</th>
             <th>Example</th>
-            <th class="actions-col">Actions</th>
+            <th class="actions-col"><span class="sr-only">Actions</span></th>
           </tr>
         </thead>
         <tbody>
@@ -37,8 +48,10 @@
     </div>
   }
 
-  @if (toneContexts().length === 0) {
-    <p class="empty-state">No tone contexts yet. Add one or generate with AI.</p>
+  @if (toneContexts().length === 0 && !editingId()) {
+    <div class="empty-state-box">
+      <p>No tone contexts defined. Add contexts or use AI Generate.</p>
+    </div>
   }
 
   @if (editingId()) {
@@ -65,10 +78,4 @@
     </div>
   }
 
-  <div class="card-actions">
-    <button class="btn btn-secondary" (click)="startAdd()">
-      <app-icon name="plus" class="btn-icon" />
-      Add Context
-    </button>
-  </div>
 </section>
