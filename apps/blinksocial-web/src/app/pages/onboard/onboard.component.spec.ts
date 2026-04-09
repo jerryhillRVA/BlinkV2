@@ -90,6 +90,15 @@ describe('OnboardComponent', () => {
     expect(fixture.nativeElement.querySelector('.chat-area')).toBeFalsy();
   });
 
+  it('should render name-input-card above wizard-bg via position: relative', () => {
+    setup();
+    const fixture = TestBed.createComponent(OnboardComponent);
+    fixture.detectChanges();
+    const card = fixture.nativeElement.querySelector('.name-input-card') as HTMLElement;
+    const styles = getComputedStyle(card);
+    expect(styles.position).toBe('relative');
+  });
+
   it('should disable start button when name is empty', () => {
     setup();
     const fixture = TestBed.createComponent(OnboardComponent);

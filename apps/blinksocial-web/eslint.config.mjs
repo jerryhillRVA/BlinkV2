@@ -31,4 +31,27 @@ export default [
     // Override or add rules here
     rules: {},
   },
+  {
+    // Tests are allowed to use non-null assertions and `any` for ergonomic
+    // assertions; production code is still held to the stricter rules.
+    files: ['**/*.spec.ts'],
+    rules: {
+      '@typescript-eslint/no-non-null-assertion': 'off',
+      '@typescript-eslint/no-explicit-any': 'off',
+    },
+  },
+  {
+    // Allow `_`-prefixed args/vars to be intentionally unused.
+    files: ['**/*.ts'],
+    rules: {
+      '@typescript-eslint/no-unused-vars': [
+        'warn',
+        {
+          argsIgnorePattern: '^_',
+          varsIgnorePattern: '^_',
+          caughtErrorsIgnorePattern: '^_',
+        },
+      ],
+    },
+  },
 ];

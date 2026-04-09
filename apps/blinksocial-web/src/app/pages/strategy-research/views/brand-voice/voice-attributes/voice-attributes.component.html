@@ -1,0 +1,120 @@
+<section class="bv-section">
+  <header class="bv-section-header">
+    <div>
+      <p class="bv-section-label has-mock-data" title="Mock data">Brand Personality</p>
+      <p class="bv-section-subtitle">3–5 defining traits that shape how your brand communicates</p>
+    </div>
+    <div class="bv-section-actions">
+      <button class="btn btn-ai btn-sm" (click)="generateAttributes()" [disabled]="isGenerating()">
+        @if (!isGenerating()) {
+          <app-icon name="sparkles" class="btn-icon" />
+        }
+        @if (isGenerating()) {
+          <span class="spinner"></span>
+        }
+        {{ isGenerating() ? 'Generating...' : 'AI Generate' }}
+      </button>
+      <button class="btn btn-primary btn-sm" (click)="startAdd()">
+        <app-icon name="plus" class="btn-icon" />
+        Add Attribute
+      </button>
+    </div>
+  </header>
+
+  @if (editingId()) {
+    <div class="attribute-edit-card">
+      <p class="attribute-edit-label">{{ isEditingNew() ? 'New' : 'Edit' }} Voice Attribute</p>
+      <div class="attribute-edit-grid">
+        <div class="attribute-edit-field">
+          <label>
+            <span>Label</span>
+            <input
+              class="form-input"
+              placeholder="e.g. Empowering"
+              [ngModel]="editAttribute().label"
+              (ngModelChange)="updateField('label', $event)"
+            />
+          </label>
+        </div>
+        <div class="attribute-edit-field">
+          <label>
+            <span>Description</span>
+            <input
+              class="form-input"
+              placeholder="What this means for the brand"
+              [ngModel]="editAttribute().description"
+              (ngModelChange)="updateField('description', $event)"
+            />
+          </label>
+        </div>
+        <div class="attribute-edit-field">
+          <label>
+            <span>Do Example</span>
+            <input
+              class="form-input"
+              placeholder="Example done right"
+              [ngModel]="editAttribute().doExample"
+              (ngModelChange)="updateField('doExample', $event)"
+            />
+          </label>
+        </div>
+        <div class="attribute-edit-field">
+          <label>
+            <span>Don't Example</span>
+            <input
+              class="form-input"
+              placeholder="Example to avoid"
+              [ngModel]="editAttribute().dontExample"
+              (ngModelChange)="updateField('dontExample', $event)"
+            />
+          </label>
+        </div>
+      </div>
+      <div class="attribute-edit-actions">
+        <button class="btn btn-primary btn-sm" (click)="save()">Save</button>
+        <button class="btn btn-ai btn-sm" (click)="cancelEdit()">Cancel</button>
+      </div>
+    </div>
+  }
+
+  @if (attributes().length === 0 && !editingId()) {
+    <div class="empty-state-box">
+      <svg class="empty-state-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/>
+        <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
+        <line x1="12" x2="12" y1="19" y2="22"/>
+      </svg>
+      <p>No voice attributes defined yet. Add attributes or use AI Generate.</p>
+    </div>
+  }
+
+  <div class="attributes-grid">
+    @for (attr of attributes(); track attr.id) {
+      <div class="attribute-card">
+        <div class="attribute-header">
+          <span class="attribute-label has-mock-data" title="Mock data">{{ attr.label }}</span>
+          <div class="attribute-actions">
+            <button class="btn-icon-only" (click)="startEdit(attr)" title="Edit">
+              <app-icon name="edit" />
+            </button>
+            <button class="btn-icon-only btn-danger" (click)="remove(attr.id)" title="Remove">
+              <app-icon name="trash" />
+            </button>
+          </div>
+        </div>
+        <p class="attribute-description">{{ attr.description }}</p>
+        <div class="example-stack">
+          <div class="example-box example-box--do">
+            <p class="example-label">Do</p>
+            <p class="example-text">{{ attr.doExample }}</p>
+          </div>
+          <div class="example-box example-box--dont">
+            <p class="example-label">Don't</p>
+            <p class="example-text">{{ attr.dontExample }}</p>
+          </div>
+        </div>
+      </div>
+    }
+  </div>
+
+</section>

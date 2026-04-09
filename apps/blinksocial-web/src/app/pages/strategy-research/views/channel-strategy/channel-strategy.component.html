@@ -1,0 +1,191 @@
+<div class="channel-strategy">
+  <header class="page-header">
+    <div class="page-header-text">
+      <div class="page-header-icon">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M4.9 19.1C1 15.2 1 8.8 4.9 4.9"/>
+          <path d="M7.8 16.2c-2.3-2.3-2.3-6.1 0-8.5"/>
+          <circle cx="12" cy="12" r="2"/>
+          <path d="M16.2 7.8c2.3 2.3 2.3 6.1 0 8.5"/>
+          <path d="M19.1 4.9C23 8.8 23 15.1 19.1 19"/>
+        </svg>
+      </div>
+      <div>
+        <h3 class="page-header-title has-mock-data" title="Mock data">Channel Strategy</h3>
+        <p class="page-header-subtitle">Define the role and approach for each platform in your content mix</p>
+      </div>
+    </div>
+    <button class="btn-generate-all" (click)="aiGenerateAll()" [disabled]="generatingAll()">
+      @if (generatingAll()) {
+        <span class="spinner"></span>
+        Generating...
+      } @else {
+        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"/>
+          <path d="M20 3v4"/><path d="M22 5h-4"/><path d="M4 17v2"/><path d="M5 18H3"/>
+        </svg>
+        AI Generate All Strategies
+      }
+    </button>
+  </header>
+
+  <div class="platforms-list">
+    @for (channel of channels(); track channel.platform) {
+      <div class="platform-card" [class]="'platform-card platform-' + channel.platform" [class.inactive]="!channel.active">
+        <!-- Card Header -->
+        <div class="platform-header">
+          <button
+            type="button"
+            class="platform-title"
+            (click)="toggleExpand(channel.platform)"
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path [attr.d]="platformIcons[channel.platform]"></path>
+            </svg>
+            <span class="platform-name has-mock-data" title="Mock data">{{ platformLabels[channel.platform] }}</span>
+            <svg
+              width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+              stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+              class="chevron"
+              [class.rotated]="isExpanded(channel.platform)"
+            >
+              <polyline points="6 9 12 15 18 9"></polyline>
+            </svg>
+          </button>
+
+          <div class="platform-actions">
+            <span class="platform-status">{{ channel.active ? 'Active' : 'Inactive' }}</span>
+            <label class="toggle-switch">
+              <input
+                type="checkbox"
+                [checked]="channel.active"
+                (change)="toggleActive(channel.platform)"
+              />
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+        </div>
+
+        <!-- Card Content -->
+        @if (isExpanded(channel.platform)) {
+          <div class="platform-content">
+            @if (channel.active) {
+              <div class="strategy-form">
+                <div class="form-grid">
+                  <div class="form-group">
+                    <label class="form-label" [attr.for]="'role-' + channel.platform">Role</label>
+                    <input
+                      [id]="'role-' + channel.platform"
+                      type="text"
+                      class="form-input"
+                      [ngModel]="channel.role"
+                      (ngModelChange)="updateChannel(channel.platform, 'role', $event)"
+                      placeholder="What role does this platform play?"
+                    />
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label" [attr.for]="'cadence-' + channel.platform">Posting Cadence</label>
+                    <input
+                      [id]="'cadence-' + channel.platform"
+                      type="text"
+                      class="form-input"
+                      [ngModel]="channel.postingCadence"
+                      (ngModelChange)="updateChannel(channel.platform, 'postingCadence', $event)"
+                      placeholder="e.g. 5x/week, Mon/Wed/Fri at 7am"
+                    />
+                  </div>
+                  <div class="form-group">
+                    <span class="form-label">Primary Audience</span>
+                    <app-dropdown
+                      [options]="audienceOptions"
+                      [value]="channel.primaryAudience"
+                      size="compact"
+                      [fullWidth]="true"
+                      [filled]="true"
+                      (valueChange)="updateChannel(channel.platform, 'primaryAudience', $event)"
+                    />
+                  </div>
+                  <div class="form-group">
+                    <span class="form-label">Primary Goal</span>
+                    <app-dropdown
+                      [options]="goalOptions"
+                      [value]="channel.primaryGoal"
+                      size="compact"
+                      [fullWidth]="true"
+                      [filled]="true"
+                      (valueChange)="updateChannel(channel.platform, 'primaryGoal', $event)"
+                    />
+                  </div>
+                </div>
+
+                <div class="form-group">
+                  <span class="form-label">Primary Content Types</span>
+                  <div class="chip-toggles">
+                    @for (ct of contentTypesFor(channel.platform); track ct) {
+                      <button
+                        type="button"
+                        class="chip-toggle"
+                        [class.active]="isContentTypeActive(channel, ct)"
+                        (click)="toggleContentType(channel.platform, ct)"
+                      >
+                        {{ ct }}
+                      </button>
+                    }
+                  </div>
+                </div>
+
+                <div class="form-group">
+                  <label class="form-label" [attr.for]="'tone-' + channel.platform">Tone Adjustment</label>
+                  <textarea
+                    [id]="'tone-' + channel.platform"
+                    class="form-textarea"
+                    [ngModel]="channel.toneAdjustment"
+                    (ngModelChange)="updateChannel(channel.platform, 'toneAdjustment', $event)"
+                    rows="3"
+                    placeholder="How does your voice shift on this platform?"
+                  ></textarea>
+                </div>
+
+                <div class="form-group">
+                  <label class="form-label" [attr.for]="'notes-' + channel.platform">Strategy Notes</label>
+                  <textarea
+                    [id]="'notes-' + channel.platform"
+                    class="form-textarea"
+                    [ngModel]="channel.notes"
+                    (ngModelChange)="updateChannel(channel.platform, 'notes', $event)"
+                    rows="3"
+                    placeholder="Open strategy notes for this platform..."
+                  ></textarea>
+                </div>
+
+                <div class="form-actions">
+                  <button
+                    type="button"
+                    class="btn-ai-generate"
+                    (click)="aiGenerate(channel.platform)"
+                    [disabled]="generatingPlatform() === channel.platform"
+                  >
+                    @if (generatingPlatform() === channel.platform) {
+                      <span class="spinner"></span>
+                      Generating...
+                    } @else {
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"/>
+                        <path d="M20 3v4"/><path d="M22 5h-4"/><path d="M4 17v2"/><path d="M5 18H3"/>
+                      </svg>
+                      AI Generate Strategy
+                    }
+                  </button>
+                </div>
+              </div>
+            } @else {
+              <div class="inactive-message">
+                <p>Mark as active to define strategy for {{ platformLabels[channel.platform] }}.</p>
+              </div>
+            }
+          </div>
+        }
+      </div>
+    }
+  </div>
+</div>

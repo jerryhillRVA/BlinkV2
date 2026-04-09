@@ -1,0 +1,67 @@
+<div class="content-repurposer">
+  <div class="input-panel">
+    <div class="input-panel__header">
+      <h4 class="input-panel__title has-mock-data" title="Mock data">Source Content</h4>
+    </div>
+    <textarea
+      class="input-panel__textarea"
+      [ngModel]="sourceContent()"
+      (ngModelChange)="updateSource($event)"
+      placeholder="Paste your source content here (blog post, caption, script, etc.)..."
+      rows="6"
+    ></textarea>
+
+    <div class="platform-toggles">
+      <span class="platform-toggles__label">Repurpose for:</span>
+      <div class="platform-toggles__chips">
+        @for (p of platformOptions; track p.id) {
+          <button
+            class="platform-chip"
+            [class.platform-chip--active]="isPlatformSelected(p.id)"
+            (click)="togglePlatform(p.id)"
+          >
+            {{ p.label }}
+          </button>
+        }
+      </div>
+    </div>
+
+    <button
+      class="btn btn--primary"
+      (click)="repurpose()"
+      [disabled]="isGenerating() || !sourceContent().trim()"
+    >
+      @if (isGenerating()) {
+        <span class="spinner"></span>
+      }
+      @if (!isGenerating()) {
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 2v6h-6M3 12a9 9 0 0 1 15-6.7L21 8M3 22v-6h6M21 12a9 9 0 0 1-15 6.7L3 16"/>
+        </svg>
+      }
+      {{ isGenerating() ? 'Repurposing...' : 'Repurpose with AI' }}
+    </button>
+  </div>
+
+  @if (outputs().length > 0) {
+    <div class="output-grid">
+      @for (output of outputs(); track $index; let i = $index) {
+        <div class="output-card">
+          <div class="output-card__header">
+            <span class="output-card__platform">{{ output.platform }}</span>
+            <span class="output-card__format">{{ output.format }}</span>
+          </div>
+          <div class="output-card__content">
+            <pre class="output-card__text">{{ output.content }}</pre>
+          </div>
+          <div class="output-card__actions">
+            <button class="btn btn--sm btn--secondary" (click)="copyContent(i)">
+              {{ copiedIndex() === i ? 'Copied!' : 'Copy' }}
+            </button>
+            <button class="btn btn--sm btn--ghost" (click)="saveAsIdea(i)">Save as Idea</button>
+          </div>
+        </div>
+      }
+    </div>
+  }
+</div>

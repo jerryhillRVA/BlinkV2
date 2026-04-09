@@ -1,0 +1,41 @@
+<section class="bv-section">
+  <header class="bv-section-header">
+    <div>
+      <p class="bv-section-label has-mock-data" title="Mock data">Platform Nuances</p>
+      <p class="bv-section-subtitle">How your voice shifts on each platform</p>
+    </div>
+  </header>
+
+  <div class="platform-rows">
+    @for (entry of adjustments(); track entry.platform) {
+      <div class="platform-row">
+        <span class="platform-label has-mock-data" title="Mock data" [class]="'platform-' + entry.platform">{{ platformLabels[entry.platform] }}</span>
+        <input
+          class="form-input platform-input"
+          [placeholder]="'Tone notes for ' + platformLabels[entry.platform] + '...'"
+          [ngModel]="entry.adjustment"
+          (ngModelChange)="updateAdjustment(entry.platform, $event)"
+        />
+        <button
+          class="btn btn-ai btn-sm"
+          (click)="suggestTone(entry.platform)"
+          [disabled]="suggestingPlatform() === entry.platform"
+        >
+          @if (suggestingPlatform() !== entry.platform) {
+            <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"/>
+              <path d="M20 3v4"/>
+              <path d="M22 5h-4"/>
+              <path d="M4 17v2"/>
+              <path d="M5 18H3"/>
+            </svg>
+          }
+          @if (suggestingPlatform() === entry.platform) {
+            <span class="spinner"></span>
+          }
+          {{ suggestingPlatform() === entry.platform ? 'Suggesting...' : 'AI Suggest' }}
+        </button>
+      </div>
+    }
+  </div>
+</section>

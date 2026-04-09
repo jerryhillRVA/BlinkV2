@@ -36,6 +36,10 @@ npx nx build blinksocial-web                        # Frontend production build
 npx nx build blinksocial-api                        # API production build
 ```
 
+### Always Verify with a Build After Edits
+
+After **any** code or template change — even pure styling/SCSS edits — run `npx nx build blinksocial-web` (or `blinksocial-api`) to surface Angular template type errors, SCSS budget violations, and TypeScript breakage that lint alone won't catch. Component-style budgets are configured in `apps/blinksocial-web/project.json` and trip the build, not lint.
+
 ---
 
 ## Angular Frontend (`blinksocial-web`)

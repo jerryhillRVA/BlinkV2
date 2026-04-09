@@ -1,0 +1,54 @@
+<div class="strategy-page">
+  <div class="strategy-bg" aria-hidden="true">
+    <img src="dashboard-bg.jpg" alt="" />
+  </div>
+  <!-- Business Objectives Strip -->
+  <app-objectives-strip
+    [objectives]="objectives()"
+    (objectivesChange)="onUpdateObjectives($event)"
+  />
+
+  <!-- Main Layout: Sidebar + Content -->
+  <div class="strategy-layout">
+    <!-- Left Sidebar -->
+    <nav class="strategy-sidebar" aria-label="Strategy navigation">
+      @for (section of sidebarSections; track section.label; let isFirst = $first) {
+        @if (!isFirst) {
+          <div class="sidebar-divider"></div>
+        }
+        <p class="sidebar-section-label">{{ section.label }}</p>
+        @for (item of section.items; track item.id) {
+          <button
+            class="sidebar-item"
+            [class.active]="activeView() === item.id"
+            (click)="setActiveView(item.id)"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
+                 fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                 class="sidebar-icon">
+              <path [attr.d]="item.iconPath" />
+            </svg>
+            {{ item.label }}
+          </button>
+        }
+      }
+    </nav>
+
+    <!-- Content Area -->
+    <main class="strategy-content">
+      @switch (activeView()) {
+        @case ('brand-voice') { <app-brand-voice /> }
+        @case ('pillars') { <app-strategic-pillars [linkedObjectives]="objectives()" /> }
+        @case ('audience') { <app-audience /> }
+        @case ('channel') { <app-channel-strategy /> }
+        @case ('content-mix') { <app-content-mix /> }
+        @case ('research') { <app-research-sources /> }
+        @case ('competitors') { <app-competitor-deep-dive /> }
+        @case ('repurposer') { <app-content-repurposer /> }
+        @case ('series') { <app-series-builder /> }
+        @case ('ab-analyzer') { <app-ab-analyzer /> }
+        @case ('seo') { <app-seo-hashtags /> }
+      }
+    </main>
+  </div>
+</div>

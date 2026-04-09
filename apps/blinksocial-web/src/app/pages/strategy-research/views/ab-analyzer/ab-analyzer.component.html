@@ -1,0 +1,145 @@
+<div class="ab-analyzer">
+  <div class="input-section">
+    <div class="variant-inputs">
+      <div class="variant-input">
+        <span class="variant-label">Variant A</span>
+        <textarea
+          class="variant-textarea"
+          [ngModel]="variantA()"
+          (ngModelChange)="updateVariantA($event)"
+          placeholder="Paste your first content variant here..."
+          rows="5"
+        ></textarea>
+      </div>
+      <div class="variant-input">
+        <span class="variant-label">Variant B</span>
+        <textarea
+          class="variant-textarea"
+          [ngModel]="variantB()"
+          (ngModelChange)="updateVariantB($event)"
+          placeholder="Paste your second content variant here..."
+          rows="5"
+        ></textarea>
+      </div>
+    </div>
+
+    <div class="input-options">
+      <div class="input-option">
+        <span>Content Goal</span>
+        <select [(ngModel)]="selectedGoal">
+          @for (g of goalOptions; track g) {
+            <option [value]="g">{{ g }}</option>
+          }
+        </select>
+      </div>
+      <div class="input-option">
+        <span>Platform</span>
+        <select [(ngModel)]="selectedPlatform">
+          @for (p of platformOptions; track p.id) {
+            <option [value]="p.id">{{ p.label }}</option>
+          }
+        </select>
+      </div>
+    </div>
+
+    <button
+      class="btn btn--primary"
+      (click)="analyze()"
+      [disabled]="isAnalyzing() || !variantA().trim() || !variantB().trim()"
+    >
+      @if (isAnalyzing()) {
+        <span class="spinner"></span>
+      } @else {
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M10 2v7.527a2 2 0 0 1-.211.896L4.72 20.55a1 1 0 0 0 .9 1.45h12.76a1 1 0 0 0 .9-1.45l-5.069-10.127A2 2 0 0 1 14 9.527V2"/>
+        </svg>
+      }
+      {{ isAnalyzing() ? 'Analyzing...' : 'Analyze with AI' }}
+    </button>
+  </div>
+
+  @if (analysis(); as result) {
+    <div class="results">
+      <div class="winner-banner">
+        <div class="winner-banner__content">
+          <span class="winner-banner__label">Winner:</span>
+          <span class="winner-banner__variant">Variant {{ result.winner }}</span>
+          <span class="confidence-badge">{{ result.confidence }} Confidence</span>
+        </div>
+        <p class="winner-banner__verdict">{{ result.verdict }}</p>
+      </div>
+
+      <div class="strengths-weaknesses">
+        <div class="sw-card">
+          <h4 class="sw-card__title">Variant A</h4>
+          <div class="sw-section">
+            <span class="sw-label sw-label--strength">Strengths</span>
+            <ul class="sw-list">
+              @for (s of result.variantA.strengths; track s) {
+                <li>{{ s }}</li>
+              }
+            </ul>
+          </div>
+          <div class="sw-section">
+            <span class="sw-label sw-label--weakness">Weaknesses</span>
+            <ul class="sw-list">
+              @for (w of result.variantA.weaknesses; track w) {
+                <li>{{ w }}</li>
+              }
+            </ul>
+          </div>
+        </div>
+        <div class="sw-card">
+          <h4 class="sw-card__title">Variant B</h4>
+          <div class="sw-section">
+            <span class="sw-label sw-label--strength">Strengths</span>
+            <ul class="sw-list">
+              @for (s of result.variantB.strengths; track s) {
+                <li>{{ s }}</li>
+              }
+            </ul>
+          </div>
+          <div class="sw-section">
+            <span class="sw-label sw-label--weakness">Weaknesses</span>
+            <ul class="sw-list">
+              @for (w of result.variantB.weaknesses; track w) {
+                <li>{{ w }}</li>
+              }
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <div class="scores-card">
+        <h4 class="scores-card__title">Score Breakdown</h4>
+        @for (metric of scoreMetrics; track metric.key) {
+          <div class="score-row">
+            <span class="score-row__label">{{ metric.label }}</span>
+            <div class="score-row__bars">
+              <div class="bar-group">
+                <span class="bar-label">A</span>
+                <div class="bar-track">
+                  <div class="bar-fill bar-fill--a" [style.width]="getBarWidth(result.scores[metric.key].a)"></div>
+                </div>
+                <span class="bar-value">{{ result.scores[metric.key].a }}</span>
+              </div>
+              <div class="bar-group">
+                <span class="bar-label">B</span>
+                <div class="bar-track">
+                  <div class="bar-fill bar-fill--b" [style.width]="getBarWidth(result.scores[metric.key].b)"></div>
+                </div>
+                <span class="bar-value">{{ result.scores[metric.key].b }}</span>
+              </div>
+            </div>
+          </div>
+        }
+      </div>
+
+      <div class="improved-card">
+        <h4 class="improved-card__title">Improved Version</h4>
+        <p class="improved-card__text">{{ result.improvedVersion }}</p>
+        <button class="btn btn--primary btn--sm" (click)="useImprovedVersion()">Use This Version</button>
+      </div>
+    </div>
+  }
+</div>

@@ -1,0 +1,107 @@
+<div class="competitor-deep-dive">
+  <div class="action-bar">
+    <button class="btn btn--primary" (click)="runAiScan()" [disabled]="isScanning()">
+      @if (!isScanning()) {
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/>
+        </svg>
+      }
+      @if (isScanning()) {
+        <span class="spinner"></span>
+      }
+      {{ isScanning() ? 'Scanning...' : 'AI Competitor Scan' }}
+    </button>
+    <button class="btn btn--secondary" (click)="openAddForm()">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M12 5v14M5 12h14"/>
+      </svg>
+      Add Competitor
+    </button>
+  </div>
+
+  @if (showAddForm()) {
+    <div class="add-form">
+      <h4 class="add-form__title">Add Competitor</h4>
+      <div class="add-form__fields">
+        <div class="add-form__field">
+          <span>Competitor Name</span>
+          <input type="text" [(ngModel)]="newCompetitor" placeholder="e.g. Competitor Name" />
+        </div>
+        <div class="add-form__field">
+          <span>Platform</span>
+          <select [(ngModel)]="newPlatform">
+            <option value="instagram">Instagram</option>
+            <option value="tiktok">TikTok</option>
+            <option value="youtube">YouTube</option>
+            <option value="linkedin">LinkedIn</option>
+            <option value="facebook">Facebook</option>
+          </select>
+        </div>
+        <div class="add-form__field">
+          <span>Content Type</span>
+          <input type="text" [(ngModel)]="newContentType" placeholder="e.g. Reels, Shorts" />
+        </div>
+        <div class="add-form__field">
+          <span>Topic</span>
+          <input type="text" [(ngModel)]="newTopic" placeholder="e.g. Fitness tips" />
+        </div>
+      </div>
+      <div class="add-form__actions">
+        <button class="btn btn--primary" (click)="addCompetitor()" [disabled]="!newCompetitor.trim()">Add</button>
+        <button class="btn btn--ghost" (click)="cancelAdd()">Cancel</button>
+      </div>
+    </div>
+  }
+
+  <div class="competitor-grid">
+    @for (c of competitors(); track c.id) {
+      <div class="competitor-card">
+        <div class="competitor-card__header">
+          <div class="competitor-card__name has-mock-data" title="Mock data">{{ c.competitor }}</div>
+          <span class="relevancy-badge" [ngClass]="getRelevancyClass(c.relevancyLevel)">
+            {{ c.relevancyLevel }}
+          </span>
+        </div>
+        <div class="competitor-card__meta">
+          <span class="platform-badge">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path [attr.d]="platformIcons[c.platform]"/>
+            </svg>
+            {{ platformLabels[c.platform] }}
+          </span>
+          <span class="content-type-badge">{{ c.contentType }}</span>
+        </div>
+        <div class="competitor-card__detail">
+          <div class="detail-row">
+            <span class="detail-label">Topic:</span>
+            <span class="detail-value">{{ c.topic }}</span>
+          </div>
+          <div class="detail-row">
+            <span class="detail-label">Frequency:</span>
+            <span class="detail-value">{{ c.frequency }}</span>
+          </div>
+        </div>
+        @if (isExpanded(c.id)) {
+          <div class="competitor-card__insight">
+            <div class="insight-label">AI Insight</div>
+            <p class="insight-text">{{ c.insight }}</p>
+          </div>
+        }
+        <div class="competitor-card__actions">
+          <button class="btn btn--sm btn--primary" (click)="runTeardown(c.id)">Run Teardown</button>
+          <button class="btn btn--sm btn--ghost" (click)="toggleExpand(c.id)">
+            {{ isExpanded(c.id) ? 'Hide Intel' : 'View Intel' }}
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              @if (!isExpanded(c.id)) {
+                <path d="m6 9 6 6 6-6"/>
+              }
+              @if (isExpanded(c.id)) {
+                <path d="m18 15-6-6-6 6"/>
+              }
+            </svg>
+          </button>
+        </div>
+      </div>
+    }
+  </div>
+</div>

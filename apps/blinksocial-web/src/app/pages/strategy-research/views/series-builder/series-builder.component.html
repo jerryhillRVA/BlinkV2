@@ -1,0 +1,101 @@
+<div class="series-builder">
+  <div class="input-form">
+    <h4 class="input-form__title has-mock-data" title="Mock data">Build a Content Series</h4>
+    <div class="input-form__fields">
+      <div class="input-form__field">
+        <span>Series Goal</span>
+        <select [(ngModel)]="selectedGoal">
+          @for (g of goalOptions; track g) {
+            <option [value]="g">{{ g }}</option>
+          }
+        </select>
+      </div>
+      <div class="input-form__field">
+        <span>Series Length</span>
+        <div class="length-options">
+          @for (len of lengthOptions; track len) {
+            <button
+              class="length-btn"
+              [class.length-btn--active]="seriesLength === len"
+              (click)="seriesLength = len"
+            >
+              {{ len }} posts
+            </button>
+          }
+        </div>
+      </div>
+      <div class="input-form__field">
+        <span>Primary Platform</span>
+        <select [(ngModel)]="selectedPlatform">
+          @for (p of platformOptions; track p.id) {
+            <option [value]="p.id">{{ p.label }}</option>
+          }
+        </select>
+      </div>
+    </div>
+    <button class="btn btn--primary" (click)="buildSeries()" [disabled]="isGenerating()">
+      @if (isGenerating()) {
+        <span class="spinner"></span>
+      }
+      @if (!isGenerating()) {
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M10 6h11M10 12h11M10 18h11M3 6l2 2 4-4M3 12l2 2 4-4M3 18l2 2 4-4"/>
+        </svg>
+      }
+      {{ isGenerating() ? 'Building Series...' : 'Build Series with AI' }}
+    </button>
+  </div>
+
+  @if (series(); as s) {
+    <div class="series-output">
+      <div class="overview-card">
+        <h3 class="overview-card__title">{{ s.title }}</h3>
+        <p class="overview-card__arc">{{ s.narrativeArc }}</p>
+        <div class="overview-card__badges">
+          <span class="badge badge--platform">{{ s.platform }}</span>
+          <span class="badge badge--count">{{ s.postCount }} posts</span>
+          <span class="badge badge--goal">{{ s.goal }}</span>
+        </div>
+      </div>
+
+      <div class="post-list">
+        @for (post of s.posts; track post.number; let last = $last) {
+          <div class="post-card">
+            <div class="post-card__header">
+              <span class="post-number">{{ post.number }}</span>
+              <div class="post-card__title-row">
+                <h4 class="post-card__title">{{ post.title }}</h4>
+                <span class="role-tag" [ngClass]="getRoleClass(post.role)">{{ post.role }}</span>
+              </div>
+            </div>
+            <div class="post-card__body">
+              <div class="post-card__hook">
+                <span class="hook-label">Hook:</span>
+                <span class="hook-text">{{ post.hook }}</span>
+              </div>
+              <div class="post-card__direction">
+                <span class="direction-label">Caption Direction:</span>
+                <span class="direction-text">{{ post.captionDirection }}</span>
+              </div>
+              <div class="post-card__cta">
+                <span class="cta-label">CTA:</span>
+                <span class="cta-text">{{ post.cta }}</span>
+              </div>
+            </div>
+            <div class="post-card__actions">
+              <button class="btn btn--sm btn--primary" (click)="createInIdeation(post.number)">Create in Ideation</button>
+            </div>
+          </div>
+          @if (!last) {
+            <div class="bridge-connector">
+              <div class="bridge-line"></div>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="m6 9 6 6 6-6"/>
+              </svg>
+            </div>
+          }
+        }
+      </div>
+    </div>
+  }
+</div>

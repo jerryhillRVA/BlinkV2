@@ -279,7 +279,7 @@ describe('NewWorkspaceFormService', () => {
   it('should generate skillId from agent name', () => {
     service.workspaceName.set('Test');
     const data = service.formData();
-    expect(data.skills!.skills[0].skillId).toBe('reporting-agent');
+    expect(data.skills?.skills[0].skillId).toBe('reporting-agent');
   });
 
   it('should map brand voice to tone guidelines', () => {
@@ -304,8 +304,8 @@ describe('NewWorkspaceFormService', () => {
     service.updateObjective(service.businessObjectives()[0].id, 'statement', 'Grow 50%');
     const data = service.formData();
     expect(data.businessObjectives).toBeDefined();
-    expect(data.businessObjectives!.length).toBe(1);
-    expect(data.businessObjectives![0].statement).toBe('Grow 50%');
+    expect(data.businessObjectives?.length).toBe(1);
+    expect(data.businessObjectives?.[0].statement).toBe('Grow 50%');
   });
 
   it('should omit business objectives from formData when no statements', () => {
@@ -319,7 +319,7 @@ describe('NewWorkspaceFormService', () => {
     service.updateBrandPositioning('targetCustomer', 'Developers');
     const data = service.formData();
     expect(data.brandPositioning).toBeDefined();
-    expect(data.brandPositioning!.targetCustomer).toBe('Developers');
+    expect(data.brandPositioning?.targetCustomer).toBe('Developers');
   });
 
   it('should set purpose and mission to undefined when empty', () => {
@@ -371,7 +371,7 @@ describe('NewWorkspaceFormService', () => {
     service.workspaceName.set('Test');
     service.agents.set([{ id: 1, name: '', role: 'Test', responsibilities: '', outputs: '' }]);
     const data = service.formData();
-    expect(data.skills!.skills[0].skillId).toBe('agent-1');
+    expect(data.skills?.skills[0].skillId).toBe('agent-1');
   });
 
   it('should fall back to Platform.Tbd for unknown display name in enabled platforms', () => {
@@ -710,7 +710,7 @@ describe('NewWorkspaceFormService', () => {
       },
     });
     expect(requestWithSkills.skills).toBeDefined();
-    expect(requestWithSkills.skills!.skills.length).toBe(1);
-    expect(requestWithSkills.skills!.skills[0].skillId).toBe('reporting-agent');
+    expect(requestWithSkills.skills?.skills.length).toBe(1);
+    expect(requestWithSkills.skills?.skills[0].skillId).toBe('reporting-agent');
   });
 });
