@@ -9,10 +9,7 @@ describe('CompetitorDeepDiveComponent', () => {
 
   beforeEach(async () => {
     vi.useFakeTimers();
-    await TestBed.configureTestingModule({
-      imports: [CompetitorDeepDiveComponent],
-    }).compileComponents();
-
+    await TestBed.configureTestingModule({ imports: [CompetitorDeepDiveComponent] }).compileComponents();
     fixture = TestBed.createComponent(CompetitorDeepDiveComponent);
     component = fixture.componentInstance;
     nativeElement = fixture.nativeElement;
@@ -23,388 +20,246 @@ describe('CompetitorDeepDiveComponent', () => {
     vi.useRealTimers();
   });
 
-  it('should create', () => {
+  it('creates with seeded competitors', () => {
     expect(component).toBeTruthy();
+    expect(component.competitors().length).toBeGreaterThan(0);
+    expect(nativeElement.querySelectorAll('.competitor-card').length).toBeGreaterThan(0);
   });
 
-  // --- Rendering ---
-
-  it('should render competitor cards', () => {
-    const cards = nativeElement.querySelectorAll('.competitor-card');
-    expect(cards.length).toBeGreaterThan(0);
+  it('renders header CTAs', () => {
+    expect(nativeElement.querySelector('.btn-refresh-all')).toBeTruthy();
+    expect(nativeElement.querySelector('.btn-find-competitors')).toBeTruthy();
+    expect(nativeElement.querySelector('.btn-add')).toBeTruthy();
   });
 
-  it('should show action bar with two buttons', () => {
-    const buttons = nativeElement.querySelectorAll('.action-bar .btn');
-    expect(buttons.length).toBe(2);
-    expect(buttons[0].textContent).toContain('AI Competitor Scan');
-    expect(buttons[1].textContent).toContain('Add Competitor');
+  it('renders the AI Insight box on every card without expansion', () => {
+    const boxes = nativeElement.querySelectorAll('.ai-insight-box');
+    expect(boxes.length).toBe(component.competitors().length);
   });
 
-  it('should render platform badge and relevancy badge on each card', () => {
-    const platformBadges = nativeElement.querySelectorAll('.platform-badge');
-    const relevancyBadges = nativeElement.querySelectorAll('.relevancy-badge');
-    expect(platformBadges.length).toBeGreaterThan(0);
-    expect(relevancyBadges.length).toBeGreaterThan(0);
-  });
-
-  it('should not show add form initially', () => {
-    expect(nativeElement.querySelector('.add-form')).toBeFalsy();
-  });
-
-  // --- getRelevancyClass ---
-
-  it('should return correct class for Very High relevancy', () => {
+  // ── Helpers ──────────────────────────────────────────────
+  it('getRelevancyClass maps levels', () => {
     expect(component.getRelevancyClass('Very High')).toBe('relevancy--very-high');
-  });
-
-  it('should return correct class for High relevancy', () => {
     expect(component.getRelevancyClass('High')).toBe('relevancy--high');
-  });
-
-  it('should return correct class for Medium relevancy', () => {
     expect(component.getRelevancyClass('Medium')).toBe('relevancy--medium');
-  });
-
-  it('should return empty string for unknown relevancy', () => {
     expect(component.getRelevancyClass('Low')).toBe('');
-    expect(component.getRelevancyClass('')).toBe('');
   });
 
-  // --- Toggle expand ---
-
-  it('should toggle expand for a competitor', () => {
-    const firstId = component.competitors()[0].id;
-    expect(component.isExpanded(firstId)).toBe(false);
-
-    component.toggleExpand(firstId);
-    expect(component.isExpanded(firstId)).toBe(true);
-
-    component.toggleExpand(firstId);
-    expect(component.isExpanded(firstId)).toBe(false);
+  it('engagementClass maps levels', () => {
+    expect(component.engagementClass('Very High')).toBe('engagement--very-high');
+    expect(component.engagementClass('High')).toBe('engagement--high');
+    expect(component.engagementClass('Other')).toBe('engagement--medium');
   });
 
-  it('should show insight section when expanded', () => {
-    const firstId = component.competitors()[0].id;
-    component.toggleExpand(firstId);
-    fixture.detectChanges();
-
-    const insightSection = nativeElement.querySelector('.competitor-card__insight');
-    expect(insightSection).toBeTruthy();
-    expect(insightSection?.querySelector('.insight-text')).toBeTruthy();
+  it('formatDate produces a readable string', () => {
+    expect(component.formatDate('2026-04-01T12:00:00.000Z')).toContain('2026');
   });
 
-  it('should hide insight section when collapsed', () => {
-    expect(nativeElement.querySelector('.competitor-card__insight')).toBeFalsy();
+  it('platformLabels exposes the constant map', () => {
+    expect(component.platformLabels['instagram']).toBe('Instagram');
   });
 
-  it('should show "View Intel" when collapsed and "Hide Intel" when expanded', () => {
-    const firstId = component.competitors()[0].id;
-    fixture.detectChanges();
-
-    const ghostBtn = nativeElement.querySelector('.competitor-card__actions .btn--ghost');
-    expect(ghostBtn?.textContent).toContain('View Intel');
-
-    component.toggleExpand(firstId);
-    fixture.detectChanges();
-
-    const ghostBtnExpanded = nativeElement.querySelector('.competitor-card__actions .btn--ghost');
-    expect(ghostBtnExpanded?.textContent).toContain('Hide Intel');
-  });
-
-  // --- AI Scan ---
-
-  it('should run AI scan (timer-based)', () => {
-    component.runAiScan();
-    expect(component.isScanning()).toBe(true);
-
+  // ── Find Competitors ─────────────────────────────────────
+  it('findCompetitors prepends a new competitor after the timer', () => {
+    const before = component.competitors().length;
+    component.findCompetitors();
+    expect(component.isFinding()).toBe(true);
     vi.advanceTimersByTime(AI_SIMULATION_DELAY_MS);
-    expect(component.isScanning()).toBe(false);
+    expect(component.isFinding()).toBe(false);
+    expect(component.competitors().length).toBe(before + 1);
+    expect(component.competitors()[0].competitor).toContain('AI-Discovered');
   });
 
-  it('should show spinner and disable button during scan', () => {
-    component.runAiScan();
-    fixture.detectChanges();
-
-    const scanBtn = nativeElement.querySelector('.action-bar .btn--primary') as HTMLButtonElement;
-    expect(scanBtn.disabled).toBe(true);
-    expect(scanBtn.textContent).toContain('Scanning...');
-    expect(scanBtn.querySelector('.spinner')).toBeTruthy();
-
+  it('triggers findCompetitors via the header button', () => {
+    (nativeElement.querySelector('.btn-find-competitors') as HTMLButtonElement).click();
+    expect(component.isFinding()).toBe(true);
     vi.advanceTimersByTime(AI_SIMULATION_DELAY_MS);
     fixture.detectChanges();
-
-    expect(scanBtn.disabled).toBe(false);
-    expect(scanBtn.textContent).toContain('AI Competitor Scan');
+    expect(component.isFinding()).toBe(false);
   });
 
-  // --- runTeardown ---
-
-  it('should call runTeardown without error', () => {
-    expect(() => component.runTeardown('ci-1')).not.toThrow();
+  // ── Refresh All ──────────────────────────────────────────
+  it('refreshAll updates lastUpdated on every competitor with intel', () => {
+    const stale = component.competitors().filter(c => c.intel).map(c => c.intel!.lastUpdated);
+    component.refreshAll();
+    expect(component.isRefreshingAll()).toBe(true);
+    vi.advanceTimersByTime(AI_SIMULATION_DELAY_MS);
+    expect(component.isRefreshingAll()).toBe(false);
+    const fresh = component.competitors().filter(c => c.intel).map(c => c.intel!.lastUpdated);
+    expect(fresh.every((s, i) => s !== stale[i])).toBe(true);
   });
 
-  // --- Add form ---
+  it('triggers refreshAll via the header button', () => {
+    (nativeElement.querySelector('.btn-refresh-all') as HTMLButtonElement).click();
+    expect(component.isRefreshingAll()).toBe(true);
+    vi.advanceTimersByTime(AI_SIMULATION_DELAY_MS);
+  });
 
-  it('should open add form and reset fields', () => {
+  // ── Generate / toggle / refresh intel ────────────────────
+  it('hasIntel reflects the seeded data', () => {
+    expect(component.hasIntel(component.competitors()[0])).toBe(true);
+  });
+
+  it('toggleIntel flips isIntelOpen', () => {
+    const id = component.competitors()[0].id;
+    expect(component.isIntelOpen(id)).toBe(false);
+    component.toggleIntel(id);
+    expect(component.isIntelOpen(id)).toBe(true);
+    component.toggleIntel(id);
+    expect(component.isIntelOpen(id)).toBe(false);
+  });
+
+  it('generateIntel populates intel and opens the panel for a competitor without one', () => {
+    component.competitors.update(list => [...list, {
+      id: 'fresh-1', competitor: 'Fresh', platform: 'instagram', contentType: 'TBD', topic: 'TBD',
+      relevancyLevel: 'Medium', frequency: 'Unknown', insight: 'Pending analysis...',
+    }]);
+    fixture.detectChanges();
+    component.generateIntel('fresh-1');
+    expect(component.isRunningIntel('fresh-1')).toBe(true);
+    expect(component.isIntelOpen('fresh-1')).toBe(true);
+    fixture.detectChanges();
+    expect(nativeElement.querySelector('.intel-loading')).toBeTruthy();
+    vi.advanceTimersByTime(AI_SIMULATION_DELAY_MS);
+    fixture.detectChanges();
+    expect(component.isRunningIntel('fresh-1')).toBe(false);
+    expect(nativeElement.querySelector('.intel-loading')).toBeNull();
+    const fresh = component.competitors().find(c => c.id === 'fresh-1');
+    expect(fresh?.intel).toBeTruthy();
+    expect(component.isIntelOpen('fresh-1')).toBe(true);
+  });
+
+  it('refreshIntel updates only the targeted competitor lastUpdated', () => {
+    const id = component.competitors()[0].id;
+    const before = component.competitors()[0].intel!.lastUpdated;
+    component.refreshIntel(id);
+    const after = component.competitors().find(c => c.id === id)!.intel!.lastUpdated;
+    expect(after).not.toBe(before);
+  });
+
+  it('refreshIntel is a no-op when the competitor has no intel', () => {
+    component.competitors.update(list => [...list, {
+      id: 'noi', competitor: 'No Intel', platform: 'tiktok', contentType: 'TBD', topic: 'TBD',
+      relevancyLevel: 'Medium', frequency: 'Unknown', insight: 'Pending...',
+    }]);
+    component.refreshIntel('noi');
+    expect(component.competitors().find(c => c.id === 'noi')?.intel).toBeUndefined();
+  });
+
+  it('renders the intel panel when intel is open', () => {
+    const id = component.competitors()[0].id;
+    component.toggleIntel(id);
+    fixture.detectChanges();
+    expect(nativeElement.querySelector('.intel-panel')).toBeTruthy();
+    expect(nativeElement.querySelector('.intel-section--positioning')).toBeTruthy();
+    expect(nativeElement.querySelector('.intel-section--strategy')).toBeTruthy();
+    expect(nativeElement.querySelector('.intel-section--gaps')).toBeTruthy();
+    expect(nativeElement.querySelector('.intel-section--actions')).toBeTruthy();
+  });
+
+  it('renders Generate Intel for a competitor without intel', () => {
+    component.competitors.update(list => [...list, {
+      id: 'fresh-2', competitor: 'Fresh 2', platform: 'instagram', contentType: 'TBD', topic: 'TBD',
+      relevancyLevel: 'Medium', frequency: 'Unknown', insight: 'Pending...',
+    }]);
+    fixture.detectChanges();
+    const intelButtons = nativeElement.querySelectorAll('.btn-intel');
+    const last = intelButtons[intelButtons.length - 1];
+    expect(last.textContent).toContain('Generate Intel');
+  });
+
+  // ── Delete flow ──────────────────────────────────────────
+  it('requestDelete sets the confirm id and renders the inline confirm', () => {
+    const id = component.competitors()[0].id;
+    component.requestDelete(id);
+    fixture.detectChanges();
+    expect(component.deleteConfirmId()).toBe(id);
+    expect(nativeElement.querySelector('.delete-confirm')).toBeTruthy();
+  });
+
+  it('confirmDelete removes the competitor and clears state', () => {
+    const id = component.competitors()[0].id;
+    component.requestDelete(id);
+    component.confirmDelete(id);
+    expect(component.competitors().find(c => c.id === id)).toBeUndefined();
+    expect(component.deleteConfirmId()).toBeNull();
+  });
+
+  it('cancelDelete clears state without removing', () => {
+    const id = component.competitors()[0].id;
+    const before = component.competitors().length;
+    component.requestDelete(id);
+    component.cancelDelete();
+    expect(component.deleteConfirmId()).toBeNull();
+    expect(component.competitors().length).toBe(before);
+  });
+
+  it('renders the empty state when there are no competitors', () => {
+    component.competitors.set([]);
+    fixture.detectChanges();
+    expect(nativeElement.querySelector('.empty-state')).toBeTruthy();
+  });
+
+  // ── Add form (slimmed) ───────────────────────────────────
+  it('openAddForm resets fields and shows the form', () => {
     component.newCompetitor = 'leftover';
     component.openAddForm();
     expect(component.showAddForm()).toBe(true);
     expect(component.newCompetitor).toBe('');
     expect(component.newPlatform).toBe('instagram');
-    expect(component.newContentType).toBe('');
-    expect(component.newTopic).toBe('');
-  });
-
-  it('should render add form when showAddForm is true', () => {
-    component.openAddForm();
     fixture.detectChanges();
-
     expect(nativeElement.querySelector('.add-form')).toBeTruthy();
-    expect(nativeElement.querySelector('.add-form__title')?.textContent).toContain('Add Competitor');
   });
 
-  it('should cancel add form', () => {
+  it('cancelAdd hides the form', () => {
     component.openAddForm();
-    expect(component.showAddForm()).toBe(true);
     component.cancelAdd();
     expect(component.showAddForm()).toBe(false);
   });
 
-  it('should add a competitor', () => {
-    const initialCount = component.competitors().length;
-    component.newCompetitor = 'New Competitor';
+  it('addCompetitor uses TBD defaults and appends the new entry', () => {
+    const before = component.competitors().length;
+    component.openAddForm();
+    component.newCompetitor = 'New One';
     component.newPlatform = 'youtube';
-    component.newContentType = 'Shorts';
-    component.newTopic = 'Fitness';
     component.addCompetitor();
-
-    expect(component.competitors().length).toBe(initialCount + 1);
-    const added = component.competitors()[component.competitors().length - 1];
-    expect(added.competitor).toBe('New Competitor');
+    expect(component.competitors().length).toBe(before + 1);
+    const added = component.competitors().at(-1)!;
+    expect(added.competitor).toBe('New One');
     expect(added.platform).toBe('youtube');
-    expect(added.contentType).toBe('Shorts');
-    expect(added.topic).toBe('Fitness');
-    expect(added.relevancyLevel).toBe('Medium');
+    expect(added.contentType).toBe('TBD');
+    expect(added.topic).toBe('TBD');
     expect(component.showAddForm()).toBe(false);
   });
 
-  it('should not add competitor with empty name', () => {
-    const initialCount = component.competitors().length;
+  it('addCompetitor is a no-op when the name is blank', () => {
+    const before = component.competitors().length;
+    component.openAddForm();
     component.newCompetitor = '   ';
     component.addCompetitor();
-    expect(component.competitors().length).toBe(initialCount);
+    expect(component.competitors().length).toBe(before);
   });
 
-  it('should default contentType to "General" and topic to "TBD" when empty', () => {
-    component.newCompetitor = 'Test';
-    component.newContentType = '';
-    component.newTopic = '';
-    component.addCompetitor();
-
-    const added = component.competitors()[component.competitors().length - 1];
-    expect(added.contentType).toBe('General');
-    expect(added.topic).toBe('TBD');
-  });
-
-  // --- Platform labels and icons ---
-
-  it('should have platform labels for all platforms', () => {
-    expect(component.platformLabels['instagram']).toBe('Instagram');
-    expect(component.platformLabels['tiktok']).toBe('TikTok');
-    expect(component.platformLabels['youtube']).toBe('YouTube');
-    expect(component.platformLabels['facebook']).toBe('Facebook');
-    expect(component.platformLabels['linkedin']).toBe('LinkedIn');
-  });
-
-  it('should have platform icons for all platforms', () => {
-    expect(component.platformIcons['instagram']).toBeTruthy();
-    expect(component.platformIcons['tiktok']).toBeTruthy();
-    expect(component.platformIcons['youtube']).toBeTruthy();
-    expect(component.platformIcons['facebook']).toBeTruthy();
-    expect(component.platformIcons['linkedin']).toBeTruthy();
-  });
-
-  // --- isExpanded ---
-
-  it('should return false for non-expanded ids', () => {
-    expect(component.isExpanded('non-existent-id')).toBe(false);
-  });
-
-  // --- DOM interactions for template function coverage ---
-
-  it('should trigger runAiScan via button click in DOM', () => {
-    const scanBtn = nativeElement.querySelector('.action-bar .btn--primary') as HTMLButtonElement;
-    scanBtn.click();
-    expect(component.isScanning()).toBe(true);
-    vi.advanceTimersByTime(AI_SIMULATION_DELAY_MS);
-    expect(component.isScanning()).toBe(false);
-  });
-
-  it('should open add form via button click in DOM', () => {
-    const addBtn = nativeElement.querySelector('.action-bar .btn--secondary') as HTMLButtonElement;
-    addBtn.click();
-    fixture.detectChanges();
-    expect(component.showAddForm()).toBe(true);
-    expect(nativeElement.querySelector('.add-form')).toBeTruthy();
-  });
-
-  it('should cancel add form via DOM button', () => {
+  it('renders only Name + Platform inputs in the add form', () => {
     component.openAddForm();
     fixture.detectChanges();
-
-    const cancelBtn = nativeElement.querySelector('.add-form__actions .btn--ghost') as HTMLButtonElement;
-    cancelBtn.click();
-    fixture.detectChanges();
-    expect(component.showAddForm()).toBe(false);
+    expect(nativeElement.querySelectorAll('.add-form__input').length).toBe(1);
+    expect(nativeElement.querySelectorAll('.add-form__dropdown').length).toBe(1);
   });
 
-  it('should add competitor via DOM button when name is filled', () => {
-    component.openAddForm();
-    component.newCompetitor = 'DOM Competitor';
-    fixture.detectChanges();
-
-    const addBtn = nativeElement.querySelector('.add-form__actions .btn--primary') as HTMLButtonElement;
-    addBtn.click();
-    fixture.detectChanges();
-
-    const added = component.competitors().find(c => c.competitor === 'DOM Competitor');
-    expect(added).toBeTruthy();
-  });
-
-  it('should toggle expand via View Intel button click in DOM', () => {
-    const ghostBtns = nativeElement.querySelectorAll('.competitor-card__actions .btn--ghost') as NodeListOf<HTMLButtonElement>;
-    ghostBtns[0].click();
-    fixture.detectChanges();
-
-    expect(component.isExpanded(component.competitors()[0].id)).toBe(true);
-    expect(nativeElement.querySelector('.competitor-card__insight')).toBeTruthy();
-
-    // Click again to collapse
-    ghostBtns[0].click();
-    fixture.detectChanges();
-    expect(component.isExpanded(component.competitors()[0].id)).toBe(false);
-  });
-
-  it('should trigger runTeardown via Run Teardown button click in DOM', () => {
-    const spy = vi.spyOn(component, 'runTeardown');
-    const teardownBtns = nativeElement.querySelectorAll('.competitor-card__actions .btn--primary') as NodeListOf<HTMLButtonElement>;
-    teardownBtns[0].click();
-    expect(spy).toHaveBeenCalledWith(component.competitors()[0].id);
-  });
-
-  it('should show down chevron when collapsed and up chevron when expanded', () => {
-    // Initially collapsed - down chevron path should be visible
-    let ghostBtn = nativeElement.querySelector('.competitor-card__actions .btn--ghost');
-    expect(ghostBtn?.querySelector('svg')).toBeTruthy();
-
-    // Expand
-    const firstId = component.competitors()[0].id;
-    component.toggleExpand(firstId);
-    fixture.detectChanges();
-
-    // Up chevron path should be visible
-    ghostBtn = nativeElement.querySelector('.competitor-card__actions .btn--ghost');
-    expect(ghostBtn?.querySelector('svg')).toBeTruthy();
-  });
-
-  it('should render add form fields with ngModel bindings', () => {
-    component.openAddForm();
-    fixture.detectChanges();
-
-    const inputs = nativeElement.querySelectorAll('.add-form__field input[type="text"]') as NodeListOf<HTMLInputElement>;
-    expect(inputs.length).toBe(3); // competitor name, content type, topic
-
-    const select = nativeElement.querySelector('.add-form__field select') as HTMLSelectElement;
-    expect(select).toBeTruthy();
-    expect(select.options.length).toBe(5);
-  });
-
-  it('should disable Add button when competitor name is empty', () => {
-    component.openAddForm();
-    fixture.detectChanges();
-
-    const addBtn = nativeElement.querySelector('.add-form__actions .btn--primary') as HTMLButtonElement;
-    expect(addBtn.disabled).toBe(true);
-  });
-
-  it('should render relevancy classes on badges', () => {
-    fixture.detectChanges();
-    const badges = nativeElement.querySelectorAll('.relevancy-badge');
-    expect(badges.length).toBeGreaterThan(0);
-  });
-
-  it('should render platform icons with path attribute', () => {
-    const paths = nativeElement.querySelectorAll('.platform-badge svg path');
-    expect(paths.length).toBeGreaterThan(0);
-  });
-
-  it('should bind newCompetitor via input ngModel in add form', () => {
-    component.openAddForm();
-    fixture.detectChanges();
-
-    const inputs = nativeElement.querySelectorAll('.add-form__field input[type="text"]') as NodeListOf<HTMLInputElement>;
-    inputs[0].value = 'DOM Competitor Name';
-    inputs[0].dispatchEvent(new Event('input'));
-    fixture.detectChanges();
-    expect(component.newCompetitor).toBe('DOM Competitor Name');
-  });
-
-  it('should bind newContentType via input ngModel in add form', () => {
-    component.openAddForm();
-    fixture.detectChanges();
-
-    const inputs = nativeElement.querySelectorAll('.add-form__field input[type="text"]') as NodeListOf<HTMLInputElement>;
-    inputs[1].value = 'Shorts';
-    inputs[1].dispatchEvent(new Event('input'));
-    fixture.detectChanges();
-    expect(component.newContentType).toBe('Shorts');
-  });
-
-  it('should bind newTopic via input ngModel in add form', () => {
-    component.openAddForm();
-    fixture.detectChanges();
-
-    const inputs = nativeElement.querySelectorAll('.add-form__field input[type="text"]') as NodeListOf<HTMLInputElement>;
-    inputs[2].value = 'Fitness Tips';
-    inputs[2].dispatchEvent(new Event('input'));
-    fixture.detectChanges();
-    expect(component.newTopic).toBe('Fitness Tips');
-  });
-
-  it('should bind newPlatform via select ngModel in add form', () => {
-    component.openAddForm();
-    fixture.detectChanges();
-
-    const select = nativeElement.querySelector('.add-form__field select') as HTMLSelectElement;
-    select.value = 'youtube';
-    select.dispatchEvent(new Event('change'));
-    fixture.detectChanges();
+  it('setNewPlatform updates the bound platform value', () => {
+    component.setNewPlatform('youtube');
     expect(component.newPlatform).toBe('youtube');
   });
 
-  it('should enable Add button when competitor name is filled via DOM', () => {
-    component.openAddForm();
+  it('triggers add via the Add Competitor header button', () => {
+    (nativeElement.querySelector('.btn-add') as HTMLButtonElement).click();
     fixture.detectChanges();
-
-    const inputs = nativeElement.querySelectorAll('.add-form__field input[type="text"]') as NodeListOf<HTMLInputElement>;
-    inputs[0].value = 'Some Name';
-    inputs[0].dispatchEvent(new Event('input'));
-    fixture.detectChanges();
-
-    const addBtn = nativeElement.querySelector('.add-form__actions .btn--primary') as HTMLButtonElement;
-    expect(addBtn.disabled).toBe(false);
+    expect(component.showAddForm()).toBe(true);
   });
 
-  it('should render competitor cards with detail rows', () => {
-    const detailRows = nativeElement.querySelectorAll('.detail-row');
-    expect(detailRows.length).toBeGreaterThan(0);
-    const topicLabels = Array.from(detailRows).filter(r => r.textContent?.includes('Topic:'));
-    expect(topicLabels.length).toBeGreaterThan(0);
-  });
-
-  it('should render content type badges', () => {
-    const badges = nativeElement.querySelectorAll('.content-type-badge');
-    expect(badges.length).toBeGreaterThan(0);
+  // ── createIdeaFromAction stub ────────────────────────────
+  it('createIdeaFromAction is a callable no-op', () => {
+    expect(() => component.createIdeaFromAction('id', 'action')).not.toThrow();
   });
 });

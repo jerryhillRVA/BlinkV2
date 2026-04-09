@@ -6,10 +6,11 @@ import type { Platform } from '@blinksocial/contracts';
 import { DropdownComponent } from '../../../../shared/dropdown/dropdown.component';
 import type { DropdownOption } from '../../../../shared/dropdown/dropdown.component';
 import { TooltipComponent } from '../../../../shared/tooltip/tooltip.component';
+import { PlatformIconComponent } from '../../../../shared/platform-icon/platform-icon.component';
 
 @Component({
   selector: 'app-tab-platforms',
-  imports: [CommonModule, DropdownComponent, TooltipComponent],
+  imports: [CommonModule, DropdownComponent, TooltipComponent, PlatformIconComponent],
   templateUrl: './tab-platforms.component.html',
   styleUrl: './tab-platforms.component.scss',
 })

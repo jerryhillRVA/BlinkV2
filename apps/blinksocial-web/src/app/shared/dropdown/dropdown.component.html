@@ -1,4 +1,4 @@
-<div class="dropdown-wrapper" [class.dropdown-compact]="size() === 'compact'" [class.dropdown-full]="fullWidth()" [class.dropdown-filled]="filled()">
+<div class="dropdown-wrapper" [class.dropdown-compact]="size() === 'compact'" [class.dropdown-sm]="size() === 'sm'" [class.dropdown-full]="fullWidth()" [class.dropdown-filled]="filled()">
   <button
     class="dropdown-trigger"
     type="button"
@@ -7,7 +7,12 @@
     [attr.aria-expanded]="open()"
     (click)="toggle()"
   >
-    <span class="dropdown-value">{{ selectedLabel() }}</span>
+    <span class="dropdown-value" [class.dropdown-value--placeholder]="isPlaceholder()">
+      @if (selectedColor()) {
+        <span class="dropdown-color-dot" [style.background]="selectedColor()"></span>
+      }
+      {{ selectedLabel() }}
+    </span>
     <svg class="dropdown-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16" aria-hidden="true">
       <path d="m6 9 6 6 6-6"/>
     </svg>
@@ -23,7 +28,12 @@
           [attr.aria-selected]="opt.value === value()"
           (click)="select(opt.value)"
         >
-          <span>{{ opt.label }}</span>
+          <span class="dropdown-option-label">
+            @if (opt.color) {
+              <span class="dropdown-color-dot" [style.background]="opt.color"></span>
+            }
+            {{ opt.label }}
+          </span>
           @if (opt.value === value()) {
             <svg class="dropdown-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16" aria-hidden="true">
               <path d="M20 6 9 17l-5-5"/>

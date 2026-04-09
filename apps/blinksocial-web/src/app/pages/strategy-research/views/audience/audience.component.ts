@@ -2,7 +2,7 @@ import { Component, DestroyRef, EmbeddedViewRef, HostBinding, TemplateRef, ViewC
 import { DOCUMENT } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { IconComponent } from '../../shared/icon/icon.component';
-import { DropdownComponent, DropdownOption } from '../../../../shared/dropdown/dropdown.component';
+import { PlatformIconComponent } from '../../../../shared/platform-icon/platform-icon.component';
 import { MockDataService } from '../../../../core/mock-data/mock-data.service';
 import type { AudienceInsight, AudienceSegment, SegmentJourneyStage, JourneyStage } from '../../strategy-research.types';
 import { AI_SIMULATION_DELAY_MS, PLATFORM_LABELS } from '../../strategy-research.constants';
@@ -20,7 +20,7 @@ const STAGE_LABELS: Record<JourneyStage, string> = {
 
 @Component({
   selector: 'app-audience',
-  imports: [FormsModule, IconComponent, DropdownComponent],
+  imports: [FormsModule, IconComponent, PlatformIconComponent],
   templateUrl: './audience.component.html',
   styleUrl: './audience.component.scss',
 })
@@ -123,14 +123,11 @@ export class AudienceComponent {
   readonly mappingSegmentId = signal<string | null>(null);
   readonly editingId = signal<string | null>(null);
 
-  // AI Audience Analyzer state
-  readonly selectedAnalyzeId = signal<string>(DEFAULT_SEGMENTS[0]?.id ?? '');
-  readonly isAnalyzing = signal(false);
+  // AI Audience Analyzer state — per-card
+  readonly analyzingSegmentId = signal<string | null>(null);
+  readonly expandedInsights = signal<Set<string>>(new Set());
   readonly insights = signal<AudienceInsight[]>([]);
   /* v8 ignore stop */
-
-  readonly segmentOptions = (): DropdownOption[] =>
-    this.segments().map(s => ({ value: s.id, label: s.name || 'Untitled segment' }));
 
   readonly journeyStages = JOURNEY_STAGES;
   readonly stageLabels = STAGE_LABELS;
@@ -302,29 +299,45 @@ export class AudienceComponent {
     }, AI_SIMULATION_DELAY_MS, this.destroyRef);
   }
 
+  hasJourney(segment: AudienceSegment): boolean {
+    return !!segment.journeyStages?.some(s => !!s.primaryGoal);
+  }
+
   getStage(segment: AudienceSegment, stage: JourneyStage): SegmentJourneyStage | undefined {
     return segment.journeyStages?.find(s => s.stage === stage);
   }
 
-  // ── AI Audience Analyzer ────────────────────────────────────────────────
-  currentInsight(): AudienceInsight | undefined {
-    return this.insights().find(i => i.segmentId === this.selectedAnalyzeId());
+  // ── AI Audience Analyzer (per-card) ─────────────────────────────────────
+  insightFor(segmentId: string): AudienceInsight | undefined {
+    return this.insights().find(i => i.segmentId === segmentId);
   }
 
-  currentSegmentName(): string {
-    return this.segments().find(s => s.id === this.selectedAnalyzeId())?.name ?? '';
+  isAnalyzingSegment(segmentId: string): boolean {
+    return this.analyzingSegmentId() === segmentId;
   }
 
-  analyzeAudience(): void {
-    const id = this.selectedAnalyzeId();
-    if (!id) return;
-    this.isAnalyzing.set(true);
+  isInsightsExpanded(segmentId: string): boolean {
+    return this.expandedInsights().has(segmentId);
+  }
+
+  toggleInsights(segmentId: string): void {
+    this.expandedInsights.update(set => toggleSetItem(set, segmentId));
+  }
+
+  analyzeForSegment(segmentId: string): void {
+    this.analyzingSegmentId.set(segmentId);
+    this.expandedInsights.update(set => {
+      const next = new Set(set);
+      next.add(segmentId);
+      return next;
+    });
     safeTimeout(() => {
-      // Use mock if available for this segment id, otherwise synthesize a fallback.
-      const mock = MOCK_AUDIENCE_INSIGHTS.find(i => i.segmentId === id)
-        ?? { ...MOCK_AUDIENCE_INSIGHTS[0], segmentId: id };
-      this.insights.update(list => [...list.filter(i => i.segmentId !== id), mock]);
-      this.isAnalyzing.set(false);
+      const mock = MOCK_AUDIENCE_INSIGHTS.find(i => i.segmentId === segmentId)
+        ?? { ...MOCK_AUDIENCE_INSIGHTS[0], segmentId };
+      this.insights.update(list => [...list.filter(i => i.segmentId !== segmentId), mock]);
+      if (this.analyzingSegmentId() === segmentId) {
+        this.analyzingSegmentId.set(null);
+      }
     }, AI_SIMULATION_DELAY_MS, this.destroyRef);
   }
 

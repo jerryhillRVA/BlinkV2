@@ -3,560 +3,229 @@ import { SeoHashtagsComponent } from './seo-hashtags.component';
 import { AI_SIMULATION_DELAY_MS } from '../../strategy-research.constants';
 
 describe('SeoHashtagsComponent', () => {
-  let component: SeoHashtagsComponent;
   let fixture: ComponentFixture<SeoHashtagsComponent>;
+  let component: SeoHashtagsComponent;
+  let nativeElement: HTMLElement;
 
-  beforeEach(async () => {
-    vi.useFakeTimers();
-    await TestBed.configureTestingModule({
-      imports: [SeoHashtagsComponent],
-    }).compileComponents();
-
+  beforeEach(() => {
+    TestBed.configureTestingModule({ imports: [SeoHashtagsComponent] });
     fixture = TestBed.createComponent(SeoHashtagsComponent);
     component = fixture.componentInstance;
+    nativeElement = fixture.nativeElement;
     fixture.detectChanges();
   });
 
-  afterEach(() => {
+  afterEach(() => fixture.destroy());
+
+  function generateAndAdvance() {
+    vi.useFakeTimers();
+    component.setPillar('p1');
+    component.generate();
+    vi.advanceTimersByTime(AI_SIMULATION_DELAY_MS);
+    fixture.detectChanges();
+  }
+
+  it('creates with default state and the first pillar pre-selected', () => {
+    expect(component).toBeTruthy();
+    expect(component.canGenerate()).toBe(true);
+    expect(component.selectedPillarId()).toBeTruthy();
+    expect(component.seoData()).toBeNull();
+  });
+
+  it('renders the 3-field setup grid + Generate button', () => {
+    expect(nativeElement.querySelectorAll('.setup-field').length).toBe(3);
+    const btn = nativeElement.querySelector('.btn-generate') as HTMLButtonElement;
+    expect(btn).toBeTruthy();
+    expect(btn.disabled).toBe(false);
+  });
+
+  it('shows the empty state before generation', () => {
+    expect(nativeElement.querySelector('.empty-state')).toBeTruthy();
+  });
+
+  it('typed setters update the corresponding signal', () => {
+    component.setPillar('p2');
+    expect(component.selectedPillarId()).toBe('p2');
+    component.setPlatform('youtube');
+    expect(component.selectedPlatform()).toBe('youtube');
+    component.setGoal('Niche Authority');
+    expect(component.selectedGoal()).toBe('Niche Authority');
+    component.setTab('niche');
+    expect(component.activeTab()).toBe('niche');
+  });
+
+  it('canGenerate is false when a selection is cleared', () => {
+    expect(component.canGenerate()).toBe(true);
+    component.setPillar('');
+    expect(component.canGenerate()).toBe(false);
+  });
+
+  it('generate populates seoData and seeds angle titles after the timer', () => {
+    vi.useFakeTimers();
+    component.setPillar('p1');
+    component.generate();
+    expect(component.isGenerating()).toBe(true);
+    fixture.detectChanges();
+    expect(nativeElement.querySelector('.loading-card')).toBeTruthy();
+    vi.advanceTimersByTime(AI_SIMULATION_DELAY_MS);
+    fixture.detectChanges();
+    expect(component.isGenerating()).toBe(false);
+    expect(component.seoData()).not.toBeNull();
+    expect(Object.keys(component.angleTitles()).length).toBeGreaterThan(0);
     vi.useRealTimers();
   });
 
-  it('should create', () => {
-    expect(component).toBeTruthy();
+  it('generate is a no-op when canGenerate is false', () => {
+    component.setPillar('');
+    component.generate();
+    expect(component.isGenerating()).toBe(false);
+    expect(component.seoData()).toBeNull();
   });
 
-  describe('initial state', () => {
-    it('should not be generating', () => {
-      expect(component.isGenerating()).toBe(false);
-    });
-
-    it('should have null seoData', () => {
-      expect(component.seoData()).toBeNull();
-    });
-
-    it('should have reach as default active tab', () => {
-      expect(component.activeTab()).toBe('reach');
-    });
-
-    it('should have empty checked items', () => {
-      expect(component.checkedItems().size).toBe(0);
-    });
-
-    it('should have default selected pillar', () => {
-      expect(component.selectedPillar).toBeTruthy();
-    });
-
-    it('should have default selected platform', () => {
-      expect(component.selectedPlatform).toBe('instagram');
-    });
-
-    it('should have default selected goal', () => {
-      expect(component.selectedGoal).toBe('Engagement');
-    });
-
-    it('should have pillar options', () => {
-      expect(component.pillarOptions.length).toBeGreaterThan(0);
-    });
-
-    it('should have goal options', () => {
-      expect(component.goalOptions.length).toBe(5);
-    });
-
-    it('should have platform options', () => {
-      expect(component.platformOptions.length).toBe(5);
-    });
-
-    it('should have hashtag tabs', () => {
-      expect(component.hashtagTabs.length).toBe(3);
-      expect(component.hashtagTabs[0].id).toBe('reach');
-      expect(component.hashtagTabs[1].id).toBe('niche');
-      expect(component.hashtagTabs[2].id).toBe('community');
-    });
+  it('getActiveHashtags returns [] before data and the active tab after', () => {
+    expect(component.getActiveHashtags()).toEqual([]);
+    generateAndAdvance();
+    expect(component.getActiveHashtags().length).toBeGreaterThan(0);
+    component.setTab('niche');
+    expect(component.getActiveHashtags()[0].tag).toContain('#');
+    vi.useRealTimers();
   });
 
-  describe('template rendering', () => {
-    it('should render input panel with title', () => {
-      const title = fixture.nativeElement.querySelector('.input-panel__title');
-      expect(title).toBeTruthy();
-      expect(title.textContent).toContain('SEO & Hashtag Strategy');
-    });
-
-    it('should render three select dropdowns', () => {
-      const selects = fixture.nativeElement.querySelectorAll('select');
-      expect(selects.length).toBe(3);
-    });
-
-    it('should render generate button', () => {
-      const button = fixture.nativeElement.querySelector('.btn--primary');
-      expect(button).toBeTruthy();
-      expect(button.textContent).toContain('Generate SEO Strategy');
-    });
-
-    it('should not show results section initially', () => {
-      const results = fixture.nativeElement.querySelector('.results');
-      expect(results).toBeFalsy();
-    });
-
-    it('should show SVG icon when not generating', () => {
-      const svg = fixture.nativeElement.querySelector('.btn--primary svg');
-      expect(svg).toBeTruthy();
-    });
-
-    it('should not show spinner when not generating', () => {
-      const spinner = fixture.nativeElement.querySelector('.spinner');
-      expect(spinner).toBeFalsy();
-    });
+  it('toggleCheckItem flips the checked set', () => {
+    component.toggleCheckItem(0);
+    expect(component.isChecked(0)).toBe(true);
+    component.toggleCheckItem(0);
+    expect(component.isChecked(0)).toBe(false);
   });
 
-  describe('generate()', () => {
-    it('should set isGenerating to true', () => {
-      component.generate();
-      expect(component.isGenerating()).toBe(true);
-    });
-
-    it('should clear previous seoData', () => {
-      component.generate();
-      expect(component.seoData()).toBeNull();
-    });
-
-    it('should show spinner and generating text during generation', () => {
-      component.generate();
-      fixture.detectChanges();
-      const spinner = fixture.nativeElement.querySelector('.spinner');
-      expect(spinner).toBeTruthy();
-      const button = fixture.nativeElement.querySelector('.btn--primary');
-      expect(button.textContent).toContain('Generating...');
-      expect(button.disabled).toBe(true);
-    });
-
-    it('should set seoData after timeout', () => {
-      component.generate();
-      vi.advanceTimersByTime(AI_SIMULATION_DELAY_MS);
-      expect(component.seoData()).not.toBeNull();
-      expect(component.isGenerating()).toBe(false);
-    });
-
-    it('should render results section after generation completes', () => {
-      component.generate();
-      vi.advanceTimersByTime(AI_SIMULATION_DELAY_MS);
-      fixture.detectChanges();
-      const results = fixture.nativeElement.querySelector('.results');
-      expect(results).toBeTruthy();
-    });
-
-    it('should display hashtag card with tabs', () => {
-      component.generate();
-      vi.advanceTimersByTime(AI_SIMULATION_DELAY_MS);
-      fixture.detectChanges();
-      const tabBtns = fixture.nativeElement.querySelectorAll('.tab-btn');
-      expect(tabBtns.length).toBe(3);
-    });
-
-    it('should display hashtag chips for reach tab', () => {
-      component.generate();
-      vi.advanceTimersByTime(AI_SIMULATION_DELAY_MS);
-      fixture.detectChanges();
-      const chips = fixture.nativeElement.querySelectorAll('.hashtag-chip');
-      expect(chips.length).toBe(3);
-    });
-
-    it('should display keyword chips', () => {
-      component.generate();
-      vi.advanceTimersByTime(AI_SIMULATION_DELAY_MS);
-      fixture.detectChanges();
-      const keywords = fixture.nativeElement.querySelectorAll('.keyword-chip');
-      expect(keywords.length).toBe(4);
-    });
-
-    it('should display example bio', () => {
-      component.generate();
-      vi.advanceTimersByTime(AI_SIMULATION_DELAY_MS);
-      fixture.detectChanges();
-      const bio = fixture.nativeElement.querySelector('.example-bio__text');
-      expect(bio).toBeTruthy();
-      expect(bio.textContent).toContain('Helping women 40+');
-    });
-
-    it('should display checklist items', () => {
-      component.generate();
-      vi.advanceTimersByTime(AI_SIMULATION_DELAY_MS);
-      fixture.detectChanges();
-      const items = fixture.nativeElement.querySelectorAll('.checklist-item');
-      expect(items.length).toBe(8);
-    });
-
-    it('should display trending angles', () => {
-      component.generate();
-      vi.advanceTimersByTime(AI_SIMULATION_DELAY_MS);
-      fixture.detectChanges();
-      const trending = fixture.nativeElement.querySelectorAll('.trending-item');
-      expect(trending.length).toBe(2);
-    });
-
-    it('should display virality badges on trending items', () => {
-      component.generate();
-      vi.advanceTimersByTime(AI_SIMULATION_DELAY_MS);
-      fixture.detectChanges();
-      const badges = fixture.nativeElement.querySelectorAll('.virality-badge');
-      expect(badges.length).toBe(2);
-    });
+  it('getViralityClass maps each level + a fallback', () => {
+    expect(component.getViralityClass('Very High')).toBe('virality--very-high');
+    expect(component.getViralityClass('High')).toBe('virality--high');
+    expect(component.getViralityClass('Medium')).toBe('virality--medium');
+    expect(component.getViralityClass('Other')).toBe('');
   });
 
-  describe('setTab()', () => {
-    it('should set active tab to niche', () => {
-      component.setTab('niche');
-      expect(component.activeTab()).toBe('niche');
-    });
-
-    it('should set active tab to community', () => {
-      component.setTab('community');
-      expect(component.activeTab()).toBe('community');
-    });
-
-    it('should set active tab back to reach', () => {
-      component.setTab('niche');
-      component.setTab('reach');
-      expect(component.activeTab()).toBe('reach');
-    });
-
-    it('should update displayed hashtags when tab changes', () => {
-      component.generate();
-      vi.advanceTimersByTime(AI_SIMULATION_DELAY_MS);
-      fixture.detectChanges();
-
-      component.setTab('niche');
-      fixture.detectChanges();
-      const chips = fixture.nativeElement.querySelectorAll('.hashtag-chip');
-      expect(chips.length).toBe(3);
-      expect(chips[0].textContent).toContain('#over40fitness');
-    });
-
-    it('should highlight the active tab button', () => {
-      component.generate();
-      vi.advanceTimersByTime(AI_SIMULATION_DELAY_MS);
-      fixture.detectChanges();
-      const activeTabs = fixture.nativeElement.querySelectorAll('.tab-btn--active');
-      expect(activeTabs.length).toBe(1);
-      expect(activeTabs[0].textContent).toContain('Reach');
-    });
+  it('copyTag flips copiedHashtag and resets after the timer', () => {
+    vi.useFakeTimers();
+    component.copyTag('#abc');
+    expect(component.isCopiedHashtag('#abc')).toBe(true);
+    vi.advanceTimersByTime(2000);
+    expect(component.isCopiedHashtag('#abc')).toBe(false);
+    vi.useRealTimers();
   });
 
-  describe('getActiveHashtags()', () => {
-    it('should return empty array when seoData is null', () => {
-      expect(component.getActiveHashtags()).toEqual([]);
-    });
-
-    it('should return reach hashtags by default', () => {
-      component.generate();
-      vi.advanceTimersByTime(AI_SIMULATION_DELAY_MS);
-      const hashtags = component.getActiveHashtags();
-      expect(hashtags.length).toBe(3);
-      expect(hashtags[0].tag).toBe('#fitness');
-    });
-
-    it('should return niche hashtags when niche tab is active', () => {
-      component.generate();
-      vi.advanceTimersByTime(AI_SIMULATION_DELAY_MS);
-      component.setTab('niche');
-      const hashtags = component.getActiveHashtags();
-      expect(hashtags.length).toBe(3);
-      expect(hashtags[0].tag).toBe('#over40fitness');
-    });
-
-    it('should return community hashtags when community tab is active', () => {
-      component.generate();
-      vi.advanceTimersByTime(AI_SIMULATION_DELAY_MS);
-      component.setTab('community');
-      const hashtags = component.getActiveHashtags();
-      expect(hashtags.length).toBe(3);
-      expect(hashtags[0].tag).toBe('#strongafter40');
-    });
+  it('copyTag keeps the latest copied tag when called twice in quick succession', () => {
+    vi.useFakeTimers();
+    component.copyTag('#one');
+    component.copyTag('#two');
+    vi.advanceTimersByTime(2000);
+    expect(component.isCopiedHashtag('#two')).toBe(false);
+    vi.useRealTimers();
   });
 
-  describe('toggleCheckItem()', () => {
-    it('should add item to checked set', () => {
-      component.toggleCheckItem(0);
-      expect(component.isChecked(0)).toBe(true);
-    });
-
-    it('should remove item from checked set when toggled again', () => {
-      component.toggleCheckItem(0);
-      component.toggleCheckItem(0);
-      expect(component.isChecked(0)).toBe(false);
-    });
-
-    it('should handle multiple checked items', () => {
-      component.toggleCheckItem(0);
-      component.toggleCheckItem(2);
-      component.toggleCheckItem(5);
-      expect(component.isChecked(0)).toBe(true);
-      expect(component.isChecked(1)).toBe(false);
-      expect(component.isChecked(2)).toBe(true);
-      expect(component.isChecked(5)).toBe(true);
-    });
-
-    it('should render checkmark SVG for checked items in DOM', () => {
-      component.generate();
-      vi.advanceTimersByTime(AI_SIMULATION_DELAY_MS);
-      fixture.detectChanges();
-
-      component.toggleCheckItem(0);
-      fixture.detectChanges();
-      const firstItem = fixture.nativeElement.querySelector('.checklist-item--checked');
-      expect(firstItem).toBeTruthy();
-      const svg = firstItem.querySelector('.checklist-checkbox svg');
-      expect(svg).toBeTruthy();
-    });
+  it('copyAll flips copiedTab and resets after the timer', () => {
+    generateAndAdvance();
+    component.copyAll('reach');
+    expect(component.isCopiedTab('reach')).toBe(true);
+    vi.advanceTimersByTime(2000);
+    expect(component.isCopiedTab('reach')).toBe(false);
+    vi.useRealTimers();
   });
 
-  describe('isChecked()', () => {
-    it('should return false for unchecked items', () => {
-      expect(component.isChecked(0)).toBe(false);
-    });
-
-    it('should return true for checked items', () => {
-      component.toggleCheckItem(3);
-      expect(component.isChecked(3)).toBe(true);
-    });
+  it('copyAll is a no-op when no data exists', () => {
+    component.copyAll('reach');
+    expect(component.copiedTab()).toBeNull();
   });
 
-  describe('getViralityClass()', () => {
-    it('should return virality--very-high for Very High', () => {
-      expect(component.getViralityClass('Very High')).toBe('virality--very-high');
-    });
-
-    it('should return virality--high for High', () => {
-      expect(component.getViralityClass('High')).toBe('virality--high');
-    });
-
-    it('should return virality--medium for Medium', () => {
-      expect(component.getViralityClass('Medium')).toBe('virality--medium');
-    });
-
-    it('should return empty string for unknown virality', () => {
-      expect(component.getViralityClass('Low')).toBe('');
-    });
+  it('copyAll keeps copiedTab when another tab was copied mid-timer', () => {
+    generateAndAdvance();
+    component.copyAll('reach');
+    component.copyAll('niche');
+    vi.advanceTimersByTime(2000);
+    // The reach reset is a no-op because copiedTab moved on
+    expect(component.isCopiedTab('niche')).toBe(false);
+    vi.useRealTimers();
   });
 
-  describe('copyTag()', () => {
-    it('should call navigator.clipboard.writeText when available', () => {
-      const writeTextSpy = vi.fn().mockResolvedValue(undefined);
-      Object.defineProperty(navigator, 'clipboard', {
-        value: { writeText: writeTextSpy },
-        writable: true,
-        configurable: true,
-      });
-      component.copyTag('#fitness');
-      expect(writeTextSpy).toHaveBeenCalledWith('#fitness');
-    });
-
-    it('should not throw when clipboard is unavailable', () => {
-      Object.defineProperty(navigator, 'clipboard', {
-        value: undefined,
-        writable: true,
-        configurable: true,
-      });
-      expect(() => component.copyTag('#fitness')).not.toThrow();
-    });
+  it('copyBio flips copiedBio and resets after the timer', () => {
+    generateAndAdvance();
+    component.copyBio();
+    expect(component.copiedBio()).toBe(true);
+    vi.advanceTimersByTime(2000);
+    expect(component.copiedBio()).toBe(false);
+    vi.useRealTimers();
   });
 
-  // --- DOM interactions ---
+  it('copyBio is a no-op when no data exists', () => {
+    component.copyBio();
+    expect(component.copiedBio()).toBe(false);
+  });
 
-  describe('DOM interactions', () => {
-    it('should switch tab when clicking tab button in DOM', () => {
-      component.generate();
-      vi.advanceTimersByTime(AI_SIMULATION_DELAY_MS);
-      fixture.detectChanges();
+  it('setAngleTitle stores the new value', () => {
+    generateAndAdvance();
+    component.setAngleTitle(0, 'New title');
+    expect(component.angleTitles()[0]).toBe('New title');
+    vi.useRealTimers();
+  });
 
-      const tabBtns = fixture.nativeElement.querySelectorAll('.tab-btn') as NodeListOf<HTMLButtonElement>;
-      // Click "Niche" tab (index 1)
-      tabBtns[1].click();
-      fixture.detectChanges();
+  it('setAngleIdeaTitle stores the idea title', () => {
+    component.setAngleIdeaTitle(0, 'Idea 1');
+    expect(component.angleIdeaTitles()[0]).toBe('Idea 1');
+  });
 
-      expect(component.activeTab()).toBe('niche');
-      expect(tabBtns[1].classList.contains('tab-btn--active')).toBe(true);
-    });
+  it('createIdeaForAngle marks the index as saved (idempotent)', () => {
+    generateAndAdvance();
+    component.createIdeaForAngle(0);
+    expect(component.isAngleSaved(0)).toBe(true);
+    component.createIdeaForAngle(0);
+    expect(component.savedAngles().size).toBe(1);
+    vi.useRealTimers();
+  });
 
-    it('should copy tag when clicking hashtag chip in DOM', () => {
-      component.generate();
-      vi.advanceTimersByTime(AI_SIMULATION_DELAY_MS);
-      fixture.detectChanges();
+  // ── DOM ─────────────────────────────────────────────────
+  it('renders the four output cards after generation', () => {
+    generateAndAdvance();
+    expect(nativeElement.querySelectorAll('.results-card').length).toBe(4);
+    vi.useRealTimers();
+  });
 
-      const writeTextSpy = vi.fn().mockResolvedValue(undefined);
-      Object.defineProperty(navigator, 'clipboard', {
-        value: { writeText: writeTextSpy },
-        writable: true,
-        configurable: true,
-      });
+  it('renders 3 hashtag tabs and switches the active tab via DOM click', () => {
+    generateAndAdvance();
+    const tabs = nativeElement.querySelectorAll('.hashtag-tab') as NodeListOf<HTMLButtonElement>;
+    expect(tabs.length).toBe(3);
+    tabs[1].click();
+    fixture.detectChanges();
+    expect(component.activeTab()).toBe('niche');
+    vi.useRealTimers();
+  });
 
-      const chip = fixture.nativeElement.querySelector('.hashtag-chip') as HTMLButtonElement;
-      chip.click();
-      expect(writeTextSpy).toHaveBeenCalledWith('#fitness');
-    });
+  it('renders search intents, bio box copy button, and 8 checklist rows', () => {
+    generateAndAdvance();
+    expect(nativeElement.querySelectorAll('.search-intents li').length).toBeGreaterThan(0);
+    expect(nativeElement.querySelector('.btn-copy-bio')).toBeTruthy();
+    expect(nativeElement.querySelectorAll('.checklist-item').length).toBe(8);
+    vi.useRealTimers();
+  });
 
-    it('should toggle checklist item when clicking in DOM', () => {
-      component.generate();
-      vi.advanceTimersByTime(AI_SIMULATION_DELAY_MS);
-      fixture.detectChanges();
+  it('renders trending angle cards with editable inputs and Create Idea buttons', () => {
+    generateAndAdvance();
+    const cards = nativeElement.querySelectorAll('.angle-card');
+    expect(cards.length).toBeGreaterThanOrEqual(4);
+    const inputs = nativeElement.querySelectorAll('.angle-idea-title');
+    expect(inputs.length).toBe(cards.length);
+    const button = nativeElement.querySelector('.btn-create-idea') as HTMLButtonElement;
+    button.click();
+    fixture.detectChanges();
+    expect(component.isAngleSaved(0)).toBe(true);
+    vi.useRealTimers();
+  });
 
-      const item = fixture.nativeElement.querySelector('.checklist-item') as HTMLElement;
-      item.click();
-      fixture.detectChanges();
-
-      expect(component.isChecked(0)).toBe(true);
-      expect(item.classList.contains('checklist-item--checked')).toBe(true);
-    });
-
-    it('should uncheck checklist item when clicking again in DOM', () => {
-      component.generate();
-      vi.advanceTimersByTime(AI_SIMULATION_DELAY_MS);
-      fixture.detectChanges();
-
-      const item = fixture.nativeElement.querySelector('.checklist-item') as HTMLElement;
-      item.click();
-      fixture.detectChanges();
-      expect(component.isChecked(0)).toBe(true);
-
-      item.click();
-      fixture.detectChanges();
-      expect(component.isChecked(0)).toBe(false);
-    });
-
-    it('should trigger generate via button click in DOM', () => {
-      const button = fixture.nativeElement.querySelector('.btn--primary') as HTMLButtonElement;
-      button.click();
-      expect(component.isGenerating()).toBe(true);
-
-      vi.advanceTimersByTime(AI_SIMULATION_DELAY_MS);
-      fixture.detectChanges();
-      expect(component.seoData()).not.toBeNull();
-    });
-
-    it('should render pillar options in select dropdown', () => {
-      const selects = fixture.nativeElement.querySelectorAll('select');
-      const pillarSelect = selects[0];
-      expect(pillarSelect.options.length).toBe(component.pillarOptions.length);
-    });
-
-    it('should render platform options in select dropdown', () => {
-      const selects = fixture.nativeElement.querySelectorAll('select');
-      const platformSelect = selects[1];
-      expect(platformSelect.options.length).toBe(5);
-    });
-
-    it('should render goal options in select dropdown', () => {
-      const selects = fixture.nativeElement.querySelectorAll('select');
-      const goalSelect = selects[2];
-      expect(goalSelect.options.length).toBe(5);
-    });
-
-    it('should switch to community tab and display community hashtags', () => {
-      component.generate();
-      vi.advanceTimersByTime(AI_SIMULATION_DELAY_MS);
-      fixture.detectChanges();
-
-      component.setTab('community');
-      fixture.detectChanges();
-
-      const chips = fixture.nativeElement.querySelectorAll('.hashtag-chip');
-      expect(chips.length).toBe(3);
-      expect(chips[0].textContent).toContain('#strongafter40');
-    });
-
-    it('should render virality classes correctly on trending items', () => {
-      component.generate();
-      vi.advanceTimersByTime(AI_SIMULATION_DELAY_MS);
-      fixture.detectChanges();
-
-      const badges = fixture.nativeElement.querySelectorAll('.virality-badge');
-      expect(badges[0].classList.contains('virality--very-high')).toBe(true);
-      expect(badges[1].classList.contains('virality--high')).toBe(true);
-    });
-
-    it('should render checklist checkbox SVG only for checked items', () => {
-      component.generate();
-      vi.advanceTimersByTime(AI_SIMULATION_DELAY_MS);
-      fixture.detectChanges();
-
-      // No items checked initially
-      const svgs = fixture.nativeElement.querySelectorAll('.checklist-checkbox svg');
-      expect(svgs.length).toBe(0);
-
-      // Check first item
-      component.toggleCheckItem(0);
-      fixture.detectChanges();
-      const svgsAfter = fixture.nativeElement.querySelectorAll('.checklist-checkbox svg');
-      expect(svgsAfter.length).toBe(1);
-    });
-
-    it('should display trending item titles and hooks', () => {
-      component.generate();
-      vi.advanceTimersByTime(AI_SIMULATION_DELAY_MS);
-      fixture.detectChanges();
-
-      const titles = fixture.nativeElement.querySelectorAll('.trending-item__title');
-      expect(titles[0].textContent).toContain('Perimenopause Fitness Myths');
-      const hooks = fixture.nativeElement.querySelectorAll('.hook-text');
-      expect(hooks[0].textContent).toContain('Everything you were told');
-    });
-
-    it('should change selectedPillar via select dropdown', () => {
-      const selects = fixture.nativeElement.querySelectorAll('select');
-      const pillarSelect = selects[0] as HTMLSelectElement;
-      pillarSelect.value = component.pillarOptions[1];
-      pillarSelect.dispatchEvent(new Event('change'));
-      fixture.detectChanges();
-      expect(component.selectedPillar).toBe(component.pillarOptions[1]);
-    });
-
-    it('should change selectedPlatform via select dropdown', () => {
-      const selects = fixture.nativeElement.querySelectorAll('select');
-      const platformSelect = selects[1] as HTMLSelectElement;
-      platformSelect.value = 'tiktok';
-      platformSelect.dispatchEvent(new Event('change'));
-      fixture.detectChanges();
-      expect(component.selectedPlatform).toBe('tiktok');
-    });
-
-    it('should change selectedGoal via select dropdown', () => {
-      const selects = fixture.nativeElement.querySelectorAll('select');
-      const goalSelect = selects[2] as HTMLSelectElement;
-      goalSelect.value = 'Reach';
-      goalSelect.dispatchEvent(new Event('change'));
-      fixture.detectChanges();
-      expect(component.selectedGoal).toBe('Reach');
-    });
-
-    it('should hide SVG and show spinner during generation', () => {
-      component.generate();
-      fixture.detectChanges();
-      expect(fixture.nativeElement.querySelector('.spinner')).toBeTruthy();
-      expect(fixture.nativeElement.querySelector('.btn--primary svg')).toBeFalsy();
-
-      vi.advanceTimersByTime(AI_SIMULATION_DELAY_MS);
-      fixture.detectChanges();
-      expect(fixture.nativeElement.querySelector('.spinner')).toBeFalsy();
-      expect(fixture.nativeElement.querySelector('.btn--primary svg')).toBeTruthy();
-    });
-
-    it('should render all keyword chips with text', () => {
-      component.generate();
-      vi.advanceTimersByTime(AI_SIMULATION_DELAY_MS);
-      fixture.detectChanges();
-
-      const kwChips = fixture.nativeElement.querySelectorAll('.keyword-chip');
-      expect(kwChips.length).toBe(4);
-      expect(kwChips[0].textContent).toContain('perimenopause fitness');
-    });
-
-    it('should render checklist text for all items', () => {
-      component.generate();
-      vi.advanceTimersByTime(AI_SIMULATION_DELAY_MS);
-      fixture.detectChanges();
-
-      const texts = fixture.nativeElement.querySelectorAll('.checklist-text');
-      expect(texts.length).toBe(8);
-      expect(texts[0].textContent).toContain('Open with primary keyword');
-    });
+  it('clicking a checklist row toggles the strikethrough state', () => {
+    generateAndAdvance();
+    const item = nativeElement.querySelector('.checklist-item') as HTMLButtonElement;
+    item.click();
+    fixture.detectChanges();
+    expect(item.classList.contains('checked')).toBe(true);
+    vi.useRealTimers();
   });
 });

@@ -1,18 +1,14 @@
-import { TestBed } from '@angular/core/testing';
+import { TestBed, ComponentFixture } from '@angular/core/testing';
 import { ContentRepurposerComponent } from './content-repurposer.component';
 import { AI_SIMULATION_DELAY_MS } from '../../strategy-research.constants';
 
 describe('ContentRepurposerComponent', () => {
+  let fixture: ComponentFixture<ContentRepurposerComponent>;
   let component: ContentRepurposerComponent;
-  let fixture: ReturnType<typeof TestBed.createComponent<ContentRepurposerComponent>>;
   let nativeElement: HTMLElement;
 
-  beforeEach(async () => {
-    vi.useFakeTimers();
-    await TestBed.configureTestingModule({
-      imports: [ContentRepurposerComponent],
-    }).compileComponents();
-
+  beforeEach(() => {
+    TestBed.configureTestingModule({ imports: [ContentRepurposerComponent] });
     fixture = TestBed.createComponent(ContentRepurposerComponent);
     component = fixture.componentInstance;
     nativeElement = fixture.nativeElement;
@@ -20,387 +16,263 @@ describe('ContentRepurposerComponent', () => {
   });
 
   afterEach(() => {
+    if (component.showRegenerateDialog()) component.closeRegenerateDialog();
+    fixture.destroy();
+    document.body.style.overflow = '';
+  });
+
+  function fillSourceAndRun() {
+    vi.useFakeTimers();
+    component.updateSource(0, 'Some source content');
+    component.repurpose();
+    vi.advanceTimersByTime(AI_SIMULATION_DELAY_MS);
+    fixture.detectChanges();
+  }
+
+  it('creates with default state', () => {
+    expect(component).toBeTruthy();
+    expect(component.sources()).toEqual(['']);
+    expect(component.selectedPlatforms().size).toBe(5);
+    expect(component.output()).toBeNull();
+    expect(component.canRepurpose()).toBe(false);
+  });
+
+  it('renders the input panel and disables Repurpose until source is filled', () => {
+    const btn = nativeElement.querySelector('.btn-repurpose') as HTMLButtonElement;
+    expect(btn).toBeTruthy();
+    expect(btn.disabled).toBe(true);
+    component.updateSource(0, 'hello');
+    fixture.detectChanges();
+    expect(btn.disabled).toBe(false);
+  });
+
+  it('addSource caps at 3 and removeSource shrinks the list', () => {
+    component.addSource();
+    component.addSource();
+    component.addSource();
+    expect(component.sources().length).toBe(3);
+    component.removeSource(1);
+    expect(component.sources().length).toBe(2);
+  });
+
+  it('updateSource updates the indexed value', () => {
+    component.addSource();
+    component.updateSource(1, 'second');
+    expect(component.sources()[1]).toBe('second');
+  });
+
+  it('formatChars formats with thousands separator', () => {
+    expect(component.formatChars('a'.repeat(1234))).toBe('1,234');
+  });
+
+  it('togglePlatform / togglePillar / toggleSegment flip set membership', () => {
+    component.togglePlatform('instagram');
+    expect(component.isPlatformSelected('instagram')).toBe(false);
+    component.togglePlatform('instagram');
+    expect(component.isPlatformSelected('instagram')).toBe(true);
+
+    const pillarId = component.pillars()[0].id;
+    component.togglePillar(pillarId);
+    expect(component.isPillarSelected(pillarId)).toBe(true);
+    component.togglePillar(pillarId);
+    expect(component.isPillarSelected(pillarId)).toBe(false);
+
+    const segmentId = component.segments()[0].id;
+    component.toggleSegment(segmentId);
+    expect(component.isSegmentSelected(segmentId)).toBe(true);
+    component.toggleSegment(segmentId);
+    expect(component.isSegmentSelected(segmentId)).toBe(false);
+  });
+
+  it('repurpose populates output, auto-selects pillars+segment, builds card titles', () => {
+    fillSourceAndRun();
+    expect(component.output()).not.toBeNull();
+    expect(component.isGenerating()).toBe(false);
+    expect(component.cards().length).toBe(7);
+    expect(component.selectedPillarIds().size).toBe(2);
+    expect(component.selectedSegmentIds().size).toBe(1);
+    expect(Object.keys(component.cardTitles()).length).toBe(7);
     vi.useRealTimers();
   });
 
-  it('should create', () => {
-    expect(component).toBeTruthy();
+  it('renders cards grid with platform badges after a run', () => {
+    fillSourceAndRun();
+    expect(nativeElement.querySelectorAll('.cards-grid .output-card').length).toBe(7);
+    expect(nativeElement.querySelectorAll('.card-badge.badge--instagram').length).toBeGreaterThan(0);
+    vi.useRealTimers();
   });
 
-  // --- Rendering ---
-
-  it('should render input textarea', () => {
-    const textarea = nativeElement.querySelector('.input-panel__textarea');
-    expect(textarea).toBeTruthy();
+  it('dismissCard removes a card from visibleCards; restoreAll brings them back', () => {
+    fillSourceAndRun();
+    const id = component.cards()[0].key;
+    component.dismissCard(id);
+    expect(component.visibleCards().some(c => c.key === id)).toBe(false);
+    component.restoreAll();
+    expect(component.visibleCards().length).toBe(7);
+    vi.useRealTimers();
   });
 
-  it('should render 5 platform toggle chips', () => {
-    const chips = nativeElement.querySelectorAll('.platform-chip');
-    expect(chips.length).toBe(5);
-  });
-
-  it('should render repurpose button', () => {
-    const btn = nativeElement.querySelector('.btn--primary') as HTMLButtonElement;
-    expect(btn).toBeTruthy();
-    expect(btn.textContent).toContain('Repurpose with AI');
-  });
-
-  it('should not show output grid initially', () => {
-    expect(nativeElement.querySelector('.output-grid')).toBeFalsy();
-  });
-
-  // --- Initial state ---
-
-  it('should initialize with default values', () => {
-    expect(component.sourceContent()).toBe('');
-    expect(component.isGenerating()).toBe(false);
-    expect(component.outputs().length).toBe(0);
-    expect(component.copiedIndex()).toBeNull();
-    expect(component.selectedPlatforms().has('instagram')).toBe(true);
-    expect(component.selectedPlatforms().has('tiktok')).toBe(true);
-    expect(component.selectedPlatforms().has('youtube')).toBe(false);
-  });
-
-  // --- Platform selection ---
-
-  it('should check if a platform is selected', () => {
-    expect(component.isPlatformSelected('instagram')).toBe(true);
-    expect(component.isPlatformSelected('youtube')).toBe(false);
-  });
-
-  it('should toggle platform on and off', () => {
-    component.togglePlatform('youtube');
-    expect(component.isPlatformSelected('youtube')).toBe(true);
-
-    component.togglePlatform('youtube');
-    expect(component.isPlatformSelected('youtube')).toBe(false);
-  });
-
-  it('should deselect an already selected platform', () => {
-    expect(component.isPlatformSelected('instagram')).toBe(true);
-    component.togglePlatform('instagram');
-    expect(component.isPlatformSelected('instagram')).toBe(false);
-  });
-
-  it('should apply active class to selected platform chips', () => {
+  it('shows the all-dismissed restore link when every card is dismissed', () => {
+    fillSourceAndRun();
+    for (const c of component.cards()) component.dismissCard(c.key);
     fixture.detectChanges();
-    const chips = nativeElement.querySelectorAll('.platform-chip');
-    const activeChips = nativeElement.querySelectorAll('.platform-chip--active');
-    expect(activeChips.length).toBe(2); // instagram and tiktok
-    expect(chips.length).toBe(5);
-  });
-
-  // --- Source content ---
-
-  it('should update source content', () => {
-    component.updateSource('Test content');
-    expect(component.sourceContent()).toBe('Test content');
-  });
-
-  // --- Repurpose ---
-
-  it('should not repurpose with empty source content', () => {
-    component.sourceContent.set('   ');
-    component.repurpose();
-    expect(component.isGenerating()).toBe(false);
-    expect(component.outputs().length).toBe(0);
-  });
-
-  it('should repurpose content with selected platforms (timer-based)', () => {
-    component.sourceContent.set('Test blog post content here');
-    component.repurpose();
-    expect(component.isGenerating()).toBe(true);
-    expect(component.outputs().length).toBe(0);
-
-    vi.advanceTimersByTime(AI_SIMULATION_DELAY_MS);
-    expect(component.isGenerating()).toBe(false);
-    expect(component.outputs().length).toBeGreaterThan(0);
-  });
-
-  it('should filter outputs by selected platforms', () => {
-    component.selectedPlatforms.set(new Set(['instagram']));
-    component.sourceContent.set('Test content');
-    component.repurpose();
-
-    vi.advanceTimersByTime(AI_SIMULATION_DELAY_MS);
-    const outputs = component.outputs();
-    outputs.forEach(o => {
-      expect(o.platform).toBe('instagram');
-    });
-  });
-
-  it('should fall back to first 2 outputs when no matching platforms', () => {
-    component.selectedPlatforms.set(new Set());
-    component.sourceContent.set('Test content');
-    component.repurpose();
-
-    vi.advanceTimersByTime(AI_SIMULATION_DELAY_MS);
-    expect(component.outputs().length).toBe(2);
-  });
-
-  it('should show spinner and disable button during generation', () => {
-    component.sourceContent.set('Test content');
-    component.repurpose();
+    expect(nativeElement.querySelector('.all-dismissed')).toBeTruthy();
+    const link = nativeElement.querySelector('.restore-all-link') as HTMLButtonElement;
+    link.click();
     fixture.detectChanges();
-
-    const btn = nativeElement.querySelector('.btn--primary') as HTMLButtonElement;
-    expect(btn.disabled).toBe(true);
-    expect(btn.textContent).toContain('Repurposing...');
-    expect(nativeElement.querySelector('.spinner')).toBeTruthy();
-
-    vi.advanceTimersByTime(AI_SIMULATION_DELAY_MS);
-    fixture.detectChanges();
-
-    expect(btn.disabled).toBe(false);
-    expect(btn.textContent).toContain('Repurpose with AI');
+    expect(component.visibleCards().length).toBe(7);
+    vi.useRealTimers();
   });
 
-  it('should disable repurpose button when source is empty', () => {
-    fixture.detectChanges();
-    const btn = nativeElement.querySelector('.btn--primary') as HTMLButtonElement;
-    expect(btn.disabled).toBe(true);
+  it('saveCard sets a title error when blank and saves when non-blank', () => {
+    fillSourceAndRun();
+    const card = component.cards()[0];
+    component.setCardTitle(card.key, '   ');
+    component.saveCard(card);
+    expect(component.titleErrors().has(card.key)).toBe(true);
+    expect(component.savedCards().has(card.key)).toBe(false);
+    component.setCardTitle(card.key, 'Real title');
+    component.saveCard(card);
+    expect(component.savedCards().has(card.key)).toBe(true);
+    expect(component.titleErrors().has(card.key)).toBe(false);
+    vi.useRealTimers();
   });
 
-  it('should render output cards after repurposing', () => {
-    component.sourceContent.set('Test content');
-    component.repurpose();
-    vi.advanceTimersByTime(AI_SIMULATION_DELAY_MS);
-    fixture.detectChanges();
-
-    const outputCards = nativeElement.querySelectorAll('.output-card');
-    expect(outputCards.length).toBeGreaterThan(0);
-    expect(nativeElement.querySelector('.output-card__platform')).toBeTruthy();
-    expect(nativeElement.querySelector('.output-card__format')).toBeTruthy();
-    expect(nativeElement.querySelector('.output-card__text')).toBeTruthy();
+  it('saveAllCards saves every visible card with a non-blank title', () => {
+    fillSourceAndRun();
+    component.saveAllCards();
+    expect(component.unsavedCount()).toBe(0);
+    vi.useRealTimers();
   });
 
-  // --- Copy content ---
-
-  it('should set copiedIndex and reset after timeout', () => {
-    component.sourceContent.set('Test content');
-    component.repurpose();
-    vi.advanceTimersByTime(AI_SIMULATION_DELAY_MS);
-
-    // Mock clipboard
-    Object.assign(navigator, { clipboard: { writeText: vi.fn() } });
-
-    component.copyContent(0);
-    expect(component.copiedIndex()).toBe(0);
-
+  it('copyCard sets copiedCard then clears it after the timer', () => {
+    fillSourceAndRun();
+    const card = component.cards()[0];
+    component.copyCard(card);
+    expect(component.copiedCard()).toBe(card.key);
     vi.advanceTimersByTime(2000);
-    expect(component.copiedIndex()).toBeNull();
+    expect(component.copiedCard()).toBeNull();
+    vi.useRealTimers();
   });
 
-  it('should not crash when copying invalid index', () => {
-    component.copyContent(99);
-    expect(component.copiedIndex()).toBeNull();
+  it('hasPendingChanges flips after toggling a pillar post-run', () => {
+    fillSourceAndRun();
+    expect(component.hasPendingChanges()).toBe(false);
+    const otherPillar = component.pillars().find(p => !component.isPillarSelected(p.id));
+    if (otherPillar) component.togglePillar(otherPillar.id);
+    expect(component.hasPendingChanges()).toBe(true);
+    vi.useRealTimers();
   });
 
-  it('should show "Copied!" text when copiedIndex matches', () => {
-    component.sourceContent.set('Test content');
-    component.repurpose();
+  it('confirmRegenerate moves saved cards into savedIdeaRecords and runs again', () => {
+    fillSourceAndRun();
+    const first = component.cards()[0];
+    component.setCardTitle(first.key, 'Keep this one');
+    component.saveCard(first);
+    expect(component.savedCards().size).toBe(1);
+    component.openRegenerateDialog();
+    expect(component.showRegenerateDialog()).toBe(true);
+    component.confirmRegenerate();
+    expect(component.showRegenerateDialog()).toBe(false);
+    expect(component.savedIdeaRecords().length).toBe(1);
+    expect(component.savedCards().size).toBe(0);
     vi.advanceTimersByTime(AI_SIMULATION_DELAY_MS);
-
-    Object.assign(navigator, { clipboard: { writeText: vi.fn() } });
-    component.copyContent(0);
-    fixture.detectChanges();
-
-    const copyBtn = nativeElement.querySelector('.output-card__actions .btn--secondary');
-    expect(copyBtn?.textContent).toContain('Copied!');
+    expect(component.output()).not.toBeNull();
+    vi.useRealTimers();
   });
 
-  // --- Save as idea ---
-
-  it('should call saveAsIdea without error', () => {
-    expect(() => component.saveAsIdea(0)).not.toThrow();
+  it('openRegenerateDialog teleports the modal to body and closeRegenerateDialog tears it down', () => {
+    component.openRegenerateDialog();
+    fixture.detectChanges();
+    expect(document.body.querySelector('.app-modal')).toBeTruthy();
+    component.closeRegenerateDialog();
+    fixture.detectChanges();
+    expect(document.body.querySelector('.app-modal')).toBeNull();
   });
 
-  // --- platformOptions ---
-
-  it('should have 5 platform options', () => {
-    expect(component.platformOptions.length).toBe(5);
-    expect(component.platformOptions.map(p => p.id)).toEqual(['instagram', 'tiktok', 'youtube', 'linkedin', 'facebook']);
+  it('pillarColor / pillarName / segmentName fall back when not found', () => {
+    expect(component.pillarColor('missing')).toBe('var(--blink-on-surface-muted)');
+    expect(component.pillarName('missing')).toBe('missing');
+    expect(component.segmentName('missing')).toBe('missing');
   });
 
-  // --- DOM interactions ---
-
-  it('should toggle platform when clicking platform chip in DOM', () => {
-    const chips = nativeElement.querySelectorAll('.platform-chip') as NodeListOf<HTMLButtonElement>;
-    // youtube is index 2, not selected by default
-    expect(component.isPlatformSelected('youtube')).toBe(false);
-    chips[2].click();
-    fixture.detectChanges();
-    expect(component.isPlatformSelected('youtube')).toBe(true);
-    expect(chips[2].classList.contains('platform-chip--active')).toBe(true);
-  });
-
-  it('should deselect platform when clicking active platform chip in DOM', () => {
-    const chips = nativeElement.querySelectorAll('.platform-chip') as NodeListOf<HTMLButtonElement>;
-    // instagram is index 0, selected by default
-    expect(component.isPlatformSelected('instagram')).toBe(true);
-    chips[0].click();
-    fixture.detectChanges();
-    expect(component.isPlatformSelected('instagram')).toBe(false);
-  });
-
-  it('should trigger repurpose via button click in DOM', () => {
-    component.sourceContent.set('Test content');
-    fixture.detectChanges();
-
-    const btn = nativeElement.querySelector('.btn--primary') as HTMLButtonElement;
-    btn.click();
-    expect(component.isGenerating()).toBe(true);
-
-    vi.advanceTimersByTime(AI_SIMULATION_DELAY_MS);
-    fixture.detectChanges();
-    expect(component.outputs().length).toBeGreaterThan(0);
-  });
-
-  it('should render Save as Idea button for each output card', () => {
-    component.sourceContent.set('Test content');
-    component.repurpose();
-    vi.advanceTimersByTime(AI_SIMULATION_DELAY_MS);
-    fixture.detectChanges();
-
-    const ghostBtns = nativeElement.querySelectorAll('.btn--ghost');
-    expect(ghostBtns.length).toBe(component.outputs().length);
-  });
-
-  it('should call saveAsIdea when clicking Save as Idea button in DOM', () => {
-    component.sourceContent.set('Test content');
-    component.repurpose();
-    vi.advanceTimersByTime(AI_SIMULATION_DELAY_MS);
-    fixture.detectChanges();
-
-    const spy = vi.spyOn(component, 'saveAsIdea');
-    const ghostBtn = nativeElement.querySelector('.btn--ghost') as HTMLButtonElement;
-    ghostBtn.click();
-    expect(spy).toHaveBeenCalledWith(0);
-  });
-
-  it('should call copyContent when clicking Copy button in DOM', () => {
-    component.sourceContent.set('Test content');
-    component.repurpose();
-    vi.advanceTimersByTime(AI_SIMULATION_DELAY_MS);
-    fixture.detectChanges();
-
-    Object.assign(navigator, { clipboard: { writeText: vi.fn() } });
-
-    const copyBtn = nativeElement.querySelector('.output-card__actions .btn--secondary') as HTMLButtonElement;
-    copyBtn.click();
-    fixture.detectChanges();
-
-    expect(component.copiedIndex()).toBe(0);
-  });
-
-  it('should show SVG icon when not generating', () => {
-    component.sourceContent.set('Test content');
-    fixture.detectChanges();
-    const svg = nativeElement.querySelector('.btn--primary svg');
-    expect(svg).toBeTruthy();
-  });
-
-  it('should hide SVG icon and show spinner when generating', () => {
-    component.sourceContent.set('Test content');
+  it('renders the loading card while generating and the empty state otherwise', () => {
+    expect(nativeElement.querySelector('.empty-state')).toBeTruthy();
+    vi.useFakeTimers();
+    component.updateSource(0, 'hi');
     component.repurpose();
     fixture.detectChanges();
-
-    const svg = nativeElement.querySelector('.btn--primary svg');
-    expect(svg).toBeFalsy();
-    const spinner = nativeElement.querySelector('.spinner');
-    expect(spinner).toBeTruthy();
-  });
-
-  it('should not show output grid when outputs is empty', () => {
-    expect(nativeElement.querySelector('.output-grid')).toBeFalsy();
-  });
-
-  it('should render output card platform and format', () => {
-    component.sourceContent.set('Test content');
-    component.repurpose();
+    expect(nativeElement.querySelector('.loading-card')).toBeTruthy();
     vi.advanceTimersByTime(AI_SIMULATION_DELAY_MS);
     fixture.detectChanges();
-
-    const platforms = nativeElement.querySelectorAll('.output-card__platform');
-    const formats = nativeElement.querySelectorAll('.output-card__format');
-    expect(platforms.length).toBeGreaterThan(0);
-    expect(formats.length).toBeGreaterThan(0);
+    expect(nativeElement.querySelector('.loading-card')).toBeNull();
+    vi.useRealTimers();
   });
 
-  it('should show "Copy" text when copiedIndex does not match', () => {
-    component.sourceContent.set('Test content');
+  it('repurpose is a no-op when no source is filled', () => {
     component.repurpose();
+    expect(component.isGenerating()).toBe(false);
+    expect(component.output()).toBeNull();
+  });
+
+  it('addSource refuses to add a 4th entry', () => {
+    component.addSource();
+    component.addSource();
+    component.addSource();
+    component.addSource();
+    expect(component.sources().length).toBe(3);
+  });
+
+  it('saveCard treats a missing title entry as blank', () => {
+    fillSourceAndRun();
+    const card = component.cards()[0];
+    component.cardTitles.set({});
+    component.saveCard(card);
+    expect(component.titleErrors().has(card.key)).toBe(true);
+    expect(component.savedCards().has(card.key)).toBe(false);
+    vi.useRealTimers();
+  });
+
+  it('saveAllCards skips already-saved cards', () => {
+    fillSourceAndRun();
+    const first = component.cards()[0];
+    component.setCardTitle(first.key, 'Locked');
+    component.saveCard(first);
+    component.saveAllCards();
+    expect(component.savedCards().has(first.key)).toBe(true);
+    expect(component.unsavedCount()).toBe(0);
+    vi.useRealTimers();
+  });
+
+  it('confirmRegenerate produces no new records when nothing was saved', () => {
+    fillSourceAndRun();
+    component.confirmRegenerate();
+    expect(component.savedIdeaRecords().length).toBe(0);
     vi.advanceTimersByTime(AI_SIMULATION_DELAY_MS);
-    fixture.detectChanges();
-
-    const copyBtn = nativeElement.querySelector('.output-card__actions .btn--secondary');
-    expect(copyBtn?.textContent).toContain('Copy');
+    expect(component.output()).not.toBeNull();
+    vi.useRealTimers();
   });
 
-  it('should handle copyContent with clipboard unavailable', () => {
-    component.sourceContent.set('Test content');
-    component.repurpose();
+  it('confirmRegenerate falls back to card label when title was cleared', () => {
+    fillSourceAndRun();
+    const first = component.cards()[0];
+    component.setCardTitle(first.key, 'Real');
+    component.saveCard(first);
+    component.cardTitles.update(m => ({ ...m, [first.key]: '' }));
+    component.confirmRegenerate();
+    expect(component.savedIdeaRecords()[0].title).toBe(first.label);
     vi.advanceTimersByTime(AI_SIMULATION_DELAY_MS);
-
-    Object.defineProperty(navigator, 'clipboard', {
-      value: undefined,
-      writable: true,
-      configurable: true,
-    });
-
-    // Should not throw, copiedIndex should still be set
-    expect(() => component.copyContent(0)).not.toThrow();
-    expect(component.copiedIndex()).toBe(0);
+    vi.useRealTimers();
   });
 
-  it('should generate outputs for multiple selected platforms', () => {
-    component.selectedPlatforms.set(new Set(['instagram', 'tiktok', 'youtube', 'linkedin']));
-    component.sourceContent.set('Test content');
-    component.repurpose();
-    vi.advanceTimersByTime(AI_SIMULATION_DELAY_MS);
-
-    expect(component.outputs().length).toBe(4);
-  });
-
-  it('should render pre element with content text', () => {
-    component.sourceContent.set('Test content');
-    component.repurpose();
-    vi.advanceTimersByTime(AI_SIMULATION_DELAY_MS);
-    fixture.detectChanges();
-
-    const preElement = nativeElement.querySelector('.output-card__text');
-    expect(preElement).toBeTruthy();
-    expect(preElement?.textContent?.length).toBeGreaterThan(0);
-  });
-
-  it('should trigger updateSource via textarea ngModelChange in DOM', () => {
-    const textarea = nativeElement.querySelector('.input-panel__textarea') as HTMLTextAreaElement;
-    textarea.value = 'DOM typed content';
-    textarea.dispatchEvent(new Event('input'));
-    fixture.detectChanges();
-    expect(component.sourceContent()).toBe('DOM typed content');
-  });
-
-  it('should enable repurpose button after typing in textarea via DOM', () => {
-    const textarea = nativeElement.querySelector('.input-panel__textarea') as HTMLTextAreaElement;
-    textarea.value = 'Some content';
-    textarea.dispatchEvent(new Event('input'));
-    fixture.detectChanges();
-
-    const btn = nativeElement.querySelector('.btn--primary') as HTMLButtonElement;
-    expect(btn.disabled).toBe(false);
-  });
-
-  it('should render output cards with all action buttons', () => {
-    component.sourceContent.set('Test content');
-    component.repurpose();
-    vi.advanceTimersByTime(AI_SIMULATION_DELAY_MS);
-    fixture.detectChanges();
-
-    const outputCards = nativeElement.querySelectorAll('.output-card');
-    outputCards.forEach((card: Element) => {
-      expect(card.querySelector('.btn--secondary')).toBeTruthy(); // Copy
-      expect(card.querySelector('.btn--ghost')).toBeTruthy(); // Save as Idea
-    });
+  it('copyCard timer no-op when copiedCard moved to a different card', () => {
+    fillSourceAndRun();
+    const a = component.cards()[0];
+    const b = component.cards()[1];
+    component.copyCard(a);
+    component.copyCard(b);
+    vi.advanceTimersByTime(2000);
+    expect(component.copiedCard()).toBeNull();
+    vi.useRealTimers();
   });
 });

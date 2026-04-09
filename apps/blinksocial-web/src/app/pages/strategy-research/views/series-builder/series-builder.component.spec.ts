@@ -3,490 +3,197 @@ import { SeriesBuilderComponent } from './series-builder.component';
 import { AI_SIMULATION_DELAY_MS } from '../../strategy-research.constants';
 
 describe('SeriesBuilderComponent', () => {
-  let component: SeriesBuilderComponent;
   let fixture: ComponentFixture<SeriesBuilderComponent>;
+  let component: SeriesBuilderComponent;
+  let nativeElement: HTMLElement;
 
-  beforeEach(async () => {
-    vi.useFakeTimers();
-    await TestBed.configureTestingModule({
-      imports: [SeriesBuilderComponent],
-    }).compileComponents();
-
+  beforeEach(() => {
+    TestBed.configureTestingModule({ imports: [SeriesBuilderComponent] });
     fixture = TestBed.createComponent(SeriesBuilderComponent);
     component = fixture.componentInstance;
+    nativeElement = fixture.nativeElement;
     fixture.detectChanges();
   });
 
   afterEach(() => {
+    fixture.destroy();
+  });
+
+  function buildAndAdvance() {
+    vi.useFakeTimers();
+    component.buildSeries();
+    vi.advanceTimersByTime(AI_SIMULATION_DELAY_MS);
+    fixture.detectChanges();
+  }
+
+  it('creates with sensible defaults', () => {
+    expect(component).toBeTruthy();
+    expect(component.canBuild()).toBe(true);
+    expect(component.series()).toBeNull();
+    expect(component.selectedLength()).toBe('5');
+    expect(component.selectedPlatform()).toBe('instagram');
+  });
+
+  it('renders five setup dropdowns and the build button', () => {
+    expect(nativeElement.querySelectorAll('.setup-field').length).toBe(5);
+    const btn = nativeElement.querySelector('.btn-build') as HTMLButtonElement;
+    expect(btn).toBeTruthy();
+    expect(btn.disabled).toBe(false);
+  });
+
+  it('shows the empty state before generation', () => {
+    expect(nativeElement.querySelector('.empty-state')).toBeTruthy();
+    expect(nativeElement.querySelector('.series-overview')).toBeNull();
+  });
+
+  it('canBuild flips to false when a selection is cleared', () => {
+    component.setSegment('');
+    expect(component.canBuild()).toBe(false);
+    component.setSegment('s1');
+    component.setPillar('');
+    expect(component.canBuild()).toBe(false);
+  });
+
+  it('typed setters update the matching signal', () => {
+    component.setGoal('Drive Profile Follows');
+    expect(component.selectedGoal()).toBe('Drive Profile Follows');
+    component.setLength('7');
+    expect(component.selectedLength()).toBe('7');
+    component.setPlatform('tiktok');
+    expect(component.selectedPlatform()).toBe('tiktok');
+    component.setSegment('s2');
+    expect(component.selectedSegmentId()).toBe('s2');
+    component.setPillar('p2');
+    expect(component.selectedPillarId()).toBe('p2');
+  });
+
+  it('getRoleClass maps every role plus a fallback', () => {
+    expect(component.getRoleClass('Hook')).toBe('role--hook');
+    expect(component.getRoleClass('Value')).toBe('role--value');
+    expect(component.getRoleClass('Proof')).toBe('role--proof');
+    expect(component.getRoleClass('Pivot')).toBe('role--pivot');
+    expect(component.getRoleClass('Conversion')).toBe('role--conversion');
+    expect(component.getRoleClass('Other' as never)).toBe('');
+  });
+
+  it('buildSeries sets isGenerating then populates the series after the timer', () => {
+    vi.useFakeTimers();
+    component.buildSeries();
+    expect(component.isGenerating()).toBe(true);
+    fixture.detectChanges();
+    expect(nativeElement.querySelector('.loading-card')).toBeTruthy();
+    vi.advanceTimersByTime(AI_SIMULATION_DELAY_MS);
+    fixture.detectChanges();
+    expect(component.isGenerating()).toBe(false);
+    expect(component.series()).not.toBeNull();
+    expect(component.series()!.posts.length).toBe(5);
+    expect(Object.keys(component.postTitles()).length).toBe(5);
+    expect(nativeElement.querySelectorAll('.post-card').length).toBe(5);
     vi.useRealTimers();
   });
 
-  it('should create', () => {
-    expect(component).toBeTruthy();
+  it('buildSeries respects the selected length and platform', () => {
+    component.setLength('3');
+    component.setPlatform('youtube');
+    component.setGoal('Launch a New Topic or Offer');
+    buildAndAdvance();
+    const s = component.series()!;
+    expect(s.posts.length).toBe(3);
+    expect(s.platform).toBe('youtube');
+    expect(s.goal).toBe('Launch a New Topic or Offer');
+    vi.useRealTimers();
   });
 
-  describe('initial state', () => {
-    it('should not be generating', () => {
-      expect(component.isGenerating()).toBe(false);
-    });
-
-    it('should have null series', () => {
-      expect(component.series()).toBeNull();
-    });
-
-    it('should have default selected goal', () => {
-      expect(component.selectedGoal).toBe('Grow Followers');
-    });
-
-    it('should have default series length of 5', () => {
-      expect(component.seriesLength).toBe(5);
-    });
-
-    it('should have default selected platform', () => {
-      expect(component.selectedPlatform).toBe('instagram');
-    });
-
-    it('should have goal options', () => {
-      expect(component.goalOptions.length).toBe(5);
-      expect(component.goalOptions).toContain('Grow Followers');
-      expect(component.goalOptions).toContain('Drive Sales');
-    });
-
-    it('should have platform options', () => {
-      expect(component.platformOptions.length).toBe(5);
-    });
-
-    it('should have length options', () => {
-      expect(component.lengthOptions).toEqual([3, 5, 7]);
-    });
+  it('buildSeries is a no-op when canBuild is false', () => {
+    component.setSegment('');
+    component.buildSeries();
+    expect(component.isGenerating()).toBe(false);
+    expect(component.series()).toBeNull();
   });
 
-  describe('template rendering', () => {
-    it('should render input form with title', () => {
-      const title = fixture.nativeElement.querySelector('.input-form__title');
-      expect(title).toBeTruthy();
-      expect(title.textContent).toContain('Build a Content Series');
-    });
-
-    it('should render goal select with options', () => {
-      const selects = fixture.nativeElement.querySelectorAll('select');
-      expect(selects.length).toBe(2);
-      const goalSelect = selects[0];
-      expect(goalSelect.options.length).toBe(5);
-    });
-
-    it('should render platform select with options', () => {
-      const selects = fixture.nativeElement.querySelectorAll('select');
-      const platformSelect = selects[1];
-      expect(platformSelect.options.length).toBe(5);
-    });
-
-    it('should render length option buttons', () => {
-      const lengthBtns = fixture.nativeElement.querySelectorAll('.length-btn');
-      expect(lengthBtns.length).toBe(3);
-      expect(lengthBtns[0].textContent).toContain('3 posts');
-      expect(lengthBtns[1].textContent).toContain('5 posts');
-      expect(lengthBtns[2].textContent).toContain('7 posts');
-    });
-
-    it('should highlight default length option (5)', () => {
-      const activeBtns = fixture.nativeElement.querySelectorAll('.length-btn--active');
-      expect(activeBtns.length).toBe(1);
-      expect(activeBtns[0].textContent).toContain('5 posts');
-    });
-
-    it('should render build series button', () => {
-      const button = fixture.nativeElement.querySelector('.btn--primary');
-      expect(button).toBeTruthy();
-      expect(button.textContent).toContain('Build Series with AI');
-    });
-
-    it('should not show series output initially', () => {
-      const output = fixture.nativeElement.querySelector('.series-output');
-      expect(output).toBeFalsy();
-    });
-
-    it('should show SVG icon when not generating', () => {
-      const svg = fixture.nativeElement.querySelector('.btn--primary svg');
-      expect(svg).toBeTruthy();
-    });
-
-    it('should not show spinner when not generating', () => {
-      const spinner = fixture.nativeElement.querySelector('.spinner');
-      expect(spinner).toBeFalsy();
-    });
-
-    it('should change series length when clicking length button', () => {
-      const lengthBtns = fixture.nativeElement.querySelectorAll('.length-btn');
-      lengthBtns[0].click();
-      fixture.detectChanges();
-      expect(component.seriesLength).toBe(3);
-      const activeBtns = fixture.nativeElement.querySelectorAll('.length-btn--active');
-      expect(activeBtns.length).toBe(1);
-      expect(activeBtns[0].textContent).toContain('3 posts');
-    });
+  it('setPostTitle clears the error when the title becomes non-blank', () => {
+    buildAndAdvance();
+    const post = component.series()!.posts[0];
+    component.setPostTitle(post.number, '');
+    component.createPost(post);
+    expect(component.titleErrors().has(post.number)).toBe(true);
+    component.setPostTitle(post.number, 'Real');
+    expect(component.titleErrors().has(post.number)).toBe(false);
+    vi.useRealTimers();
   });
 
-  describe('getRoleClass()', () => {
-    it('should return role--hook for Hook', () => {
-      expect(component.getRoleClass('Hook')).toBe('role--hook');
-    });
-
-    it('should return role--value for Value', () => {
-      expect(component.getRoleClass('Value')).toBe('role--value');
-    });
-
-    it('should return role--proof for Proof', () => {
-      expect(component.getRoleClass('Proof')).toBe('role--proof');
-    });
-
-    it('should return role--pivot for Pivot', () => {
-      expect(component.getRoleClass('Pivot')).toBe('role--pivot');
-    });
-
-    it('should return role--conversion for Conversion', () => {
-      expect(component.getRoleClass('Conversion')).toBe('role--conversion');
-    });
-
-    it('should return empty string for unknown role', () => {
-      expect(component.getRoleClass('Unknown' as any)).toBe('');
-    });
+  it('createPost saves when the title is set, errors when blank', () => {
+    buildAndAdvance();
+    const a = component.series()!.posts[0];
+    const b = component.series()!.posts[1];
+    component.setPostTitle(b.number, '   ');
+    component.createPost(b);
+    expect(component.savedPosts().has(b.number)).toBe(false);
+    expect(component.titleErrors().has(b.number)).toBe(true);
+    component.setPostTitle(a.number, 'Day 1');
+    component.createPost(a);
+    expect(component.savedPosts().has(a.number)).toBe(true);
+    vi.useRealTimers();
   });
 
-  describe('buildSeries()', () => {
-    it('should set isGenerating to true', () => {
-      component.buildSeries();
-      expect(component.isGenerating()).toBe(true);
-    });
-
-    it('should clear previous series', () => {
-      component.buildSeries();
-      expect(component.series()).toBeNull();
-    });
-
-    it('should show spinner and building text during generation', () => {
-      component.buildSeries();
-      fixture.detectChanges();
-      const spinner = fixture.nativeElement.querySelector('.spinner');
-      expect(spinner).toBeTruthy();
-      const button = fixture.nativeElement.querySelector('.btn--primary');
-      expect(button.textContent).toContain('Building Series...');
-      expect(button.disabled).toBe(true);
-    });
-
-    it('should set series result after timeout', () => {
-      component.buildSeries();
-      vi.advanceTimersByTime(AI_SIMULATION_DELAY_MS);
-      expect(component.series()).not.toBeNull();
-      expect(component.isGenerating()).toBe(false);
-    });
-
-    it('should use selected platform in result', () => {
-      component.selectedPlatform = 'tiktok';
-      component.buildSeries();
-      vi.advanceTimersByTime(AI_SIMULATION_DELAY_MS);
-      expect(component.series()?.platform).toBe('tiktok');
-    });
-
-    it('should use selected goal in result', () => {
-      component.selectedGoal = 'Drive Sales';
-      component.buildSeries();
-      vi.advanceTimersByTime(AI_SIMULATION_DELAY_MS);
-      expect(component.series()?.goal).toBe('Drive Sales');
-    });
-
-    it('should use selected series length in result', () => {
-      component.seriesLength = 3;
-      component.buildSeries();
-      vi.advanceTimersByTime(AI_SIMULATION_DELAY_MS);
-      expect(component.series()?.postCount).toBe(3);
-      expect(component.series()?.posts.length).toBe(3);
-    });
-
-    it('should render series output after generation completes', () => {
-      component.buildSeries();
-      vi.advanceTimersByTime(AI_SIMULATION_DELAY_MS);
-      fixture.detectChanges();
-      const output = fixture.nativeElement.querySelector('.series-output');
-      expect(output).toBeTruthy();
-    });
-
-    it('should display overview card with title and narrative arc', () => {
-      component.buildSeries();
-      vi.advanceTimersByTime(AI_SIMULATION_DELAY_MS);
-      fixture.detectChanges();
-      const title = fixture.nativeElement.querySelector('.overview-card__title');
-      expect(title.textContent).toContain('5-Day Strength After 40 Challenge');
-      const arc = fixture.nativeElement.querySelector('.overview-card__arc');
-      expect(arc).toBeTruthy();
-    });
-
-    it('should display badges for platform, count, and goal', () => {
-      component.buildSeries();
-      vi.advanceTimersByTime(AI_SIMULATION_DELAY_MS);
-      fixture.detectChanges();
-      const badges = fixture.nativeElement.querySelectorAll('.badge');
-      expect(badges.length).toBe(3);
-    });
-
-    it('should display post cards with correct content', () => {
-      component.buildSeries();
-      vi.advanceTimersByTime(AI_SIMULATION_DELAY_MS);
-      fixture.detectChanges();
-      const postCards = fixture.nativeElement.querySelectorAll('.post-card');
-      expect(postCards.length).toBe(5);
-    });
-
-    it('should display post numbers', () => {
-      component.buildSeries();
-      vi.advanceTimersByTime(AI_SIMULATION_DELAY_MS);
-      fixture.detectChanges();
-      const postNumbers = fixture.nativeElement.querySelectorAll('.post-number');
-      expect(postNumbers.length).toBe(5);
-      expect(postNumbers[0].textContent).toContain('1');
-    });
-
-    it('should display role tags with correct classes', () => {
-      component.buildSeries();
-      vi.advanceTimersByTime(AI_SIMULATION_DELAY_MS);
-      fixture.detectChanges();
-      const roleTags = fixture.nativeElement.querySelectorAll('.role-tag');
-      expect(roleTags.length).toBe(5);
-      expect(roleTags[0].textContent).toContain('Hook');
-    });
-
-    it('should display hook, caption direction, and CTA for each post', () => {
-      component.buildSeries();
-      vi.advanceTimersByTime(AI_SIMULATION_DELAY_MS);
-      fixture.detectChanges();
-      const hooks = fixture.nativeElement.querySelectorAll('.hook-text');
-      expect(hooks.length).toBe(5);
-      const directions = fixture.nativeElement.querySelectorAll('.direction-text');
-      expect(directions.length).toBe(5);
-      const ctas = fixture.nativeElement.querySelectorAll('.cta-text');
-      expect(ctas.length).toBe(5);
-    });
-
-    it('should display bridge connectors between posts (not after last)', () => {
-      component.buildSeries();
-      vi.advanceTimersByTime(AI_SIMULATION_DELAY_MS);
-      fixture.detectChanges();
-      const connectors = fixture.nativeElement.querySelectorAll('.bridge-connector');
-      expect(connectors.length).toBe(4); // 5 posts - 1
-    });
-
-    it('should display Create in Ideation button for each post', () => {
-      component.buildSeries();
-      vi.advanceTimersByTime(AI_SIMULATION_DELAY_MS);
-      fixture.detectChanges();
-      const ideationBtns = fixture.nativeElement.querySelectorAll('.post-card__actions .btn--sm');
-      expect(ideationBtns.length).toBe(5);
-    });
-
-    it('should limit posts to 3 when series length is 3', () => {
-      component.seriesLength = 3;
-      component.buildSeries();
-      vi.advanceTimersByTime(AI_SIMULATION_DELAY_MS);
-      fixture.detectChanges();
-      const postCards = fixture.nativeElement.querySelectorAll('.post-card');
-      expect(postCards.length).toBe(3);
-      const connectors = fixture.nativeElement.querySelectorAll('.bridge-connector');
-      expect(connectors.length).toBe(2);
-    });
+  it('createAllPosts saves every visible post with a non-blank title', () => {
+    buildAndAdvance();
+    component.createAllPosts();
+    expect(component.unsavedCount()).toBe(0);
+    vi.useRealTimers();
   });
 
-  describe('createInIdeation()', () => {
-    it('should be callable without error (placeholder)', () => {
-      expect(() => component.createInIdeation(1)).not.toThrow();
-    });
-
-    it('should be callable via button click in DOM', () => {
-      component.buildSeries();
-      vi.advanceTimersByTime(AI_SIMULATION_DELAY_MS);
-      fixture.detectChanges();
-      const ideationBtn = fixture.nativeElement.querySelector('.post-card__actions .btn--sm');
-      expect(() => ideationBtn.click()).not.toThrow();
-    });
+  it('createAllPosts is a no-op when no series has been built', () => {
+    component.createAllPosts();
+    expect(component.savedPosts().size).toBe(0);
   });
 
-  // --- DOM interactions ---
+  it('renders bridge connectors between consecutive posts that have a bridge note', () => {
+    buildAndAdvance();
+    expect(nativeElement.querySelectorAll('.bridge-connector').length).toBeGreaterThan(0);
+    vi.useRealTimers();
+  });
 
-  describe('DOM interactions', () => {
-    it('should trigger buildSeries via button click in DOM', () => {
-      const button = fixture.nativeElement.querySelector('.btn--primary') as HTMLButtonElement;
-      button.click();
-      expect(component.isGenerating()).toBe(true);
+  it('renders the series overview with badges and Create All button', () => {
+    buildAndAdvance();
+    expect(nativeElement.querySelector('.series-overview')).toBeTruthy();
+    expect(nativeElement.querySelectorAll('.series-badge').length).toBeGreaterThan(0);
+    const createAll = nativeElement.querySelector('.btn-create-all') as HTMLButtonElement;
+    expect(createAll).toBeTruthy();
+    createAll.click();
+    fixture.detectChanges();
+    expect(component.unsavedCount()).toBe(0);
+    expect(nativeElement.querySelector('.btn-create-all')).toBeNull();
+    vi.useRealTimers();
+  });
 
-      vi.advanceTimersByTime(AI_SIMULATION_DELAY_MS);
-      fixture.detectChanges();
-      expect(component.series()).not.toBeNull();
-    });
+  it('createPost via the per-card DOM button flips the card into a saved state', () => {
+    buildAndAdvance();
+    const button = nativeElement.querySelector('.btn-create-post') as HTMLButtonElement;
+    button.click();
+    fixture.detectChanges();
+    expect(component.savedPosts().has(component.series()!.posts[0].number)).toBe(true);
+    vi.useRealTimers();
+  });
 
-    it('should change series length via length button click', () => {
-      const lengthBtns = fixture.nativeElement.querySelectorAll('.length-btn') as NodeListOf<HTMLButtonElement>;
-      lengthBtns[2].click(); // 7 posts
-      fixture.detectChanges();
-      expect(component.seriesLength).toBe(7);
+  it('createPost falls back to a missing title entry being treated as blank', () => {
+    buildAndAdvance();
+    const post = component.series()!.posts[0];
+    component.postTitles.set({});
+    component.createPost(post);
+    expect(component.titleErrors().has(post.number)).toBe(true);
+    vi.useRealTimers();
+  });
 
-      const activeBtns = fixture.nativeElement.querySelectorAll('.length-btn--active');
-      expect(activeBtns.length).toBe(1);
-      expect(activeBtns[0].textContent).toContain('7 posts');
-    });
+  it('pillarColor / pillarName / segmentName fall back when missing', () => {
+    expect(component.pillarColor('missing')).toBe('var(--blink-on-surface-muted)');
+    expect(component.pillarName('missing')).toBe('missing');
+    expect(component.segmentName('missing')).toBe('missing');
+  });
 
-    it('should render goal options in select dropdown', () => {
-      const selects = fixture.nativeElement.querySelectorAll('select');
-      const goalSelect = selects[0];
-      expect(goalSelect.options.length).toBe(5);
-      expect(goalSelect.options[0].textContent?.trim()).toBe('Grow Followers');
-    });
-
-    it('should render platform options in select dropdown', () => {
-      const selects = fixture.nativeElement.querySelectorAll('select');
-      const platformSelect = selects[1];
-      expect(platformSelect.options.length).toBe(5);
-    });
-
-    it('should render role tag classes correctly in DOM', () => {
-      component.buildSeries();
-      vi.advanceTimersByTime(AI_SIMULATION_DELAY_MS);
-      fixture.detectChanges();
-
-      const roleTags = fixture.nativeElement.querySelectorAll('.role-tag');
-      expect(roleTags[0].classList.contains('role--hook')).toBe(true);
-      expect(roleTags[1].classList.contains('role--value')).toBe(true);
-      expect(roleTags[2].classList.contains('role--proof')).toBe(true);
-      expect(roleTags[3].classList.contains('role--pivot')).toBe(true);
-      expect(roleTags[4].classList.contains('role--conversion')).toBe(true);
-    });
-
-    it('should render bridge connector SVGs between posts', () => {
-      component.buildSeries();
-      vi.advanceTimersByTime(AI_SIMULATION_DELAY_MS);
-      fixture.detectChanges();
-
-      const connectors = fixture.nativeElement.querySelectorAll('.bridge-connector');
-      expect(connectors.length).toBe(4);
-      const svg = connectors[0].querySelector('svg');
-      expect(svg).toBeTruthy();
-    });
-
-    it('should not render bridge connector after the last post', () => {
-      component.buildSeries();
-      vi.advanceTimersByTime(AI_SIMULATION_DELAY_MS);
-      fixture.detectChanges();
-
-      const postCards = fixture.nativeElement.querySelectorAll('.post-card');
-      const lastCard = postCards[postCards.length - 1];
-      // Next sibling should not be a bridge-connector
-      expect(lastCard.nextElementSibling?.classList.contains('bridge-connector')).toBeFalsy();
-    });
-
-    it('should display CTA text for each post', () => {
-      component.buildSeries();
-      vi.advanceTimersByTime(AI_SIMULATION_DELAY_MS);
-      fixture.detectChanges();
-
-      const ctaTexts = fixture.nativeElement.querySelectorAll('.cta-text');
-      expect(ctaTexts[0].textContent).toContain('Save this for Day 2');
-    });
-
-    it('should display overview badges with correct content', () => {
-      component.buildSeries();
-      vi.advanceTimersByTime(AI_SIMULATION_DELAY_MS);
-      fixture.detectChanges();
-
-      const badges = fixture.nativeElement.querySelectorAll('.badge');
-      expect(badges[0].textContent).toContain('instagram');
-      expect(badges[1].textContent).toContain('5 posts');
-      expect(badges[2].textContent).toContain('Grow Followers');
-    });
-
-    it('should show SVG icon when not generating', () => {
-      const svg = fixture.nativeElement.querySelector('.btn--primary svg');
-      expect(svg).toBeTruthy();
-    });
-
-    it('should show spinner and hide SVG when generating', () => {
-      component.buildSeries();
-      fixture.detectChanges();
-
-      const spinner = fixture.nativeElement.querySelector('.spinner');
-      expect(spinner).toBeTruthy();
-      const svg = fixture.nativeElement.querySelector('.btn--primary svg');
-      expect(svg).toBeFalsy();
-    });
-
-    it('should render 3 posts and 2 connectors for series length 3', () => {
-      component.seriesLength = 3;
-      component.buildSeries();
-      vi.advanceTimersByTime(AI_SIMULATION_DELAY_MS);
-      fixture.detectChanges();
-
-      const postCards = fixture.nativeElement.querySelectorAll('.post-card');
-      expect(postCards.length).toBe(3);
-      const connectors = fixture.nativeElement.querySelectorAll('.bridge-connector');
-      expect(connectors.length).toBe(2);
-    });
-
-    it('should call createInIdeation for each post via button click', () => {
-      const spy = vi.spyOn(component, 'createInIdeation');
-      component.buildSeries();
-      vi.advanceTimersByTime(AI_SIMULATION_DELAY_MS);
-      fixture.detectChanges();
-
-      const ideationBtns = fixture.nativeElement.querySelectorAll('.post-card__actions .btn--sm');
-      ideationBtns[2].click();
-      expect(spy).toHaveBeenCalledWith(3);
-    });
-
-    it('should change selectedGoal via select dropdown in DOM', () => {
-      const selects = fixture.nativeElement.querySelectorAll('select');
-      const goalSelect = selects[0] as HTMLSelectElement;
-      goalSelect.value = 'Drive Sales';
-      goalSelect.dispatchEvent(new Event('change'));
-      fixture.detectChanges();
-      expect(component.selectedGoal).toBe('Drive Sales');
-    });
-
-    it('should change selectedPlatform via select dropdown in DOM', () => {
-      const selects = fixture.nativeElement.querySelectorAll('select');
-      const platformSelect = selects[1] as HTMLSelectElement;
-      platformSelect.value = 'youtube';
-      platformSelect.dispatchEvent(new Event('change'));
-      fixture.detectChanges();
-      expect(component.selectedPlatform).toBe('youtube');
-    });
-
-    it('should hide SVG and show spinner during generation then restore', () => {
-      component.buildSeries();
-      fixture.detectChanges();
-      expect(fixture.nativeElement.querySelector('.spinner')).toBeTruthy();
-      expect(fixture.nativeElement.querySelector('.btn--primary svg')).toBeFalsy();
-
-      vi.advanceTimersByTime(AI_SIMULATION_DELAY_MS);
-      fixture.detectChanges();
-      expect(fixture.nativeElement.querySelector('.spinner')).toBeFalsy();
-      expect(fixture.nativeElement.querySelector('.btn--primary svg')).toBeTruthy();
-    });
-
-    it('should render narrative arc text', () => {
-      component.buildSeries();
-      vi.advanceTimersByTime(AI_SIMULATION_DELAY_MS);
-      fixture.detectChanges();
-
-      const arc = fixture.nativeElement.querySelector('.overview-card__arc');
-      expect(arc.textContent).toContain('Takes the audience from awareness');
-    });
-
-    it('should render caption direction and CTA labels', () => {
-      component.buildSeries();
-      vi.advanceTimersByTime(AI_SIMULATION_DELAY_MS);
-      fixture.detectChanges();
-
-      const directionLabels = fixture.nativeElement.querySelectorAll('.direction-label');
-      const ctaLabels = fixture.nativeElement.querySelectorAll('.cta-label');
-      expect(directionLabels.length).toBe(5);
-      expect(ctaLabels.length).toBe(5);
-    });
+  it('selectedPillar resolves to the active pillar object', () => {
+    expect(component.selectedPillar()).not.toBeNull();
+    component.setPillar('missing');
+    expect(component.selectedPillar()).toBeNull();
   });
 });

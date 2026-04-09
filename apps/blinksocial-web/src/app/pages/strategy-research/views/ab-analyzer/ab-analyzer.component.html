@@ -1,144 +1,247 @@
 <div class="ab-analyzer">
-  <div class="input-section">
-    <div class="variant-inputs">
-      <div class="variant-input">
-        <span class="variant-label">Variant A</span>
-        <textarea
-          class="variant-textarea"
-          [ngModel]="variantA()"
-          (ngModelChange)="updateVariantA($event)"
-          placeholder="Paste your first content variant here..."
-          rows="5"
-        ></textarea>
+  <div class="input-panel">
+    <div class="variants-grid">
+      <div class="variant-block">
+        <div class="variant-block__header">
+          <span class="variant-block__head-left">
+            <span class="variant-badge variant-badge--a">A</span>
+            <span class="variant-label">Variant A</span>
+          </span>
+          @if (variantA().length > 0) {
+            <button type="button" class="btn-clear" (click)="clearVariantA()">Clear</button>
+          }
+        </div>
+        <div class="variant-textarea-wrap">
+          <textarea
+            class="variant-textarea"
+            placeholder="Paste your hook, caption, or full copy..."
+            [value]="variantA()"
+            (input)="updateVariantA($any($event.target).value)"
+          ></textarea>
+          <span class="char-counter">{{ formatChars(variantA()) }} chars</span>
+        </div>
       </div>
-      <div class="variant-input">
-        <span class="variant-label">Variant B</span>
-        <textarea
-          class="variant-textarea"
-          [ngModel]="variantB()"
-          (ngModelChange)="updateVariantB($event)"
-          placeholder="Paste your second content variant here..."
-          rows="5"
-        ></textarea>
+
+      <div class="variant-block">
+        <div class="variant-block__header">
+          <span class="variant-block__head-left">
+            <span class="variant-badge variant-badge--b">B</span>
+            <span class="variant-label">Variant B</span>
+          </span>
+          @if (variantB().length > 0) {
+            <button type="button" class="btn-clear" (click)="clearVariantB()">Clear</button>
+          }
+        </div>
+        <div class="variant-textarea-wrap">
+          <textarea
+            class="variant-textarea"
+            placeholder="Paste your hook, caption, or full copy..."
+            [value]="variantB()"
+            (input)="updateVariantB($any($event.target).value)"
+          ></textarea>
+          <span class="char-counter">{{ formatChars(variantB()) }} chars</span>
+        </div>
       </div>
     </div>
 
-    <div class="input-options">
-      <div class="input-option">
-        <span>Content Goal</span>
-        <select [(ngModel)]="selectedGoal">
-          @for (g of goalOptions; track g) {
-            <option [value]="g">{{ g }}</option>
-          }
-        </select>
+    <div class="input-controls">
+      <div class="input-field">
+        <span class="input-field__label">Content Goal</span>
+        <app-dropdown
+          size="sm"
+          [filled]="true"
+          [options]="goalDropdownOptions"
+          [value]="selectedGoal()"
+          (valueChange)="setGoal($event)"
+        />
       </div>
-      <div class="input-option">
-        <span>Platform</span>
-        <select [(ngModel)]="selectedPlatform">
-          @for (p of platformOptions; track p.id) {
-            <option [value]="p.id">{{ p.label }}</option>
-          }
-        </select>
+      <div class="input-field">
+        <span class="input-field__label">Platform</span>
+        <app-dropdown
+          size="sm"
+          [filled]="true"
+          [options]="platformDropdownOptions"
+          [value]="selectedPlatform()"
+          (valueChange)="setPlatform($event)"
+        />
       </div>
+      <button
+        type="button"
+        class="btn-analyze"
+        (click)="analyze()"
+        [disabled]="!canAnalyze()"
+      >
+        @if (isAnalyzing()) {
+          <span class="spinner"></span>
+        } @else {
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M14 2v6a2 2 0 0 0 .245.96l5.51 10.08A2 2 0 0 1 18 22H6a2 2 0 0 1-1.755-2.96l5.51-10.08A2 2 0 0 0 10 8V2"/><path d="M6.453 15h11.094"/><path d="M8.5 2h7"/>
+          </svg>
+        }
+        Analyze with AI
+      </button>
     </div>
-
-    <button
-      class="btn btn--primary"
-      (click)="analyze()"
-      [disabled]="isAnalyzing() || !variantA().trim() || !variantB().trim()"
-    >
-      @if (isAnalyzing()) {
-        <span class="spinner"></span>
-      } @else {
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M10 2v7.527a2 2 0 0 1-.211.896L4.72 20.55a1 1 0 0 0 .9 1.45h12.76a1 1 0 0 0 .9-1.45l-5.069-10.127A2 2 0 0 1 14 9.527V2"/>
-        </svg>
-      }
-      {{ isAnalyzing() ? 'Analyzing...' : 'Analyze with AI' }}
-    </button>
   </div>
 
-  @if (analysis(); as result) {
-    <div class="results">
-      <div class="winner-banner">
-        <div class="winner-banner__content">
-          <span class="winner-banner__label">Winner:</span>
-          <span class="winner-banner__variant">Variant {{ result.winner }}</span>
-          <span class="confidence-badge">{{ result.confidence }} Confidence</span>
+  @if (isAnalyzing()) {
+    <div class="loading-card">
+      <span class="spinner spinner--lg"></span>
+      <p class="loading-card__title">Analyzing your copy variants…</p>
+      <p class="loading-card__subtitle">Scoring hook strength, clarity, resonance, and CTA effectiveness</p>
+    </div>
+  } @else if (!analysis()) {
+    <div class="empty-state">
+      <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M14 2v6a2 2 0 0 0 .245.96l5.51 10.08A2 2 0 0 1 18 22H6a2 2 0 0 1-1.755-2.96l5.51-10.08A2 2 0 0 0 10 8V2"/><path d="M6.453 15h11.094"/><path d="M8.5 2h7"/>
+      </svg>
+      <p class="empty-state__title">Paste two copy variants above and click Analyze with AI</p>
+      <p class="empty-state__subtitle">Get a scored breakdown plus an AI-improved version you can drop straight into production.</p>
+    </div>
+  } @else if (analysis(); as result) {
+    <div class="winner-banner">
+      <div class="winner-banner__head">
+        <div class="winner-banner__title-row">
+          <h3 class="winner-banner__title">Variant {{ result.winner }} Wins</h3>
+          <span [class]="'confidence-badge ' + confidenceClass(result.confidence)">{{ result.confidence }} confidence</span>
         </div>
         <p class="winner-banner__verdict">{{ result.verdict }}</p>
       </div>
+      <div class="winner-circles">
+        <span [class]="'winner-circle ' + winnerCircleClass('A')">A</span>
+        <span [class]="'winner-circle ' + winnerCircleClass('B')">B</span>
+      </div>
+    </div>
 
-      <div class="strengths-weaknesses">
-        <div class="sw-card">
-          <h4 class="sw-card__title">Variant A</h4>
-          <div class="sw-section">
-            <span class="sw-label sw-label--strength">Strengths</span>
-            <ul class="sw-list">
-              @for (s of result.variantA.strengths; track s) {
-                <li>{{ s }}</li>
-              }
-            </ul>
+    <div class="results-card sw-card">
+      <p class="results-card__label">STRENGTHS &amp; WEAKNESSES</p>
+      <div class="sw-grid">
+        <div class="sw-side">
+          <div class="sw-side__head">
+            <span class="variant-badge variant-badge--a">A</span>
+            <span class="sw-side__heading sw-side__heading--a">Variant A</span>
           </div>
-          <div class="sw-section">
-            <span class="sw-label sw-label--weakness">Weaknesses</span>
-            <ul class="sw-list">
-              @for (w of result.variantA.weaknesses; track w) {
-                <li>{{ w }}</li>
-              }
-            </ul>
-          </div>
+          <ul class="sw-list sw-list--strengths">
+            @for (s of result.variantA.strengths; track s) {
+              <li>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+                <span>{{ s }}</span>
+              </li>
+            }
+          </ul>
+          <ul class="sw-list sw-list--weaknesses">
+            @for (w of result.variantA.weaknesses; track w) {
+              <li>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>
+                <span>{{ w }}</span>
+              </li>
+            }
+          </ul>
         </div>
-        <div class="sw-card">
-          <h4 class="sw-card__title">Variant B</h4>
-          <div class="sw-section">
-            <span class="sw-label sw-label--strength">Strengths</span>
-            <ul class="sw-list">
-              @for (s of result.variantB.strengths; track s) {
-                <li>{{ s }}</li>
-              }
-            </ul>
+        <div class="sw-side">
+          <div class="sw-side__head">
+            <span class="variant-badge variant-badge--b">B</span>
+            <span class="sw-side__heading sw-side__heading--b">Variant B</span>
           </div>
-          <div class="sw-section">
-            <span class="sw-label sw-label--weakness">Weaknesses</span>
-            <ul class="sw-list">
-              @for (w of result.variantB.weaknesses; track w) {
-                <li>{{ w }}</li>
-              }
-            </ul>
-          </div>
+          <ul class="sw-list sw-list--strengths">
+            @for (s of result.variantB.strengths; track s) {
+              <li>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+                <span>{{ s }}</span>
+              </li>
+            }
+          </ul>
+          <ul class="sw-list sw-list--weaknesses">
+            @for (w of result.variantB.weaknesses; track w) {
+              <li>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>
+                <span>{{ w }}</span>
+              </li>
+            }
+          </ul>
         </div>
       </div>
+    </div>
 
-      <div class="scores-card">
-        <h4 class="scores-card__title">Score Breakdown</h4>
-        @for (metric of scoreMetrics; track metric.key) {
-          <div class="score-row">
-            <span class="score-row__label">{{ metric.label }}</span>
-            <div class="score-row__bars">
-              <div class="bar-group">
-                <span class="bar-label">A</span>
-                <div class="bar-track">
-                  <div class="bar-fill bar-fill--a" [style.width]="getBarWidth(result.scores[metric.key].a)"></div>
-                </div>
-                <span class="bar-value">{{ result.scores[metric.key].a }}</span>
-              </div>
-              <div class="bar-group">
-                <span class="bar-label">B</span>
-                <div class="bar-track">
-                  <div class="bar-fill bar-fill--b" [style.width]="getBarWidth(result.scores[metric.key].b)"></div>
-                </div>
-                <span class="bar-value">{{ result.scores[metric.key].b }}</span>
-              </div>
-            </div>
+    <div class="results-card score-card">
+      <p class="results-card__label">SCORE BREAKDOWN</p>
+      <div class="score-row score-row--header">
+        <span></span>
+        <div class="score-header-cell">
+          <span class="variant-badge variant-badge--a">A</span>
+          <span class="score-header-cell__caption">out of 10</span>
+        </div>
+        <div class="score-header-cell">
+          <span class="variant-badge variant-badge--b">B</span>
+          <span class="score-header-cell__caption">out of 10</span>
+        </div>
+      </div>
+      @for (metric of scoreMetrics; track metric.key) {
+        <div class="score-row">
+          <span class="score-row__label">{{ metric.label }}</span>
+          <div class="score-bar-cell">
+            <div class="score-bar"><div [class]="'score-bar__fill ' + scoreBarClass('a')" [style.width]="barWidth(scoreFor(metric.key, 'a'))"></div></div>
+            <span class="score-value">{{ scoreFor(metric.key, 'a') }}</span>
           </div>
+          <div class="score-bar-cell">
+            <div class="score-bar"><div [class]="'score-bar__fill ' + scoreBarClass('b')" [style.width]="barWidth(scoreFor(metric.key, 'b'))"></div></div>
+            <span class="score-value">{{ scoreFor(metric.key, 'b') }}</span>
+          </div>
+        </div>
+      }
+    </div>
+
+    <div class="results-card improved-card">
+      <p class="improved-card__label">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"/>
+          <path d="M20 3v4"/><path d="M22 5h-4"/><path d="M4 17v2"/><path d="M5 18H3"/>
+        </svg>
+        <span>AI-COMBINED VERSION</span>
+      </p>
+      <div class="improved-textarea-wrap">
+        <textarea class="improved-textarea" rows="8" readonly [value]="result.improvedVersion"></textarea>
+        <button type="button" class="btn-copy" [class.copied]="copiedImproved()" (click)="copyImproved()" aria-label="Copy improved version" title="Copy to clipboard">
+          @if (copiedImproved()) {
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+          } @else {
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
+          }
+        </button>
+      </div>
+      <p class="improvement-rationale">
+        <span class="improvement-rationale__label">Why this works:</span>
+        {{ result.improvementRationale }}
+      </p>
+
+      <div class="save-as-idea">
+        <p class="save-as-idea__label">SAVE AS IDEA</p>
+        <input
+          type="text"
+          class="save-as-idea__input"
+          [class.error]="ideaTitleError()"
+          placeholder="Idea title..."
+          [value]="ideaTitle()"
+          (input)="setIdeaTitle($any($event.target).value)"
+          [disabled]="ideaSaved()"
+        />
+        @if (ideaTitleError()) {
+          <p class="save-as-idea__error">Add a title to save this idea</p>
         }
-      </div>
-
-      <div class="improved-card">
-        <h4 class="improved-card__title">Improved Version</h4>
-        <p class="improved-card__text">{{ result.improvedVersion }}</p>
-        <button class="btn btn--primary btn--sm" (click)="useImprovedVersion()">Use This Version</button>
+        <button
+          type="button"
+          class="btn-save-idea"
+          [class.saved]="ideaSaved()"
+          [disabled]="ideaSaved()"
+          (click)="saveAsIdea()"
+        >
+          @if (ideaSaved()) {
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+            Saved ✓
+          } @else {
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m19 21-7-4-7 4V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16z"/></svg>
+            Create Idea with this copy →
+          }
+        </button>
       </div>
     </div>
   }

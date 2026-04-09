@@ -3,6 +3,7 @@ import { Component, ElementRef, HostBinding, HostListener, inject, input, output
 export interface DropdownOption {
   value: string;
   label: string;
+  color?: string;
 }
 
 @Component({
@@ -15,9 +16,10 @@ export class DropdownComponent {
 
   options = input.required<DropdownOption[]>();
   value = input.required<string>();
-  size = input<'default' | 'compact'>('default');
+  size = input<'default' | 'compact' | 'sm'>('default');
   fullWidth = input<boolean>(false);
   filled = input<boolean>(false);
+  placeholder = input<string>('');
   valueChange = output<string>();
 
   open = signal(false);
@@ -27,10 +29,17 @@ export class DropdownComponent {
     return this.fullWidth();
   }
 
+  selectedOption = computed(() => this.options().find((o) => o.value === this.value()) ?? null);
+
   selectedLabel = computed(() => {
-    const match = this.options().find((o) => o.value === this.value());
-    return match?.label ?? this.value();
+    const value = this.value();
+    if (!value) return this.placeholder();
+    return this.selectedOption()?.label ?? value;
   });
+
+  selectedColor = computed(() => this.selectedOption()?.color ?? null);
+
+  isPlaceholder = computed(() => !this.value());
 
   toggle(): void {
     this.open.set(!this.open());

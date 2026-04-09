@@ -1,129 +1,232 @@
 <div class="seo-hashtags">
-  <div class="input-panel">
-    <h4 class="input-panel__title has-mock-data" title="Mock data">SEO & Hashtag Strategy</h4>
-    <div class="input-panel__fields">
-      <div class="input-panel__field">
-        <span>Content Pillar</span>
-        <select [(ngModel)]="selectedPillar">
-          @for (p of pillarOptions; track p) {
-            <option [value]="p">{{ p }}</option>
-          }
-        </select>
+  <div class="setup-form">
+    <div class="setup-grid">
+      <div class="setup-field">
+        <span class="setup-field__label">Content Pillar</span>
+        <app-dropdown
+          size="sm"
+          [filled]="true"
+          placeholder="Select pillar"
+          [options]="pillarDropdownOptions"
+          [value]="selectedPillarId()"
+          (valueChange)="setPillar($event)"
+        />
       </div>
-      <div class="input-panel__field">
-        <span>Platform</span>
-        <select [(ngModel)]="selectedPlatform">
-          @for (p of platformOptions; track p.id) {
-            <option [value]="p.id">{{ p.label }}</option>
-          }
-        </select>
+      <div class="setup-field">
+        <span class="setup-field__label">Platform</span>
+        <app-dropdown
+          size="sm"
+          [filled]="true"
+          [options]="platformDropdownOptions"
+          [value]="selectedPlatform()"
+          (valueChange)="setPlatform($event)"
+        />
       </div>
-      <div class="input-panel__field">
-        <span>Content Goal</span>
-        <select [(ngModel)]="selectedGoal">
-          @for (g of goalOptions; track g) {
-            <option [value]="g">{{ g }}</option>
-          }
-        </select>
+      <div class="setup-field">
+        <span class="setup-field__label">Content Goal</span>
+        <app-dropdown
+          size="sm"
+          [filled]="true"
+          [options]="goalDropdownOptions"
+          [value]="selectedGoal()"
+          (valueChange)="setGoal($event)"
+        />
       </div>
     </div>
-    <button class="btn btn--primary" (click)="generate()" [disabled]="isGenerating()">
+
+    <button
+      type="button"
+      class="btn-generate"
+      (click)="generate()"
+      [disabled]="!canGenerate() || isGenerating()"
+    >
       @if (isGenerating()) {
         <span class="spinner"></span>
-      }
-      @if (!isGenerating()) {
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M4 9h16M4 15h16M10 3 8 21M16 3l-2 18"/>
+      } @else {
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="4" x2="20" y1="9" y2="9"/><line x1="4" x2="20" y1="15" y2="15"/><line x1="10" x2="8" y1="3" y2="21"/><line x1="16" x2="14" y1="3" y2="21"/>
         </svg>
       }
-      {{ isGenerating() ? 'Generating...' : 'Generate SEO Strategy' }}
+      Generate SEO Strategy
     </button>
   </div>
 
-  @if (seoData(); as data) {
-    <div class="results">
-      <div class="hashtag-card">
-        <h4 class="card-title">Hashtag Sets</h4>
-        <div class="tab-bar">
-          @for (tab of hashtagTabs; track tab.id) {
-            <button
-              class="tab-btn"
-              [class.tab-btn--active]="activeTab() === tab.id"
-              (click)="setTab(tab.id)"
-            >
-              {{ tab.label }}
-            </button>
+  @if (isGenerating()) {
+    <div class="loading-card">
+      <span class="spinner spinner--lg"></span>
+      <p class="loading-card__title">Building your SEO &amp; hashtag strategy…</p>
+      <p class="loading-card__subtitle">Tuning hashtags, keywords, and trending angles for {{ selectedPlatform() }}</p>
+    </div>
+  } @else if (!seoData()) {
+    <div class="empty-state">
+      <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="4" x2="20" y1="9" y2="9"/><line x1="4" x2="20" y1="15" y2="15"/><line x1="10" x2="8" y1="3" y2="21"/><line x1="16" x2="14" y1="3" y2="21"/>
+      </svg>
+      <p class="empty-state__title">Select a pillar, platform, and goal — then generate</p>
+      <p class="empty-state__subtitle">Returns hashtag tiers, profile keywords, an SEO checklist, and trending angles for your audience.</p>
+    </div>
+  } @else if (seoData(); as data) {
+    <div class="results-card">
+      <div class="results-card__head">
+        <p class="results-card__label">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="4" x2="20" y1="9" y2="9"/><line x1="4" x2="20" y1="15" y2="15"/><line x1="10" x2="8" y1="3" y2="21"/><line x1="16" x2="14" y1="3" y2="21"/>
+          </svg>
+          HASHTAG SETS
+        </p>
+        @if (selectedPillar(); as p) {
+          <span class="pillar-badge" [style.--pillar-color]="p.color">
+            <span class="pillar-badge__dot"></span>
+            {{ p.name }}
+          </span>
+        }
+      </div>
+      <div class="hashtag-tabs">
+        @for (tab of hashtagTabs; track tab.id) {
+          <button
+            type="button"
+            [class]="'hashtag-tab tab--' + tab.id + (activeTab() === tab.id ? ' active' : '')"
+            (click)="setTab(tab.id)"
+          >{{ tab.label }}</button>
+        }
+      </div>
+
+      <div [class]="'hashtag-grid hashtag-grid--' + activeTab()">
+        @for (h of getActiveHashtags(); track h.tag) {
+          <button type="button" class="hashtag-chip" [class.copied]="isCopiedHashtag(h.tag)" (click)="copyTag(h.tag)">
+            @if (isCopiedHashtag(h.tag)) {
+              <svg class="hashtag-chip__icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M20 6 9 17l-5-5"/>
+              </svg>
+            } @else {
+              <svg class="hashtag-chip__icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="4" x2="20" y1="9" y2="9"/><line x1="4" x2="20" y1="15" y2="15"/><line x1="10" x2="8" y1="3" y2="21"/><line x1="16" x2="14" y1="3" y2="21"/>
+              </svg>
+            }
+            <span>{{ h.tag.replace('#', '') }}</span>
+            <span class="hashtag-chip__count">{{ h.posts }} posts</span>
+          </button>
+        }
+      </div>
+
+      <div class="hashtag-actions">
+        <button type="button" class="btn-copy-all" [class.copied]="isCopiedTab(activeTab())" (click)="copyAll(activeTab())">
+          @if (isCopiedTab(activeTab())) {
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+            Copied!
+          } @else {
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
+            Copy All
           }
-        </div>
-        <div class="hashtag-chips">
-          @for (h of getActiveHashtags(); track h.tag) {
-            <button
-              class="hashtag-chip"
-              (click)="copyTag(h.tag)"
-              title="Click to copy"
-            >
-              <span class="hashtag-chip__tag">{{ h.tag }}</span>
-              <span class="hashtag-chip__count">{{ h.posts }}</span>
-            </button>
+        </button>
+      </div>
+    </div>
+
+    <div class="results-card">
+      <p class="results-card__label">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
+        </svg>
+        BIO &amp; PROFILE KEYWORDS
+      </p>
+
+      <div class="bio-subsection">
+        <p class="bio-subsection__label">Recommended keywords for your bio</p>
+        <div class="keyword-row">
+          @for (k of data.keywords; track k) {
+            <span class="keyword-chip">{{ k }}</span>
           }
         </div>
       </div>
 
-      <div class="keywords-card">
-        <h4 class="card-title">Bio & Profile Keywords</h4>
-        <div class="keyword-chips">
-          @for (kw of data.keywords; track kw) {
-            <span class="keyword-chip">{{ kw }}</span>
+      <div class="bio-subsection">
+        <p class="bio-subsection__label">Search intent your profile should satisfy</p>
+        <ul class="search-intents">
+          @for (intent of data.searchIntents; track intent) {
+            <li>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.801 10A10 10 0 1 1 17 3.335"/><path d="m9 11 3 3L22 4"/></svg>
+              <span>{{ intent }}</span>
+            </li>
           }
-        </div>
-        <div class="example-bio">
-          <span class="example-bio__label">Example Bio:</span>
-          <p class="example-bio__text">{{ data.exampleBio }}</p>
-        </div>
+        </ul>
       </div>
 
-      <div class="checklist-card">
-        <h4 class="card-title">Caption SEO Checklist</h4>
-        <div class="checklist">
-          @for (item of data.checklist; track $index; let i = $index) {
-            <div
-              class="checklist-item"
-              [class.checklist-item--checked]="isChecked(i)"
-              (click)="toggleCheckItem(i)"
-              (keydown.enter)="toggleCheckItem(i)"
-              tabindex="0"
-              role="checkbox"
-              [attr.aria-checked]="isChecked(i)"
-            >
-              <div class="checklist-checkbox">
-                @if (isChecked(i)) {
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M20 6 9 17l-5-5"/>
-                  </svg>
+      <div class="bio-subsection">
+        <p class="bio-subsection__label">Example optimized bio</p>
+        <div class="bio-box">
+          <p>{{ data.exampleBio }}</p>
+          <button type="button" class="btn-copy-bio" [class.copied]="copiedBio()" (click)="copyBio()" aria-label="Copy bio">
+            @if (copiedBio()) {
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+            } @else {
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
+            }
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div class="results-card">
+      <p class="results-card__label">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="m3 17 2 2 4-4"/><path d="m3 7 2 2 4-4"/><path d="M13 6h8"/><path d="M13 12h8"/><path d="M13 18h8"/>
+        </svg>
+        CAPTION SEO CHECKLIST
+      </p>
+      <div class="checklist">
+        @for (item of data.checklist; track item.label; let i = $index) {
+          <button type="button" class="checklist-item" [class.checked]="isChecked(i)" (click)="toggleCheckItem(i)">
+            <svg class="checklist-item__icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.801 10A10 10 0 1 1 17 3.335"/><path d="m9 11 3 3L22 4"/></svg>
+            <span class="checklist-item__body">
+              <span class="checklist-item__label">{{ item.label }}</span>
+              <span class="checklist-item__tip">{{ item.tip }}</span>
+            </span>
+          </button>
+        }
+      </div>
+    </div>
+
+    <div class="results-card">
+      <p class="results-card__label">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/>
+        </svg>
+        TRENDING ANGLES
+      </p>
+      <div class="angle-grid">
+        @for (angle of data.trending; track angle.title; let i = $index) {
+          <div class="angle-card" [class.saved]="isAngleSaved(i)">
+            <div class="angle-card__head">
+              <p class="angle-card__title">{{ angle.title }}</p>
+              <span [class]="'virality-badge ' + getViralityClass(angle.virality)">{{ angle.virality }}</span>
+            </div>
+            <p class="angle-hook">"{{ angle.hook }}"</p>
+            <div class="angle-card__footer">
+              <input
+                type="text"
+                class="angle-idea-title"
+                placeholder="Idea title..."
+                [value]="angleIdeaTitles()[i] || ''"
+                [disabled]="isAngleSaved(i)"
+                (input)="setAngleIdeaTitle(i, $any($event.target).value)"
+              />
+              <button
+                type="button"
+                class="btn-create-idea"
+                [class.saved]="isAngleSaved(i)"
+                [disabled]="isAngleSaved(i)"
+                (click)="createIdeaForAngle(i)"
+              >
+                @if (isAngleSaved(i)) {
+                  Created ✓
+                } @else {
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m19 21-7-4-7 4V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16z"/></svg>
+                  Create Idea →
                 }
-              </div>
-              <span class="checklist-text">{{ item }}</span>
+              </button>
             </div>
-          }
-        </div>
-      </div>
-
-      <div class="trending-card">
-        <h4 class="card-title">Trending Angles</h4>
-        <div class="trending-grid">
-          @for (t of data.trending; track t.title) {
-            <div class="trending-item">
-              <div class="trending-item__header">
-                <h5 class="trending-item__title">{{ t.title }}</h5>
-                <span class="virality-badge" [ngClass]="getViralityClass(t.virality)">{{ t.virality }}</span>
-              </div>
-              <div class="trending-item__hook">
-                <span class="hook-label">Hook:</span>
-                <span class="hook-text">{{ t.hook }}</span>
-              </div>
-            </div>
-          }
-        </div>
+          </div>
+        }
       </div>
     </div>
   }
