@@ -1,583 +1,322 @@
-import { TestBed } from '@angular/core/testing';
+import { TestBed, ComponentFixture } from '@angular/core/testing';
 import { StrategicPillarsComponent } from './strategic-pillars.component';
 import { AI_SIMULATION_DELAY_MS } from '../../strategy-research.constants';
+import type { ContentPillar, PillarGoal } from '../../strategy-research.types';
+
+function makePillar(overrides: Partial<ContentPillar> = {}): ContentPillar {
+  return {
+    id: 'p-test',
+    name: 'Test Pillar',
+    description: 'Desc',
+    color: '#abcdef',
+    goals: [],
+    objectiveIds: [],
+    ...overrides,
+  };
+}
 
 describe('StrategicPillarsComponent', () => {
+  let fixture: ComponentFixture<StrategicPillarsComponent>;
   let component: StrategicPillarsComponent;
-  let fixture: ReturnType<typeof TestBed.createComponent<StrategicPillarsComponent>>;
-  let nativeElement: HTMLElement;
 
-  beforeEach(async () => {
-    vi.useFakeTimers();
-    await TestBed.configureTestingModule({
-      imports: [StrategicPillarsComponent],
-    }).compileComponents();
-
+  beforeEach(() => {
+    TestBed.configureTestingModule({ imports: [StrategicPillarsComponent] });
     fixture = TestBed.createComponent(StrategicPillarsComponent);
     component = fixture.componentInstance;
-    nativeElement = fixture.nativeElement;
     fixture.detectChanges();
   });
 
   afterEach(() => {
-    vi.useRealTimers();
+    if (component.showAddForm()) component.cancelAdd();
+    fixture.destroy();
+    document.body.style.overflow = '';
   });
 
-  it('should create', () => {
+  it('should create with default pillars and segments', () => {
     expect(component).toBeTruthy();
+    expect(component.pillars().length).toBeGreaterThan(0);
+    expect(component.audienceSegments().length).toBeGreaterThan(0);
   });
 
-  // --- Rendering ---
-
-  it('should render pillar cards', () => {
-    const cards = nativeElement.querySelectorAll('.pillar-card');
-    expect(cards.length).toBeGreaterThan(0);
+  it('toggleSegment flips selection', () => {
+    const id = component.audienceSegments()[0].id;
+    expect(component.isSegmentSelected(id)).toBe(true);
+    component.toggleSegment(id);
+    expect(component.isSegmentSelected(id)).toBe(false);
+    component.toggleSegment(id);
+    expect(component.isSegmentSelected(id)).toBe(true);
   });
 
-  it('should show add pillar button', () => {
-    const btn = nativeElement.querySelector('.btn-add');
-    expect(btn).toBeTruthy();
-    expect(btn?.textContent).toContain('Add Pillar');
+  it('getPillarById returns matching pillar or undefined', () => {
+    const id = component.pillars()[0].id;
+    expect(component.getPillarById(id)?.id).toBe(id);
+    expect(component.getPillarById('missing')).toBeUndefined();
   });
 
-  it('should not show add form initially', () => {
-    expect(nativeElement.querySelector('.add-form')).toBeFalsy();
-  });
-
-  it('should render section header', () => {
-    expect(nativeElement.querySelector('.section-header h2')?.textContent).toContain('Strategic Pillars');
-  });
-
-  it('should render distribution section', () => {
-    expect(nativeElement.querySelector('.distribution-section')).toBeTruthy();
-    expect(nativeElement.querySelector('.distribution-section h3')?.textContent).toContain('Content Distribution Analysis');
-  });
-
-  // --- Add form ---
-
-  it('should open add form and reset fields', () => {
-    component.newPillarName = 'leftover';
+  it('openAddForm initializes blank state and opens modal', () => {
     component.openAddForm();
     expect(component.showAddForm()).toBe(true);
+    expect(component.modalEditingId()).toBeNull();
     expect(component.newPillarName).toBe('');
-    expect(component.newPillarDescription).toBe('');
-    expect(component.editingId()).toBeNull();
-  });
-
-  it('should render add form when showAddForm is true', () => {
-    component.openAddForm();
-    fixture.detectChanges();
-
-    expect(nativeElement.querySelector('.add-form')).toBeTruthy();
-    expect(nativeElement.querySelector('.add-form h3')?.textContent).toContain('New Pillar');
-  });
-
-  it('should render color swatches in add form', () => {
-    component.openAddForm();
-    fixture.detectChanges();
-
-    const swatches = nativeElement.querySelectorAll('.add-form .color-swatch');
-    expect(swatches.length).toBe(10);
-  });
-
-  it('should cancel add form', () => {
-    component.openAddForm();
-    expect(component.showAddForm()).toBe(true);
+    expect(component.newGoals().length).toBe(0);
     component.cancelAdd();
     expect(component.showAddForm()).toBe(false);
   });
 
-  it('should add a new pillar', () => {
-    const initialCount = component.pillars().length;
-    component.newPillarName = 'Test Pillar';
-    component.newPillarDescription = 'Test description';
-    component.newPillarColor = '#d94e33';
-    component.addPillar();
+  it('openEditModal preloads pillar data and saves goal ids', () => {
+    const pillar = makePillar({
+      goals: [{ id: 'g1', metric: 'X', target: 10, unit: '%', period: 'monthly' }],
+      objectiveIds: ['o1'],
+    });
+    component.openEditModal(pillar);
+    expect(component.modalEditingId()).toBe('p-test');
+    expect(component.newPillarName).toBe('Test Pillar');
+    expect(component.isObjectiveLinked('o1')).toBe(true);
+    expect(component.isGoalSaved('g1')).toBe(true);
+    component.cancelAdd();
+  });
 
-    expect(component.pillars().length).toBe(initialCount + 1);
-    const added = component.pillars()[component.pillars().length - 1];
-    expect(added.name).toBe('Test Pillar');
-    expect(added.description).toBe('Test description');
-    expect(added.color).toBe('#d94e33');
-    expect(added.goals).toEqual([]);
+  it('openEditModalAddGoal opens edit modal with a new draft goal', () => {
+    const pillar = makePillar();
+    component.openEditModalAddGoal(pillar);
+    expect(component.showAddForm()).toBe(true);
+    expect(component.newGoals().length).toBe(1);
+    expect(component.hasDraftGoal()).toBe(true);
+    component.cancelAdd();
+  });
+
+  it('toggleLinkedObjective adds and removes id', () => {
+    component.toggleLinkedObjective('obj-1');
+    expect(component.isObjectiveLinked('obj-1')).toBe(true);
+    component.toggleLinkedObjective('obj-1');
+    expect(component.isObjectiveLinked('obj-1')).toBe(false);
+  });
+
+  it('addGoal appends a draft goal and removeGoal drops it', () => {
+    component.addGoal();
+    const goal = component.newGoals()[0];
+    expect(goal.unit).toBe('%');
+    component.removeGoal(goal.id);
+    expect(component.newGoals().length).toBe(0);
+  });
+
+  it('saveGoal marks the draft as saved', () => {
+    component.addGoal();
+    const id = component.newGoals()[0].id;
+    expect(component.isGoalSaved(id)).toBe(false);
+    component.saveGoal(id);
+    expect(component.isGoalSaved(id)).toBe(true);
+    expect(component.hasDraftGoal()).toBe(false);
+  });
+
+  it('updateGoalPeriod patches the goal period and leaves siblings alone', () => {
+    component.addGoal();
+    component.addGoal();
+    const id = component.newGoals()[0].id;
+    component.updateGoalPeriod(id, 'yearly');
+    expect(component.newGoals()[0].period).toBe('yearly');
+    expect(component.newGoals()[1].period).toBe('monthly');
+  });
+
+  it('suggestGoals appends two pre-saved goals after timer', () => {
+    vi.useFakeTimers();
+    component.suggestGoals();
+    expect(component.isSuggestingGoals()).toBe(true);
+    vi.advanceTimersByTime(AI_SIMULATION_DELAY_MS);
+    expect(component.isSuggestingGoals()).toBe(false);
+    expect(component.newGoals().length).toBe(2);
+    expect(component.hasDraftGoal()).toBe(false);
+    vi.useRealTimers();
+  });
+
+  it('addPillar creates a new pillar in create mode', () => {
+    const before = component.pillars().length;
+    component.openAddForm();
+    component.newPillarName = 'New Pillar';
+    component.newPillarDescription = 'desc';
+    component.addPillar();
+    expect(component.pillars().length).toBe(before + 1);
     expect(component.showAddForm()).toBe(false);
   });
 
-  it('should not add pillar with empty name', () => {
-    const initialCount = component.pillars().length;
+  it('addPillar is a no-op when name is blank', () => {
+    const before = component.pillars().length;
+    component.openAddForm();
     component.newPillarName = '   ';
     component.addPillar();
-    expect(component.pillars().length).toBe(initialCount);
+    expect(component.pillars().length).toBe(before);
   });
 
-  // --- Edit ---
-
-  it('should start editing a pillar', () => {
-    const pillar = component.pillars()[0];
-    component.startEdit(pillar);
-    expect(component.editingId()).toBe(pillar.id);
-    expect(component.editName).toBe(pillar.name);
-    expect(component.editDescription).toBe(pillar.description);
-    expect(component.editColor).toBe(pillar.color);
-    expect(component.showAddForm()).toBe(false);
+  it('addPillar updates an existing pillar in edit mode', () => {
+    const target = component.pillars()[0];
+    component.openEditModal(target);
+    component.newPillarName = 'Edited';
+    component.addPillar();
+    const updated = component.pillars().find(p => p.id === target.id);
+    expect(updated?.name).toBe('Edited');
+    expect(component.modalEditingId()).toBeNull();
   });
 
-  it('should render edit form when editingId matches', () => {
-    const pillar = component.pillars()[0];
-    component.startEdit(pillar);
-    fixture.detectChanges();
-
-    expect(nativeElement.querySelector('.edit-form')).toBeTruthy();
-  });
-
-  it('should close add form when starting edit', () => {
+  it('addPillar drops draft goals with empty metric', () => {
     component.openAddForm();
-    expect(component.showAddForm()).toBe(true);
-
-    const pillar = component.pillars()[0];
-    component.startEdit(pillar);
-    expect(component.showAddForm()).toBe(false);
+    component.newPillarName = 'X';
+    component.addGoal(); // metric is ''
+    component.addPillar();
+    const created = component.pillars().at(-1);
+    expect(created?.goals?.length).toBe(0);
   });
 
-  it('should cancel edit', () => {
-    const pillar = component.pillars()[0];
-    component.startEdit(pillar);
-    expect(component.editingId()).toBe(pillar.id);
-
+  it('startEdit / saveEdit / cancelEdit on a pillar inline', () => {
+    const target = component.pillars()[0];
+    component.startEdit(target);
+    expect(component.editingId()).toBe(target.id);
+    component.editName = 'Renamed';
+    component.editDescription = 'New';
+    component.editColor = '#000';
+    component.saveEdit(target.id);
+    expect(component.pillars().find(p => p.id === target.id)?.name).toBe('Renamed');
+    component.startEdit(target);
     component.cancelEdit();
     expect(component.editingId()).toBeNull();
   });
 
-  it('should save edit', () => {
-    const pillar = component.pillars()[0];
-    component.startEdit(pillar);
-
-    component.editName = 'Updated Name';
-    component.editDescription = 'Updated Desc';
-    component.editColor = '#f59e0b';
-    component.saveEdit(pillar.id);
-
-    const updated = component.pillars().find(p => p.id === pillar.id)!;
-    expect(updated.name).toBe('Updated Name');
-    expect(updated.description).toBe('Updated Desc');
-    expect(updated.color).toBe('#f59e0b');
-    expect(component.editingId()).toBeNull();
+  it('deletePillar removes the pillar', () => {
+    const id = component.pillars()[0].id;
+    component.deletePillar(id);
+    expect(component.pillars().find(p => p.id === id)).toBeUndefined();
   });
 
-  // --- Delete ---
-
-  it('should delete a pillar', () => {
-    const initialCount = component.pillars().length;
-    const firstId = component.pillars()[0].id;
-    component.deletePillar(firstId);
-    expect(component.pillars().length).toBe(initialCount - 1);
-    expect(component.pillars().find(p => p.id === firstId)).toBeUndefined();
+  it('getGoalProgress handles missing/zero values and clamps to 100', () => {
+    const partial: PillarGoal = { id: 'g', metric: '', target: 10, unit: '', period: 'monthly', current: 5 };
+    expect(component.getGoalProgress(partial)).toBe(50);
+    expect(component.getGoalProgress({ ...partial, current: 100 })).toBe(100);
+    expect(component.getGoalProgress({ ...partial, target: 0 })).toBe(0);
+    expect(component.getGoalProgress({ ...partial, current: undefined })).toBe(0);
   });
 
-  // --- Goal progress ---
-
-  it('should return 0 when goal has no current value', () => {
-    expect(component.getGoalProgress({ id: 'g1', metric: 'Views', target: 100, unit: 'views', period: 'monthly' })).toBe(0);
-  });
-
-  it('should return 0 when goal target is 0', () => {
-    expect(component.getGoalProgress({ id: 'g1', metric: 'Views', target: 0, current: 50, unit: 'views', period: 'monthly' })).toBe(0);
-  });
-
-  it('should calculate correct progress percentage', () => {
-    expect(component.getGoalProgress({ id: 'g1', metric: 'Views', target: 100, current: 50, unit: 'views', period: 'monthly' })).toBe(50);
-  });
-
-  it('should cap progress at 100%', () => {
-    expect(component.getGoalProgress({ id: 'g1', metric: 'Views', target: 50, current: 100, unit: 'views', period: 'monthly' })).toBe(100);
-  });
-
-  it('should round progress to nearest integer', () => {
-    expect(component.getGoalProgress({ id: 'g1', metric: 'Views', target: 3, current: 1, unit: 'views', period: 'monthly' })).toBe(33);
-  });
-
-  // --- Analyze distribution ---
-
-  it('should analyze distribution (timer-based)', () => {
+  it('analyzeDistribution is a no-op when postsPerWeek is invalid', () => {
+    component.postsPerWeek.set(null);
     component.analyzeDistribution();
-    expect(component.isAnalyzing()).toBe(true);
-
-    vi.advanceTimersByTime(AI_SIMULATION_DELAY_MS);
-    expect(component.isAnalyzing()).toBe(false);
-  });
-
-  it('should show spinner during analysis', () => {
+    expect(component.investmentPlan()).toBeNull();
+    component.postsPerWeek.set(0);
     component.analyzeDistribution();
-    fixture.detectChanges();
-
-    const btn = nativeElement.querySelector('.btn-analyze') as HTMLButtonElement;
-    expect(btn.disabled).toBe(true);
-    expect(btn.textContent).toContain('Analyzing...');
-    expect(nativeElement.querySelector('.btn-analyze .spinner')).toBeTruthy();
-
-    vi.advanceTimersByTime(AI_SIMULATION_DELAY_MS);
-    fixture.detectChanges();
-
-    expect(btn.disabled).toBe(false);
-    expect(btn.textContent).toContain('Analyze');
+    expect(component.investmentPlan()).toBeNull();
   });
 
-  // --- Posts per week ---
-
-  it('should have default posts per week of 7', () => {
-    expect(component.postsPerWeek()).toBe(7);
-  });
-
-  // --- Preset colors ---
-
-  it('should have 10 preset colors', () => {
-    expect(component.presetColors.length).toBe(10);
-  });
-
-  // --- View mode vs edit mode rendering ---
-
-  it('should show view mode with name and description by default', () => {
-    const cardHeader = nativeElement.querySelector('.card-header h3');
-    expect(cardHeader).toBeTruthy();
-    expect(nativeElement.querySelector('.card-description')).toBeTruthy();
-  });
-
-  it('should show card action buttons (edit and delete) in view mode', () => {
-    const editBtn = nativeElement.querySelector('.card-actions .btn-icon');
-    const deleteBtn = nativeElement.querySelector('.card-actions .btn-delete');
-    expect(editBtn).toBeTruthy();
-    expect(deleteBtn).toBeTruthy();
-  });
-
-  // --- Goals rendering ---
-
-  it('should render goals section when pillar has goals', () => {
-    component.pillars.update(list =>
-      list.map((p, i) =>
-        i === 0
-          ? {
-              ...p,
-              goals: [
-                { id: 'g1', metric: 'Views', target: 1000, current: 500, unit: 'views', period: 'monthly' as const },
-                { id: 'g2', metric: 'Likes', target: 200, current: 50, unit: 'likes', period: 'monthly' as const },
-              ],
-            }
-          : p
-      )
-    );
-    fixture.detectChanges();
-
-    const goalsSection = nativeElement.querySelector('.goals-section');
-    expect(goalsSection).toBeTruthy();
-    expect(goalsSection?.querySelector('h4')?.textContent).toContain('Goals');
-    const goalItems = nativeElement.querySelectorAll('.goal-item');
-    expect(goalItems.length).toBe(2);
-  });
-
-  it('should render goal progress bars with correct width', () => {
-    component.pillars.update(list =>
-      list.map((p, i) =>
-        i === 0
-          ? {
-              ...p,
-              goals: [{ id: 'g1', metric: 'Views', target: 100, current: 75, unit: 'views', period: 'monthly' as const }],
-            }
-          : p
-      )
-    );
-    fixture.detectChanges();
-
-    const progressFill = nativeElement.querySelector('.progress-fill') as HTMLElement;
-    expect(progressFill).toBeTruthy();
-    expect(progressFill.style.width).toBe('75%');
-  });
-
-  it('should display goal metric and value text', () => {
-    component.pillars.update(list =>
-      list.map((p, i) =>
-        i === 0
-          ? {
-              ...p,
-              goals: [{ id: 'g1', metric: 'Views', target: 100, current: 50, unit: 'views', period: 'monthly' as const }],
-            }
-          : p
-      )
-    );
-    fixture.detectChanges();
-
-    const goalLabel = nativeElement.querySelector('.goal-label');
-    expect(goalLabel?.textContent).toContain('Views');
-    expect(goalLabel?.textContent).toContain('50 / 100 views');
-  });
-
-  it('should not render goals section when pillar has no goals', () => {
-    // Default pillars have no goals
-    const goalsSection = nativeElement.querySelector('.goals-section');
-    expect(goalsSection).toBeFalsy();
-  });
-
-  it('should not render goals section when pillar has empty goals array', () => {
-    component.pillars.update(list =>
-      list.map((p, i) => (i === 0 ? { ...p, goals: [] } : p))
-    );
-    fixture.detectChanges();
-    expect(nativeElement.querySelector('.goals-section')).toBeFalsy();
-  });
-
-  it('should display goal value with 0 when current is undefined', () => {
-    component.pillars.update(list =>
-      list.map((p, i) =>
-        i === 0
-          ? {
-              ...p,
-              goals: [{ id: 'g1', metric: 'Reach', target: 500, unit: 'impressions', period: 'monthly' as const }],
-            }
-          : p
-      )
-    );
-    fixture.detectChanges();
-
-    const goalValue = nativeElement.querySelector('.goal-value');
-    expect(goalValue?.textContent).toContain('0 / 500');
-  });
-
-  // --- Color swatch click in add form ---
-
-  it('should change newPillarColor when clicking a color swatch in add form', () => {
-    component.openAddForm();
-    fixture.detectChanges();
-
-    const swatches = nativeElement.querySelectorAll('.add-form .color-swatch') as NodeListOf<HTMLButtonElement>;
-    expect(swatches.length).toBeGreaterThan(1);
-
-    // Click the second swatch
-    swatches[1].click();
-    fixture.detectChanges();
-    expect(component.newPillarColor).toBe(component.presetColors[1]);
-  });
-
-  // --- Color swatch click in edit form ---
-
-  it('should change editColor when clicking a color swatch in edit form', () => {
-    const pillar = component.pillars()[0];
-    component.startEdit(pillar);
-    fixture.detectChanges();
-
-    const swatches = nativeElement.querySelectorAll('.edit-form .color-swatch') as NodeListOf<HTMLButtonElement>;
-    expect(swatches.length).toBeGreaterThan(1);
-
-    swatches[2].click();
-    fixture.detectChanges();
-    expect(component.editColor).toBe(component.presetColors[2]);
-  });
-
-  // --- Edit and Delete via DOM clicks ---
-
-  it('should start edit when clicking the edit button in DOM', () => {
-    const editBtn = nativeElement.querySelector('.card-actions .btn-icon') as HTMLButtonElement;
-    editBtn.click();
-    fixture.detectChanges();
-
-    expect(component.editingId()).toBe(component.pillars()[0].id);
-    expect(nativeElement.querySelector('.edit-form')).toBeTruthy();
-  });
-
-  it('should delete pillar when clicking the delete button in DOM', () => {
-    const initialCount = component.pillars().length;
-    const deleteBtn = nativeElement.querySelector('.card-actions .btn-delete') as HTMLButtonElement;
-    deleteBtn.click();
-    fixture.detectChanges();
-
-    expect(component.pillars().length).toBe(initialCount - 1);
-  });
-
-  it('should cancel edit from DOM cancel button', () => {
-    const pillar = component.pillars()[0];
-    component.startEdit(pillar);
-    fixture.detectChanges();
-
-    const cancelBtn = nativeElement.querySelector('.edit-form .btn-cancel') as HTMLButtonElement;
-    cancelBtn.click();
-    fixture.detectChanges();
-
-    expect(component.editingId()).toBeNull();
-    expect(nativeElement.querySelector('.edit-form')).toBeFalsy();
-  });
-
-  it('should save edit from DOM save button', () => {
-    const pillar = component.pillars()[0];
-    component.startEdit(pillar);
-    component.editName = 'DOM Saved';
-    fixture.detectChanges();
-
-    const saveBtn = nativeElement.querySelector('.edit-form .btn-save') as HTMLButtonElement;
-    saveBtn.click();
-    fixture.detectChanges();
-
-    expect(component.pillars()[0].name).toBe('DOM Saved');
-  });
-
-  // --- Add form DOM interactions ---
-
-  it('should cancel add form via DOM cancel button', () => {
-    component.openAddForm();
-    fixture.detectChanges();
-
-    const cancelBtn = nativeElement.querySelector('.add-form .btn-cancel') as HTMLButtonElement;
-    cancelBtn.click();
-    fixture.detectChanges();
-
-    expect(component.showAddForm()).toBe(false);
-    expect(nativeElement.querySelector('.add-form')).toBeFalsy();
-  });
-
-  it('should add pillar via DOM save button', () => {
-    component.openAddForm();
-    component.newPillarName = 'DOM Pillar';
-    component.newPillarDescription = 'DOM desc';
-    fixture.detectChanges();
-
-    const saveBtn = nativeElement.querySelector('.add-form .btn-save') as HTMLButtonElement;
-    saveBtn.click();
-    fixture.detectChanges();
-
-    const lastPillar = component.pillars()[component.pillars().length - 1];
-    expect(lastPillar.name).toBe('DOM Pillar');
-  });
-
-  // --- postsPerWeek signal update ---
-
-  it('should update postsPerWeek signal', () => {
-    component.postsPerWeek.set(14);
-    expect(component.postsPerWeek()).toBe(14);
-  });
-
-  // --- Analyze via DOM click ---
-
-  it('should trigger analyzeDistribution via DOM button click', () => {
-    const analyzeBtn = nativeElement.querySelector('.btn-analyze') as HTMLButtonElement;
-    analyzeBtn.click();
+  it('analyzeDistribution populates investment plan after timer', () => {
+    vi.useFakeTimers();
+    component.postsPerWeek.set(10);
+    component.analyzeDistribution();
     expect(component.isAnalyzing()).toBe(true);
     vi.advanceTimersByTime(AI_SIMULATION_DELAY_MS);
     expect(component.isAnalyzing()).toBe(false);
+    const plan = component.investmentPlan();
+    expect(plan).toBeTruthy();
+    expect(plan?.pillarAllocations.length).toBe(component.pillars().length);
+    expect(plan?.platformAllocations.length).toBe(4);
+    expect(plan?.quickWins.length).toBeGreaterThan(0);
+    vi.useRealTimers();
   });
 
-  // --- Color swatch selected class ---
+  it('renders header and add pillar button', () => {
+    const el = fixture.nativeElement as HTMLElement;
+    expect(el.querySelector('.page-header-title')?.textContent).toContain('Content Pillars');
+    expect(el.querySelector('.btn-add')).toBeTruthy();
+  });
 
-  it('should apply selected class to matching color swatch in add form', () => {
+  it('clicking add button opens the modal (teleported to body)', () => {
+    const btn = (fixture.nativeElement as HTMLElement).querySelector('.btn-add') as HTMLButtonElement;
+    btn.click();
+    fixture.detectChanges();
+    expect(component.showAddForm()).toBe(true);
+    expect(document.body.querySelector('.app-modal')).toBeTruthy();
+    component.cancelAdd();
+    fixture.detectChanges();
+  });
+
+  it('renders modal content when opened (covers template bindings)', () => {
+    component.openAddForm();
+    component.newPillarName = 'Pillar';
+    component.newPillarDescription = 'Desc';
+    component.toggleLinkedObjective('o1');
+    component.addGoal();
+    fixture.detectChanges();
+    const modal = document.body.querySelector('.app-modal') as HTMLElement;
+    expect(modal).toBeTruthy();
+    expect(modal.querySelector('.modal-title')?.textContent).toContain('New Content Pillar');
+    expect(modal.querySelector('.field-input')).toBeTruthy();
+    expect(modal.querySelectorAll('.color-swatch').length).toBeGreaterThan(0);
+    component.cancelAdd();
+    fixture.detectChanges();
+  });
+
+  it('modal title flips to Edit Pillar in edit mode', () => {
+    const target = component.pillars()[0];
+    component.openEditModal(target);
+    fixture.detectChanges();
+    const modal = document.body.querySelector('.app-modal') as HTMLElement;
+    expect(modal.querySelector('.modal-title')?.textContent).toContain('Edit Pillar');
+    component.cancelAdd();
+    fixture.detectChanges();
+  });
+
+  it('renders distribution results after analyze', () => {
+    vi.useFakeTimers();
+    component.postsPerWeek.set(10);
+    component.analyzeDistribution();
+    vi.advanceTimersByTime(AI_SIMULATION_DELAY_MS);
+    fixture.detectChanges();
+    const el = fixture.nativeElement as HTMLElement;
+    expect(el.querySelector('.distribution-results')).toBeTruthy();
+    expect(el.querySelectorAll('.alloc-row').length).toBeGreaterThan(0);
+    expect(el.querySelectorAll('.platform-row').length).toBe(4);
+    expect(el.querySelectorAll('.quick-win').length).toBeGreaterThan(0);
+    vi.useRealTimers();
+  });
+
+  it('destroys cleanly while modal is open', () => {
     component.openAddForm();
     fixture.detectChanges();
-
-    const swatches = nativeElement.querySelectorAll('.add-form .color-swatch');
-    expect(swatches[0].classList.contains('selected')).toBe(true);
-    expect(swatches[1].classList.contains('selected')).toBe(false);
+    fixture.destroy();
+    expect(document.body.style.overflow).toBe('');
   });
 
-  it('should apply selected class to matching color swatch in edit form', () => {
-    const pillar = component.pillars()[0];
-    component.startEdit(pillar);
+  it('accepts linkedObjectives input from parent', () => {
+    fixture.componentRef.setInput('linkedObjectives', [
+      { id: 'o1', category: 'growth' as const, statement: 'Grow', target: 1000, unit: 'followers', timeframe: 'Q1', status: 'on-track' as const },
+    ]);
     fixture.detectChanges();
-
-    const swatches = nativeElement.querySelectorAll('.edit-form .color-swatch');
-    const selectedIndex = component.presetColors.indexOf(pillar.color);
-    if (selectedIndex >= 0) {
-      expect(swatches[selectedIndex].classList.contains('selected')).toBe(true);
-    }
+    expect(component.linkedObjectives().length).toBe(1);
   });
 
-  // --- Pillar card border color ---
-
-  it('should apply border-top-color to pillar cards', () => {
-    const card = nativeElement.querySelector('.pillar-card') as HTMLElement;
-    expect(card).toBeTruthy();
-    expect(card.style.borderTopColor).toBeTruthy();
+  it('analyzeDistribution handles >5 pillars (modulo wrap)', () => {
+    vi.useFakeTimers();
+    component.pillars.update(list => [
+      ...list,
+      { id: 'p-extra', name: 'Extra', description: 'd', color: '#000', goals: [], objectiveIds: [] },
+    ]);
+    component.postsPerWeek.set(20);
+    component.analyzeDistribution();
+    vi.advanceTimersByTime(AI_SIMULATION_DELAY_MS);
+    expect(component.investmentPlan()?.pillarAllocations.length).toBe(component.pillars().length);
+    vi.useRealTimers();
   });
 
-  // --- Multiple pillar rendering ---
-
-  it('should render correct number of pillar cards', () => {
-    const cards = nativeElement.querySelectorAll('.pillar-card');
-    expect(cards.length).toBe(component.pillars().length);
+  it('openEditModal handles missing goals/objectiveIds via fallback', () => {
+    component.openEditModal({ id: 'p', name: 'X', description: '', color: '#000' });
+    expect(component.newGoals().length).toBe(0);
+    expect(component.newLinkedObjectiveIds().size).toBe(0);
+    component.cancelAdd();
   });
 
-  // --- Render all pillar names and descriptions ---
-
-  it('should render pillar names and descriptions in view mode', () => {
-    const names = nativeElement.querySelectorAll('.card-header h3');
-    const descriptions = nativeElement.querySelectorAll('.card-description');
-    expect(names.length).toBe(component.pillars().length);
-    expect(descriptions.length).toBe(component.pillars().length);
-    expect(names[0].textContent?.trim()).toBe(component.pillars()[0].name);
-  });
-
-  // --- Edit form renders color swatches ---
-
-  it('should render color swatches in edit form', () => {
-    const pillar = component.pillars()[0];
-    component.startEdit(pillar);
+  it('renders pillar cards with goals and progress bars', () => {
+    component.pillars.update(list => list.map((p, i) => i === 0
+      ? { ...p, goals: [{ id: 'g1', metric: 'X', target: 10, unit: '%', period: 'monthly', current: 5 }] }
+      : p,
+    ));
     fixture.detectChanges();
-
-    const swatches = nativeElement.querySelectorAll('.edit-form .color-swatch');
-    expect(swatches.length).toBe(10);
-  });
-
-  // --- postsPerWeek ngModelChange via DOM ---
-
-  it('should update postsPerWeek via number input ngModelChange in DOM', () => {
-    const input = nativeElement.querySelector('.distribution-controls input[type="number"]') as HTMLInputElement;
-    input.value = '14';
-    input.dispatchEvent(new Event('input'));
-    fixture.detectChanges();
-    expect(component.postsPerWeek()).toBe(14);
-  });
-
-  // --- Add form ngModel bindings ---
-
-  it('should bind newPillarName via input in add form', () => {
-    component.openAddForm();
-    fixture.detectChanges();
-
-    const inputs = nativeElement.querySelectorAll('.add-form input[type="text"]') as NodeListOf<HTMLInputElement>;
-    inputs[0].value = 'New Name';
-    inputs[0].dispatchEvent(new Event('input'));
-    fixture.detectChanges();
-    expect(component.newPillarName).toBe('New Name');
-  });
-
-  it('should bind newPillarDescription via textarea in add form', () => {
-    component.openAddForm();
-    fixture.detectChanges();
-
-    const textarea = nativeElement.querySelector('.add-form textarea') as HTMLTextAreaElement;
-    textarea.value = 'New Description';
-    textarea.dispatchEvent(new Event('input'));
-    fixture.detectChanges();
-    expect(component.newPillarDescription).toBe('New Description');
-  });
-
-  // --- Edit form ngModel bindings ---
-
-  it('should bind editName via input in edit form', () => {
-    const pillar = component.pillars()[0];
-    component.startEdit(pillar);
-    fixture.detectChanges();
-
-    const inputs = nativeElement.querySelectorAll('.edit-form input[type="text"]') as NodeListOf<HTMLInputElement>;
-    inputs[0].value = 'Edited Name';
-    inputs[0].dispatchEvent(new Event('input'));
-    fixture.detectChanges();
-    expect(component.editName).toBe('Edited Name');
-  });
-
-  it('should bind editDescription via textarea in edit form', () => {
-    const pillar = component.pillars()[0];
-    component.startEdit(pillar);
-    fixture.detectChanges();
-
-    const textarea = nativeElement.querySelector('.edit-form textarea') as HTMLTextAreaElement;
-    textarea.value = 'Edited Description';
-    textarea.dispatchEvent(new Event('input'));
-    fixture.detectChanges();
-    expect(component.editDescription).toBe('Edited Description');
+    const el = fixture.nativeElement as HTMLElement;
+    expect(el.querySelectorAll('.pillar-card').length).toBeGreaterThan(0);
+    expect(el.querySelector('.progress-fill')).toBeTruthy();
   });
 });

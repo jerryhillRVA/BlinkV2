@@ -39,6 +39,68 @@
   margin-top: 1rem;
 }
 
+.tone-edit-card {
+  background: var(--blink-surface);
+  border: 1px dashed var(--blink-brand-primary-dashed);
+  border-radius: 12px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.tone-edit-label {
+  margin: 0;
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--blink-on-surface-muted);
+}
+
+.tone-edit-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+
+  @media (min-width: 640px) {
+    grid-template-columns: 1fr 1fr 1fr;
+  }
+}
+
+.tone-edit-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+
+  label {
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--blink-on-surface-muted);
+  }
+
+  .form-input {
+    height: 32px;
+    padding: 0 12px;
+    border: 1px solid var(--blink-outline-variant);
+    border-radius: 6px;
+    background: var(--blink-input-bg-dark);
+    color: var(--blink-on-surface-strong);
+    font-family: inherit;
+    font-size: 14px;
+
+    &:focus {
+      outline: none;
+      border-color: var(--blink-brand-primary);
+    }
+  }
+}
+
+.tone-edit-actions {
+  display: flex;
+  gap: 8px;
+}
+
 .btn {
   display: inline-flex;
   align-items: center;

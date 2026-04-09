@@ -38,7 +38,7 @@
     <main class="strategy-content">
       @switch (activeView()) {
         @case ('brand-voice') { <app-brand-voice /> }
-        @case ('pillars') { <app-strategic-pillars /> }
+        @case ('pillars') { <app-strategic-pillars [linkedObjectives]="objectives()" /> }
         @case ('audience') { <app-audience /> }
         @case ('channel') { <app-channel-strategy /> }
         @case ('content-mix') { <app-content-mix /> }

@@ -50,7 +50,7 @@ describe('VoiceAttributesComponent', () => {
   it('should show edit form when editing', () => {
     component.startAdd();
     fixture.detectChanges();
-    expect(nativeElement.querySelector('.inline-form')).toBeTruthy();
+    expect(nativeElement.querySelector('.attribute-edit-card')).toBeTruthy();
   });
 
   it('should save a new attribute', () => {

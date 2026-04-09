@@ -16,6 +16,51 @@
     </div>
   </header>
 
+  @if (editingId()) {
+    <div class="tone-edit-card">
+      <p class="tone-edit-label">{{ isEditingNew() ? 'New' : 'Edit' }} Context</p>
+      <div class="tone-edit-grid">
+        <div class="tone-edit-field">
+          <label>
+            <span>Context</span>
+            <input
+              class="form-input"
+              placeholder="e.g. Educational"
+              [ngModel]="editTone().context"
+              (ngModelChange)="updateField('context', $event)"
+            />
+          </label>
+        </div>
+        <div class="tone-edit-field">
+          <label>
+            <span>Tone Description</span>
+            <input
+              class="form-input"
+              placeholder="How the voice sounds here"
+              [ngModel]="editTone().tone"
+              (ngModelChange)="updateField('tone', $event)"
+            />
+          </label>
+        </div>
+        <div class="tone-edit-field">
+          <label>
+            <span>Example Line</span>
+            <input
+              class="form-input"
+              placeholder="Sample copy"
+              [ngModel]="editTone().example"
+              (ngModelChange)="updateField('example', $event)"
+            />
+          </label>
+        </div>
+      </div>
+      <div class="tone-edit-actions">
+        <button class="btn btn-primary btn-sm" (click)="save()">Save</button>
+        <button class="btn btn-ai btn-sm" (click)="cancelEdit()">Cancel</button>
+      </div>
+    </div>
+  }
+
   @if (toneContexts().length > 0) {
     <div class="tone-table-wrapper">
       <table class="tone-table">
@@ -30,7 +75,7 @@
         <tbody>
           @for (tone of toneContexts(); track tone.id) {
             <tr>
-              <td class="context-cell">{{ tone.context }}</td>
+              <td class="context-cell"><span class="has-mock-data" title="Mock data">{{ tone.context }}</span></td>
               <td>{{ tone.tone }}</td>
               <td class="example-cell">{{ tone.example }}</td>
               <td class="actions-col">
@@ -51,30 +96,6 @@
   @if (toneContexts().length === 0 && !editingId()) {
     <div class="empty-state-box">
       <p>No tone contexts defined. Add contexts or use AI Generate.</p>
-    </div>
-  }
-
-  @if (editingId()) {
-    <div class="inline-form">
-      <div class="form-row">
-        <input class="form-input" placeholder="Context (e.g. Educational)"
-          [ngModel]="editTone().context"
-          (ngModelChange)="updateField('context', $event)" />
-      </div>
-      <div class="form-row">
-        <input class="form-input" placeholder="Tone description"
-          [ngModel]="editTone().tone"
-          (ngModelChange)="updateField('tone', $event)" />
-      </div>
-      <div class="form-row">
-        <input class="form-input" placeholder="Example sentence"
-          [ngModel]="editTone().example"
-          (ngModelChange)="updateField('example', $event)" />
-      </div>
-      <div class="form-actions">
-        <button class="btn btn-primary" (click)="save()">Save</button>
-        <button class="btn btn-secondary" (click)="cancelEdit()">Cancel</button>
-      </div>
     </div>
   }
 

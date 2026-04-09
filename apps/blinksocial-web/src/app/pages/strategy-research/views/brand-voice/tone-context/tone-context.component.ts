@@ -28,6 +28,12 @@ export class ToneContextComponent {
     this.editTone.set({ id: newId, context: '', tone: '', example: '' });
   }
 
+  isEditingNew(): boolean {
+    const id = this.editingId();
+    if (!id) return false;
+    return !this.toneContexts().some((t) => t.id === id);
+  }
+
   startEdit(tone: ToneContext): void {
     this.editingId.set(tone.id);
     this.editTone.set({ ...tone });

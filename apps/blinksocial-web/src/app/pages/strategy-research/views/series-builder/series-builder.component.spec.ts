@@ -185,22 +185,22 @@ describe('SeriesBuilderComponent', () => {
       component.selectedPlatform = 'tiktok';
       component.buildSeries();
       vi.advanceTimersByTime(AI_SIMULATION_DELAY_MS);
-      expect(component.series()!.platform).toBe('tiktok');
+      expect(component.series()?.platform).toBe('tiktok');
     });
 
     it('should use selected goal in result', () => {
       component.selectedGoal = 'Drive Sales';
       component.buildSeries();
       vi.advanceTimersByTime(AI_SIMULATION_DELAY_MS);
-      expect(component.series()!.goal).toBe('Drive Sales');
+      expect(component.series()?.goal).toBe('Drive Sales');
     });
 
     it('should use selected series length in result', () => {
       component.seriesLength = 3;
       component.buildSeries();
       vi.advanceTimersByTime(AI_SIMULATION_DELAY_MS);
-      expect(component.series()!.postCount).toBe(3);
-      expect(component.series()!.posts.length).toBe(3);
+      expect(component.series()?.postCount).toBe(3);
+      expect(component.series()?.posts.length).toBe(3);
     });
 
     it('should render series output after generation completes', () => {

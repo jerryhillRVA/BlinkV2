@@ -41,8 +41,8 @@ describe('ResearchSourcesComponent', () => {
   it('should show filter dropdown with All Pillars and individual pillars', () => {
     const select = nativeElement.querySelector('select');
     expect(select).toBeTruthy();
-    const options = select!.querySelectorAll('option');
-    expect(options.length).toBe(6); // "All Pillars" + 5 pillars
+    const options = select?.querySelectorAll('option');
+    expect(options?.length).toBe(6); // "All Pillars" + 5 pillars
   });
 
   it('should render discover button', () => {

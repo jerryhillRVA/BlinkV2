@@ -40,6 +40,12 @@ export class VoiceAttributesComponent {
     this.editAttribute.set({ id: newId, label: '', description: '', doExample: '', dontExample: '' });
   }
 
+  isEditingNew(): boolean {
+    const id = this.editingId();
+    if (!id) return false;
+    return !this.attributes().some((a) => a.id === id);
+  }
+
   startEdit(attr: VoiceAttribute): void {
     this.editingId.set(attr.id);
     this.editAttribute.set({ ...attr });

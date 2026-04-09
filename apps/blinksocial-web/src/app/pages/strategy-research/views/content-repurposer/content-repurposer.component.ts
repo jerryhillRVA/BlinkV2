@@ -1,8 +1,9 @@
-import { Component, DestroyRef, inject, signal } from '@angular/core';
+import { Component, DestroyRef, HostBinding, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import type { Platform } from '../../strategy-research.types';
 import { PLATFORM_OPTIONS, AI_SIMULATION_DELAY_MS } from '../../strategy-research.constants';
 import { safeTimeout, toggleSetItem } from '../../strategy-research.utils';
+import { MockDataService } from '../../../../core/mock-data/mock-data.service';
 
 interface RepurposedOutput {
   platform: Platform;
@@ -25,6 +26,12 @@ const MOCK_OUTPUTS: RepurposedOutput[] = [
 })
 export class ContentRepurposerComponent {
   private readonly destroyRef = inject(DestroyRef);
+  private readonly mockData = inject(MockDataService);
+
+  @HostBinding('class.is-mock-source')
+  get isMockSource(): boolean {
+    return this.mockData.isMock('content-repurposer');
+  }
 
   readonly sourceContent = signal('');
   readonly selectedPlatforms = signal<Set<Platform>>(new Set(['instagram', 'tiktok']));

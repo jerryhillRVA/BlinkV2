@@ -9,6 +9,7 @@
   --blink-brand-primary-light-bg: rgba(217, 78, 51, 0.1);
   --blink-brand-primary-lighter-bg: #fde0dc;
   --blink-brand-primary-lightest-bg: #fef2f0;
+  --blink-brand-primary-dashed: rgba(217, 78, 51, 0.4);
 
   // Surfaces
   --blink-surface: white;
@@ -17,6 +18,12 @@
   --blink-surface-container-low: #f9fafb;
   --blink-surface-variant: #f5f5f5;
   --blink-surface-hover: #f9fafb;
+
+  // Form input fill — two variants so card-on-card layouts can stay distinct.
+  // -light: matches Tailwind gray-50 (used for nested cards/wrappers).
+  // -dark:  slightly darker, used for inputs sitting on white surfaces.
+  --blink-input-bg-light: #f9fafb;
+  --blink-input-bg-dark: #f3f4f6;
 
   // Text / On-surface
   --blink-on-surface: #333;
@@ -93,8 +100,18 @@
   --blink-icon-orange-bg: #fff7ed;
   --blink-icon-orange: #ea580c;
 
+  // Platform brand colors
+  --blink-platform-instagram: #db2777;
+  --blink-platform-tiktok: #111;
+  --blink-platform-youtube: #dc2626;
+  --blink-platform-pinterest: #e60023;
+  --blink-platform-facebook: #2563eb;
+  --blink-platform-linkedin: #1d4ed8;
+  --blink-platform-x: #111;
+  --blink-platform-threads: #111;
+
   // Form inputs
-  --blink-input-bg: #f3f4f6;
+  --blink-input-bg-dark: #f3f4f6;
   --blink-input-bg-focus: #edeff2;
   --blink-input-ring: #e5e7eb;
 
@@ -152,6 +169,7 @@
   --blink-brand-primary-hover-bg: #2d1f1b;
   --blink-brand-primary-light-bg: #3a2420;
   --blink-brand-primary-lighter-bg: #4d2a22;
+  --blink-brand-primary-dashed: rgba(217, 78, 51, 0.5);
   --blink-brand-primary-lightest-bg: #2f2019;
 
   // Surfaces
@@ -161,6 +179,8 @@
   --blink-surface-container-low: #282828;
   --blink-surface-variant: #2a2a2a;
   --blink-surface-hover: #2c2c2c;
+  --blink-input-bg-light: #262626;
+  --blink-input-bg-dark: #2e2e2e;
 
   // Text / On-surface
   --blink-on-surface: #e0e0e0;
@@ -220,8 +240,18 @@
   --blink-icon-orange-bg: rgba(234, 88, 12, 0.15);
   --blink-icon-orange: #f97316;
 
+  // Platform brand colors (slightly brightened for dark backgrounds)
+  --blink-platform-instagram: #ec4899;
+  --blink-platform-tiktok: #f0f0f0;
+  --blink-platform-youtube: #f87171;
+  --blink-platform-pinterest: #f87171;
+  --blink-platform-facebook: #60a5fa;
+  --blink-platform-linkedin: #60a5fa;
+  --blink-platform-x: #f0f0f0;
+  --blink-platform-threads: #f0f0f0;
+
   // Form inputs
-  --blink-input-bg: #2a2a2a;
+  --blink-input-bg-dark: #2a2a2a;
   --blink-input-bg-focus: #333;
   --blink-input-ring: #444;
 

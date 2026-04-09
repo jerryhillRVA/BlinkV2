@@ -35,8 +35,9 @@
 
 .card-actions {
   display: flex;
+  justify-content: flex-end;
   gap: 0.5rem;
-  margin-top: 1rem;
+  margin-top: -4px; // .bv-section gap (12px) + this = ~8px (matches figma mt-2)
 }
 
 .btn {
@@ -64,12 +65,15 @@
 }
 
 .btn-ai {
-  background: var(--blink-brand-primary-lighter-bg);
-  color: var(--blink-brand-primary);
-  border-color: var(--blink-brand-primary);
+  background: var(--blink-surface);
+  color: var(--blink-on-surface-strong);
+  border-color: var(--blink-outline-variant);
+
+  .btn-icon { color: var(--blink-brand-primary); }
 
   &:hover {
-    background: var(--blink-brand-primary-light-bg);
+    background: var(--blink-surface-hover);
+    border-color: var(--blink-outline);
   }
 }
 

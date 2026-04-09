@@ -1,271 +1,128 @@
-import { TestBed } from '@angular/core/testing';
+import { TestBed, ComponentFixture } from '@angular/core/testing';
 import { ContentMixComponent } from './content-mix.component';
 import { AI_SIMULATION_DELAY_MS } from '../../strategy-research.constants';
 
 describe('ContentMixComponent', () => {
+  let fixture: ComponentFixture<ContentMixComponent>;
   let component: ContentMixComponent;
-  let fixture: ReturnType<typeof TestBed.createComponent<ContentMixComponent>>;
-  let nativeElement: HTMLElement;
 
-  beforeEach(async () => {
-    vi.useFakeTimers();
-    await TestBed.configureTestingModule({
-      imports: [ContentMixComponent],
-    }).compileComponents();
-
+  beforeEach(() => {
+    TestBed.configureTestingModule({ imports: [ContentMixComponent] });
     fixture = TestBed.createComponent(ContentMixComponent);
     component = fixture.componentInstance;
-    nativeElement = fixture.nativeElement;
     fixture.detectChanges();
-  });
-
-  afterEach(() => {
-    vi.useRealTimers();
   });
 
   it('should create', () => {
     expect(component).toBeTruthy();
   });
 
-  // --- Rendering ---
-
-  it('should render two mix cards (target and comparison)', () => {
-    const cards = nativeElement.querySelectorAll('.mix-card');
-    expect(cards.length).toBe(2);
-    expect(cards[0].textContent).toContain('Target Content Mix');
-    expect(cards[1].textContent).toContain('Actual vs Target');
-  });
-
-  it('should render section header', () => {
-    expect(nativeElement.querySelector('.section-header h2')?.textContent).toContain('Content Mix');
-  });
-
-  it('should show 5 category rows', () => {
-    const categories = nativeElement.querySelectorAll('.category-row');
-    expect(categories.length).toBe(5);
-  });
-
-  it('should show 5 comparison rows', () => {
-    const comparisons = nativeElement.querySelectorAll('.comparison-row');
-    expect(comparisons.length).toBe(5);
-  });
-
-  it('should render range inputs for each category', () => {
-    const ranges = nativeElement.querySelectorAll('.range-input');
-    expect(ranges.length).toBe(5);
-  });
-
-  it('should render reset and AI suggest buttons', () => {
-    const resetBtn = nativeElement.querySelector('.btn-reset');
-    const aiBtn = nativeElement.querySelector('.btn-ai');
-    expect(resetBtn).toBeTruthy();
-    expect(resetBtn?.textContent).toContain('Reset');
-    expect(aiBtn).toBeTruthy();
-    expect(aiBtn?.textContent).toContain('AI Suggest');
-  });
-
-  it('should render category labels and descriptions', () => {
-    const labels = nativeElement.querySelectorAll('.category-label');
-    const descs = nativeElement.querySelectorAll('.category-desc');
-    expect(labels.length).toBe(5);
-    expect(descs.length).toBe(5);
-    expect(labels[0].textContent).toContain('Educational');
-  });
-
-  it('should render percent displays', () => {
-    const percents = nativeElement.querySelectorAll('.percent-display');
-    expect(percents.length).toBe(5);
-    expect(percents[0].textContent).toContain('35%');
-  });
-
-  // --- Initial state ---
-
-  it('should have a total of 100% by default', () => {
-    expect(component.total()).toBe(100);
-    expect(component.isValid()).toBe(true);
-  });
-
-  it('should have 5 mix entries with correct defaults', () => {
+  it('initializes with five default categories totalling 100%', () => {
     expect(component.mix().length).toBe(5);
-    const categories = component.mix().map(m => m.category);
-    expect(categories).toEqual(['educational', 'entertaining', 'community', 'promotional', 'trending']);
-  });
-
-  it('should not show invalid warning by default', () => {
-    expect(nativeElement.querySelector('.warning')).toBeFalsy();
-    expect(nativeElement.querySelector('.total-indicator.invalid')).toBeFalsy();
-  });
-
-  // --- Total indicator ---
-
-  it('should show total percentage', () => {
-    const total = nativeElement.querySelector('.total-indicator');
-    expect(total?.textContent).toContain('100%');
-  });
-
-  // --- updateTarget ---
-
-  it('should update target percent for a category', () => {
-    component.updateTarget('educational', 40);
-    const edu = component.mix().find(m => m.category === 'educational')!;
-    expect(edu.targetPercent).toBe(40);
-  });
-
-  it('should update total when target changes', () => {
-    component.updateTarget('educational', 50);
-    expect(component.total()).toBe(115); // 50 + 25 + 20 + 15 + 5
-  });
-
-  // --- isValid ---
-
-  it('should detect invalid total when not 100', () => {
-    component.updateTarget('educational', 50);
-    expect(component.isValid()).toBe(false);
-  });
-
-  it('should show warning when total is not 100', () => {
-    component.updateTarget('educational', 50);
-    fixture.detectChanges();
-
-    const warning = nativeElement.querySelector('.warning');
-    expect(warning).toBeTruthy();
-    expect(warning?.textContent).toContain('must equal 100%');
-    expect(nativeElement.querySelector('.total-indicator.invalid')).toBeTruthy();
-  });
-
-  it('should become valid again when total returns to 100', () => {
-    component.updateTarget('educational', 50);
-    expect(component.isValid()).toBe(false);
-
-    component.updateTarget('educational', 35);
+    expect(component.total()).toBe(100);
     expect(component.isValid()).toBe(true);
   });
 
-  // --- reset ---
-
-  it('should reset to default values', () => {
+  it('updateTarget changes only the matching category', () => {
     component.updateTarget('educational', 50);
-    component.updateTarget('entertaining', 10);
+    const ed = component.mix().find(m => m.category === 'educational');
+    const ent = component.mix().find(m => m.category === 'entertaining');
+    expect(ed?.targetPercent).toBe(50);
+    expect(ent?.targetPercent).toBe(25);
+  });
+
+  it('total recomputes after updateTarget and isValid flips', () => {
+    component.updateTarget('educational', 0);
+    expect(component.total()).toBe(65);
+    expect(component.isValid()).toBe(false);
+  });
+
+  it('reset restores defaults', () => {
+    component.updateTarget('educational', 5);
     component.reset();
-
-    const edu = component.mix().find(m => m.category === 'educational')!;
-    const ent = component.mix().find(m => m.category === 'entertaining')!;
-    expect(edu.targetPercent).toBe(35);
-    expect(ent.targetPercent).toBe(25);
+    expect(component.mix().find(m => m.category === 'educational')?.targetPercent).toBe(35);
     expect(component.total()).toBe(100);
-    expect(component.isValid()).toBe(true);
   });
 
-  // --- aiSuggest ---
-
-  it('should run AI suggest (timer-based)', () => {
+  it('aiSuggest sets isSuggesting and updates targets after timeout', () => {
+    vi.useFakeTimers();
     component.aiSuggest();
     expect(component.isSuggesting()).toBe(true);
-
     vi.advanceTimersByTime(AI_SIMULATION_DELAY_MS);
     expect(component.isSuggesting()).toBe(false);
+    expect(component.mix().find(m => m.category === 'educational')?.targetPercent).toBe(30);
+    expect(component.mix().find(m => m.category === 'community')?.targetPercent).toBe(25);
+    vi.useRealTimers();
   });
 
-  it('should update mix values after AI suggest', () => {
-    component.aiSuggest();
-    vi.advanceTimersByTime(AI_SIMULATION_DELAY_MS);
-
-    const edu = component.mix().find(m => m.category === 'educational')!;
-    expect(edu.targetPercent).toBe(30);
-    const trending = component.mix().find(m => m.category === 'trending')!;
-    expect(trending.targetPercent).toBe(10);
-    expect(component.total()).toBe(100);
-    expect(component.isValid()).toBe(true);
+  it('renders header, target card, and comparison card', () => {
+    const el = fixture.nativeElement as HTMLElement;
+    expect(el.querySelector('.page-header-title')?.textContent).toContain('Content Mix Framework');
+    expect(el.querySelectorAll('.mix-card').length).toBe(2);
+    expect(el.querySelectorAll('.mix-row').length).toBe(5);
+    expect(el.querySelectorAll('.comparison-row').length).toBe(5);
   });
 
-  it('should show spinner during AI suggestion', () => {
-    component.aiSuggest();
+  it('shows valid total indicator when balanced', () => {
+    const el = fixture.nativeElement as HTMLElement;
+    expect(el.querySelector('.total-valid')).toBeTruthy();
+    expect(el.querySelector('.total-invalid')).toBeFalsy();
+  });
+
+  it('shows invalid total indicator when not balanced', () => {
+    component.updateTarget('educational', 0);
     fixture.detectChanges();
+    const el = fixture.nativeElement as HTMLElement;
+    expect(el.querySelector('.total-invalid')).toBeTruthy();
+  });
 
-    const btn = nativeElement.querySelector('.btn-ai') as HTMLButtonElement;
-    expect(btn.disabled).toBe(true);
-    expect(btn.textContent).toContain('Suggesting...');
-    expect(btn.querySelector('.spinner')).toBeTruthy();
-
-    vi.advanceTimersByTime(AI_SIMULATION_DELAY_MS);
+  it('reset button click resets the mix', () => {
+    component.updateTarget('educational', 10);
     fixture.detectChanges();
-
-    expect(btn.disabled).toBe(false);
-    expect(btn.textContent).toContain('AI Suggest');
+    const el = fixture.nativeElement as HTMLElement;
+    const btn = el.querySelector('.btn-reset') as HTMLButtonElement;
+    btn.click();
+    expect(component.mix().find(m => m.category === 'educational')?.targetPercent).toBe(35);
   });
 
-  // --- Comparison rendering ---
-
-  it('should render target and actual bars', () => {
-    const targetBars = nativeElement.querySelectorAll('.target-bar');
-    const actualBars = nativeElement.querySelectorAll('.actual-bar');
-    expect(targetBars.length).toBe(5);
-    expect(actualBars.length).toBe(5);
-  });
-
-  it('should render bar labels (Target and Actual)', () => {
-    const barLabels = nativeElement.querySelectorAll('.bar-label');
-    expect(barLabels.length).toBe(10); // 5 Target + 5 Actual
-  });
-
-  it('should render bar values', () => {
-    const barValues = nativeElement.querySelectorAll('.bar-value');
-    expect(barValues.length).toBe(10);
-  });
-
-  // --- Color display ---
-
-  it('should render category color indicators', () => {
-    const colorDots = nativeElement.querySelectorAll('.category-color');
-    expect(colorDots.length).toBe(10); // 5 in target + 5 in comparison
-  });
-
-  // --- DOM interactions for template function coverage ---
-
-  it('should update target via range input ngModelChange in DOM', () => {
-    const rangeInputs = nativeElement.querySelectorAll('.range-input') as NodeListOf<HTMLInputElement>;
-    rangeInputs[0].value = '40';
-    rangeInputs[0].dispatchEvent(new Event('input'));
-    fixture.detectChanges();
-    expect(component.mix().find(m => m.category === 'educational')!.targetPercent).toBe(40);
-  });
-
-  it('should trigger reset via Reset button click in DOM', () => {
-    component.updateTarget('educational', 50);
-    fixture.detectChanges();
-
-    const resetBtn = nativeElement.querySelector('.btn-reset') as HTMLButtonElement;
-    resetBtn.click();
-    fixture.detectChanges();
-
-    expect(component.mix().find(m => m.category === 'educational')!.targetPercent).toBe(35);
-    expect(component.total()).toBe(100);
-  });
-
-  it('should trigger aiSuggest via AI Suggest button click in DOM', () => {
-    const aiBtn = nativeElement.querySelector('.btn-ai') as HTMLButtonElement;
-    aiBtn.click();
+  it('AI Suggest button click invokes aiSuggest', () => {
+    vi.useFakeTimers();
+    const el = fixture.nativeElement as HTMLElement;
+    const btn = el.querySelector('.btn-ai-suggest') as HTMLButtonElement;
+    btn.click();
     expect(component.isSuggesting()).toBe(true);
     vi.advanceTimersByTime(AI_SIMULATION_DELAY_MS);
-    fixture.detectChanges();
-    expect(component.isSuggesting()).toBe(false);
+    vi.useRealTimers();
   });
 
-  it('should show warning element when total is not 100 in DOM', () => {
-    component.updateTarget('educational', 50);
+  it('renders below-target badge for categories far below target', () => {
+    component.mix.update(list =>
+      list.map(m => m.category === 'educational' ? { ...m, actualPercent: 5 } : m),
+    );
     fixture.detectChanges();
-
-    expect(nativeElement.querySelector('.warning')).toBeTruthy();
-    expect(nativeElement.querySelector('.total-indicator.invalid')).toBeTruthy();
+    const el = fixture.nativeElement as HTMLElement;
+    expect(el.querySelector('.comparison-badge--below')).toBeTruthy();
   });
 
-  it('should hide warning when total returns to 100 in DOM', () => {
-    component.updateTarget('educational', 50);
-    fixture.detectChanges();
-    expect(nativeElement.querySelector('.warning')).toBeTruthy();
+  it('aiSuggest preserves unknown categories via nullish fallback', () => {
+    vi.useFakeTimers();
+    component.mix.update(list => [
+      ...list,
+      // Add a non-standard category that won't be in the suggested map
+      { category: 'custom' as never, label: 'Custom', targetPercent: 5, color: '#000', description: '', actualPercent: 0 },
+    ]);
+    component.aiSuggest();
+    vi.advanceTimersByTime(AI_SIMULATION_DELAY_MS);
+    expect(component.mix().find(m => m.category === ('custom' as never))?.targetPercent).toBe(5);
+    vi.useRealTimers();
+  });
 
-    component.updateTarget('educational', 35);
+  it('renders above-target badge for categories far above target', () => {
+    component.mix.update(list =>
+      list.map(m => m.category === 'educational' ? { ...m, actualPercent: 90 } : m),
+    );
     fixture.detectChanges();
-    expect(nativeElement.querySelector('.warning')).toBeFalsy();
+    const el = fixture.nativeElement as HTMLElement;
+    expect(el.querySelector('.comparison-badge--above')).toBeTruthy();
   });
 });

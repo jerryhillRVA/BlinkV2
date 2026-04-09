@@ -1,102 +1,139 @@
 <div class="content-mix">
-  <div class="section-header">
-    <h2 class="has-mock-data" title="Mock data">Content Mix</h2>
-  </div>
-
-  <div class="mix-grid">
-    <!-- Target Content Mix Card -->
-    <div class="mix-card">
-      <div class="card-header">
-        <h3>Target Content Mix</h3>
-        <div class="card-actions">
-          <button class="btn-reset" (click)="reset()">Reset</button>
-          <button class="btn-ai" (click)="aiSuggest()" [disabled]="isSuggesting()">
-            @if (isSuggesting()) {
-              <span class="spinner"></span>
-              Suggesting...
-            } @else {
-              AI Suggest
-            }
-          </button>
-        </div>
+  <header class="page-header">
+    <div class="page-header-text">
+      <div class="page-header-icon">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21.21 15.89A10 10 0 1 1 8 2.83"/>
+          <path d="M22 12A10 10 0 0 0 12 2v10z"/>
+        </svg>
       </div>
-
-      <div class="total-indicator" [class.invalid]="!isValid()">
-        Total: {{ total() }}%
-        @if (!isValid()) {
-          <span class="warning">(must equal 100%)</span>
-        }
+      <div>
+        <h3 class="page-header-title has-mock-data" title="Mock data">Content Mix Framework</h3>
+        <p class="page-header-subtitle">Define your ideal content ratio and track actual distribution</p>
       </div>
+    </div>
+  </header>
 
-      <div class="categories">
-        @for (item of mix(); track item.category) {
-          <div class="category-row">
-            <div class="category-info">
-              <div class="category-color" [style.background]="item.color"></div>
-              <div class="category-text">
-                <span class="category-label">{{ item.label }}</span>
-                <span class="category-desc">{{ item.description }}</span>
-              </div>
-            </div>
-            <div class="category-control">
-              <input
-                type="range"
-                min="0"
-                max="100"
-                [ngModel]="item.targetPercent"
-                (ngModelChange)="updateTarget(item.category, $event)"
-                class="range-input"
-              />
-              <span class="percent-display">{{ item.targetPercent }}%</span>
-            </div>
-          </div>
-        }
+  <!-- Target Content Mix -->
+  <div class="mix-card">
+    <div class="mix-card-header">
+      <div>
+        <h4 class="mix-card-title">Target Content Mix</h4>
+        <p class="mix-card-subtitle">Define the ideal ratio of content types across your strategy</p>
+      </div>
+      <div class="mix-actions">
+        <button type="button" class="btn-reset" (click)="reset()">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/>
+            <path d="M3 3v5h5"/>
+          </svg>
+          Reset to Defaults
+        </button>
+        <button type="button" class="btn-ai-suggest" (click)="aiSuggest()" [disabled]="isSuggesting()">
+          @if (isSuggesting()) {
+            <span class="spinner"></span>
+            Suggesting...
+          } @else {
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"/>
+              <path d="M20 3v4"/><path d="M22 5h-4"/><path d="M4 17v2"/><path d="M5 18H3"/>
+            </svg>
+            AI Suggest Mix
+          }
+        </button>
       </div>
     </div>
 
-    <!-- Actual vs Target Card -->
-    <div class="mix-card">
-      <div class="card-header">
-        <h3>Actual vs Target</h3>
-      </div>
+    <div class="total-indicator" [class.total-valid]="isValid()" [class.total-invalid]="!isValid()">
+      @if (!isValid()) {
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="m21.73 18-8-14a2 2 0 0 0-3.46 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/>
+          <line x1="12" x2="12" y1="9" y2="13"/>
+          <line x1="12" x2="12.01" y1="17" y2="17"/>
+        </svg>
+      }
+      Total: {{ total() }}%
+      @if (isValid()) {
+        <span>✓ Balanced</span>
+      } @else {
+        <span>— {{ total() > 100 ? 'over' : 'under' }} by {{ total() > 100 ? total() - 100 : 100 - total() }}%</span>
+      }
+    </div>
 
-      <div class="comparison">
-        @for (item of mix(); track item.category) {
-          <div class="comparison-row">
-            <div class="comparison-label">
-              <div class="category-color" [style.background]="item.color"></div>
-              <span>{{ item.label }}</span>
+    <div class="mix-rows">
+      @for (item of mix(); track item.category) {
+        <div class="mix-row">
+          <div class="mix-row-head">
+            <div class="mix-row-info">
+              <span class="mix-dot" [style.background]="item.color"></span>
+              <span class="mix-name has-mock-data" title="Mock data">{{ item.label }}</span>
+              <span class="mix-desc">{{ item.description }}</span>
             </div>
-            <div class="bars-container">
-              <div class="bar-group">
-                <div class="bar-row">
-                  <span class="bar-label">Target</span>
-                  <div class="bar-track">
-                    <div
-                      class="bar-fill target-bar"
-                      [style.width.%]="item.targetPercent"
-                      [style.background]="item.color"
-                    ></div>
-                  </div>
-                  <span class="bar-value">{{ item.targetPercent }}%</span>
-                </div>
-                <div class="bar-row">
-                  <span class="bar-label">Actual</span>
-                  <div class="bar-track">
-                    <div
-                      class="bar-fill actual-bar"
-                      [style.width.%]="item.actualPercent"
-                      [style.background]="item.color"
-                      [style.opacity]="0.6"
-                    ></div>
-                  </div>
-                  <span class="bar-value">{{ item.actualPercent }}%</span>
-                </div>
-              </div>
+            <input
+              type="number"
+              min="0"
+              max="100"
+              class="mix-percent-input"
+              [ngModel]="item.targetPercent"
+              (ngModelChange)="updateTarget(item.category, $event)"
+            />
+          </div>
+          <input
+            type="range"
+            min="0"
+            max="100"
+            class="mix-slider"
+            [ngModel]="item.targetPercent"
+            (ngModelChange)="updateTarget(item.category, $event)"
+            [style.accent-color]="item.color"
+          />
+        </div>
+      }
+    </div>
+  </div>
+
+  <!-- Actual vs Target -->
+  <div class="mix-card">
+    <h4 class="mix-card-title">Actual vs. Target</h4>
+    <p class="mix-card-subtitle">Distribution based on tagged content items</p>
+
+    <div class="comparison-list">
+      @for (item of mix(); track item.category) {
+        <div class="comparison-row">
+          <div class="comparison-head">
+            <div class="comparison-info">
+              <span class="mix-dot" [style.background]="item.color"></span>
+              <span class="comparison-name">{{ item.label }}</span>
+              @if (item.actualPercent - item.targetPercent < -10) {
+                <span class="comparison-badge comparison-badge--below">
+                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="m21.73 18-8-14a2 2 0 0 0-3.46 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/>
+                    <line x1="12" x2="12" y1="9" y2="13"/>
+                    <line x1="12" x2="12.01" y1="17" y2="17"/>
+                  </svg>
+                  Below target
+                </span>
+              }
+              @if (item.actualPercent - item.targetPercent > 10) {
+                <span class="comparison-badge comparison-badge--above">Above target</span>
+              }
+            </div>
+            <div class="comparison-stats">
+              <span class="comparison-stat">Target: {{ item.targetPercent }}%</span>
+              <span
+                class="comparison-stat"
+                [class.comparison-stat--below]="item.actualPercent - item.targetPercent < -10"
+                [class.comparison-stat--above]="item.actualPercent - item.targetPercent > 10"
+                [class.comparison-stat--ok]="item.actualPercent - item.targetPercent >= -10 && item.actualPercent - item.targetPercent <= 10"
+              >Actual: {{ item.actualPercent }}%</span>
             </div>
           </div>
-        }
-      </div>
+          <div class="comparison-bar">
+            <div class="comparison-bar-target" [style.width.%]="item.targetPercent" [style.background]="item.color"></div>
+            <div class="comparison-bar-actual" [style.width.%]="item.actualPercent" [style.background]="item.color"></div>
+          </div>
+        </div>
+      }
     </div>
   </div>
 </div>

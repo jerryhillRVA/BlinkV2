@@ -57,7 +57,7 @@
     @for (c of competitors(); track c.id) {
       <div class="competitor-card">
         <div class="competitor-card__header">
-          <div class="competitor-card__name">{{ c.competitor }}</div>
+          <div class="competitor-card__name has-mock-data" title="Mock data">{{ c.competitor }}</div>
           <span class="relevancy-badge" [ngClass]="getRelevancyClass(c.relevancyLevel)">
             {{ c.relevancyLevel }}
           </span>

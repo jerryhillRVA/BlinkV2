@@ -50,7 +50,7 @@ app-strategy-research {
 
 @keyframes page-enter {
   from { opacity: 0; transform: translateY(8px); }
-  to   { opacity: 1; transform: translateY(0); }
+  to   { opacity: 1; transform: none; }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -62,6 +62,47 @@ app-strategy-research {
   app-strategy-research {
     animation: none;
   }
+}
+
+// Page-section header (icon + title + subtitle) — used by Brand Voice,
+// Strategic Pillars, etc.
+.page-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.page-header-text {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.page-header-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px;
+  border-radius: 8px;
+  background: var(--blink-brand-primary-light-bg);
+  color: var(--blink-brand-primary);
+  flex-shrink: 0;
+}
+
+.page-header-title {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--blink-on-surface-strong);
+  line-height: 1.2;
+}
+
+.page-header-subtitle {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.4;
+  color: var(--blink-on-surface-muted);
 }
 
 .bv-section {
@@ -85,7 +126,7 @@ app-strategy-research {
 }
 
 .empty-state-box {
-  border: 1px dashed var(--blink-outline-variant);
+  border: 1px dashed var(--blink-outline-dashed);
   border-radius: 8px;
   padding: 24px;
   text-align: center;
@@ -93,24 +134,71 @@ app-strategy-research {
 
   p {
     margin: 0;
-    font-size: var(--blink-body-small);
+    font-size: var(--blink-body-medium);
+  }
+}
+
+// Outlined "AI Suggest / Draft / Generate" button — white background,
+// gray border, dark text, and a coral sparkle icon. Matches the figma's
+// `border bg-background … hover:bg-accent` pattern.
+.btn.btn-ai,
+button.btn-ai {
+  background: var(--blink-surface);
+  color: var(--blink-on-surface-strong);
+  border: 1px solid var(--blink-outline-variant);
+
+  .btn-icon { color: var(--blink-brand-primary); }
+
+  &:hover {
+    background: var(--blink-surface-hover);
+    border-color: var(--blink-outline);
+  }
+}
+
+// Default button-icon sizing — local .btn-icon classes only set color,
+// so the SVG itself needs explicit dimensions or it collapses to 0.
+.btn-icon {
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+}
+
+// Solid coral primary button — used for Save / Add Attribute / Add Context
+// across the Brand Voice subcomponents. Each component scopes its own
+// `.btn:hover` to a light gray, which was clobbering `.btn-primary`'s
+// background on hover. This rule re-asserts the coral fill at hover.
+.btn.btn-primary,
+button.btn-primary {
+  background: var(--blink-brand-primary);
+  color: var(--mat-sys-on-primary, var(--blink-on-brand));
+  border: 1px solid var(--blink-brand-primary);
+
+  &:hover:not(:disabled) {
+    background: var(--blink-brand-primary-active, #c4452d);
+    border-color: var(--blink-brand-primary-active, #c4452d);
+    color: var(--mat-sys-on-primary, var(--blink-on-brand));
   }
 }
 
 .empty-state-icon {
   width: 24px;
   height: 24px;
-  color: var(--blink-on-surface-faint, var(--blink-on-surface-muted));
+  color: var(--blink-on-surface-faint);
   margin: 0 auto 8px;
   display: block;
 }
 
-// Mock-data visual cue. Apply `class="has-mock-data"` to a meaningful
-// heading/label inside any component that's rendering mock (non-API)
-// data. Renders a subtle `※` after the element so developers know at a
-// glance which sections are placeholder data. Title attribute can be
-// added on the element itself for a hover hint.
-.has-mock-data::after {
+// Mock-data visual cue.
+//
+// `class="has-mock-data"` is a static marker on every element that
+// *could* be mock data. Whether the marker is actually rendered depends
+// on whether the element sits inside an `.is-mock-source` ancestor.
+// Components that pull from MOCK_* constants set this class on their
+// host via `MockDataService.isMock('<feature>')`, and remove it once
+// they're wired to the real Agentic Filesystem path. This means a
+// single host-class flip toggles ALL markers in that subtree on/off
+// without touching templates.
+.is-mock-source .has-mock-data::after {
   content: '\00a0※';
   margin-left: 2px;
   color: var(--blink-on-surface-muted);
@@ -123,10 +211,10 @@ app-strategy-research {
 
 .bv-section-label {
   margin: 0;
-  font-size: var(--blink-label-small);
+  font-size: 12px;
   font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.05em;
   color: var(--blink-on-surface-muted);
 }
 
@@ -182,4 +270,371 @@ app-strategy-research {
   .mat-mdc-snack-bar-action {
     color: var(--blink-toast-action-text);
   }
+}
+
+/* ──────────────────────────────────────────────────────────────────
+   Strategic Pillars "New Content Pillar" modal — global because the
+   modal element is teleported to <body> via ViewContainerRef so that
+   `position: fixed` is anchored to the viewport regardless of any
+   ancestor transforms (e.g. the page-enter animation on
+   <app-strategy-research>). All selectors are namespaced under
+   `.app-modal` to avoid colliding with other styles.
+   ────────────────────────────────────────────────────────────────── */
+.app-modal.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.5);
+  display: grid;
+  place-items: center;
+  z-index: 1000;
+  padding: 16px;
+  box-sizing: border-box;
+  overflow-y: auto;
+  animation: sp-modal-fade-in 200ms ease-out;
+}
+
+.app-modal {
+  .modal-dialog {
+    position: relative;
+    background: var(--blink-surface);
+    border: 1px solid var(--blink-outline-variant);
+    border-radius: 12px;
+    box-shadow: var(--blink-shadow-lg);
+    width: 100%;
+    max-width: 32rem;
+    max-height: calc(100vh - 32px);
+    min-height: 0;
+    overflow-y: auto;
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    margin: auto;
+    animation: sp-modal-zoom-in 200ms ease-out;
+  }
+
+  .modal-close {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--blink-on-surface-muted);
+    opacity: 0.7;
+    padding: 4px;
+    border-radius: 4px;
+    transition: opacity 0.15s;
+
+    &:hover { opacity: 1; }
+  }
+
+  .modal-header {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding-right: 32px;
+  }
+
+  .modal-title {
+    font-size: var(--blink-title-medium);
+    font-weight: 600;
+    line-height: 1;
+    margin: 0;
+    color: var(--blink-on-surface-strong);
+  }
+
+  .modal-description {
+    font-size: var(--blink-body-small);
+    color: var(--blink-on-surface-muted);
+    margin: 0;
+  }
+
+  .modal-body {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    padding: 8px 0;
+  }
+
+  .field {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .field-label {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: var(--blink-label-small);
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--blink-on-surface-muted);
+  }
+
+  .field-label-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .field-input {
+    height: 40px;
+    padding: 0 12px;
+    border: 1px solid var(--blink-outline-variant);
+    border-radius: 6px;
+    font-family: inherit;
+    font-size: var(--blink-body-medium);
+    background: var(--blink-input-bg-dark);
+    color: var(--blink-on-surface);
+    outline: none;
+    width: 100%;
+    box-sizing: border-box;
+
+    &:focus { border-color: var(--blink-brand-primary); }
+  }
+
+  .field-textarea {
+    min-height: 80px;
+    padding: 8px 12px;
+    border: 1px solid var(--blink-outline-variant);
+    border-radius: 6px;
+    font-family: inherit;
+    font-size: var(--blink-body-medium);
+    background: var(--blink-input-bg-dark);
+    color: var(--blink-on-surface);
+    outline: none;
+    resize: none;
+    width: 100%;
+    box-sizing: border-box;
+
+    &:focus { border-color: var(--blink-brand-primary); }
+  }
+
+  .color-swatches {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .color-swatches .color-swatch {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    border: 2px solid transparent;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    transition: transform 0.15s;
+
+    &:hover { transform: scale(1.05); }
+    &.selected { border-color: var(--blink-on-surface-strong); transform: scale(1.1); }
+  }
+
+  .objective-empty {
+    margin: 0;
+    font-size: var(--blink-body-small);
+    color: var(--blink-on-surface-muted);
+  }
+
+  .objective-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+
+  .objective-chip {
+    font-size: var(--blink-body-small);
+    padding: 4px 10px;
+    border-radius: 999px;
+    border: 1px solid var(--blink-outline-variant);
+    background: none;
+    color: var(--blink-on-surface-muted);
+    cursor: pointer;
+    max-width: 180px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    transition: all 0.15s;
+
+    &:hover { border-color: var(--blink-on-surface-secondary); }
+    &.selected {
+      border-color: var(--blink-brand-primary);
+      background: var(--blink-brand-primary-lightest-bg);
+      color: var(--blink-brand-primary);
+    }
+  }
+
+  .btn-ai-suggest {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: none;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    font-size: 10px;
+    color: var(--blink-brand-primary);
+
+    &:hover:not(:disabled) { text-decoration: underline; }
+    &:disabled { opacity: 0.5; cursor: not-allowed; }
+  }
+
+  .goal-card {
+    border: 1px solid var(--blink-outline-variant);
+    border-radius: 6px;
+    padding: 12px;
+    background: var(--blink-input-bg-light);
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .goal-grid-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+
+  .field-xs {
+    height: 32px;
+    font-size: var(--blink-label-medium);
+    padding: 0 12px;
+    background: var(--blink-input-bg-dark);
+  }
+
+  .goal-card-actions { display: flex; gap: 8px; }
+
+  .btn-goal-save {
+    height: 28px;
+    padding: 0 12px;
+    border-radius: 6px;
+    border: none;
+    background: var(--blink-brand-primary);
+    color: var(--blink-on-brand);
+    font-size: var(--blink-label-medium);
+    font-weight: 500;
+    cursor: pointer;
+
+    &:hover { background: var(--blink-brand-primary-active, #c4452d); }
+  }
+
+  .btn-goal-cancel {
+    height: 28px;
+    padding: 0 12px;
+    border-radius: 6px;
+    border: 1px solid var(--blink-outline-variant);
+    background: var(--blink-surface);
+    color: var(--blink-on-surface);
+    font-size: var(--blink-label-medium);
+    font-weight: 500;
+    cursor: pointer;
+
+    &:hover { background: var(--blink-surface-hover); }
+  }
+
+  .field--goals { gap: 6px; }
+
+  .goal-saved {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 10px;
+    border: 1px solid var(--blink-outline-variant);
+    border-radius: 6px;
+    background: var(--blink-input-bg-dark);
+    font-size: var(--blink-body-small);
+
+    .goal-saved-metric {
+      font-weight: 600;
+      color: var(--blink-on-surface-strong);
+      flex: 1;
+    }
+    .goal-saved-target { color: var(--blink-on-surface-muted); }
+
+    .btn-icon-remove { padding: 0; }
+  }
+
+  .btn-icon-remove {
+    background: none;
+    border: none;
+    padding: 6px;
+    cursor: pointer;
+    color: var(--blink-on-surface-muted);
+    border-radius: 4px;
+
+    &:hover {
+      color: var(--blink-status-danger, var(--blink-brand-primary));
+      background: var(--blink-surface-hover);
+    }
+  }
+
+  .btn-add-goal {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: none;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    font-size: var(--blink-body-small);
+    color: var(--blink-on-surface-muted);
+
+    &:hover:not(:disabled) { color: var(--blink-brand-primary); }
+    &:disabled { opacity: 0.5; cursor: not-allowed; }
+  }
+
+  .modal-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+
+    @media (max-width: 480px) {
+      flex-direction: column-reverse;
+    }
+  }
+
+  .btn-modal-cancel {
+    height: 36px;
+    padding: 0 16px;
+    border-radius: 6px;
+    border: 1px solid var(--blink-outline-variant);
+    background: var(--blink-surface);
+    color: var(--blink-on-surface);
+    font-size: var(--blink-body-small);
+    font-weight: 500;
+    cursor: pointer;
+
+    &:hover { background: var(--blink-surface-hover); }
+  }
+
+  .btn-modal-create {
+    height: 36px;
+    padding: 0 16px;
+    border-radius: 6px;
+    border: none;
+    background: var(--blink-brand-primary);
+    color: var(--blink-on-brand);
+    font-size: var(--blink-body-small);
+    font-weight: 500;
+    cursor: pointer;
+
+    &:hover:not(:disabled) { background: var(--blink-brand-primary-active, #c4452d); }
+    &:disabled { opacity: 0.5; cursor: not-allowed; }
+  }
+}
+
+@keyframes sp-modal-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes sp-modal-zoom-in {
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
 }

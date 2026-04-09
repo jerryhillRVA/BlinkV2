@@ -1,7 +1,8 @@
-import { Component, DestroyRef, inject, signal } from '@angular/core';
+import { Component, DestroyRef, HostBinding, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import type { Platform } from '../../strategy-research.types';
+import { MockDataService } from '../../../../core/mock-data/mock-data.service';
 import { PLATFORM_OPTIONS, SERIES_GOAL_OPTIONS, AI_SIMULATION_DELAY_MS } from '../../strategy-research.constants';
 import { safeTimeout } from '../../strategy-research.utils';
 
@@ -83,6 +84,12 @@ const MOCK_SERIES: SeriesOverview = {
 })
 export class SeriesBuilderComponent {
   private readonly destroyRef = inject(DestroyRef);
+  private readonly mockData = inject(MockDataService);
+
+  @HostBinding('class.is-mock-source')
+  get isMockSource(): boolean {
+    return this.mockData.isMock('series-builder');
+  }
 
   readonly isGenerating = signal(false);
   readonly series = signal<SeriesOverview | null>(null);

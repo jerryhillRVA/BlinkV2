@@ -1,49 +1,224 @@
 <div class="strategic-pillars">
-  <div class="section-header">
-    <h2 class="has-mock-data" title="Mock data">Strategic Pillars</h2>
+  <header class="page-header">
+    <div class="page-header-text">
+      <div class="page-header-icon">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83z"/>
+          <path d="M2 12a1 1 0 0 0 .58.91l8.6 3.91a2 2 0 0 0 1.65 0l8.58-3.9A1 1 0 0 0 22 12"/>
+          <path d="M2 17a1 1 0 0 0 .58.91l8.6 3.91a2 2 0 0 0 1.65 0l8.58-3.9A1 1 0 0 0 22 17"/>
+        </svg>
+      </div>
+      <div>
+        <h3 class="page-header-title has-mock-data" title="Mock data">Content Pillars</h3>
+        <p class="page-header-subtitle">Core wellness themes for your brand</p>
+      </div>
+    </div>
     <button class="btn-add" (click)="openAddForm()">
       <app-icon name="plus" />
       Add Pillar
     </button>
-  </div>
+  </header>
 
-  <!-- Add Form -->
-  @if (showAddForm()) {
-    <div class="add-form">
-      <h3>New Pillar</h3>
-      <div class="form-group">
-        <span>Name</span>
-        <input type="text" [(ngModel)]="newPillarName" placeholder="Pillar name" />
-      </div>
-      <div class="form-group">
-        <span>Description</span>
-        <textarea [(ngModel)]="newPillarDescription" placeholder="Describe this pillar..." rows="3"></textarea>
-      </div>
-      <div class="form-group">
-        <span>Color</span>
-        <div class="color-picker">
-          @for (color of presetColors; track color) {
-            <button
-              class="color-swatch"
-              [class.selected]="newPillarColor === color"
-              [style.background]="color"
-              (click)="newPillarColor = color"
-              [attr.aria-label]="'Select color ' + color"
-            ></button>
-          }
+  <!-- Add Pillar Modal (teleported to body via ViewContainerRef) -->
+  <ng-template #modalTpl>
+    <div
+      class="modal-overlay app-modal"
+      role="presentation"
+      tabindex="-1"
+      (click)="cancelAdd()"
+      (keyup.escape)="cancelAdd()"
+    >
+      <div
+        class="modal-dialog"
+        role="dialog"
+        aria-labelledby="new-pillar-title"
+        aria-modal="true"
+        tabindex="-1"
+        (click)="$event.stopPropagation()"
+        (keyup.escape)="cancelAdd()"
+      >
+        <button type="button" class="modal-close" (click)="cancelAdd()" aria-label="Close">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M18 6 6 18" />
+            <path d="m6 6 12 12" />
+          </svg>
+        </button>
+
+        <div class="modal-header">
+          <h2 id="new-pillar-title" class="modal-title">{{ modalEditingId() ? 'Edit Pillar' : 'New Content Pillar' }}</h2>
+          <p class="modal-description">{{ modalEditingId() ? 'Update this content pillar' : 'Create a strategic content pillar to categorize your content' }}</p>
+        </div>
+
+        <div class="modal-body">
+          <div class="field">
+            <span class="field-label">
+              <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="4 7 4 4 20 4 20 7" />
+                <line x1="9" x2="15" y1="20" y2="20" />
+                <line x1="12" x2="12" y1="4" y2="20" />
+              </svg>
+              Name
+            </span>
+            <input type="text" class="field-input" [(ngModel)]="newPillarName" placeholder="e.g. Yoga & Movement" />
+          </div>
+
+          <div class="field">
+            <span class="field-label">
+              <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z" />
+                <path d="M14 2v4a2 2 0 0 0 2 2h4" />
+                <path d="M10 9H8" />
+                <path d="M16 13H8" />
+                <path d="M16 17H8" />
+              </svg>
+              Description
+            </span>
+            <textarea class="field-textarea" [(ngModel)]="newPillarDescription" placeholder="Describe this content pillar..." rows="3"></textarea>
+          </div>
+
+          <div class="field">
+            <span class="field-label">
+              <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="13.5" cy="6.5" r=".5" fill="currentColor" />
+                <circle cx="17.5" cy="10.5" r=".5" fill="currentColor" />
+                <circle cx="8.5" cy="7.5" r=".5" fill="currentColor" />
+                <circle cx="6.5" cy="12.5" r=".5" fill="currentColor" />
+                <path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 0 1 1.668-1.668h1.996c3.051 0 5.555-2.503 5.555-5.554C21.965 6.012 17.461 2 12 2z" />
+              </svg>
+              Color
+            </span>
+            <div class="color-swatches">
+              @for (color of presetColors; track color) {
+                <button
+                  type="button"
+                  class="color-swatch"
+                  [class.selected]="newPillarColor === color"
+                  [style.background-color]="color"
+                  (click)="newPillarColor = color"
+                  [attr.aria-label]="'Select color ' + color"
+                >
+                  @if (newPillarColor === color) {
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M20 6 9 17l-5-5" />
+                    </svg>
+                  }
+                </button>
+              }
+            </div>
+          </div>
+
+          <div class="field">
+            <span class="field-label">
+              <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10" />
+                <circle cx="12" cy="12" r="6" />
+                <circle cx="12" cy="12" r="2" />
+              </svg>
+              Linked Objectives
+            </span>
+            @if (linkedObjectives().length > 0) {
+              <div class="objective-chips">
+                @for (obj of linkedObjectives(); track obj.id) {
+                  <button
+                    type="button"
+                    class="objective-chip"
+                    [class.selected]="isObjectiveLinked(obj.id)"
+                    [title]="obj.statement"
+                    (click)="toggleLinkedObjective(obj.id)"
+                  >
+                    {{ obj.statement }}
+                  </button>
+                }
+              </div>
+            } @else {
+              <p class="objective-empty">No business objectives yet. Add objectives at the top of the page to link them here.</p>
+            }
+          </div>
+
+          <div class="field field--goals">
+            <div class="field-label-row">
+              <span class="field-label">
+                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <circle cx="12" cy="12" r="10" />
+                  <circle cx="12" cy="12" r="6" />
+                  <circle cx="12" cy="12" r="2" />
+                </svg>
+                Goals
+              </span>
+              <button type="button" class="btn-ai-suggest" [disabled]="isSuggestingGoals()" (click)="suggestGoals()">
+                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z" />
+                  <path d="M20 3v4" />
+                  <path d="M22 5h-4" />
+                  <path d="M4 17v2" />
+                  <path d="M5 18H3" />
+                </svg>
+                AI Suggest Goals
+              </button>
+            </div>
+            @for (goal of newGoals(); track goal.id) {
+              @if (isGoalSaved(goal.id)) {
+                <div class="goal-saved">
+                  <span class="goal-saved-metric">{{ goal.metric }}</span>
+                  <span class="goal-saved-target">{{ goal.target }}{{ goal.unit }} / {{ goal.period }}</span>
+                  <button type="button" class="btn-icon-remove" (click)="removeGoal(goal.id)" aria-label="Remove goal">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M18 6 6 18" />
+                      <path d="m6 6 12 12" />
+                    </svg>
+                  </button>
+                </div>
+              } @else {
+                <div class="goal-card">
+                  <input type="text" class="field-input field-xs" [(ngModel)]="goal.metric" placeholder="Metric name (e.g. Engagement Rate)" />
+                  <div class="goal-grid-2">
+                    <input type="number" class="field-input field-xs" [(ngModel)]="goal.target" placeholder="Target" />
+                    <input type="text" class="field-input field-xs" [(ngModel)]="goal.unit" placeholder="Unit (%, followers…)" />
+                  </div>
+                  <div class="goal-grid-2">
+                    <app-dropdown
+                      [options]="periodOptions"
+                      [value]="goal.period"
+                      size="compact"
+                      [fullWidth]="true"
+                      (valueChange)="updateGoalPeriod(goal.id, $any($event))"
+                    />
+
+                    <input type="number" class="field-input field-xs" [(ngModel)]="goal.current" placeholder="Current (optional)" />
+                  </div>
+                  <div class="goal-card-actions">
+                    <button type="button" class="btn-goal-save" (click)="saveGoal(goal.id)">Save</button>
+                    <button type="button" class="btn-goal-cancel" (click)="removeGoal(goal.id)">Cancel</button>
+                  </div>
+                </div>
+              }
+            }
+            @if (!hasDraftGoal()) {
+            <button type="button" class="btn-add-goal" (click)="addGoal()">
+              <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M5 12h14" />
+                <path d="M12 5v14" />
+              </svg>
+              Add Goal
+            </button>
+            }
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn-modal-cancel" (click)="cancelAdd()">Cancel</button>
+          <button type="button" class="btn-modal-create" (click)="addPillar()" [disabled]="!newPillarName.trim()">{{ modalEditingId() ? 'Update Pillar' : 'Create Pillar' }}</button>
         </div>
       </div>
-      <div class="form-actions">
-        <button class="btn-cancel" (click)="cancelAdd()">Cancel</button>
-        <button class="btn-save" (click)="addPillar()">Add Pillar</button>
-      </div>
     </div>
-  }
+  </ng-template>
 
   <!-- Pillar Cards Grid -->
   <div class="pillars-grid">
     @for (pillar of pillars(); track pillar.id) {
-      <div class="pillar-card" [style.border-top-color]="pillar.color">
+      <div class="pillar-card">
+        <div class="pillar-card-bar" [style.background]="pillar.color"></div>
+        <div class="pillar-card-body">
         @if (editingId() === pillar.id) {
           <!-- Edit Mode -->
           <div class="edit-form">
@@ -77,9 +252,18 @@
         } @else {
           <!-- View Mode -->
           <div class="card-header">
-            <h3>{{ pillar.name }}</h3>
+            <div class="card-header-main">
+              <div class="card-title-row">
+                <span class="pillar-color-dot" [style.background]="pillar.color"></span>
+                <h3 class="has-mock-data" title="Mock data">{{ pillar.name }}</h3>
+                @if (pillar.objectiveIds && pillar.objectiveIds.length > 0) {
+                  <span class="objective-badge" [title]="pillar.objectiveIds.length + ' linked objective(s)'">{{ pillar.objectiveIds.length }} obj</span>
+                }
+              </div>
+              <p class="card-description">{{ pillar.description }}</p>
+            </div>
             <div class="card-actions">
-              <button class="btn-icon" (click)="startEdit(pillar)" title="Edit">
+              <button class="btn-icon" (click)="openEditModal(pillar)" title="Edit">
                 <app-icon name="edit" [size]="14" />
               </button>
               <button class="btn-icon btn-delete" (click)="deletePillar(pillar.id)" title="Delete">
@@ -87,8 +271,10 @@
               </button>
             </div>
           </div>
-          <p class="card-description">{{ pillar.description }}</p>
 
+          @if (!pillar.goals || pillar.goals.length === 0) {
+            <button type="button" class="card-add-goal" (click)="openEditModalAddGoal(pillar)">+ Add Goal</button>
+          }
           @if (pillar.goals && pillar.goals.length > 0) {
             <div class="goals-section">
               <h4>Goals</h4>
@@ -110,13 +296,30 @@
             </div>
           }
         }
+        </div>
       </div>
     }
   </div>
 
   <!-- Content Distribution Analysis -->
   <div class="distribution-section">
-    <h3>Content Distribution Analysis</h3>
+    <header class="page-header">
+      <div class="page-header-text">
+        <div class="page-header-icon">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M3 3v16a2 2 0 0 0 2 2h16"/>
+            <path d="M18 17V9"/>
+            <path d="M13 17V5"/>
+            <path d="M8 17v-3"/>
+          </svg>
+        </div>
+        <div>
+          <h3 class="page-header-title">Content Distribution Analysis</h3>
+          <p class="page-header-subtitle">AI-recommended effort distribution across your content pillars</p>
+        </div>
+      </div>
+    </header>
+
     <div class="distribution-controls">
       <div class="form-group inline">
         <span>Posts per week</span>
@@ -126,16 +329,139 @@
           (ngModelChange)="postsPerWeek.set($event)"
           min="1"
           max="50"
+          placeholder="e.g. 10"
         />
       </div>
-      <button class="btn-analyze" (click)="analyzeDistribution()" [disabled]="isAnalyzing()">
+
+      <div class="form-group audience-focus">
+        <span>Audience Focus</span>
+        <div class="chip-toggles">
+          @for (segment of audienceSegments(); track segment.id) {
+            <button
+              type="button"
+              class="chip-toggle"
+              [class.active]="isSegmentSelected(segment.id)"
+              (click)="toggleSegment(segment.id)"
+            >
+              {{ segment.name }}
+            </button>
+          }
+        </div>
+      </div>
+
+      <button
+        class="btn-analyze"
+        (click)="analyzeDistribution()"
+        [disabled]="isAnalyzing() || !postsPerWeek() || (postsPerWeek() ?? 0) < 1"
+      >
         @if (isAnalyzing()) {
           <span class="spinner"></span>
           Analyzing...
         } @else {
-          Analyze
+          Analyze Distribution
         }
       </button>
     </div>
+
+    <!-- Empty state -->
+    @if (!isAnalyzing() && !investmentPlan()) {
+      <div class="distribution-empty">
+        <svg class="empty-icon" xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M3 3v16a2 2 0 0 0 2 2h16"/>
+          <path d="M18 17V9"/>
+          <path d="M13 17V5"/>
+          <path d="M8 17v-3"/>
+        </svg>
+        <p>Enter your weekly posting volume to get a recommended distribution across your content pillars</p>
+      </div>
+    }
+
+    <!-- Loading state -->
+    @if (isAnalyzing()) {
+      <div class="distribution-loading">
+        <span class="spinner spinner--lg"></span>
+        <p>Analyzing your content distribution...</p>
+      </div>
+    }
+
+    <!-- Results -->
+    @if (!isAnalyzing() && investmentPlan(); as plan) {
+      <div class="distribution-results has-mock-data" title="Mock data">
+        <div class="alloc-table">
+          <div class="alloc-row alloc-header">
+            <span class="col-pillar">Pillar</span>
+            <span class="col-bar">Recommended Distribution</span>
+            <span class="col-posts">Posts/Week</span>
+            <span class="col-rationale">Rationale</span>
+          </div>
+          @for (alloc of plan.pillarAllocations; track alloc.pillarId) {
+            @if (getPillarById(alloc.pillarId); as pillar) {
+              <div class="alloc-row">
+                <div class="col-pillar">
+                  <span class="pillar-dot" [style.background]="pillar.color"></span>
+                  <span class="pillar-name has-mock-data" title="Mock data">{{ pillar.name }}</span>
+                </div>
+                <div class="col-bar">
+                  <div class="alloc-bar">
+                    <div
+                      class="alloc-bar-fill"
+                      [style.width.%]="alloc.percentage"
+                      [style.background]="pillar.color"
+                    ></div>
+                  </div>
+                </div>
+                <div class="col-posts">{{ alloc.postsPerWeek }} posts/wk</div>
+                <div class="col-rationale">{{ alloc.rationale }}</div>
+              </div>
+            }
+          }
+        </div>
+        <p class="alloc-legend">Bar width represents % of weekly posts recommended per pillar</p>
+
+        <!-- Platform Split -->
+        <div class="info-card">
+          <div class="info-card-header">
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="18" cy="5" r="3" />
+              <circle cx="6" cy="12" r="3" />
+              <circle cx="18" cy="19" r="3" />
+              <line x1="8.59" y1="13.51" x2="15.42" y2="17.49" />
+              <line x1="15.41" y1="6.51" x2="8.59" y2="10.49" />
+            </svg>
+            <span>Platform Split</span>
+          </div>
+          <div class="info-card-body platform-list">
+            @for (pa of plan.platformAllocations; track pa.platform) {
+              <div class="platform-row">
+                <span class="platform-name" [class]="'platform-name platform-' + pa.platform">{{ pa.platform }}</span>
+                <span class="platform-posts">{{ pa.postsPerWeek }} posts/wk</span>
+                <span class="platform-rationale">{{ pa.rationale }}</span>
+              </div>
+            }
+          </div>
+        </div>
+
+        <!-- Quick Wins -->
+        <div class="info-card">
+          <div class="info-card-header">
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--blink-brand-primary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
+            </svg>
+            <span>Quick Wins</span>
+          </div>
+          <div class="info-card-body quick-wins">
+            @for (win of plan.quickWins; track $index) {
+              <div class="quick-win">
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--blink-brand-primary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M5 12h14" />
+                  <path d="m12 5 7 7-7 7" />
+                </svg>
+                <p>{{ win }}</p>
+              </div>
+            }
+          </div>
+        </div>
+      </div>
+    }
   </div>
 </div>

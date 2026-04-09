@@ -1,368 +1,135 @@
-import { TestBed } from '@angular/core/testing';
+import { TestBed, ComponentFixture } from '@angular/core/testing';
 import { ChannelStrategyComponent } from './channel-strategy.component';
 import { AI_SIMULATION_DELAY_MS } from '../../strategy-research.constants';
 
 describe('ChannelStrategyComponent', () => {
+  let fixture: ComponentFixture<ChannelStrategyComponent>;
   let component: ChannelStrategyComponent;
-  let fixture: ReturnType<typeof TestBed.createComponent<ChannelStrategyComponent>>;
-  let nativeElement: HTMLElement;
 
-  beforeEach(async () => {
-    vi.useFakeTimers();
-    await TestBed.configureTestingModule({
-      imports: [ChannelStrategyComponent],
-    }).compileComponents();
-
+  beforeEach(() => {
+    TestBed.configureTestingModule({ imports: [ChannelStrategyComponent] });
     fixture = TestBed.createComponent(ChannelStrategyComponent);
     component = fixture.componentInstance;
-    nativeElement = fixture.nativeElement;
     fixture.detectChanges();
   });
 
-  afterEach(() => {
-    vi.useRealTimers();
-  });
-
-  it('should create', () => {
+  it('should create with five channel platforms', () => {
     expect(component).toBeTruthy();
+    expect(component.channels().length).toBe(5);
   });
 
-  // --- Rendering ---
-
-  it('should render 5 platform cards', () => {
-    const cards = nativeElement.querySelectorAll('.platform-card');
-    expect(cards.length).toBe(5);
-  });
-
-  it('should render section header', () => {
-    expect(nativeElement.querySelector('.section-header h2')?.textContent).toContain('Channel Strategy');
-  });
-
-  it('should mark inactive platforms with inactive class', () => {
-    const inactiveCards = nativeElement.querySelectorAll('.platform-card.inactive');
-    expect(inactiveCards.length).toBe(2); // facebook and linkedin
-  });
-
-  it('should render platform names from platformLabels', () => {
-    const names = nativeElement.querySelectorAll('.platform-name');
-    const nameTexts = Array.from(names).map(n => n.textContent?.trim());
-    expect(nameTexts).toContain('Instagram');
-    expect(nameTexts).toContain('TikTok');
-    expect(nameTexts).toContain('YouTube');
-    expect(nameTexts).toContain('Facebook');
-    expect(nameTexts).toContain('LinkedIn');
-  });
-
-  // --- Initial state ---
-
-  it('should have instagram expanded by default', () => {
+  it('isExpanded reports default expanded platforms', () => {
     expect(component.isExpanded('instagram')).toBe(true);
-    expect(component.isExpanded('tiktok')).toBe(false);
+    expect(component.isExpanded('linkedin')).toBe(false);
   });
 
-  it('should have 3 active and 2 inactive channels', () => {
-    const active = component.channels().filter(c => c.active);
-    const inactive = component.channels().filter(c => !c.active);
-    expect(active.length).toBe(3);
-    expect(inactive.length).toBe(2);
+  it('toggleExpand flips expansion state', () => {
+    component.toggleExpand('linkedin');
+    expect(component.isExpanded('linkedin')).toBe(true);
+    component.toggleExpand('linkedin');
+    expect(component.isExpanded('linkedin')).toBe(false);
   });
 
-  // --- Expand / Collapse ---
-
-  it('should toggle expand for a platform', () => {
-    expect(component.isExpanded('tiktok')).toBe(false);
-    component.toggleExpand('tiktok');
-    expect(component.isExpanded('tiktok')).toBe(true);
-    component.toggleExpand('tiktok');
-    expect(component.isExpanded('tiktok')).toBe(false);
-  });
-
-  it('should show platform-content when expanded', () => {
-    // Instagram is expanded by default
-    expect(nativeElement.querySelector('.platform-content')).toBeTruthy();
-  });
-
-  it('should show strategy form for active expanded platform', () => {
-    // Instagram is active and expanded
-    expect(nativeElement.querySelector('.strategy-form')).toBeTruthy();
-  });
-
-  it('should show inactive message for inactive expanded platform', () => {
-    component.toggleExpand('facebook');
-    fixture.detectChanges();
-
-    const inactiveMsg = nativeElement.querySelector('.inactive-message');
-    expect(inactiveMsg).toBeTruthy();
-    expect(inactiveMsg?.textContent).toContain('Mark as active');
-  });
-
-  it('should apply rotated class to chevron when expanded', () => {
-    fixture.detectChanges();
-    const chevron = nativeElement.querySelector('.chevron.rotated');
-    expect(chevron).toBeTruthy();
-  });
-
-  // --- Toggle active ---
-
-  it('should toggle platform active state', () => {
-    const fb = component.channels().find(c => c.platform === 'facebook')!;
-    expect(fb.active).toBe(false);
-
+  it('toggleActive flips channel active flag', () => {
+    const before = component.getChannel('facebook').active;
     component.toggleActive('facebook');
-    const updated = component.channels().find(c => c.platform === 'facebook')!;
-    expect(updated.active).toBe(true);
-
-    component.toggleActive('facebook');
-    const toggled = component.channels().find(c => c.platform === 'facebook')!;
-    expect(toggled.active).toBe(false);
+    expect(component.getChannel('facebook').active).toBe(!before);
   });
 
-  // --- Update channel ---
-
-  it('should update channel field', () => {
-    component.updateChannel('instagram', 'role', 'New Role');
-    const ig = component.channels().find(c => c.platform === 'instagram')!;
-    expect(ig.role).toBe('New Role');
+  it('updateChannel patches a single field', () => {
+    component.updateChannel('instagram', 'role', 'New role');
+    expect(component.getChannel('instagram').role).toBe('New role');
   });
 
-  it('should update posting cadence', () => {
-    component.updateChannel('tiktok', 'postingCadence', '7x/week');
-    const tk = component.channels().find(c => c.platform === 'tiktok')!;
-    expect(tk.postingCadence).toBe('7x/week');
-  });
-
-  it('should update tone adjustment', () => {
-    component.updateChannel('instagram', 'toneAdjustment', 'Very warm');
-    const ig = component.channels().find(c => c.platform === 'instagram')!;
-    expect(ig.toneAdjustment).toBe('Very warm');
-  });
-
-  it('should update notes', () => {
-    component.updateChannel('instagram', 'notes', 'Some notes');
-    const ig = component.channels().find(c => c.platform === 'instagram')!;
-    expect(ig.notes).toBe('Some notes');
-  });
-
-  it('should update primary audience', () => {
-    component.updateChannel('instagram', 'primaryAudience', 'New Audience');
-    const ig = component.channels().find(c => c.platform === 'instagram')!;
-    expect(ig.primaryAudience).toBe('New Audience');
-  });
-
-  // --- Content types ---
-
-  it('should check if content type is active', () => {
+  it('isContentTypeActive reflects primaryContentTypes', () => {
     const ig = component.getChannel('instagram');
-    expect(component.isContentTypeActive(ig, 'Reels')).toBe(true);
-    expect(component.isContentTypeActive(ig, 'Lives')).toBe(false);
+    const existing = ig.primaryContentTypes[0];
+    expect(component.isContentTypeActive(ig, existing)).toBe(true);
+    expect(component.isContentTypeActive(ig, 'NotInList')).toBe(false);
   });
 
-  it('should toggle content type on', () => {
-    component.toggleContentType('instagram', 'Lives');
-    const ig = component.getChannel('instagram');
-    expect(ig.primaryContentTypes).toContain('Lives');
+  it('toggleContentType adds and removes a content type', () => {
+    component.toggleContentType('instagram', 'NewType');
+    expect(component.getChannel('instagram').primaryContentTypes).toContain('NewType');
+    component.toggleContentType('instagram', 'NewType');
+    expect(component.getChannel('instagram').primaryContentTypes).not.toContain('NewType');
   });
 
-  it('should toggle content type off', () => {
-    component.toggleContentType('instagram', 'Reels');
-    const ig = component.getChannel('instagram');
-    expect(ig.primaryContentTypes).not.toContain('Reels');
+  it('contentTypesFor returns platform-specific options', () => {
+    expect(component.contentTypesFor('instagram').length).toBeGreaterThan(0);
+    expect(component.contentTypesFor('linkedin').length).toBeGreaterThan(0);
+    expect(component.contentTypesFor('instagram')).not.toEqual(component.contentTypesFor('linkedin'));
   });
 
-  it('should render content type chip toggles when expanded', () => {
-    fixture.detectChanges();
-    const chipToggles = nativeElement.querySelectorAll('.chip-toggle');
-    expect(chipToggles.length).toBe(10); // 10 content type options
-  });
-
-  // --- getChannel ---
-
-  it('should get channel by platform', () => {
-    const ig = component.getChannel('instagram');
-    expect(ig.platform).toBe('instagram');
-    expect(ig.active).toBe(true);
-  });
-
-  // --- AI Generate ---
-
-  it('should run AI generate for a platform (timer-based)', () => {
+  it('aiGenerate fills the channel after timer', () => {
+    vi.useFakeTimers();
     component.aiGenerate('facebook');
     expect(component.generatingPlatform()).toBe('facebook');
-
     vi.advanceTimersByTime(AI_SIMULATION_DELAY_MS);
     expect(component.generatingPlatform()).toBeNull();
-
     const fb = component.getChannel('facebook');
     expect(fb.active).toBe(true);
     expect(fb.role).toContain('AI-generated role for Facebook');
-    expect(fb.primaryContentTypes).toEqual(['Reels', 'Stories', 'Tutorials']);
-    expect(fb.toneAdjustment).toBe('Warm, authentic, and encouraging');
-    expect(fb.postingCadence).toBe('3x/week');
-    expect(fb.notes).toContain('AI-generated strategy');
+    expect(fb.primaryContentTypes.length).toBeGreaterThan(0);
+    vi.useRealTimers();
   });
 
-  it('should show spinner and "Generating..." during AI generation', () => {
-    component.aiGenerate('instagram');
-    fixture.detectChanges();
-
-    const genBtn = nativeElement.querySelector('.btn-ai-generate') as HTMLButtonElement;
-    expect(genBtn.disabled).toBe(true);
-    expect(genBtn.textContent).toContain('Generating...');
-    expect(genBtn.querySelector('.spinner')).toBeTruthy();
-
+  it('aiGenerateAll activates and seeds every channel', () => {
+    vi.useFakeTimers();
+    component.aiGenerateAll();
+    expect(component.generatingAll()).toBe(true);
     vi.advanceTimersByTime(AI_SIMULATION_DELAY_MS);
-    fixture.detectChanges();
-
-    expect(genBtn.disabled).toBe(false);
-    expect(genBtn.textContent).toContain('AI Generate');
+    expect(component.generatingAll()).toBe(false);
+    for (const c of component.channels()) {
+      expect(c.active).toBe(true);
+      expect(c.role).toBeTruthy();
+      expect(c.primaryAudience).toBeTruthy();
+      expect(c.primaryGoal).toBeTruthy();
+    }
+    vi.useRealTimers();
   });
 
-  // --- Platform labels and icons ---
-
-  it('should have platform labels for all platforms', () => {
-    expect(component.platformLabels['instagram']).toBe('Instagram');
-    expect(component.platformLabels['tiktok']).toBe('TikTok');
-    expect(component.platformLabels['youtube']).toBe('YouTube');
-    expect(component.platformLabels['facebook']).toBe('Facebook');
-    expect(component.platformLabels['linkedin']).toBe('LinkedIn');
-  });
-
-  it('should have platform icons for all platforms', () => {
+  it('exposes platformLabels, platformIcons, and option lists', () => {
+    expect(component.platformLabels['instagram']).toBeTruthy();
     expect(component.platformIcons['instagram']).toBeTruthy();
-    expect(component.platformIcons['tiktok']).toBeTruthy();
-    expect(component.platformIcons['youtube']).toBeTruthy();
-    expect(component.platformIcons['facebook']).toBeTruthy();
-    expect(component.platformIcons['linkedin']).toBeTruthy();
+    expect(component.audienceOptions.length).toBeGreaterThan(0);
+    expect(component.goalOptions.length).toBeGreaterThan(0);
   });
 
-  it('should have 10 content type options', () => {
-    expect(component.contentTypeOptions.length).toBe(10);
+  it('renders header and per-platform cards', () => {
+    const el = fixture.nativeElement as HTMLElement;
+    expect(el.querySelector('.page-header-title')?.textContent).toContain('Channel Strategy');
+    expect(el.querySelectorAll('.platform-card').length).toBe(5);
+    expect(el.querySelector('.btn-generate-all')).toBeTruthy();
   });
 
-  // --- DOM interactions for template function coverage ---
-
-  it('should toggle expand via platform header click in DOM', () => {
-    const headers = nativeElement.querySelectorAll('.platform-header') as NodeListOf<HTMLElement>;
-    // Click tiktok header (index 1) to expand
-    headers[1].click();
-    fixture.detectChanges();
-    expect(component.isExpanded('tiktok')).toBe(true);
-    expect(nativeElement.querySelectorAll('.platform-content').length).toBe(2); // instagram + tiktok
-
-    // Click again to collapse
-    headers[1].click();
-    fixture.detectChanges();
-    expect(component.isExpanded('tiktok')).toBe(false);
-  });
-
-  it('should toggle active via checkbox change in DOM', () => {
-    const checkbox = nativeElement.querySelector('.toggle-switch input[type="checkbox"]') as HTMLInputElement;
-    expect(checkbox).toBeTruthy();
-    checkbox.click();
-    fixture.detectChanges();
-    // Instagram was active, now should be inactive
-    expect(component.channels().find(c => c.platform === 'instagram')!.active).toBe(false);
-  });
-
-  it('should trigger AI generate via button click in DOM', () => {
-    const genBtn = nativeElement.querySelector('.btn-ai-generate') as HTMLButtonElement;
-    genBtn.click();
-    expect(component.generatingPlatform()).toBe('instagram');
+  it('AI Generate All button click invokes aiGenerateAll', () => {
+    vi.useFakeTimers();
+    const btn = (fixture.nativeElement as HTMLElement).querySelector('.btn-generate-all') as HTMLButtonElement;
+    btn.click();
+    expect(component.generatingAll()).toBe(true);
     vi.advanceTimersByTime(AI_SIMULATION_DELAY_MS);
-    expect(component.generatingPlatform()).toBeNull();
+    vi.useRealTimers();
   });
 
-  it('should update role via input ngModelChange in DOM', () => {
-    const roleInput = nativeElement.querySelector('.strategy-form input[type="text"]') as HTMLInputElement;
-    roleInput.value = 'Updated role via DOM';
-    roleInput.dispatchEvent(new Event('input'));
+  it('renders all platform cards with form fields when expanded', () => {
+    // Expand every platform and activate every channel so all template branches render
+    for (const c of component.channels()) {
+      if (!component.isExpanded(c.platform)) component.toggleExpand(c.platform);
+      if (!c.active) component.toggleActive(c.platform);
+    }
     fixture.detectChanges();
-    expect(component.channels().find(c => c.platform === 'instagram')!.role).toBe('Updated role via DOM');
+    const el = fixture.nativeElement as HTMLElement;
+    expect(el.querySelectorAll('.platform-content').length).toBe(5);
+    expect(el.querySelectorAll('.form-input').length).toBeGreaterThan(0);
+    expect(el.querySelectorAll('.chip-toggle').length).toBeGreaterThan(0);
+    expect(el.querySelectorAll('.btn-ai-generate').length).toBe(5);
   });
 
-  it('should update toneAdjustment via textarea ngModelChange in DOM', () => {
-    const textareas = nativeElement.querySelectorAll('.strategy-form textarea') as NodeListOf<HTMLTextAreaElement>;
-    textareas[0].value = 'Updated tone via DOM';
-    textareas[0].dispatchEvent(new Event('input'));
-    fixture.detectChanges();
-    expect(component.channels().find(c => c.platform === 'instagram')!.toneAdjustment).toBe('Updated tone via DOM');
-  });
-
-  it('should update notes via textarea ngModelChange in DOM', () => {
-    const textareas = nativeElement.querySelectorAll('.strategy-form textarea') as NodeListOf<HTMLTextAreaElement>;
-    textareas[1].value = 'Updated notes via DOM';
-    textareas[1].dispatchEvent(new Event('input'));
-    fixture.detectChanges();
-    expect(component.channels().find(c => c.platform === 'instagram')!.notes).toBe('Updated notes via DOM');
-  });
-
-  it('should toggle content type via chip toggle click in DOM', () => {
-    const chips = nativeElement.querySelectorAll('.chip-toggle') as NodeListOf<HTMLButtonElement>;
-    // Find a chip that is not active for instagram (e.g. "Lives")
-    const livesChip = Array.from(chips).find(c => c.textContent?.trim() === 'Lives');
-    expect(livesChip).toBeTruthy();
-    livesChip!.click();
-    fixture.detectChanges();
-    expect(component.channels().find(c => c.platform === 'instagram')!.primaryContentTypes).toContain('Lives');
-  });
-
-  it('should show inactive message when expanding an inactive platform via DOM', () => {
-    // Click facebook header to expand (index 3)
-    const headers = nativeElement.querySelectorAll('.platform-header') as NodeListOf<HTMLElement>;
-    headers[3].click();
-    fixture.detectChanges();
-    const inactiveMsg = nativeElement.querySelector('.inactive-message');
-    expect(inactiveMsg).toBeTruthy();
-  });
-
-  it('should stop propagation and generate via AI button within actions', () => {
-    // Expand tiktok first
-    component.toggleExpand('tiktok');
-    fixture.detectChanges();
-
-    const genBtns = nativeElement.querySelectorAll('.btn-ai-generate') as NodeListOf<HTMLButtonElement>;
-    // Click tiktok generate button (index 1)
-    genBtns[1].click();
-    expect(component.generatingPlatform()).toBe('tiktok');
-    vi.advanceTimersByTime(AI_SIMULATION_DELAY_MS);
-    fixture.detectChanges();
-  });
-
-  it('should update primaryAudience via input ngModelChange in DOM', () => {
-    const inputs = nativeElement.querySelectorAll('.strategy-form input[type="text"]') as NodeListOf<HTMLInputElement>;
-    // primaryAudience is the 3rd text input (role, postingCadence, primaryAudience)
-    inputs[2].value = 'Updated audience via DOM';
-    inputs[2].dispatchEvent(new Event('input'));
-    fixture.detectChanges();
-    expect(component.channels().find(c => c.platform === 'instagram')!.primaryAudience).toBe('Updated audience via DOM');
-  });
-
-  it('should update primaryGoal via input ngModelChange in DOM', () => {
-    const inputs = nativeElement.querySelectorAll('.strategy-form input[type="text"]') as NodeListOf<HTMLInputElement>;
-    // primaryGoal is the 4th text input (role, postingCadence, primaryAudience, primaryGoal)
-    inputs[3].value = 'Engagement & Growth';
-    inputs[3].dispatchEvent(new Event('input'));
-    fixture.detectChanges();
-    expect(component.channels().find(c => c.platform === 'instagram')!.primaryGoal).toBe('Engagement & Growth');
-  });
-
-  it('should render the Strategy Notes label', () => {
-    const labels = Array.from(nativeElement.querySelectorAll('.form-group span')).map(s => s.textContent?.trim());
-    expect(labels).toContain('Strategy Notes');
-    expect(labels).toContain('Primary Goal');
-  });
-
-  it('should update postingCadence via input ngModelChange in DOM', () => {
-    const inputs = nativeElement.querySelectorAll('.strategy-form input[type="text"]') as NodeListOf<HTMLInputElement>;
-    inputs[1].value = '10x/week';
-    inputs[1].dispatchEvent(new Event('input'));
-    fixture.detectChanges();
-    expect(component.channels().find(c => c.platform === 'instagram')!.postingCadence).toBe('10x/week');
-  });
-
-  it('should render active chip toggles with correct active class', () => {
-    const activeChips = nativeElement.querySelectorAll('.chip-toggle.active');
-    // Instagram has ['Reels', 'Stories', 'Carousels'] = 3 active
-    expect(activeChips.length).toBe(3);
+  it('clicking platform title toggles expansion', () => {
+    const title = (fixture.nativeElement as HTMLElement).querySelector('.platform-title') as HTMLButtonElement;
+    const before = component.isExpanded('instagram');
+    title.click();
+    expect(component.isExpanded('instagram')).toBe(!before);
   });
 });

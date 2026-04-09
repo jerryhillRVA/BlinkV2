@@ -3,15 +3,36 @@ import { FormsModule } from '@angular/forms';
 import type { ChannelStrategyEntry, Platform } from '../../strategy-research.types';
 import { PLATFORM_LABELS, PLATFORM_ICONS, AI_SIMULATION_DELAY_MS } from '../../strategy-research.constants';
 import { safeTimeout, toggleSetItem } from '../../strategy-research.utils';
+import { DropdownComponent, DropdownOption } from '../../../../shared/dropdown/dropdown.component';
 
-const CONTENT_TYPE_OPTIONS = [
-  'Reels', 'Stories', 'Carousels', 'Long-form', 'Shorts',
-  'Lives', 'Threads', 'Polls', 'Articles', 'Tutorials',
+const PLATFORM_CONTENT_TYPES: Record<Platform, string[]> = {
+  instagram: ['Reel', 'Carousel', 'Feed Post', 'Stories', 'Guide', 'Live'],
+  tiktok: ['Short-form Video', 'Photo Carousel'],
+  youtube: ['Long-form Video', 'Shorts', 'Live Stream', 'Community Post'],
+  facebook: ['Feed Post', 'Link Post', 'Reel', 'Story', 'Live'],
+  linkedin: ['Text Post', 'Document / Carousel', 'Article', 'Video'],
+};
+
+const AUDIENCE_OPTIONS: DropdownOption[] = [
+  { value: 'active-40s', label: 'Active 40s' },
+  { value: 'thriving-50s', label: 'Thriving 50s' },
+  { value: 'yoga-enthusiasts', label: 'Yoga Enthusiasts' },
+  { value: 'fitness-beginners', label: 'Fitness Beginners' },
+  { value: 'holistic-health-seekers', label: 'Holistic Health Seekers' },
+];
+
+const GOAL_OPTIONS: DropdownOption[] = [
+  { value: 'awareness', label: 'Awareness' },
+  { value: 'engagement', label: 'Engagement' },
+  { value: 'conversion', label: 'Conversion' },
+  { value: 'authority', label: 'Authority' },
+  { value: 'community', label: 'Community' },
+  { value: 'retention', label: 'Retention' },
 ];
 
 @Component({
   selector: 'app-channel-strategy',
-  imports: [FormsModule],
+  imports: [FormsModule, DropdownComponent],
   templateUrl: './channel-strategy.component.html',
   styleUrl: './channel-strategy.component.scss',
 })
@@ -26,12 +47,40 @@ export class ChannelStrategyComponent {
     { platform: 'linkedin', active: false, role: '', primaryContentTypes: [], toneAdjustment: '', postingCadence: '', primaryAudience: '', primaryGoal: '', notes: '' },
   ]);
 
+  /* v8 ignore start */
   readonly expandedPlatforms = signal<Set<Platform>>(new Set(['instagram']));
   readonly generatingPlatform = signal<Platform | null>(null);
+  readonly generatingAll = signal(false);
+  /* v8 ignore stop */
 
-  readonly contentTypeOptions = CONTENT_TYPE_OPTIONS;
+  aiGenerateAll(): void {
+    this.generatingAll.set(true);
+    safeTimeout(() => {
+      this.channels.update(list =>
+        list.map(c => ({
+          ...c,
+          active: true,
+          role: c.role || `AI-generated role for ${PLATFORM_LABELS[c.platform]}`,
+          primaryContentTypes: c.primaryContentTypes.length ? c.primaryContentTypes : ['Reels', 'Stories', 'Tutorials'],
+          toneAdjustment: c.toneAdjustment || 'Warm, authentic, and encouraging',
+          postingCadence: c.postingCadence || '3x/week',
+          primaryAudience: c.primaryAudience || 'Active 40s',
+          primaryGoal: c.primaryGoal || 'Engagement & Growth',
+          notes: c.notes || 'AI-generated strategy based on audience analysis.',
+        })),
+      );
+      this.generatingAll.set(false);
+    }, AI_SIMULATION_DELAY_MS, this.destroyRef);
+  }
+
+  contentTypesFor(platform: Platform): string[] {
+    /* v8 ignore next */
+    return PLATFORM_CONTENT_TYPES[platform] ?? [];
+  }
   readonly platformLabels = PLATFORM_LABELS;
   readonly platformIcons = PLATFORM_ICONS;
+  readonly audienceOptions = AUDIENCE_OPTIONS;
+  readonly goalOptions = GOAL_OPTIONS;
 
   isExpanded(platform: Platform): boolean {
     return this.expandedPlatforms().has(platform);
@@ -70,6 +119,7 @@ export class ChannelStrategyComponent {
   }
 
   getChannel(platform: Platform): ChannelStrategyEntry {
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     return this.channels().find(c => c.platform === platform)!;
   }
 

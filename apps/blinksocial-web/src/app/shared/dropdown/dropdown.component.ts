@@ -1,4 +1,4 @@
-import { Component, ElementRef, HostListener, inject, input, output, signal, computed } from '@angular/core';
+import { Component, ElementRef, HostBinding, HostListener, inject, input, output, signal, computed } from '@angular/core';
 
 export interface DropdownOption {
   value: string;
@@ -16,9 +16,16 @@ export class DropdownComponent {
   options = input.required<DropdownOption[]>();
   value = input.required<string>();
   size = input<'default' | 'compact'>('default');
+  fullWidth = input<boolean>(false);
+  filled = input<boolean>(false);
   valueChange = output<string>();
 
   open = signal(false);
+
+  @HostBinding('class.dropdown-host-full')
+  get hostFull(): boolean {
+    return this.fullWidth();
+  }
 
   selectedLabel = computed(() => {
     const match = this.options().find((o) => o.value === this.value());
