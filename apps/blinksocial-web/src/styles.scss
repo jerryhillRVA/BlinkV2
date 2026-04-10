@@ -43,7 +43,8 @@ app-onboard,
 app-new-workspace,
 app-profile-settings,
 app-workspace-settings,
-app-strategy-research {
+app-strategy-research,
+app-content {
   display: block;
   animation: page-enter 400ms ease-out both;
 }
@@ -59,7 +60,8 @@ app-strategy-research {
   app-new-workspace,
   app-profile-settings,
   app-workspace-settings,
-  app-strategy-research {
+  app-strategy-research,
+  app-content {
     animation: none;
   }
 }

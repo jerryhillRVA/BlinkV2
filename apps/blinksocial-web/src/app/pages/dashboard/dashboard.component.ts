@@ -69,4 +69,8 @@ export class DashboardComponent implements OnInit {
   onGoToStrategy(id: string) {
     this.router.navigate(['/workspace', id, 'strategy']);
   }
+
+  onGoToContent(id: string) {
+    this.router.navigate(['/workspace', id, 'content']);
+  }
 }

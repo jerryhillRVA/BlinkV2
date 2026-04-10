@@ -9,6 +9,14 @@
   box-shadow: var(--blink-shadow-md);
 }
 
+.navbar-start {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  min-width: 0;
+  flex: 1;
+}
+
 .navbar-brand {
   display: flex;
   align-items: center;
@@ -16,6 +24,7 @@
   text-decoration: none;
   color: inherit;
   cursor: pointer;
+  flex-shrink: 0;
 }
 
 .brand-icon {
@@ -32,10 +41,194 @@
   font-size: 20px;
 }
 
+// ── Workspace Selector ──
+.ws-selector-container {
+  position: relative;
+  margin-left: 12px;
+  flex-shrink: 0;
+}
+
+.ws-selector-btn {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 8px 10px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: white;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.15s;
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.15);
+  }
+}
+
+.ws-selector-name {
+  max-width: 140px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ws-selector-chevron {
+  opacity: 0.7;
+  flex-shrink: 0;
+}
+
+.ws-dropdown-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 99;
+}
+
+.ws-dropdown {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  min-width: 220px;
+  background: var(--blink-surface);
+  border: 1px solid var(--blink-outline-variant);
+  border-radius: 8px;
+  box-shadow: var(--blink-shadow-lg);
+  padding: 4px 0;
+  z-index: 100;
+}
+
+.ws-dropdown-label {
+  padding: 8px 12px 4px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--blink-on-surface-muted);
+}
+
+.ws-dropdown-item {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  padding: 8px 12px;
+  font-size: 14px;
+  font-family: inherit;
+  color: var(--blink-on-surface);
+  background: none;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.15s;
+
+  &:hover {
+    background: var(--blink-surface-hover);
+  }
+}
+
+.ws-dropdown-current {
+  display: flex;
+  justify-content: space-between;
+  font-weight: 600;
+  cursor: default;
+
+  &:hover {
+    background: transparent;
+  }
+}
+
+.ws-current-icon {
+  flex-shrink: 0;
+}
+
+.ws-dropdown-divider {
+  height: 1px;
+  background: var(--blink-outline-variant);
+  margin: 4px 0;
+}
+
+.ws-dropdown-add {
+  color: var(--blink-brand-primary);
+  font-weight: 600;
+  gap: 8px;
+}
+
+.ws-dropdown-empty {
+  padding: 8px 12px;
+  font-size: 13px;
+  color: var(--blink-on-surface-muted);
+}
+
+// ── Workspace Navigation Tabs ──
+.workspace-nav {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: 12px;
+  flex-shrink: 0;
+}
+
+.ws-nav-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.8);
+  text-decoration: none;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+  white-space: nowrap;
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.15);
+    color: white;
+  }
+
+  &.active {
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
+  }
+}
+
+.ws-nav-divider {
+  width: 1px;
+  height: 24px;
+  background: rgba(255, 255, 255, 0.2);
+  margin: 0 2px;
+}
+
+// ── Right Side ──
+.settings-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px;
+  border-radius: 8px;
+  text-decoration: none;
+  color: white;
+  transition: background 0.15s;
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.15);
+  }
+}
+
+.navbar-separator {
+  width: 1px;
+  height: 32px;
+  background: rgba(255, 255, 255, 0.2);
+  flex-shrink: 0;
+}
+
 .navbar-end {
   display: flex;
   align-items: center;
   gap: 12px;
+  flex-shrink: 0;
 }
 
 .user-info {

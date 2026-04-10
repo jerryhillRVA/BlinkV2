@@ -1,9 +1,11 @@
 import { Component, EventEmitter, Output, inject, signal, computed, OnInit, DestroyRef } from '@angular/core';
 import { NavigationEnd, Router, RouterLink } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { filter } from 'rxjs';
+import { filter, catchError, of } from 'rxjs';
 import { ThemeService } from '../../core/theme/theme.service';
 import { AuthService } from '../../core/auth/auth.service';
+import { DashboardApiService } from '../../pages/dashboard/dashboard-api.service';
+import type { WorkspaceSummaryContract } from '@blinksocial/contracts';
 
 @Component({
   selector: 'app-header',
@@ -18,22 +20,41 @@ export class HeaderComponent implements OnInit {
   protected readonly authService = inject(AuthService);
   private readonly router = inject(Router);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly dashboardApi = inject(DashboardApiService);
 
   readonly menuOpen = signal(false);
   readonly workspaceId = signal<string | null>(null);
+  readonly currentTab = signal<string | null>(null);
+  readonly wsDropdownOpen = signal(false);
+
+  /** Cached workspace summaries (loaded once, reused across navigations) */
+  private readonly workspaceSummaries = signal<WorkspaceSummaryContract[]>([]);
+  private workspacesLoaded = false;
+
+  readonly workspaceName = computed(() => {
+    const wsId = this.workspaceId();
+    if (!wsId) return null;
+    const summary = this.workspaceSummaries().find((w) => w.id === wsId);
+    return summary?.name ?? wsId;
+  });
+
+  readonly otherWorkspaces = computed(() => {
+    const wsId = this.workspaceId();
+    return this.workspaceSummaries().filter(
+      (w) => w.id !== wsId && (!w.status || w.status === 'active')
+    );
+  });
 
   readonly displayName = computed(() => this.authService.currentUser()?.displayName ?? '');
   readonly userInitials = computed(() => this.authService.getUserInitials());
   readonly currentRole = computed(() => {
     const wsId = this.workspaceId();
     if (wsId) return this.authService.getWorkspaceRole(wsId) ?? '';
-    // Show role from first workspace if not on a workspace page
     const user = this.authService.currentUser();
     if (user?.workspaces?.length) return user.workspaces[0].role;
     return 'Admin';
   });
 
-  /** Workspace settings link — use current workspace, or last visited, or first available */
   readonly settingsWorkspaceId = computed(() => {
     const current = this.workspaceId();
     if (current) return current;
@@ -60,7 +81,21 @@ export class HeaderComponent implements OnInit {
     this.workspaceId.set(id);
     if (id) {
       this.authService.lastWorkspaceId.set(id);
+      const tabMatch = url.match(/^\/workspace\/[^/]+\/(\w+)/);
+      this.currentTab.set(tabMatch ? tabMatch[1] : null);
+      this.loadWorkspacesIfNeeded();
+    } else {
+      this.currentTab.set(null);
     }
+  }
+
+  private loadWorkspacesIfNeeded(): void {
+    if (this.workspacesLoaded) return;
+    this.workspacesLoaded = true;
+    this.dashboardApi
+      .listWorkspaces()
+      .pipe(catchError(() => of({ workspaces: [] })))
+      .subscribe((resp) => this.workspaceSummaries.set(resp.workspaces));
   }
 
   toggleMenu(): void {
@@ -69,6 +104,25 @@ export class HeaderComponent implements OnInit {
 
   closeMenu(): void {
     this.menuOpen.set(false);
+  }
+
+  toggleWsDropdown(): void {
+    this.wsDropdownOpen.update((v) => !v);
+  }
+
+  closeWsDropdown(): void {
+    this.wsDropdownOpen.set(false);
+  }
+
+  addWorkspace(): void {
+    this.closeWsDropdown();
+    this.router.navigate(['/new-workspace']);
+  }
+
+  switchWorkspace(wsId: string): void {
+    this.closeWsDropdown();
+    const tab = this.currentTab() ?? 'content';
+    this.router.navigate(['/workspace', wsId, tab]);
   }
 
   onLogout(): void {

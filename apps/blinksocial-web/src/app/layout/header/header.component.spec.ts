@@ -30,6 +30,8 @@ describe('HeaderComponent', () => {
         provideRouter([
           { path: 'profile-settings', component: DummyComponent },
           { path: 'workspace/:id/settings', component: DummyComponent },
+          { path: 'workspace/:id/content', component: DummyComponent },
+          { path: 'workspace/:id/strategy', component: DummyComponent },
         ]),
         provideHttpClient(),
         provideHttpClientTesting(),
@@ -360,5 +362,223 @@ describe('HeaderComponent', () => {
 
     btn.click();
     expect(themeService.theme()).toBe('light');
+  });
+
+  describe('Workspace Navigation', () => {
+    it('should not show workspace nav when not on workspace route', () => {
+      const fixture = TestBed.createComponent(HeaderComponent);
+      fixture.detectChanges();
+      const el: HTMLElement = fixture.nativeElement;
+      expect(el.querySelector('.workspace-nav')).toBeFalsy();
+      expect(el.querySelector('.ws-selector-btn')).toBeFalsy();
+    });
+
+    it('should show workspace nav and selector when on workspace route', async () => {
+      const router = TestBed.inject(Router);
+      const fixture = TestBed.createComponent(HeaderComponent);
+      fixture.detectChanges();
+      await router.navigateByUrl('/workspace/abc123/content');
+      fixture.detectChanges();
+      const el: HTMLElement = fixture.nativeElement;
+      expect(el.querySelector('.workspace-nav')).toBeTruthy();
+      expect(el.querySelector('.ws-selector-btn')).toBeTruthy();
+    });
+
+    it('should show Content and Strategy nav items', async () => {
+      const router = TestBed.inject(Router);
+      const fixture = TestBed.createComponent(HeaderComponent);
+      fixture.detectChanges();
+      await router.navigateByUrl('/workspace/abc123/content');
+      fixture.detectChanges();
+      const el: HTMLElement = fixture.nativeElement;
+      const navItems = el.querySelectorAll('.ws-nav-item');
+      expect(navItems.length).toBe(2);
+      expect(navItems[0].textContent).toContain('Content');
+      expect(navItems[1].textContent).toContain('Strategy');
+    });
+
+    it('should highlight active tab', async () => {
+      const router = TestBed.inject(Router);
+      const fixture = TestBed.createComponent(HeaderComponent);
+      fixture.detectChanges();
+      await router.navigateByUrl('/workspace/abc123/content');
+      fixture.detectChanges();
+      const el: HTMLElement = fixture.nativeElement;
+      const activeItem = el.querySelector('.ws-nav-item.active');
+      expect(activeItem?.textContent).toContain('Content');
+    });
+
+    it('should show workspace name in selector', async () => {
+      const router = TestBed.inject(Router);
+      const fixture = TestBed.createComponent(HeaderComponent);
+      fixture.detectChanges();
+      await router.navigateByUrl('/workspace/abc123/content');
+      fixture.detectChanges();
+      const el: HTMLElement = fixture.nativeElement;
+      const name = el.querySelector('.ws-selector-name');
+      expect(name?.textContent).toContain('abc123');
+    });
+
+    it('should toggle workspace dropdown', async () => {
+      const router = TestBed.inject(Router);
+      const fixture = TestBed.createComponent(HeaderComponent);
+      fixture.detectChanges();
+      await router.navigateByUrl('/workspace/abc123/content');
+      fixture.detectChanges();
+      const el: HTMLElement = fixture.nativeElement;
+      expect(el.querySelector('.ws-dropdown')).toBeFalsy();
+      (el.querySelector('.ws-selector-btn') as HTMLElement).click();
+      fixture.detectChanges();
+      expect(el.querySelector('.ws-dropdown')).toBeTruthy();
+    });
+
+    it('should close workspace dropdown when backdrop is clicked', async () => {
+      const router = TestBed.inject(Router);
+      const fixture = TestBed.createComponent(HeaderComponent);
+      fixture.detectChanges();
+      await router.navigateByUrl('/workspace/abc123/content');
+      fixture.detectChanges();
+      fixture.componentInstance.toggleWsDropdown();
+      fixture.detectChanges();
+      const el: HTMLElement = fixture.nativeElement;
+      (el.querySelector('.ws-dropdown-backdrop') as HTMLElement).click();
+      fixture.detectChanges();
+      expect(el.querySelector('.ws-dropdown')).toBeFalsy();
+    });
+
+    it('should highlight strategy tab when on strategy route', async () => {
+      const router = TestBed.inject(Router);
+      const fixture = TestBed.createComponent(HeaderComponent);
+      fixture.detectChanges();
+      await router.navigateByUrl('/workspace/abc123/strategy');
+      fixture.detectChanges();
+      const el: HTMLElement = fixture.nativeElement;
+      const activeItem = el.querySelector('.ws-nav-item.active');
+      expect(activeItem?.textContent).toContain('Strategy');
+    });
+
+    it('should clear workspace nav when navigating away from workspace', async () => {
+      const router = TestBed.inject(Router);
+      const fixture = TestBed.createComponent(HeaderComponent);
+      fixture.detectChanges();
+      await router.navigateByUrl('/workspace/abc123/content');
+      fixture.detectChanges();
+      expect(fixture.nativeElement.querySelector('.workspace-nav')).toBeTruthy();
+      await router.navigateByUrl('/profile-settings');
+      fixture.detectChanges();
+      expect(fixture.nativeElement.querySelector('.workspace-nav')).toBeFalsy();
+    });
+
+    it('should call switchWorkspace and navigate', async () => {
+      const router = TestBed.inject(Router);
+      const fixture = TestBed.createComponent(HeaderComponent);
+      fixture.detectChanges();
+      await router.navigateByUrl('/workspace/abc123/content');
+      fixture.detectChanges();
+      const spy = vi.spyOn(router, 'navigate');
+      fixture.componentInstance.switchWorkspace('other-ws');
+      expect(spy).toHaveBeenCalledWith(['/workspace', 'other-ws', 'content']);
+    });
+
+    it('should show other workspace items in dropdown when summaries are loaded', async () => {
+      const router = TestBed.inject(Router);
+      const fixture = TestBed.createComponent(HeaderComponent);
+      fixture.detectChanges();
+      await router.navigateByUrl('/workspace/abc123/content');
+      fixture.detectChanges();
+      // Manually set workspace summaries to simulate API response
+      (fixture.componentInstance as unknown as { workspaceSummaries: ReturnType<typeof import('@angular/core').signal> })
+        .workspaceSummaries.set([
+          { id: 'abc123', name: 'Hive Collective', color: '#d94e33', status: 'active', createdAt: '' },
+          { id: 'other-ws', name: 'Other Workspace', color: '#2b6bff', status: 'active', createdAt: '' },
+        ]);
+      fixture.detectChanges();
+      // Workspace name should now resolve
+      expect(fixture.componentInstance.workspaceName()).toBe('Hive Collective');
+      // Open dropdown
+      fixture.componentInstance.toggleWsDropdown();
+      fixture.detectChanges();
+      const el: HTMLElement = fixture.nativeElement;
+      // Current workspace + 1 other workspace + Add Workspace = 3 items
+      const items = el.querySelectorAll('.ws-dropdown-item');
+      expect(items.length).toBe(3);
+      // First item is current workspace
+      expect(items[0].textContent).toContain('Hive Collective');
+      // Second is the other workspace
+      expect(items[1].textContent).toContain('Other Workspace');
+      // Third is Add Workspace
+      expect(items[2].textContent).toContain('Add Workspace');
+    });
+
+    it('should show Add Workspace in dropdown', async () => {
+      const router = TestBed.inject(Router);
+      const fixture = TestBed.createComponent(HeaderComponent);
+      fixture.detectChanges();
+      await router.navigateByUrl('/workspace/abc123/content');
+      fixture.detectChanges();
+      fixture.componentInstance.toggleWsDropdown();
+      fixture.detectChanges();
+      const el: HTMLElement = fixture.nativeElement;
+      const addBtn = el.querySelector('.ws-dropdown-add');
+      expect(addBtn).toBeTruthy();
+      expect(addBtn?.textContent).toContain('Add Workspace');
+    });
+
+    it('should set currentTab to null when not on workspace page', () => {
+      const fixture = TestBed.createComponent(HeaderComponent);
+      fixture.detectChanges();
+      expect(fixture.componentInstance.currentTab()).toBeNull();
+    });
+
+    it('should show navbar-start wrapper', () => {
+      const fixture = TestBed.createComponent(HeaderComponent);
+      fixture.detectChanges();
+      expect(fixture.nativeElement.querySelector('.navbar-start')).toBeTruthy();
+    });
+
+    it('should derive workspaceName from summaries when loaded', async () => {
+      const router = TestBed.inject(Router);
+      const fixture = TestBed.createComponent(HeaderComponent);
+      fixture.detectChanges();
+      await router.navigateByUrl('/workspace/abc123/content');
+      fixture.detectChanges();
+      expect(fixture.componentInstance.workspaceName()).toBe('abc123');
+    });
+
+    it('should use workspace role when on workspace page', async () => {
+      const router = TestBed.inject(Router);
+      const fixture = TestBed.createComponent(HeaderComponent);
+      fixture.detectChanges();
+      await router.navigateByUrl('/workspace/abc123/content');
+      fixture.detectChanges();
+      expect(fixture.componentInstance.currentRole()).toBe('Admin');
+    });
+
+    it('should use current workspace for settingsWorkspaceId when on workspace page', async () => {
+      const router = TestBed.inject(Router);
+      const fixture = TestBed.createComponent(HeaderComponent);
+      fixture.detectChanges();
+      await router.navigateByUrl('/workspace/abc123/content');
+      fixture.detectChanges();
+      expect(fixture.componentInstance.settingsWorkspaceId()).toBe('abc123');
+    });
+
+    it('should return null workspaceName when no user', async () => {
+      const authService = TestBed.inject(AuthService);
+      authService.currentUser.set(null);
+      const fixture = TestBed.createComponent(HeaderComponent);
+      fixture.detectChanges();
+      expect(fixture.componentInstance.workspaceName()).toBeNull();
+    });
+
+    it('should return Admin role when no user workspaces', () => {
+      const authService = TestBed.inject(AuthService);
+      authService.currentUser.set({
+        id: 'u1', email: 'a@b.com', displayName: 'Test', workspaces: [],
+      });
+      const fixture = TestBed.createComponent(HeaderComponent);
+      fixture.detectChanges();
+      expect(fixture.componentInstance.currentRole()).toBe('Admin');
+    });
   });
 });
