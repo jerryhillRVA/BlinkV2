@@ -1,13 +1,45 @@
 import { TestBed, ComponentFixture } from '@angular/core/testing';
+import { signal } from '@angular/core';
 import { AudienceComponent } from './audience.component';
+import { StrategyResearchStateService } from '../../strategy-research-state.service';
+import { ToastService } from '../../../../core/toast/toast.service';
 import { AI_SIMULATION_DELAY_MS } from '../../strategy-research.constants';
+import { DEFAULT_SEGMENTS } from '../../strategy-research.mock-data';
 
 describe('AudienceComponent', () => {
   let fixture: ComponentFixture<AudienceComponent>;
   let component: AudienceComponent;
 
   beforeEach(() => {
-    TestBed.configureTestingModule({ imports: [AudienceComponent] });
+    const JOURNEY_STAGES = ['awareness', 'consideration', 'conversion', 'retention'] as const;
+    const segmentsWithStages = DEFAULT_SEGMENTS.map(s => ({
+      ...s,
+      journeyStages: JOURNEY_STAGES.map(stage => ({
+        stage,
+        primaryGoal: '',
+        contentTypes: [] as string[],
+        hookAngles: [] as string[],
+        successMetric: '',
+      })),
+    }));
+    const mockStateService = {
+      segments: signal(segmentsWithStages),
+      audienceInsights: signal([] as never[]),
+      pillars: signal([]),
+      objectives: signal([]),
+      channelStrategy: signal([]),
+      saveSegments: vi.fn(),
+      saveAudienceInsights: vi.fn(),
+      savePillars: vi.fn(),
+      saveChannelStrategy: vi.fn(),
+    };
+    TestBed.configureTestingModule({
+      imports: [AudienceComponent],
+      providers: [
+        { provide: StrategyResearchStateService, useValue: mockStateService },
+        { provide: ToastService, useValue: { showSuccess: vi.fn(), showError: vi.fn() } },
+      ],
+    });
     fixture = TestBed.createComponent(AudienceComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
@@ -99,18 +131,6 @@ describe('AudienceComponent', () => {
     vi.useRealTimers();
   });
 
-  it('hasJourney is false before mapping and true after', () => {
-    vi.useFakeTimers();
-    const seg = component.segments()[0];
-    expect(component.hasJourney(seg)).toBe(false);
-    component.mapJourney(seg.id);
-    vi.advanceTimersByTime(AI_SIMULATION_DELAY_MS);
-    const after = component.segments().find(s => s.id === seg.id)!;
-    expect(component.hasJourney(after)).toBe(true);
-    expect(component.hasJourney({ id: 'x', name: '', description: '' })).toBe(false);
-    vi.useRealTimers();
-  });
-
   it('getStage returns matching stage or undefined', () => {
     const seg = component.segments()[0];
     expect(component.getStage(seg, 'awareness')?.stage).toBe('awareness');
@@ -134,8 +154,8 @@ describe('AudienceComponent', () => {
 
   it('addContentType / addHookAngle no-op when no input set (?? fallback)', () => {
     const id = component.segments()[0].id;
-    component.addContentType(id, 'awareness');
-    component.addHookAngle(id, 'awareness');
+    component.addContentType(id, 'awareness'); // newContentType[key] is undefined
+    component.addHookAngle(id, 'awareness'); // newHookAngle[key] is undefined
   });
 
   it('addContentType and addHookAngle ignore empty input', () => {
@@ -159,55 +179,34 @@ describe('AudienceComponent', () => {
     expect(stage?.successMetric).toBe('Metric!');
   });
 
-  // ── Per-card AI Audience Analyzer ──────────────────────────────────
-  it('analyzeForSegment populates insights and auto-expands', () => {
+  it('analyzeAudience populates insights for a known segment', () => {
     vi.useFakeTimers();
     const id = component.segments()[0].id;
-    component.analyzeForSegment(id);
-    expect(component.isAnalyzingSegment(id)).toBe(true);
-    expect(component.isInsightsExpanded(id)).toBe(true);
+    component.selectedAnalyzeId.set(id);
+    component.analyzeAudience();
+    expect(component.isAnalyzing()).toBe(true);
     vi.advanceTimersByTime(AI_SIMULATION_DELAY_MS);
-    expect(component.isAnalyzingSegment(id)).toBe(false);
-    expect(component.insightFor(id)).toBeTruthy();
+    expect(component.isAnalyzing()).toBe(false);
+    expect(component.currentInsight()).toBeTruthy();
+    expect(component.currentSegmentName()).toBeTruthy();
     vi.useRealTimers();
   });
 
-  it('analyzeForSegment falls back for unknown segment id', () => {
+  it('analyzeAudience is a no-op when no segment is selected', () => {
+    component.selectedAnalyzeId.set('');
+    component.analyzeAudience();
+    expect(component.isAnalyzing()).toBe(false);
+  });
+
+  it('analyzeAudience falls back for unknown segment id', () => {
     vi.useFakeTimers();
     component.addSegment();
     const newId = component.segments().at(-1)?.id ?? '';
-    component.analyzeForSegment(newId);
+    component.selectedAnalyzeId.set(newId);
+    component.analyzeAudience();
     vi.advanceTimersByTime(AI_SIMULATION_DELAY_MS);
-    expect(component.insightFor(newId)?.segmentId).toBe(newId);
+    expect(component.currentInsight()?.segmentId).toBe(newId);
     vi.useRealTimers();
-  });
-
-  it('analyzeForSegment supports concurrent per-card runs', () => {
-    vi.useFakeTimers();
-    const a = component.segments()[0].id;
-    const b = component.segments()[1].id;
-    component.analyzeForSegment(a);
-    component.analyzeForSegment(b);
-    expect(component.isAnalyzingSegment(b)).toBe(true);
-    vi.advanceTimersByTime(AI_SIMULATION_DELAY_MS);
-    expect(component.insightFor(a)).toBeTruthy();
-    expect(component.insightFor(b)).toBeTruthy();
-    expect(component.analyzingSegmentId()).toBeNull();
-    vi.useRealTimers();
-  });
-
-  it('toggleInsights flips expanded state', () => {
-    const id = component.segments()[0].id;
-    expect(component.isInsightsExpanded(id)).toBe(false);
-    component.toggleInsights(id);
-    expect(component.isInsightsExpanded(id)).toBe(true);
-    component.toggleInsights(id);
-    expect(component.isInsightsExpanded(id)).toBe(false);
-  });
-
-  it('insightFor returns undefined before analysis', () => {
-    const id = component.segments()[0].id;
-    expect(component.insightFor(id)).toBeUndefined();
   });
 
   it('engagementClass maps levels', () => {
@@ -222,33 +221,50 @@ describe('AudienceComponent', () => {
     expect(el.querySelectorAll('.segment-card').length).toBeGreaterThan(0);
   });
 
-  it('renders a per-card AI Analyze button and populates insights on click', () => {
+  it('renders journey stages, modal, and analyzer states (template coverage)', () => {
     vi.useFakeTimers();
-    const btn = (fixture.nativeElement as HTMLElement).querySelector('.btn-ai-analyze') as HTMLButtonElement;
-    expect(btn).toBeTruthy();
-    btn.click();
-    fixture.detectChanges();
-    expect(component.analyzingSegmentId()).toBeTruthy();
-    vi.advanceTimersByTime(AI_SIMULATION_DELAY_MS);
-    fixture.detectChanges();
-    const el = fixture.nativeElement as HTMLElement;
-    expect(el.querySelector('.insights-expanded')).toBeTruthy();
-    expect(el.querySelectorAll('.insight-title').length).toBeGreaterThan(0);
-    vi.useRealTimers();
-  });
-
-  it('renders segment cards with mapped journey stages (template coverage)', () => {
-    vi.useFakeTimers();
-    for (const seg of component.segments()) component.toggleJourney(seg.id);
+    // Expand all segments
+    for (const seg of component.segments()) {
+      component.toggleJourney(seg.id);
+    }
+    // Map a journey to populate stage data
     const id = component.segments()[0].id;
     component.mapJourney(id);
     vi.advanceTimersByTime(AI_SIMULATION_DELAY_MS);
+    // Run analyzer
+    component.selectedAnalyzeId.set(id);
+    component.analyzeAudience();
+    vi.advanceTimersByTime(AI_SIMULATION_DELAY_MS);
+    // Put first segment into inline edit mode so the edit form renders
     component.startEdit(component.segments()[0]);
+    fixture.detectChanges();
+    // Open modal
+    component.openAddSegmentModal();
+    component.newSegmentName = 'X';
+    component.newSegmentDescription = 'Y';
     fixture.detectChanges();
     const el = fixture.nativeElement as HTMLElement;
     expect(el.querySelectorAll('.stage-card').length).toBeGreaterThan(0);
+    expect(el.querySelector('.insights-grid')).toBeTruthy();
+    expect(document.body.querySelector('.app-modal')).toBeTruthy();
+    component.cancelAddSegment();
     component.cancelEdit();
     fixture.detectChanges();
+    vi.useRealTimers();
+  });
+
+  it('renders analyzer empty and loading states', () => {
+    vi.useFakeTimers();
+    let el = fixture.nativeElement as HTMLElement;
+    expect(el.querySelector('.analyzer-empty')).toBeTruthy();
+    component.selectedAnalyzeId.set(component.segments()[0].id);
+    component.analyzeAudience();
+    fixture.detectChanges();
+    el = fixture.nativeElement as HTMLElement;
+    expect(el.querySelector('.analyzer-loading')).toBeTruthy();
+    vi.advanceTimersByTime(AI_SIMULATION_DELAY_MS);
+    fixture.detectChanges();
+    expect((fixture.nativeElement as HTMLElement).querySelector('.insights-grid')).toBeTruthy();
     vi.useRealTimers();
   });
 
@@ -278,16 +294,27 @@ describe('AudienceComponent', () => {
     vi.useRealTimers();
   });
 
+  it('currentSegmentName falls back to empty for unknown id', () => {
+    component.selectedAnalyzeId.set('nonexistent');
+    expect(component.currentSegmentName()).toBe('');
+  });
+
   it('exercises null/fallback branches across helpers', () => {
+    // segmentOptions: empty-name segment uses "Untitled segment" label
+    component.addSegment();
+    expect(component.segmentOptions().some(o => o.label === 'Untitled segment')).toBe(true);
+    // updateStage on a segment without journeyStages no-ops gracefully
     component.segments.update(list => [
       ...list,
       { id: 'no-stages', name: 'NS', description: 'd' },
     ]);
     component.setStageGoal('no-stages', 'awareness', 'X');
+    // addContentType / addHookAngle on segment without journeyStages
     component.newContentType['no-stages:awareness:type'] = 'X';
     component.addContentType('no-stages', 'awareness');
     component.newHookAngle['no-stages:awareness:hook'] = 'Y';
     component.addHookAngle('no-stages', 'awareness');
+    // removeContentType / removeHookAngle on segment without journeyStages
     component.removeContentType('no-stages', 'awareness', 'X');
     component.removeHookAngle('no-stages', 'awareness', 'Y');
   });
@@ -299,5 +326,88 @@ describe('AudienceComponent', () => {
     expect(component.showAddForm()).toBe(true);
     expect(document.body.querySelector('.app-modal')).toBeTruthy();
     component.cancelAddSegment();
+  });
+
+  // ── Per-card Audience Insights ──────────────────────────────────────────
+  it('insightFor returns matching insight from state service', () => {
+    const id = component.segments()[0].id;
+    const mockInsight = {
+      segmentId: id,
+      interests: ['A'],
+      painPoints: ['B'],
+      peakActivityTimes: [],
+      preferredPlatforms: [],
+      contentPreferences: [],
+    };
+    const stateService = TestBed.inject(StrategyResearchStateService);
+    (stateService.audienceInsights as ReturnType<typeof signal>).set([mockInsight]);
+    expect(component.insightFor(id)).toEqual(mockInsight);
+  });
+
+  it('insightFor returns undefined when no match', () => {
+    expect(component.insightFor('nonexistent')).toBeUndefined();
+  });
+
+  it('toggleInsights toggles expanded state', () => {
+    const id = component.segments()[0].id;
+    expect(component.isInsightsExpanded(id)).toBe(false);
+    component.toggleInsights(id);
+    expect(component.isInsightsExpanded(id)).toBe(true);
+    component.toggleInsights(id);
+    expect(component.isInsightsExpanded(id)).toBe(false);
+  });
+
+  it('isAnalyzingSegment reflects state', () => {
+    const id = component.segments()[0].id;
+    expect(component.isAnalyzingSegment(id)).toBe(false);
+    component.analyzingSegmentId.set(id);
+    expect(component.isAnalyzingSegment(id)).toBe(true);
+  });
+
+  it('analyzeForSegment sets analyzing state and generates insight after timer', () => {
+    vi.useFakeTimers();
+    const id = component.segments()[0].id;
+    component.analyzeForSegment(id);
+    expect(component.isAnalyzingSegment(id)).toBe(true);
+    expect(component.isInsightsExpanded(id)).toBe(true);
+    vi.advanceTimersByTime(AI_SIMULATION_DELAY_MS);
+    expect(component.isAnalyzingSegment(id)).toBe(false);
+    expect(component.insightFor(id)).toBeTruthy();
+    expect(component.insightFor(id)?.interests.length).toBeGreaterThan(0);
+    vi.useRealTimers();
+  });
+
+  it('analyzeForSegment does not overwrite existing insight', () => {
+    vi.useFakeTimers();
+    const id = component.segments()[0].id;
+    const stateService = TestBed.inject(StrategyResearchStateService);
+    const existingInsight = {
+      segmentId: id,
+      interests: ['Existing'],
+      painPoints: [],
+      peakActivityTimes: [],
+      preferredPlatforms: [],
+      contentPreferences: [],
+    };
+    (stateService.audienceInsights as ReturnType<typeof signal>).set([existingInsight]);
+    component.analyzeForSegment(id);
+    vi.advanceTimersByTime(AI_SIMULATION_DELAY_MS);
+    expect(component.insightFor(id)?.interests).toEqual(['Existing']);
+    vi.useRealTimers();
+  });
+
+  it('renders per-card insights section with analyze button and expanded content', () => {
+    vi.useFakeTimers();
+    const id = component.segments()[0].id;
+    fixture.detectChanges();
+    const el = fixture.nativeElement as HTMLElement;
+    expect(el.querySelector('.audience-insights')).toBeTruthy();
+    expect(el.querySelector('.btn-ai-analyze')).toBeTruthy();
+    // Analyze and expand
+    component.analyzeForSegment(id);
+    vi.advanceTimersByTime(AI_SIMULATION_DELAY_MS);
+    fixture.detectChanges();
+    expect(el.querySelector('.insights-expanded')).toBeTruthy();
+    vi.useRealTimers();
   });
 });

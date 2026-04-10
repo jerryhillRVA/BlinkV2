@@ -1,0 +1,36 @@
+{
+  "insights": [
+    {
+      "segmentId": "s1",
+      "interests": ["Strength training", "Hormone health", "Energy management", "Metabolism support"],
+      "painPoints": ["Energy fluctuations throughout day", "Metabolism slowing down", "Balancing career demands with self-care", "Finding time for fitness"],
+      "peakActivityTimes": [
+        { "day": "Monday", "hour": "6:00 AM", "engagement": "Very High" },
+        { "day": "Wednesday", "hour": "12:00 PM", "engagement": "High" },
+        { "day": "Saturday", "hour": "8:00 AM", "engagement": "High" }
+      ],
+      "preferredPlatforms": [
+        { "platform": "instagram", "preference": 88 },
+        { "platform": "youtube", "preference": 75 },
+        { "platform": "tiktok", "preference": 45 }
+      ],
+      "contentPreferences": ["Quick workout routines", "Hormone health tips", "Energy-boosting nutrition", "Motivational content"]
+    },
+    {
+      "segmentId": "s2",
+      "interests": ["Bone health", "Joint mobility", "Menopause support", "Gentle movement"],
+      "painPoints": ["Joint pain and stiffness", "Weight management challenges", "Sleep disruption", "Hot flashes affecting workouts"],
+      "peakActivityTimes": [
+        { "day": "Tuesday", "hour": "7:00 AM", "engagement": "Very High" },
+        { "day": "Thursday", "hour": "10:00 AM", "engagement": "High" },
+        { "day": "Sunday", "hour": "9:00 AM", "engagement": "Medium" }
+      ],
+      "preferredPlatforms": [
+        { "platform": "youtube", "preference": 92 },
+        { "platform": "instagram", "preference": 70 },
+        { "platform": "facebook", "preference": 65 }
+      ],
+      "contentPreferences": ["Low-impact exercises", "Menopause education", "Joint-friendly yoga", "Strength training for bone health"]
+    }
+  ]
+}

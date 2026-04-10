@@ -1,0 +1,9 @@
+{
+  "targets": [
+    { "category": "educational", "label": "Educational", "targetPercent": 35, "color": "var(--blink-accent-blue)", "description": "How-tos, tips, tutorials, expert insights" },
+    { "category": "entertaining", "label": "Entertaining", "targetPercent": 25, "color": "var(--blink-accent-amber)", "description": "Relatable content, humor, storytelling, trends" },
+    { "category": "community", "label": "Community", "targetPercent": 20, "color": "var(--blink-accent-green)", "description": "UGC, Q&As, behind the scenes, audience spotlights" },
+    { "category": "promotional", "label": "Promotional", "targetPercent": 15, "color": "var(--blink-brand-primary)", "description": "Products, services, offers, launches" },
+    { "category": "trending", "label": "Trending / Reactive", "targetPercent": 5, "color": "var(--blink-accent-purple)", "description": "Timely content, news hooks, cultural moments" }
+  ]
+}

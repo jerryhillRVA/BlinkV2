@@ -57,4 +57,48 @@ export class WorkspacesController {
   ) {
     return this.workspacesService.updateSettings(id, tab, body);
   }
+
+  // --- Namespace entity endpoints (research-sources, competitor-insights) ---
+
+  @Get(':id/research-sources')
+  getResearchSources(@Param('id') id: string) {
+    return this.workspacesService.getNamespaceEntities(id, 'research-sources');
+  }
+
+  @Put(':id/research-sources')
+  saveResearchSources(@Param('id') id: string, @Body() body: { id: string }[]) {
+    return this.workspacesService.saveNamespaceEntities(id, 'research-sources', body);
+  }
+
+  @Get(':id/competitor-insights')
+  getCompetitorInsights(@Param('id') id: string) {
+    return this.workspacesService.getNamespaceEntities(id, 'competitor-insights');
+  }
+
+  @Put(':id/competitor-insights')
+  saveCompetitorInsights(@Param('id') id: string, @Body() body: { id: string }[]) {
+    return this.workspacesService.saveNamespaceEntities(id, 'competitor-insights', body);
+  }
+
+  // --- Namespace aggregate endpoints (content-mix, audience-insights) ---
+
+  @Get(':id/content-mix')
+  getContentMix(@Param('id') id: string) {
+    return this.workspacesService.getNamespaceAggregateEndpoint(id, 'content-pillars', '_content-mix.json');
+  }
+
+  @Put(':id/content-mix')
+  saveContentMix(@Param('id') id: string, @Body() body: unknown) {
+    return this.workspacesService.saveNamespaceAggregateEndpoint(id, 'content-pillars', '_content-mix.json', body);
+  }
+
+  @Get(':id/audience-insights')
+  getAudienceInsights(@Param('id') id: string) {
+    return this.workspacesService.getNamespaceAggregateEndpoint(id, 'audience-segments', '_audience-insights.json');
+  }
+
+  @Put(':id/audience-insights')
+  saveAudienceInsights(@Param('id') id: string, @Body() body: unknown) {
+    return this.workspacesService.saveNamespaceAggregateEndpoint(id, 'audience-segments', '_audience-insights.json', body);
+  }
 }

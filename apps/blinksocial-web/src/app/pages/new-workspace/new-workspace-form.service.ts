@@ -10,6 +10,8 @@ import {
   type CreateWorkspaceRequestContract,
   type BusinessObjectiveContract,
   type BrandPositioningContract,
+  type ChannelStrategySettingsContract,
+  type ContentMixSettingsContract,
 } from '@blinksocial/contracts';
 import { CreateWorkspaceRequest } from '@blinksocial/models';
 import type { UIBusinessObjective, UIBrandPositioning } from '../../models';
@@ -112,7 +114,7 @@ export class NewWorkspaceFormService {
     const segments: AudienceSegmentContract[] = this.audienceSegments().map((s, i) => ({
       id: `seg-${i + 1}`,
       name: s.name || `Segment ${i + 1}`,
-      description: s.name || `Segment ${i + 1}`,
+      description: '',
       demographics: s.demographics,
     }));
 
@@ -132,9 +134,12 @@ export class NewWorkspaceFormService {
         description: p.description,
         color: PILLAR_COLORS[i % PILLAR_COLORS.length],
         themes: p.themes.split(',').map((t) => t.trim()).filter(Boolean),
-        audienceSegmentIds: p.audienceSegments.map(
-          (_, si) => `seg-${si + 1}`
-        ),
+        audienceSegmentIds: p.audienceSegments
+          .map(segName => {
+            const idx = this.audienceSegments().findIndex(s => s.name === segName);
+            return idx >= 0 ? `seg-${idx + 1}` : undefined;
+          })
+          .filter((id): id is string => id !== undefined),
         platformDistribution,
         objectiveIds: p.objectiveId ? [p.objectiveId] : undefined,
       };
@@ -177,6 +182,34 @@ export class NewWorkspaceFormService {
         .filter(Boolean),
     }));
 
+    // Scaffold channel-strategy entries from enabled platforms (Rec 1)
+    const channelEntries = enabledPlatformsList
+      .map((displayName) => displayNameToPlatform(displayName))
+      .filter((v): v is Platform => v !== undefined && v !== Platform.Tbd)
+      .map((platform) => ({
+        platform,
+        active: true,
+        role: '',
+        primaryContentTypes: [] as string[],
+        toneAdjustment: '',
+        postingCadence: '',
+        primaryAudience: segments[0]?.name ?? '',
+        primaryGoal: '',
+        notes: '',
+      }));
+    const channelStrategy: ChannelStrategySettingsContract = { channels: channelEntries };
+
+    // Default content mix categories (Rec 2)
+    const contentMix: ContentMixSettingsContract = {
+      targets: [
+        { category: 'educational', label: 'Educational', targetPercent: 30, color: '#4F46E5', description: 'Informative content that teaches and builds authority' },
+        { category: 'entertaining', label: 'Entertaining', targetPercent: 25, color: '#F59E0B', description: 'Engaging content that captures attention and builds affinity' },
+        { category: 'community', label: 'Community', targetPercent: 25, color: '#10B981', description: 'Content that fosters connection and conversation' },
+        { category: 'promotional', label: 'Promotional', targetPercent: 10, color: '#EF4444', description: 'Content that drives conversions and sales' },
+        { category: 'trending', label: 'Trending', targetPercent: 10, color: '#8B5CF6', description: 'Timely content that leverages current trends and events' },
+      ],
+    };
+
     return new CreateWorkspaceRequest({
       general: {
         workspaceName: this.workspaceName(),
@@ -204,6 +237,8 @@ export class NewWorkspaceFormService {
       skills: skills.length > 0 ? { skills } : undefined,
       businessObjectives: objectives.length > 0 ? objectives : undefined,
       brandPositioning: positioning,
+      channelStrategy,
+      contentMix,
     });
   });
 
@@ -322,10 +357,11 @@ export class NewWorkspaceFormService {
   }
 
   // Step 6 helpers — Content Strategy
-  readonly AUDIENCES = [
-    'Engineers', 'Founders', 'Social Media Managers',
-    'Tech Enthusiasts', 'Executives',
-  ];
+  readonly AUDIENCES = computed(() => {
+    const segments = this.audienceSegments();
+    const names = segments.map((s) => s.name).filter((n) => n.trim());
+    return names.length > 0 ? names : [];
+  });
 
   readonly PLATFORMS = PLATFORM_DISPLAY_OPTIONS;
 

@@ -5,6 +5,9 @@ dist
 tmp
 out-tsc
 
+#test logs 
+out.log 
+
 # dependencies
 node_modules
 

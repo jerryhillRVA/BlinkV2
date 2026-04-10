@@ -1,3 +1,11 @@
+export interface SegmentJourneyStageContract {
+  stage: string;
+  primaryGoal: string;
+  contentTypes: string[];
+  hookAngles: string[];
+  successMetric: string;
+}
+
 export interface AudienceSegmentContract {
   id: string;
   name: string;
@@ -6,4 +14,5 @@ export interface AudienceSegmentContract {
   interests?: string[];
   painPoints?: string[];
   peakTimes?: string[];
+  journeyStages?: SegmentJourneyStageContract[];
 }

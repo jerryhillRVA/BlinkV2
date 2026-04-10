@@ -1,9 +1,10 @@
 import { Component, DestroyRef, inject, signal, computed } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import type { ResearchSource, ContentPillar } from '../../strategy-research.types';
+import type { ResearchSource } from '../../strategy-research.types';
 import { AI_SIMULATION_DELAY_MS } from '../../strategy-research.constants';
-import { MOCK_RESEARCH_SOURCES, DEFAULT_PILLARS } from '../../strategy-research.mock-data';
 import { safeTimeout, generateId } from '../../strategy-research.utils';
+import { StrategyResearchStateService } from '../../strategy-research-state.service';
+import { ToastService } from '../../../../core/toast/toast.service';
 
 const TYPE_COLORS: Record<ResearchSource['type'], { bg: string; text: string }> = {
   article: { bg: 'var(--blink-icon-blue-bg)', text: 'var(--blink-icon-blue)' },
@@ -21,13 +22,23 @@ const TYPE_COLORS: Record<ResearchSource['type'], { bg: string; text: string }> 
 })
 export class ResearchSourcesComponent {
   private readonly destroyRef = inject(DestroyRef);
+  private readonly stateService = inject(StrategyResearchStateService);
+  private readonly toast = inject(ToastService);
 
-  readonly sources = signal<ResearchSource[]>([...MOCK_RESEARCH_SOURCES]);
-  readonly pillars = signal<ContentPillar[]>([...DEFAULT_PILLARS]);
+  readonly sources = this.stateService.researchSources;
+  readonly pillars = this.stateService.pillars;
   readonly filterPillarId = signal<string>('all');
   readonly isDiscovering = signal(false);
 
   readonly typeColors = TYPE_COLORS;
+
+  readonly showAddForm = signal(false);
+  newTitle = '';
+  newUrl = '';
+  newType: ResearchSource['type'] = 'article';
+  newRelevance = 80;
+  newPillarIds = signal<Set<string>>(new Set());
+  newSummary = '';
 
   readonly filteredSources = computed(() => {
     const filter = this.filterPillarId();
@@ -67,9 +78,56 @@ export class ResearchSourcesComponent {
         summary: 'New research on optimal exercise protocols for women experiencing perimenopause, including strength training and yoga recommendations.',
         discoveredAt: new Date().toISOString(),
       };
-      this.sources.update(list => [newSource, ...list]);
+      const updated = [newSource, ...this.sources()];
+      this.stateService.saveResearchSources(updated);
       this.isDiscovering.set(false);
+      this.toast.showSuccess('New source discovered');
     }, AI_SIMULATION_DELAY_MS, this.destroyRef);
+  }
+
+  openAddForm(): void {
+    this.newTitle = '';
+    this.newUrl = '';
+    this.newType = 'article';
+    this.newRelevance = 80;
+    this.newPillarIds.set(new Set());
+    this.newSummary = '';
+    this.showAddForm.set(true);
+  }
+
+  cancelAdd(): void {
+    this.showAddForm.set(false);
+  }
+
+  togglePillarTag(pillarId: string): void {
+    this.newPillarIds.update(set => {
+      const next = new Set(set);
+      if (next.has(pillarId)) next.delete(pillarId);
+      else next.add(pillarId);
+      return next;
+    });
+  }
+
+  isPillarSelected(pillarId: string): boolean {
+    return this.newPillarIds().has(pillarId);
+  }
+
+  addSource(): void {
+    if (!this.newTitle.trim()) return;
+    const source: ResearchSource = {
+      id: generateId('rs'),
+      title: this.newTitle.trim(),
+      url: this.newUrl.trim(),
+      type: this.newType,
+      relevance: this.newRelevance,
+      pillarIds: Array.from(this.newPillarIds()),
+      summary: this.newSummary.trim(),
+      discoveredAt: new Date().toISOString(),
+    };
+    const updated = [source, ...this.sources()];
+    this.stateService.saveResearchSources(updated);
+    this.showAddForm.set(false);
+    this.toast.showSuccess('Source added');
   }
 
   createIdea(_source: ResearchSource): void {

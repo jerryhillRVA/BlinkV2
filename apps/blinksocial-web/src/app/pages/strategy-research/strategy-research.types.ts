@@ -17,7 +17,7 @@ export type ObjectiveCategory = 'growth' | 'revenue' | 'awareness' | 'trust' | '
 
 export type ObjectiveStatus = 'on-track' | 'at-risk' | 'behind' | 'achieved';
 
-export type ContentCategory = 'educational' | 'entertaining' | 'community' | 'promotional' | 'trending';
+export type ContentCategory = string;
 
 export interface BusinessObjective {
   id: string;
@@ -38,9 +38,18 @@ export interface VoiceAttribute {
   dontExample: string;
 }
 
+export interface ToneContext {
+  id: string;
+  context: string;
+  tone: string;
+  example: string;
+}
+
 export interface BrandVoiceData {
   missionStatement: string;
   voiceAttributes: VoiceAttribute[];
+  toneByContext: ToneContext[];
+  platformToneAdjustments: { platform: Platform; adjustment: string }[];
   vocabulary: { preferred: string[]; avoid: string[] };
 }
 

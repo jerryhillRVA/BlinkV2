@@ -52,7 +52,7 @@
                 </svg>
                 <h3 class="has-mock-data" title="Mock data">{{ segment.name }}</h3>
               </div>
-              <p class="card-description">{{ segment.description }}</p>
+              <p class="card-description" [class.card-description--empty]="!segment.description">{{ segment.description || 'No description yet \u2014 click Edit to add one.' }}</p>
             </div>
             <div class="card-actions">
               <button class="btn-icon" (click)="startEdit(segment)" title="Edit">
@@ -222,14 +222,6 @@
             </button>
           </div>
 
-          @if (!isExpanded(segment.id) && hasJourney(segment)) {
-            <div class="journey-pills">
-              @for (stageName of journeyStages; track stageName) {
-                <span class="journey-pill" [class]="'journey-pill journey-pill--' + stageName">{{ stageLabels[stageName] }}</span>
-              }
-            </div>
-          }
-
           <!-- Journey Stages Content -->
           @if (isExpanded(segment.id)) {
             <div class="journey-stages">
@@ -334,6 +326,145 @@
     }
   </div>
 
+  <!-- ── AI Audience Analyzer ─────────────────────────────────────── -->
+  <div class="analyzer-bar">
+    <div class="analyzer-select">
+      <app-dropdown
+        [options]="segmentOptions()"
+        [value]="selectedAnalyzeId()"
+        size="compact"
+        [fullWidth]="true"
+        (valueChange)="selectedAnalyzeId.set($event)"
+      />
+    </div>
+    <button class="btn-analyze" (click)="analyzeAudience()" [disabled]="isAnalyzing()">
+      @if (isAnalyzing()) {
+        <span class="spinner"></span>
+      } @else {
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"/>
+        </svg>
+      }
+      AI Analyze Audience
+    </button>
+  </div>
+
+  @if (isAnalyzing()) {
+    <div class="analyzer-loading">
+      <span class="spinner spinner--lg"></span>
+      <p class="loading-title">Analyzing {{ currentSegmentName() }} audience...</p>
+      <p class="loading-subtitle">Identifying interests, pain points, and activity patterns</p>
+    </div>
+  } @else if (currentInsight(); as insight) {
+    <div class="insights-grid has-mock-data" title="Mock data">
+      <!-- Interests -->
+      <div class="insight-card">
+        <h4 class="insight-title insight-title--pink">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></svg>
+          Interests
+        </h4>
+        <div class="chip-row">
+          @for (interest of insight.interests; track interest) {
+            <span class="chip chip--pink">{{ interest }}</span>
+          }
+        </div>
+      </div>
+
+      <!-- Pain Points -->
+      <div class="insight-card">
+        <h4 class="insight-title insight-title--amber">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.46 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" x2="12" y1="9" y2="13"/><line x1="12" x2="12.01" y1="17" y2="17"/></svg>
+          Pain Points
+        </h4>
+        <ul class="bullet-list">
+          @for (point of insight.painPoints; track point) {
+            <li>
+              <span class="bullet bullet--amber"></span>
+              {{ point }}
+            </li>
+          }
+        </ul>
+      </div>
+
+      <!-- Peak Activity Times -->
+      <div class="insight-card">
+        <h4 class="insight-title insight-title--blue">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+          Peak Activity Times
+        </h4>
+        <div class="time-list">
+          @for (time of insight.peakActivityTimes; track time.day + time.hour) {
+            <div class="time-row">
+              <div class="time-info">
+                <strong>{{ time.day }}</strong>
+                <span>{{ time.hour }}</span>
+              </div>
+              <span class="engagement-badge" [class]="engagementClass(time.engagement)">{{ time.engagement }}</span>
+            </div>
+          }
+        </div>
+      </div>
+
+      <!-- Platform Preferences -->
+      <div class="insight-card">
+        <h4 class="insight-title insight-title--purple">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M2 12h20"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+          Platform Preferences
+        </h4>
+        <div class="platform-list">
+          @for (pp of insight.preferredPlatforms; track pp.platform) {
+            <div class="platform-row" [class]="'platform-row platform-' + pp.platform">
+              <div class="platform-row-head">
+                <span class="platform-name">
+                  @switch (pp.platform) {
+                    @case ('instagram') {
+                      <svg class="platform-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
+                    }
+                    @case ('tiktok') {
+                      <svg class="platform-icon" width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .88.13V9.4a6.84 6.84 0 0 0-1-.05A6.33 6.33 0 0 0 5.8 20.1a6.34 6.34 0 0 0 10.86-4.43V8.83a8.16 8.16 0 0 0 4.77 1.52V6.9a4.85 4.85 0 0 1-1-.21z"/></svg>
+                    }
+                    @case ('youtube') {
+                      <svg class="platform-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22.54 6.42a2.78 2.78 0 0 0-1.94-2C18.88 4 12 4 12 4s-6.88 0-8.6.46a2.78 2.78 0 0 0-1.94 2A29 29 0 0 0 1 11.75a29 29 0 0 0 .46 5.33A2.78 2.78 0 0 0 3.4 19c1.72.46 8.6.46 8.6.46s6.88 0 8.6-.46a2.78 2.78 0 0 0 1.94-2 29 29 0 0 0 .46-5.25 29 29 0 0 0-.46-5.33z"/><polygon points="9.75 15.02 15.5 11.75 9.75 8.48 9.75 15.02"/></svg>
+                    }
+                    @case ('facebook') {
+                      <svg class="platform-icon" width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M22 12a10 10 0 1 0-11.56 9.88v-6.99H7.9V12h2.54V9.8c0-2.51 1.49-3.9 3.78-3.9 1.1 0 2.24.2 2.24.2v2.46h-1.26c-1.24 0-1.63.77-1.63 1.56V12h2.78l-.45 2.89h-2.33v6.99A10 10 0 0 0 22 12z"/></svg>
+                    }
+                    @case ('linkedin') {
+                      <svg class="platform-icon" width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M20.45 20.45h-3.56v-5.57c0-1.33-.02-3.04-1.85-3.04-1.86 0-2.14 1.45-2.14 2.95v5.66H9.34V9h3.42v1.56h.05a3.74 3.74 0 0 1 3.37-1.85c3.6 0 4.27 2.37 4.27 5.45zM5.34 7.43a2.07 2.07 0 1 1 0-4.14 2.07 2.07 0 0 1 0 4.14zM7.12 20.45H3.56V9h3.56zM22.22 0H1.77C.79 0 0 .77 0 1.72v20.56C0 23.23.79 24 1.77 24h20.45c.98 0 1.78-.77 1.78-1.72V1.72C24 .77 23.2 0 22.22 0z"/></svg>
+                    }
+                  }
+                  {{ platformLabels[pp.platform] }}
+                </span>
+                <span class="platform-pct">{{ pp.preference }}%</span>
+              </div>
+              <div class="platform-bar"><div class="platform-bar-fill" [style.width.%]="pp.preference"></div></div>
+            </div>
+          }
+        </div>
+      </div>
+
+      <!-- Content Preferences (full width) -->
+      <div class="insight-card insight-card--full">
+        <h4 class="insight-title insight-title--brand">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+          Content Preferences
+        </h4>
+        <div class="chip-row">
+          @for (pref of insight.contentPreferences; track pref) {
+            <span class="chip chip--brand">{{ pref }}</span>
+          }
+        </div>
+      </div>
+    </div>
+  } @else {
+    <div class="analyzer-empty">
+      <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+      </svg>
+      <p>Select a segment and run AI Analysis to see audience insights.</p>
+      <p class="empty-sub">Insights include interests, pain points, activity times, and platform preferences.</p>
+    </div>
+  }
 
   <!-- Add Segment Modal (teleported to body) -->
   <ng-template #segmentModalTpl>

@@ -31,6 +31,41 @@
   &:disabled { opacity: 0.6; cursor: not-allowed; }
 }
 
+.platform-picker-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: center;
+  margin: 12px 0;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border: 1px solid var(--blink-outline-variant);
+  border-radius: 999px;
+  background: var(--blink-surface);
+  color: var(--blink-on-surface-muted);
+  font-family: inherit;
+  font-size: var(--blink-body-small);
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s;
+
+  &:hover {
+    border-color: var(--blink-on-surface-secondary);
+  }
+
+  &.chip-selected {
+    background: var(--blink-brand-primary-light-bg);
+    border-color: var(--blink-brand-primary);
+    color: var(--blink-brand-primary);
+    font-weight: 600;
+  }
+}
+
 .platforms-list {
   display: flex;
   flex-direction: column;

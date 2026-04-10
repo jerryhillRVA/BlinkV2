@@ -3,10 +3,13 @@ import { DOCUMENT } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { IconComponent } from '../../shared/icon/icon.component';
 import { PlatformIconComponent } from '../../../../shared/platform-icon/platform-icon.component';
+import { DropdownComponent, DropdownOption } from '../../../../shared/dropdown/dropdown.component';
 import { MockDataService } from '../../../../core/mock-data/mock-data.service';
+import { ToastService } from '../../../../core/toast/toast.service';
+import { StrategyResearchStateService } from '../../strategy-research-state.service';
 import type { AudienceInsight, AudienceSegment, SegmentJourneyStage, JourneyStage } from '../../strategy-research.types';
 import { AI_SIMULATION_DELAY_MS, PLATFORM_LABELS } from '../../strategy-research.constants';
-import { DEFAULT_SEGMENTS, MOCK_AUDIENCE_INSIGHTS } from '../../strategy-research.mock-data';
+import { MOCK_AUDIENCE_INSIGHTS } from '../../strategy-research.mock-data';
 import { generateId, safeTimeout, toggleSetItem } from '../../strategy-research.utils';
 
 const JOURNEY_STAGES: JourneyStage[] = ['awareness', 'consideration', 'conversion', 'retention'];
@@ -20,13 +23,15 @@ const STAGE_LABELS: Record<JourneyStage, string> = {
 
 @Component({
   selector: 'app-audience',
-  imports: [FormsModule, IconComponent, PlatformIconComponent],
+  imports: [FormsModule, IconComponent, PlatformIconComponent, DropdownComponent],
   templateUrl: './audience.component.html',
   styleUrl: './audience.component.scss',
 })
 export class AudienceComponent {
   private readonly destroyRef = inject(DestroyRef);
   private readonly mockData = inject(MockDataService);
+  private readonly stateService = inject(StrategyResearchStateService);
+  private readonly toast = inject(ToastService);
   private readonly doc = inject(DOCUMENT);
   private readonly vcr = inject(ViewContainerRef);
 
@@ -56,6 +61,13 @@ export class AudienceComponent {
         this.modalView.destroy();
         this.modalView = null;
         body.style.overflow = '';
+      }
+    });
+    // Auto-select first segment for analyzer when segments load
+    effect(() => {
+      const segs = this.segments();
+      if (segs.length > 0 && !this.selectedAnalyzeId()) {
+        this.selectedAnalyzeId.set(segs[0].id);
       }
     });
     /* v8 ignore start */
@@ -95,7 +107,9 @@ export class AudienceComponent {
       })),
     };
     this.segments.update(list => [...list, newSegment]);
+    this.stateService.saveSegments(this.segments());
     this.showAddForm.set(false);
+    this.toast.showSuccess('Segment created');
   }
 
   @HostBinding('class.is-mock-source')
@@ -103,31 +117,25 @@ export class AudienceComponent {
     return this.mockData.isMock('audience');
   }
 
-  /* v8 ignore start */
-  readonly segments = signal<AudienceSegment[]>(
-    DEFAULT_SEGMENTS.map(s => ({
-      ...s,
-      journeyStages: JOURNEY_STAGES.map(stage => ({
-        stage,
-        primaryGoal: '',
-        contentTypes: [],
-        hookAngles: [],
-        successMetric: '',
-      })),
-    }))
-  );
-  /* v8 ignore stop */
+  readonly segments = this.stateService.segments;
 
   /* v8 ignore start */
   readonly expandedSegments = signal<Set<string>>(new Set());
   readonly mappingSegmentId = signal<string | null>(null);
   readonly editingId = signal<string | null>(null);
 
-  // AI Audience Analyzer state — per-card
-  readonly analyzingSegmentId = signal<string | null>(null);
+  // AI Audience Analyzer state
+  readonly selectedAnalyzeId = signal<string>('');
+  readonly isAnalyzing = signal(false);
+  readonly insights = this.stateService.audienceInsights;
+
+  // Per-card insights state
   readonly expandedInsights = signal<Set<string>>(new Set());
-  readonly insights = signal<AudienceInsight[]>([]);
+  readonly analyzingSegmentId = signal<string | null>(null);
   /* v8 ignore stop */
+
+  readonly segmentOptions = (): DropdownOption[] =>
+    this.segments().map(s => ({ value: s.id, label: s.name || 'Untitled segment' }));
 
   readonly journeyStages = JOURNEY_STAGES;
   readonly stageLabels = STAGE_LABELS;
@@ -155,6 +163,7 @@ export class AudienceComponent {
         };
       }),
     );
+    this.stateService.saveSegments(this.segments());
   }
 
   setStageGoal(segmentId: string, stage: JourneyStage, value: string): void {
@@ -223,11 +232,15 @@ export class AudienceComponent {
           : s
       )
     );
+    this.stateService.saveSegments(this.segments());
     this.editingId.set(null);
+    this.toast.showSuccess('Segment updated');
   }
 
   deleteSegment(id: string): void {
     this.segments.update(list => list.filter(s => s.id !== id));
+    this.stateService.saveSegments(this.segments());
+    this.toast.showSuccess('Segment deleted');
   }
 
   addSegment(): void {
@@ -245,6 +258,7 @@ export class AudienceComponent {
       })),
     };
     this.segments.update(list => [...list, newSegment]);
+    this.stateService.saveSegments(this.segments());
     this.editingId.set(id);
     this.editName = '';
     this.editDescription = '';
@@ -290,6 +304,8 @@ export class AudienceComponent {
         })
       );
       this.mappingSegmentId.set(null);
+      this.stateService.saveSegments(this.segments());
+      this.toast.showSuccess('Journey mapped');
       // Auto-expand after mapping
       this.expandedSegments.update(set => {
         const next = new Set(set);
@@ -299,21 +315,37 @@ export class AudienceComponent {
     }, AI_SIMULATION_DELAY_MS, this.destroyRef);
   }
 
-  hasJourney(segment: AudienceSegment): boolean {
-    return !!segment.journeyStages?.some(s => !!s.primaryGoal);
-  }
-
   getStage(segment: AudienceSegment, stage: JourneyStage): SegmentJourneyStage | undefined {
     return segment.journeyStages?.find(s => s.stage === stage);
   }
 
-  // ── AI Audience Analyzer (per-card) ─────────────────────────────────────
-  insightFor(segmentId: string): AudienceInsight | undefined {
-    return this.insights().find(i => i.segmentId === segmentId);
+  // ── AI Audience Analyzer ────────────────────────────────────────────────
+  currentInsight(): AudienceInsight | undefined {
+    return this.insights().find(i => i.segmentId === this.selectedAnalyzeId());
   }
 
-  isAnalyzingSegment(segmentId: string): boolean {
-    return this.analyzingSegmentId() === segmentId;
+  currentSegmentName(): string {
+    return this.segments().find(s => s.id === this.selectedAnalyzeId())?.name ?? '';
+  }
+
+  analyzeAudience(): void {
+    const id = this.selectedAnalyzeId();
+    if (!id) return;
+    this.isAnalyzing.set(true);
+    safeTimeout(() => {
+      // Use mock if available for this segment id, otherwise synthesize a fallback.
+      const mock = MOCK_AUDIENCE_INSIGHTS.find(i => i.segmentId === id)
+        ?? { ...MOCK_AUDIENCE_INSIGHTS[0], segmentId: id };
+      this.insights.update(list => [...list.filter(i => i.segmentId !== id), mock]);
+      this.stateService.saveAudienceInsights(this.insights());
+      this.isAnalyzing.set(false);
+      this.toast.showSuccess('Audience analysis complete');
+    }, AI_SIMULATION_DELAY_MS, this.destroyRef);
+  }
+
+  // ── Per-card Audience Insights ───────────────────────────────────────────
+  insightFor(segmentId: string): AudienceInsight | undefined {
+    return this.stateService.audienceInsights().find(i => i.segmentId === segmentId);
   }
 
   isInsightsExpanded(segmentId: string): boolean {
@@ -324,20 +356,36 @@ export class AudienceComponent {
     this.expandedInsights.update(set => toggleSetItem(set, segmentId));
   }
 
+  isAnalyzingSegment(segmentId: string): boolean {
+    return this.analyzingSegmentId() === segmentId;
+  }
+
   analyzeForSegment(segmentId: string): void {
     this.analyzingSegmentId.set(segmentId);
-    this.expandedInsights.update(set => {
-      const next = new Set(set);
-      next.add(segmentId);
-      return next;
-    });
+    this.expandedInsights.update(set => { const next = new Set(set); next.add(segmentId); return next; });
     safeTimeout(() => {
-      const mock = MOCK_AUDIENCE_INSIGHTS.find(i => i.segmentId === segmentId)
-        ?? { ...MOCK_AUDIENCE_INSIGHTS[0], segmentId };
-      this.insights.update(list => [...list.filter(i => i.segmentId !== segmentId), mock]);
-      if (this.analyzingSegmentId() === segmentId) {
-        this.analyzingSegmentId.set(null);
+      const existing = this.insightFor(segmentId);
+      if (!existing) {
+        const mockInsight: AudienceInsight = {
+          segmentId,
+          interests: ['Content Strategy', 'Social Media Growth', 'Brand Building', 'Analytics'],
+          painPoints: ['Lack of consistency', 'Difficulty measuring ROI', 'Content fatigue'],
+          peakActivityTimes: [
+            { day: 'Monday', hour: '9am', engagement: 'High' },
+            { day: 'Wednesday', hour: '12pm', engagement: 'Very High' },
+            { day: 'Friday', hour: '5pm', engagement: 'Medium' },
+          ],
+          preferredPlatforms: [
+            { platform: 'instagram', preference: 85 },
+            { platform: 'tiktok', preference: 72 },
+            { platform: 'youtube', preference: 60 },
+          ],
+          contentPreferences: ['Short-form video', 'Carousel posts', 'Behind-the-scenes', 'Expert interviews'],
+        };
+        this.insights.update(list => [...list, mockInsight]);
+        this.stateService.saveAudienceInsights(this.insights());
       }
+      this.analyzingSegmentId.set(null);
     }, AI_SIMULATION_DELAY_MS, this.destroyRef);
   }
 

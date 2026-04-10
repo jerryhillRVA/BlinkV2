@@ -1,5 +1,8 @@
+import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { VocabularyGuideComponent } from './vocabulary-guide.component';
+import { ToastService } from '../../../../../core/toast/toast.service';
+import { StrategyResearchStateService } from '../../../strategy-research-state.service';
 
 describe('VocabularyGuideComponent', () => {
   let component: VocabularyGuideComponent;
@@ -7,8 +10,36 @@ describe('VocabularyGuideComponent', () => {
   let nativeElement: HTMLElement;
 
   beforeEach(async () => {
+    const mockBrandVoice = signal({
+      missionStatement: '',
+      voiceAttributes: [],
+      toneByContext: [],
+      platformToneAdjustments: [],
+      vocabulary: { preferred: [] as string[], avoid: [] as string[] },
+    });
+    const mockStateService = {
+      brandVoice: mockBrandVoice,
+      objectives: signal([]),
+      pillars: signal([]),
+      segments: signal([]),
+      channelStrategy: signal([]),
+      contentMix: signal([]),
+      researchSources: signal([]),
+      competitorInsights: signal([]),
+      audienceInsights: signal([]),
+      loading: signal(false),
+      saving: signal(false),
+      workspaceId: signal('test-workspace'),
+      saveBrandVoice: vi.fn(),
+      loadAll: vi.fn(),
+      isDirty: signal(false),
+    };
     await TestBed.configureTestingModule({
       imports: [VocabularyGuideComponent],
+      providers: [
+        { provide: ToastService, useValue: { showSuccess: vi.fn(), showError: vi.fn() } },
+        { provide: StrategyResearchStateService, useValue: mockStateService },
+      ],
     }).compileComponents();
 
     fixture = TestBed.createComponent(VocabularyGuideComponent);
@@ -19,6 +50,12 @@ describe('VocabularyGuideComponent', () => {
 
   it('should create', () => {
     expect(component).toBeTruthy();
+  });
+
+  it('should initialize with default signal values', () => {
+    expect(component.vocabulary()).toEqual({ preferred: [], avoid: [] });
+    expect(component.newPreferredWord()).toBe('');
+    expect(component.newAvoidWord()).toBe('');
   });
 
   it('should render vocabulary columns', () => {

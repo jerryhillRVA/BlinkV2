@@ -1,5 +1,8 @@
-import { Component, DestroyRef, inject, signal } from '@angular/core';
+import { Component, DestroyRef, HostBinding, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { MockDataService } from '../../../../core/mock-data/mock-data.service';
+import { ToastService } from '../../../../core/toast/toast.service';
+import { StrategyResearchStateService } from '../../strategy-research-state.service';
 import type { ChannelStrategyEntry, Platform } from '../../strategy-research.types';
 import { PLATFORM_LABELS, AI_SIMULATION_DELAY_MS } from '../../strategy-research.constants';
 import { safeTimeout, toggleSetItem } from '../../strategy-research.utils';
@@ -14,13 +17,7 @@ const PLATFORM_CONTENT_TYPES: Record<Platform, string[]> = {
   linkedin: ['Text Post', 'Document / Carousel', 'Article', 'Video'],
 };
 
-const AUDIENCE_OPTIONS: DropdownOption[] = [
-  { value: 'active-40s', label: 'Active 40s' },
-  { value: 'thriving-50s', label: 'Thriving 50s' },
-  { value: 'yoga-enthusiasts', label: 'Yoga Enthusiasts' },
-  { value: 'fitness-beginners', label: 'Fitness Beginners' },
-  { value: 'holistic-health-seekers', label: 'Holistic Health Seekers' },
-];
+// Audience options are now derived dynamically from workspace segments (see audienceOptions computed)
 
 const GOAL_OPTIONS: DropdownOption[] = [
   { value: 'awareness', label: 'Awareness' },
@@ -39,20 +36,53 @@ const GOAL_OPTIONS: DropdownOption[] = [
 })
 export class ChannelStrategyComponent {
   private readonly destroyRef = inject(DestroyRef);
+  private readonly mockData = inject(MockDataService);
+  private readonly stateService = inject(StrategyResearchStateService);
+  private readonly toast = inject(ToastService);
 
-  readonly channels = signal<ChannelStrategyEntry[]>([
-    { platform: 'instagram', active: true, role: 'Primary engagement and community building', primaryContentTypes: ['Reels', 'Stories', 'Carousels'], toneAdjustment: 'Warm, casual, motivational', postingCadence: '5x/week', primaryAudience: 'Active 40s', primaryGoal: 'Engagement', notes: '' },
-    { platform: 'tiktok', active: true, role: 'Reach and trend-driven discovery', primaryContentTypes: ['Shorts', 'Tutorials'], toneAdjustment: 'Fun, energetic, relatable', postingCadence: '4x/week', primaryAudience: 'Active 40s', primaryGoal: 'Awareness', notes: '' },
-    { platform: 'youtube', active: true, role: 'Long-form education and authority', primaryContentTypes: ['Long-form', 'Shorts', 'Tutorials'], toneAdjustment: 'Professional, supportive, thorough', postingCadence: '2x/week', primaryAudience: 'Thriving 50s', primaryGoal: 'Authority', notes: '' },
-    { platform: 'facebook', active: false, role: '', primaryContentTypes: [], toneAdjustment: '', postingCadence: '', primaryAudience: '', primaryGoal: '', notes: '' },
-    { platform: 'linkedin', active: false, role: '', primaryContentTypes: [], toneAdjustment: '', postingCadence: '', primaryAudience: '', primaryGoal: '', notes: '' },
-  ]);
+  @HostBinding('class.is-mock-source')
+  get isMockSource(): boolean {
+    return this.mockData.isMock('channel-strategy');
+  }
+
+  readonly channels = this.stateService.channelStrategy;
+  readonly showPlatformPicker = computed(() => this.channels().length === 0);
+  readonly selectedNewPlatforms = signal<Set<Platform>>(new Set(['instagram', 'tiktok', 'youtube', 'facebook']));
 
   /* v8 ignore start */
   readonly expandedPlatforms = signal<Set<Platform>>(new Set(['instagram']));
   readonly generatingPlatform = signal<Platform | null>(null);
   readonly generatingAll = signal(false);
   /* v8 ignore stop */
+
+  readonly allPlatforms: Platform[] = ['instagram', 'tiktok', 'youtube', 'facebook', 'linkedin'];
+
+  isNewPlatformSelected(platform: Platform): boolean {
+    return this.selectedNewPlatforms().has(platform);
+  }
+
+  toggleNewPlatform(platform: Platform): void {
+    this.selectedNewPlatforms.update(set => toggleSetItem(set, platform));
+  }
+
+  initializeChannels(): void {
+    const selected = Array.from(this.selectedNewPlatforms());
+    if (selected.length === 0) return;
+    const entries: ChannelStrategyEntry[] = selected.map(platform => ({
+      platform,
+      active: true,
+      role: '',
+      primaryContentTypes: [],
+      toneAdjustment: '',
+      postingCadence: '',
+      primaryAudience: '',
+      primaryGoal: '',
+      notes: '',
+    }));
+    this.channels.set(entries);
+    this.stateService.saveChannelStrategy(entries);
+    this.toast.showSuccess('Channels initialized');
+  }
 
   aiGenerateAll(): void {
     this.generatingAll.set(true);
@@ -70,7 +100,9 @@ export class ChannelStrategyComponent {
           notes: c.notes || 'AI-generated strategy based on audience analysis.',
         })),
       );
+      this.stateService.saveChannelStrategy(this.channels());
       this.generatingAll.set(false);
+      this.toast.showSuccess('All strategies generated');
     }, AI_SIMULATION_DELAY_MS, this.destroyRef);
   }
 
@@ -79,7 +111,11 @@ export class ChannelStrategyComponent {
     return PLATFORM_CONTENT_TYPES[platform] ?? [];
   }
   readonly platformLabels = PLATFORM_LABELS;
-  readonly audienceOptions = AUDIENCE_OPTIONS;
+  readonly audienceOptions = computed<DropdownOption[]>(() => {
+    const segments = this.stateService.segments();
+    if (segments.length === 0) return [{ value: 'general', label: 'General Audience' }];
+    return segments.map(s => ({ value: s.id, label: s.name }));
+  });
   readonly goalOptions = GOAL_OPTIONS;
 
   isExpanded(platform: Platform): boolean {
@@ -94,12 +130,14 @@ export class ChannelStrategyComponent {
     this.channels.update(list =>
       list.map(c => c.platform === platform ? { ...c, active: !c.active } : c)
     );
+    this.stateService.saveChannelStrategy(this.channels());
   }
 
   updateChannel(platform: Platform, field: keyof ChannelStrategyEntry, value: string): void {
     this.channels.update(list =>
       list.map(c => c.platform === platform ? { ...c, [field]: value } : c)
     );
+    this.stateService.saveChannelStrategy(this.channels());
   }
 
   isContentTypeActive(channel: ChannelStrategyEntry, contentType: string): boolean {
@@ -116,6 +154,7 @@ export class ChannelStrategyComponent {
         return { ...c, primaryContentTypes: types };
       })
     );
+    this.stateService.saveChannelStrategy(this.channels());
   }
 
   getChannel(platform: Platform): ChannelStrategyEntry {
@@ -142,7 +181,9 @@ export class ChannelStrategyComponent {
           };
         })
       );
+      this.stateService.saveChannelStrategy(this.channels());
       this.generatingPlatform.set(null);
+      this.toast.showSuccess('Strategy generated');
     }, AI_SIMULATION_DELAY_MS, this.destroyRef);
   }
 }

@@ -3,6 +3,7 @@ import { VoiceMissionComponent } from './voice-mission/voice-mission.component';
 import { VoiceAttributesComponent } from './voice-attributes/voice-attributes.component';
 import { VocabularyGuideComponent } from './vocabulary-guide/vocabulary-guide.component';
 import { MockDataService } from '../../../../core/mock-data/mock-data.service';
+import { StrategyResearchStateService } from '../../strategy-research-state.service';
 
 @Component({
   selector: 'app-brand-voice',
@@ -16,6 +17,7 @@ import { MockDataService } from '../../../../core/mock-data/mock-data.service';
 })
 export class BrandVoiceComponent {
   private readonly mockData = inject(MockDataService);
+  protected readonly stateService = inject(StrategyResearchStateService);
 
   @HostBinding('class.is-mock-source')
   get isMockSource(): boolean {

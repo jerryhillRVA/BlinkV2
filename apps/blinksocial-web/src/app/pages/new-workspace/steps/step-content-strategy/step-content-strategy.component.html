@@ -71,7 +71,7 @@
                 Target Audience
               </span>
               <div class="pill-list">
-                @for (segment of formService.AUDIENCES; track segment) {
+                @for (segment of formService.AUDIENCES(); track segment) {
                   <button
                     class="audience-pill"
                     [class.pill-selected]="isAudienceSelected(pillar, segment)"

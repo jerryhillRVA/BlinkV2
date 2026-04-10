@@ -40,14 +40,12 @@
   }
 }
 
-.btn-discover {
+.btn-discover,
+.btn-add-source {
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
   padding: 0.5rem 1rem;
-  background: var(--blink-brand-primary);
-  color: var(--blink-on-brand);
-  border: none;
   border-radius: 0.5rem;
   font-size: var(--blink-label-large);
   cursor: pointer;
@@ -60,6 +58,22 @@
   &:disabled {
     opacity: 0.6;
     cursor: not-allowed;
+  }
+}
+
+.btn-discover {
+  background: var(--blink-brand-primary);
+  color: var(--blink-on-brand);
+  border: none;
+}
+
+.btn-add-source {
+  background: var(--blink-surface);
+  color: var(--blink-on-surface);
+  border: 1px solid var(--blink-outline-variant);
+
+  &:hover {
+    background: var(--blink-surface-hover);
   }
 }
 

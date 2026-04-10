@@ -367,6 +367,48 @@ describe('NewWorkspaceFormService', () => {
     expect(data.audienceSegments[0].name).toBe('Engineers');
   });
 
+  it('should set segment description to empty string (not copy name)', () => {
+    service.workspaceName.set('Test');
+    service.audienceSegments.set([{ id: 1, name: 'Engineers' }]);
+    const data = service.formData();
+    expect(data.audienceSegments[0].description).toBe('');
+  });
+
+  it('should include channelStrategy with scaffold entries from enabled platforms', () => {
+    service.workspaceName.set('Test');
+    service.enabledPlatforms.set(new Set(['YouTube', 'Instagram']));
+    const data = service.formData();
+    expect(data.channelStrategy).toBeDefined();
+    expect(data.channelStrategy!.channels.length).toBe(2);
+    expect(data.channelStrategy!.channels[0].active).toBe(true);
+    expect(data.channelStrategy!.channels[0].role).toBe('');
+    expect(data.channelStrategy!.channels[0].primaryContentTypes).toEqual([]);
+  });
+
+  it('should include contentMix with 5 default categories totaling 100%', () => {
+    service.workspaceName.set('Test');
+    const data = service.formData();
+    expect(data.contentMix).toBeDefined();
+    expect(data.contentMix!.targets.length).toBe(5);
+    const total = data.contentMix!.targets.reduce((sum, t) => sum + t.targetPercent, 0);
+    expect(total).toBe(100);
+    expect(data.contentMix!.targets[0].category).toBe('educational');
+  });
+
+  it('should map audienceSegmentIds by segment name position in main list', () => {
+    service.workspaceName.set('Test');
+    service.audienceSegments.set([
+      { id: 1, name: 'Founders' },
+      { id: 2, name: 'Engineers' },
+    ]);
+    service.contentPillars.set([{
+      id: 1, name: 'P1', themes: '', description: 'D',
+      audienceSegments: ['Engineers'], platforms: [], objectiveId: '',
+    }]);
+    const data = service.formData();
+    expect(data.contentPillars[0].audienceSegmentIds).toEqual(['seg-2']);
+  });
+
   it('should use fallback skillId when agent name is empty', () => {
     service.workspaceName.set('Test');
     service.agents.set([{ id: 1, name: '', role: 'Test', responsibilities: '', outputs: '' }]);
@@ -712,5 +754,74 @@ describe('NewWorkspaceFormService', () => {
     expect(requestWithSkills.skills).toBeDefined();
     expect(requestWithSkills.skills?.skills.length).toBe(1);
     expect(requestWithSkills.skills?.skills[0].skillId).toBe('reporting-agent');
+  });
+
+  // --- AUDIENCES computed (dynamic from audienceSegments) ---
+
+  it('should return audience segment names for AUDIENCES when segments have names', () => {
+    service.audienceSegments.set([
+      { id: 1, name: 'Engineers' },
+      { id: 2, name: 'Designers' },
+    ]);
+    expect(service.AUDIENCES()).toEqual(['Engineers', 'Designers']);
+  });
+
+  it('should return empty array for AUDIENCES when segments have no names', () => {
+    service.audienceSegments.set([{ id: 1, name: '' }]);
+    expect(service.AUDIENCES()).toEqual([]);
+  });
+
+  it('should return empty array for AUDIENCES when no segments', () => {
+    service.audienceSegments.set([]);
+    expect(service.AUDIENCES()).toEqual([]);
+  });
+
+  // --- addObjective/removeObjective boundary tests ---
+
+  it('should not add objective beyond max of 4', () => {
+    // Start with default 1, add 3 more to reach 4
+    service.addObjective();
+    service.addObjective();
+    service.addObjective();
+    expect(service.businessObjectives().length).toBe(4);
+    service.addObjective(); // Should be a no-op
+    expect(service.businessObjectives().length).toBe(4);
+  });
+
+  it('should not remove the last objective', () => {
+    // Remove all but one
+    const ids = service.businessObjectives().map(o => o.id);
+    service.removeObjective(ids[0]);
+    expect(service.businessObjectives().length).toBe(1);
+    service.removeObjective(service.businessObjectives()[0].id); // Should be a no-op
+    expect(service.businessObjectives().length).toBe(1);
+  });
+
+  it('should update a specific objective field', () => {
+    const id = service.businessObjectives()[0].id;
+    service.updateObjective(id, 'statement', 'Grow followers');
+    expect(service.businessObjectives().find(o => o.id === id)?.statement).toBe('Grow followers');
+  });
+
+  it('should filter out blank segment names from AUDIENCES', () => {
+    service.audienceSegments.set([
+      { id: 1, name: 'Valid' },
+      { id: 2, name: '  ' },
+      { id: 3, name: 'Also Valid' },
+    ]);
+    expect(service.AUDIENCES()).toEqual(['Valid', 'Also Valid']);
+  });
+
+  // --- Signal initializer coverage ---
+
+  it('should have default signal values on creation', () => {
+    const fresh = new NewWorkspaceFormService();
+    expect(fresh.workspaceName()).toBe('');
+    expect(fresh.brandVoice()).toBe('');
+    expect(fresh.toneTags()).toEqual([]);
+    expect(fresh.contentWarning()).toBe(false);
+    expect(fresh.aiDisclaimer()).toBe(true);
+    expect(fresh.defaultPlatform()).toBe('YouTube');
+    expect(fresh.maxIdeasPerMonth()).toBe(30);
   });
 });

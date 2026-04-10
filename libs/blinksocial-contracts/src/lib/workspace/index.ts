@@ -16,3 +16,8 @@ export * from './notification-settings.js';
 export * from './calendar-settings.js';
 export * from './security-settings.js';
 export * from './workspace-settings.js';
+export * from './channel-strategy.js';
+export * from './content-mix.js';
+export * from './research-source.js';
+export * from './competitor-insight.js';
+export * from './audience-insight.js';

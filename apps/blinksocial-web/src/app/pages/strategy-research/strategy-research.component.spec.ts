@@ -1,12 +1,51 @@
 import { TestBed } from '@angular/core/testing';
 import { provideRouter, ActivatedRoute } from '@angular/router';
+import { signal } from '@angular/core';
 import { StrategyResearchComponent } from './strategy-research.component';
+import { StrategyResearchStateService } from './strategy-research-state.service';
 
 describe('StrategyResearchComponent', () => {
   let fixture: ReturnType<typeof TestBed.createComponent<StrategyResearchComponent>>;
   let component: StrategyResearchComponent;
 
+  const mockObjectives = signal<unknown[]>([]);
+  const mockStateService = {
+    brandVoice: signal({
+      missionStatement: '',
+      voiceAttributes: [],
+      toneByContext: [],
+      platformToneAdjustments: [],
+      vocabulary: { preferred: [] as string[], avoid: [] as string[] },
+    }).asReadonly(),
+    objectives: mockObjectives.asReadonly(),
+    pillars: signal([]).asReadonly(),
+    segments: signal([]).asReadonly(),
+    channelStrategy: signal([]).asReadonly(),
+    contentMix: signal([]).asReadonly(),
+    researchSources: signal([]).asReadonly(),
+    competitorInsights: signal([]).asReadonly(),
+    audienceInsights: signal([]).asReadonly(),
+    loading: signal(false).asReadonly(),
+    saving: signal(false).asReadonly(),
+    workspaceId: signal('test-workspace'),
+    isDirty: signal(false),
+    saveBrandVoice: vi.fn(),
+    saveObjectives: vi.fn(),
+    savePillars: vi.fn(),
+    saveSegments: vi.fn(),
+    saveChannelStrategy: vi.fn(),
+    saveContentMix: vi.fn(),
+    saveResearchSources: vi.fn(),
+    saveCompetitorInsights: vi.fn(),
+    saveAudienceInsights: vi.fn(),
+    loadAll: vi.fn(),
+  };
+
   beforeEach(async () => {
+    mockObjectives.set([]);
+    mockStateService.saveObjectives.mockClear();
+    mockStateService.loadAll.mockClear();
+
     await TestBed.configureTestingModule({
       imports: [StrategyResearchComponent],
       providers: [
@@ -17,8 +56,13 @@ describe('StrategyResearchComponent', () => {
             snapshot: { paramMap: { get: () => 'test-workspace' } },
           },
         },
+        { provide: StrategyResearchStateService, useValue: mockStateService },
       ],
-    }).compileComponents();
+    })
+      .overrideComponent(StrategyResearchComponent, {
+        set: { providers: [] },
+      })
+      .compileComponents();
 
     fixture = TestBed.createComponent(StrategyResearchComponent);
     component = fixture.componentInstance;
@@ -156,11 +200,11 @@ describe('StrategyResearchComponent', () => {
     expect(seo).toBeTruthy();
   });
 
-  it('should update objectives', () => {
+  it('should update objectives via state service', () => {
     const objectives = [
       { id: 'o1', category: 'growth' as const, statement: 'Test', target: 100, unit: 'followers', timeframe: 'Q1', status: 'on-track' as const },
     ];
     component.onUpdateObjectives(objectives);
-    expect(component.objectives()).toEqual(objectives);
+    expect(mockStateService.saveObjectives).toHaveBeenCalledWith(objectives);
   });
 });

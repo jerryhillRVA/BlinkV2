@@ -101,11 +101,31 @@
                      placeholder="Q2 2026" />
             </div>
           </div>
+          <div class="field-row">
+            <div class="field-group">
+              <span class="field-label">Current Value</span>
+              <input type="number" class="field-input field-sm"
+                     [ngModel]="obj.currentValue ?? ''"
+                     (ngModelChange)="updateObjective(obj.id, { currentValue: +$event })"
+                     placeholder="0" />
+            </div>
+            <div class="field-group">
+              <span class="field-label">Status</span>
+              <select class="field-input field-sm"
+                      [ngModel]="obj.status"
+                      (ngModelChange)="updateObjective(obj.id, { status: $event })">
+                <option value="on-track">On Track</option>
+                <option value="at-risk">At Risk</option>
+                <option value="behind">Behind</option>
+                <option value="achieved">Achieved</option>
+              </select>
+            </div>
+          </div>
         </div>
       }
 
       <div class="drawer-actions-top">
-        @if (dialogObjectives.length < 4) {
+        @if (dialogObjectives.length < 6) {
           <button class="btn-outline" (click)="addObjective()">
             <app-icon name="plus" [size]="14" />
             Add Objective

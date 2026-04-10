@@ -1,15 +1,52 @@
+import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { CompetitorDeepDiveComponent } from './competitor-deep-dive.component';
+import { StrategyResearchStateService } from '../../strategy-research-state.service';
+import { ToastService } from '../../../../core/toast/toast.service';
 import { AI_SIMULATION_DELAY_MS } from '../../strategy-research.constants';
+import { MOCK_COMPETITOR_INSIGHTS } from '../../strategy-research.mock-data';
+import type { CompetitorInsight } from '../../strategy-research.types';
 
 describe('CompetitorDeepDiveComponent', () => {
   let component: CompetitorDeepDiveComponent;
   let fixture: ReturnType<typeof TestBed.createComponent<CompetitorDeepDiveComponent>>;
   let nativeElement: HTMLElement;
+  let mockCompetitorInsights: ReturnType<typeof signal<CompetitorInsight[]>>;
 
   beforeEach(async () => {
     vi.useFakeTimers();
-    await TestBed.configureTestingModule({ imports: [CompetitorDeepDiveComponent] }).compileComponents();
+    mockCompetitorInsights = signal<CompetitorInsight[]>([...MOCK_COMPETITOR_INSIGHTS]);
+    const mockStateService = {
+      competitorInsights: mockCompetitorInsights,
+      brandVoice: signal({
+        missionStatement: '',
+        voiceAttributes: [],
+        toneByContext: [],
+        platformToneAdjustments: [],
+        vocabulary: { preferred: [], avoid: [] },
+      }),
+      objectives: signal([]),
+      pillars: signal([]),
+      segments: signal([]),
+      channelStrategy: signal([]),
+      contentMix: signal([]),
+      researchSources: signal([]),
+      audienceInsights: signal([]),
+      loading: signal(false),
+      saving: signal(false),
+      workspaceId: signal('test-workspace'),
+      saveCompetitorInsights: vi.fn((data: CompetitorInsight[]) => { mockCompetitorInsights.set(data); }),
+      loadAll: vi.fn(),
+      isDirty: signal(false),
+    };
+    await TestBed.configureTestingModule({
+      imports: [CompetitorDeepDiveComponent],
+      providers: [
+        { provide: StrategyResearchStateService, useValue: mockStateService },
+        { provide: ToastService, useValue: { showSuccess: vi.fn(), showError: vi.fn() } },
+      ],
+    }).compileComponents();
+
     fixture = TestBed.createComponent(CompetitorDeepDiveComponent);
     component = fixture.componentInstance;
     nativeElement = fixture.nativeElement;

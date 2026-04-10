@@ -51,6 +51,7 @@ const VALID_TABS = new Set([
   'business-objectives', 'brand-positioning',
   'team', 'notifications', 'calendar', 'security',
   'wizard-state', 'onboarding-session',
+  'channel-strategy',
 ]);
 
 @Injectable()
@@ -101,6 +102,7 @@ export class WorkspacesService {
         this.fs.uploadJsonFile(tenantId, 'settings', 'skills.json', request.skills ?? { skills: [] }),
         this.fs.uploadJsonFile(tenantId, 'settings', 'business-objectives.json', request.businessObjectives ?? []),
         this.fs.uploadJsonFile(tenantId, 'settings', 'brand-positioning.json', request.brandPositioning ?? {}),
+        this.fs.uploadJsonFile(tenantId, 'settings', 'channel-strategy.json', request.channelStrategy ?? { channels: [] }),
         this.fs.uploadJsonFile(tenantId, 'settings', 'calendar.json', {}),
         this.fs.uploadJsonFile(tenantId, 'settings', 'notifications.json', {}),
         this.fs.uploadJsonFile(tenantId, 'settings', 'security.json', {}),
@@ -109,6 +111,13 @@ export class WorkspacesService {
         ),
         ...request.contentPillars.map((pillar) =>
           this.fs.uploadJsonFile(tenantId, 'content-pillars', `${pillar.id}.json`, pillar)
+        ),
+        this.fs.uploadJsonFile(tenantId, 'content-pillars', '_content-mix.json', request.contentMix ?? { targets: [] }),
+        ...(request.competitorInsights ?? []).map((ci) =>
+          this.fs.uploadJsonFile(tenantId, 'competitor-insights', `${ci.id}.json`, ci)
+        ),
+        ...(request.researchSources ?? []).map((rs) =>
+          this.fs.uploadJsonFile(tenantId, 'research-sources', `${rs.id}.json`, rs)
         ),
       ]);
 
@@ -175,6 +184,7 @@ export class WorkspacesService {
           this.fs.uploadJsonFile(tenantId, 'settings', 'skills.json', fullRequest.skills ?? { skills: [] }),
           this.fs.uploadJsonFile(tenantId, 'settings', 'business-objectives.json', fullRequest.businessObjectives ?? []),
           this.fs.uploadJsonFile(tenantId, 'settings', 'brand-positioning.json', fullRequest.brandPositioning ?? {}),
+          this.fs.uploadJsonFile(tenantId, 'settings', 'channel-strategy.json', fullRequest.channelStrategy ?? { channels: [] }),
           this.fs.uploadJsonFile(tenantId, 'settings', 'calendar.json', {}),
           this.fs.uploadJsonFile(tenantId, 'settings', 'notifications.json', {}),
           this.fs.uploadJsonFile(tenantId, 'settings', 'security.json', {}),
@@ -183,6 +193,13 @@ export class WorkspacesService {
           ),
           ...fullRequest.contentPillars.map((pillar) =>
             this.fs.uploadJsonFile(tenantId, 'content-pillars', `${pillar.id}.json`, pillar)
+          ),
+          this.fs.uploadJsonFile(tenantId, 'content-pillars', '_content-mix.json', fullRequest.contentMix ?? { targets: [] }),
+          ...(fullRequest.competitorInsights ?? []).map((ci) =>
+            this.fs.uploadJsonFile(tenantId, 'competitor-insights', `${ci.id}.json`, ci)
+          ),
+          ...(fullRequest.researchSources ?? []).map((rs) =>
+            this.fs.uploadJsonFile(tenantId, 'research-sources', `${rs.id}.json`, rs)
           ),
         ]);
       } else {
@@ -297,6 +314,7 @@ export class WorkspacesService {
               : Promise.resolve(),
             this.writeSettingsFile(workspaceId, 'business-objectives', request.businessObjectives ?? []),
             this.writeSettingsFile(workspaceId, 'brand-positioning', request.brandPositioning ?? {}),
+            this.writeSettingsFile(workspaceId, 'channel-strategy', request.channelStrategy ?? { channels: [] }),
             this.writeSettingsFile(workspaceId, 'calendar', {}),
             this.writeSettingsFile(workspaceId, 'notifications', {}),
             this.writeSettingsFile(workspaceId, 'security', {}),
@@ -305,6 +323,13 @@ export class WorkspacesService {
             ),
             ...(request.contentPillars ?? []).map((pillar) =>
               this.fs.uploadJsonFile(workspaceId, 'content-pillars', `${pillar.id}.json`, pillar)
+            ),
+            this.fs.uploadJsonFile(workspaceId, 'content-pillars', '_content-mix.json', request.contentMix ?? { targets: [] }),
+            ...(request.competitorInsights ?? []).map((ci) =>
+              this.fs.uploadJsonFile(workspaceId, 'competitor-insights', `${ci.id}.json`, ci)
+            ),
+            ...(request.researchSources ?? []).map((rs) =>
+              this.fs.uploadJsonFile(workspaceId, 'research-sources', `${rs.id}.json`, rs)
             ),
           ]);
         }
@@ -546,6 +571,113 @@ export class WorkspacesService {
     throw new NotFoundException(`Workspace not found: ${workspaceId}`);
   }
 
+  async getNamespaceEntities(workspaceId: string, namespace: string): Promise<unknown[]> {
+    if (this.fs.isConfigured()) {
+      try {
+        const registry = await this.readRegistry();
+        const exists = registry?.workspaces.some((w) => w.tenantId === workspaceId);
+        if (!exists) {
+          throw new NotFoundException(`Workspace not found: ${workspaceId}`);
+        }
+        return this.readNamespaceDocs(workspaceId, namespace);
+      } catch (error) {
+        if (error instanceof NotFoundException) throw error;
+        this.logger.error(`Failed to read ${workspaceId}/${namespace}`, error);
+        throw new ServiceUnavailableException('Storage service unavailable.');
+      }
+    }
+
+    if (this.mockDataService?.isMockWorkspace(workspaceId)) {
+      return this.mockDataService.getNamespaceDocs(workspaceId, namespace);
+    }
+
+    throw new NotFoundException(`Workspace not found: ${workspaceId}`);
+  }
+
+  async saveNamespaceEntities(
+    workspaceId: string,
+    namespace: string,
+    docs: { id: string; [k: string]: unknown }[],
+  ): Promise<unknown[]> {
+    if (!this.fs.isConfigured() && this.mockDataService?.isMockWorkspace(workspaceId)) {
+      return docs;
+    }
+
+    if (this.fs.isConfigured()) {
+      try {
+        const registry = await this.readRegistry();
+        const exists = registry?.workspaces.some((w) => w.tenantId === workspaceId);
+        if (!exists) {
+          throw new NotFoundException(`Workspace not found: ${workspaceId}`);
+        }
+        await this.syncNamespaceDocs(workspaceId, namespace, docs);
+        return docs;
+      } catch (error) {
+        if (error instanceof NotFoundException) throw error;
+        this.logger.error(`Failed to write ${workspaceId}/${namespace}`, error);
+        throw new ServiceUnavailableException('Storage service unavailable.');
+      }
+    }
+
+    throw new NotFoundException(`Workspace not found: ${workspaceId}`);
+  }
+
+  async getNamespaceAggregateEndpoint(
+    workspaceId: string,
+    namespace: string,
+    filename: string,
+  ): Promise<unknown> {
+    if (this.fs.isConfigured()) {
+      try {
+        const registry = await this.readRegistry();
+        const exists = registry?.workspaces.some((w) => w.tenantId === workspaceId);
+        if (!exists) {
+          throw new NotFoundException(`Workspace not found: ${workspaceId}`);
+        }
+        return (await this.readNamespaceAggregate(workspaceId, namespace, filename)) ?? {};
+      } catch (error) {
+        if (error instanceof NotFoundException) throw error;
+        this.logger.error(`Failed to read ${workspaceId}/${namespace}/${filename}`, error);
+        throw new ServiceUnavailableException('Storage service unavailable.');
+      }
+    }
+
+    if (this.mockDataService?.isMockWorkspace(workspaceId)) {
+      return (await this.mockDataService.getNamespaceAggregate(workspaceId, namespace, filename)) ?? {};
+    }
+
+    throw new NotFoundException(`Workspace not found: ${workspaceId}`);
+  }
+
+  async saveNamespaceAggregateEndpoint(
+    workspaceId: string,
+    namespace: string,
+    filename: string,
+    data: unknown,
+  ): Promise<unknown> {
+    if (!this.fs.isConfigured() && this.mockDataService?.isMockWorkspace(workspaceId)) {
+      return data;
+    }
+
+    if (this.fs.isConfigured()) {
+      try {
+        const registry = await this.readRegistry();
+        const exists = registry?.workspaces.some((w) => w.tenantId === workspaceId);
+        if (!exists) {
+          throw new NotFoundException(`Workspace not found: ${workspaceId}`);
+        }
+        await this.writeNamespaceAggregate(workspaceId, namespace, filename, data);
+        return data;
+      } catch (error) {
+        if (error instanceof NotFoundException) throw error;
+        this.logger.error(`Failed to write ${workspaceId}/${namespace}/${filename}`, error);
+        throw new ServiceUnavailableException('Storage service unavailable.');
+      }
+    }
+
+    throw new NotFoundException(`Workspace not found: ${workspaceId}`);
+  }
+
   private async getTeamFromUsers(workspaceId: string): Promise<TeamSettingsContract> {
     const users = await this.userService.listByWorkspace(workspaceId);
     const members: TeamMemberContract[] = users.map((u) => {
@@ -613,7 +745,7 @@ export class WorkspacesService {
     }
   }
 
-  private async readNamespaceDocs(
+  async readNamespaceDocs(
     tenantId: string,
     namespace: string
   ): Promise<unknown[]> {
@@ -624,8 +756,10 @@ export class WorkspacesService {
       return [];
     }
 
+    // Only read entity files (skip _-prefixed aggregate files)
     const fileIds = entries
-      .filter((e): e is typeof e & { file_id: string } => e.type === 'file' && !!e.file_id)
+      .filter((e): e is typeof e & { file_id: string } =>
+        e.type === 'file' && !!e.file_id && !e.name.startsWith('_'))
       .map((e) => e.file_id);
 
     if (fileIds.length === 0) return [];
@@ -636,7 +770,7 @@ export class WorkspacesService {
       .map((f) => f.content as unknown);
   }
 
-  private async syncNamespaceDocs(
+  async syncNamespaceDocs(
     tenantId: string,
     namespace: string,
     docs: { id: string; [k: string]: unknown }[]
@@ -656,9 +790,9 @@ export class WorkspacesService {
 
     const newDocNames = new Set(docs.map((d) => `${d.id}.json`));
 
-    // Delete docs that are no longer present
+    // Delete docs that are no longer present (skip _-prefixed aggregate files)
     const deletions = [...existingFiles.entries()]
-      .filter(([name]) => !newDocNames.has(name))
+      .filter(([name]) => !newDocNames.has(name) && !name.startsWith('_'))
       .map(([, fileId]) => this.fs.deleteFile(tenantId, fileId));
 
     // Upsert each doc
@@ -672,6 +806,56 @@ export class WorkspacesService {
     });
 
     await Promise.all([...deletions, ...upserts]);
+  }
+
+  async readNamespaceAggregate(
+    tenantId: string,
+    namespace: string,
+    filename: string,
+  ): Promise<unknown | null> {
+    let entries: { name: string; type: string; file_id?: string }[] = [];
+    try {
+      entries = await this.fs.listDirectory(tenantId, namespace);
+    } catch {
+      return null;
+    }
+
+    const file = entries.find(
+      (e) => e.type === 'file' && e.name === filename
+    );
+    if (!file || !file.file_id) {
+      return null;
+    }
+
+    const files = await this.fs.batchRetrieve(tenantId, [file.file_id]);
+    if (files.length === 0 || files[0].content_type === 'error') {
+      return null;
+    }
+    return files[0].content;
+  }
+
+  async writeNamespaceAggregate(
+    tenantId: string,
+    namespace: string,
+    filename: string,
+    data: unknown,
+  ): Promise<void> {
+    let entries: { name: string; type: string; file_id?: string }[] = [];
+    try {
+      entries = await this.fs.listDirectory(tenantId, namespace);
+    } catch {
+      // Namespace doesn't exist yet, will create via upload
+    }
+
+    const file = entries.find(
+      (e) => e.type === 'file' && e.name === filename
+    );
+
+    if (file && file.file_id) {
+      await this.fs.replaceJsonFile(tenantId, file.file_id, filename, data);
+    } else {
+      await this.fs.uploadJsonFile(tenantId, namespace, filename, data);
+    }
   }
 
   private async resolveUniqueTenantId(name: string): Promise<string> {

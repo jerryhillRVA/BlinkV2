@@ -1,5 +1,5 @@
 {
-  "brandVoiceDescription": "Warm, encouraging, and evidence-based. We speak directly to our audience using 'you' — like a knowledgeable friend who also happens to be a certified trainer. We celebrate strength at every age without being condescending. We cite sources when making health claims and never promise miracle results.",
+  "brandVoiceDescription": "We create content to help women 40+ build strength, flexibility, and confidence by combining evidence-based fitness with mindful wellness practices.",
   "toneGuidelines": [
     "Use direct address ('you', 'your')",
     "Keep sentences short and punchy for social",
@@ -33,5 +33,52 @@
       "audienceSegmentIds": ["Social Media Managers"],
       "targetPlatforms": ["youtube", "instagram"]
     }
-  ]
+  ],
+  "voiceAttributes": [
+    {
+      "id": "va-1",
+      "label": "Empowering",
+      "description": "We lift women up, never talk down to them.",
+      "doExample": "You have everything it takes — let's unlock it together.",
+      "dontExample": "You need to fix your relationship with your body."
+    },
+    {
+      "id": "va-2",
+      "label": "Knowledgeable but Accessible",
+      "description": "Expert-backed but never jargon-heavy.",
+      "doExample": "Estrogen affects your muscle recovery — here's what that means for your workouts.",
+      "dontExample": "HRT-mediated myofibrillar protein synthesis rates indicate..."
+    },
+    {
+      "id": "va-3",
+      "label": "Warm & Inclusive",
+      "description": "Every woman in her 40s belongs here.",
+      "doExample": "Whether you're a lifelong athlete or just rediscovering movement — this is your space.",
+      "dontExample": "For women who are already committed to fitness."
+    },
+    {
+      "id": "va-4",
+      "label": "Honest & Real",
+      "description": "No toxic positivity, no impossible standards.",
+      "doExample": "Some days perimenopause wins. That's real. Here's how to adapt.",
+      "dontExample": "Every day is an opportunity to crush it!"
+    }
+  ],
+  "toneByContext": [
+    { "id": "tc-1", "context": "Educational", "tone": "Clear, authoritative, relatable", "example": "Here's what's actually happening in your body during perimenopause — and what you can do about it today." },
+    { "id": "tc-2", "context": "Motivational", "tone": "Energetic, affirming, forward-looking", "example": "Your strongest decade might just be the one you're stepping into right now." },
+    { "id": "tc-3", "context": "Community", "tone": "Warm, conversational, curious", "example": "What's been your biggest shift in how you train since turning 40?" },
+    { "id": "tc-4", "context": "Promotional", "tone": "Honest and benefit-led — never pushy", "example": "We built this program for the woman who knows what she wants but needs the right tools." }
+  ],
+  "platformToneAdjustments": [
+    { "platform": "instagram", "adjustment": "" },
+    { "platform": "tiktok", "adjustment": "" },
+    { "platform": "youtube", "adjustment": "" },
+    { "platform": "facebook", "adjustment": "" },
+    { "platform": "linkedin", "adjustment": "" }
+  ],
+  "vocabulary": {
+    "preferred": [],
+    "avoid": []
+  }
 }

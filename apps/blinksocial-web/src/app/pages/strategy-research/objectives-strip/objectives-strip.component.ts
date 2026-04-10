@@ -1,6 +1,7 @@
 import { Component, DestroyRef, inject, input, output, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { IconComponent } from '../shared/icon/icon.component';
+import { ToastService } from '../../../core/toast/toast.service';
 import type { BusinessObjective, ObjectiveCategory } from '../strategy-research.types';
 import { OBJECTIVE_CATEGORY_CONFIG, AI_SIMULATION_DELAY_MS } from '../strategy-research.constants';
 import { safeTimeout, generateId } from '../strategy-research.utils';
@@ -16,6 +17,7 @@ export class ObjectivesStripComponent {
   readonly objectivesChange = output<BusinessObjective[]>();
 
   private readonly destroyRef = inject(DestroyRef);
+  private readonly toast = inject(ToastService);
 
   readonly showDrawer = signal(false);
   readonly isSuggesting = signal(false);
@@ -60,10 +62,11 @@ export class ObjectivesStripComponent {
     const valid = this.dialogObjectives.filter(o => o.statement.trim());
     this.objectivesChange.emit(valid);
     this.showDrawer.set(false);
+    this.toast.showSuccess('Objectives saved');
   }
 
   addObjective(): void {
-    if (this.dialogObjectives.length < 4) {
+    if (this.dialogObjectives.length < 6) {
       this.dialogObjectives = [...this.dialogObjectives, this.createBlankObjective()];
     }
   }
@@ -87,7 +90,7 @@ export class ObjectivesStripComponent {
         { id: generateId('obj'), category: 'growth', statement: 'Grow combined social following to 25,000', target: 25000, unit: 'followers', timeframe: 'Q4 2026', status: 'on-track' },
         { id: generateId('obj'), category: 'engagement', statement: 'Achieve 5% average engagement rate across platforms', target: 5, unit: '%', timeframe: 'Q3 2026', status: 'on-track' },
       ];
-      this.dialogObjectives = [...this.dialogObjectives, ...suggested].slice(0, 4);
+      this.dialogObjectives = [...this.dialogObjectives, ...suggested].slice(0, 6);
       this.isSuggesting.set(false);
     }, AI_SIMULATION_DELAY_MS, this.destroyRef);
   }

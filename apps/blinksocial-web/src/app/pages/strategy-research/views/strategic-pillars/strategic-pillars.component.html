@@ -107,6 +107,102 @@
             </div>
           </div>
 
+          <div class="field">
+            <span class="field-label">
+              <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10" />
+                <circle cx="12" cy="12" r="6" />
+                <circle cx="12" cy="12" r="2" />
+              </svg>
+              Linked Objectives
+            </span>
+            @if (linkedObjectives().length > 0) {
+              <div class="objective-chips">
+                @for (obj of linkedObjectives(); track obj.id) {
+                  <button
+                    type="button"
+                    class="objective-chip"
+                    [class.selected]="isObjectiveLinked(obj.id)"
+                    [title]="obj.statement"
+                    (click)="toggleLinkedObjective(obj.id)"
+                  >
+                    {{ obj.statement }}
+                  </button>
+                }
+              </div>
+            } @else {
+              <p class="objective-empty">No business objectives yet. Add objectives at the top of the page to link them here.</p>
+            }
+          </div>
+
+          <div class="field field--goals">
+            <div class="field-label-row">
+              <span class="field-label">
+                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <circle cx="12" cy="12" r="10" />
+                  <circle cx="12" cy="12" r="6" />
+                  <circle cx="12" cy="12" r="2" />
+                </svg>
+                Goals
+              </span>
+              <button type="button" class="btn-ai-suggest" [disabled]="isSuggestingGoals()" (click)="suggestGoals()">
+                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z" />
+                  <path d="M20 3v4" />
+                  <path d="M22 5h-4" />
+                  <path d="M4 17v2" />
+                  <path d="M5 18H3" />
+                </svg>
+                AI Suggest Goals
+              </button>
+            </div>
+            @for (goal of newGoals(); track goal.id) {
+              @if (isGoalSaved(goal.id)) {
+                <div class="goal-saved">
+                  <span class="goal-saved-metric">{{ goal.metric }}</span>
+                  <span class="goal-saved-target">{{ goal.target }}{{ goal.unit }} / {{ goal.period }}</span>
+                  <button type="button" class="btn-icon-remove" (click)="removeGoal(goal.id)" aria-label="Remove goal">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M18 6 6 18" />
+                      <path d="m6 6 12 12" />
+                    </svg>
+                  </button>
+                </div>
+              } @else {
+                <div class="goal-card">
+                  <input type="text" class="field-input field-xs" [(ngModel)]="goal.metric" placeholder="Metric name (e.g. Engagement Rate)" />
+                  <div class="goal-grid-2">
+                    <input type="number" class="field-input field-xs" [(ngModel)]="goal.target" placeholder="Target" />
+                    <input type="text" class="field-input field-xs" [(ngModel)]="goal.unit" placeholder="Unit (%, followers…)" />
+                  </div>
+                  <div class="goal-grid-2">
+                    <app-dropdown
+                      [options]="periodOptions"
+                      [value]="goal.period"
+                      size="compact"
+                      [fullWidth]="true"
+                      (valueChange)="updateGoalPeriod(goal.id, $any($event))"
+                    />
+
+                    <input type="number" class="field-input field-xs" [(ngModel)]="goal.current" placeholder="Current (optional)" />
+                  </div>
+                  <div class="goal-card-actions">
+                    <button type="button" class="btn-goal-save" (click)="saveGoal(goal.id)">Save</button>
+                    <button type="button" class="btn-goal-cancel" (click)="removeGoal(goal.id)">Cancel</button>
+                  </div>
+                </div>
+              }
+            }
+            @if (!hasDraftGoal()) {
+            <button type="button" class="btn-add-goal" (click)="addGoal()">
+              <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M5 12h14" />
+                <path d="M12 5v14" />
+              </svg>
+              Add Goal
+            </button>
+            }
+          </div>
         </div>
 
         <div class="modal-footer">
@@ -323,6 +419,9 @@
               <div class="card-title-row">
                 <span class="pillar-color-dot" [style.background]="pillar.color"></span>
                 <h3 class="has-mock-data" title="Mock data">{{ pillar.name }}</h3>
+                @if (pillar.objectiveIds && pillar.objectiveIds.length > 0) {
+                  <span class="objective-badge" [title]="pillar.objectiveIds.length + ' linked objective(s)'">{{ pillar.objectiveIds.length }} obj</span>
+                }
               </div>
               <p class="card-description">{{ pillar.description }}</p>
             </div>
@@ -411,41 +510,20 @@
     </header>
 
     <div class="distribution-controls">
-      <div class="posts-control">
-        <span class="posts-label">Total Posts Per Week</span>
-        <div class="posts-row">
-          <input
-            type="number"
-            class="posts-input"
-            [ngModel]="postsPerWeek()"
-            (ngModelChange)="postsPerWeek.set($event)"
-            min="1"
-            max="50"
-            placeholder="e.g. 10"
-          />
-          <button
-            class="btn-analyze"
-            (click)="analyzeDistribution()"
-            [disabled]="isAnalyzing() || !postsPerWeek() || (postsPerWeek() ?? 0) < 1"
-          >
-            @if (isAnalyzing()) {
-              <span class="spinner"></span>
-              Analyzing...
-            } @else {
-              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M3 3v16a2 2 0 0 0 2 2h16"/>
-                <path d="M18 17V9"/>
-                <path d="M13 17V5"/>
-                <path d="M8 17v-3"/>
-              </svg>
-              Analyze Distribution
-            }
-          </button>
-        </div>
+      <div class="form-group inline">
+        <span>Posts per week</span>
+        <input
+          type="number"
+          [ngModel]="postsPerWeek()"
+          (ngModelChange)="postsPerWeek.set($event)"
+          min="1"
+          max="50"
+          placeholder="e.g. 10"
+        />
       </div>
 
-      <div class="form-group optimize-for">
-        <span>Optimize For</span>
+      <div class="form-group audience-focus">
+        <span>Audience Focus</span>
         <div class="chip-toggles">
           @for (segment of audienceSegments(); track segment.id) {
             <button
@@ -458,8 +536,20 @@
             </button>
           }
         </div>
-        <p class="distribution-hint">Distribution is optimized for selected segments. Deselecting all defaults to an equal-weight split.</p>
       </div>
+
+      <button
+        class="btn-analyze"
+        (click)="analyzeDistribution()"
+        [disabled]="isAnalyzing() || !postsPerWeek() || (postsPerWeek() ?? 0) < 1"
+      >
+        @if (isAnalyzing()) {
+          <span class="spinner"></span>
+          Analyzing...
+        } @else {
+          Analyze Distribution
+        }
+      </button>
     </div>
 
     <!-- Empty state -->
@@ -471,7 +561,7 @@
           <path d="M13 17V5"/>
           <path d="M8 17v-3"/>
         </svg>
-        <p>Enter your total weekly posts and select which audience segments to optimize for — pillar distribution will shift based on your selection.</p>
+        <p>Enter your weekly posting volume to get a recommended distribution across your content pillars</p>
       </div>
     }
 
@@ -489,29 +579,28 @@
         <div class="alloc-table">
           <div class="alloc-row alloc-header">
             <span class="col-pillar">Pillar</span>
-            <span class="col-bar">Distribution</span>
-            <span class="col-posts">Posts / Week</span>
+            <span class="col-bar">Recommended Distribution</span>
+            <span class="col-posts">Posts/Week</span>
+            <span class="col-rationale">Rationale</span>
           </div>
           @for (alloc of plan.pillarAllocations; track alloc.pillarId) {
             @if (getPillarById(alloc.pillarId); as pillar) {
-              <div class="alloc-group">
-                <div class="alloc-row">
-                  <div class="col-pillar">
-                    <span class="pillar-dot" [style.background]="pillar.color"></span>
-                    <span class="pillar-name has-mock-data" title="Mock data">{{ pillar.name }}</span>
-                  </div>
-                  <div class="col-bar">
-                    <div class="alloc-bar">
-                      <div
-                        class="alloc-bar-fill"
-                        [style.width.%]="alloc.percentage"
-                        [style.background]="pillar.color"
-                      ></div>
-                    </div>
-                  </div>
-                  <div class="col-posts">{{ alloc.postsPerWeek }} posts/wk</div>
+              <div class="alloc-row">
+                <div class="col-pillar">
+                  <span class="pillar-dot" [style.background]="pillar.color"></span>
+                  <span class="pillar-name has-mock-data" title="Mock data">{{ pillar.name }}</span>
                 </div>
-                <p class="alloc-rationale">{{ alloc.rationale }}</p>
+                <div class="col-bar">
+                  <div class="alloc-bar">
+                    <div
+                      class="alloc-bar-fill"
+                      [style.width.%]="alloc.percentage"
+                      [style.background]="pillar.color"
+                    ></div>
+                  </div>
+                </div>
+                <div class="col-posts">{{ alloc.postsPerWeek }} posts/wk</div>
+                <div class="col-rationale">{{ alloc.rationale }}</div>
               </div>
             }
           }

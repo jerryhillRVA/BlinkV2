@@ -4,7 +4,7 @@
   </div>
   <!-- Business Objectives Strip -->
   <app-objectives-strip
-    [objectives]="objectives()"
+    [objectives]="stateService.objectives()"
     (objectivesChange)="onUpdateObjectives($event)"
   />
 
@@ -38,7 +38,7 @@
     <main class="strategy-content">
       @switch (activeView()) {
         @case ('brand-voice') { <app-brand-voice /> }
-        @case ('pillars') { <app-strategic-pillars [linkedObjectives]="objectives()" /> }
+        @case ('pillars') { <app-strategic-pillars [linkedObjectives]="stateService.objectives()" /> }
         @case ('audience') { <app-audience /> }
         @case ('channel') { <app-channel-strategy /> }
         @case ('content-mix') { <app-content-mix /> }

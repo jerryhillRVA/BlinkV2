@@ -1,13 +1,42 @@
+import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { BrandVoiceComponent } from './brand-voice.component';
+import { StrategyResearchStateService } from '../../strategy-research-state.service';
 
 describe('BrandVoiceComponent', () => {
   let fixture: ReturnType<typeof TestBed.createComponent<BrandVoiceComponent>>;
   let nativeElement: HTMLElement;
 
   beforeEach(async () => {
+    const mockBrandVoice = signal({
+      missionStatement: '',
+      voiceAttributes: [],
+      toneByContext: [],
+      platformToneAdjustments: [],
+      vocabulary: { preferred: [], avoid: [] },
+    });
+    const mockStateService = {
+      brandVoice: mockBrandVoice,
+      objectives: signal([]),
+      pillars: signal([]),
+      segments: signal([]),
+      channelStrategy: signal([]),
+      contentMix: signal([]),
+      researchSources: signal([]),
+      competitorInsights: signal([]),
+      audienceInsights: signal([]),
+      loading: signal(false),
+      saving: signal(false),
+      workspaceId: signal('test-workspace'),
+      saveBrandVoice: vi.fn(),
+      loadAll: vi.fn(),
+      isDirty: signal(false),
+    };
     await TestBed.configureTestingModule({
       imports: [BrandVoiceComponent],
+      providers: [
+        { provide: StrategyResearchStateService, useValue: mockStateService },
+      ],
     }).compileComponents();
 
     fixture = TestBed.createComponent(BrandVoiceComponent);

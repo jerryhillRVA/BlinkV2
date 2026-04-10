@@ -4,9 +4,9 @@ import { FormsModule } from '@angular/forms';
 import { IconComponent } from '../../shared/icon/icon.component';
 import { DropdownComponent, DropdownOption } from '../../../../shared/dropdown/dropdown.component';
 import { MockDataService } from '../../../../core/mock-data/mock-data.service';
-import type { ContentPillar, PillarGoal, AudienceSegment, BusinessObjective } from '../../strategy-research.types';
+import { StrategyResearchStateService } from '../../strategy-research-state.service';
+import type { ContentPillar, PillarGoal, BusinessObjective } from '../../strategy-research.types';
 import { PRESET_COLORS, AI_SIMULATION_DELAY_MS } from '../../strategy-research.constants';
-import { DEFAULT_PILLARS, DEFAULT_SEGMENTS } from '../../strategy-research.mock-data';
 import { safeTimeout, generateId, toggleSetItem } from '../../strategy-research.utils';
 
 interface PillarAllocation {
@@ -44,6 +44,7 @@ const BLANK_QUICK_GOAL: QuickGoalForm = {
   current: undefined,
 };
 
+// Default weights — used to scale postsPerWeek across pillars.
 const DEFAULT_PILLAR_WEIGHTS: { weight: number; rationale: string }[] = [
   { weight: 30, rationale: 'Top engagement driver for your segments' },
   { weight: 25, rationale: 'Highest save rate content type' },
@@ -61,6 +62,7 @@ const DEFAULT_PILLAR_WEIGHTS: { weight: number; rationale: string }[] = [
 export class StrategicPillarsComponent {
   private readonly destroyRef = inject(DestroyRef);
   private readonly mockData = inject(MockDataService);
+  private readonly stateService = inject(StrategyResearchStateService);
   private readonly doc = inject(DOCUMENT);
   private readonly vcr = inject(ViewContainerRef);
 
@@ -78,20 +80,17 @@ export class StrategicPillarsComponent {
       if (open && this.modalTpl && !this.modalView) {
         this.modalView = this.vcr.createEmbeddedView(this.modalTpl);
         this.modalView.detectChanges();
-        /* v8 ignore start */
+        /* v8 ignore next 3 */
         for (const node of this.modalView.rootNodes as Node[]) {
           if (node.nodeType === 1) body.appendChild(node);
         }
-        /* v8 ignore stop */
         body.style.overflow = 'hidden';
       } else if (!open && this.modalView) {
         this.modalView.destroy();
         this.modalView = null;
-        /* v8 ignore next */
-        if (!this.goalsDialogPillarId() && !this.objectivesDialogPillarId()) body.style.overflow = '';
+        body.style.overflow = '';
       }
     });
-
     effect(() => {
       const pillarId = this.goalsDialogPillarId();
       const body = this.doc.body;
@@ -131,6 +130,13 @@ export class StrategicPillarsComponent {
       /* v8 ignore stop */
     });
 
+    // Auto-select all segments when they load from state service
+    effect(() => {
+      const segs = this.audienceSegments();
+      if (segs.length > 0 && this.selectedSegmentIds().size === 0) {
+        this.selectedSegmentIds.set(new Set(segs.map(s => s.id)));
+      }
+    });
     /* v8 ignore start */
     this.destroyRef.onDestroy(() => {
       if (this.modalView) { this.modalView.destroy(); this.modalView = null; }
@@ -149,8 +155,9 @@ export class StrategicPillarsComponent {
   /* v8 ignore start */
   readonly linkedObjectives = input<BusinessObjective[]>([]);
 
-  readonly pillars = signal<ContentPillar[]>([...DEFAULT_PILLARS]);
+  readonly pillars = this.stateService.pillars;
   readonly showAddForm = signal(false);
+  readonly isSuggestingGoals = signal(false);
   readonly editingId = signal<string | null>(null);
   readonly isAnalyzing = signal(false);
   readonly postsPerWeek = signal<number | null>(null);
@@ -165,11 +172,11 @@ export class StrategicPillarsComponent {
   ];
 
   /* v8 ignore start */
-  readonly audienceSegments = signal<AudienceSegment[]>([...DEFAULT_SEGMENTS]);
-  readonly selectedSegmentIds = signal<Set<string>>(
-    new Set(DEFAULT_SEGMENTS.map((s) => s.id)),
-  );
+  // Audience Focus selection (chip toggles)
+  readonly audienceSegments = this.stateService.segments;
+  readonly selectedSegmentIds = signal<Set<string>>(new Set());
 
+  // Investment plan output (populated by analyzeDistribution)
   readonly investmentPlan = signal<InvestmentPlan | null>(null);
   /* v8 ignore stop */
 
@@ -185,12 +192,14 @@ export class StrategicPillarsComponent {
     return this.pillars().find((p) => p.id === id);
   }
 
-  // Add/Edit pillar form state
+  // Add form state
   newPillarName = '';
   newPillarDescription = '';
   newPillarColor = PRESET_COLORS[0];
-
   /* v8 ignore start */
+  newLinkedObjectiveIds = signal<Set<string>>(new Set());
+  newGoals = signal<PillarGoal[]>([]);
+  savedGoalIds = signal<Set<string>>(new Set());
   modalEditingId = signal<string | null>(null);
 
   // Manage Goals dialog state
@@ -202,14 +211,49 @@ export class StrategicPillarsComponent {
   readonly quickObjectiveIds = signal<Set<string>>(new Set());
   /* v8 ignore stop */
 
-  // ── Pillar modal (Name / Description / Color only) ────────────────
+  isGoalSaved(id: string): boolean {
+    return this.savedGoalIds().has(id);
+  }
+
+  hasDraftGoal(): boolean {
+    const saved = this.savedGoalIds();
+    return this.newGoals().some((g) => !saved.has(g.id));
+  }
+
+  saveGoal(id: string): void {
+    this.savedGoalIds.update((set) => {
+      const next = new Set(set);
+      next.add(id);
+      return next;
+    });
+  }
+
+  updateGoalPeriod(id: string, period: PillarGoal['period']): void {
+    this.newGoals.update((list) =>
+      list.map((g) => (g.id === id ? { ...g, period } : g)),
+    );
+  }
+
+  // Edit form state
+  editName = '';
+  editDescription = '';
+  editColor = '';
+
   openAddForm(): void {
     this.modalEditingId.set(null);
     this.newPillarName = '';
     this.newPillarDescription = '';
     this.newPillarColor = PRESET_COLORS[0];
+    this.newLinkedObjectiveIds.set(new Set());
+    this.newGoals.set([]);
+    this.savedGoalIds.set(new Set());
     this.showAddForm.set(true);
     this.editingId.set(null);
+  }
+
+  openEditModalAddGoal(pillar: ContentPillar): void {
+    this.openEditModal(pillar);
+    this.addGoal();
   }
 
   openEditModal(pillar: ContentPillar): void {
@@ -217,6 +261,10 @@ export class StrategicPillarsComponent {
     this.newPillarName = pillar.name;
     this.newPillarDescription = pillar.description;
     this.newPillarColor = pillar.color;
+    this.newLinkedObjectiveIds.set(new Set(pillar.objectiveIds ?? []));
+    const goals = (pillar.goals ?? []).map((g) => ({ ...g }));
+    this.newGoals.set(goals);
+    this.savedGoalIds.set(new Set(goals.map((g) => g.id)));
     this.showAddForm.set(true);
     this.editingId.set(null);
   }
@@ -225,9 +273,51 @@ export class StrategicPillarsComponent {
     this.showAddForm.set(false);
   }
 
+  isObjectiveLinked(id: string): boolean {
+    return this.newLinkedObjectiveIds().has(id);
+  }
+
+  toggleLinkedObjective(id: string): void {
+    this.newLinkedObjectiveIds.update((set) => toggleSetItem(set, id));
+  }
+
+  addGoal(): void {
+    this.newGoals.update((list) => [
+      ...list,
+      { id: generateId('g'), metric: '', target: null as unknown as number, unit: '%', period: 'monthly', current: undefined },
+    ]);
+  }
+
+  removeGoal(id: string): void {
+    this.newGoals.update((list) => list.filter((g) => g.id !== id));
+  }
+
+  suggestGoals(): void {
+    this.isSuggestingGoals.set(true);
+    safeTimeout(
+      () => {
+        const suggested: PillarGoal[] = [
+          { id: generateId('g'), metric: 'Engagement rate', target: 5, unit: '%', period: 'monthly', current: 0 },
+          { id: generateId('g'), metric: 'Saves per post', target: 100, unit: 'saves', period: 'monthly', current: 0 },
+        ];
+        this.newGoals.update((list) => [...list, ...suggested]);
+        this.savedGoalIds.update((set) => {
+          const next = new Set(set);
+          suggested.forEach((g) => next.add(g.id));
+          return next;
+        });
+        this.isSuggestingGoals.set(false);
+      },
+      AI_SIMULATION_DELAY_MS,
+      this.destroyRef,
+    );
+  }
+
   addPillar(): void {
     if (!this.newPillarName.trim()) return;
     const editingId = this.modalEditingId();
+    const goals = this.newGoals().filter((g) => g.metric.trim());
+    const objectiveIds = Array.from(this.newLinkedObjectiveIds());
     if (editingId) {
       this.pillars.update((list) =>
         list.map((p) =>
@@ -237,6 +327,8 @@ export class StrategicPillarsComponent {
                 name: this.newPillarName.trim(),
                 description: this.newPillarDescription.trim(),
                 color: this.newPillarColor,
+                goals,
+                objectiveIds,
               }
             : p,
         ),
@@ -247,13 +339,48 @@ export class StrategicPillarsComponent {
         name: this.newPillarName.trim(),
         description: this.newPillarDescription.trim(),
         color: this.newPillarColor,
-        goals: [],
-        objectiveIds: [],
+        goals,
+        objectiveIds,
       };
       this.pillars.update((list) => [...list, pillar]);
     }
+    this.stateService.savePillars(this.pillars());
     this.showAddForm.set(false);
     this.modalEditingId.set(null);
+  }
+
+  startEdit(pillar: ContentPillar): void {
+    this.editingId.set(pillar.id);
+    this.editName = pillar.name;
+    this.editDescription = pillar.description;
+    this.editColor = pillar.color;
+    this.showAddForm.set(false);
+  }
+
+  cancelEdit(): void {
+    this.editingId.set(null);
+  }
+
+  saveEdit(id: string): void {
+    this.pillars.update(list =>
+      list.map(p =>
+        p.id === id
+          ? { ...p, name: this.editName.trim(), description: this.editDescription.trim(), color: this.editColor }
+          : p
+      )
+    );
+    this.stateService.savePillars(this.pillars());
+    this.editingId.set(null);
+  }
+
+  deletePillar(id: string): void {
+    this.pillars.update(list => list.filter(p => p.id !== id));
+    this.stateService.savePillars(this.pillars());
+  }
+
+  getGoalProgress(goal: PillarGoal): number {
+    if (!goal.current || goal.target <= 0) return 0;
+    return Math.min(100, Math.round((goal.current / goal.target) * 100));
   }
 
   // ── Manage Goals dialog ──────────────────────────────────────────
@@ -296,6 +423,7 @@ export class StrategicPillarsComponent {
         p.id === pillarId ? { ...p, goals: [...(p.goals ?? []), goal] } : p,
       ),
     );
+    this.stateService.savePillars(this.pillars());
     this.quickGoalForm = { ...BLANK_QUICK_GOAL };
   }
 
@@ -308,6 +436,7 @@ export class StrategicPillarsComponent {
           : p,
       ),
     );
+    this.stateService.savePillars(this.pillars());
   }
 
   // ── Link Objectives dialog ───────────────────────────────────────
@@ -335,49 +464,13 @@ export class StrategicPillarsComponent {
     this.pillars.update((list) =>
       list.map((p) => (p.id === pillarId ? { ...p, objectiveIds: ids } : p)),
     );
+    this.stateService.savePillars(this.pillars());
     this.closeObjectivesDialog();
   }
 
   linkedObjectivesFor(pillar: ContentPillar): BusinessObjective[] {
     const ids = new Set(pillar.objectiveIds ?? []);
     return this.linkedObjectives().filter((o) => ids.has(o.id));
-  }
-
-  // ── Inline edit (legacy) ─────────────────────────────────────────
-  editName = '';
-  editDescription = '';
-  editColor = '';
-
-  startEdit(pillar: ContentPillar): void {
-    this.editingId.set(pillar.id);
-    this.editName = pillar.name;
-    this.editDescription = pillar.description;
-    this.editColor = pillar.color;
-    this.showAddForm.set(false);
-  }
-
-  cancelEdit(): void {
-    this.editingId.set(null);
-  }
-
-  saveEdit(id: string): void {
-    this.pillars.update((list) =>
-      list.map((p) =>
-        p.id === id
-          ? { ...p, name: this.editName.trim(), description: this.editDescription.trim(), color: this.editColor }
-          : p,
-      ),
-    );
-    this.editingId.set(null);
-  }
-
-  deletePillar(id: string): void {
-    this.pillars.update((list) => list.filter((p) => p.id !== id));
-  }
-
-  getGoalProgress(goal: PillarGoal): number {
-    if (!goal.current || goal.target <= 0) return 0;
-    return Math.min(100, Math.round((goal.current / goal.target) * 100));
   }
 
   analyzeDistribution(): void {
@@ -387,11 +480,9 @@ export class StrategicPillarsComponent {
     safeTimeout(
       () => {
         const pillarList = this.pillars();
-        const equalSplit = this.selectedSegmentIds().size === 0;
-        const weights = pillarList.map((_, i) =>
-          equalSplit
-            ? 1
-            : DEFAULT_PILLAR_WEIGHTS[i % DEFAULT_PILLAR_WEIGHTS.length].weight,
+        // Distribute by descending weights, scale to requested total.
+        const weights = pillarList.map(
+          (_, i) => DEFAULT_PILLAR_WEIGHTS[i % DEFAULT_PILLAR_WEIGHTS.length].weight,
         );
         /* v8 ignore next */
         const weightSum = weights.reduce((a, b) => a + b, 0) || 1;
@@ -406,12 +497,24 @@ export class StrategicPillarsComponent {
               DEFAULT_PILLAR_WEIGHTS[i % DEFAULT_PILLAR_WEIGHTS.length].rationale,
           };
         });
-        const platformSplit: PlatformAllocation[] = [
-          { platform: 'instagram', postsPerWeek: Math.max(1, Math.round(total * 0.45)), rationale: 'Highest reach for wellness content; visual-first audience' },
-          { platform: 'tiktok',    postsPerWeek: Math.max(1, Math.round(total * 0.30)), rationale: 'Top discovery channel for new followers' },
-          { platform: 'youtube',   postsPerWeek: Math.max(1, Math.round(total * 0.15)), rationale: 'Long-form trust builder; SEO compounding' },
-          { platform: 'pinterest', postsPerWeek: Math.max(1, Math.round(total * 0.10)), rationale: 'Evergreen traffic for tutorials and saves' },
-        ];
+        // Platform split — derived from active workspace channels
+        const activeChannels = this.stateService.channelStrategy().filter(c => c.active);
+        let platformSplit: PlatformAllocation[];
+        if (activeChannels.length > 0) {
+          const share = 1 / activeChannels.length;
+          platformSplit = activeChannels.map(c => ({
+            platform: c.platform,
+            postsPerWeek: Math.max(1, Math.round(share * total)),
+            rationale: c.role || `Strategy for ${c.platform}`,
+          }));
+        } else {
+          platformSplit = [
+            { platform: 'instagram', postsPerWeek: Math.max(1, Math.round(total * 0.45)), rationale: 'Highest reach; visual-first audience' },
+            { platform: 'tiktok',    postsPerWeek: Math.max(1, Math.round(total * 0.30)), rationale: 'Top discovery channel for new followers' },
+            { platform: 'youtube',   postsPerWeek: Math.max(1, Math.round(total * 0.15)), rationale: 'Long-form trust builder; SEO compounding' },
+            { platform: 'facebook',  postsPerWeek: Math.max(1, Math.round(total * 0.10)), rationale: 'Community engagement and discussion' },
+          ];
+        }
         const quickWins = [
           'Repurpose your top-performing pillar into a 3-part Reels series this week',
           'Cross-post the highest engagement Reel to TikTok within 24 hours of publishing',

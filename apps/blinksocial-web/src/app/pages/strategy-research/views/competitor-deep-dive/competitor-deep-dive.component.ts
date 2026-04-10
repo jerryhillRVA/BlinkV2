@@ -3,8 +3,10 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import type { CompetitorInsight, CompetitorIntel, Platform } from '../../strategy-research.types';
 import { PLATFORM_LABELS, AI_SIMULATION_DELAY_MS } from '../../strategy-research.constants';
-import { MOCK_COMPETITOR_INSIGHTS, MOCK_COMPETITOR_INTEL_FALLBACK } from '../../strategy-research.mock-data';
+import { MOCK_COMPETITOR_INTEL_FALLBACK } from '../../strategy-research.mock-data';
 import { safeTimeout, generateId, toggleSetItem } from '../../strategy-research.utils';
+import { StrategyResearchStateService } from '../../strategy-research-state.service';
+import { ToastService } from '../../../../core/toast/toast.service';
 import { PlatformIconComponent } from '../../../../shared/platform-icon/platform-icon.component';
 import { DropdownComponent, DropdownOption } from '../../../../shared/dropdown/dropdown.component';
 
@@ -16,8 +18,10 @@ import { DropdownComponent, DropdownOption } from '../../../../shared/dropdown/d
 })
 export class CompetitorDeepDiveComponent {
   private readonly destroyRef = inject(DestroyRef);
+  private readonly stateService = inject(StrategyResearchStateService);
+  private readonly toast = inject(ToastService);
 
-  readonly competitors = signal<CompetitorInsight[]>([...MOCK_COMPETITOR_INSIGHTS]);
+  readonly competitors = this.stateService.competitorInsights;
   readonly showAddForm = signal(false);
   readonly intelOpenIds = signal<Set<string>>(new Set());
   readonly runningIntelIds = signal<Set<string>>(new Set());
@@ -89,35 +93,21 @@ export class CompetitorDeepDiveComponent {
   }
 
   generateIntel(id: string): void {
-    this.runningIntelIds.update(set => {
-      const next = new Set(set);
-      next.add(id);
-      return next;
-    });
-    this.intelOpenIds.update(set => {
-      const next = new Set(set);
-      next.add(id);
-      return next;
-    });
+    this.runningIntelIds.update(set => { const next = new Set(set); next.add(id); return next; });
+    this.intelOpenIds.update(set => { const next = new Set(set); next.add(id); return next; });
     safeTimeout(() => {
       this.competitors.update(list =>
         list.map(c => (c.id === id ? { ...c, intel: c.intel ?? this.cloneFallbackIntel() } : c))
       );
-      this.runningIntelIds.update(set => {
-        const next = new Set(set);
-        next.delete(id);
-        return next;
-      });
+      this.stateService.saveCompetitorInsights(this.competitors());
+      this.runningIntelIds.update(set => { const next = new Set(set); next.delete(id); return next; });
+      this.toast.showSuccess('Intel generated');
     }, AI_SIMULATION_DELAY_MS, this.destroyRef);
   }
 
   refreshIntel(id: string): void {
     this.competitors.update(list =>
-      list.map(c =>
-        c.id === id && c.intel
-          ? { ...c, intel: { ...c.intel, lastUpdated: new Date().toISOString() } }
-          : c
-      )
+      list.map(c => c.id === id && c.intel ? { ...c, intel: { ...c.intel, lastUpdated: new Date().toISOString() } } : c)
     );
   }
 
@@ -125,9 +115,7 @@ export class CompetitorDeepDiveComponent {
     this.isRefreshingAll.set(true);
     safeTimeout(() => {
       const stamp = new Date().toISOString();
-      this.competitors.update(list =>
-        list.map(c => (c.intel ? { ...c, intel: { ...c.intel, lastUpdated: stamp } } : c))
-      );
+      this.competitors.update(list => list.map(c => (c.intel ? { ...c, intel: { ...c.intel, lastUpdated: stamp } } : c)));
       this.isRefreshingAll.set(false);
     }, AI_SIMULATION_DELAY_MS, this.destroyRef);
   }
@@ -136,32 +124,27 @@ export class CompetitorDeepDiveComponent {
     this.isFinding.set(true);
     safeTimeout(() => {
       const insight: CompetitorInsight = {
-        id: generateId('ci'),
-        competitor: 'AI-Discovered: Strong After 50',
-        platform: 'instagram',
-        contentType: 'Reels',
-        topic: 'Strength training for women 50+',
-        relevancyLevel: 'High',
-        frequency: '3x/week',
-        insight: 'Newly discovered competitor focused on accessible strength training for women 50+.',
+        id: generateId('ci'), competitor: 'AI-Discovered: Strong After 50', platform: 'instagram',
+        contentType: 'Reels', topic: 'Strength training for women 50+', relevancyLevel: 'High',
+        frequency: '3x/week', insight: 'Newly discovered competitor focused on accessible strength training for women 50+.',
       };
       this.competitors.update(list => [insight, ...list]);
+      this.stateService.saveCompetitorInsights(this.competitors());
       this.isFinding.set(false);
+      this.toast.showSuccess('Competitor discovered');
     }, AI_SIMULATION_DELAY_MS, this.destroyRef);
   }
 
-  requestDelete(id: string): void {
-    this.deleteConfirmId.set(id);
-  }
+  requestDelete(id: string): void { this.deleteConfirmId.set(id); }
 
   confirmDelete(id: string): void {
     this.competitors.update(list => list.filter(c => c.id !== id));
+    this.stateService.saveCompetitorInsights(this.competitors());
     this.deleteConfirmId.set(null);
+    this.toast.showSuccess('Competitor removed');
   }
 
-  cancelDelete(): void {
-    this.deleteConfirmId.set(null);
-  }
+  cancelDelete(): void { this.deleteConfirmId.set(null); }
 
   createIdeaFromAction(_id: string, _action: string): void {
     // Placeholder — wired to ideation flow in a future task.
@@ -178,23 +161,17 @@ export class CompetitorDeepDiveComponent {
     this.showAddForm.set(true);
   }
 
-  cancelAdd(): void {
-    this.showAddForm.set(false);
-  }
+  cancelAdd(): void { this.showAddForm.set(false); }
 
   addCompetitor(): void {
     if (!this.newCompetitor.trim()) return;
     const insight: CompetitorInsight = {
-      id: generateId('ci'),
-      competitor: this.newCompetitor.trim(),
-      platform: this.newPlatform,
-      contentType: 'TBD',
-      topic: 'TBD',
-      relevancyLevel: 'Medium',
-      frequency: 'Unknown',
-      insight: 'Pending analysis...',
+      id: generateId('ci'), competitor: this.newCompetitor.trim(), platform: this.newPlatform,
+      contentType: 'TBD', topic: 'TBD', relevancyLevel: 'Medium', frequency: 'Unknown', insight: 'Pending analysis...',
     };
-    this.competitors.update(list => [...list, insight]);
+    const updated = [...this.competitors(), insight];
+    this.stateService.saveCompetitorInsights(updated);
     this.showAddForm.set(false);
+    this.toast.showSuccess('Competitor added');
   }
 }
