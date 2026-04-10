@@ -1,9 +1,11 @@
-import { Component, DestroyRef, inject, signal } from '@angular/core';
+import { Component, DestroyRef, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { IconComponent } from '../../../shared/icon/icon.component';
 import type { VoiceAttribute } from '../../../strategy-research.types';
 import { AI_SIMULATION_DELAY_MS } from '../../../strategy-research.constants';
 import { safeTimeout, generateId } from '../../../strategy-research.utils';
+import { ToastService } from '../../../../../core/toast/toast.service';
+import { StrategyResearchStateService } from '../../../strategy-research-state.service';
 
 const MOCK_VOICE_ATTRIBUTES: VoiceAttribute[] = [
   { id: 'va1', label: 'Empowering', description: 'We lift women up, never talk down to them.', doExample: 'You have everything it takes — let\'s unlock it together.', dontExample: 'You need to fix your relationship with your body.' },
@@ -20,8 +22,10 @@ const MOCK_VOICE_ATTRIBUTES: VoiceAttribute[] = [
 })
 export class VoiceAttributesComponent {
   private readonly destroyRef = inject(DestroyRef);
+  private readonly toast = inject(ToastService);
+  private readonly stateService = inject(StrategyResearchStateService);
 
-  readonly attributes = signal<VoiceAttribute[]>(MOCK_VOICE_ATTRIBUTES);
+  readonly attributes = computed(() => this.stateService.brandVoice().voiceAttributes);
   readonly isGenerating = signal(false);
   readonly editingId = signal<string | null>(null);
   readonly editAttribute = signal<VoiceAttribute>({ id: '', label: '', description: '', doExample: '', dontExample: '' });
@@ -29,7 +33,12 @@ export class VoiceAttributesComponent {
   generateAttributes(): void {
     this.isGenerating.set(true);
     safeTimeout(() => {
-      this.attributes.update(attrs => [...attrs, ...MOCK_VOICE_ATTRIBUTES]);
+      this.stateService.brandVoice.update(bv => ({
+        ...bv,
+        voiceAttributes: [...bv.voiceAttributes, ...MOCK_VOICE_ATTRIBUTES],
+      }));
+      this.stateService.saveBrandVoice(this.stateService.brandVoice());
+      this.toast.showSuccess('Voice attributes generated');
       this.isGenerating.set(false);
     }, AI_SIMULATION_DELAY_MS, this.destroyRef);
   }
@@ -54,12 +63,17 @@ export class VoiceAttributesComponent {
   save(): void {
     const attr = this.editAttribute();
     if (!attr.label.trim()) return;
-    this.attributes.update(attrs => {
-      const exists = attrs.find(a => a.id === attr.id);
-      return exists
-        ? attrs.map(a => a.id === attr.id ? { ...attr } : a)
-        : [...attrs, { ...attr }];
+    this.stateService.brandVoice.update(bv => {
+      const exists = bv.voiceAttributes.find(a => a.id === attr.id);
+      return {
+        ...bv,
+        voiceAttributes: exists
+          ? bv.voiceAttributes.map(a => a.id === attr.id ? { ...attr } : a)
+          : [...bv.voiceAttributes, { ...attr }],
+      };
     });
+    this.stateService.saveBrandVoice(this.stateService.brandVoice());
+    this.toast.showSuccess('Voice attribute saved');
     this.editingId.set(null);
   }
 
@@ -68,7 +82,12 @@ export class VoiceAttributesComponent {
   }
 
   remove(id: string): void {
-    this.attributes.update(attrs => attrs.filter(a => a.id !== id));
+    this.stateService.brandVoice.update(bv => ({
+      ...bv,
+      voiceAttributes: bv.voiceAttributes.filter(a => a.id !== id),
+    }));
+    this.stateService.saveBrandVoice(this.stateService.brandVoice());
+    this.toast.showSuccess('Voice attribute removed');
   }
 
   updateField(field: keyof VoiceAttribute, value: string): void {

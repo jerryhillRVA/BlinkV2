@@ -322,10 +322,11 @@ export class NewWorkspaceFormService {
   }
 
   // Step 6 helpers — Content Strategy
-  readonly AUDIENCES = [
-    'Engineers', 'Founders', 'Social Media Managers',
-    'Tech Enthusiasts', 'Executives',
-  ];
+  readonly AUDIENCES = computed(() => {
+    const segments = this.audienceSegments();
+    const names = segments.map((s) => s.name).filter((n) => n.trim());
+    return names.length > 0 ? names : [];
+  });
 
   readonly PLATFORMS = PLATFORM_DISPLAY_OPTIONS;
 

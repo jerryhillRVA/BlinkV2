@@ -63,7 +63,7 @@ export class ObjectivesStripComponent {
   }
 
   addObjective(): void {
-    if (this.dialogObjectives.length < 4) {
+    if (this.dialogObjectives.length < 6) {
       this.dialogObjectives = [...this.dialogObjectives, this.createBlankObjective()];
     }
   }
@@ -87,7 +87,7 @@ export class ObjectivesStripComponent {
         { id: generateId('obj'), category: 'growth', statement: 'Grow combined social following to 25,000', target: 25000, unit: 'followers', timeframe: 'Q4 2026', status: 'on-track' },
         { id: generateId('obj'), category: 'engagement', statement: 'Achieve 5% average engagement rate across platforms', target: 5, unit: '%', timeframe: 'Q3 2026', status: 'on-track' },
       ];
-      this.dialogObjectives = [...this.dialogObjectives, ...suggested].slice(0, 4);
+      this.dialogObjectives = [...this.dialogObjectives, ...suggested].slice(0, 6);
       this.isSuggesting.set(false);
     }, AI_SIMULATION_DELAY_MS, this.destroyRef);
   }

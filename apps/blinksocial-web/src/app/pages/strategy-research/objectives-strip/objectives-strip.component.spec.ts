@@ -120,14 +120,16 @@ describe('ObjectivesStripComponent', () => {
     expect(component.dialogObjectives.length).toBe(initialLength + 1);
   });
 
-  it('should not exceed 4 objectives', () => {
+  it('should not exceed 6 objectives', () => {
     fixture.detectChanges();
     component.openDrawer();
     component.addObjective();
     component.addObjective();
     component.addObjective();
     component.addObjective();
-    expect(component.dialogObjectives.length).toBeLessThanOrEqual(4);
+    component.addObjective();
+    component.addObjective();
+    expect(component.dialogObjectives.length).toBeLessThanOrEqual(6);
   });
 
   it('should display edit button text', () => {

@@ -3,18 +3,13 @@ import { FormsModule } from '@angular/forms';
 import type { ContentMixTarget, ContentCategory } from '../../strategy-research.types';
 import { AI_SIMULATION_DELAY_MS } from '../../strategy-research.constants';
 import { safeTimeout } from '../../strategy-research.utils';
+import { StrategyResearchStateService } from '../../strategy-research-state.service';
 
 interface ContentMixEntry extends ContentMixTarget {
   actualPercent: number;
 }
 
-const DEFAULT_MIX: ContentMixEntry[] = [
-  { category: 'educational',  label: 'Educational',         targetPercent: 35, color: '#3b82f6', description: 'How-tos, tips, tutorials, expert insights', actualPercent: 32 },
-  { category: 'entertaining', label: 'Entertaining',        targetPercent: 25, color: '#f59e0b', description: 'Relatable content, humor, storytelling, trends', actualPercent: 28 },
-  { category: 'community',    label: 'Community',           targetPercent: 20, color: '#10b981', description: 'UGC, Q&As, behind the scenes, audience spotlights', actualPercent: 18 },
-  { category: 'promotional',  label: 'Promotional',         targetPercent: 15, color: '#d94e33', description: 'Products, services, offers, launches', actualPercent: 17 },
-  { category: 'trending',     label: 'Trending / Reactive', targetPercent: 5,  color: '#8b5cf6', description: 'Timely content, news hooks, cultural moments', actualPercent: 5 },
-];
+const CATEGORY_COLORS = ['#4F46E5', '#F59E0B', '#10B981', '#EF4444', '#8B5CF6', '#EC4899', '#06B6D4', '#84CC16'];
 
 @Component({
   selector: 'app-content-mix',
@@ -24,9 +19,17 @@ const DEFAULT_MIX: ContentMixEntry[] = [
 })
 export class ContentMixComponent {
   private readonly destroyRef = inject(DestroyRef);
+  private readonly stateService = inject(StrategyResearchStateService);
+  private initialMix: ContentMixTarget[] = [];
+
+  readonly showAddCategory = signal(false);
+  newCategoryName = '';
+  newCategoryDescription = '';
 
   /* v8 ignore start */
-  readonly mix = signal<ContentMixEntry[]>(DEFAULT_MIX.map(m => ({ ...m })));
+  readonly mix = computed<ContentMixEntry[]>(() =>
+    this.stateService.contentMix().map(m => ({ ...m, actualPercent: m.targetPercent }))
+  );
   readonly isSuggesting = signal(false);
   /* v8 ignore stop */
 
@@ -38,25 +41,65 @@ export class ContentMixComponent {
   readonly isValid = computed(() => this.total() === 100);
   /* v8 ignore stop */
 
+  constructor() {
+    this.initialMix = this.stateService.contentMix().map(m => ({ ...m }));
+  }
+
   updateTarget(category: ContentCategory, value: number): void {
-    this.mix.update(list =>
-      list.map(m => m.category === category ? { ...m, targetPercent: value } : m)
+    const updated = this.stateService.contentMix().map(m =>
+      m.category === category ? { ...m, targetPercent: value } : m
     );
+    this.stateService.saveContentMix(updated);
   }
 
   reset(): void {
-    this.mix.set(DEFAULT_MIX.map(m => ({ ...m })));
+    this.stateService.saveContentMix(this.initialMix.map(m => ({ ...m })));
+  }
+
+  openAddCategory(): void {
+    this.newCategoryName = '';
+    this.newCategoryDescription = '';
+    this.showAddCategory.set(true);
+  }
+
+  cancelAddCategory(): void {
+    this.showAddCategory.set(false);
+  }
+
+  addCategory(): void {
+    if (!this.newCategoryName.trim()) return;
+    const current = this.stateService.contentMix();
+    const colorIndex = current.length % CATEGORY_COLORS.length;
+    const category = this.newCategoryName.trim().toLowerCase().replace(/\s+/g, '-');
+    const newTarget: ContentMixTarget = {
+      category,
+      label: this.newCategoryName.trim(),
+      targetPercent: 0,
+      color: CATEGORY_COLORS[colorIndex],
+      description: this.newCategoryDescription.trim(),
+    };
+    this.stateService.saveContentMix([...current, newTarget]);
+    this.showAddCategory.set(false);
+  }
+
+  removeCategory(category: ContentCategory): void {
+    const updated = this.stateService.contentMix().filter(m => m.category !== category);
+    this.stateService.saveContentMix(updated);
   }
 
   aiSuggest(): void {
-    const suggestedTargets: Record<ContentCategory, number> = {
-      educational: 30, entertaining: 25, community: 25, promotional: 10, trending: 10,
-    };
     this.isSuggesting.set(true);
     safeTimeout(() => {
-      this.mix.update(list =>
-        list.map(m => ({ ...m, targetPercent: suggestedTargets[m.category] ?? m.targetPercent }))
-      );
+      const current = this.stateService.contentMix();
+      const count = current.length || 1;
+      // Distribute evenly across all existing categories
+      const basePercent = Math.floor(100 / count);
+      const remainder = 100 - basePercent * count;
+      const updated = current.map((m, i) => ({
+        ...m,
+        targetPercent: basePercent + (i < remainder ? 1 : 0),
+      }));
+      this.stateService.saveContentMix(updated);
       this.isSuggesting.set(false);
     }, AI_SIMULATION_DELAY_MS, this.destroyRef);
   }

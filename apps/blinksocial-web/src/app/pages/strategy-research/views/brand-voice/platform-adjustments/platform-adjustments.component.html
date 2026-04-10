@@ -15,6 +15,7 @@
           [placeholder]="'Tone notes for ' + platformLabels[entry.platform] + '...'"
           [ngModel]="entry.adjustment"
           (ngModelChange)="updateAdjustment(entry.platform, $event)"
+          (blur)="saveAdjustments()"
         />
         <button
           class="btn btn-ai btn-sm"

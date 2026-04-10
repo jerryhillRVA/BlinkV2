@@ -11,6 +11,12 @@
           }
         </select>
       </div>
+      <button class="btn btn--secondary" (click)="openAddForm()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 5v14M5 12h14"/>
+        </svg>
+        Add Source
+      </button>
       <button class="btn-discover" (click)="discoverSources()" [disabled]="isDiscovering()">
         @if (isDiscovering()) {
           <span class="spinner"></span>
@@ -24,6 +30,56 @@
       </button>
     </div>
   </div>
+
+  @if (showAddForm()) {
+    <div class="add-form">
+      <h4 class="add-form__title">Add Research Source</h4>
+      <div class="add-form__fields">
+        <div class="add-form__field">
+          <span>Title</span>
+          <input type="text" [(ngModel)]="newTitle" placeholder="Source title" />
+        </div>
+        <div class="add-form__field">
+          <span>URL</span>
+          <input type="text" [(ngModel)]="newUrl" placeholder="https://..." />
+        </div>
+        <div class="add-form__field">
+          <span>Type</span>
+          <select [(ngModel)]="newType">
+            <option value="article">Article</option>
+            <option value="report">Report</option>
+            <option value="social">Social</option>
+            <option value="news">News</option>
+            <option value="video">Video</option>
+          </select>
+        </div>
+        <div class="add-form__field">
+          <span>Relevance (0-100)</span>
+          <input type="number" [(ngModel)]="newRelevance" min="0" max="100" />
+        </div>
+        <div class="add-form__field add-form__field--full">
+          <span>Pillar Tags</span>
+          <div class="pill-list">
+            @for (pillar of pillars(); track pillar.id) {
+              <button
+                class="chip"
+                [class.chip-selected]="isPillarSelected(pillar.id)"
+                (click)="togglePillarTag(pillar.id)"
+              >{{ pillar.name }}</button>
+            }
+          </div>
+        </div>
+        <div class="add-form__field add-form__field--full">
+          <span>Summary</span>
+          <textarea [(ngModel)]="newSummary" placeholder="Brief summary of the source..." rows="2"></textarea>
+        </div>
+      </div>
+      <div class="add-form__actions">
+        <button class="btn btn--primary" (click)="addSource()" [disabled]="!newTitle.trim()">Add Source</button>
+        <button class="btn btn--ghost" (click)="cancelAdd()">Cancel</button>
+      </div>
+    </div>
+  }
 
   <div class="sources-list">
     @for (source of filteredSources(); track source.id) {

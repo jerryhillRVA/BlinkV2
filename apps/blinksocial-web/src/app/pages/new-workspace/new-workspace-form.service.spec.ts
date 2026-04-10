@@ -713,4 +713,73 @@ describe('NewWorkspaceFormService', () => {
     expect(requestWithSkills.skills?.skills.length).toBe(1);
     expect(requestWithSkills.skills?.skills[0].skillId).toBe('reporting-agent');
   });
+
+  // --- AUDIENCES computed (dynamic from audienceSegments) ---
+
+  it('should return audience segment names for AUDIENCES when segments have names', () => {
+    service.audienceSegments.set([
+      { id: 1, name: 'Engineers' },
+      { id: 2, name: 'Designers' },
+    ]);
+    expect(service.AUDIENCES()).toEqual(['Engineers', 'Designers']);
+  });
+
+  it('should return empty array for AUDIENCES when segments have no names', () => {
+    service.audienceSegments.set([{ id: 1, name: '' }]);
+    expect(service.AUDIENCES()).toEqual([]);
+  });
+
+  it('should return empty array for AUDIENCES when no segments', () => {
+    service.audienceSegments.set([]);
+    expect(service.AUDIENCES()).toEqual([]);
+  });
+
+  // --- addObjective/removeObjective boundary tests ---
+
+  it('should not add objective beyond max of 4', () => {
+    // Start with default 1, add 3 more to reach 4
+    service.addObjective();
+    service.addObjective();
+    service.addObjective();
+    expect(service.businessObjectives().length).toBe(4);
+    service.addObjective(); // Should be a no-op
+    expect(service.businessObjectives().length).toBe(4);
+  });
+
+  it('should not remove the last objective', () => {
+    // Remove all but one
+    const ids = service.businessObjectives().map(o => o.id);
+    service.removeObjective(ids[0]);
+    expect(service.businessObjectives().length).toBe(1);
+    service.removeObjective(service.businessObjectives()[0].id); // Should be a no-op
+    expect(service.businessObjectives().length).toBe(1);
+  });
+
+  it('should update a specific objective field', () => {
+    const id = service.businessObjectives()[0].id;
+    service.updateObjective(id, 'statement', 'Grow followers');
+    expect(service.businessObjectives().find(o => o.id === id)?.statement).toBe('Grow followers');
+  });
+
+  it('should filter out blank segment names from AUDIENCES', () => {
+    service.audienceSegments.set([
+      { id: 1, name: 'Valid' },
+      { id: 2, name: '  ' },
+      { id: 3, name: 'Also Valid' },
+    ]);
+    expect(service.AUDIENCES()).toEqual(['Valid', 'Also Valid']);
+  });
+
+  // --- Signal initializer coverage ---
+
+  it('should have default signal values on creation', () => {
+    const fresh = new NewWorkspaceFormService();
+    expect(fresh.workspaceName()).toBe('');
+    expect(fresh.brandVoice()).toBe('');
+    expect(fresh.toneTags()).toEqual([]);
+    expect(fresh.contentWarning()).toBe(false);
+    expect(fresh.aiDisclaimer()).toBe(true);
+    expect(fresh.defaultPlatform()).toBe('YouTube');
+    expect(fresh.maxIdeasPerMonth()).toBe(30);
+  });
 });

@@ -84,7 +84,11 @@ describe('StepContentStrategyComponent', () => {
     expect(card.querySelector('.pillar-description')).toBeTruthy();
   });
 
-  it('should have audience multi-select buttons', () => {
+  it('should have audience multi-select buttons when segments are defined', () => {
+    formService.audienceSegments.set([
+      { id: 1, name: 'Engineers' },
+      { id: 2, name: 'Founders' },
+    ]);
     const fixture = TestBed.createComponent(StepContentStrategyComponent);
     fixture.detectChanges();
     const el: HTMLElement = fixture.nativeElement;
@@ -101,6 +105,10 @@ describe('StepContentStrategyComponent', () => {
   });
 
   it('should toggle audience selection state on click', () => {
+    formService.audienceSegments.set([
+      { id: 1, name: 'Engineers' },
+      { id: 2, name: 'Founders' },
+    ]);
     const fixture = TestBed.createComponent(StepContentStrategyComponent);
     fixture.detectChanges();
     const el: HTMLElement = fixture.nativeElement;

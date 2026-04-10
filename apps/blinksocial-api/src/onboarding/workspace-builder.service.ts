@@ -176,18 +176,49 @@ export class WorkspaceBuilderService {
     data.audienceSegments = data.audienceSegments.map((seg) => {
       const s = { ...seg } as Record<string, unknown>;
       // If description looks like a content hook (starts with "Content that..."),
-      // swap it with the segment name which should be the persona name
+      // preserve it as a secondary field but keep the original description intact
       if (
         typeof s.description === 'string' &&
         typeof s.name === 'string' &&
         /^content\s+that\b/i.test(s.description)
       ) {
-        // Move the content hook to a secondary field and use name as description
         s.contentHook = s.description;
-        s.description = s.name;
       }
       return s;
     }) as CreateWorkspaceRequestContract['audienceSegments'];
+
+    // Ensure channelStrategy is populated — fall back to platforms list if LLM didn't produce it
+    if (!data.channelStrategy || !data.channelStrategy.channels?.length) {
+      const enabledPlatforms = (data.platforms?.platforms ?? [])
+        .filter((p) => p.enabled !== false && p.platformId !== 'tbd')
+        .map((p) => p.platformId);
+      data.channelStrategy = {
+        channels: enabledPlatforms.map((platform) => ({
+          platform,
+          active: true,
+          role: '',
+          primaryContentTypes: [],
+          toneAdjustment: '',
+          postingCadence: '',
+          primaryAudience: data.audienceSegments?.[0]?.name ?? '',
+          primaryGoal: '',
+          notes: '',
+        })),
+      };
+    }
+
+    // Ensure contentMix is populated with default 5-category distribution
+    if (!data.contentMix || !((data.contentMix as Record<string, unknown>).targets as unknown[])?.length) {
+      data.contentMix = {
+        targets: [
+          { category: 'educational', label: 'Educational', targetPercent: 30, color: '#4F46E5', description: 'Informative content that teaches and builds authority' },
+          { category: 'entertaining', label: 'Entertaining', targetPercent: 25, color: '#F59E0B', description: 'Engaging content that captures attention and builds affinity' },
+          { category: 'community', label: 'Community', targetPercent: 25, color: '#10B981', description: 'Content that fosters connection and conversation' },
+          { category: 'promotional', label: 'Promotional', targetPercent: 10, color: '#EF4444', description: 'Content that drives conversions and sales' },
+          { category: 'trending', label: 'Trending', targetPercent: 10, color: '#8B5CF6', description: 'Timely content that leverages current trends and events' },
+        ],
+      };
+    }
 
     return data as CreateWorkspaceRequestContract;
   }

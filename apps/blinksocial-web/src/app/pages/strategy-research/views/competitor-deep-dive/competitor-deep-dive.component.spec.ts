@@ -1,16 +1,48 @@
+import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { CompetitorDeepDiveComponent } from './competitor-deep-dive.component';
+import { StrategyResearchStateService } from '../../strategy-research-state.service';
 import { AI_SIMULATION_DELAY_MS } from '../../strategy-research.constants';
+import { MOCK_COMPETITOR_INSIGHTS } from '../../strategy-research.mock-data';
+import type { CompetitorInsight } from '../../strategy-research.types';
 
 describe('CompetitorDeepDiveComponent', () => {
   let component: CompetitorDeepDiveComponent;
   let fixture: ReturnType<typeof TestBed.createComponent<CompetitorDeepDiveComponent>>;
   let nativeElement: HTMLElement;
+  let mockCompetitorInsights: ReturnType<typeof signal<CompetitorInsight[]>>;
 
   beforeEach(async () => {
     vi.useFakeTimers();
+    mockCompetitorInsights = signal<CompetitorInsight[]>([...MOCK_COMPETITOR_INSIGHTS]);
+    const mockStateService = {
+      competitorInsights: mockCompetitorInsights,
+      brandVoice: signal({
+        missionStatement: '',
+        voiceAttributes: [],
+        toneByContext: [],
+        platformToneAdjustments: [],
+        vocabulary: { preferred: [], avoid: [] },
+      }),
+      objectives: signal([]),
+      pillars: signal([]),
+      segments: signal([]),
+      channelStrategy: signal([]),
+      contentMix: signal([]),
+      researchSources: signal([]),
+      audienceInsights: signal([]),
+      loading: signal(false),
+      saving: signal(false),
+      workspaceId: signal('test-workspace'),
+      saveCompetitorInsights: vi.fn((data: CompetitorInsight[]) => { mockCompetitorInsights.set(data); }),
+      loadAll: vi.fn(),
+      isDirty: signal(false),
+    };
     await TestBed.configureTestingModule({
       imports: [CompetitorDeepDiveComponent],
+      providers: [
+        { provide: StrategyResearchStateService, useValue: mockStateService },
+      ],
     }).compileComponents();
 
     fixture = TestBed.createComponent(CompetitorDeepDiveComponent);
@@ -231,6 +263,21 @@ describe('CompetitorDeepDiveComponent', () => {
     expect(component.isExpanded('non-existent-id')).toBe(false);
   });
 
+  it('should initialize with default signal values', () => {
+    expect(component.showAddForm()).toBe(false);
+    expect(component.expandedIds().size).toBe(0);
+    expect(component.isScanning()).toBe(false);
+  });
+
+  it('should render empty state when no competitors', () => {
+    const mockState = TestBed.inject(StrategyResearchStateService);
+    (mockState.competitorInsights as ReturnType<typeof signal>).set([]);
+    fixture.detectChanges();
+    const el = fixture.nativeElement as HTMLElement;
+    expect(el.querySelector('.empty-state-box')).toBeTruthy();
+    expect(el.querySelector('.empty-state-title')?.textContent).toContain('No competitors yet');
+  });
+
   // --- DOM interactions for template function coverage ---
 
   it('should trigger runAiScan via button click in DOM', () => {
@@ -287,10 +334,13 @@ describe('CompetitorDeepDiveComponent', () => {
   });
 
   it('should trigger runTeardown via Run Teardown button click in DOM', () => {
+    const firstId = component.competitors()[0].id;
+    const initialCount = component.competitors().length;
     const spy = vi.spyOn(component, 'runTeardown');
     const teardownBtns = nativeElement.querySelectorAll('.competitor-card__actions .btn--primary') as NodeListOf<HTMLButtonElement>;
     teardownBtns[0].click();
-    expect(spy).toHaveBeenCalledWith(component.competitors()[0].id);
+    expect(spy).toHaveBeenCalledWith(firstId);
+    expect(component.competitors().length).toBe(initialCount - 1);
   });
 
   it('should show down chevron when collapsed and up chevron when expanded', () => {
@@ -313,11 +363,10 @@ describe('CompetitorDeepDiveComponent', () => {
     fixture.detectChanges();
 
     const inputs = nativeElement.querySelectorAll('.add-form__field input[type="text"]') as NodeListOf<HTMLInputElement>;
-    expect(inputs.length).toBe(3); // competitor name, content type, topic
+    expect(inputs.length).toBe(4); // competitor name, content type, topic, frequency
 
-    const select = nativeElement.querySelector('.add-form__field select') as HTMLSelectElement;
-    expect(select).toBeTruthy();
-    expect(select.options.length).toBe(5);
+    const selects = nativeElement.querySelectorAll('.add-form__field select') as NodeListOf<HTMLSelectElement>;
+    expect(selects.length).toBe(2); // platform, relevancy
   });
 
   it('should disable Add button when competitor name is empty', () => {

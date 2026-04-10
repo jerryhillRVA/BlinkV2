@@ -45,11 +45,30 @@
           <span>Topic</span>
           <input type="text" [(ngModel)]="newTopic" placeholder="e.g. Fitness tips" />
         </div>
+        <div class="add-form__field">
+          <span>Relevancy</span>
+          <select [(ngModel)]="newRelevancy">
+            <option value="Very High">Very High</option>
+            <option value="High">High</option>
+            <option value="Medium">Medium</option>
+          </select>
+        </div>
+        <div class="add-form__field">
+          <span>Posting Frequency</span>
+          <input type="text" [(ngModel)]="newFrequency" placeholder="e.g. 3x/week, Daily" />
+        </div>
       </div>
       <div class="add-form__actions">
         <button class="btn btn--primary" (click)="addCompetitor()" [disabled]="!newCompetitor.trim()">Add</button>
         <button class="btn btn--ghost" (click)="cancelAdd()">Cancel</button>
       </div>
+    </div>
+  }
+
+  @if (competitors().length === 0 && !showAddForm()) {
+    <div class="empty-state-box">
+      <p class="empty-state-title">No competitors yet</p>
+      <p class="empty-state-subtitle">Add a competitor manually or run an AI scan to discover competitors in your niche.</p>
     </div>
   }
 

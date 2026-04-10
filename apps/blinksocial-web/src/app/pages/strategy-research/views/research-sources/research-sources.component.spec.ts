@@ -1,16 +1,48 @@
+import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { ResearchSourcesComponent } from './research-sources.component';
+import type { ResearchSource } from '../../strategy-research.types';
+import { StrategyResearchStateService } from '../../strategy-research-state.service';
 import { AI_SIMULATION_DELAY_MS } from '../../strategy-research.constants';
+import { MOCK_RESEARCH_SOURCES, DEFAULT_PILLARS } from '../../strategy-research.mock-data';
 
 describe('ResearchSourcesComponent', () => {
   let component: ResearchSourcesComponent;
   let fixture: ReturnType<typeof TestBed.createComponent<ResearchSourcesComponent>>;
   let nativeElement: HTMLElement;
+  let mockResearchSources: ReturnType<typeof signal<typeof MOCK_RESEARCH_SOURCES>>;
 
   beforeEach(async () => {
     vi.useFakeTimers();
+    mockResearchSources = signal([...MOCK_RESEARCH_SOURCES]);
+    const mockStateService = {
+      researchSources: mockResearchSources,
+      pillars: signal([...DEFAULT_PILLARS]),
+      brandVoice: signal({
+        missionStatement: '',
+        voiceAttributes: [],
+        toneByContext: [],
+        platformToneAdjustments: [],
+        vocabulary: { preferred: [], avoid: [] },
+      }),
+      objectives: signal([]),
+      segments: signal([]),
+      channelStrategy: signal([]),
+      contentMix: signal([]),
+      competitorInsights: signal([]),
+      audienceInsights: signal([]),
+      loading: signal(false),
+      saving: signal(false),
+      workspaceId: signal('test-workspace'),
+      saveResearchSources: vi.fn((data: typeof MOCK_RESEARCH_SOURCES) => { mockResearchSources.set(data); }),
+      loadAll: vi.fn(),
+      isDirty: signal(false),
+    };
     await TestBed.configureTestingModule({
       imports: [ResearchSourcesComponent],
+      providers: [
+        { provide: StrategyResearchStateService, useValue: mockStateService },
+      ],
     }).compileComponents();
 
     fixture = TestBed.createComponent(ResearchSourcesComponent);
@@ -25,6 +57,18 @@ describe('ResearchSourcesComponent', () => {
 
   it('should create', () => {
     expect(component).toBeTruthy();
+  });
+
+  it('should initialize with default signal values', () => {
+    expect(component.filterPillarId()).toBe('all');
+    expect(component.isDiscovering()).toBe(false);
+    expect(component.showAddForm()).toBe(false);
+    expect(component.newPillarIds().size).toBe(0);
+    expect(component.newTitle).toBe('');
+    expect(component.newUrl).toBe('');
+    expect(component.newType).toBe('article');
+    expect(component.newRelevance).toBe(80);
+    expect(component.newSummary).toBe('');
   });
 
   // --- Rendering ---
@@ -158,6 +202,12 @@ describe('ResearchSourcesComponent', () => {
     expect(style.color).toBe('var(--blink-brand-primary)');
   });
 
+  it('should return fallback style for unknown type', () => {
+    const style = component.getTypeBadgeStyle('unknown' as ResearchSource['type']);
+    expect(style.background).toBe('var(--blink-surface-container-low)');
+    expect(style.color).toBe('var(--blink-on-surface-muted)');
+  });
+
   // --- formatDate ---
 
   it('should format date correctly', () => {
@@ -279,5 +329,66 @@ describe('ResearchSourcesComponent', () => {
     expect(chips.length).toBeGreaterThan(0);
     // Should have --chip-color CSS variable set via inline style
     expect(chips[0].style.getPropertyValue('--chip-color')).toBeTruthy();
+  });
+
+  // --- Add Source Form ---
+
+  it('openAddForm initializes form state and shows form', () => {
+    component.openAddForm();
+    expect(component.showAddForm()).toBe(true);
+    expect(component.newTitle).toBe('');
+    expect(component.newUrl).toBe('');
+    expect(component.newType).toBe('article');
+    expect(component.newRelevance).toBe(80);
+    expect(component.newPillarIds().size).toBe(0);
+    expect(component.newSummary).toBe('');
+  });
+
+  it('cancelAdd hides form', () => {
+    component.openAddForm();
+    component.cancelAdd();
+    expect(component.showAddForm()).toBe(false);
+  });
+
+  it('togglePillarTag adds and removes pillar ids', () => {
+    component.togglePillarTag('p1');
+    expect(component.isPillarSelected('p1')).toBe(true);
+    component.togglePillarTag('p1');
+    expect(component.isPillarSelected('p1')).toBe(false);
+  });
+
+  it('isPillarSelected returns false for unselected pillar', () => {
+    expect(component.isPillarSelected('p1')).toBe(false);
+  });
+
+  it('addSource creates a new source and saves', () => {
+    const initialCount = component.sources().length;
+    component.newTitle = 'Test Source';
+    component.newUrl = 'https://example.com';
+    component.newType = 'article';
+    component.newRelevance = 90;
+    component.togglePillarTag('p1');
+    component.newSummary = 'A test summary';
+    component.addSource();
+    expect(component.sources().length).toBe(initialCount + 1);
+    expect(component.sources()[0].title).toBe('Test Source');
+    expect(component.sources()[0].url).toBe('https://example.com');
+    expect(component.sources()[0].pillarIds).toEqual(['p1']);
+    expect(component.showAddForm()).toBe(false);
+  });
+
+  it('should render add form in the DOM when opened', () => {
+    component.openAddForm();
+    fixture.detectChanges();
+    const form = nativeElement.querySelector('.add-form');
+    expect(form).toBeTruthy();
+    expect(nativeElement.querySelectorAll('.add-form__field').length).toBeGreaterThan(0);
+  });
+
+  it('addSource does nothing with empty title', () => {
+    const initialCount = component.sources().length;
+    component.newTitle = '   ';
+    component.addSource();
+    expect(component.sources().length).toBe(initialCount);
   });
 });

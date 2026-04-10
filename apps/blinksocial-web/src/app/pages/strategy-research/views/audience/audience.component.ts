@@ -4,9 +4,10 @@ import { FormsModule } from '@angular/forms';
 import { IconComponent } from '../../shared/icon/icon.component';
 import { DropdownComponent, DropdownOption } from '../../../../shared/dropdown/dropdown.component';
 import { MockDataService } from '../../../../core/mock-data/mock-data.service';
+import { StrategyResearchStateService } from '../../strategy-research-state.service';
 import type { AudienceInsight, AudienceSegment, SegmentJourneyStage, JourneyStage } from '../../strategy-research.types';
 import { AI_SIMULATION_DELAY_MS, PLATFORM_LABELS } from '../../strategy-research.constants';
-import { DEFAULT_SEGMENTS, MOCK_AUDIENCE_INSIGHTS } from '../../strategy-research.mock-data';
+import { MOCK_AUDIENCE_INSIGHTS } from '../../strategy-research.mock-data';
 import { generateId, safeTimeout, toggleSetItem } from '../../strategy-research.utils';
 
 const JOURNEY_STAGES: JourneyStage[] = ['awareness', 'consideration', 'conversion', 'retention'];
@@ -27,6 +28,7 @@ const STAGE_LABELS: Record<JourneyStage, string> = {
 export class AudienceComponent {
   private readonly destroyRef = inject(DestroyRef);
   private readonly mockData = inject(MockDataService);
+  private readonly stateService = inject(StrategyResearchStateService);
   private readonly doc = inject(DOCUMENT);
   private readonly vcr = inject(ViewContainerRef);
 
@@ -56,6 +58,13 @@ export class AudienceComponent {
         this.modalView.destroy();
         this.modalView = null;
         body.style.overflow = '';
+      }
+    });
+    // Auto-select first segment for analyzer when segments load
+    effect(() => {
+      const segs = this.segments();
+      if (segs.length > 0 && !this.selectedAnalyzeId()) {
+        this.selectedAnalyzeId.set(segs[0].id);
       }
     });
     /* v8 ignore start */
@@ -95,6 +104,7 @@ export class AudienceComponent {
       })),
     };
     this.segments.update(list => [...list, newSegment]);
+    this.stateService.saveSegments(this.segments());
     this.showAddForm.set(false);
   }
 
@@ -103,20 +113,7 @@ export class AudienceComponent {
     return this.mockData.isMock('audience');
   }
 
-  /* v8 ignore start */
-  readonly segments = signal<AudienceSegment[]>(
-    DEFAULT_SEGMENTS.map(s => ({
-      ...s,
-      journeyStages: JOURNEY_STAGES.map(stage => ({
-        stage,
-        primaryGoal: '',
-        contentTypes: [],
-        hookAngles: [],
-        successMetric: '',
-      })),
-    }))
-  );
-  /* v8 ignore stop */
+  readonly segments = this.stateService.segments;
 
   /* v8 ignore start */
   readonly expandedSegments = signal<Set<string>>(new Set());
@@ -124,9 +121,9 @@ export class AudienceComponent {
   readonly editingId = signal<string | null>(null);
 
   // AI Audience Analyzer state
-  readonly selectedAnalyzeId = signal<string>(DEFAULT_SEGMENTS[0]?.id ?? '');
+  readonly selectedAnalyzeId = signal<string>('');
   readonly isAnalyzing = signal(false);
-  readonly insights = signal<AudienceInsight[]>([]);
+  readonly insights = this.stateService.audienceInsights;
   /* v8 ignore stop */
 
   readonly segmentOptions = (): DropdownOption[] =>
@@ -158,6 +155,7 @@ export class AudienceComponent {
         };
       }),
     );
+    this.stateService.saveSegments(this.segments());
   }
 
   setStageGoal(segmentId: string, stage: JourneyStage, value: string): void {
@@ -226,11 +224,13 @@ export class AudienceComponent {
           : s
       )
     );
+    this.stateService.saveSegments(this.segments());
     this.editingId.set(null);
   }
 
   deleteSegment(id: string): void {
     this.segments.update(list => list.filter(s => s.id !== id));
+    this.stateService.saveSegments(this.segments());
   }
 
   addSegment(): void {
@@ -248,6 +248,7 @@ export class AudienceComponent {
       })),
     };
     this.segments.update(list => [...list, newSegment]);
+    this.stateService.saveSegments(this.segments());
     this.editingId.set(id);
     this.editName = '';
     this.editDescription = '';
@@ -293,6 +294,7 @@ export class AudienceComponent {
         })
       );
       this.mappingSegmentId.set(null);
+      this.stateService.saveSegments(this.segments());
       // Auto-expand after mapping
       this.expandedSegments.update(set => {
         const next = new Set(set);
@@ -324,6 +326,7 @@ export class AudienceComponent {
       const mock = MOCK_AUDIENCE_INSIGHTS.find(i => i.segmentId === id)
         ?? { ...MOCK_AUDIENCE_INSIGHTS[0], segmentId: id };
       this.insights.update(list => [...list.filter(i => i.segmentId !== id), mock]);
+      this.stateService.saveAudienceInsights(this.insights());
       this.isAnalyzing.set(false);
     }, AI_SIMULATION_DELAY_MS, this.destroyRef);
   }

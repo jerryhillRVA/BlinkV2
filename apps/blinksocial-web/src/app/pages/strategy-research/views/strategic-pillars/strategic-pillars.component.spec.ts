@@ -1,6 +1,9 @@
 import { TestBed, ComponentFixture } from '@angular/core/testing';
+import { signal } from '@angular/core';
 import { StrategicPillarsComponent } from './strategic-pillars.component';
+import { StrategyResearchStateService } from '../../strategy-research-state.service';
 import { AI_SIMULATION_DELAY_MS } from '../../strategy-research.constants';
+import { DEFAULT_PILLARS, DEFAULT_SEGMENTS } from '../../strategy-research.mock-data';
 import type { ContentPillar, PillarGoal } from '../../strategy-research.types';
 
 function makePillar(overrides: Partial<ContentPillar> = {}): ContentPillar {
@@ -20,7 +23,21 @@ describe('StrategicPillarsComponent', () => {
   let component: StrategicPillarsComponent;
 
   beforeEach(() => {
-    TestBed.configureTestingModule({ imports: [StrategicPillarsComponent] });
+    const mockStateService = {
+      pillars: signal([...DEFAULT_PILLARS]),
+      segments: signal([...DEFAULT_SEGMENTS]),
+      objectives: signal([]),
+      channelStrategy: signal([]),
+      audienceInsights: signal([]),
+      savePillars: vi.fn(),
+      saveSegments: vi.fn(),
+      saveChannelStrategy: vi.fn(),
+      saveAudienceInsights: vi.fn(),
+    };
+    TestBed.configureTestingModule({
+      imports: [StrategicPillarsComponent],
+      providers: [{ provide: StrategyResearchStateService, useValue: mockStateService }],
+    });
     fixture = TestBed.createComponent(StrategicPillarsComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();

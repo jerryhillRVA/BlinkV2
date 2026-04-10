@@ -191,6 +191,8 @@ describe('WorkspaceSettingsStateService', () => {
 
     service.securitySettings.set({ twoFactorEnabled: false, activeSessions: [], apiKeys: [], loginHistory: [] });
     expect(service.getCurrentTabData('security')).toBeDefined();
+
+    expect(service.getCurrentTabData('channel-strategy')).toBeNull();
   });
 
   it('should return null for getCurrentTabData when signals are in default state', () => {

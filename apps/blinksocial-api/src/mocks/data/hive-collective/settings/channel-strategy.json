@@ -1,0 +1,59 @@
+{
+  "channels": [
+    {
+      "platform": "instagram",
+      "active": true,
+      "role": "Primary engagement and community building",
+      "primaryContentTypes": ["Reel", "Carousel", "Stories"],
+      "toneAdjustment": "Warm, casual, motivational",
+      "postingCadence": "5x/week",
+      "primaryAudience": "Active 40s",
+      "primaryGoal": "Engagement",
+      "notes": ""
+    },
+    {
+      "platform": "tiktok",
+      "active": true,
+      "role": "Reach and discovery for new audiences",
+      "primaryContentTypes": ["Short-form", "Duet"],
+      "toneAdjustment": "Energetic, relatable, trend-aware",
+      "postingCadence": "4x/week",
+      "primaryAudience": "Fitness Beginners",
+      "primaryGoal": "Growth",
+      "notes": ""
+    },
+    {
+      "platform": "youtube",
+      "active": true,
+      "role": "Long-form education and SEO",
+      "primaryContentTypes": ["Long-form", "Shorts"],
+      "toneAdjustment": "Authoritative, detailed, warm",
+      "postingCadence": "2x/week",
+      "primaryAudience": "Thriving 50s",
+      "primaryGoal": "Trust",
+      "notes": ""
+    },
+    {
+      "platform": "facebook",
+      "active": true,
+      "role": "Community groups and discussion",
+      "primaryContentTypes": ["Post", "Live"],
+      "toneAdjustment": "Conversational, supportive",
+      "postingCadence": "3x/week",
+      "primaryAudience": "Holistic Health Seekers",
+      "primaryGoal": "Community",
+      "notes": ""
+    },
+    {
+      "platform": "linkedin",
+      "active": false,
+      "role": "",
+      "primaryContentTypes": [],
+      "toneAdjustment": "",
+      "postingCadence": "",
+      "primaryAudience": "",
+      "primaryGoal": "",
+      "notes": ""
+    }
+  ]
+}

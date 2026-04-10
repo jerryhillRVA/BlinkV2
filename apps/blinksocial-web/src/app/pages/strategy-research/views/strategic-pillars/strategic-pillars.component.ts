@@ -4,9 +4,9 @@ import { FormsModule } from '@angular/forms';
 import { IconComponent } from '../../shared/icon/icon.component';
 import { DropdownComponent, DropdownOption } from '../../../../shared/dropdown/dropdown.component';
 import { MockDataService } from '../../../../core/mock-data/mock-data.service';
-import type { ContentPillar, PillarGoal, AudienceSegment, BusinessObjective } from '../../strategy-research.types';
+import { StrategyResearchStateService } from '../../strategy-research-state.service';
+import type { ContentPillar, PillarGoal, BusinessObjective } from '../../strategy-research.types';
 import { PRESET_COLORS, AI_SIMULATION_DELAY_MS } from '../../strategy-research.constants';
-import { DEFAULT_PILLARS, DEFAULT_SEGMENTS } from '../../strategy-research.mock-data';
 import { safeTimeout, generateId, toggleSetItem } from '../../strategy-research.utils';
 
 interface PillarAllocation {
@@ -46,6 +46,7 @@ const DEFAULT_PILLAR_WEIGHTS: { weight: number; rationale: string }[] = [
 export class StrategicPillarsComponent {
   private readonly destroyRef = inject(DestroyRef);
   private readonly mockData = inject(MockDataService);
+  private readonly stateService = inject(StrategyResearchStateService);
   private readonly doc = inject(DOCUMENT);
   private readonly vcr = inject(ViewContainerRef);
 
@@ -70,6 +71,13 @@ export class StrategicPillarsComponent {
         body.style.overflow = '';
       }
     });
+    // Auto-select all segments when they load from state service
+    effect(() => {
+      const segs = this.audienceSegments();
+      if (segs.length > 0 && this.selectedSegmentIds().size === 0) {
+        this.selectedSegmentIds.set(new Set(segs.map(s => s.id)));
+      }
+    });
     /* v8 ignore start */
     this.destroyRef.onDestroy(() => {
       if (this.modalView) {
@@ -89,7 +97,7 @@ export class StrategicPillarsComponent {
   /* v8 ignore start */
   readonly linkedObjectives = input<BusinessObjective[]>([]);
 
-  readonly pillars = signal<ContentPillar[]>([...DEFAULT_PILLARS]);
+  readonly pillars = this.stateService.pillars;
   readonly showAddForm = signal(false);
   readonly isSuggestingGoals = signal(false);
   readonly editingId = signal<string | null>(null);
@@ -107,10 +115,8 @@ export class StrategicPillarsComponent {
 
   /* v8 ignore start */
   // Audience Focus selection (chip toggles)
-  readonly audienceSegments = signal<AudienceSegment[]>([...DEFAULT_SEGMENTS]);
-  readonly selectedSegmentIds = signal<Set<string>>(
-    new Set(DEFAULT_SEGMENTS.map((s) => s.id)),
-  );
+  readonly audienceSegments = this.stateService.segments;
+  readonly selectedSegmentIds = signal<Set<string>>(new Set());
 
   // Investment plan output (populated by analyzeDistribution)
   readonly investmentPlan = signal<InvestmentPlan | null>(null);
@@ -272,6 +278,7 @@ export class StrategicPillarsComponent {
       };
       this.pillars.update((list) => [...list, pillar]);
     }
+    this.stateService.savePillars(this.pillars());
     this.showAddForm.set(false);
     this.modalEditingId.set(null);
   }
@@ -296,11 +303,13 @@ export class StrategicPillarsComponent {
           : p
       )
     );
+    this.stateService.savePillars(this.pillars());
     this.editingId.set(null);
   }
 
   deletePillar(id: string): void {
     this.pillars.update(list => list.filter(p => p.id !== id));
+    this.stateService.savePillars(this.pillars());
   }
 
   getGoalProgress(goal: PillarGoal): number {
@@ -332,13 +341,24 @@ export class StrategicPillarsComponent {
               DEFAULT_PILLAR_WEIGHTS[i % DEFAULT_PILLAR_WEIGHTS.length].rationale,
           };
         });
-        // Platform split — proportional split across the most common platforms
-        const platformSplit: PlatformAllocation[] = [
-          { platform: 'instagram', postsPerWeek: Math.max(1, Math.round(total * 0.45)), rationale: 'Highest reach for wellness content; visual-first audience' },
-          { platform: 'tiktok',    postsPerWeek: Math.max(1, Math.round(total * 0.30)), rationale: 'Top discovery channel for new followers' },
-          { platform: 'youtube',   postsPerWeek: Math.max(1, Math.round(total * 0.15)), rationale: 'Long-form trust builder; SEO compounding' },
-          { platform: 'pinterest', postsPerWeek: Math.max(1, Math.round(total * 0.10)), rationale: 'Evergreen traffic for tutorials and saves' },
-        ];
+        // Platform split — derived from active workspace channels
+        const activeChannels = this.stateService.channelStrategy().filter(c => c.active);
+        let platformSplit: PlatformAllocation[];
+        if (activeChannels.length > 0) {
+          const share = 1 / activeChannels.length;
+          platformSplit = activeChannels.map(c => ({
+            platform: c.platform,
+            postsPerWeek: Math.max(1, Math.round(share * total)),
+            rationale: c.role || `Strategy for ${c.platform}`,
+          }));
+        } else {
+          platformSplit = [
+            { platform: 'instagram', postsPerWeek: Math.max(1, Math.round(total * 0.45)), rationale: 'Highest reach; visual-first audience' },
+            { platform: 'tiktok',    postsPerWeek: Math.max(1, Math.round(total * 0.30)), rationale: 'Top discovery channel for new followers' },
+            { platform: 'youtube',   postsPerWeek: Math.max(1, Math.round(total * 0.15)), rationale: 'Long-form trust builder; SEO compounding' },
+            { platform: 'facebook',  postsPerWeek: Math.max(1, Math.round(total * 0.10)), rationale: 'Community engagement and discussion' },
+          ];
+        }
         const quickWins = [
           'Repurpose your top-performing pillar into a 3-part Reels series this week',
           'Cross-post the highest engagement Reel to TikTok within 24 hours of publishing',

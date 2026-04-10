@@ -17,7 +17,7 @@ export type ObjectiveCategory = 'growth' | 'revenue' | 'awareness' | 'trust' | '
 
 export type ObjectiveStatus = 'on-track' | 'at-risk' | 'behind' | 'achieved';
 
-export type ContentCategory = 'educational' | 'entertaining' | 'community' | 'promotional' | 'trending';
+export type ContentCategory = string;
 
 export interface BusinessObjective {
   id: string;

@@ -29,6 +29,25 @@
     </button>
   </header>
 
+  @if (showPlatformPicker()) {
+    <div class="empty-state-box">
+      <p class="empty-state-title">No channels configured yet</p>
+      <p class="empty-state-subtitle">Select the platforms you want to include in your channel strategy, then click Initialize.</p>
+      <div class="platform-picker-chips">
+        @for (platform of allPlatforms; track platform) {
+          <button
+            class="chip"
+            [class.chip-selected]="isNewPlatformSelected(platform)"
+            (click)="toggleNewPlatform(platform)"
+          >{{ platformLabels[platform] }}</button>
+        }
+      </div>
+      <button class="btn btn-primary" (click)="initializeChannels()" [disabled]="selectedNewPlatforms().size === 0">
+        Initialize Channels
+      </button>
+    </div>
+  }
+
   <div class="platforms-list">
     @for (channel of channels(); track channel.platform) {
       <div class="platform-card" [class]="'platform-card platform-' + channel.platform" [class.inactive]="!channel.active">
@@ -97,7 +116,7 @@
                   <div class="form-group">
                     <span class="form-label">Primary Audience</span>
                     <app-dropdown
-                      [options]="audienceOptions"
+                      [options]="audienceOptions()"
                       [value]="channel.primaryAudience"
                       size="compact"
                       [fullWidth]="true"

@@ -14,6 +14,7 @@ import { AbAnalyzerComponent } from './views/ab-analyzer/ab-analyzer.component';
 import { SeoHashtagsComponent } from './views/seo-hashtags/seo-hashtags.component';
 import type { StrategyView, BusinessObjective, SidebarItem } from './strategy-research.types';
 import { SIDEBAR_ITEMS } from './strategy-research.constants';
+import { StrategyResearchStateService } from './strategy-research-state.service';
 
 const SIDEBAR_SECTIONS: { label: string; items: SidebarItem[] }[] = [
   { label: 'Strategy', items: SIDEBAR_ITEMS.filter(i => i.section === 'strategy') },
@@ -37,22 +38,27 @@ const SIDEBAR_SECTIONS: { label: string; items: SidebarItem[] }[] = [
     AbAnalyzerComponent,
     SeoHashtagsComponent,
   ],
+  providers: [StrategyResearchStateService],
   templateUrl: './strategy-research.component.html',
   styleUrl: './strategy-research.component.scss',
 })
 export class StrategyResearchComponent {
   private readonly route = inject(ActivatedRoute);
+  protected readonly stateService = inject(StrategyResearchStateService);
   readonly workspaceId = this.route.snapshot.paramMap.get('id') ?? '';
   readonly activeView = signal<StrategyView>('brand-voice');
-  readonly objectives = signal<BusinessObjective[]>([]);
 
   readonly sidebarSections = SIDEBAR_SECTIONS;
+
+  constructor() {
+    this.stateService.loadAll(this.workspaceId);
+  }
 
   setActiveView(view: StrategyView): void {
     this.activeView.set(view);
   }
 
   onUpdateObjectives(updated: BusinessObjective[]): void {
-    this.objectives.set(updated);
+    this.stateService.saveObjectives(updated);
   }
 }

@@ -1,13 +1,41 @@
 import { TestBed, ComponentFixture } from '@angular/core/testing';
+import { signal } from '@angular/core';
 import { AudienceComponent } from './audience.component';
+import { StrategyResearchStateService } from '../../strategy-research-state.service';
 import { AI_SIMULATION_DELAY_MS } from '../../strategy-research.constants';
+import { DEFAULT_SEGMENTS } from '../../strategy-research.mock-data';
 
 describe('AudienceComponent', () => {
   let fixture: ComponentFixture<AudienceComponent>;
   let component: AudienceComponent;
 
   beforeEach(() => {
-    TestBed.configureTestingModule({ imports: [AudienceComponent] });
+    const JOURNEY_STAGES = ['awareness', 'consideration', 'conversion', 'retention'] as const;
+    const segmentsWithStages = DEFAULT_SEGMENTS.map(s => ({
+      ...s,
+      journeyStages: JOURNEY_STAGES.map(stage => ({
+        stage,
+        primaryGoal: '',
+        contentTypes: [] as string[],
+        hookAngles: [] as string[],
+        successMetric: '',
+      })),
+    }));
+    const mockStateService = {
+      segments: signal(segmentsWithStages),
+      audienceInsights: signal([] as never[]),
+      pillars: signal([]),
+      objectives: signal([]),
+      channelStrategy: signal([]),
+      saveSegments: vi.fn(),
+      saveAudienceInsights: vi.fn(),
+      savePillars: vi.fn(),
+      saveChannelStrategy: vi.fn(),
+    };
+    TestBed.configureTestingModule({
+      imports: [AudienceComponent],
+      providers: [{ provide: StrategyResearchStateService, useValue: mockStateService }],
+    });
     fixture = TestBed.createComponent(AudienceComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();

@@ -1,0 +1,32 @@
+[
+  {
+    "id": "obj-1",
+    "category": "growth",
+    "statement": "Grow Instagram following to 50K",
+    "target": 50000,
+    "unit": "followers",
+    "timeframe": "Q2 2026",
+    "currentValue": 32000,
+    "status": "on-track"
+  },
+  {
+    "id": "obj-2",
+    "category": "engagement",
+    "statement": "Achieve 5% average engagement rate",
+    "target": 5,
+    "unit": "%",
+    "timeframe": "Q2 2026",
+    "currentValue": 3.8,
+    "status": "at-risk"
+  },
+  {
+    "id": "obj-3",
+    "category": "awareness",
+    "statement": "Reach 1M monthly impressions across platforms",
+    "target": 1000000,
+    "unit": "impressions",
+    "timeframe": "Q3 2026",
+    "currentValue": 620000,
+    "status": "on-track"
+  }
+]

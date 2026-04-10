@@ -51,6 +51,7 @@ export class WorkspaceSettingsStateService {
     notifications: () => this.notificationSettings(),
     calendar: () => this.calendarSettings(),
     security: () => this.securitySettings(),
+    'channel-strategy': () => null,
   };
 
   private readonly tabToApiTab: Record<SettingsTab, string> = {
@@ -62,6 +63,7 @@ export class WorkspaceSettingsStateService {
     notifications: 'notifications',
     calendar: 'calendar',
     security: 'security',
+    'channel-strategy': 'channel-strategy',
   };
 
   getCurrentTabData(tab: SettingsTab): unknown {

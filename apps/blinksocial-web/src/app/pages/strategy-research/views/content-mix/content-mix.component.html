@@ -60,6 +60,27 @@
       }
     </div>
 
+    @if (showAddCategory()) {
+      <div class="add-category-form">
+        <div class="add-form__fields">
+          <div class="add-form__field">
+            <span>Category Name</span>
+            <input type="text" [(ngModel)]="newCategoryName" placeholder="e.g. Behind The Scenes" />
+          </div>
+          <div class="add-form__field">
+            <span>Description</span>
+            <input type="text" [(ngModel)]="newCategoryDescription" placeholder="Brief description..." />
+          </div>
+        </div>
+        <div class="add-form__actions">
+          <button class="btn btn--primary btn--sm" (click)="addCategory()" [disabled]="!newCategoryName.trim()">Add</button>
+          <button class="btn btn--ghost btn--sm" (click)="cancelAddCategory()">Cancel</button>
+        </div>
+      </div>
+    } @else {
+      <button type="button" class="btn-add-category" (click)="openAddCategory()">+ Add Category</button>
+    }
+
     <div class="mix-rows">
       @for (item of mix(); track item.category) {
         <div class="mix-row">

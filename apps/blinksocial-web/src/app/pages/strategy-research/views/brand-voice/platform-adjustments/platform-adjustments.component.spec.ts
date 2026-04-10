@@ -1,5 +1,8 @@
+import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { PlatformAdjustmentsComponent } from './platform-adjustments.component';
+import { ToastService } from '../../../../../core/toast/toast.service';
+import { StrategyResearchStateService } from '../../../strategy-research-state.service';
 
 describe('PlatformAdjustmentsComponent', () => {
   let component: PlatformAdjustmentsComponent;
@@ -8,8 +11,36 @@ describe('PlatformAdjustmentsComponent', () => {
 
   beforeEach(async () => {
     vi.useFakeTimers();
+    const mockBrandVoice = signal({
+      missionStatement: '',
+      voiceAttributes: [],
+      toneByContext: [],
+      platformToneAdjustments: [],
+      vocabulary: { preferred: [], avoid: [] },
+    });
+    const mockStateService = {
+      brandVoice: mockBrandVoice,
+      objectives: signal([]),
+      pillars: signal([]),
+      segments: signal([]),
+      channelStrategy: signal([]),
+      contentMix: signal([]),
+      researchSources: signal([]),
+      competitorInsights: signal([]),
+      audienceInsights: signal([]),
+      loading: signal(false),
+      saving: signal(false),
+      workspaceId: signal('test-workspace'),
+      saveBrandVoice: vi.fn(),
+      loadAll: vi.fn(),
+      isDirty: signal(false),
+    };
     await TestBed.configureTestingModule({
       imports: [PlatformAdjustmentsComponent],
+      providers: [
+        { provide: ToastService, useValue: { showSuccess: vi.fn(), showError: vi.fn() } },
+        { provide: StrategyResearchStateService, useValue: mockStateService },
+      ],
     }).compileComponents();
 
     fixture = TestBed.createComponent(PlatformAdjustmentsComponent);
@@ -74,6 +105,35 @@ describe('PlatformAdjustmentsComponent', () => {
     expect(component.platformLabels['youtube']).toBe('YouTube');
     expect(component.platformLabels['facebook']).toBe('Facebook');
     expect(component.platformLabels['linkedin']).toBe('LinkedIn');
+  });
+
+  it('should show only active platforms when channelStrategy has active entries', () => {
+    const mockState = TestBed.inject(StrategyResearchStateService);
+    (mockState.channelStrategy as ReturnType<typeof signal>).set([
+      { platform: 'instagram', active: true, role: '', primaryContentTypes: [], toneAdjustment: '', postingCadence: '', primaryAudience: '', primaryGoal: '', notes: '' },
+      { platform: 'tiktok', active: false, role: '', primaryContentTypes: [], toneAdjustment: '', postingCadence: '', primaryAudience: '', primaryGoal: '', notes: '' },
+      { platform: 'youtube', active: true, role: '', primaryContentTypes: [], toneAdjustment: '', postingCadence: '', primaryAudience: '', primaryGoal: '', notes: '' },
+    ]);
+    fixture.detectChanges();
+    expect(component.activePlatforms().length).toBe(2);
+    expect(component.activePlatforms()).toContain('instagram');
+    expect(component.activePlatforms()).toContain('youtube');
+    expect(component.activePlatforms()).not.toContain('tiktok');
+    expect(component.adjustments().length).toBe(2);
+  });
+
+  it('should fall back to all platforms when channelStrategy is empty', () => {
+    const mockState = TestBed.inject(StrategyResearchStateService);
+    (mockState.channelStrategy as ReturnType<typeof signal>).set([]);
+    fixture.detectChanges();
+    expect(component.activePlatforms().length).toBe(5);
+  });
+
+  it('should persist via saveAdjustments on blur', () => {
+    const mockState = TestBed.inject(StrategyResearchStateService);
+    component.updateAdjustment('instagram', 'Be warm and visual');
+    component.saveAdjustments();
+    expect(mockState.saveBrandVoice).toHaveBeenCalled();
   });
 
   it('should clean up timer on destroy', () => {

@@ -1,8 +1,10 @@
-import { Component, signal } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { IconComponent } from '../../../shared/icon/icon.component';
 import type { ToneContext } from '../../../strategy-research.types';
 import { generateId } from '../../../strategy-research.utils';
+import { ToastService } from '../../../../../core/toast/toast.service';
+import { StrategyResearchStateService } from '../../../strategy-research-state.service';
 
 const MOCK_TONE_CONTEXTS: ToneContext[] = [
   { id: 'tc1', context: 'Educational', tone: 'Clear, authoritative, relatable', example: 'Here\'s what\'s actually happening in your body during perimenopause — and what you can do about it today.' },
@@ -18,7 +20,10 @@ const MOCK_TONE_CONTEXTS: ToneContext[] = [
   styleUrl: './tone-context.component.scss',
 })
 export class ToneContextComponent {
-  readonly toneContexts = signal<ToneContext[]>(MOCK_TONE_CONTEXTS);
+  private readonly toast = inject(ToastService);
+  private readonly stateService = inject(StrategyResearchStateService);
+
+  readonly toneContexts = computed(() => this.stateService.brandVoice().toneByContext);
   readonly editingId = signal<string | null>(null);
   readonly editTone = signal<ToneContext>({ id: '', context: '', tone: '', example: '' });
 
@@ -42,12 +47,17 @@ export class ToneContextComponent {
   save(): void {
     const tone = this.editTone();
     if (!tone.context.trim()) return;
-    this.toneContexts.update(list => {
-      const exists = list.find(t => t.id === tone.id);
-      return exists
-        ? list.map(t => t.id === tone.id ? { ...tone } : t)
-        : [...list, { ...tone }];
+    this.stateService.brandVoice.update(bv => {
+      const exists = bv.toneByContext.find(t => t.id === tone.id);
+      return {
+        ...bv,
+        toneByContext: exists
+          ? bv.toneByContext.map(t => t.id === tone.id ? { ...tone } : t)
+          : [...bv.toneByContext, { ...tone }],
+      };
     });
+    this.stateService.saveBrandVoice(this.stateService.brandVoice());
+    this.toast.showSuccess('Tone context saved');
     this.editingId.set(null);
   }
 
@@ -56,7 +66,12 @@ export class ToneContextComponent {
   }
 
   remove(id: string): void {
-    this.toneContexts.update(list => list.filter(t => t.id !== id));
+    this.stateService.brandVoice.update(bv => ({
+      ...bv,
+      toneByContext: bv.toneByContext.filter(t => t.id !== id),
+    }));
+    this.stateService.saveBrandVoice(this.stateService.brandVoice());
+    this.toast.showSuccess('Tone context removed');
   }
 
   updateField(field: keyof ToneContext, value: string): void {
@@ -64,6 +79,11 @@ export class ToneContextComponent {
   }
 
   generateToneContexts(): void {
-    this.toneContexts.set(MOCK_TONE_CONTEXTS);
+    this.stateService.brandVoice.update(bv => ({
+      ...bv,
+      toneByContext: MOCK_TONE_CONTEXTS,
+    }));
+    this.stateService.saveBrandVoice(this.stateService.brandVoice());
+    this.toast.showSuccess('Tone contexts generated');
   }
 }

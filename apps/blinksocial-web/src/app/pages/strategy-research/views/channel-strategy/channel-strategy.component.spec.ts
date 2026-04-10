@@ -1,13 +1,38 @@
 import { TestBed, ComponentFixture } from '@angular/core/testing';
+import { signal } from '@angular/core';
 import { ChannelStrategyComponent } from './channel-strategy.component';
+import { StrategyResearchStateService } from '../../strategy-research-state.service';
 import { AI_SIMULATION_DELAY_MS } from '../../strategy-research.constants';
+import type { ChannelStrategyEntry } from '../../strategy-research.types';
+
+const DEFAULT_CHANNELS: ChannelStrategyEntry[] = [
+  { platform: 'instagram', active: true, role: 'Primary engagement and community building', primaryContentTypes: ['Reels', 'Stories', 'Carousels'], toneAdjustment: 'Warm, casual, motivational', postingCadence: '5x/week', primaryAudience: 'Active 40s', primaryGoal: 'Engagement', notes: '' },
+  { platform: 'tiktok', active: true, role: 'Reach and trend-driven discovery', primaryContentTypes: ['Shorts', 'Tutorials'], toneAdjustment: 'Fun, energetic, relatable', postingCadence: '4x/week', primaryAudience: 'Active 40s', primaryGoal: 'Awareness', notes: '' },
+  { platform: 'youtube', active: true, role: 'Long-form education and authority', primaryContentTypes: ['Long-form', 'Shorts', 'Tutorials'], toneAdjustment: 'Professional, supportive, thorough', postingCadence: '2x/week', primaryAudience: 'Thriving 50s', primaryGoal: 'Authority', notes: '' },
+  { platform: 'facebook', active: false, role: '', primaryContentTypes: [], toneAdjustment: '', postingCadence: '', primaryAudience: '', primaryGoal: '', notes: '' },
+  { platform: 'linkedin', active: false, role: '', primaryContentTypes: [], toneAdjustment: '', postingCadence: '', primaryAudience: '', primaryGoal: '', notes: '' },
+];
 
 describe('ChannelStrategyComponent', () => {
   let fixture: ComponentFixture<ChannelStrategyComponent>;
   let component: ChannelStrategyComponent;
 
   beforeEach(() => {
-    TestBed.configureTestingModule({ imports: [ChannelStrategyComponent] });
+    const mockStateService = {
+      channelStrategy: signal<ChannelStrategyEntry[]>([...DEFAULT_CHANNELS.map(c => ({ ...c }))]),
+      pillars: signal([]),
+      segments: signal([]),
+      objectives: signal([]),
+      audienceInsights: signal([]),
+      saveChannelStrategy: vi.fn(),
+      savePillars: vi.fn(),
+      saveSegments: vi.fn(),
+      saveAudienceInsights: vi.fn(),
+    };
+    TestBed.configureTestingModule({
+      imports: [ChannelStrategyComponent],
+      providers: [{ provide: StrategyResearchStateService, useValue: mockStateService }],
+    });
     fixture = TestBed.createComponent(ChannelStrategyComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
@@ -92,7 +117,7 @@ describe('ChannelStrategyComponent', () => {
   it('exposes platformLabels, platformIcons, and option lists', () => {
     expect(component.platformLabels['instagram']).toBeTruthy();
     expect(component.platformIcons['instagram']).toBeTruthy();
-    expect(component.audienceOptions.length).toBeGreaterThan(0);
+    expect(component.audienceOptions().length).toBeGreaterThan(0);
     expect(component.goalOptions.length).toBeGreaterThan(0);
   });
 
@@ -131,5 +156,61 @@ describe('ChannelStrategyComponent', () => {
     const before = component.isExpanded('instagram');
     title.click();
     expect(component.isExpanded('instagram')).toBe(!before);
+  });
+
+  // --- Platform Picker / Initialization ---
+
+  it('showPlatformPicker is false when channels exist', () => {
+    expect(component.showPlatformPicker()).toBe(false);
+  });
+
+  it('showPlatformPicker is true when channels are empty', () => {
+    component.channels.set([]);
+    expect(component.showPlatformPicker()).toBe(true);
+  });
+
+  it('renders platform picker UI when channels are empty', () => {
+    component.channels.set([]);
+    fixture.detectChanges();
+    const el = fixture.nativeElement as HTMLElement;
+    expect(el.querySelector('.empty-state-box')).toBeTruthy();
+    expect(el.querySelector('.platform-picker-chips')).toBeTruthy();
+  });
+
+  it('toggleNewPlatform adds and removes platforms from selection', () => {
+    expect(component.isNewPlatformSelected('linkedin')).toBe(false);
+    component.toggleNewPlatform('linkedin');
+    expect(component.isNewPlatformSelected('linkedin')).toBe(true);
+    component.toggleNewPlatform('linkedin');
+    expect(component.isNewPlatformSelected('linkedin')).toBe(false);
+  });
+
+  it('initializeChannels creates entries for selected platforms and saves', () => {
+    component.channels.set([]);
+    component.selectedNewPlatforms.set(new Set(['instagram', 'youtube']));
+    component.initializeChannels();
+    expect(component.channels().length).toBe(2);
+    expect(component.channels()[0].platform).toBe('instagram');
+    expect(component.channels()[1].platform).toBe('youtube');
+    expect(component.channels()[0].active).toBe(true);
+  });
+
+  it('initializeChannels does nothing when no platforms selected', () => {
+    component.channels.set([]);
+    component.selectedNewPlatforms.set(new Set());
+    component.initializeChannels();
+    expect(component.channels().length).toBe(0);
+  });
+
+  it('audienceOptions returns segment names when segments exist', () => {
+    const mockState = TestBed.inject(StrategyResearchStateService);
+    (mockState.segments as ReturnType<typeof signal>).set([
+      { id: 'seg-1', name: 'Engineers', description: '' },
+      { id: 'seg-2', name: 'Founders', description: '' },
+    ]);
+    const options = component.audienceOptions();
+    expect(options.length).toBe(2);
+    expect(options[0].label).toBe('Engineers');
+    expect(options[1].label).toBe('Founders');
   });
 });
