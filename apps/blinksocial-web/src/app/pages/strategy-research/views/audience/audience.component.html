@@ -52,7 +52,7 @@
                 </svg>
                 <h3 class="has-mock-data" title="Mock data">{{ segment.name }}</h3>
               </div>
-              <p class="card-description">{{ segment.description }}</p>
+              <p class="card-description" [class.card-description--empty]="!segment.description">{{ segment.description || 'No description yet \u2014 click Edit to add one.' }}</p>
             </div>
             <div class="card-actions">
               <button class="btn-icon" (click)="startEdit(segment)" title="Edit">

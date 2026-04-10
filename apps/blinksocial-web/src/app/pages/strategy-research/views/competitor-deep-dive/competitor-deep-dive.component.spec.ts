@@ -2,6 +2,7 @@ import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { CompetitorDeepDiveComponent } from './competitor-deep-dive.component';
 import { StrategyResearchStateService } from '../../strategy-research-state.service';
+import { ToastService } from '../../../../core/toast/toast.service';
 import { AI_SIMULATION_DELAY_MS } from '../../strategy-research.constants';
 import { MOCK_COMPETITOR_INSIGHTS } from '../../strategy-research.mock-data';
 import type { CompetitorInsight } from '../../strategy-research.types';
@@ -42,6 +43,7 @@ describe('CompetitorDeepDiveComponent', () => {
       imports: [CompetitorDeepDiveComponent],
       providers: [
         { provide: StrategyResearchStateService, useValue: mockStateService },
+        { provide: ToastService, useValue: { showSuccess: vi.fn(), showError: vi.fn() } },
       ],
     }).compileComponents();
 

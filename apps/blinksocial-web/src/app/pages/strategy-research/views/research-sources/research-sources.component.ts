@@ -4,6 +4,7 @@ import type { ResearchSource } from '../../strategy-research.types';
 import { AI_SIMULATION_DELAY_MS } from '../../strategy-research.constants';
 import { safeTimeout, generateId } from '../../strategy-research.utils';
 import { StrategyResearchStateService } from '../../strategy-research-state.service';
+import { ToastService } from '../../../../core/toast/toast.service';
 
 const TYPE_COLORS: Record<ResearchSource['type'], { bg: string; text: string }> = {
   article: { bg: 'var(--blink-icon-blue-bg)', text: 'var(--blink-icon-blue)' },
@@ -22,6 +23,7 @@ const TYPE_COLORS: Record<ResearchSource['type'], { bg: string; text: string }> 
 export class ResearchSourcesComponent {
   private readonly destroyRef = inject(DestroyRef);
   private readonly stateService = inject(StrategyResearchStateService);
+  private readonly toast = inject(ToastService);
 
   readonly sources = this.stateService.researchSources;
   readonly pillars = this.stateService.pillars;
@@ -79,6 +81,7 @@ export class ResearchSourcesComponent {
       const updated = [newSource, ...this.sources()];
       this.stateService.saveResearchSources(updated);
       this.isDiscovering.set(false);
+      this.toast.showSuccess('New source discovered');
     }, AI_SIMULATION_DELAY_MS, this.destroyRef);
   }
 
@@ -124,6 +127,7 @@ export class ResearchSourcesComponent {
     const updated = [source, ...this.sources()];
     this.stateService.saveResearchSources(updated);
     this.showAddForm.set(false);
+    this.toast.showSuccess('Source added');
   }
 
   createIdea(_source: ResearchSource): void {

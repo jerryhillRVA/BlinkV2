@@ -6,6 +6,7 @@ import { PLATFORM_LABELS, AI_SIMULATION_DELAY_MS } from '../../strategy-research
 import { MOCK_COMPETITOR_INTEL_FALLBACK } from '../../strategy-research.mock-data';
 import { safeTimeout, generateId, toggleSetItem } from '../../strategy-research.utils';
 import { StrategyResearchStateService } from '../../strategy-research-state.service';
+import { ToastService } from '../../../../core/toast/toast.service';
 import { PlatformIconComponent } from '../../../../shared/platform-icon/platform-icon.component';
 import { DropdownComponent, DropdownOption } from '../../../../shared/dropdown/dropdown.component';
 
@@ -18,6 +19,7 @@ import { DropdownComponent, DropdownOption } from '../../../../shared/dropdown/d
 export class CompetitorDeepDiveComponent {
   private readonly destroyRef = inject(DestroyRef);
   private readonly stateService = inject(StrategyResearchStateService);
+  private readonly toast = inject(ToastService);
 
   readonly competitors = this.stateService.competitorInsights;
   readonly showAddForm = signal(false);
@@ -99,6 +101,7 @@ export class CompetitorDeepDiveComponent {
       );
       this.stateService.saveCompetitorInsights(this.competitors());
       this.runningIntelIds.update(set => { const next = new Set(set); next.delete(id); return next; });
+      this.toast.showSuccess('Intel generated');
     }, AI_SIMULATION_DELAY_MS, this.destroyRef);
   }
 
@@ -128,6 +131,7 @@ export class CompetitorDeepDiveComponent {
       this.competitors.update(list => [insight, ...list]);
       this.stateService.saveCompetitorInsights(this.competitors());
       this.isFinding.set(false);
+      this.toast.showSuccess('Competitor discovered');
     }, AI_SIMULATION_DELAY_MS, this.destroyRef);
   }
 
@@ -137,6 +141,7 @@ export class CompetitorDeepDiveComponent {
     this.competitors.update(list => list.filter(c => c.id !== id));
     this.stateService.saveCompetitorInsights(this.competitors());
     this.deleteConfirmId.set(null);
+    this.toast.showSuccess('Competitor removed');
   }
 
   cancelDelete(): void { this.deleteConfirmId.set(null); }
@@ -167,5 +172,6 @@ export class CompetitorDeepDiveComponent {
     const updated = [...this.competitors(), insight];
     this.stateService.saveCompetitorInsights(updated);
     this.showAddForm.set(false);
+    this.toast.showSuccess('Competitor added');
   }
 }

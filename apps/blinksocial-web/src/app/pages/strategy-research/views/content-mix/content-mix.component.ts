@@ -4,12 +4,21 @@ import type { ContentMixTarget, ContentCategory } from '../../strategy-research.
 import { AI_SIMULATION_DELAY_MS } from '../../strategy-research.constants';
 import { safeTimeout } from '../../strategy-research.utils';
 import { StrategyResearchStateService } from '../../strategy-research-state.service';
+import { ToastService } from '../../../../core/toast/toast.service';
 
 interface ContentMixEntry extends ContentMixTarget {
   actualPercent: number;
 }
 
 const CATEGORY_COLORS = ['#4F46E5', '#F59E0B', '#10B981', '#EF4444', '#8B5CF6', '#EC4899', '#06B6D4', '#84CC16'];
+
+const DEFAULT_CONTENT_MIX: ContentMixTarget[] = [
+  { category: 'educational', label: 'Educational', targetPercent: 30, color: '#4F46E5', description: 'Informative content that teaches and builds authority' },
+  { category: 'entertaining', label: 'Entertaining', targetPercent: 25, color: '#F59E0B', description: 'Engaging content that captures attention and builds affinity' },
+  { category: 'community', label: 'Community', targetPercent: 25, color: '#10B981', description: 'Content that fosters connection and conversation' },
+  { category: 'promotional', label: 'Promotional', targetPercent: 10, color: '#EF4444', description: 'Content that drives conversions and sales' },
+  { category: 'trending', label: 'Trending', targetPercent: 10, color: '#8B5CF6', description: 'Timely content that leverages current trends and events' },
+];
 
 @Component({
   selector: 'app-content-mix',
@@ -20,7 +29,7 @@ const CATEGORY_COLORS = ['#4F46E5', '#F59E0B', '#10B981', '#EF4444', '#8B5CF6', 
 export class ContentMixComponent {
   private readonly destroyRef = inject(DestroyRef);
   private readonly stateService = inject(StrategyResearchStateService);
-  private initialMix: ContentMixTarget[] = [];
+  private readonly toast = inject(ToastService);
 
   readonly showAddCategory = signal(false);
   newCategoryName = '';
@@ -41,10 +50,6 @@ export class ContentMixComponent {
   readonly isValid = computed(() => this.total() === 100);
   /* v8 ignore stop */
 
-  constructor() {
-    this.initialMix = this.stateService.contentMix().map(m => ({ ...m }));
-  }
-
   updateTarget(category: ContentCategory, value: number): void {
     const updated = this.stateService.contentMix().map(m =>
       m.category === category ? { ...m, targetPercent: value } : m
@@ -53,7 +58,8 @@ export class ContentMixComponent {
   }
 
   reset(): void {
-    this.stateService.saveContentMix(this.initialMix.map(m => ({ ...m })));
+    this.stateService.saveContentMix(DEFAULT_CONTENT_MIX.map(m => ({ ...m })));
+    this.toast.showSuccess('Content mix reset to defaults');
   }
 
   openAddCategory(): void {
@@ -80,11 +86,13 @@ export class ContentMixComponent {
     };
     this.stateService.saveContentMix([...current, newTarget]);
     this.showAddCategory.set(false);
+    this.toast.showSuccess('Category added');
   }
 
   removeCategory(category: ContentCategory): void {
     const updated = this.stateService.contentMix().filter(m => m.category !== category);
     this.stateService.saveContentMix(updated);
+    this.toast.showSuccess('Category removed');
   }
 
   aiSuggest(): void {
@@ -101,6 +109,7 @@ export class ContentMixComponent {
       }));
       this.stateService.saveContentMix(updated);
       this.isSuggesting.set(false);
+      this.toast.showSuccess('AI suggestions applied');
     }, AI_SIMULATION_DELAY_MS, this.destroyRef);
   }
 }

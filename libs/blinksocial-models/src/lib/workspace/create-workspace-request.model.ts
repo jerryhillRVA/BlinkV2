@@ -3,6 +3,8 @@ import type {
   ContentPillarContract,
   AudienceSegmentContract,
   BusinessObjectiveContract,
+  ChannelStrategySettingsContract,
+  ContentMixSettingsContract,
 } from '@blinksocial/contracts';
 import { GeneralSettings } from './general-settings.model.js';
 import { PlatformSettings } from './platform-settings.model.js';
@@ -22,6 +24,8 @@ export class CreateWorkspaceRequest implements CreateWorkspaceRequestContract {
   readonly skills?: SkillSettings;
   readonly businessObjectives?: BusinessObjective[];
   readonly brandPositioning?: BrandPositioning;
+  readonly channelStrategy?: ChannelStrategySettingsContract;
+  readonly contentMix?: ContentMixSettingsContract;
 
   constructor(data: CreateWorkspaceRequestContract) {
     this.general = new GeneralSettings(data.general);
@@ -37,6 +41,12 @@ export class CreateWorkspaceRequest implements CreateWorkspaceRequestContract {
     }
     if (data.brandPositioning) {
       this.brandPositioning = new BrandPositioning(data.brandPositioning);
+    }
+    if (data.channelStrategy) {
+      this.channelStrategy = data.channelStrategy;
+    }
+    if (data.contentMix) {
+      this.contentMix = data.contentMix;
     }
   }
 }

@@ -1,6 +1,7 @@
 import { Component, DestroyRef, HostBinding, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { MockDataService } from '../../../../core/mock-data/mock-data.service';
+import { ToastService } from '../../../../core/toast/toast.service';
 import { StrategyResearchStateService } from '../../strategy-research-state.service';
 import type { ChannelStrategyEntry, Platform } from '../../strategy-research.types';
 import { PLATFORM_LABELS, AI_SIMULATION_DELAY_MS } from '../../strategy-research.constants';
@@ -37,6 +38,7 @@ export class ChannelStrategyComponent {
   private readonly destroyRef = inject(DestroyRef);
   private readonly mockData = inject(MockDataService);
   private readonly stateService = inject(StrategyResearchStateService);
+  private readonly toast = inject(ToastService);
 
   @HostBinding('class.is-mock-source')
   get isMockSource(): boolean {
@@ -79,6 +81,7 @@ export class ChannelStrategyComponent {
     }));
     this.channels.set(entries);
     this.stateService.saveChannelStrategy(entries);
+    this.toast.showSuccess('Channels initialized');
   }
 
   aiGenerateAll(): void {
@@ -99,6 +102,7 @@ export class ChannelStrategyComponent {
       );
       this.stateService.saveChannelStrategy(this.channels());
       this.generatingAll.set(false);
+      this.toast.showSuccess('All strategies generated');
     }, AI_SIMULATION_DELAY_MS, this.destroyRef);
   }
 
@@ -179,6 +183,7 @@ export class ChannelStrategyComponent {
       );
       this.stateService.saveChannelStrategy(this.channels());
       this.generatingPlatform.set(null);
+      this.toast.showSuccess('Strategy generated');
     }, AI_SIMULATION_DELAY_MS, this.destroyRef);
   }
 }

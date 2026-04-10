@@ -3,6 +3,7 @@ import { TestBed, ComponentFixture } from '@angular/core/testing';
 import { ContentMixComponent } from './content-mix.component';
 import { AI_SIMULATION_DELAY_MS } from '../../strategy-research.constants';
 import { StrategyResearchStateService } from '../../strategy-research-state.service';
+import { ToastService } from '../../../../core/toast/toast.service';
 import type { ContentMixTarget } from '../../strategy-research.types';
 
 const DEFAULT_CONTENT_MIX: ContentMixTarget[] = [
@@ -29,6 +30,7 @@ describe('ContentMixComponent', () => {
       imports: [ContentMixComponent],
       providers: [
         { provide: StrategyResearchStateService, useValue: mockStateService },
+        { provide: ToastService, useValue: { showSuccess: vi.fn(), showError: vi.fn() } },
       ],
     });
     fixture = TestBed.createComponent(ContentMixComponent);
@@ -60,10 +62,14 @@ describe('ContentMixComponent', () => {
     expect(component.isValid()).toBe(false);
   });
 
-  it('reset restores defaults', () => {
+  it('reset restores standard defaults', () => {
     component.updateTarget('educational', 5);
     component.reset();
-    expect(component.mix().find(m => m.category === 'educational')?.targetPercent).toBe(35);
+    expect(component.mix().find(m => m.category === 'educational')?.targetPercent).toBe(30);
+    expect(component.mix().find(m => m.category === 'entertaining')?.targetPercent).toBe(25);
+    expect(component.mix().find(m => m.category === 'community')?.targetPercent).toBe(25);
+    expect(component.mix().find(m => m.category === 'promotional')?.targetPercent).toBe(10);
+    expect(component.mix().find(m => m.category === 'trending')?.targetPercent).toBe(10);
     expect(component.total()).toBe(100);
   });
 
@@ -107,7 +113,7 @@ describe('ContentMixComponent', () => {
     const el = fixture.nativeElement as HTMLElement;
     const btn = el.querySelector('.btn-reset') as HTMLButtonElement;
     btn.click();
-    expect(component.mix().find(m => m.category === 'educational')?.targetPercent).toBe(35);
+    expect(component.mix().find(m => m.category === 'educational')?.targetPercent).toBe(30);
   });
 
   it('AI Suggest button click invokes aiSuggest', () => {

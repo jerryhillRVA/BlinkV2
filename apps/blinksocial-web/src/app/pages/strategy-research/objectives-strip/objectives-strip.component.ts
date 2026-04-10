@@ -1,6 +1,7 @@
 import { Component, DestroyRef, inject, input, output, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { IconComponent } from '../shared/icon/icon.component';
+import { ToastService } from '../../../core/toast/toast.service';
 import type { BusinessObjective, ObjectiveCategory } from '../strategy-research.types';
 import { OBJECTIVE_CATEGORY_CONFIG, AI_SIMULATION_DELAY_MS } from '../strategy-research.constants';
 import { safeTimeout, generateId } from '../strategy-research.utils';
@@ -16,6 +17,7 @@ export class ObjectivesStripComponent {
   readonly objectivesChange = output<BusinessObjective[]>();
 
   private readonly destroyRef = inject(DestroyRef);
+  private readonly toast = inject(ToastService);
 
   readonly showDrawer = signal(false);
   readonly isSuggesting = signal(false);
@@ -60,6 +62,7 @@ export class ObjectivesStripComponent {
     const valid = this.dialogObjectives.filter(o => o.statement.trim());
     this.objectivesChange.emit(valid);
     this.showDrawer.set(false);
+    this.toast.showSuccess('Objectives saved');
   }
 
   addObjective(): void {

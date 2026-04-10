@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { IconComponent } from '../../shared/icon/icon.component';
 import { DropdownComponent, DropdownOption } from '../../../../shared/dropdown/dropdown.component';
 import { MockDataService } from '../../../../core/mock-data/mock-data.service';
+import { ToastService } from '../../../../core/toast/toast.service';
 import { StrategyResearchStateService } from '../../strategy-research-state.service';
 import type { AudienceInsight, AudienceSegment, SegmentJourneyStage, JourneyStage } from '../../strategy-research.types';
 import { AI_SIMULATION_DELAY_MS, PLATFORM_LABELS } from '../../strategy-research.constants';
@@ -29,6 +30,7 @@ export class AudienceComponent {
   private readonly destroyRef = inject(DestroyRef);
   private readonly mockData = inject(MockDataService);
   private readonly stateService = inject(StrategyResearchStateService);
+  private readonly toast = inject(ToastService);
   private readonly doc = inject(DOCUMENT);
   private readonly vcr = inject(ViewContainerRef);
 
@@ -106,6 +108,7 @@ export class AudienceComponent {
     this.segments.update(list => [...list, newSegment]);
     this.stateService.saveSegments(this.segments());
     this.showAddForm.set(false);
+    this.toast.showSuccess('Segment created');
   }
 
   @HostBinding('class.is-mock-source')
@@ -226,11 +229,13 @@ export class AudienceComponent {
     );
     this.stateService.saveSegments(this.segments());
     this.editingId.set(null);
+    this.toast.showSuccess('Segment updated');
   }
 
   deleteSegment(id: string): void {
     this.segments.update(list => list.filter(s => s.id !== id));
     this.stateService.saveSegments(this.segments());
+    this.toast.showSuccess('Segment deleted');
   }
 
   addSegment(): void {
@@ -295,6 +300,7 @@ export class AudienceComponent {
       );
       this.mappingSegmentId.set(null);
       this.stateService.saveSegments(this.segments());
+      this.toast.showSuccess('Journey mapped');
       // Auto-expand after mapping
       this.expandedSegments.update(set => {
         const next = new Set(set);
@@ -328,6 +334,7 @@ export class AudienceComponent {
       this.insights.update(list => [...list.filter(i => i.segmentId !== id), mock]);
       this.stateService.saveAudienceInsights(this.insights());
       this.isAnalyzing.set(false);
+      this.toast.showSuccess('Audience analysis complete');
     }, AI_SIMULATION_DELAY_MS, this.destroyRef);
   }
 

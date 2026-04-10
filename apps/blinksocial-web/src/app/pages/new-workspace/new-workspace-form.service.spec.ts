@@ -367,6 +367,48 @@ describe('NewWorkspaceFormService', () => {
     expect(data.audienceSegments[0].name).toBe('Engineers');
   });
 
+  it('should set segment description to empty string (not copy name)', () => {
+    service.workspaceName.set('Test');
+    service.audienceSegments.set([{ id: 1, name: 'Engineers' }]);
+    const data = service.formData();
+    expect(data.audienceSegments[0].description).toBe('');
+  });
+
+  it('should include channelStrategy with scaffold entries from enabled platforms', () => {
+    service.workspaceName.set('Test');
+    service.enabledPlatforms.set(new Set(['YouTube', 'Instagram']));
+    const data = service.formData();
+    expect(data.channelStrategy).toBeDefined();
+    expect(data.channelStrategy!.channels.length).toBe(2);
+    expect(data.channelStrategy!.channels[0].active).toBe(true);
+    expect(data.channelStrategy!.channels[0].role).toBe('');
+    expect(data.channelStrategy!.channels[0].primaryContentTypes).toEqual([]);
+  });
+
+  it('should include contentMix with 5 default categories totaling 100%', () => {
+    service.workspaceName.set('Test');
+    const data = service.formData();
+    expect(data.contentMix).toBeDefined();
+    expect(data.contentMix!.targets.length).toBe(5);
+    const total = data.contentMix!.targets.reduce((sum, t) => sum + t.targetPercent, 0);
+    expect(total).toBe(100);
+    expect(data.contentMix!.targets[0].category).toBe('educational');
+  });
+
+  it('should map audienceSegmentIds by segment name position in main list', () => {
+    service.workspaceName.set('Test');
+    service.audienceSegments.set([
+      { id: 1, name: 'Founders' },
+      { id: 2, name: 'Engineers' },
+    ]);
+    service.contentPillars.set([{
+      id: 1, name: 'P1', themes: '', description: 'D',
+      audienceSegments: ['Engineers'], platforms: [], objectiveId: '',
+    }]);
+    const data = service.formData();
+    expect(data.contentPillars[0].audienceSegmentIds).toEqual(['seg-2']);
+  });
+
   it('should use fallback skillId when agent name is empty', () => {
     service.workspaceName.set('Test');
     service.agents.set([{ id: 1, name: '', role: 'Test', responsibilities: '', outputs: '' }]);

@@ -2,6 +2,7 @@ import { TestBed, ComponentFixture } from '@angular/core/testing';
 import { signal } from '@angular/core';
 import { ChannelStrategyComponent } from './channel-strategy.component';
 import { StrategyResearchStateService } from '../../strategy-research-state.service';
+import { ToastService } from '../../../../core/toast/toast.service';
 import { AI_SIMULATION_DELAY_MS } from '../../strategy-research.constants';
 import type { ChannelStrategyEntry } from '../../strategy-research.types';
 
@@ -31,7 +32,10 @@ describe('ChannelStrategyComponent', () => {
     };
     TestBed.configureTestingModule({
       imports: [ChannelStrategyComponent],
-      providers: [{ provide: StrategyResearchStateService, useValue: mockStateService }],
+      providers: [
+        { provide: StrategyResearchStateService, useValue: mockStateService },
+        { provide: ToastService, useValue: { showSuccess: vi.fn(), showError: vi.fn() } },
+      ],
     });
     fixture = TestBed.createComponent(ChannelStrategyComponent);
     component = fixture.componentInstance;

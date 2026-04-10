@@ -3,6 +3,7 @@ import { TestBed } from '@angular/core/testing';
 import { ResearchSourcesComponent } from './research-sources.component';
 import type { ResearchSource } from '../../strategy-research.types';
 import { StrategyResearchStateService } from '../../strategy-research-state.service';
+import { ToastService } from '../../../../core/toast/toast.service';
 import { AI_SIMULATION_DELAY_MS } from '../../strategy-research.constants';
 import { MOCK_RESEARCH_SOURCES, DEFAULT_PILLARS } from '../../strategy-research.mock-data';
 
@@ -42,6 +43,7 @@ describe('ResearchSourcesComponent', () => {
       imports: [ResearchSourcesComponent],
       providers: [
         { provide: StrategyResearchStateService, useValue: mockStateService },
+        { provide: ToastService, useValue: { showSuccess: vi.fn(), showError: vi.fn() } },
       ],
     }).compileComponents();
 

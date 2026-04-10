@@ -1,5 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { ObjectivesStripComponent } from './objectives-strip.component';
+import { ToastService } from '../../../core/toast/toast.service';
 import type { BusinessObjective } from '../strategy-research.types';
 import { AI_SIMULATION_DELAY_MS } from '../strategy-research.constants';
 
@@ -15,6 +16,9 @@ describe('ObjectivesStripComponent', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [ObjectivesStripComponent],
+      providers: [
+        { provide: ToastService, useValue: { showSuccess: vi.fn(), showError: vi.fn() } },
+      ],
     }).compileComponents();
 
     fixture = TestBed.createComponent(ObjectivesStripComponent);
