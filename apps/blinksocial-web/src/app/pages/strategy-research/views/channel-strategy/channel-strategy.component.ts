@@ -3,9 +3,10 @@ import { FormsModule } from '@angular/forms';
 import { MockDataService } from '../../../../core/mock-data/mock-data.service';
 import { StrategyResearchStateService } from '../../strategy-research-state.service';
 import type { ChannelStrategyEntry, Platform } from '../../strategy-research.types';
-import { PLATFORM_LABELS, PLATFORM_ICONS, AI_SIMULATION_DELAY_MS } from '../../strategy-research.constants';
+import { PLATFORM_LABELS, AI_SIMULATION_DELAY_MS } from '../../strategy-research.constants';
 import { safeTimeout, toggleSetItem } from '../../strategy-research.utils';
 import { DropdownComponent, DropdownOption } from '../../../../shared/dropdown/dropdown.component';
+import { PlatformIconComponent } from '../../../../shared/platform-icon/platform-icon.component';
 
 const PLATFORM_CONTENT_TYPES: Record<Platform, string[]> = {
   instagram: ['Reel', 'Carousel', 'Feed Post', 'Stories', 'Guide', 'Live'],
@@ -28,7 +29,7 @@ const GOAL_OPTIONS: DropdownOption[] = [
 
 @Component({
   selector: 'app-channel-strategy',
-  imports: [FormsModule, DropdownComponent],
+  imports: [FormsModule, DropdownComponent, PlatformIconComponent],
   templateUrl: './channel-strategy.component.html',
   styleUrl: './channel-strategy.component.scss',
 })
@@ -106,7 +107,6 @@ export class ChannelStrategyComponent {
     return PLATFORM_CONTENT_TYPES[platform] ?? [];
   }
   readonly platformLabels = PLATFORM_LABELS;
-  readonly platformIcons = PLATFORM_ICONS;
   readonly audienceOptions = computed<DropdownOption[]>(() => {
     const segments = this.stateService.segments();
     if (segments.length === 0) return [{ value: 'general', label: 'General Audience' }];

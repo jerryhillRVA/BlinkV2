@@ -440,155 +440,6 @@ button.btn-primary {
     &.selected { border-color: var(--blink-on-surface-strong); transform: scale(1.1); }
   }
 
-  .objective-empty {
-    margin: 0;
-    font-size: var(--blink-body-small);
-    color: var(--blink-on-surface-muted);
-  }
-
-  .objective-chips { display: flex; flex-wrap: wrap; gap: 8px; }
-
-  .objective-chip {
-    font-size: var(--blink-body-small);
-    padding: 4px 10px;
-    border-radius: 999px;
-    border: 1px solid var(--blink-outline-variant);
-    background: none;
-    color: var(--blink-on-surface-muted);
-    cursor: pointer;
-    max-width: 180px;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    transition: all 0.15s;
-
-    &:hover { border-color: var(--blink-on-surface-secondary); }
-    &.selected {
-      border-color: var(--blink-brand-primary);
-      background: var(--blink-brand-primary-lightest-bg);
-      color: var(--blink-brand-primary);
-    }
-  }
-
-  .btn-ai-suggest {
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-    background: none;
-    border: none;
-    padding: 0;
-    cursor: pointer;
-    font-size: 10px;
-    color: var(--blink-brand-primary);
-
-    &:hover:not(:disabled) { text-decoration: underline; }
-    &:disabled { opacity: 0.5; cursor: not-allowed; }
-  }
-
-  .goal-card {
-    border: 1px solid var(--blink-outline-variant);
-    border-radius: 6px;
-    padding: 12px;
-    background: var(--blink-input-bg-light);
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-  }
-
-  .goal-grid-2 {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 8px;
-  }
-
-  .field-xs {
-    height: 32px;
-    font-size: var(--blink-label-medium);
-    padding: 0 12px;
-    background: var(--blink-input-bg-dark);
-  }
-
-  .goal-card-actions { display: flex; gap: 8px; }
-
-  .btn-goal-save {
-    height: 28px;
-    padding: 0 12px;
-    border-radius: 6px;
-    border: none;
-    background: var(--blink-brand-primary);
-    color: var(--blink-on-brand);
-    font-size: var(--blink-label-medium);
-    font-weight: 500;
-    cursor: pointer;
-
-    &:hover { background: var(--blink-brand-primary-active, #c4452d); }
-  }
-
-  .btn-goal-cancel {
-    height: 28px;
-    padding: 0 12px;
-    border-radius: 6px;
-    border: 1px solid var(--blink-outline-variant);
-    background: var(--blink-surface);
-    color: var(--blink-on-surface);
-    font-size: var(--blink-label-medium);
-    font-weight: 500;
-    cursor: pointer;
-
-    &:hover { background: var(--blink-surface-hover); }
-  }
-
-  .field--goals { gap: 6px; }
-
-  .goal-saved {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 6px 10px;
-    border: 1px solid var(--blink-outline-variant);
-    border-radius: 6px;
-    background: var(--blink-input-bg-dark);
-    font-size: var(--blink-body-small);
-
-    .goal-saved-metric {
-      font-weight: 600;
-      color: var(--blink-on-surface-strong);
-      flex: 1;
-    }
-    .goal-saved-target { color: var(--blink-on-surface-muted); }
-
-    .btn-icon-remove { padding: 0; }
-  }
-
-  .btn-icon-remove {
-    background: none;
-    border: none;
-    padding: 6px;
-    cursor: pointer;
-    color: var(--blink-on-surface-muted);
-    border-radius: 4px;
-
-    &:hover {
-      color: var(--blink-status-danger, var(--blink-brand-primary));
-      background: var(--blink-surface-hover);
-    }
-  }
-
-  .btn-add-goal {
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-    background: none;
-    border: none;
-    padding: 0;
-    cursor: pointer;
-    font-size: var(--blink-body-small);
-    color: var(--blink-on-surface-muted);
-
-    &:hover:not(:disabled) { color: var(--blink-brand-primary); }
-    &:disabled { opacity: 0.5; cursor: not-allowed; }
-  }
-
   .modal-footer {
     display: flex;
     justify-content: flex-end;
@@ -626,6 +477,133 @@ button.btn-primary {
 
     &:hover:not(:disabled) { background: var(--blink-brand-primary-active, #c4452d); }
     &:disabled { opacity: 0.5; cursor: not-allowed; }
+  }
+
+  .modal-dialog--sm {
+    max-width: 24rem;
+  }
+
+  .goals-list {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .goal-saved-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 6px 10px;
+    border-radius: 6px;
+    background: var(--blink-input-bg-light);
+    font-size: var(--blink-body-small);
+
+    .goal-saved-metric {
+      font-weight: 500;
+      color: var(--blink-on-surface-strong);
+    }
+
+    .goal-saved-meta {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--blink-on-surface-muted);
+    }
+
+    .goal-saved-remove {
+      background: none;
+      border: none;
+      padding: 0;
+      cursor: pointer;
+      color: var(--blink-on-surface-muted);
+      display: inline-flex;
+
+      &:hover { color: var(--blink-status-danger, var(--blink-brand-primary)); }
+    }
+  }
+
+  .goals-empty {
+    margin: 0;
+    font-size: var(--blink-body-small);
+    color: var(--blink-on-surface-muted);
+  }
+
+  .goals-divider {
+    border-top: 1px solid var(--blink-outline-variant);
+    padding-top: 12px;
+  }
+
+  .goals-add-label {
+    margin: 0 0 8px;
+    font-size: var(--blink-body-small);
+    font-weight: 600;
+    color: var(--blink-on-surface-strong);
+  }
+
+  .goal-add-form {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .goal-grid-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+
+  .field-sm {
+    height: 32px;
+    font-size: var(--blink-label-medium);
+    padding: 0 10px;
+  }
+
+  .btn-goal-full {
+    width: 100%;
+    height: 32px;
+    border-radius: 6px;
+    border: none;
+    background: var(--blink-brand-primary);
+    color: var(--blink-on-brand);
+    font-family: inherit;
+    font-size: var(--blink-label-medium);
+    font-weight: 500;
+    cursor: pointer;
+
+    &:hover:not(:disabled) { background: var(--blink-brand-primary-active, #c4452d); }
+    &:disabled { opacity: 0.5; cursor: not-allowed; }
+  }
+
+  .obj-chip-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .obj-chip {
+    font-size: var(--blink-body-small);
+    padding: 4px 10px;
+    border-radius: 999px;
+    border: 1px solid var(--blink-outline-variant);
+    background: var(--blink-surface);
+    color: var(--blink-on-surface-muted);
+    cursor: pointer;
+    max-width: 240px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-family: inherit;
+
+    &:hover {
+      border-color: var(--blink-on-surface-secondary);
+    }
+
+    &.active {
+      border-color: var(--blink-brand-primary);
+      background: var(--blink-brand-primary-lightest-bg);
+      color: var(--blink-brand-primary);
+      font-weight: 500;
+    }
   }
 }
 

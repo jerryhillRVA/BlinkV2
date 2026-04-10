@@ -1,14 +1,17 @@
 import { Component, DestroyRef, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import type { CompetitorInsight, Platform } from '../../strategy-research.types';
-import { PLATFORM_LABELS, PLATFORM_ICONS, AI_SIMULATION_DELAY_MS } from '../../strategy-research.constants';
+import type { CompetitorInsight, CompetitorIntel, Platform } from '../../strategy-research.types';
+import { PLATFORM_LABELS, AI_SIMULATION_DELAY_MS } from '../../strategy-research.constants';
+import { MOCK_COMPETITOR_INTEL_FALLBACK } from '../../strategy-research.mock-data';
 import { safeTimeout, generateId, toggleSetItem } from '../../strategy-research.utils';
 import { StrategyResearchStateService } from '../../strategy-research-state.service';
+import { PlatformIconComponent } from '../../../../shared/platform-icon/platform-icon.component';
+import { DropdownComponent, DropdownOption } from '../../../../shared/dropdown/dropdown.component';
 
 @Component({
   selector: 'app-competitor-deep-dive',
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, PlatformIconComponent, DropdownComponent],
   templateUrl: './competitor-deep-dive.component.html',
   styleUrl: './competitor-deep-dive.component.scss',
 })
@@ -18,19 +21,28 @@ export class CompetitorDeepDiveComponent {
 
   readonly competitors = this.stateService.competitorInsights;
   readonly showAddForm = signal(false);
-  readonly expandedIds = signal<Set<string>>(new Set());
-  readonly isScanning = signal(false);
+  readonly intelOpenIds = signal<Set<string>>(new Set());
+  readonly runningIntelIds = signal<Set<string>>(new Set());
+  readonly deleteConfirmId = signal<string | null>(null);
+  readonly isFinding = signal(false);
+  readonly isRefreshingAll = signal(false);
 
-  // Add form state
   newCompetitor = '';
   newPlatform: Platform = 'instagram';
-  newContentType = '';
-  newTopic = '';
-  newRelevancy: CompetitorInsight['relevancyLevel'] = 'Medium';
-  newFrequency = '';
+
+  readonly platformDropdownOptions: DropdownOption[] = [
+    { value: 'instagram', label: 'Instagram' },
+    { value: 'tiktok', label: 'TikTok' },
+    { value: 'youtube', label: 'YouTube' },
+    { value: 'linkedin', label: 'LinkedIn' },
+    { value: 'facebook', label: 'Facebook' },
+  ];
+
+  setNewPlatform(value: string): void {
+    this.newPlatform = value as Platform;
+  }
 
   readonly platformLabels = PLATFORM_LABELS;
-  readonly platformIcons = PLATFORM_ICONS;
 
   getRelevancyClass(level: string): string {
     switch (level) {
@@ -41,85 +53,116 @@ export class CompetitorDeepDiveComponent {
     }
   }
 
-  toggleExpand(id: string): void {
-    this.expandedIds.update(set => toggleSetItem(set, id));
+  engagementClass(level: string): string {
+    if (level === 'Very High') return 'engagement--very-high';
+    if (level === 'High') return 'engagement--high';
+    return 'engagement--medium';
   }
 
-  isExpanded(id: string): boolean {
-    return this.expandedIds().has(id);
+  hasIntel(c: CompetitorInsight): boolean {
+    return !!c.intel;
   }
 
-  runAiScan(): void {
-    this.isScanning.set(true);
+  isIntelOpen(id: string): boolean {
+    return this.intelOpenIds().has(id);
+  }
+
+  toggleIntel(id: string): void {
+    this.intelOpenIds.update(set => toggleSetItem(set, id));
+  }
+
+  isRunningIntel(id: string): boolean {
+    return this.runningIntelIds().has(id);
+  }
+
+  private cloneFallbackIntel(): CompetitorIntel {
+    return {
+      ...MOCK_COMPETITOR_INTEL_FALLBACK,
+      positioning: { ...MOCK_COMPETITOR_INTEL_FALLBACK.positioning },
+      contentStrategy: { ...MOCK_COMPETITOR_INTEL_FALLBACK.contentStrategy },
+      gaps: {
+        ...MOCK_COMPETITOR_INTEL_FALLBACK.gaps,
+        uncoveredAngles: [...MOCK_COMPETITOR_INTEL_FALLBACK.gaps.uncoveredAngles],
+        missedPainPoints: [...MOCK_COMPETITOR_INTEL_FALLBACK.gaps.missedPainPoints],
+      },
+      recommendedActions: [...MOCK_COMPETITOR_INTEL_FALLBACK.recommendedActions],
+      lastUpdated: new Date().toISOString(),
+    };
+  }
+
+  generateIntel(id: string): void {
+    this.runningIntelIds.update(set => { const next = new Set(set); next.add(id); return next; });
+    this.intelOpenIds.update(set => { const next = new Set(set); next.add(id); return next; });
     safeTimeout(() => {
-      const scannedInsights: CompetitorInsight[] = [
-        {
-          id: generateId('ci'),
-          competitor: 'Competitor A (AI-discovered)',
-          platform: 'instagram',
-          contentType: 'Reels & Carousels',
-          topic: 'Industry tips and behind-the-scenes',
-          relevancyLevel: 'High',
-          frequency: '4x/week',
-          insight: 'Strong engagement on educational Reels. Carousels drive saves. Opportunity to differentiate with more authentic storytelling.',
-        },
-        {
-          id: generateId('ci'),
-          competitor: 'Competitor B (AI-discovered)',
-          platform: 'tiktok',
-          contentType: 'Short-form Video',
-          topic: 'Trending challenges and tutorials',
-          relevancyLevel: 'Very High',
-          frequency: 'Daily',
-          insight: 'Rapid follower growth via trend-jacking. Weak on educational depth — a gap you can fill with expert-backed content.',
-        },
-        {
-          id: generateId('ci'),
-          competitor: 'Competitor C (AI-discovered)',
-          platform: 'youtube',
-          contentType: 'Long-form Video',
-          topic: 'In-depth guides and reviews',
-          relevancyLevel: 'Medium',
-          frequency: '1x/week',
-          insight: 'High watch time on 10-15 min videos. Low posting frequency leaves room for consistent competitors to capture search traffic.',
-        },
-      ];
-      const updated = [...scannedInsights, ...this.competitors()];
-      this.stateService.saveCompetitorInsights(updated);
-      this.isScanning.set(false);
+      this.competitors.update(list =>
+        list.map(c => (c.id === id ? { ...c, intel: c.intel ?? this.cloneFallbackIntel() } : c))
+      );
+      this.stateService.saveCompetitorInsights(this.competitors());
+      this.runningIntelIds.update(set => { const next = new Set(set); next.delete(id); return next; });
     }, AI_SIMULATION_DELAY_MS, this.destroyRef);
   }
 
-  runTeardown(id: string): void {
+  refreshIntel(id: string): void {
+    this.competitors.update(list =>
+      list.map(c => c.id === id && c.intel ? { ...c, intel: { ...c.intel, lastUpdated: new Date().toISOString() } } : c)
+    );
+  }
+
+  refreshAll(): void {
+    this.isRefreshingAll.set(true);
+    safeTimeout(() => {
+      const stamp = new Date().toISOString();
+      this.competitors.update(list => list.map(c => (c.intel ? { ...c, intel: { ...c.intel, lastUpdated: stamp } } : c)));
+      this.isRefreshingAll.set(false);
+    }, AI_SIMULATION_DELAY_MS, this.destroyRef);
+  }
+
+  findCompetitors(): void {
+    this.isFinding.set(true);
+    safeTimeout(() => {
+      const insight: CompetitorInsight = {
+        id: generateId('ci'), competitor: 'AI-Discovered: Strong After 50', platform: 'instagram',
+        contentType: 'Reels', topic: 'Strength training for women 50+', relevancyLevel: 'High',
+        frequency: '3x/week', insight: 'Newly discovered competitor focused on accessible strength training for women 50+.',
+      };
+      this.competitors.update(list => [insight, ...list]);
+      this.stateService.saveCompetitorInsights(this.competitors());
+      this.isFinding.set(false);
+    }, AI_SIMULATION_DELAY_MS, this.destroyRef);
+  }
+
+  requestDelete(id: string): void { this.deleteConfirmId.set(id); }
+
+  confirmDelete(id: string): void {
     this.competitors.update(list => list.filter(c => c.id !== id));
     this.stateService.saveCompetitorInsights(this.competitors());
+    this.deleteConfirmId.set(null);
+  }
+
+  cancelDelete(): void { this.deleteConfirmId.set(null); }
+
+  createIdeaFromAction(_id: string, _action: string): void {
+    // Placeholder — wired to ideation flow in a future task.
+  }
+
+  formatDate(dateStr: string): string {
+    const date = new Date(dateStr);
+    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
   }
 
   openAddForm(): void {
     this.newCompetitor = '';
     this.newPlatform = 'instagram';
-    this.newContentType = '';
-    this.newTopic = '';
-    this.newRelevancy = 'Medium';
-    this.newFrequency = '';
     this.showAddForm.set(true);
   }
 
-  cancelAdd(): void {
-    this.showAddForm.set(false);
-  }
+  cancelAdd(): void { this.showAddForm.set(false); }
 
   addCompetitor(): void {
     if (!this.newCompetitor.trim()) return;
     const insight: CompetitorInsight = {
-      id: generateId('ci'),
-      competitor: this.newCompetitor.trim(),
-      platform: this.newPlatform,
-      contentType: this.newContentType.trim() || 'General',
-      topic: this.newTopic.trim() || 'TBD',
-      relevancyLevel: this.newRelevancy,
-      frequency: this.newFrequency.trim() || 'Unknown',
-      insight: '',
+      id: generateId('ci'), competitor: this.newCompetitor.trim(), platform: this.newPlatform,
+      contentType: 'TBD', topic: 'TBD', relevancyLevel: 'Medium', frequency: 'Unknown', insight: 'Pending analysis...',
     };
     const updated = [...this.competitors(), insight];
     this.stateService.saveCompetitorInsights(updated);

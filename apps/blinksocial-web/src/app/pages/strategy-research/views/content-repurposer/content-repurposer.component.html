@@ -1,67 +1,268 @@
 <div class="content-repurposer">
   <div class="input-panel">
-    <div class="input-panel__header">
-      <h4 class="input-panel__title has-mock-data" title="Mock data">Source Content</h4>
-    </div>
-    <textarea
-      class="input-panel__textarea"
-      [ngModel]="sourceContent()"
-      (ngModelChange)="updateSource($event)"
-      placeholder="Paste your source content here (blog post, caption, script, etc.)..."
-      rows="6"
-    ></textarea>
+    @for (src of sources(); track $index; let i = $index) {
+      <div class="source-block">
+        <div class="source-block__header">
+          <span class="source-block__label">{{ sources().length > 1 ? 'Source ' + (i + 1) : 'Source Content' }}</span>
+          @if (sources().length > 1) {
+            <button type="button" class="btn-remove-source" (click)="removeSource(i)" aria-label="Remove source">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+            </button>
+          }
+        </div>
+        <div class="source-textarea-wrap">
+          <textarea
+            class="source-textarea"
+            placeholder="Paste your blog post, podcast transcript, newsletter, or any long-form content here..."
+            [value]="src"
+            (input)="updateSource(i, $any($event.target).value)"
+          ></textarea>
+          <span class="char-counter">{{ formatChars(src) }} chars</span>
+        </div>
+      </div>
+    }
 
-    <div class="platform-toggles">
-      <span class="platform-toggles__label">Repurpose for:</span>
-      <div class="platform-toggles__chips">
-        @for (p of platformOptions; track p.id) {
+    @if (sources().length < 3) {
+      <button type="button" class="btn-add-source" (click)="addSource()">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
+        Add Source
+      </button>
+    }
+
+    @if (sources().length > 1) {
+      <p class="hint">AI will combine all sources into a unified output</p>
+    }
+
+    <div>
+      <span class="platform-toggles__label">Repurpose for</span>
+      <div class="platform-toggles">
+        @for (p of allPlatforms; track p) {
           <button
-            class="platform-chip"
-            [class.platform-chip--active]="isPlatformSelected(p.id)"
-            (click)="togglePlatform(p.id)"
+            type="button"
+            class="platform-toggle"
+            [class.active]="isPlatformSelected(p)"
+            (click)="togglePlatform(p)"
           >
-            {{ p.label }}
+            <app-platform-icon [platform]="p" [size]="14" />
+            {{ platformLabel[p] }}
           </button>
         }
       </div>
     </div>
 
     <button
-      class="btn btn--primary"
+      type="button"
+      class="btn-repurpose"
       (click)="repurpose()"
-      [disabled]="isGenerating() || !sourceContent().trim()"
+      [disabled]="!canRepurpose() || isGenerating()"
     >
       @if (isGenerating()) {
         <span class="spinner"></span>
-      }
-      @if (!isGenerating()) {
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M21 2v6h-6M3 12a9 9 0 0 1 15-6.7L21 8M3 22v-6h6M21 12a9 9 0 0 1-15 6.7L3 16"/>
+      } @else {
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"/>
+          <path d="M20 3v4"/><path d="M22 5h-4"/><path d="M4 17v2"/><path d="M5 18H3"/>
         </svg>
       }
-      {{ isGenerating() ? 'Repurposing...' : 'Repurpose with AI' }}
+      Repurpose with AI
     </button>
   </div>
 
-  @if (outputs().length > 0) {
-    <div class="output-grid">
-      @for (output of outputs(); track $index; let i = $index) {
-        <div class="output-card">
-          <div class="output-card__header">
-            <span class="output-card__platform">{{ output.platform }}</span>
-            <span class="output-card__format">{{ output.format }}</span>
-          </div>
-          <div class="output-card__content">
-            <pre class="output-card__text">{{ output.content }}</pre>
-          </div>
-          <div class="output-card__actions">
-            <button class="btn btn--sm btn--secondary" (click)="copyContent(i)">
-              {{ copiedIndex() === i ? 'Copied!' : 'Copy' }}
+  @if (isGenerating()) {
+    <div class="loading-card">
+      <span class="spinner spinner--lg"></span>
+      <p class="loading-card__title">Generating platform formats…</p>
+      <p class="loading-card__subtitle">Adapting your content for {{ selectedPlatforms().size }} platform{{ selectedPlatforms().size === 1 ? '' : 's' }}</p>
+    </div>
+  } @else if (!output()) {
+    <div class="empty-state">
+      <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><path d="M21 3v5h-5"/>
+        <path d="M21 12a9 9 0 0 1-15 6.7L3 16"/><path d="M3 21v-5h5"/>
+      </svg>
+      <p class="empty-state__title">Select platforms, paste your content, and click Repurpose with AI</p>
+      <p class="empty-state__subtitle">Generates platform-ready formats for every selected channel</p>
+    </div>
+  } @else {
+    <div class="output-area">
+      <div class="ai-detected">
+        <div class="ai-detected__header">
+          <span class="ai-detected__label">AI DETECTED — ADJUST IF NEEDED</span>
+          @if (hasPendingChanges()) {
+            <button type="button" class="btn-regenerate" (click)="openRegenerateDialog()">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><path d="M21 3v5h-5"/>
+                <path d="M21 12a9 9 0 0 1-15 6.7L3 16"/><path d="M3 21v-5h5"/>
+              </svg>
+              Regenerate
             </button>
-            <button class="btn btn--sm btn--ghost" (click)="saveAsIdea(i)">Save as Idea</button>
+          }
+        </div>
+
+        <div>
+          <p class="ai-detected__sublabel">Content Pillars</p>
+          <div class="pillar-chips">
+            @for (p of pillars(); track p.id) {
+              <button
+                type="button"
+                class="pillar-chip"
+                [class.active]="isPillarSelected(p.id)"
+                [style.--pillar-color]="p.color"
+                (click)="togglePillar(p.id)"
+              >
+                {{ p.name }}
+              </button>
+            }
           </div>
+        </div>
+
+        <div>
+          <p class="ai-detected__sublabel">Audience Segments</p>
+          <div class="segment-chips">
+            @for (s of segments(); track s.id) {
+              <button
+                type="button"
+                class="segment-chip"
+                [class.active]="isSegmentSelected(s.id)"
+                (click)="toggleSegment(s.id)"
+              >
+                {{ s.name }}
+              </button>
+            }
+          </div>
+        </div>
+      </div>
+
+      <div class="counts-row">
+        <p>
+          {{ visibleCards().length }} format{{ visibleCards().length === 1 ? '' : 's' }} generated
+          @if (dismissedCards().size > 0) {
+            · {{ dismissedCards().size }} dismissed
+          }
+        </p>
+        @if (unsavedCount() > 0) {
+          <button type="button" class="btn-save-all" (click)="saveAllCards()">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m19 21-7-4-7 4V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16z"/></svg>
+            Save All as Ideas ({{ unsavedCount() }})
+          </button>
+        }
+      </div>
+
+      @if (visibleCards().length > 0) {
+        <div class="cards-grid">
+          @for (card of visibleCards(); track card.key) {
+            <div class="output-card">
+              <div class="card-title-block">
+                <input
+                  type="text"
+                  class="card-title"
+                  [class.error]="titleErrors().has(card.key)"
+                  placeholder="Idea title…"
+                  [value]="cardTitles()[card.key] || ''"
+                  (input)="setCardTitle(card.key, $any($event.target).value)"
+                  [disabled]="savedCards().has(card.key)"
+                />
+                @if (titleErrors().has(card.key)) {
+                  <p class="card-title-error">Add a title to save this idea</p>
+                }
+              </div>
+
+              <div class="card-header">
+                <div class="card-header__left">
+                  <app-platform-icon [platform]="card.platformId" [size]="16" />
+                  <span class="card-label">{{ card.label }}</span>
+                </div>
+                <div class="card-header__right">
+                  <span class="card-badge" [class]="'card-badge ' + card.badgeClass">{{ card.badge }}</span>
+                  <button type="button" class="btn-dismiss" (click)="dismissCard(card.key)" aria-label="Dismiss">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+                  </button>
+                </div>
+              </div>
+
+              <div class="card-content">
+                <p>{{ card.content }}</p>
+              </div>
+
+              <div class="card-actions">
+                <button type="button" class="btn-card-copy" (click)="copyCard(card)">
+                  @if (copiedCard() === card.key) {
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+                    Copied!
+                  } @else {
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
+                    Copy
+                  }
+                </button>
+                <button
+                  type="button"
+                  class="btn-card-save"
+                  [class.saved]="savedCards().has(card.key)"
+                  [disabled]="savedCards().has(card.key)"
+                  (click)="saveCard(card)"
+                >
+                  @if (savedCards().has(card.key)) {
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+                    Saved
+                  } @else {
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m19 21-7-4-7 4V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16z"/></svg>
+                    Save as Idea
+                  }
+                </button>
+              </div>
+            </div>
+          }
+        </div>
+      } @else {
+        <div class="all-dismissed">
+          <p>All formats dismissed.</p>
+          <button type="button" class="restore-all-link" (click)="restoreAll()">Restore all</button>
+        </div>
+      }
+
+      @if (savedIdeaRecords().length > 0) {
+        <div class="saved-records-section">
+          <p class="saved-records-section__label">PREVIOUSLY SAVED IDEAS</p>
+          @for (r of savedIdeaRecords(); track r.uid) {
+            <div class="saved-record">
+              <span [class]="'card-badge ' + r.badgeClass">{{ r.badge }}</span>
+              <p class="saved-record__title">{{ r.title }}</p>
+              <a class="saved-record__link" href="javascript:void(0)">View in Ideation</a>
+            </div>
+          }
         </div>
       }
     </div>
   }
+
+  <ng-template #regenerateDialogTpl>
+    <div
+      class="modal-overlay app-modal"
+      role="presentation"
+      tabindex="-1"
+      (click)="closeRegenerateDialog()"
+      (keyup.escape)="closeRegenerateDialog()"
+    >
+      <div
+        class="modal-dialog modal-dialog--sm"
+        role="dialog"
+        aria-labelledby="regenerate-title"
+        aria-modal="true"
+        tabindex="-1"
+        (click)="$event.stopPropagation()"
+        (keyup.escape)="closeRegenerateDialog()"
+      >
+        <div class="modal-header">
+          <h2 id="regenerate-title" class="modal-title">Regenerate content formats?</h2>
+          <p class="modal-description">
+            This will rebuild all platform formats using your updated pillars, audience, and platform selections. Ideas you've already saved are safe — unsaved cards will be replaced.
+          </p>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn-modal-cancel" (click)="closeRegenerateDialog()">Cancel</button>
+          <button type="button" class="btn-modal-create" (click)="confirmRegenerate()">Regenerate</button>
+        </div>
+      </div>
+    </div>
+  </ng-template>
 </div>

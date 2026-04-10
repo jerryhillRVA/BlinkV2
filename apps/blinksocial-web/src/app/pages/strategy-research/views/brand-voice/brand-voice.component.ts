@@ -1,8 +1,6 @@
 import { Component, HostBinding, inject } from '@angular/core';
 import { VoiceMissionComponent } from './voice-mission/voice-mission.component';
 import { VoiceAttributesComponent } from './voice-attributes/voice-attributes.component';
-import { ToneContextComponent } from './tone-context/tone-context.component';
-import { PlatformAdjustmentsComponent } from './platform-adjustments/platform-adjustments.component';
 import { VocabularyGuideComponent } from './vocabulary-guide/vocabulary-guide.component';
 import { MockDataService } from '../../../../core/mock-data/mock-data.service';
 import { StrategyResearchStateService } from '../../strategy-research-state.service';
@@ -12,8 +10,6 @@ import { StrategyResearchStateService } from '../../strategy-research-state.serv
   imports: [
     VoiceMissionComponent,
     VoiceAttributesComponent,
-    ToneContextComponent,
-    PlatformAdjustmentsComponent,
     VocabularyGuideComponent,
   ],
   templateUrl: './brand-voice.component.html',

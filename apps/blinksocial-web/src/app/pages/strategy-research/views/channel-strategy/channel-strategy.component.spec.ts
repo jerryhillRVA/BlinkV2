@@ -114,9 +114,8 @@ describe('ChannelStrategyComponent', () => {
     vi.useRealTimers();
   });
 
-  it('exposes platformLabels, platformIcons, and option lists', () => {
+  it('exposes platformLabels and option lists', () => {
     expect(component.platformLabels['instagram']).toBeTruthy();
-    expect(component.platformIcons['instagram']).toBeTruthy();
     expect(component.audienceOptions().length).toBeGreaterThan(0);
     expect(component.goalOptions.length).toBeGreaterThan(0);
   });

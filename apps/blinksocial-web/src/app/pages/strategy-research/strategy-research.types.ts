@@ -119,6 +119,34 @@ export interface ResearchSource {
   discoveredAt: string;
 }
 
+export interface CompetitorIntelPositioning {
+  brandVoice: string;
+  primaryMessage: string;
+  targeting: string;
+}
+
+export interface CompetitorIntelContentStrategy {
+  topFormat: string;
+  frequency: string;
+  hookStyle: string;
+  ctaPattern: string;
+  engagement: 'Very High' | 'High' | 'Medium';
+}
+
+export interface CompetitorIntelGaps {
+  uncoveredAngles: string[];
+  missedPainPoints: string[];
+  counterStrategy: string;
+}
+
+export interface CompetitorIntel {
+  positioning: CompetitorIntelPositioning;
+  contentStrategy: CompetitorIntelContentStrategy;
+  gaps: CompetitorIntelGaps;
+  recommendedActions: string[];
+  lastUpdated: string;
+}
+
 export interface CompetitorInsight {
   id: string;
   competitor: string;
@@ -128,6 +156,118 @@ export interface CompetitorInsight {
   relevancyLevel: 'Very High' | 'High' | 'Medium';
   frequency: string;
   insight: string;
+  intel?: CompetitorIntel;
+}
+
+export type HashtagTab = 'reach' | 'niche' | 'community';
+
+export interface HashtagEntry {
+  tag: string;
+  posts: string;
+}
+
+export interface SeoChecklistItem {
+  label: string;
+  tip: string;
+}
+
+export interface TrendingAngle {
+  title: string;
+  hook: string;
+  virality: 'Very High' | 'High' | 'Medium';
+}
+
+export interface SeoData {
+  hashtags: Record<HashtagTab, HashtagEntry[]>;
+  keywords: string[];
+  searchIntents: string[];
+  exampleBio: string;
+  checklist: SeoChecklistItem[];
+  trending: TrendingAngle[];
+}
+
+export interface AbScoreBreakdown {
+  hookStrength: { a: number; b: number };
+  clarity: { a: number; b: number };
+  emotionalResonance: { a: number; b: number };
+  ctaEffectiveness: { a: number; b: number };
+}
+
+export interface AbVariantInsights {
+  strengths: string[];
+  weaknesses: string[];
+}
+
+export interface AbAnalysisResult {
+  winner: 'A' | 'B';
+  confidence: 'High' | 'Medium' | 'Low';
+  verdict: string;
+  variantA: AbVariantInsights;
+  variantB: AbVariantInsights;
+  scores: AbScoreBreakdown;
+  improvedVersion: string;
+  improvementRationale: string;
+}
+
+export type SeriesPostRole = 'Hook' | 'Value' | 'Proof' | 'Pivot' | 'Conversion';
+
+export interface SeriesPost {
+  number: number;
+  title: string;
+  role: SeriesPostRole;
+  contentType: string;
+  suggestedDay: string;
+  hook: string;
+  captionDirection: string;
+  cta: string;
+  bridgeNote?: string;
+}
+
+export interface SeriesOverview {
+  title: string;
+  narrativeArc: string;
+  platform: Platform;
+  postCount: number;
+  goal: string;
+  pillarId: string;
+  segmentId: string;
+  posts: SeriesPost[];
+}
+
+export interface RepurposeCarouselSlide {
+  role: string;
+  headline: string;
+}
+
+export interface RepurposeOutput {
+  sourceText: string;
+  pillarId: string;
+  segmentId: string;
+  generatedAt: string;
+  reelHooks: string[];
+  carouselSlides: RepurposeCarouselSlide[];
+  instagramCaption: string;
+  tiktokHook: string;
+  youtubeShort: string;
+  linkedinPost: string;
+  facebookPost: string;
+}
+
+export interface RepurposeOutputCard {
+  key: string;
+  platformId: Platform;
+  label: string;
+  badge: string;
+  badgeClass: string;
+  content: string;
+}
+
+export interface SavedIdeaRecord {
+  uid: string;
+  title: string;
+  platformId: Platform;
+  badge: string;
+  badgeClass: string;
 }
 
 export interface AudienceInsight {

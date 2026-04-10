@@ -83,10 +83,28 @@ describe('ResearchSourcesComponent', () => {
   });
 
   it('should show filter dropdown with All Pillars and individual pillars', () => {
-    const select = nativeElement.querySelector('select');
+    const select = nativeElement.querySelector('.filter-select') as HTMLSelectElement;
     expect(select).toBeTruthy();
-    const options = select?.querySelectorAll('option');
-    expect(options?.length).toBe(6); // "All Pillars" + 5 pillars
+    const options = select.querySelectorAll('option');
+    expect(options.length).toBe(6); // "All Pillars" + 5 pillars
+  });
+
+  it('should render an external source link with the source url and target=_blank', () => {
+    const link = nativeElement.querySelector('.source-link') as HTMLAnchorElement;
+    expect(link).toBeTruthy();
+    expect(link.getAttribute('target')).toBe('_blank');
+    expect(link.getAttribute('rel')).toContain('noopener');
+    expect(link.getAttribute('href')).toBe(component.sources()[0].url);
+  });
+
+  it('renders the discover loading card while isDiscovering and removes it after', () => {
+    expect(nativeElement.querySelector('.discover-loading-card')).toBeNull();
+    component.discoverSources();
+    fixture.detectChanges();
+    expect(nativeElement.querySelector('.discover-loading-card')).toBeTruthy();
+    vi.advanceTimersByTime(AI_SIMULATION_DELAY_MS);
+    fixture.detectChanges();
+    expect(nativeElement.querySelector('.discover-loading-card')).toBeNull();
   });
 
   it('should render discover button', () => {

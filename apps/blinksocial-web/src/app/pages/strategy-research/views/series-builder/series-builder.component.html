@@ -1,101 +1,197 @@
 <div class="series-builder">
-  <div class="input-form">
-    <h4 class="input-form__title has-mock-data" title="Mock data">Build a Content Series</h4>
-    <div class="input-form__fields">
-      <div class="input-form__field">
-        <span>Series Goal</span>
-        <select [(ngModel)]="selectedGoal">
-          @for (g of goalOptions; track g) {
-            <option [value]="g">{{ g }}</option>
-          }
-        </select>
+  <div class="setup-form">
+    <div class="setup-grid">
+      <div class="setup-field">
+        <span class="setup-field__label">Audience Segment</span>
+        <app-dropdown
+          size="sm"
+          [filled]="true"
+          [options]="segmentDropdownOptions"
+          [value]="selectedSegmentId()"
+          (valueChange)="setSegment($event)"
+        />
       </div>
-      <div class="input-form__field">
-        <span>Series Length</span>
-        <div class="length-options">
-          @for (len of lengthOptions; track len) {
-            <button
-              class="length-btn"
-              [class.length-btn--active]="seriesLength === len"
-              (click)="seriesLength = len"
-            >
-              {{ len }} posts
-            </button>
-          }
-        </div>
+      <div class="setup-field">
+        <span class="setup-field__label">Content Pillar</span>
+        <app-dropdown
+          size="sm"
+          [filled]="true"
+          [options]="pillarDropdownOptions"
+          [value]="selectedPillarId()"
+          (valueChange)="setPillar($event)"
+        />
       </div>
-      <div class="input-form__field">
-        <span>Primary Platform</span>
-        <select [(ngModel)]="selectedPlatform">
-          @for (p of platformOptions; track p.id) {
-            <option [value]="p.id">{{ p.label }}</option>
-          }
-        </select>
+      <div class="setup-field">
+        <span class="setup-field__label">Series Goal</span>
+        <app-dropdown
+          size="sm"
+          [filled]="true"
+          [options]="goalDropdownOptions"
+          [value]="selectedGoal()"
+          (valueChange)="setGoal($event)"
+        />
+      </div>
+      <div class="setup-field">
+        <span class="setup-field__label">Series Length</span>
+        <app-dropdown
+          size="sm"
+          [filled]="true"
+          [options]="lengthDropdownOptions"
+          [value]="selectedLength()"
+          (valueChange)="setLength($event)"
+        />
+      </div>
+      <div class="setup-field">
+        <span class="setup-field__label">Primary Platform</span>
+        <app-dropdown
+          size="sm"
+          [filled]="true"
+          [options]="platformDropdownOptions"
+          [value]="selectedPlatform()"
+          (valueChange)="setPlatform($event)"
+        />
       </div>
     </div>
-    <button class="btn btn--primary" (click)="buildSeries()" [disabled]="isGenerating()">
+
+    <button
+      type="button"
+      class="btn-build"
+      (click)="buildSeries()"
+      [disabled]="!canBuild() || isGenerating()"
+    >
       @if (isGenerating()) {
         <span class="spinner"></span>
-      }
-      @if (!isGenerating()) {
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M10 6h11M10 12h11M10 18h11M3 6l2 2 4-4M3 12l2 2 4-4M3 18l2 2 4-4"/>
+      } @else {
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="10" x2="21" y1="6" y2="6"/><line x1="10" x2="21" y1="12" y2="12"/><line x1="10" x2="21" y1="18" y2="18"/>
+          <path d="M4 6h1v4"/><path d="M4 10h2"/><path d="M6 18H4c0-1 2-2 2-3s-1-1.5-2-1"/>
         </svg>
       }
-      {{ isGenerating() ? 'Building Series...' : 'Build Series with AI' }}
+      Build Series with AI
     </button>
   </div>
 
-  @if (series(); as s) {
-    <div class="series-output">
-      <div class="overview-card">
-        <h3 class="overview-card__title">{{ s.title }}</h3>
-        <p class="overview-card__arc">{{ s.narrativeArc }}</p>
-        <div class="overview-card__badges">
-          <span class="badge badge--platform">{{ s.platform }}</span>
-          <span class="badge badge--count">{{ s.postCount }} posts</span>
-          <span class="badge badge--goal">{{ s.goal }}</span>
+  @if (isGenerating()) {
+    <div class="loading-card">
+      <span class="spinner spinner--lg"></span>
+      <p class="loading-card__title">Building your content series…</p>
+      <p class="loading-card__subtitle">Generating {{ selectedLength() }} posts</p>
+    </div>
+  } @else if (!series()) {
+    <div class="empty-state">
+      <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="10" x2="21" y1="6" y2="6"/><line x1="10" x2="21" y1="12" y2="12"/><line x1="10" x2="21" y1="18" y2="18"/>
+        <path d="M4 6h1v4"/><path d="M4 10h2"/><path d="M6 18H4c0-1 2-2 2-3s-1-1.5-2-1"/>
+      </svg>
+      <p class="empty-state__title">Configure your series and click Build Series with AI</p>
+      <p class="empty-state__subtitle">Generates a connected post sequence with hooks, value, proof, and a conversion moment.</p>
+    </div>
+  } @else if (series(); as s) {
+    <div class="series-overview">
+      <div class="series-overview__head">
+        <div class="series-overview__head-left">
+          <svg class="series-overview__icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="10" x2="21" y1="6" y2="6"/><line x1="10" x2="21" y1="12" y2="12"/><line x1="10" x2="21" y1="18" y2="18"/>
+            <path d="M4 6h1v4"/><path d="M4 10h2"/><path d="M6 18H4c0-1 2-2 2-3s-1-1.5-2-1"/>
+          </svg>
+          <span class="series-overview__eyebrow">CONTENT SERIES</span>
         </div>
-      </div>
-
-      <div class="post-list">
-        @for (post of s.posts; track post.number; let last = $last) {
-          <div class="post-card">
-            <div class="post-card__header">
-              <span class="post-number">{{ post.number }}</span>
-              <div class="post-card__title-row">
-                <h4 class="post-card__title">{{ post.title }}</h4>
-                <span class="role-tag" [ngClass]="getRoleClass(post.role)">{{ post.role }}</span>
-              </div>
-            </div>
-            <div class="post-card__body">
-              <div class="post-card__hook">
-                <span class="hook-label">Hook:</span>
-                <span class="hook-text">{{ post.hook }}</span>
-              </div>
-              <div class="post-card__direction">
-                <span class="direction-label">Caption Direction:</span>
-                <span class="direction-text">{{ post.captionDirection }}</span>
-              </div>
-              <div class="post-card__cta">
-                <span class="cta-label">CTA:</span>
-                <span class="cta-text">{{ post.cta }}</span>
-              </div>
-            </div>
-            <div class="post-card__actions">
-              <button class="btn btn--sm btn--primary" (click)="createInIdeation(post.number)">Create in Ideation</button>
-            </div>
-          </div>
-          @if (!last) {
-            <div class="bridge-connector">
-              <div class="bridge-line"></div>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="m6 9 6 6 6-6"/>
-              </svg>
-            </div>
-          }
+        @if (unsavedCount() > 0) {
+          <button type="button" class="btn-create-all" (click)="createAllPosts()">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"/>
+              <path d="M20 3v4"/><path d="M22 5h-4"/><path d="M4 17v2"/><path d="M5 18H3"/>
+            </svg>
+            Create All in Ideation ({{ unsavedCount() }})
+          </button>
         }
       </div>
+
+      <h3>{{ s.title }}</h3>
+      <p>{{ s.narrativeArc }}</p>
+
+      <div class="series-badges">
+        <span class="series-badge">
+          <app-platform-icon [platform]="s.platform" [size]="12" />
+          {{ s.platform }}
+        </span>
+        <span class="series-badge">{{ s.postCount }} posts</span>
+        <span class="series-badge">{{ s.goal }}</span>
+        <span class="series-badge series-badge--pillar" [style.--pillar-color]="pillarColor(s.pillarId)">
+          <span class="series-badge__dot"></span>
+          {{ pillarName(s.pillarId) }}
+        </span>
+      </div>
+    </div>
+
+    <div class="post-list">
+      @for (post of s.posts; track post.number; let last = $last) {
+        <div class="post-card">
+          <div class="post-number">{{ post.number }}</div>
+          <div class="post-card__body">
+            <div class="post-card__title-row">
+              <div class="post-card__title-block">
+                <input
+                  type="text"
+                  class="post-title"
+                  [class.error]="titleErrors().has(post.number)"
+                  placeholder="Post title…"
+                  [value]="postTitles()[post.number] || ''"
+                  (input)="setPostTitle(post.number, $any($event.target).value)"
+                  [disabled]="savedPosts().has(post.number)"
+                />
+                @if (titleErrors().has(post.number)) {
+                  <p class="post-title-error">Add a title to save this post</p>
+                }
+              </div>
+              <button
+                type="button"
+                class="btn-create-post"
+                [class.saved]="savedPosts().has(post.number)"
+                [disabled]="savedPosts().has(post.number)"
+                (click)="createPost(post)"
+              >
+                @if (savedPosts().has(post.number)) {
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+                  Created
+                } @else {
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m19 21-7-4-7 4V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16z"/></svg>
+                  Create in Ideation →
+                }
+              </button>
+            </div>
+
+            <div class="post-meta-row">
+              <span [class]="'role-badge ' + getRoleClass(post.role)">{{ post.role }}</span>
+              <span class="content-type-badge">{{ post.contentType }}</span>
+              <span class="post-day">Post {{ post.number }} — {{ post.suggestedDay }}</span>
+            </div>
+
+            <div class="post-block">
+              <p class="post-section-label">Hook</p>
+              <p class="post-hook-text">{{ post.hook }}</p>
+            </div>
+
+            <div class="post-block">
+              <p class="post-section-label">Caption Direction</p>
+              <p class="post-direction-text">{{ post.captionDirection }}</p>
+            </div>
+
+            <div class="post-block">
+              <p class="post-section-label">Call to Action</p>
+              <p class="post-cta-text">{{ post.cta }}</p>
+            </div>
+
+          </div>
+        </div>
+
+        @if (!last && post.bridgeNote) {
+          <div class="bridge-connector">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14"/><path d="m19 12-7 7-7-7"/></svg>
+            <p class="bridge-connector__note">{{ post.bridgeNote }}</p>
+          </div>
+        }
+      }
     </div>
   }
 </div>
