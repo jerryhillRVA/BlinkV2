@@ -61,7 +61,7 @@
     </div>
 
     @for (workspace of activeWorkspaces(); track workspace.name) {
-      <app-workspace-card [workspace]="workspace" (goToWorkspace)="onGoToWorkspace($event)" (goToStrategy)="onGoToStrategy($event)" />
+      <app-workspace-card [workspace]="workspace" (goToWorkspace)="onGoToWorkspace($event)" (goToStrategy)="onGoToStrategy($event)" (goToContent)="onGoToContent($event)" />
     }
   </div>
 </div>

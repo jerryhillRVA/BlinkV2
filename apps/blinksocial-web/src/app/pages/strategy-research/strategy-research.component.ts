@@ -1,5 +1,6 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, inject, signal, DestroyRef } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ObjectivesStripComponent } from './objectives-strip/objectives-strip.component';
 import { BrandVoiceComponent } from './views/brand-voice/brand-voice.component';
 import { StrategicPillarsComponent } from './views/strategic-pillars/strategic-pillars.component';
@@ -44,14 +45,24 @@ const SIDEBAR_SECTIONS: { label: string; items: SidebarItem[] }[] = [
 })
 export class StrategyResearchComponent {
   private readonly route = inject(ActivatedRoute);
+  private readonly destroyRef = inject(DestroyRef);
   protected readonly stateService = inject(StrategyResearchStateService);
-  readonly workspaceId = this.route.snapshot.paramMap.get('id') ?? '';
+  workspaceId = '';
   readonly activeView = signal<StrategyView>('brand-voice');
 
   readonly sidebarSections = SIDEBAR_SECTIONS;
 
   constructor() {
-    this.stateService.loadAll(this.workspaceId);
+    this.route.paramMap
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((params) => {
+        const id = params.get('id') ?? '';
+        if (id !== this.workspaceId) {
+          this.workspaceId = id;
+          this.activeView.set('brand-voice');
+          this.stateService.loadAll(id);
+        }
+      });
   }
 
   setActiveView(view: StrategyView): void {

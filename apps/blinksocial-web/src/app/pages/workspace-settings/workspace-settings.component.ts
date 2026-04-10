@@ -1,6 +1,7 @@
-import { Component, inject, computed, OnInit } from '@angular/core';
+import { Component, inject, computed, DestroyRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute } from '@angular/router';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { WorkspaceSettingsStateService } from './workspace-settings-state.service';
 import { TabGeneralComponent } from './tabs/tab-general/tab-general.component';
 import { TabPlatformsComponent } from './tabs/tab-platforms/tab-platforms.component';
@@ -35,8 +36,9 @@ interface TabDef {
   templateUrl: './workspace-settings.component.html',
   styleUrl: './workspace-settings.component.scss',
 })
-export class WorkspaceSettingsComponent implements OnInit {
+export class WorkspaceSettingsComponent {
   private readonly route = inject(ActivatedRoute);
+  private readonly destroyRef = inject(DestroyRef);
   protected readonly state = inject(WorkspaceSettingsStateService);
   protected readonly authService = inject(AuthService);
 
@@ -55,14 +57,23 @@ export class WorkspaceSettingsComponent implements OnInit {
     { id: 'security', label: 'Security', saveLabel: 'Save Security Settings', icon: 'M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 .6-.92l7-3.11a1 1 0 0 1 .8 0l7 3.11A1 1 0 0 1 20 6zM9 12l2 2 4-4' },
   ];
 
-  get activeTabDef(): TabDef {
-    return this.tabs.find((t) => t.id === this.state.activeTab()) ?? this.tabs[0];
+  private currentWsId = '';
+
+  constructor() {
+    this.route.paramMap
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((params) => {
+        const id = params.get('id') ?? '';
+        if (id !== this.currentWsId) {
+          this.currentWsId = id;
+          this.state.workspaceId.set(id);
+          this.state.loadTab('general');
+        }
+      });
   }
 
-  ngOnInit(): void {
-    const id = this.route.snapshot.paramMap.get('id') ?? '';
-    this.state.workspaceId.set(id);
-    this.state.loadTab('general');
+  get activeTabDef(): TabDef {
+    return this.tabs.find((t) => t.id === this.state.activeTab()) ?? this.tabs[0];
   }
 
   onTabChange(tab: SettingsTab): void {
