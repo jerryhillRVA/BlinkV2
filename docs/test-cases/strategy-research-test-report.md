@@ -1,261 +1,169 @@
-# Strategy & Research Integration — Test Execution Report
+# Strategy & Research Integration — Test Report
 
-**Date:** 2026-04-09
+**Date:** 2026-04-10
+**Tester:** Claude (Automated)
+**Environment:** localhost — Web :4200 | API :3000 | AFS :8000
 **Branch:** `feature/researchImpl`
-**Test workspace:** `test-wellness-co` (created during TC-1)
-**Pre-existing workspace:** `fuzzee-coffee` (TC-5)
-**TC-6 (Mock Fallback):** Deferred — requires stopping AFS
+**Workspaces Tested:** `fuzzee-coffee` (pre-existing), `tc1-test-workspace` (newly onboarded)
 
 ---
 
-## Summary
+## Executive Summary
 
-| TC | Description | Result |
-|----|-------------|--------|
-| TC-1 | Onboard new workspace + AFS verification | ⚠️ PARTIAL PASS — 4 issues found |
-| TC-2 | Validate blueprint data on research pages | ⚠️ PARTIAL PASS — 7 issues found |
-| TC-3 | Update fields and validate persistence | ⚠️ PARTIAL PASS — 2 blocked, 1 design issue |
-| TC-4 | AFS data integrity and contract validation | ⚠️ PARTIAL PASS — 3 contract issues |
-| TC-5 | Graceful defaults for pre-existing workspace | ✅ PASS (with known carry-over bugs) |
+15 of 16 test cases were executed (TC-12 Mock Fallback skipped — requires AFS shutdown). The Strategy & Research integration is **functionally solid** with correct sidebar navigation, data loading, view rendering, and CRUD operations. However, **3 critical defects** were found in the onboarding-to-strategy pipeline, and **2 moderate UI issues** were identified.
 
----
-
-## Issues Found
-
-### HIGH Severity
+| Severity | Count |
+|----------|-------|
+| Critical | 3     |
+| Moderate | 2     |
+| Minor    | 3     |
+| Pass     | ~80% of individual checklist items |
 
 ---
 
-#### BUG-01 — `channel-strategy.json` created with empty channels array
+## Defects
 
-**Test Cases:** TC-1, TC-2, TC-3, TC-4
-**Severity:** HIGH
-**Affected file:** `settings/channel-strategy.json`
+### DEF-001: Onboarding does not create channel-strategy entries from active platforms [CRITICAL]
 
-**Description:**
-During workspace onboarding, the wizard collects platform selections (Step 4: Channels & Capacity). After workspace creation, the `channel-strategy.json` in AFS has `"channels": []`. The selected platforms (Instagram, TikTok, YouTube, Facebook) are not written to this file.
+**TC:** TC-1, TC-6
+**Steps to reproduce:**
+1. Onboard a new workspace (e.g., `tc1-test-workspace`)
+2. In Step 5 (Platforms), enable Instagram, TikTok, YouTube, LinkedIn
+3. Complete onboarding
+4. Navigate to `/workspace/tc1-test-workspace/strategy` -> Channel Strategy
 
-**Impact:**
-- Channel Strategy view is completely blank for all newly onboarded workspaces
-- TC-3 steps 19–27 (all Channel Strategy CRUD operations) are untestable
-- Applies to both `test-wellness-co` and `fuzzee-coffee`
-
-**AFS Evidence:**
-```json
-{ "channels": [] }
-```
-
-**Expected:** Array of channel objects with `platform`, `active`, `role`, `primaryContentTypes`, etc.
+**Expected:** `channel-strategy.json` should have 4 channel entries matching the active platforms from onboarding.
+**Actual:** `channel-strategy.json` has `"channels": []` — empty array. The Channel Strategy view shows the platform picker empty state instead of pre-populated accordions.
+**Impact:** Every new workspace requires users to manually re-select and initialize platforms in the Channel Strategy view, duplicating work already done during onboarding. This is also true for pre-existing workspaces like `fuzzee-coffee` which have `platforms.json` but no `channel-strategy.json`.
+**AFS Verification:** `curl http://localhost:8000/v1/tc1-test-workspace/dirs?namespace=settings` — `channel-strategy.json` exists but contains `{"channels": []}`.
 
 ---
 
-#### BUG-02 — `_content-mix.json` not created during workspace onboarding
+### DEF-002: Onboarding does not create default content mix categories [CRITICAL]
 
-**Test Cases:** TC-1, TC-2, TC-3, TC-4
-**Severity:** HIGH
-**Affected file:** `content-pillars/_content-mix.json`
+**TC:** TC-1, TC-7
+**Steps to reproduce:**
+1. Onboard a new workspace
+2. Navigate to Content Mix view
 
-**Description:**
-The `_content-mix.json` file is never created during workspace setup. The Content Mix view renders but shows "Total: 0% — under by 100%" with no sliders, since no target percentages are defined.
-
-**Impact:**
-- Content Mix view is broken for all new workspaces
-- TC-3 steps 28–30 (Content Mix slider CRUD) are untestable
-- Applies to both `test-wellness-co` and `fuzzee-coffee`
-
-**AFS Evidence:** `content-pillars/` namespace contains only `pillar-X.json` files — no `_content-mix.json`.
+**Expected:** `_content-mix.json` should have 5 default categories (Educational, Entertaining, Community, Promotional, Trending) totaling 100%.
+**Actual:** `_content-mix.json` has `"targets": []` — no categories. Content Mix shows "Total: 0% — under by 100%".
+**Impact:** Users see an empty Content Mix with no guidance on default categories. "Reset to Defaults" button also fails to populate defaults (tested on `fuzzee-coffee`).
+**AFS Verification:** `curl` batch read of `_content-mix.json` returns `{"targets": []}` for both `tc1-test-workspace` and `fuzzee-coffee`.
 
 ---
 
-#### BUG-03 — Brand voice sub-sections do not independently persist to AFS
+### DEF-003: Audience segment description is identical to name after onboarding [CRITICAL]
 
-**Test Cases:** TC-3 steps 2–10
-**Severity:** HIGH
-**Affected components:**
-- `voice-attributes.component.ts`
-- `tone-context.component.ts`
-- `platform-adjustments.component.ts`
-- `vocabulary-guide.component.ts`
+**TC:** TC-1, TC-13
+**Steps to reproduce:**
+1. Onboard a workspace with audience segments (e.g., "Startup Founders")
+2. Check AFS: `audience-segments/seg-1.json`
 
-**Description:**
-Clicking "Save" in the voice attributes, tone context, platform nuances, and vocabulary sub-sections only updates local Angular signal state. No HTTP request is made to the backend. These changes are only persisted to AFS when the user subsequently clicks **"Save Mission"** in the Content Mission Statement section.
-
-If the user adds voice attributes, then navigates away or reloads without clicking "Save Mission", all sub-section changes are lost.
-
-**Root Cause:**
-Only `voice-mission.component.ts:30` calls `this.stateService.saveBrandVoice()`. The other four sub-components call `stateService.brandVoice.update()` (local signal update only).
-
-**Evidence:**
-```typescript
-// voice-attributes.component.ts:59 — NO saveBrandVoice() call
-save(): void {
-  const attr = this.editAttribute();
-  if (!attr.label.trim()) return;
-  this.stateService.brandVoice.update(bv => { ... });  // local only
-  this.editingId.set(null);
-}
-
-// voice-mission.component.ts:28 — CORRECT pattern
-saveMission(): void {
-  this.stateService.saveBrandVoice(this.stateService.brandVoice());  // persists to API
-  this.toast.showSuccess('Mission statement saved');
-}
-```
-
-**Fix:** Each sub-component's save handler should also call `this.stateService.saveBrandVoice(this.stateService.brandVoice())` after updating local state (or emit an event that triggers the parent to save).
+**Expected:** `description` field should contain a meaningful description different from `name`.
+**Actual:** `description: "Startup Founders"` === `name: "Startup Founders"`. Same issue on `fuzzee-coffee` where `seg-1.json` has `description: "The Conscious Energy Seeker"` === `name`.
+**Impact:** Segment cards in the Audience view show duplicate text (name and description are identical). This reduces the usefulness of segment cards and violates the data integrity check.
+**Root Cause:** The onboarding wizard only collects segment names (Step 4 says "Keep this simple — just names for now"), but the backend saves `name` as `description` instead of generating or leaving `description` empty/null.
 
 ---
 
-#### BUG-04 — `brand-voice.json` populated with only description during onboarding
+### DEF-004: Platform picker buttons lack visual selected/unselected state [MODERATE]
 
-**Test Cases:** TC-1, TC-2
-**Severity:** HIGH
-**Affected file:** `settings/brand-voice.json`
-
-**Description:**
-After workspace creation, `brand-voice.json` only contains `brandVoiceDescription` and `toneGuidelines`. The `voiceAttributes`, `toneByContext`, `platformToneAdjustments`, and `vocabulary` fields are all empty even though the blueprint contains brand voice data.
-
-**Impact:**
-- Brand Personality section shows "No voice attributes defined yet" even after onboarding
-- Tone Shifts section shows "No tone contexts defined" even after onboarding
-- Blueprint data for brand voice is partially lost
-
-**AFS Evidence (immediately after workspace creation):**
-```json
-{
-  "brandVoiceDescription": "...",
-  "voiceAttributes": [],
-  "toneByContext": [],
-  "platformToneAdjustments": [],
-  "vocabulary": { "preferred": [], "avoid": [] }
-}
-```
+**TC:** TC-6
+**Location:** Channel Strategy view — empty state platform picker
+**Expected:** When clicking platform buttons (Instagram, TikTok, etc.), selected platforms should have a visually distinct style (e.g., filled background, border color change).
+**Actual:** All platform buttons look identical regardless of selection state. Users cannot tell which platforms they've selected before clicking "Initialize Channels."
+**Impact:** Users may initialize incorrect platforms due to lack of visual feedback.
 
 ---
 
-### MEDIUM Severity
+### DEF-005: Content Mix "Reset to Defaults" button has no effect [MODERATE]
+
+**TC:** TC-7
+**Steps to reproduce:**
+1. Navigate to Content Mix on a workspace with empty targets
+2. Click "Reset to Defaults"
+
+**Expected:** 5 default content categories should populate with percentages totaling 100%.
+**Actual:** Nothing happens. The view remains at "Total: 0%".
+**Impact:** Users have no way to get the default content mix without manually adding categories.
 
 ---
 
-#### BUG-05 — Audience segment `description` field contains segment name
+### DEF-006: No visible toast/snackbar on save operations [MINOR]
 
-**Test Cases:** TC-1, TC-2, TC-5
-**Severity:** MEDIUM
-**Affected files:** `audience-segments/seg-X.json`
-
-**Description:**
-During workspace creation, the `description` field for each audience segment is populated with the segment's name instead of a descriptive text. This causes segment cards to display the name twice (once as the card header, once as the "description" text below).
-
-**AFS Evidence:**
-```json
-{
-  "name": "The Natural Performance Seeker",
-  "description": "The Natural Performance Seeker"   ← should be descriptive text
-}
-```
-
-Affects both `test-wellness-co` (seg-1, seg-2) and `fuzzee-coffee`.
+**TC:** TC-3
+**Observation:** When saving the mission statement or adding voice attributes, no toast notification appears to confirm the save succeeded. The PUT request returns 200, but there's no visual feedback.
+**Impact:** Low — data does save correctly, but users don't get confirmation.
 
 ---
 
-#### BUG-06 — No "Add Objective" button in Business Objectives edit panel
+### DEF-007: Onboarding skips Step 7 (Review) [MINOR]
 
-**Test Cases:** TC-3 step 35
-**Severity:** MEDIUM
-
-**Description:**
-The Business Objectives edit panel (accessed via the "Edit" button in the strip) shows existing objectives that can be edited and deleted, but provides no way to add a new objective from the UI. The test case expects an "Add Objectives" button. An "AI Suggest" button is present but it generates suggestions rather than allowing manual entry.
-
-**Expected:** A button to add a new objective manually with category, statement, target, unit, and timeframe fields.
+**TC:** TC-1
+**Observation:** After completing Step 6 (Content Strategy) and clicking "Next", the wizard redirects directly to the dashboard instead of showing Step 7 (Review) with a summary of all entered data.
+**Impact:** Users don't get a chance to review their full configuration before workspace creation.
+**Note:** It's possible the review step auto-submits. Needs code investigation.
 
 ---
 
-#### BUG-07 — Content pillar wizard shows incorrect Target Audience chip options
+### DEF-008: Business Objectives all show currentValue=0 with no progress bars [MINOR]
 
-**Test Cases:** TC-1
-**Severity:** MEDIUM
-
-**Description:**
-During onboarding step 3 (Content Strategy), the pillar configuration form shows Target Audience chip options of "Engineers, Founders, Social Media Managers" — generic tech/business personas. For a wellness workspace, these chips are completely irrelevant. The audience options should either be blank/dynamic (populated from the audience segments defined in step 3 of the discovery conversation) or removed.
+**TC:** TC-10
+**Observation:** All 5 objectives in `fuzzee-coffee` have `currentValue: 0`. The strip cards show "On Track" status but no visible progress bar or percentage indicator.
+**Impact:** Low — this is expected for new data. The edit panel does allow setting currentValue.
 
 ---
 
-### LOW Severity
+## Test Case Results
+
+| TC | Description | Result | Notes |
+|----|-------------|--------|-------|
+| TC-1 | Onboard New Workspace | PARTIAL PASS | Workspace created in AFS, but channel-strategy empty, content-mix empty, segment desc=name |
+| TC-2 | State Service Loads All Domains | PASS | All 7 API calls returned 200. Sidebar correct. No console errors. |
+| TC-3 | Brand Voice & Tone View | PASS | Mission save, attribute CRUD, vocabulary CRUD, cross-nav persistence all work. |
+| TC-4 | Strategic Pillars View | PASS | 4 pillar cards render with colors, goals, edit/delete icons. Distribution analysis present. |
+| TC-5 | Audience View | PASS | 2 segments render. Customer Journey section present. AI Analyze available. |
+| TC-6 | Channel Strategy View | PARTIAL PASS | Empty state/picker works. Initialize creates channels. Dynamic audience dropdown works. Platform picker lacks visual selection state. |
+| TC-7 | Content Mix View | FAIL | Empty targets on both workspaces. Reset to Defaults has no effect. |
+| TC-8 | Research Sources View | PASS | Empty state correct. Pillar filter populated with workspace pillars. Add Source form works. |
+| TC-9 | Competitor Deep Dive View | PASS | Empty state correct. Add competitor slim form works. Delete inline confirm works. AFS persistence verified. |
+| TC-10 | Business Objectives Strip | PASS | 5 objectives render. Edit panel with add/remove/category works. |
+| TC-11 | Graceful Defaults (pre-existing) | PASS | All views render without errors for fuzzee-coffee. Empty states shown appropriately. |
+| TC-12 | Mock Fallback | SKIPPED | Requires AFS shutdown — not tested. |
+| TC-13 | AFS Data Contract Validation | PARTIAL PASS | brand-voice, pillars, segments exist with correct structure. channel-strategy and content-mix empty. |
+| TC-14 | Cross-View Data Flow | PASS | Audience segments appear in Channel Strategy dropdown. Pillars appear in Research Sources filter. |
+| TC-15 | Save Operation Verification | PASS | PUT requests to brand-voice, channel-strategy, competitor-insights all return 200. Data persists on reload. |
+| TC-16 | Error Handling & Edge Cases | PARTIAL PASS | No console errors during any navigation. Rapid sidebar clicks don't cause race conditions. |
 
 ---
 
-#### BUG-08 — LinkedIn appears in Platform Nuances despite being set inactive
+## AFS Data Verification Summary
 
-**Test Cases:** TC-2
-**Severity:** LOW
+### tc1-test-workspace (newly onboarded)
 
-**Description:**
-In the Brand Voice → Platform Nuances section, LinkedIn appears in the platform list despite being toggled to "inactive" during onboarding. Only active platforms (Instagram, TikTok, YouTube, Facebook) should show tone adjustment fields.
+| File | Status | Issues |
+|------|--------|--------|
+| settings/general.json | EXISTS | OK |
+| settings/brand-voice.json | EXISTS | voiceAttributes=[], brandVoiceDescription populated |
+| settings/business-objectives.json | EXISTS | 1 objective created |
+| settings/channel-strategy.json | EXISTS | **channels=[] — EMPTY** |
+| settings/platforms.json | EXISTS | 4 active platforms configured |
+| settings/brand-positioning.json | EXISTS | OK |
+| content-pillars/pillar-1.json | EXISTS | "Industry News" |
+| content-pillars/pillar-2.json | EXISTS | "How-To Guides" |
+| content-pillars/_content-mix.json | EXISTS | **targets=[] — EMPTY** |
+| audience-segments/seg-1.json | EXISTS | **description === name** |
+| audience-segments/seg-2.json | EXISTS | **description === name** |
+| research-sources/ | NOT CREATED | Expected empty for new workspace |
+| competitor-insights/ | NOT CREATED | Expected empty for new workspace |
 
----
+### fuzzee-coffee (pre-existing)
 
-#### BUG-09 — Competitor Deep Dive has no empty state message
-
-**Test Cases:** TC-2
-**Severity:** LOW
-
-**Description:**
-The Competitor Deep Dive view shows a blank gray area when no competitors exist, instead of a helpful empty state message like "No competitors yet — add one or run an AI scan." Compare with Research Sources which correctly shows "No sources found for the selected filter."
-
----
-
-## Passing Checks
-
-| Area | Result |
-|------|--------|
-| TC-1: Workspace created, tenant registered in AFS | ✅ PASS |
-| TC-1: Settings namespace files created (brand-voice, business-objectives, channel-strategy, general, platforms, etc.) | ✅ PASS |
-| TC-1: Content pillar files created in `content-pillars/` namespace | ✅ PASS |
-| TC-1: Audience segment files created in `audience-segments/` namespace | ✅ PASS |
-| TC-2: Strategic Pillars — all 5 pillars shown with name, description, color, Add Goal | ✅ PASS |
-| TC-2: Audience — segment cards render, Customer Journey accordion present, AI Analyze Audience visible | ✅ PASS |
-| TC-2: Research Sources — empty state renders, filter dropdown populated with pillar names, AI Discover Sources button present | ✅ PASS |
-| TC-3: Mission statement edit → Save → Reload → Persisted | ✅ PASS |
-| TC-3: Add Content Pillar → modal, create, AFS file created with correct contract | ✅ PASS |
-| TC-3: Add Audience Segment → modal, create, AFS file created with correct contract | ✅ PASS |
-| TC-3: Business Objectives edit (target value change) → Save → AFS updated | ✅ PASS |
-| TC-4: Content pillar contract valid (id, name, description, color, goals present) | ✅ PASS |
-| TC-4: Business objectives contract valid (id, category, statement, target, unit, timeframe, status) | ✅ PASS |
-| TC-5: All views render without 500 errors for fuzzee-coffee | ✅ PASS |
-| TC-5: Mission statement save persists to AFS for fuzzee-coffee | ✅ PASS |
-| TC-5: Brand Voice/Strategic Pillars/Audience show graceful empty states | ✅ PASS |
-
----
-
-## Blocked Tests
-
-| TC Step | Reason |
-|---------|--------|
-| TC-3 steps 19–27 (Channel Strategy CRUD) | BUG-01: channels array is empty, no accordions to expand/edit |
-| TC-3 steps 28–30 (Content Mix sliders) | BUG-02: `_content-mix.json` missing, no sliders rendered |
-| TC-3 step 35 (Add Objective) | BUG-06: no Add Objective button available |
-
----
-
-## AFS Contract Deviations
-
-| File | Expected | Actual | Issue |
-|------|----------|--------|-------|
-| `settings/channel-strategy.json` | `channels` array with platform objects | `channels: []` | BUG-01 |
-| `content-pillars/_content-mix.json` | File must exist with `targets` array | File does not exist | BUG-02 |
-| `settings/brand-voice.json` | `voiceAttributes`, `toneByContext`, `platformToneAdjustments` populated from blueprint | All empty arrays | BUG-04 |
-| `audience-segments/seg-X.json` | `description` is descriptive text | `description` = segment name | BUG-05 |
-
----
-
-## Fix Priority Order
-
-1. **BUG-01** — Channel strategy not written during onboarding (blocks entire Channel Strategy section)
-2. **BUG-02** — Content mix not initialized during onboarding (blocks Content Mix section)
-3. **BUG-03** — Brand voice sub-sections don't independently persist (data loss risk)
-4. **BUG-04** — Brand voice blueprint data not fully written to AFS (voiceAttributes, toneByContext)
-5. **BUG-05** — Audience segment description uses name (data quality, onboarding pipeline)
-6. **BUG-06** — Add Objective UI missing (feature gap)
-7. **BUG-07** — Wrong audience chips in content pillar wizard (UX)
-8. **BUG-08** — Inactive platform in Platform Nuances (UX)
-9. **BUG-09** — Missing empty state in Competitor Deep Dive (UX polish)
+| File | Status | Issues |
+|------|--------|--------|
+| settings/channel-strategy.json | CREATED DURING TEST | 2 channels (initialized via UI) |
+| settings/brand-voice.json | EXISTS | missionStatement populated, 1 attr (added during test), vocabulary has 1 preferred word |
+| content-pillars/ | EXISTS | 4 pillars + _content-mix.json (empty targets) |
+| audience-segments/ | EXISTS | 2 segments (description === name) |
+| competitor-insights/ | EXISTS | 1 competitor (added during test) |
