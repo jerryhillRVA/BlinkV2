@@ -327,4 +327,87 @@ describe('AudienceComponent', () => {
     expect(document.body.querySelector('.app-modal')).toBeTruthy();
     component.cancelAddSegment();
   });
+
+  // ── Per-card Audience Insights ──────────────────────────────────────────
+  it('insightFor returns matching insight from state service', () => {
+    const id = component.segments()[0].id;
+    const mockInsight = {
+      segmentId: id,
+      interests: ['A'],
+      painPoints: ['B'],
+      peakActivityTimes: [],
+      preferredPlatforms: [],
+      contentPreferences: [],
+    };
+    const stateService = TestBed.inject(StrategyResearchStateService);
+    (stateService.audienceInsights as ReturnType<typeof signal>).set([mockInsight]);
+    expect(component.insightFor(id)).toEqual(mockInsight);
+  });
+
+  it('insightFor returns undefined when no match', () => {
+    expect(component.insightFor('nonexistent')).toBeUndefined();
+  });
+
+  it('toggleInsights toggles expanded state', () => {
+    const id = component.segments()[0].id;
+    expect(component.isInsightsExpanded(id)).toBe(false);
+    component.toggleInsights(id);
+    expect(component.isInsightsExpanded(id)).toBe(true);
+    component.toggleInsights(id);
+    expect(component.isInsightsExpanded(id)).toBe(false);
+  });
+
+  it('isAnalyzingSegment reflects state', () => {
+    const id = component.segments()[0].id;
+    expect(component.isAnalyzingSegment(id)).toBe(false);
+    component.analyzingSegmentId.set(id);
+    expect(component.isAnalyzingSegment(id)).toBe(true);
+  });
+
+  it('analyzeForSegment sets analyzing state and generates insight after timer', () => {
+    vi.useFakeTimers();
+    const id = component.segments()[0].id;
+    component.analyzeForSegment(id);
+    expect(component.isAnalyzingSegment(id)).toBe(true);
+    expect(component.isInsightsExpanded(id)).toBe(true);
+    vi.advanceTimersByTime(AI_SIMULATION_DELAY_MS);
+    expect(component.isAnalyzingSegment(id)).toBe(false);
+    expect(component.insightFor(id)).toBeTruthy();
+    expect(component.insightFor(id)?.interests.length).toBeGreaterThan(0);
+    vi.useRealTimers();
+  });
+
+  it('analyzeForSegment does not overwrite existing insight', () => {
+    vi.useFakeTimers();
+    const id = component.segments()[0].id;
+    const stateService = TestBed.inject(StrategyResearchStateService);
+    const existingInsight = {
+      segmentId: id,
+      interests: ['Existing'],
+      painPoints: [],
+      peakActivityTimes: [],
+      preferredPlatforms: [],
+      contentPreferences: [],
+    };
+    (stateService.audienceInsights as ReturnType<typeof signal>).set([existingInsight]);
+    component.analyzeForSegment(id);
+    vi.advanceTimersByTime(AI_SIMULATION_DELAY_MS);
+    expect(component.insightFor(id)?.interests).toEqual(['Existing']);
+    vi.useRealTimers();
+  });
+
+  it('renders per-card insights section with analyze button and expanded content', () => {
+    vi.useFakeTimers();
+    const id = component.segments()[0].id;
+    fixture.detectChanges();
+    const el = fixture.nativeElement as HTMLElement;
+    expect(el.querySelector('.audience-insights')).toBeTruthy();
+    expect(el.querySelector('.btn-ai-analyze')).toBeTruthy();
+    // Analyze and expand
+    component.analyzeForSegment(id);
+    vi.advanceTimersByTime(AI_SIMULATION_DELAY_MS);
+    fixture.detectChanges();
+    expect(el.querySelector('.insights-expanded')).toBeTruthy();
+    vi.useRealTimers();
+  });
 });

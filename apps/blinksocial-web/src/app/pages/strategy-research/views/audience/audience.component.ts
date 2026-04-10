@@ -2,6 +2,7 @@ import { Component, DestroyRef, EmbeddedViewRef, HostBinding, TemplateRef, ViewC
 import { DOCUMENT } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { IconComponent } from '../../shared/icon/icon.component';
+import { PlatformIconComponent } from '../../../../shared/platform-icon/platform-icon.component';
 import { DropdownComponent, DropdownOption } from '../../../../shared/dropdown/dropdown.component';
 import { MockDataService } from '../../../../core/mock-data/mock-data.service';
 import { ToastService } from '../../../../core/toast/toast.service';
@@ -22,7 +23,7 @@ const STAGE_LABELS: Record<JourneyStage, string> = {
 
 @Component({
   selector: 'app-audience',
-  imports: [FormsModule, IconComponent, DropdownComponent],
+  imports: [FormsModule, IconComponent, PlatformIconComponent, DropdownComponent],
   templateUrl: './audience.component.html',
   styleUrl: './audience.component.scss',
 })
@@ -127,6 +128,10 @@ export class AudienceComponent {
   readonly selectedAnalyzeId = signal<string>('');
   readonly isAnalyzing = signal(false);
   readonly insights = this.stateService.audienceInsights;
+
+  // Per-card insights state
+  readonly expandedInsights = signal<Set<string>>(new Set());
+  readonly analyzingSegmentId = signal<string | null>(null);
   /* v8 ignore stop */
 
   readonly segmentOptions = (): DropdownOption[] =>
@@ -335,6 +340,52 @@ export class AudienceComponent {
       this.stateService.saveAudienceInsights(this.insights());
       this.isAnalyzing.set(false);
       this.toast.showSuccess('Audience analysis complete');
+    }, AI_SIMULATION_DELAY_MS, this.destroyRef);
+  }
+
+  // ── Per-card Audience Insights ───────────────────────────────────────────
+  insightFor(segmentId: string): AudienceInsight | undefined {
+    return this.stateService.audienceInsights().find(i => i.segmentId === segmentId);
+  }
+
+  isInsightsExpanded(segmentId: string): boolean {
+    return this.expandedInsights().has(segmentId);
+  }
+
+  toggleInsights(segmentId: string): void {
+    this.expandedInsights.update(set => toggleSetItem(set, segmentId));
+  }
+
+  isAnalyzingSegment(segmentId: string): boolean {
+    return this.analyzingSegmentId() === segmentId;
+  }
+
+  analyzeForSegment(segmentId: string): void {
+    this.analyzingSegmentId.set(segmentId);
+    this.expandedInsights.update(set => { const next = new Set(set); next.add(segmentId); return next; });
+    safeTimeout(() => {
+      const existing = this.insightFor(segmentId);
+      if (!existing) {
+        const mockInsight: AudienceInsight = {
+          segmentId,
+          interests: ['Content Strategy', 'Social Media Growth', 'Brand Building', 'Analytics'],
+          painPoints: ['Lack of consistency', 'Difficulty measuring ROI', 'Content fatigue'],
+          peakActivityTimes: [
+            { day: 'Monday', hour: '9am', engagement: 'High' },
+            { day: 'Wednesday', hour: '12pm', engagement: 'Very High' },
+            { day: 'Friday', hour: '5pm', engagement: 'Medium' },
+          ],
+          preferredPlatforms: [
+            { platform: 'instagram', preference: 85 },
+            { platform: 'tiktok', preference: 72 },
+            { platform: 'youtube', preference: 60 },
+          ],
+          contentPreferences: ['Short-form video', 'Carousel posts', 'Behind-the-scenes', 'Expert interviews'],
+        };
+        this.insights.update(list => [...list, mockInsight]);
+        this.stateService.saveAudienceInsights(this.insights());
+      }
+      this.analyzingSegmentId.set(null);
     }, AI_SIMULATION_DELAY_MS, this.destroyRef);
   }
 

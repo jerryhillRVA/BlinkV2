@@ -28,6 +28,22 @@ interface InvestmentPlan {
   quickWins: string[];
 }
 
+interface QuickGoalForm {
+  metric: string;
+  target: number | null;
+  unit: string;
+  period: PillarGoal['period'];
+  current: number | undefined;
+}
+
+const BLANK_QUICK_GOAL: QuickGoalForm = {
+  metric: '',
+  target: null,
+  unit: '%',
+  period: 'monthly',
+  current: undefined,
+};
+
 // Default weights — used to scale postsPerWeek across pillars.
 const DEFAULT_PILLAR_WEIGHTS: { weight: number; rationale: string }[] = [
   { weight: 30, rationale: 'Top engagement driver for your segments' },
@@ -51,7 +67,11 @@ export class StrategicPillarsComponent {
   private readonly vcr = inject(ViewContainerRef);
 
   @ViewChild('modalTpl', { static: true }) modalTpl!: TemplateRef<unknown>;
+  @ViewChild('goalsDialogTpl', { static: true }) goalsDialogTpl!: TemplateRef<unknown>;
+  @ViewChild('objectivesDialogTpl', { static: true }) objectivesDialogTpl!: TemplateRef<unknown>;
   private modalView: EmbeddedViewRef<unknown> | null = null;
+  private goalsView: EmbeddedViewRef<unknown> | null = null;
+  private objectivesView: EmbeddedViewRef<unknown> | null = null;
 
   constructor() {
     effect(() => {
@@ -71,6 +91,45 @@ export class StrategicPillarsComponent {
         body.style.overflow = '';
       }
     });
+    effect(() => {
+      const pillarId = this.goalsDialogPillarId();
+      const body = this.doc.body;
+      if (pillarId && this.goalsDialogTpl && !this.goalsView) {
+        this.goalsView = this.vcr.createEmbeddedView(this.goalsDialogTpl);
+        this.goalsView.detectChanges();
+        /* v8 ignore start */
+        for (const node of this.goalsView.rootNodes as Node[]) {
+          if (node.nodeType === 1) body.appendChild(node);
+        }
+        /* v8 ignore stop */
+        body.style.overflow = 'hidden';
+      } else if (!pillarId && this.goalsView) {
+        this.goalsView.destroy();
+        this.goalsView = null;
+        /* v8 ignore next */
+        if (!this.showAddForm() && !this.objectivesDialogPillarId()) body.style.overflow = '';
+      }
+    });
+
+    effect(() => {
+      const pillarId = this.objectivesDialogPillarId();
+      const body = this.doc.body;
+      /* v8 ignore start */
+      if (pillarId && this.objectivesDialogTpl && !this.objectivesView) {
+        this.objectivesView = this.vcr.createEmbeddedView(this.objectivesDialogTpl);
+        this.objectivesView.detectChanges();
+        for (const node of this.objectivesView.rootNodes as Node[]) {
+          if (node.nodeType === 1) body.appendChild(node);
+        }
+        body.style.overflow = 'hidden';
+      } else if (!pillarId && this.objectivesView) {
+        this.objectivesView.destroy();
+        this.objectivesView = null;
+        if (!this.showAddForm() && !this.goalsDialogPillarId()) body.style.overflow = '';
+      }
+      /* v8 ignore stop */
+    });
+
     // Auto-select all segments when they load from state service
     effect(() => {
       const segs = this.audienceSegments();
@@ -80,10 +139,9 @@ export class StrategicPillarsComponent {
     });
     /* v8 ignore start */
     this.destroyRef.onDestroy(() => {
-      if (this.modalView) {
-        this.modalView.destroy();
-        this.modalView = null;
-      }
+      if (this.modalView) { this.modalView.destroy(); this.modalView = null; }
+      if (this.goalsView) { this.goalsView.destroy(); this.goalsView = null; }
+      if (this.objectivesView) { this.objectivesView.destroy(); this.objectivesView = null; }
       if (this.doc.body) this.doc.body.style.overflow = '';
     });
     /* v8 ignore stop */
@@ -143,6 +201,14 @@ export class StrategicPillarsComponent {
   newGoals = signal<PillarGoal[]>([]);
   savedGoalIds = signal<Set<string>>(new Set());
   modalEditingId = signal<string | null>(null);
+
+  // Manage Goals dialog state
+  readonly goalsDialogPillarId = signal<string | null>(null);
+  quickGoalForm: QuickGoalForm = { ...BLANK_QUICK_GOAL };
+
+  // Link Objectives dialog state
+  readonly objectivesDialogPillarId = signal<string | null>(null);
+  readonly quickObjectiveIds = signal<Set<string>>(new Set());
   /* v8 ignore stop */
 
   isGoalSaved(id: string): boolean {
@@ -315,6 +381,96 @@ export class StrategicPillarsComponent {
   getGoalProgress(goal: PillarGoal): number {
     if (!goal.current || goal.target <= 0) return 0;
     return Math.min(100, Math.round((goal.current / goal.target) * 100));
+  }
+
+  // ── Manage Goals dialog ──────────────────────────────────────────
+  openGoalsDialog(pillar: ContentPillar): void {
+    this.quickGoalForm = { ...BLANK_QUICK_GOAL };
+    this.goalsDialogPillarId.set(pillar.id);
+  }
+
+  closeGoalsDialog(): void {
+    this.goalsDialogPillarId.set(null);
+    this.quickGoalForm = { ...BLANK_QUICK_GOAL };
+  }
+
+  goalsDialogPillar(): ContentPillar | undefined {
+    const id = this.goalsDialogPillarId();
+    /* v8 ignore next */
+    return id ? this.pillars().find((p) => p.id === id) : undefined;
+  }
+
+  updateQuickGoalPeriod(period: PillarGoal['period']): void {
+    this.quickGoalForm = { ...this.quickGoalForm, period };
+  }
+
+  addQuickGoal(): void {
+    const pillarId = this.goalsDialogPillarId();
+    if (!pillarId) return;
+    const metric = this.quickGoalForm.metric.trim();
+    const target = this.quickGoalForm.target;
+    if (!metric || target === null || target === undefined || target <= 0) return;
+    const goal: PillarGoal = {
+      id: generateId('g'),
+      metric,
+      target,
+      unit: this.quickGoalForm.unit.trim() || '%',
+      period: this.quickGoalForm.period,
+      current: this.quickGoalForm.current ?? 0,
+    };
+    this.pillars.update((list) =>
+      list.map((p) =>
+        p.id === pillarId ? { ...p, goals: [...(p.goals ?? []), goal] } : p,
+      ),
+    );
+    this.stateService.savePillars(this.pillars());
+    this.quickGoalForm = { ...BLANK_QUICK_GOAL };
+  }
+
+  removeGoalFromPillar(pillarId: string, goalId: string): void {
+    this.pillars.update((list) =>
+      list.map((p) =>
+        p.id === pillarId
+          /* v8 ignore next */
+          ? { ...p, goals: (p.goals ?? []).filter((g) => g.id !== goalId) }
+          : p,
+      ),
+    );
+    this.stateService.savePillars(this.pillars());
+  }
+
+  // ── Link Objectives dialog ───────────────────────────────────────
+  openObjectivesDialog(pillar: ContentPillar): void {
+    this.quickObjectiveIds.set(new Set(pillar.objectiveIds ?? []));
+    this.objectivesDialogPillarId.set(pillar.id);
+  }
+
+  closeObjectivesDialog(): void {
+    this.objectivesDialogPillarId.set(null);
+  }
+
+  isQuickObjectiveLinked(id: string): boolean {
+    return this.quickObjectiveIds().has(id);
+  }
+
+  toggleQuickObjective(id: string): void {
+    this.quickObjectiveIds.update((set) => toggleSetItem(set, id));
+  }
+
+  saveQuickObjectives(): void {
+    const pillarId = this.objectivesDialogPillarId();
+    if (!pillarId) return;
+    const ids = Array.from(this.quickObjectiveIds());
+    this.pillars.update((list) =>
+      list.map((p) => (p.id === pillarId ? { ...p, objectiveIds: ids } : p)),
+    );
+    this.stateService.savePillars(this.pillars());
+    this.closeObjectivesDialog();
+  }
+
+  linkedObjectivesFor(pillar: ContentPillar): BusinessObjective[] {
+    const ids = new Set(pillar.objectiveIds ?? []);
+    return this.linkedObjectives().filter((o) => ids.has(o.id));
   }
 
   analyzeDistribution(): void {

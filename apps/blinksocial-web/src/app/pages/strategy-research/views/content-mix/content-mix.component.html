@@ -41,6 +41,12 @@
             AI Suggest Mix
           }
         </button>
+        <button type="button" class="btn-add-category" (click)="openAddCategory()">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 5v14M5 12h14"/>
+          </svg>
+          Add Category
+        </button>
       </div>
     </div>
 
@@ -77,8 +83,6 @@
           <button class="btn btn--ghost btn--sm" (click)="cancelAddCategory()">Cancel</button>
         </div>
       </div>
-    } @else {
-      <button type="button" class="btn-add-category" (click)="openAddCategory()">+ Add Category</button>
     }
 
     <div class="mix-rows">

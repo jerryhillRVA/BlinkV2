@@ -44,7 +44,8 @@
 }
 
 .btn-reset,
-.btn-ai-suggest {
+.btn-ai-suggest,
+.btn-add-category {
   display: inline-flex;
   align-items: center;
   gap: 6px;
@@ -75,6 +76,14 @@
     background: var(--blink-brand-primary-active, #c4452d);
   }
   &:disabled { opacity: 0.6; cursor: not-allowed; }
+}
+
+.btn-add-category {
+  background: var(--blink-surface);
+  color: var(--blink-on-surface);
+  border: 1px solid var(--blink-outline-variant);
+
+  &:hover { background: var(--blink-surface-hover); }
 }
 
 .total-indicator {

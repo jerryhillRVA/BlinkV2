@@ -326,6 +326,142 @@ describe('StrategicPillarsComponent', () => {
     component.cancelAdd();
   });
 
+  // ── Goals Dialog tests ─────────────────────────────────────────
+  it('openGoalsDialog sets goalsDialogPillarId', () => {
+    const pillar = makePillar();
+    component.openGoalsDialog(pillar);
+    expect(component.goalsDialogPillarId()).toBe('p-test');
+    component.closeGoalsDialog();
+  });
+
+  it('closeGoalsDialog clears goalsDialogPillarId and resets quickGoalForm', () => {
+    const pillar = makePillar();
+    component.openGoalsDialog(pillar);
+    component.quickGoalForm.metric = 'Test';
+    component.closeGoalsDialog();
+    expect(component.goalsDialogPillarId()).toBeNull();
+    expect(component.quickGoalForm.metric).toBe('');
+  });
+
+  it('goalsDialogPillar returns the matching pillar or undefined', () => {
+    expect(component.goalsDialogPillar()).toBeUndefined();
+    const pillar = component.pillars()[0];
+    component.openGoalsDialog(pillar);
+    expect(component.goalsDialogPillar()?.id).toBe(pillar.id);
+    component.closeGoalsDialog();
+  });
+
+  it('addQuickGoal adds a goal to the pillar and saves via state service', () => {
+    const stateService = TestBed.inject(StrategyResearchStateService);
+    const pillar = component.pillars()[0];
+    component.openGoalsDialog(pillar);
+    component.quickGoalForm = { metric: 'Engagement', target: 10, unit: '%', period: 'monthly', current: 5 };
+    component.addQuickGoal();
+    fixture.detectChanges();
+    const updated = component.pillars().find(p => p.id === pillar.id);
+    expect(updated?.goals?.some(g => g.metric === 'Engagement')).toBe(true);
+    expect(stateService.savePillars).toHaveBeenCalled();
+    component.closeGoalsDialog();
+  });
+
+  it('addQuickGoal is a no-op when metric is empty or target is invalid', () => {
+    const pillar = component.pillars()[0];
+    const goalsBefore = pillar.goals?.length ?? 0;
+    component.openGoalsDialog(pillar);
+    component.quickGoalForm = { metric: '', target: 10, unit: '%', period: 'monthly', current: undefined };
+    component.addQuickGoal();
+    expect(component.pillars().find(p => p.id === pillar.id)?.goals?.length ?? 0).toBe(goalsBefore);
+    component.quickGoalForm = { metric: 'X', target: null, unit: '%', period: 'monthly', current: undefined };
+    component.addQuickGoal();
+    expect(component.pillars().find(p => p.id === pillar.id)?.goals?.length ?? 0).toBe(goalsBefore);
+    component.quickGoalForm = { metric: 'X', target: 0, unit: '%', period: 'monthly', current: undefined };
+    component.addQuickGoal();
+    expect(component.pillars().find(p => p.id === pillar.id)?.goals?.length ?? 0).toBe(goalsBefore);
+    component.closeGoalsDialog();
+  });
+
+  it('removeGoalFromPillar removes a goal and saves via state service', () => {
+    const stateService = TestBed.inject(StrategyResearchStateService);
+    const pillar = component.pillars()[0];
+    component.openGoalsDialog(pillar);
+    component.quickGoalForm = { metric: 'ToRemove', target: 5, unit: '%', period: 'monthly', current: 0 };
+    component.addQuickGoal();
+    const addedGoal = component.pillars().find(p => p.id === pillar.id)!.goals!.find(g => g.metric === 'ToRemove')!;
+    component.removeGoalFromPillar(pillar.id, addedGoal.id);
+    expect(component.pillars().find(p => p.id === pillar.id)?.goals?.find(g => g.id === addedGoal.id)).toBeUndefined();
+    expect(stateService.savePillars).toHaveBeenCalled();
+    component.closeGoalsDialog();
+  });
+
+  it('updateQuickGoalPeriod updates the period on quickGoalForm', () => {
+    component.updateQuickGoalPeriod('yearly');
+    expect(component.quickGoalForm.period).toBe('yearly');
+  });
+
+  // ── Objectives Dialog tests ──────────────────────────────────────
+  it('openObjectivesDialog sets objectivesDialogPillarId and populates quickObjectiveIds', () => {
+    const pillar = makePillar({ objectiveIds: ['o1', 'o2'] });
+    component.openObjectivesDialog(pillar);
+    expect(component.objectivesDialogPillarId()).toBe('p-test');
+    expect(component.isQuickObjectiveLinked('o1')).toBe(true);
+    expect(component.isQuickObjectiveLinked('o2')).toBe(true);
+    component.closeObjectivesDialog();
+  });
+
+  it('closeObjectivesDialog clears objectivesDialogPillarId', () => {
+    const pillar = makePillar();
+    component.openObjectivesDialog(pillar);
+    component.closeObjectivesDialog();
+    expect(component.objectivesDialogPillarId()).toBeNull();
+  });
+
+  it('toggleQuickObjective toggles an ID in the set', () => {
+    expect(component.isQuickObjectiveLinked('o1')).toBe(false);
+    component.toggleQuickObjective('o1');
+    expect(component.isQuickObjectiveLinked('o1')).toBe(true);
+    component.toggleQuickObjective('o1');
+    expect(component.isQuickObjectiveLinked('o1')).toBe(false);
+  });
+
+  it('saveQuickObjectives updates pillar objectiveIds and saves via state service', () => {
+    const stateService = TestBed.inject(StrategyResearchStateService);
+    const pillar = component.pillars()[0];
+    component.openObjectivesDialog(pillar);
+    component.toggleQuickObjective('o1');
+    component.toggleQuickObjective('o2');
+    component.saveQuickObjectives();
+    const updated = component.pillars().find(p => p.id === pillar.id);
+    expect(updated?.objectiveIds).toContain('o1');
+    expect(updated?.objectiveIds).toContain('o2');
+    expect(stateService.savePillars).toHaveBeenCalled();
+    expect(component.objectivesDialogPillarId()).toBeNull();
+  });
+
+  it('saveQuickObjectives is a no-op when no pillar is selected', () => {
+    const stateService = TestBed.inject(StrategyResearchStateService);
+    const callsBefore = (stateService.savePillars as ReturnType<typeof vi.fn>).mock.calls.length;
+    component.saveQuickObjectives();
+    expect((stateService.savePillars as ReturnType<typeof vi.fn>).mock.calls.length).toBe(callsBefore);
+  });
+
+  it('linkedObjectivesFor returns matching objectives', () => {
+    fixture.componentRef.setInput('linkedObjectives', [
+      { id: 'o1', category: 'growth' as const, statement: 'Grow', target: 1000, unit: 'followers', timeframe: 'Q1', status: 'on-track' as const },
+      { id: 'o2', category: 'engagement' as const, statement: 'Engage', target: 500, unit: 'likes', timeframe: 'Q1', status: 'on-track' as const },
+      { id: 'o3', category: 'revenue' as const, statement: 'Revenue', target: 100, unit: '$', timeframe: 'Q2', status: 'on-track' as const },
+    ]);
+    fixture.detectChanges();
+    const pillar = makePillar({ objectiveIds: ['o1', 'o3'] });
+    const result = component.linkedObjectivesFor(pillar);
+    expect(result.length).toBe(2);
+    expect(result.map(o => o.id)).toEqual(['o1', 'o3']);
+  });
+
+  it('linkedObjectivesFor returns empty array when pillar has no objectiveIds', () => {
+    const pillar = makePillar({ objectiveIds: undefined });
+    expect(component.linkedObjectivesFor(pillar)).toEqual([]);
+  });
+
   it('renders pillar cards with goals and progress bars', () => {
     component.pillars.update(list => list.map((p, i) => i === 0
       ? { ...p, goals: [{ id: 'g1', metric: 'X', target: 10, unit: '%', period: 'monthly', current: 5 }] }

@@ -213,6 +213,169 @@
     </div>
   </ng-template>
 
+  <!-- Manage Goals dialog -->
+  <ng-template #goalsDialogTpl>
+    @if (goalsDialogPillar(); as gPillar) {
+      <div
+        class="modal-overlay app-modal"
+        role="presentation"
+        tabindex="-1"
+        (click)="closeGoalsDialog()"
+        (keyup.escape)="closeGoalsDialog()"
+      >
+        <div
+          class="modal-dialog modal-dialog--sm"
+          role="dialog"
+          aria-labelledby="goals-dialog-title"
+          aria-modal="true"
+          tabindex="-1"
+          (click)="$event.stopPropagation()"
+          (keyup.escape)="closeGoalsDialog()"
+        >
+          <button type="button" class="modal-close" (click)="closeGoalsDialog()" aria-label="Close">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M18 6 6 18" />
+              <path d="m6 6 12 12" />
+            </svg>
+          </button>
+
+          <div class="modal-header">
+            <h2 id="goals-dialog-title" class="modal-title">Goals</h2>
+            <p class="modal-description">Track measurable targets for this pillar.</p>
+          </div>
+
+          <div class="modal-body">
+            @if ((gPillar.goals ?? []).length > 0) {
+              <div class="goals-list">
+                @for (g of gPillar.goals; track g.id) {
+                  <div class="goal-saved-row">
+                    <span class="goal-saved-metric">{{ g.metric }}</span>
+                    <div class="goal-saved-meta">
+                      <span>{{ g.target }} {{ g.unit }} / {{ g.period }}</span>
+                      <button type="button" class="goal-saved-remove" (click)="removeGoalFromPillar(gPillar.id, g.id)" aria-label="Remove goal">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                          <path d="M18 6 6 18" />
+                          <path d="m6 6 12 12" />
+                        </svg>
+                      </button>
+                    </div>
+                  </div>
+                }
+              </div>
+            } @else {
+              <p class="goals-empty">No goals yet — add one below.</p>
+            }
+
+            <div class="goals-divider">
+              <p class="goals-add-label">Add a Goal</p>
+              <div class="goal-add-form">
+                <input
+                  type="text"
+                  class="field-input field-sm"
+                  placeholder="Metric name (e.g. Engagement Rate)"
+                  [(ngModel)]="quickGoalForm.metric"
+                />
+                <div class="goal-grid-2">
+                  <input
+                    type="number"
+                    class="field-input field-sm"
+                    placeholder="Target"
+                    [(ngModel)]="quickGoalForm.target"
+                  />
+                  <input
+                    type="text"
+                    class="field-input field-sm"
+                    placeholder="Unit (%, followers…)"
+                    [(ngModel)]="quickGoalForm.unit"
+                  />
+                </div>
+                <div class="goal-grid-2">
+                  <app-dropdown
+                    [options]="periodOptions"
+                    [value]="quickGoalForm.period"
+                    size="compact"
+                    [fullWidth]="true"
+                    [filled]="true"
+                    (valueChange)="updateQuickGoalPeriod($any($event))"
+                  />
+                  <input
+                    type="number"
+                    class="field-input field-sm"
+                    placeholder="Current (optional)"
+                    [(ngModel)]="quickGoalForm.current"
+                  />
+                </div>
+                <button type="button" class="btn-goal-full" (click)="addQuickGoal()">Add Goal</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="modal-footer">
+            <button type="button" class="btn-modal-cancel" (click)="closeGoalsDialog()">Done</button>
+          </div>
+        </div>
+      </div>
+    }
+  </ng-template>
+
+  <!-- Link Objectives dialog -->
+  <ng-template #objectivesDialogTpl>
+    <div
+      class="modal-overlay app-modal"
+      role="presentation"
+      tabindex="-1"
+      (click)="closeObjectivesDialog()"
+      (keyup.escape)="closeObjectivesDialog()"
+    >
+      <div
+        class="modal-dialog modal-dialog--sm"
+        role="dialog"
+        aria-labelledby="objectives-dialog-title"
+        aria-modal="true"
+        tabindex="-1"
+        (click)="$event.stopPropagation()"
+        (keyup.escape)="closeObjectivesDialog()"
+      >
+        <button type="button" class="modal-close" (click)="closeObjectivesDialog()" aria-label="Close">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M18 6 6 18" />
+            <path d="m6 6 12 12" />
+          </svg>
+        </button>
+
+        <div class="modal-header">
+          <h2 id="objectives-dialog-title" class="modal-title">Link Objectives</h2>
+          <p class="modal-description">Select which business objectives this pillar contributes to.</p>
+        </div>
+
+        <div class="modal-body">
+          @if (linkedObjectives().length > 0) {
+            <div class="obj-chip-list">
+              @for (obj of linkedObjectives(); track obj.id) {
+                <button
+                  type="button"
+                  class="obj-chip"
+                  [class.active]="isQuickObjectiveLinked(obj.id)"
+                  [title]="obj.statement"
+                  (click)="toggleQuickObjective(obj.id)"
+                >
+                  {{ obj.statement || '(untitled)' }}
+                </button>
+              }
+            </div>
+          } @else {
+            <p class="goals-empty">No business objectives yet. Add them from the Business Objectives strip at the top of the page.</p>
+          }
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn-modal-cancel" (click)="closeObjectivesDialog()">Cancel</button>
+          <button type="button" class="btn-modal-create" (click)="saveQuickObjectives()">Save</button>
+        </div>
+      </div>
+    </div>
+  </ng-template>
+
   <!-- Pillar Cards Grid -->
   <div class="pillars-grid">
     @for (pillar of pillars(); track pillar.id) {
@@ -272,26 +435,52 @@
             </div>
           </div>
 
-          @if (!pillar.goals || pillar.goals.length === 0) {
-            <button type="button" class="card-add-goal" (click)="openEditModalAddGoal(pillar)">+ Add Goal</button>
-          }
-          @if (pillar.goals && pillar.goals.length > 0) {
-            <div class="goals-section">
-              <h4>Goals</h4>
-              @for (goal of pillar.goals; track goal.id) {
-                <div class="goal-item">
-                  <div class="goal-label">
-                    <span>{{ goal.metric }}</span>
-                    <span class="goal-value">{{ goal.current ?? 0 }} / {{ goal.target }} {{ goal.unit }}</span>
+          <div class="pillar-section pillar-goals">
+            <div class="pillar-section-header">
+              <span class="pillar-section-label">Goals</span>
+              <button type="button" class="pillar-section-link" (click)="openGoalsDialog(pillar)">
+                {{ (pillar.goals && pillar.goals.length > 0) ? 'Edit' : '+ Add' }}
+              </button>
+            </div>
+            @if (pillar.goals && pillar.goals.length > 0) {
+              <div class="goals-list-inline">
+                @for (goal of pillar.goals; track goal.id) {
+                  <div class="goal-item">
+                    <div class="goal-label">
+                      <span>{{ goal.metric }}</span>
+                      <span class="goal-value">{{ goal.current !== undefined ? goal.current + ' / ' : '' }}{{ goal.target }} {{ goal.unit }} ({{ goal.period }})</span>
+                    </div>
+                    <div class="progress-bar">
+                      <div
+                        class="progress-fill"
+                        [style.width.%]="getGoalProgress(goal)"
+                        [style.background]="pillar.color"
+                      ></div>
+                    </div>
                   </div>
-                  <div class="progress-bar">
-                    <div
-                      class="progress-fill"
-                      [style.width.%]="getGoalProgress(goal)"
-                      [style.background]="pillar.color"
-                    ></div>
-                  </div>
+                }
+              </div>
+            } @else {
+              <p class="pillar-section-empty">No goals added</p>
+            }
+          </div>
+
+          @if (linkedObjectives().length > 0) {
+            <div class="pillar-section pillar-objectives">
+              <div class="pillar-section-header">
+                <span class="pillar-section-label">Objectives</span>
+                <button type="button" class="pillar-section-link" (click)="openObjectivesDialog(pillar)">
+                  {{ (pillar.objectiveIds && pillar.objectiveIds.length > 0) ? 'Edit' : '+ Link' }}
+                </button>
+              </div>
+              @if (pillar.objectiveIds && pillar.objectiveIds.length > 0) {
+                <div class="pillar-obj-chips">
+                  @for (obj of linkedObjectivesFor(pillar); track obj.id) {
+                    <span class="pillar-obj-chip" [title]="obj.statement">{{ obj.statement }}</span>
+                  }
                 </div>
+              } @else {
+                <p class="pillar-section-empty">No objectives linked</p>
               }
             </div>
           }
