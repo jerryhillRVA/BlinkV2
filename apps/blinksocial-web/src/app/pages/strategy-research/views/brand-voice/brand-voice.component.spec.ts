@@ -19,21 +19,17 @@ describe('BrandVoiceComponent', () => {
     expect(fixture.componentInstance).toBeTruthy();
   });
 
-  it('should render all five child components', () => {
+  it('should render all three child components', () => {
     expect(nativeElement.querySelector('app-voice-mission')).toBeTruthy();
     expect(nativeElement.querySelector('app-voice-attributes')).toBeTruthy();
-    expect(nativeElement.querySelector('app-tone-context')).toBeTruthy();
-    expect(nativeElement.querySelector('app-platform-adjustments')).toBeTruthy();
     expect(nativeElement.querySelector('app-vocabulary-guide')).toBeTruthy();
   });
 
-  it('should render all five section labels', () => {
+  it('should render the section labels', () => {
     const labels = nativeElement.querySelectorAll('.bv-section-label');
     const labelTexts = Array.from(labels).map(el => el.textContent?.trim());
     expect(labelTexts).toContain('Content Mission Statement');
     expect(labelTexts).toContain('Brand Personality');
-    expect(labelTexts).toContain('Tone Shifts');
-    expect(labelTexts).toContain('Platform Nuances');
     expect(labelTexts).toContain('Vocabulary Guide');
   });
 

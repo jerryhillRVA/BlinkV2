@@ -13,6 +13,7 @@ import { SeriesBuilderComponent } from './views/series-builder/series-builder.co
 import { AbAnalyzerComponent } from './views/ab-analyzer/ab-analyzer.component';
 import { SeoHashtagsComponent } from './views/seo-hashtags/seo-hashtags.component';
 import type { StrategyView, BusinessObjective, SidebarItem } from './strategy-research.types';
+import { DEFAULT_OBJECTIVES } from './strategy-research.mock-data';
 import { SIDEBAR_ITEMS } from './strategy-research.constants';
 
 const SIDEBAR_SECTIONS: { label: string; items: SidebarItem[] }[] = [
@@ -44,7 +45,7 @@ export class StrategyResearchComponent {
   private readonly route = inject(ActivatedRoute);
   readonly workspaceId = this.route.snapshot.paramMap.get('id') ?? '';
   readonly activeView = signal<StrategyView>('brand-voice');
-  readonly objectives = signal<BusinessObjective[]>([]);
+  readonly objectives = signal<BusinessObjective[]>([...DEFAULT_OBJECTIVES]);
 
   readonly sidebarSections = SIDEBAR_SECTIONS;
 

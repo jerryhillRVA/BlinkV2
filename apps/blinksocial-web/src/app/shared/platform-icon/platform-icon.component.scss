@@ -1,0 +1,10 @@
+:host {
+  display: inline-flex;
+  align-items: center;
+  line-height: 0;
+}
+
+.platform-icon {
+  color: var(--platform-color, currentColor);
+  flex-shrink: 0;
+}

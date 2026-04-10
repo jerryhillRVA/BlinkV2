@@ -2,22 +2,19 @@
   <div class="section-header">
     <h2 class="has-mock-data" title="Mock data">Research Sources</h2>
     <div class="header-actions">
-      <div class="filter-group">
-        <span>Filter by pillar:</span>
-        <select [ngModel]="filterPillarId()" (ngModelChange)="filterPillarId.set($event)">
-          <option value="all">All Pillars</option>
-          @for (pillar of pillars(); track pillar.id) {
-            <option [value]="pillar.id">{{ pillar.name }}</option>
-          }
-        </select>
-      </div>
+      <select class="filter-select" [ngModel]="filterPillarId()" (ngModelChange)="filterPillarId.set($event)">
+        <option value="all">All Pillars</option>
+        @for (pillar of pillars(); track pillar.id) {
+          <option [value]="pillar.id">{{ pillar.name }}</option>
+        }
+      </select>
       <button class="btn-discover" (click)="discoverSources()" [disabled]="isDiscovering()">
         @if (isDiscovering()) {
           <span class="spinner"></span>
           Discovering...
         } @else {
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"></path>
+            <circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/>
           </svg>
           AI Discover Sources
         }
@@ -25,52 +22,73 @@
     </div>
   </div>
 
+  @if (isDiscovering()) {
+    <div class="discover-loading-card">
+      <span class="spinner spinner--lg"></span>
+      <h3>Scanning for relevant sources…</h3>
+      <p>Analyzing your pillars and audience to surface high-signal research.</p>
+    </div>
+  }
+
   <div class="sources-list">
     @for (source of filteredSources(); track source.id) {
       <div class="source-card">
-        <div class="source-top-row">
-          <div class="source-badges">
-            <span
-              class="type-badge"
-              [style.background]="getTypeBadgeStyle(source.type).background"
-              [style.color]="getTypeBadgeStyle(source.type).color"
-            >
-              {{ source.type }}
-            </span>
-            <span class="relevance-badge" title="Relevance score">
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <circle cx="12" cy="12" r="10"></circle>
-                <circle cx="12" cy="12" r="6"></circle>
-                <circle cx="12" cy="12" r="2"></circle>
-              </svg>
-              {{ source.relevance }}%
-            </span>
+        <div class="source-card-body">
+          <div class="source-content">
+            <div class="source-meta-row">
+              <span
+                class="type-badge"
+                [style.background]="getTypeBadgeStyle(source.type).background"
+                [style.color]="getTypeBadgeStyle(source.type).color"
+              >
+                {{ source.type }}
+              </span>
+              <span class="relevance-badge" title="Relevance score">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/>
+                </svg>
+                {{ source.relevance }}% relevance
+              </span>
+            </div>
+
+            <h3 class="source-title has-mock-data" title="Mock data">{{ source.title }}</h3>
+            <p class="source-summary">{{ source.summary }}</p>
+
+            <div class="source-pillars-row">
+              @for (pillarId of source.pillarIds; track pillarId) {
+                <span class="pillar-chip" [style.--chip-color]="getPillarColor(pillarId)">
+                  {{ getPillarName(pillarId) }}
+                </span>
+              }
+              <span class="source-date">{{ formatDate(source.discoveredAt) }}</span>
+            </div>
           </div>
-          <span class="source-date">{{ formatDate(source.discoveredAt) }}</span>
-        </div>
 
-        <h3 class="source-title has-mock-data" title="Mock data">{{ source.title }}</h3>
-        <p class="source-summary">{{ source.summary }}</p>
-
-        <div class="source-pillars">
-          @for (pillarId of source.pillarIds; track pillarId) {
-            <span class="pillar-chip" [style.--chip-color]="getPillarColor(pillarId)">
-              {{ getPillarName(pillarId) }}
-            </span>
-          }
+          <a
+            class="source-link"
+            [href]="source.url"
+            target="_blank"
+            rel="noopener noreferrer"
+            title="Open source"
+            aria-label="Open source in new tab"
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M15 3h6v6"/><path d="M10 14 21 3"/><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
+            </svg>
+          </a>
         </div>
 
         <div class="source-actions">
           <button class="btn-action btn-create-idea" (click)="createIdea(source)">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M12 2a7 7 0 0 1 7 7c0 2.38-1.19 4.47-3 5.74V17a1 1 0 0 1-1 1H9a1 1 0 0 1-1-1v-2.26C6.19 13.47 5 11.38 5 9a7 7 0 0 1 7-7Z"></path>
-              <path d="M9 21h6M10 17v4M14 17v4"></path>
+              <path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5"/>
+              <path d="M9 18h6"/><path d="M10 22h4"/>
             </svg>
             Create Idea
           </button>
           <button class="btn-action btn-start-prod" (click)="startProduction(source)">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <polygon points="5 3 19 12 5 21 5 3"></polygon>
+              <path d="M12 19l7-7 3 3-7 7-3-3z"/><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"/><path d="M2 2l7.586 7.586"/><circle cx="11" cy="11" r="2"/>
             </svg>
             Start Production
           </button>
@@ -78,8 +96,12 @@
       </div>
     }
 
-    @if (filteredSources().length === 0) {
+    @if (filteredSources().length === 0 && !isDiscovering()) {
       <div class="empty-state">
+        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/>
+          <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/>
+        </svg>
         <p>No sources found for the selected filter.</p>
       </div>
     }

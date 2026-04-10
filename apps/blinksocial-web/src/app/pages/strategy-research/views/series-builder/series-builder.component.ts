@@ -1,84 +1,32 @@
-import { Component, DestroyRef, HostBinding, inject, signal } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, DestroyRef, HostBinding, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import type { Platform } from '../../strategy-research.types';
+import type {
+  AudienceSegment,
+  ContentPillar,
+  Platform,
+  SeriesOverview,
+  SeriesPost,
+  SeriesPostRole,
+} from '../../strategy-research.types';
 import { MockDataService } from '../../../../core/mock-data/mock-data.service';
-import { PLATFORM_OPTIONS, SERIES_GOAL_OPTIONS, AI_SIMULATION_DELAY_MS } from '../../strategy-research.constants';
+import {
+  AI_SIMULATION_DELAY_MS,
+  SERIES_GOAL_OPTIONS,
+  SERIES_LENGTH_OPTIONS,
+  SERIES_PLATFORM_OPTIONS,
+} from '../../strategy-research.constants';
+import {
+  DEFAULT_PILLARS,
+  DEFAULT_SEGMENTS,
+  MOCK_SERIES,
+} from '../../strategy-research.mock-data';
 import { safeTimeout } from '../../strategy-research.utils';
-
-type PostRole = 'Hook' | 'Value' | 'Proof' | 'Pivot' | 'Conversion';
-
-interface SeriesPost {
-  number: number;
-  title: string;
-  role: PostRole;
-  hook: string;
-  captionDirection: string;
-  cta: string;
-}
-
-interface SeriesOverview {
-  title: string;
-  narrativeArc: string;
-  platform: Platform;
-  postCount: number;
-  goal: string;
-  posts: SeriesPost[];
-}
-
-const MOCK_SERIES: SeriesOverview = {
-  title: '5-Day Strength After 40 Challenge',
-  narrativeArc: 'Takes the audience from awareness of the problem (losing strength in midlife) through education, social proof, and a mindset shift, ending with a clear conversion moment.',
-  platform: 'instagram',
-  postCount: 5,
-  goal: 'Grow Followers',
-  posts: [
-    {
-      number: 1,
-      title: 'The Strength Myth',
-      role: 'Hook',
-      hook: 'You\'re not getting weaker because of your age. You\'re getting weaker because of what you\'ve been told about your age.',
-      captionDirection: 'Challenge the myth that women lose strength inevitably after 40. Share a surprising statistic about muscle retention.',
-      cta: 'Save this for Day 2 tomorrow',
-    },
-    {
-      number: 2,
-      title: '3 Moves That Change Everything',
-      role: 'Value',
-      hook: 'These 3 exercises took me from exhausted to energized in 2 weeks.',
-      captionDirection: 'Teach 3 beginner-friendly strength exercises with clear form cues and modifications for joint issues.',
-      cta: 'Try move #1 today and tell me how it felt',
-    },
-    {
-      number: 3,
-      title: 'Maria\'s Transformation',
-      role: 'Proof',
-      hook: 'At 52, Maria thought her body had given up on her. 90 days later, she proved everyone wrong.',
-      captionDirection: 'Share a real community member transformation story with before/after mindset shift (not just physical).',
-      cta: 'Drop a fire emoji if this inspires you',
-    },
-    {
-      number: 4,
-      title: 'What Nobody Tells You About Perimenopause & Exercise',
-      role: 'Pivot',
-      hook: 'Your workout isn\'t failing you. Your workout doesn\'t know you\'re in perimenopause.',
-      captionDirection: 'Educate on how hormonal changes require exercise adaptation. Position your program as the solution.',
-      cta: 'Share this with a friend who needs to hear it',
-    },
-    {
-      number: 5,
-      title: 'Your 7-Day Plan Is Ready',
-      role: 'Conversion',
-      hook: 'You\'ve seen the proof. You\'ve learned the moves. Now it\'s time to start.',
-      captionDirection: 'Summarize the series journey, reinforce community belonging, and present the free 7-day plan as the natural next step.',
-      cta: 'Click the link in bio to start your free 7-day plan',
-    },
-  ],
-};
+import { PlatformIconComponent } from '../../../../shared/platform-icon/platform-icon.component';
+import { DropdownComponent, DropdownOption } from '../../../../shared/dropdown/dropdown.component';
 
 @Component({
   selector: 'app-series-builder',
-  imports: [CommonModule, FormsModule],
+  imports: [FormsModule, PlatformIconComponent, DropdownComponent],
   templateUrl: './series-builder.component.html',
   styleUrl: './series-builder.component.scss',
 })
@@ -91,18 +39,51 @@ export class SeriesBuilderComponent {
     return this.mockData.isMock('series-builder');
   }
 
+  /* v8 ignore start */
+  readonly pillars = signal<ContentPillar[]>([...DEFAULT_PILLARS]);
+  readonly segments = signal<AudienceSegment[]>([...DEFAULT_SEGMENTS]);
+  readonly selectedSegmentId = signal<string>(DEFAULT_SEGMENTS[0]?.id ?? '');
+  readonly selectedPillarId = signal<string>(DEFAULT_PILLARS[0]?.id ?? '');
+  readonly selectedGoal = signal<string>(SERIES_GOAL_OPTIONS[0]);
+  readonly selectedLength = signal<string>('5');
+  readonly selectedPlatform = signal<Platform>('instagram');
   readonly isGenerating = signal(false);
   readonly series = signal<SeriesOverview | null>(null);
+  readonly postTitles = signal<Record<number, string>>({});
+  readonly titleErrors = signal<Set<number>>(new Set());
+  readonly savedPosts = signal<Set<number>>(new Set());
+  /* v8 ignore stop */
 
-  selectedGoal = SERIES_GOAL_OPTIONS[0];
-  seriesLength = 5;
-  selectedPlatform: Platform = 'instagram';
+  readonly canBuild = computed(() =>
+    !!this.selectedSegmentId() &&
+    !!this.selectedPillarId() &&
+    !!this.selectedGoal() &&
+    !!this.selectedLength() &&
+    !!this.selectedPlatform()
+  );
 
-  readonly goalOptions = SERIES_GOAL_OPTIONS;
-  readonly platformOptions = PLATFORM_OPTIONS;
-  readonly lengthOptions = [3, 5, 7];
+  readonly selectedPillar = computed(() =>
+    this.pillars().find(p => p.id === this.selectedPillarId()) ?? null
+  );
 
-  getRoleClass(role: PostRole): string {
+  readonly unsavedCount = computed(() => {
+    const s = this.series();
+    return s ? s.posts.length - this.savedPosts().size : 0;
+  });
+
+  readonly segmentDropdownOptions: DropdownOption[] = DEFAULT_SEGMENTS.map(s => ({ value: s.id, label: s.name }));
+  readonly pillarDropdownOptions: DropdownOption[] = DEFAULT_PILLARS.map(p => ({ value: p.id, label: p.name }));
+  readonly goalDropdownOptions: DropdownOption[] = SERIES_GOAL_OPTIONS.map(g => ({ value: g, label: g }));
+  readonly lengthDropdownOptions: DropdownOption[] = SERIES_LENGTH_OPTIONS.map(l => ({ value: l, label: `${l} posts` }));
+  readonly platformDropdownOptions: DropdownOption[] = SERIES_PLATFORM_OPTIONS.map(p => ({ value: p.value, label: p.label }));
+
+  setSegment(value: string): void { this.selectedSegmentId.set(value); }
+  setPillar(value: string): void { this.selectedPillarId.set(value); }
+  setGoal(value: string): void { this.selectedGoal.set(value); }
+  setLength(value: string): void { this.selectedLength.set(value); }
+  setPlatform(value: string): void { this.selectedPlatform.set(value as Platform); }
+
+  getRoleClass(role: SeriesPostRole): string {
     switch (role) {
       case 'Hook': return 'role--hook';
       case 'Value': return 'role--value';
@@ -114,21 +95,70 @@ export class SeriesBuilderComponent {
   }
 
   buildSeries(): void {
+    if (!this.canBuild() || this.isGenerating()) return;
     this.isGenerating.set(true);
     this.series.set(null);
+    this.postTitles.set({});
+    this.titleErrors.set(new Set());
+    this.savedPosts.set(new Set());
     safeTimeout(() => {
-      this.series.set({
+      const length = Number.parseInt(this.selectedLength(), 10) || 5;
+      const posts: SeriesPost[] = MOCK_SERIES.posts.slice(0, length).map(p => ({ ...p }));
+      const built: SeriesOverview = {
         ...MOCK_SERIES,
-        platform: this.selectedPlatform,
-        postCount: this.seriesLength,
-        goal: this.selectedGoal,
-        posts: MOCK_SERIES.posts.slice(0, this.seriesLength),
-      });
+        platform: this.selectedPlatform(),
+        postCount: length,
+        goal: this.selectedGoal(),
+        pillarId: this.selectedPillarId(),
+        segmentId: this.selectedSegmentId(),
+        posts,
+      };
+      this.series.set(built);
+      const titles: Record<number, string> = {};
+      for (const p of posts) titles[p.number] = p.title;
+      this.postTitles.set(titles);
       this.isGenerating.set(false);
     }, AI_SIMULATION_DELAY_MS, this.destroyRef);
   }
 
-  createInIdeation(_postNumber: number): void {
-    // placeholder
+  setPostTitle(num: number, value: string): void {
+    this.postTitles.update(m => ({ ...m, [num]: value }));
+    if (value.trim()) {
+      this.titleErrors.update(set => {
+        const next = new Set(set);
+        next.delete(num);
+        return next;
+      });
+    }
+  }
+
+  createPost(post: SeriesPost): void {
+    const title = (this.postTitles()[post.number] ?? '').trim();
+    if (!title) {
+      this.titleErrors.update(set => new Set(set).add(post.number));
+      return;
+    }
+    this.savedPosts.update(set => new Set(set).add(post.number));
+  }
+
+  createAllPosts(): void {
+    const s = this.series();
+    if (!s) return;
+    for (const post of s.posts) {
+      if (this.savedPosts().has(post.number)) continue;
+      this.createPost(post);
+    }
+  }
+
+  pillarColor(id: string): string {
+    return this.pillars().find(p => p.id === id)?.color ?? 'var(--blink-on-surface-muted)';
+  }
+
+  pillarName(id: string): string {
+    return this.pillars().find(p => p.id === id)?.name ?? id;
+  }
+
+  segmentName(id: string): string {
+    return this.segments().find(s => s.id === id)?.name ?? id;
   }
 }

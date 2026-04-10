@@ -39,7 +39,25 @@
 }
 
 .dropdown-value {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   pointer-events: none;
+
+  &--placeholder { color: var(--blink-on-surface-muted); }
+}
+
+.dropdown-option-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.dropdown-color-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  flex-shrink: 0;
 }
 
 .dropdown-chevron {
@@ -112,6 +130,28 @@
   .dropdown-option {
     padding: 8px 12px;
     font-size: 13px;
+  }
+}
+
+// Small variant — tighter than compact, for inline form rows
+.dropdown-sm {
+  .dropdown-trigger {
+    height: 36px;
+    padding: 0 10px;
+    font-size: 12px;
+    border: 1px solid var(--blink-outline-variant);
+    border-radius: 6px;
+    background: var(--blink-surface);
+    width: 100%;
+  }
+
+  .dropdown-options {
+    width: 100%;
+  }
+
+  .dropdown-option {
+    padding: 6px 10px;
+    font-size: 12px;
   }
 }
 

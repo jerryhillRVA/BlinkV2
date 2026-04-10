@@ -39,9 +39,7 @@
             class="platform-title"
             (click)="toggleExpand(channel.platform)"
           >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path [attr.d]="platformIcons[channel.platform]"></path>
-            </svg>
+            <app-platform-icon [platform]="channel.platform" [size]="16" />
             <span class="platform-name has-mock-data" title="Mock data">{{ platformLabels[channel.platform] }}</span>
             <svg
               width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
