@@ -1,13 +1,84 @@
 <nav class="navbar">
-  <a class="navbar-brand" routerLink="/">
-    <div class="brand-icon">
-      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="#d94e33" stroke="#d94e33" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <path d="m16 13 5.223 3.482a.5.5 0 0 0 .777-.416V7.87a.5.5 0 0 0-.752-.432L16 10.5"/>
-        <rect x="2" y="6" width="14" height="12" rx="2"/>
-      </svg>
-    </div>
-    <span class="brand-text">BLINK SOCIAL</span>
-  </a>
+  <div class="navbar-start">
+    <a class="navbar-brand" routerLink="/">
+      <div class="brand-icon">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="#d94e33" stroke="#d94e33" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="m16 13 5.223 3.482a.5.5 0 0 0 .777-.416V7.87a.5.5 0 0 0-.752-.432L16 10.5"/>
+          <rect x="2" y="6" width="14" height="12" rx="2"/>
+        </svg>
+      </div>
+      <span class="brand-text">BLINK SOCIAL</span>
+    </a>
+
+    @if (workspaceId()) {
+      <!-- Workspace Selector -->
+      <div class="ws-selector-container">
+        <button class="ws-selector-btn" (click)="toggleWsDropdown()" type="button">
+          <span class="ws-selector-name">{{ workspaceName() }}</span>
+          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"
+               fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+               class="ws-selector-chevron">
+            <path d="m6 9 6 6 6-6" />
+          </svg>
+        </button>
+        @if (wsDropdownOpen()) {
+          <div class="ws-dropdown-backdrop" (click)="closeWsDropdown()" role="none"></div>
+          <div class="ws-dropdown">
+            <div class="ws-dropdown-label">Your Workspaces</div>
+            <div class="ws-dropdown-item ws-dropdown-current">
+              {{ workspaceName() }}
+              <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#d94e33" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="ws-current-icon">
+                <path d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z" />
+                <path d="M20 3v4" /><path d="M22 5h-4" />
+                <path d="M4 17v2" /><path d="M5 18H3" />
+              </svg>
+            </div>
+            @for (ws of otherWorkspaces(); track ws.id) {
+              <button class="ws-dropdown-item" (click)="switchWorkspace(ws.id)">
+                {{ ws.name }}
+              </button>
+            }
+            <div class="ws-dropdown-divider"></div>
+            <button class="ws-dropdown-item ws-dropdown-add" (click)="addWorkspace()">
+              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M5 12h14" /><path d="M12 5v14" />
+              </svg>
+              Add Workspace
+            </button>
+          </div>
+        }
+      </div>
+
+      <!-- Workspace Navigation Tabs -->
+      <nav class="workspace-nav" aria-label="Workspace navigation">
+        <span class="navbar-separator"></span>
+        <a
+          class="ws-nav-item"
+          [class.active]="currentTab() === 'content'"
+          [routerLink]="'/workspace/' + workspaceId() + '/content'"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z" />
+            <path d="M20 3v4" /><path d="M22 5h-4" />
+            <path d="M4 17v2" /><path d="M5 18H3" />
+          </svg>
+          Content
+        </a>
+        <span class="ws-nav-divider"></span>
+        <a
+          class="ws-nav-item"
+          [class.active]="currentTab() === 'strategy'"
+          [routerLink]="'/workspace/' + workspaceId() + '/strategy'"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10" /><circle cx="12" cy="12" r="6" /><circle cx="12" cy="12" r="2" />
+          </svg>
+          Strategy &amp; Research
+        </a>
+      </nav>
+    }
+  </div>
+
   <div class="navbar-end">
     <button class="theme-toggle-btn" (click)="themeService.toggleTheme()" aria-label="Toggle theme">
       @if (themeService.isDark()) {
@@ -28,6 +99,19 @@
         </svg>
       }
     </button>
+    @if (settingsWorkspaceId()) {
+      <a
+        class="settings-btn"
+        [routerLink]="'/workspace/' + settingsWorkspaceId() + '/settings'"
+        aria-label="Workspace settings"
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/>
+          <circle cx="12" cy="12" r="3"/>
+        </svg>
+      </a>
+      <span class="navbar-separator"></span>
+    }
     <div class="user-info">
       <span class="user-name">{{ displayName() }}</span>
       <span class="user-role">{{ currentRole() }}</span>

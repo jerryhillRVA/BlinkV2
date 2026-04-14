@@ -4,8 +4,9 @@ import {
   HttpTestingController,
   provideHttpClientTesting,
 } from '@angular/common/http/testing';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { provideRouter } from '@angular/router';
+import { of } from 'rxjs';
 import { WorkspaceSettingsComponent } from './workspace-settings.component';
 import { WorkspaceSettingsStateService } from './workspace-settings-state.service';
 import { AuthService } from '../../core/auth/auth.service';
@@ -26,6 +27,7 @@ describe('WorkspaceSettingsComponent', () => {
         {
           provide: ActivatedRoute,
           useValue: {
+            paramMap: of(convertToParamMap({ id: 'hive-collective' })),
             snapshot: { paramMap: { get: () => 'hive-collective' } },
           },
         },
@@ -263,5 +265,14 @@ describe('WorkspaceSettingsComponent', () => {
     });
     fixture.detectChanges();
     expect(fixture.nativeElement.querySelector('app-tab-security')).toBeTruthy();
+  });
+
+  it('should set workspace ID from route paramMap', () => {
+    const fixture = TestBed.createComponent(WorkspaceSettingsComponent);
+    fixture.detectChanges();
+    // Flush the auto-fired general tab request
+    const reqs = httpMock.match('/api/workspaces/hive-collective/settings/general');
+    reqs.forEach((r) => r.flush({}));
+    expect(fixture.componentInstance['currentWsId']).toBe('hive-collective');
   });
 });

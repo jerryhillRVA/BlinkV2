@@ -1,6 +1,7 @@
 import { TestBed } from '@angular/core/testing';
-import { provideRouter, ActivatedRoute } from '@angular/router';
+import { provideRouter, ActivatedRoute, convertToParamMap } from '@angular/router';
 import { signal } from '@angular/core';
+import { of } from 'rxjs';
 import { StrategyResearchComponent } from './strategy-research.component';
 import { StrategyResearchStateService } from './strategy-research-state.service';
 
@@ -53,6 +54,7 @@ describe('StrategyResearchComponent', () => {
         {
           provide: ActivatedRoute,
           useValue: {
+            paramMap: of(convertToParamMap({ id: 'test-workspace' })),
             snapshot: { paramMap: { get: () => 'test-workspace' } },
           },
         },
@@ -206,5 +208,13 @@ describe('StrategyResearchComponent', () => {
     ];
     component.onUpdateObjectives(objectives);
     expect(mockStateService.saveObjectives).toHaveBeenCalledWith(objectives);
+  });
+
+  it('should set workspace ID from paramMap', () => {
+    expect(component.workspaceId).toBe('test-workspace');
+  });
+
+  it('should call loadAll with workspace ID from paramMap', () => {
+    expect(mockStateService.loadAll).toHaveBeenCalledWith('test-workspace');
   });
 });

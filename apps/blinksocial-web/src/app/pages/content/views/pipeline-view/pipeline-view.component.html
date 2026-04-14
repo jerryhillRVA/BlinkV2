@@ -1,0 +1,285 @@
+<div class="pipeline-view">
+  <!-- Toolbar -->
+  <div class="toolbar">
+    <div class="toolbar-left">
+      <div class="search-box">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
+             fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+             class="search-icon">
+          <circle cx="11" cy="11" r="8" />
+          <path d="m21 21-4.3-4.3" />
+        </svg>
+        <input
+          type="text"
+          placeholder="Search content..."
+          class="search-input"
+          [value]="searchQuery()"
+          (input)="onSearch($event)"
+        />
+      </div>
+    </div>
+    <div class="toolbar-right">
+      <div class="view-toggle">
+        <button
+          class="toggle-btn"
+          [class.active]="viewMode() === 'kanban'"
+          (click)="setViewMode('kanban')"
+          aria-label="Kanban view"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"
+               fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M6 5v11" /><path d="M12 5v6" /><path d="M18 5v14" />
+          </svg>
+          <span class="toggle-label">Kanban</span>
+        </button>
+        <button
+          class="toggle-btn"
+          [class.active]="viewMode() === 'list'"
+          (click)="setViewMode('list')"
+          aria-label="List view"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"
+               fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="8" y1="6" x2="21" y2="6" />
+            <line x1="8" y1="12" x2="21" y2="12" />
+            <line x1="8" y1="18" x2="21" y2="18" />
+            <line x1="3" y1="6" x2="3.01" y2="6" />
+            <line x1="3" y1="12" x2="3.01" y2="12" />
+            <line x1="3" y1="18" x2="3.01" y2="18" />
+          </svg>
+          <span class="toggle-label">List</span>
+        </button>
+      </div>
+      <button class="btn-new-content" (click)="createItem.emit()">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
+             fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M5 12h14" />
+          <path d="M12 5v14" />
+        </svg>
+        New Content
+      </button>
+    </div>
+  </div>
+
+  <!-- Active filter chips -->
+  @if (activeFilterCount() > 0) {
+    <div class="active-filters">
+      <div class="active-filter-chips">
+        @for (pid of filterPillars(); track pid) {
+          <span class="active-chip">
+            {{ getPillarName(pid) }}
+            <button class="chip-remove" (click)="toggleFilterPillar(pid)" aria-label="Remove filter">
+              <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+            </button>
+          </span>
+        }
+        @for (plat of filterPlatforms(); track plat) {
+          <span class="active-chip">
+            {{ plat }}
+            <button class="chip-remove" (click)="toggleFilterPlatform(plat)" aria-label="Remove filter">
+              <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+            </button>
+          </span>
+        }
+        @for (ct of filterContentTypes(); track ct) {
+          <span class="active-chip">
+            {{ ct }}
+            <button class="chip-remove" (click)="toggleFilterContentType(ct)" aria-label="Remove filter">
+              <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+            </button>
+          </span>
+        }
+      </div>
+      <button class="active-filters-clear" (click)="clearAllFilters()">Clear all</button>
+    </div>
+  }
+
+  <!-- Pipeline Card (shared header + filter for both views) -->
+  <div class="pipeline-card">
+    <!-- Gradient header bar -->
+    <div class="pipeline-card-header">
+      <div class="header-left">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
+             fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M6 5v11" /><path d="M12 5v6" /><path d="M18 5v14" />
+        </svg>
+        <span class="header-title">Pipeline Board</span>
+        <span class="header-count">{{ filteredItems().length }} items</span>
+      </div>
+      <button
+        class="filter-btn"
+        [class.active]="showFilterPanel()"
+        (click)="toggleFilterPanel()"
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"
+             fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="21" x2="14" y1="4" y2="4" /><line x1="10" x2="3" y1="4" y2="4" />
+          <line x1="21" x2="12" y1="12" y2="12" /><line x1="8" x2="3" y1="12" y2="12" />
+          <line x1="21" x2="16" y1="20" y2="20" /><line x1="12" x2="3" y1="20" y2="20" />
+          <line x1="14" x2="14" y1="2" y2="6" /><line x1="8" x2="8" y1="10" y2="14" /><line x1="16" x2="16" y1="18" y2="22" />
+        </svg>
+        Filter
+        @if (activeFilterCount() > 0) {
+          <span class="filter-count">{{ activeFilterCount() }}</span>
+        }
+      </button>
+    </div>
+
+    <!-- Collapsible filter panel -->
+    @if (showFilterPanel()) {
+      <div class="filter-panel" @expandPanel>
+        <div class="filter-panel-header">
+          <span class="filter-label">Filter Content</span>
+          @if (activeFilterCount() > 0) {
+            <button class="clear-filters" (click)="clearAllFilters()">Clear all</button>
+          }
+        </div>
+        <div class="filter-group">
+          <span class="filter-group-label">Pillars</span>
+          <div class="filter-chips">
+            @for (pillar of pillars; track pillar.id) {
+              <button
+                class="filter-chip"
+                [class.active]="filterPillars().includes(pillar.id)"
+                (click)="toggleFilterPillar(pillar.id)"
+              >
+                {{ pillar.name }}
+              </button>
+            }
+          </div>
+        </div>
+        <div class="filter-group">
+          <span class="filter-group-label">Platform</span>
+          <div class="filter-chips">
+            @for (platform of platforms; track platform) {
+              <button
+                class="filter-chip"
+                [class.active]="filterPlatforms().includes(platform)"
+                (click)="toggleFilterPlatform(platform)"
+              >
+                {{ platform }}
+              </button>
+            }
+          </div>
+        </div>
+        @if (availableContentTypes().length > 0) {
+          <div class="filter-group">
+            <span class="filter-group-label">Content Type</span>
+            <div class="filter-chips">
+              @for (ct of availableContentTypes(); track ct) {
+                <button
+                  class="filter-chip"
+                  [class.active]="filterContentTypes().includes(ct)"
+                  (click)="toggleFilterContentType(ct)"
+                >
+                  {{ ct }}
+                </button>
+              }
+            </div>
+          </div>
+        }
+      </div>
+    }
+
+    <!-- Kanban View -->
+    @if (viewMode() === 'kanban') {
+      <div class="kanban-board">
+        @for (column of columns; track column.id) {
+          <div class="kanban-column" [ngClass]="column.colorClass">
+            <div class="column-header">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
+                   fill="none" [attr.stroke]="column.iconColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                   class="column-icon">
+                @for (path of column.iconPaths; track path) {
+                  <path [attr.d]="path" />
+                }
+              </svg>
+              <h3 class="column-title">{{ column.label }}</h3>
+              <span class="column-count">{{ getColumnItems(column.id).length }}</span>
+            </div>
+            <div class="column-cards">
+              @for (item of getColumnItems(column.id); track item.id) {
+                <button class="content-card" (click)="selectItem.emit(item)">
+                  @if (item.platform) {
+                    <span class="card-platform-icon" [ngClass]="'platform-' + item.platform">
+                      <app-platform-icon [platform]="item.platform" [size]="14" />
+                    </span>
+                  }
+                  <div class="card-pillars">
+                    @for (pillarId of item.pillarIds; track pillarId) {
+                      <span class="pillar-badge">
+                        {{ getPillarName(pillarId) }}
+                      </span>
+                    }
+                    @if (item.contentType) {
+                      <span class="type-badge">{{ item.contentType }}</span>
+                    }
+                  </div>
+                  <h4 class="card-title">{{ item.title }}</h4>
+                  @if (item.hook) {
+                    <p class="card-hook">"{{ item.hook }}"</p>
+                  } @else {
+                    <p class="card-description">{{ item.description }}</p>
+                  }
+                  <div class="card-footer">
+                    <span class="card-date">{{ formatDate(item.updatedAt) }}</span>
+                  </div>
+                </button>
+              }
+              @if (getColumnItems(column.id).length === 0) {
+                <div class="empty-column">
+                  <p>No items</p>
+                </div>
+              }
+            </div>
+          </div>
+        }
+      </div>
+    }
+
+    <!-- List View -->
+    @if (viewMode() === 'list') {
+      <div class="list-items">
+        @for (item of sortedItems(); track item.id) {
+          @let column = getItemColumn(item);
+          <button class="list-card" (click)="selectItem.emit(item)">
+            <div class="list-card-left">
+              <div class="list-card-title-row">
+                @if (column) {
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
+                       fill="none" [attr.stroke]="column.iconColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                       class="list-card-icon">
+                    @for (path of column.iconPaths; track path) {
+                      <path [attr.d]="path" />
+                    }
+                  </svg>
+                }
+                <h4 class="list-card-title">{{ item.title }}</h4>
+              </div>
+              <p class="list-card-description">{{ item.description }}</p>
+              <div class="list-card-badges">
+                @for (pillarId of item.pillarIds; track pillarId) {
+                  <span class="pillar-badge">{{ getPillarName(pillarId) }}</span>
+                }
+                @if (item.platform) {
+                  <span class="list-card-platform" [ngClass]="'platform-' + item.platform">
+                    <app-platform-icon [platform]="item.platform" [size]="14" />
+                  </span>
+                }
+              </div>
+            </div>
+            <div class="list-card-right">
+              <span class="list-card-stage">{{ column?.label ?? stageConfig[item.stage]?.label }}</span>
+              <span class="list-card-date">{{ formatDate(item.updatedAt) }}</span>
+            </div>
+          </button>
+        }
+        @if (sortedItems().length === 0) {
+          <div class="list-empty">
+            <p>No content found</p>
+          </div>
+        }
+      </div>
+    }
+  </div>
+</div>

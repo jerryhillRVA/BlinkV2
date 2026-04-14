@@ -1,0 +1,38 @@
+.stub-view {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 400px;
+}
+
+.stub-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 40px;
+  background: var(--blink-surface);
+  border: 1px dashed var(--blink-outline-variant);
+  border-radius: 16px;
+  max-width: 360px;
+  text-align: center;
+}
+
+.stub-icon {
+  color: var(--blink-on-surface-muted);
+  opacity: 0.5;
+}
+
+.stub-title {
+  font-size: var(--blink-title-medium);
+  font-weight: 700;
+  color: var(--blink-on-surface-strong);
+  margin: 0;
+}
+
+.stub-description {
+  font-size: var(--blink-body-medium);
+  color: var(--blink-on-surface-muted);
+  margin: 0;
+  line-height: 1.5;
+}

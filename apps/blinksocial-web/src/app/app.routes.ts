@@ -54,4 +54,12 @@ export const appRoutes: Route[] = [
         (m) => m.StrategyResearchComponent
       ),
   },
+  {
+    path: 'workspace/:id/content',
+    canActivate: [authGuard],
+    loadComponent: () =>
+      import('./pages/content/content.component').then(
+        (m) => m.ContentComponent
+      ),
+  },
 ];

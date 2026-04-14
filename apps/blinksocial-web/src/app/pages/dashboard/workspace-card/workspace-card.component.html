@@ -12,7 +12,7 @@
   <div class="card-body">
     <p class="quick-label">QUICK ACCESS</p>
     <div class="quick-grid">
-      <button class="quick-item">
+      <button class="quick-item" (click)="goToContent.emit(workspace.id); $event.stopPropagation()">
         <div class="icon-wrapper icon-purple">
           <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="quick-icon">
             <path d="m16 6 4 14"></path><path d="M12 6v14"></path><path d="M8 8v12"></path><path d="M4 4v16"></path>

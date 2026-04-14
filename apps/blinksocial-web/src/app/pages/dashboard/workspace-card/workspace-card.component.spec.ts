@@ -97,4 +97,15 @@ describe('WorkspaceCardComponent', () => {
     link.click();
     expect(spy).toHaveBeenCalledWith('hive-collective');
   });
+
+  it('should emit goToContent with workspace id when Content quick-access is clicked', () => {
+    const fixture = createComponent('hive-collective', 'Hive Collective', '#d94e33');
+    const spy = vi.fn();
+    fixture.componentInstance.goToContent.subscribe(spy);
+    const el: HTMLElement = fixture.nativeElement;
+    const items = el.querySelectorAll('.quick-item');
+    // Content is the first quick-access button
+    (items[0] as HTMLButtonElement).click();
+    expect(spy).toHaveBeenCalledWith('hive-collective');
+  });
 });

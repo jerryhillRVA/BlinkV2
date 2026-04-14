@@ -166,6 +166,12 @@ describe('DashboardComponent', () => {
     expect(router.navigate).toHaveBeenCalledWith(['/workspace', 'hive-collective', 'settings']);
   });
 
+  it('should navigate to workspace content when onGoToContent is called', () => {
+    const fixture = TestBed.createComponent(DashboardComponent);
+    fixture.componentInstance.onGoToContent('hive-collective');
+    expect(router.navigate).toHaveBeenCalledWith(['/workspace', 'hive-collective', 'content']);
+  });
+
   it('should set loading to false on API error', () => {
     TestBed.resetTestingModule();
     TestBed.configureTestingModule({

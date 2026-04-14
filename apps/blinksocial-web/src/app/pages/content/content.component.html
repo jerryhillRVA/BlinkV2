@@ -1,0 +1,36 @@
+<div class="content-page">
+  <div class="content-bg" aria-hidden="true">
+    <img src="dashboard-bg.jpg" alt="" />
+  </div>
+
+  <main class="content-main" [class.content-entering]="!transitioning()">
+    @if (transitioning() || stateService.loading()) {
+      <div class="loading-state">
+        <p>Loading content...</p>
+      </div>
+    } @else {
+      @switch (activeView()) {
+        @case ('overview') {
+          <app-pipeline-view
+            [items]="stateService.items()"
+            [pillars]="stateService.pillars()"
+            (selectItem)="stateService.saveItem($event)"
+            (navigateToStep)="setActiveView($event)"
+          />
+        }
+        @case ('strategy') {
+          <app-strategy-stub />
+        }
+        @case ('production') {
+          <app-production-stub />
+        }
+        @case ('review') {
+          <app-review-stub />
+        }
+        @case ('performance') {
+          <app-performance-stub />
+        }
+      }
+    }
+  </main>
+</div>

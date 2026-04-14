@@ -1,4 +1,5 @@
 import { TestBed } from '@angular/core/testing';
+import { PLATFORM_ID } from '@angular/core';
 import { provideHttpClient } from '@angular/common/http';
 import {
   HttpTestingController,
@@ -76,6 +77,22 @@ describe('AuthService', () => {
       expect(service.currentUser()).toBeNull();
       expect(service.isLoading()).toBe(false);
     });
+
+    it('should skip API call during SSR', async () => {
+      TestBed.resetTestingModule();
+      TestBed.configureTestingModule({
+        providers: [
+          provideHttpClient(),
+          provideHttpClientTesting(),
+          provideRouter([]),
+          { provide: PLATFORM_ID, useValue: 'server' },
+        ],
+      });
+      const ssrService = TestBed.inject(AuthService);
+      await ssrService.checkStatus();
+      expect(ssrService.isLoading()).toBe(false);
+      expect(ssrService.currentUser()).toBeNull();
+    });
   });
 
   describe('login', () => {
@@ -99,6 +116,15 @@ describe('AuthService', () => {
       const result = await promise;
       expect(result.success).toBe(false);
       expect(result.error).toBeTruthy();
+    });
+
+    it('should return fallback error message when server sends no message', async () => {
+      const promise = service.login('a@b.com', 'wrong');
+      const req = httpMock.expectOne('/api/auth/login');
+      req.error(new ProgressEvent('error'));
+      const result = await promise;
+      expect(result.success).toBe(false);
+      expect(result.error).toBe('Login failed');
     });
   });
 

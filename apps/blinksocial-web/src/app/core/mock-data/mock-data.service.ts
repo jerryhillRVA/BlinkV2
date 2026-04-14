@@ -26,6 +26,7 @@ export class MockDataService {
     'ab-analyzer': true,
     'seo-hashtags': true,
     'business-objectives': true,
+    'content-items': true,
   });
 
   /** Reactive snapshot of the mock-feature map. */
