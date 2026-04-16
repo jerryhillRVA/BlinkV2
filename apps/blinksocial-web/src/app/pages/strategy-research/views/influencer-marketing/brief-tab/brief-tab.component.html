@@ -1,0 +1,181 @@
+<div class="brief">
+  <header class="brief__header">
+    <h3 class="brief__title">Creator Brief</h3>
+    <p class="brief__subtitle">Build a brief that reflects your strategy</p>
+  </header>
+
+  <div class="brief__form">
+    <div class="brief__field brief__field--full">
+      <span class="brief__label">Select influencer</span>
+      @if (influencerOptions().length > 0) {
+        <app-dropdown
+          size="sm"
+          [filled]="true"
+          [options]="influencerOptions()"
+          [value]="selectedHandle()"
+          placeholder="Choose a creator..."
+          (valueChange)="setInfluencer($event)"
+        />
+      } @else {
+        <p class="brief__hint">Shortlist a creator first in Discovery.</p>
+      }
+    </div>
+
+    <div class="brief__field">
+      <label class="brief__label" for="brief-campaign-name">Campaign name</label>
+      <input
+        id="brief-campaign-name"
+        class="brief__input"
+        type="text"
+        [value]="form().campaignName"
+        (input)="updateField('campaignName', $any($event.target).value)"
+        placeholder="e.g. Spring Energy Launch"
+      />
+    </div>
+
+    <div class="brief__field">
+      <span class="brief__label">Objective</span>
+      <app-dropdown
+        size="sm"
+        [filled]="true"
+        [options]="objectiveOptions()"
+        [value]="selectedObjectiveId()"
+        placeholder="Choose objective..."
+        (valueChange)="setObjective($event)"
+      />
+    </div>
+
+    @if (availablePlatforms().length > 0) {
+      <div class="brief__field brief__field--full">
+        <span class="brief__label">Platform(s)</span>
+        <div class="brief__toggle-row">
+          @for (p of availablePlatforms(); track p) {
+            <button type="button"
+                    class="brief__toggle"
+                    [class.brief__toggle--active]="isPlatformActive(p)"
+                    (click)="togglePlatform(p)">
+              <app-platform-icon [platform]="p" [size]="14" />
+              {{ platformLabels[p] }}
+            </button>
+          }
+        </div>
+      </div>
+    }
+
+    <div class="brief__field">
+      <span class="brief__label">Content type</span>
+      <app-dropdown
+        size="sm"
+        [filled]="true"
+        [options]="contentTypeOptions"
+        [value]="form().contentType"
+        placeholder="Select type..."
+        (valueChange)="setContentType($event)"
+      />
+    </div>
+
+    <div class="brief__field brief__field--full">
+      <label class="brief__label" for="brief-key-messages">Key messages</label>
+      <textarea id="brief-key-messages" class="brief__textarea brief__textarea--tall"
+                [value]="form().keyMessages"
+                (input)="updateField('keyMessages', $any($event.target).value)"
+                placeholder="Auto-populated from your content pillars"></textarea>
+    </div>
+
+    <div class="brief__field brief__field--full">
+      <label class="brief__label" for="brief-deliverables">Deliverables</label>
+      <textarea id="brief-deliverables" class="brief__textarea"
+                [value]="form().deliverables"
+                (input)="updateField('deliverables', $any($event.target).value)"
+                placeholder="e.g. 1x Reel (60s), 3x Story frames, 1x link in bio for 48hrs"></textarea>
+    </div>
+
+    <div class="brief__field">
+      <label class="brief__label" for="brief-start-date">Start date</label>
+      <input id="brief-start-date" class="brief__input" type="date"
+             [value]="form().startDate"
+             (input)="updateField('startDate', $any($event.target).value)" />
+    </div>
+
+    <div class="brief__field">
+      <label class="brief__label" for="brief-post-date">Post date</label>
+      <input id="brief-post-date" class="brief__input" type="date"
+             [value]="form().postDate"
+             (input)="updateField('postDate', $any($event.target).value)" />
+    </div>
+
+    <div class="brief__field brief__field--full">
+      <label class="brief__label" for="brief-tone">Tone guidance</label>
+      <input id="brief-tone" class="brief__input" type="text"
+             [value]="form().toneGuidance"
+             (input)="updateField('toneGuidance', $any($event.target).value)"
+             placeholder="e.g. Authentic, conversational — avoid corporate language" />
+    </div>
+
+    <div class="brief__field brief__field--full">
+      <label class="brief__label" for="brief-hashtags">Required hashtags</label>
+      <input id="brief-hashtags" class="brief__input" type="text"
+             [value]="form().hashtags"
+             (input)="updateField('hashtags', $any($event.target).value)"
+             placeholder="#ad #sponsored + your brand hashtags" />
+    </div>
+
+    <div class="brief__field brief__field--full">
+      <label class="brief__label" for="brief-cta">CTA for audience</label>
+      <input id="brief-cta" class="brief__input" type="text"
+             [value]="form().cta"
+             (input)="updateField('cta', $any($event.target).value)"
+             placeholder="e.g. Visit the link in bio, use code MAYA20 for 20% off" />
+    </div>
+
+    <label class="brief__checkbox brief__field--full">
+      <input type="checkbox"
+             [checked]="form().ftcDisclosure"
+             (change)="updateField('ftcDisclosure', $any($event.target).checked)" />
+      Require #ad or #sponsored disclosure (FTC guideline)
+    </label>
+
+    <button type="button"
+            class="brief__generate brief__field--full"
+            [disabled]="!canGenerate()"
+            (click)="generate()">
+      @if (isGenerating()) {
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+             stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+             class="brief__spinner" aria-hidden="true">
+          <path d="M21 12a9 9 0 1 1-6.219-8.56" />
+        </svg>
+        Generating...
+      } @else {
+        Generate Brief
+      }
+    </button>
+  </div>
+
+  @if (generatedBrief()) {
+    <section class="brief__result">
+      <pre class="brief__output">{{ generatedBrief() }}</pre>
+      <p class="brief__result-label">Share this brief with the creator alongside your outreach message.</p>
+      <div class="brief__result-actions">
+        <button type="button" class="brief__btn" (click)="copy()">
+          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
+               stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <rect width="14" height="14" x="8" y="8" rx="2" ry="2" />
+            <path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2" />
+          </svg>
+          Copy Brief
+        </button>
+        <button type="button" class="brief__btn" (click)="regenerate()">
+          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
+               stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8" />
+            <path d="M21 3v5h-5" />
+            <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16" />
+            <path d="M8 16H3v5" />
+          </svg>
+          Regenerate
+        </button>
+      </div>
+    </section>
+  }
+</div>

@@ -31,4 +31,22 @@ describe('PlatformIconComponent', () => {
     expect(svg?.getAttribute('width')).toBe('20');
     expect(svg?.getAttribute('height')).toBe('20');
   });
+
+  it('reflects the platform name onto the host as a data-platform attribute', () => {
+    const fixture = TestBed.createComponent(PlatformIconComponent);
+    fixture.componentRef.setInput('platform', 'youtube');
+    fixture.detectChanges();
+    const host = fixture.nativeElement as HTMLElement;
+    expect(host.getAttribute('data-platform')).toBe('youtube');
+  });
+
+  it('updates data-platform when the platform input changes', () => {
+    const fixture = TestBed.createComponent(PlatformIconComponent);
+    fixture.componentRef.setInput('platform', 'instagram');
+    fixture.detectChanges();
+    expect((fixture.nativeElement as HTMLElement).getAttribute('data-platform')).toBe('instagram');
+    fixture.componentRef.setInput('platform', 'tiktok');
+    fixture.detectChanges();
+    expect((fixture.nativeElement as HTMLElement).getAttribute('data-platform')).toBe('tiktok');
+  });
 });

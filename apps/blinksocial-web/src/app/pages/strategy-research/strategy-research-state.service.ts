@@ -23,7 +23,12 @@ import type {
   AudienceInsight,
   ResearchSource,
   CompetitorInsight,
+  InfluencerProfile,
+  ShortlistedInfluencer,
+  InfluencerCampaign,
 } from './strategy-research.types';
+import { INFLUENCER_STORAGE_KEYS } from './strategy-research.constants';
+import { readInfluencerStorage, writeInfluencerStorage } from './influencer.helpers';
 import {
   mapBrandVoiceFromContract,
   mapBrandVoiceToContract,
@@ -48,7 +53,10 @@ type DataDomain =
   | 'contentMix'
   | 'researchSources'
   | 'competitorInsights'
-  | 'audienceInsights';
+  | 'audienceInsights'
+  | 'shortlistedInfluencers'
+  | 'influencerCampaigns'
+  | 'dismissedInfluencers';
 
 const DOMAIN_TO_MOCK_FEATURE: Record<DataDomain, string> = {
   brandVoice: 'brand-voice',
@@ -60,6 +68,9 @@ const DOMAIN_TO_MOCK_FEATURE: Record<DataDomain, string> = {
   researchSources: 'research-sources',
   competitorInsights: 'competitor-deep-dive',
   audienceInsights: 'audience',
+  shortlistedInfluencers: 'influencer-marketing',
+  influencerCampaigns: 'influencer-marketing',
+  dismissedInfluencers: 'influencer-marketing',
 };
 
 @Injectable()
@@ -92,6 +103,9 @@ export class StrategyResearchStateService {
   readonly researchSources = signal<ResearchSource[]>([]);
   readonly competitorInsights = signal<CompetitorInsight[]>([]);
   readonly audienceInsights = signal<AudienceInsight[]>([]);
+  readonly shortlistedInfluencers = signal<ShortlistedInfluencer[]>([]);
+  readonly influencerCampaigns = signal<InfluencerCampaign[]>([]);
+  readonly dismissedInfluencers = signal<InfluencerProfile[]>([]);
 
   private readonly originalData = new Map<DataDomain, string>();
 
@@ -106,6 +120,8 @@ export class StrategyResearchStateService {
   loadAll(workspaceId: string): void {
     this.workspaceId.set(workspaceId);
     this.loading.set(true);
+
+    this.loadInfluencerData();
 
     forkJoin({
       brandVoice: this.api.getSettings<BrandVoiceSettingsContract>(workspaceId, 'brand-voice').pipe(catchError(() => of(null))),
@@ -314,6 +330,44 @@ export class StrategyResearchStateService {
     });
   }
 
+  // --- Influencer Marketing (localStorage-backed until API is available) ---
+
+  loadInfluencerData(): void {
+    const shortlist = readInfluencerStorage<ShortlistedInfluencer[]>(INFLUENCER_STORAGE_KEYS.shortlist, []);
+    const campaigns = readInfluencerStorage<InfluencerCampaign[]>(INFLUENCER_STORAGE_KEYS.campaigns, []);
+    const dismissed = readInfluencerStorage<InfluencerProfile[]>(INFLUENCER_STORAGE_KEYS.dismissed, []);
+
+    this.shortlistedInfluencers.set(shortlist);
+    this.influencerCampaigns.set(campaigns);
+    this.dismissedInfluencers.set(dismissed);
+
+    this.snapshot('shortlistedInfluencers', shortlist);
+    this.snapshot('influencerCampaigns', campaigns);
+    this.snapshot('dismissedInfluencers', dismissed);
+
+    this.markRealIfData('shortlistedInfluencers', shortlist.length > 0 || campaigns.length > 0);
+  }
+
+  saveShortlist(data: ShortlistedInfluencer[]): void {
+    this.shortlistedInfluencers.set(data);
+    writeInfluencerStorage(INFLUENCER_STORAGE_KEYS.shortlist, data);
+    this.snapshot('shortlistedInfluencers', data);
+    if (data.length > 0) this.markRealIfData('shortlistedInfluencers', true);
+  }
+
+  saveCampaigns(data: InfluencerCampaign[]): void {
+    this.influencerCampaigns.set(data);
+    writeInfluencerStorage(INFLUENCER_STORAGE_KEYS.campaigns, data);
+    this.snapshot('influencerCampaigns', data);
+    if (data.length > 0) this.markRealIfData('influencerCampaigns', true);
+  }
+
+  saveDismissedInfluencers(data: InfluencerProfile[]): void {
+    this.dismissedInfluencers.set(data);
+    writeInfluencerStorage(INFLUENCER_STORAGE_KEYS.dismissed, data);
+    this.snapshot('dismissedInfluencers', data);
+  }
+
   // --- Helpers ---
 
   private snapshot(domain: DataDomain, data: unknown): void {
@@ -338,6 +392,9 @@ export class StrategyResearchStateService {
       case 'researchSources': return this.researchSources();
       case 'competitorInsights': return this.competitorInsights();
       case 'audienceInsights': return this.audienceInsights();
+      case 'shortlistedInfluencers': return this.shortlistedInfluencers();
+      case 'influencerCampaigns': return this.influencerCampaigns();
+      case 'dismissedInfluencers': return this.dismissedInfluencers();
     }
   }
 }

@@ -18,7 +18,7 @@ export class StepObjectivesComponent {
     { value: 'awareness', label: 'Awareness', emoji: '\u{1F4E3}' },
     { value: 'trust', label: 'Trust', emoji: '\u{1F91D}' },
     { value: 'community', label: 'Community', emoji: '\u{1F465}' },
-    { value: 'engagement', label: 'Engagement', emoji: '\u{26A1}' },
+    { value: 'engagement', label: 'Engagement', emoji: '\u{1F4AC}' },
   ];
 
   suggestObjectives(): void {

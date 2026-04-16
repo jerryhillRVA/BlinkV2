@@ -718,6 +718,129 @@ describe('StrategyResearchStateService', () => {
     });
   });
 
+  describe('influencer marketing', () => {
+    beforeEach(() => {
+      window.localStorage.clear();
+    });
+
+    afterEach(() => {
+      window.localStorage.clear();
+    });
+
+    it('loadInfluencerData loads empty arrays when storage is empty', () => {
+      service.loadInfluencerData();
+      expect(service.shortlistedInfluencers()).toEqual([]);
+      expect(service.influencerCampaigns()).toEqual([]);
+      expect(service.dismissedInfluencers()).toEqual([]);
+    });
+
+    it('loadInfluencerData restores data from localStorage', () => {
+      window.localStorage.setItem('blink_shortlisted_influencers', JSON.stringify([{ handle: '@a' }]));
+      window.localStorage.setItem('blink_influencer_campaigns', JSON.stringify([{ id: 'c1' }]));
+      window.localStorage.setItem('blink_dismissed_influencer_profiles', JSON.stringify([{ handle: '@b' }]));
+      service.loadInfluencerData();
+      expect(service.shortlistedInfluencers()).toHaveLength(1);
+      expect(service.influencerCampaigns()).toHaveLength(1);
+      expect(service.dismissedInfluencers()).toHaveLength(1);
+      expect(mockMockData.markReal).toHaveBeenCalledWith('influencer-marketing');
+    });
+
+    it('saveShortlist persists to localStorage and updates signal', () => {
+      const data = [{
+        id: 'x', name: 'Maya', handle: '@maya', platforms: ['instagram' as const],
+        tier: 'micro' as const, followers: 1000, engagementRate: 5, niche: [],
+        audienceAlignment: 70, objectiveFit: [], bio: '', avatarColor: '#000',
+        status: 'new' as const, addedAt: '2026-01-01T00:00:00Z',
+      }];
+      service.saveShortlist(data);
+      expect(service.shortlistedInfluencers()).toEqual(data);
+      expect(JSON.parse(window.localStorage.getItem('blink_shortlisted_influencers') ?? '[]')).toHaveLength(1);
+      expect(mockMockData.markReal).toHaveBeenCalledWith('influencer-marketing');
+    });
+
+    it('saveShortlist with empty array does not mark real', () => {
+      mockMockData.markReal.mockClear();
+      service.saveShortlist([]);
+      expect(mockMockData.markReal).not.toHaveBeenCalled();
+    });
+
+    it('saveCampaigns persists and updates signal', () => {
+      const data = [{
+        id: 'c1', name: 'Campaign', influencerId: 'x', influencerName: 'M',
+        influencerHandle: '@m', influencerTier: 'micro' as const,
+        platforms: ['instagram' as const], status: 'active' as const,
+        startDate: '', createdAt: '',
+      }];
+      service.saveCampaigns(data);
+      expect(service.influencerCampaigns()).toEqual(data);
+      expect(JSON.parse(window.localStorage.getItem('blink_influencer_campaigns') ?? '[]')).toHaveLength(1);
+    });
+
+    it('saveCampaigns with empty array does not mark real', () => {
+      mockMockData.markReal.mockClear();
+      service.saveCampaigns([]);
+      expect(mockMockData.markReal).not.toHaveBeenCalled();
+    });
+
+    it('saveDismissedInfluencers persists and updates signal', () => {
+      const data = [{
+        id: 'x', name: 'Hidden', handle: '@hidden', platforms: ['instagram' as const],
+        tier: 'nano' as const, followers: 100, engagementRate: 10, niche: [],
+        audienceAlignment: 60, objectiveFit: [], bio: '', avatarColor: '#000',
+      }];
+      service.saveDismissedInfluencers(data);
+      expect(service.dismissedInfluencers()).toEqual(data);
+    });
+
+    it('loadAll invokes loadInfluencerData alongside api calls', () => {
+      mockApi['getSettings'].mockImplementation((_: string, tab: string) =>
+        tab === 'business-objectives' ? of([]) : of(null),
+      );
+      mockApi['getNamespaceAggregate'].mockReturnValue(of(null));
+      mockApi['getNamespaceEntities'].mockReturnValue(of([]));
+      window.localStorage.setItem('blink_influencer_campaigns', JSON.stringify([{ id: 'c1' }]));
+      service.loadAll('ws-1');
+      expect(service.influencerCampaigns()).toHaveLength(1);
+    });
+
+    it('isDirty detects change in influencer signals', () => {
+      mockApi['getSettings'].mockImplementation((_: string, tab: string) =>
+        tab === 'business-objectives' ? of([]) : of(null),
+      );
+      mockApi['getNamespaceAggregate'].mockReturnValue(of(null));
+      mockApi['getNamespaceEntities'].mockReturnValue(of([]));
+      service.loadAll('ws-1');
+      expect(service.isDirty()).toBe(false);
+      service.shortlistedInfluencers.set([{
+        id: 'x', name: 'M', handle: '@m', platforms: ['instagram'],
+        tier: 'micro', followers: 1, engagementRate: 1, niche: [],
+        audienceAlignment: 60, objectiveFit: [], bio: '', avatarColor: '#000',
+        status: 'new', addedAt: '',
+      }]);
+      expect(service.isDirty()).toBe(true);
+      mockApi['getSettings'].mockImplementation((_: string, tab: string) =>
+        tab === 'business-objectives' ? of([]) : of(null),
+      );
+      service.loadAll('ws-1');
+      service.influencerCampaigns.set([{
+        id: 'c1', name: 'X', influencerId: 'x', influencerName: 'M',
+        influencerHandle: '@m', influencerTier: 'micro',
+        platforms: ['instagram'], status: 'active', startDate: '', createdAt: '',
+      }]);
+      expect(service.isDirty()).toBe(true);
+      mockApi['getSettings'].mockImplementation((_: string, tab: string) =>
+        tab === 'business-objectives' ? of([]) : of(null),
+      );
+      service.loadAll('ws-1');
+      service.dismissedInfluencers.set([{
+        id: 'x', name: 'H', handle: '@h', platforms: ['instagram'],
+        tier: 'nano', followers: 1, engagementRate: 1, niche: [],
+        audienceAlignment: 60, objectiveFit: [], bio: '', avatarColor: '#000',
+      }]);
+      expect(service.isDirty()).toBe(true);
+    });
+  });
+
   describe('saveCompetitorInsights', () => {
     it('should call saveNamespaceEntities with competitor insights', () => {
       mockApi['saveNamespaceEntities'].mockReturnValue(of([]));

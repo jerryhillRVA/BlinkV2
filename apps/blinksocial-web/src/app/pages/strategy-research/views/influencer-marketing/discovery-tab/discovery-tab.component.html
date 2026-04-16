@@ -1,0 +1,225 @@
+<div class="discovery">
+  <!-- Context strip -->
+  <div class="discovery__context">
+    <span class="discovery__context-summary">
+      Matching against
+      <strong>{{ stateService.objectives().length }} objectives</strong>
+      ·
+      <strong>{{ stateService.pillars().length }} pillars</strong>
+    </span>
+    @for (cat of uniqueObjectiveCategories(); track cat) {
+      <span class="discovery__context-chip">
+        {{ categoryConfig[cat].emoji }} {{ categoryConfig[cat].label }}
+      </span>
+    }
+  </div>
+
+  <!-- Controls card -->
+  <div class="discovery__controls">
+    <div class="discovery__field">
+      <label class="discovery__label" for="discovery-keyword">Narrow by keyword</label>
+      <input
+        id="discovery-keyword"
+        class="discovery__input"
+        type="text"
+        [value]="keyword()"
+        (input)="onKeywordChange($any($event.target).value)"
+        placeholder="Filter by name, niche, platform, or keyword"
+      />
+    </div>
+
+    <div class="discovery__field">
+      <span class="discovery__label">Platform</span>
+      <div class="discovery__toggle-row">
+        @for (p of platformOptions; track p.id) {
+          <button type="button"
+                  class="discovery__toggle"
+                  [class.discovery__toggle--active]="isPlatformActive(p.id)"
+                  (click)="togglePlatform(p.id)">
+            <app-platform-icon [platform]="p.id" [size]="12" />
+            {{ p.label }}
+          </button>
+        }
+      </div>
+    </div>
+
+    <div class="discovery__field">
+      <span class="discovery__label">Creator tier</span>
+      <div class="discovery__toggle-row">
+        @for (t of tierOptions; track t) {
+          <button type="button"
+                  class="discovery__toggle"
+                  [class.discovery__toggle--active]="isTierActive(t)"
+                  (click)="toggleTier(t)">
+            {{ tierLabels[t] }}
+          </button>
+        }
+      </div>
+    </div>
+
+    <div class="discovery__field">
+      <span class="discovery__label">Sort by</span>
+      <div class="discovery__toggle-row">
+        @for (opt of sortOptions; track opt.key) {
+          <div class="discovery__sort-option">
+            <button type="button"
+                    class="discovery__toggle"
+                    [class.discovery__toggle--active]="sortBy() === opt.key"
+                    (click)="setSort(opt.key)">
+              {{ opt.label }}
+            </button>
+            @if (sortBy() === opt.key) {
+              <button type="button"
+                      class="discovery__sort-arrow"
+                      [attr.aria-label]="sortDir() === 'desc' ? 'Sort ascending' : 'Sort descending'"
+                      (click)="toggleSortDir()">
+                @if (sortDir() === 'desc') {
+                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
+                       stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <path d="M12 5v14" />
+                    <path d="m19 12-7 7-7-7" />
+                  </svg>
+                } @else {
+                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
+                       stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <path d="m5 12 7-7 7 7" />
+                    <path d="M12 19V5" />
+                  </svg>
+                }
+              </button>
+            }
+          </div>
+        }
+      </div>
+    </div>
+
+    <button type="button"
+            class="discovery__find"
+            [disabled]="isDiscovering()"
+            (click)="findInfluencers()">
+      @if (isDiscovering()) {
+        <span class="discovery__spinner" aria-hidden="true"></span>
+        Finding...
+      } @else {
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+             stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+             class="discovery__find-icon" aria-hidden="true">
+          <circle cx="10" cy="7" r="4" />
+          <path d="M10.3 15H7a4 4 0 0 0-4 4v2" />
+          <circle cx="17" cy="17" r="3" />
+          <path d="m21 21-1.9-1.9" />
+        </svg>
+        Find Influencers
+      }
+    </button>
+  </div>
+
+  <!-- Results -->
+  @if (!hasSearched()) {
+    <div class="discovery__empty">
+      <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none"
+           stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="discovery__empty-icon">
+        <circle cx="10" cy="7" r="4" />
+        <path d="M10.3 15H7a4 4 0 0 0-4 4v2" />
+        <circle cx="17" cy="17" r="3" />
+        <path d="m21 21-1.9-1.9" />
+      </svg>
+      <div class="discovery__empty-text">
+        <h3 class="discovery__empty-title">Find influencers matched to your strategy</h3>
+        <p class="discovery__empty-subtitle">
+          Blink uses your objectives, pillars, and audience to surface relevant creators. Add keywords to narrow results.
+        </p>
+      </div>
+    </div>
+  } @else {
+    <div class="discovery__results-header">
+      <span class="discovery__results-count">
+        Showing {{ rangeStart() }}–{{ rangeEnd() }} of {{ filteredSorted().length }} results
+      </span>
+      <div class="discovery__page-toggle">
+        <button type="button"
+                class="discovery__page-btn"
+                [class.discovery__page-btn--active]="pageMode() === 25"
+                (click)="setPageMode(25)">25 per page</button>
+        <button type="button"
+                class="discovery__page-btn"
+                [class.discovery__page-btn--active]="pageMode() === 'all'"
+                (click)="setPageMode('all')">Show all</button>
+      </div>
+    </div>
+
+    @if (paged().length > 0) {
+      <div class="discovery__grid">
+        @for (p of paged(); track trackByHandle($index, p)) {
+          <app-influencer-card
+            [profile]="p"
+            [isShortlisted]="shortlistedHandles().has(p.handle)"
+            (shortlist)="addToShortlist($event)"
+            (outreach)="onOutreach($event)"
+            (dismiss)="dismissProfile($event)"
+          />
+        }
+      </div>
+
+      @if (pageMode() === 25 && totalPages() > 1) {
+        <div class="discovery__pagination">
+          <button type="button" class="discovery__page-nav" [disabled]="currentPage() === 1" (click)="prevPage()">
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
+                 stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="m12 19-7-7 7-7" />
+              <path d="M19 12H5" />
+            </svg>
+            Prev
+          </button>
+          <span class="discovery__page-label">Page {{ currentPage() }} of {{ totalPages() }}</span>
+          <button type="button" class="discovery__page-nav" [disabled]="currentPage() === totalPages()" (click)="nextPage()">
+            Next
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
+                 stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M5 12h14" />
+              <path d="m12 5 7 7-7 7" />
+            </svg>
+          </button>
+        </div>
+      }
+    } @else {
+      <p class="discovery__no-matches">
+        @if (keyword().trim().length > 0) {
+          No results match "{{ keyword() }}" — try a different keyword or
+          <button type="button" class="discovery__no-matches-clear"
+                  (click)="onKeywordChange('')">clear</button>
+          to see all {{ totalDiscovered().length }} results.
+        } @else {
+          No matches. Try broadening your filters.
+        }
+      </p>
+    }
+  }
+
+  <!-- Dismissed section -->
+  @if (dismissedCount() > 0) {
+    <div class="discovery__dismissed">
+      <div class="discovery__dismissed-header">
+        <button type="button" class="discovery__dismissed-toggle" (click)="toggleDismissedPanel()">
+          <span class="discovery__dismissed-chevron">{{ showDismissed() ? '▼' : '▶' }}</span>
+          Hidden creators ({{ dismissedCount() }})
+        </button>
+        <button type="button" class="discovery__restore-all" (click)="restoreAll()">Restore all</button>
+      </div>
+      @if (showDismissed()) {
+        <ul class="discovery__dismissed-list">
+          @for (p of stateService.dismissedInfluencers(); track p.handle) {
+            <li class="discovery__dismissed-item">
+              <div class="discovery__dismissed-avatar" [style.background]="p.avatarColor">{{ dismissedInitials(p.name) }}</div>
+              <div class="discovery__dismissed-info">
+                <p class="discovery__dismissed-name">{{ p.name }}</p>
+                <p class="discovery__dismissed-meta">{{ p.handle }} · {{ dismissedFollowersLabel(p.followers) }} followers</p>
+              </div>
+              <button type="button" class="discovery__restore-one" (click)="restoreOne(p)">Restore</button>
+            </li>
+          }
+        </ul>
+      }
+    </div>
+  }
+</div>

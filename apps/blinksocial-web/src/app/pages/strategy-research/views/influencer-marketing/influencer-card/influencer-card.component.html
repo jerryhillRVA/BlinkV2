@@ -1,0 +1,78 @@
+@let p = profile();
+<article class="influencer-card">
+  <button type="button" class="influencer-card__dismiss" aria-label="Hide creator" (click)="onDismiss()">
+    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
+         stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M18 6 6 18M6 6l12 12" />
+    </svg>
+  </button>
+
+  <div class="influencer-card__identity">
+    <div class="influencer-card__avatar" [style.background]="p.avatarColor" aria-hidden="true">
+      {{ initials() }}
+    </div>
+    <div class="influencer-card__name-block">
+      <p class="influencer-card__name">{{ p.name }}</p>
+      <p class="influencer-card__handle">{{ p.handle }}</p>
+    </div>
+  </div>
+
+  <div class="influencer-card__meta-row">
+    <div class="influencer-card__platforms">
+      @for (pl of p.platforms; track pl) {
+        <app-platform-icon [platform]="pl" [size]="14" />
+      }
+    </div>
+    <span class="influencer-card__tier">{{ tierLabel() }}</span>
+  </div>
+
+  <p class="influencer-card__stats">
+    {{ followersLabel() }} followers · {{ p.engagementRate }}% eng.
+  </p>
+
+  <div class="influencer-card__match">
+    <span class="influencer-card__match-label">Audience Match</span>
+    <div class="influencer-card__match-track" role="progressbar" [attr.aria-valuenow]="p.audienceAlignment" aria-valuemin="0" aria-valuemax="100">
+      <div class="influencer-card__match-fill" [style.width.%]="p.audienceAlignment"></div>
+    </div>
+    <span class="influencer-card__match-value">{{ p.audienceAlignment }}%</span>
+  </div>
+
+  @if (p.objectiveFit.length > 0) {
+    <div class="influencer-card__fit">
+      <span class="influencer-card__fit-label">Objective Fit:</span>
+      @for (cat of p.objectiveFit; track cat) {
+        <span class="influencer-card__fit-chip">{{ categoryConfig[cat].emoji }} {{ categoryConfig[cat].label }}</span>
+      }
+    </div>
+  }
+
+  <footer class="influencer-card__actions">
+    <button type="button" class="influencer-card__btn"
+            [class.influencer-card__btn--shortlisted]="isShortlisted()"
+            [disabled]="isShortlisted()" (click)="onShortlist()">
+      @if (isShortlisted()) {
+        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
+             stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="m19 21-7-4-7 4V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16z" />
+          <path d="m9 10 2 2 4-4" />
+        </svg>
+        Shortlisted
+      } @else {
+        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
+             stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="m19 21-7-4-7 4V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16z" />
+        </svg>
+        Shortlist
+      }
+    </button>
+    <button type="button" class="influencer-card__btn" (click)="onOutreach()">
+      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
+           stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <rect width="20" height="16" x="2" y="4" rx="2" />
+        <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" />
+      </svg>
+      Outreach
+    </button>
+  </footer>
+</article>

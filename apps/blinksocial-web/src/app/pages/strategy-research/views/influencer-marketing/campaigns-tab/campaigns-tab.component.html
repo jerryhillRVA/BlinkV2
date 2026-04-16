@@ -1,0 +1,226 @@
+<div class="campaigns">
+  <header class="campaigns__header">
+    <h3 class="campaigns__title">
+      Campaigns
+      <span class="campaigns__badge">{{ campaigns().length }}</span>
+    </h3>
+    <button type="button" class="campaigns__add-btn" (click)="toggleAddForm()">
+      @if (showAddForm()) {
+        Cancel
+      } @else {
+        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
+             stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M5 12h14" />
+          <path d="M12 5v14" />
+        </svg>
+        Track Campaign
+      }
+    </button>
+  </header>
+
+  @if (showAddForm()) {
+    <section class="campaigns__add-form">
+      <div class="campaigns__field campaigns__field--full">
+        <label class="campaigns__label" for="new-campaign-name">Campaign name</label>
+        <input id="new-campaign-name" class="campaigns__input" type="text"
+               placeholder="e.g. Spring Launch 2026"
+               [value]="addForm().campaignName"
+               (input)="updateAddField('campaignName', $any($event.target).value)" />
+      </div>
+
+      <div class="campaigns__field">
+        <span class="campaigns__label">Select influencer</span>
+        @if (influencerOptions().length > 0) {
+          <app-dropdown
+            size="sm"
+            [filled]="true"
+            [options]="influencerOptions()"
+            [value]="addForm().influencerHandle"
+            placeholder="Select creator..."
+            (valueChange)="setAddInfluencer($event)"
+          />
+        } @else {
+          <p class="campaigns__hint">Shortlist a creator first in Discovery.</p>
+        }
+      </div>
+
+      <div class="campaigns__field">
+        <span class="campaigns__label">Objective</span>
+        <app-dropdown
+          size="sm"
+          [filled]="true"
+          [options]="objectiveOptions()"
+          [value]="addForm().objectiveId"
+          placeholder="Choose objective..."
+          (valueChange)="updateAddField('objectiveId', $event)"
+        />
+      </div>
+
+      @if (selectedAddInfluencer(); as inf) {
+        <div class="campaigns__field campaigns__field--full">
+          <span class="campaigns__label">Platform(s)</span>
+          <div class="campaigns__toggle-row">
+            @for (p of inf.platforms; track p) {
+              <button type="button"
+                      class="campaigns__toggle"
+                      [class.campaigns__toggle--active]="isAddPlatformActive(p)"
+                      (click)="toggleAddPlatform(p)">
+                <app-platform-icon [platform]="p" [size]="14" />
+                {{ platformLabels[p] }}
+              </button>
+            }
+          </div>
+        </div>
+      }
+
+      <div class="campaigns__field">
+        <span class="campaigns__label">Status</span>
+        <app-dropdown
+          size="sm"
+          [filled]="true"
+          [options]="statusOptions"
+          [value]="addForm().status"
+          (valueChange)="updateAddField('status', $any($event))"
+        />
+      </div>
+
+      <div class="campaigns__field">
+        <label class="campaigns__label" for="new-start-date">Start date</label>
+        <input id="new-start-date" class="campaigns__input" type="date"
+               [value]="addForm().startDate"
+               (input)="updateAddField('startDate', $any($event.target).value)" />
+      </div>
+
+      <div class="campaigns__field">
+        <label class="campaigns__label" for="new-post-date">Post date</label>
+        <input id="new-post-date" class="campaigns__input" type="date"
+               [value]="addForm().postDate"
+               (input)="updateAddField('postDate', $any($event.target).value)" />
+      </div>
+
+      <button type="button" class="campaigns__save campaigns__field--full"
+              [disabled]="!canSaveNewCampaign()"
+              (click)="saveNewCampaign()">
+        Save Campaign
+      </button>
+    </section>
+  }
+
+  @if (campaigns().length === 0 && !showAddForm()) {
+    <div class="campaigns__empty">
+      <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none"
+           stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="campaigns__empty-icon">
+        <path d="M3 3v18h18" />
+        <path d="M7 16v-3" />
+        <path d="M12 16V8" />
+        <path d="M17 16v-5" />
+      </svg>
+      <div class="campaigns__empty-text">
+        <p class="campaigns__empty-title">No campaigns tracked yet.</p>
+        <p class="campaigns__empty-sub">Shortlist creators and start tracking your influencer campaigns.</p>
+      </div>
+    </div>
+  } @else {
+    <ul class="campaigns__list">
+      @for (c of campaigns(); track trackById($index, c)) {
+        <li class="campaigns__card">
+          <header class="campaigns__card-header">
+            <span class="campaigns__card-name">{{ c.name }}</span>
+            <span class="campaigns__status-pill"
+                  [class]="'campaigns__status-pill campaigns__status-pill--' + c.status">
+              <app-dropdown
+                size="sm"
+                [options]="statusOptions"
+                [value]="c.status"
+                (valueChange)="updateCampaignStatus(c.id, $event)"
+              />
+            </span>
+            <div class="campaigns__platforms">
+              @for (p of c.platforms; track p) {
+                <app-platform-icon [platform]="p" [size]="14" />
+              }
+            </div>
+          </header>
+
+          <p class="campaigns__card-handle">{{ c.influencerHandle }}</p>
+
+          @if (c.objectiveStatement) {
+            <p class="campaigns__card-objective">
+              @if (objectiveEmojiFor(c)) {
+                {{ objectiveEmojiFor(c) }}
+              }
+              {{ c.objectiveStatement }}
+            </p>
+          }
+
+          @if (c.startDate || c.postDate) {
+            <p class="campaigns__card-dates">
+              @if (c.startDate) { <span>Started {{ c.startDate }}</span> }
+              @if (c.postDate) { <span>· Post by {{ c.postDate }}</span> }
+            </p>
+          }
+
+          @if (c.status !== 'planning') {
+            <div class="campaigns__metrics-block">
+              <div class="campaigns__metrics-header">
+                <span class="campaigns__metrics-title">Performance Metrics</span>
+                <div class="campaigns__metrics-actions">
+                  @if (c.lastSynced) {
+                    <span class="campaigns__last-synced">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none"
+                           stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <circle cx="12" cy="12" r="10" />
+                        <polyline points="12 6 12 12 16 14" />
+                      </svg>
+                      {{ relativeTime(c.lastSynced) }}
+                    </span>
+                  }
+                  <button type="button" class="campaigns__sync-btn"
+                          [disabled]="syncingId() === c.id"
+                          (click)="syncCampaign(c.id)">
+                    @if (syncingId() === c.id) {
+                      <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none"
+                           stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                           class="campaigns__spinner" aria-hidden="true">
+                        <path d="M21 12a9 9 0 1 1-6.219-8.56" />
+                      </svg>
+                      Syncing…
+                    } @else {
+                      <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none"
+                           stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8" />
+                        <path d="M21 3v5h-5" />
+                        <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16" />
+                        <path d="M8 16H3v5" />
+                      </svg>
+                      Sync Now
+                    }
+                  </button>
+                </div>
+              </div>
+
+              <div class="campaigns__metric-grid">
+                @for (m of metricKeys; track m) {
+                  <div class="campaigns__metric-tile">
+                    <span class="campaigns__metric-tile-label">{{ metricLabels[m] }}</span>
+                    <span class="campaigns__metric-tile-value">{{ formatMetric(c.metrics?.[m]) }}</span>
+                  </div>
+                }
+              </div>
+
+              @if (engagementRate(c.metrics) !== '—') {
+                <p class="campaigns__eng-rate">
+                  Eng. Rate: <span>{{ engagementRate(c.metrics) }}</span>
+                </p>
+              }
+            </div>
+          }
+
+          <button type="button" class="campaigns__view-perf" (click)="viewInPerformance()">
+            View in Performance →
+          </button>
+        </li>
+      }
+    </ul>
+  }
+</div>

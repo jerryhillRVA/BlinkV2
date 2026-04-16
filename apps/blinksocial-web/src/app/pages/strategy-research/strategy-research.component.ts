@@ -13,6 +13,7 @@ import { ContentRepurposerComponent } from './views/content-repurposer/content-r
 import { SeriesBuilderComponent } from './views/series-builder/series-builder.component';
 import { AbAnalyzerComponent } from './views/ab-analyzer/ab-analyzer.component';
 import { SeoHashtagsComponent } from './views/seo-hashtags/seo-hashtags.component';
+import { InfluencerMarketingComponent } from './views/influencer-marketing/influencer-marketing.component';
 import type { StrategyView, BusinessObjective, SidebarItem } from './strategy-research.types';
 import { SIDEBAR_ITEMS } from './strategy-research.constants';
 import { StrategyResearchStateService } from './strategy-research-state.service';
@@ -21,6 +22,7 @@ const SIDEBAR_SECTIONS: { label: string; items: SidebarItem[] }[] = [
   { label: 'Strategy', items: SIDEBAR_ITEMS.filter(i => i.section === 'strategy') },
   { label: 'Research', items: SIDEBAR_ITEMS.filter(i => i.section === 'research') },
   { label: 'Content Tools', items: SIDEBAR_ITEMS.filter(i => i.section === 'content-tools') },
+  { label: 'Influencer', items: SIDEBAR_ITEMS.filter(i => i.section === 'influencer') },
 ];
 
 @Component({
@@ -38,6 +40,7 @@ const SIDEBAR_SECTIONS: { label: string; items: SidebarItem[] }[] = [
     SeriesBuilderComponent,
     AbAnalyzerComponent,
     SeoHashtagsComponent,
+    InfluencerMarketingComponent,
   ],
   providers: [StrategyResearchStateService],
   templateUrl: './strategy-research.component.html',
