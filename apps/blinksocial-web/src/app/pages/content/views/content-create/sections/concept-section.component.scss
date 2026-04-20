@@ -1,0 +1,249 @@
+:host {
+  display: block;
+}
+
+.concept-section {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.field-required {
+  color: var(--blink-brand-primary);
+  font-weight: 700;
+}
+
+.field-hint {
+  margin-left: 6px;
+  font-size: var(--blink-label-small);
+  font-weight: 400;
+  text-transform: none;
+  letter-spacing: 0;
+  color: var(--blink-on-surface-faint);
+}
+
+.ai-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0 5px;
+  height: 14px;
+  margin-left: 6px;
+  border-radius: 3px;
+  background: var(--blink-brand-primary-lightest-bg, rgba(217, 78, 51, 0.12));
+  color: var(--blink-brand-primary);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+}
+
+.objective-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+
+  @media (min-width: 480px) {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  &.is-disabled {
+    pointer-events: none;
+    opacity: 0.5;
+  }
+}
+
+.objective-btn {
+  height: 32px;
+  border-radius: 6px;
+  border: 1px solid var(--blink-outline-variant);
+  background: var(--blink-surface);
+  color: var(--blink-on-surface);
+  font-size: var(--blink-label-large);
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s, color 0.15s;
+
+  &:hover {
+    border-color: var(--blink-brand-primary);
+  }
+
+  &.is-active {
+    background: var(--blink-brand-primary);
+    color: var(--blink-on-brand, #fff);
+    border-color: var(--blink-brand-primary);
+    font-weight: 600;
+  }
+}
+
+.btn-generate {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  height: 40px;
+  border: none;
+  border-radius: 6px;
+  background: var(--blink-brand-primary);
+  color: var(--blink-on-brand, #fff);
+  font-size: var(--blink-body-medium);
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s;
+
+  &:hover:not(:disabled) {
+    background: var(--blink-brand-primary-active, #c4452d);
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+}
+
+.link-btn {
+  display: block;
+  margin: 0 auto;
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--blink-on-surface-muted);
+  font-size: var(--blink-body-small);
+  text-decoration: underline;
+  cursor: pointer;
+
+  &:hover {
+    color: var(--blink-on-surface);
+  }
+}
+
+.back-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  align-self: flex-start;
+  padding: 4px 8px;
+  margin-left: -8px;
+  border: none;
+  background: none;
+  color: var(--blink-on-surface-muted);
+  font-size: var(--blink-label-small);
+  cursor: pointer;
+
+  &:hover {
+    color: var(--blink-brand-primary);
+  }
+}
+
+.divider {
+  position: relative;
+  margin-top: 4px;
+  padding-top: 12px;
+  border-top: 1px solid var(--blink-outline-variant);
+}
+
+.divider-label {
+  font-size: var(--blink-label-small);
+  font-weight: 700;
+  color: var(--blink-on-surface-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.assist-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border: none;
+  background: none;
+  color: var(--blink-brand-primary);
+  font-size: var(--blink-label-small);
+  font-weight: 600;
+  cursor: pointer;
+  border-radius: 4px;
+
+  &:hover:not(:disabled) {
+    background: var(--blink-brand-primary-lightest-bg, rgba(217, 78, 51, 0.08));
+  }
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+}
+
+.char-counter {
+  margin: 0;
+  font-size: var(--blink-label-small);
+  color: var(--blink-on-surface-faint);
+
+  &.is-warn {
+    color: var(--blink-status-warn, #b5651d);
+  }
+
+  &.is-invalid {
+    color: var(--blink-brand-primary);
+  }
+}
+
+.chip-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  border: 1px solid var(--blink-outline-variant);
+  background: var(--blink-surface);
+  color: var(--blink-on-surface);
+  font-size: var(--blink-label-large);
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+
+  &:hover:not(:disabled) {
+    border-color: var(--blink-brand-primary);
+  }
+
+  &.is-active {
+    background: var(--blink-brand-primary);
+    border-color: var(--blink-brand-primary);
+    color: var(--blink-on-brand, #fff);
+    // Note: do NOT change font-weight — bold text has different metrics and
+    // causes the flex-wrap layout to shift when a chip is toggled.
+  }
+
+  &:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+}
+
+.chip-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+.spinner {
+  width: 14px;
+  height: 14px;
+  border: 2px solid currentColor;
+  border-top-color: transparent;
+  border-radius: 50%;
+  animation: sp-spin 0.8s linear infinite;
+
+  &--sm {
+    width: 10px;
+    height: 10px;
+    border-width: 1.5px;
+  }
+}
+
+@keyframes sp-spin {
+  to { transform: rotate(360deg); }
+}

@@ -158,6 +158,137 @@ describe('DropdownComponent', () => {
   });
 });
 
+describe('DropdownComponent (icon support)', () => {
+  let fixture: ReturnType<typeof TestBed.createComponent<DropdownComponent>>;
+
+  const ICON_OPTIONS = [
+    {
+      value: 'idea',
+      label: 'Idea',
+      iconPaths: ['M1 1h2'],
+      iconColor: '#3b82f6',
+    },
+    {
+      value: 'concept',
+      label: 'Concept',
+      iconPaths: ['M4 4h4'],
+      iconColor: '#a855f7',
+    },
+    { value: 'plain', label: 'Plain' },
+  ];
+
+  beforeEach(async () => {
+    await TestBed.configureTestingModule({
+      imports: [DropdownComponent],
+    }).compileComponents();
+
+    fixture = TestBed.createComponent(DropdownComponent);
+    fixture.componentRef.setInput('options', ICON_OPTIONS);
+    fixture.componentRef.setInput('value', 'idea');
+    fixture.detectChanges();
+  });
+
+  it('renders the selected option icon in the trigger', () => {
+    const triggerIcon = fixture.nativeElement.querySelector(
+      '.dropdown-trigger .dropdown-option-icon',
+    );
+    expect(triggerIcon).toBeTruthy();
+    // svg path should match the first pathD of the selected option
+    const path = triggerIcon.querySelector('path');
+    expect(path?.getAttribute('d')).toBe('M1 1h2');
+  });
+
+  it('applies iconColor to the trigger icon', () => {
+    const triggerIcon: HTMLElement = fixture.nativeElement.querySelector(
+      '.dropdown-trigger .dropdown-option-icon',
+    );
+    expect(triggerIcon.getAttribute('style')).toContain('color: rgb(59, 130, 246)');
+  });
+
+  it('renders an icon in each option row that has iconPaths', () => {
+    fixture.componentInstance.open.set(true);
+    fixture.detectChanges();
+    const options = fixture.nativeElement.querySelectorAll('.dropdown-option');
+    expect(options[0].querySelector('.dropdown-option-icon')).toBeTruthy();
+    expect(options[1].querySelector('.dropdown-option-icon')).toBeTruthy();
+    // the 'plain' option has no iconPaths
+    expect(options[2].querySelector('.dropdown-option-icon')).toBeNull();
+  });
+
+  it('does NOT render trigger icon when selected option has no iconPaths', () => {
+    fixture.componentRef.setInput('value', 'plain');
+    fixture.detectChanges();
+    const triggerIcon = fixture.nativeElement.querySelector(
+      '.dropdown-trigger .dropdown-option-icon',
+    );
+    expect(triggerIcon).toBeNull();
+  });
+
+  it('falls back to null iconColor when selected option has iconPaths but no iconColor', () => {
+    fixture.componentRef.setInput('options', [
+      { value: 'mono', label: 'Mono', iconPaths: ['M0 0h1'] },
+    ]);
+    fixture.componentRef.setInput('value', 'mono');
+    fixture.detectChanges();
+    expect(fixture.componentInstance.selectedIconPaths()).toEqual(['M0 0h1']);
+    expect(fixture.componentInstance.selectedIconColor()).toBeNull();
+  });
+
+  it('both selectedIconPaths and selectedIconColor return null when option has neither', () => {
+    fixture.componentRef.setInput('options', [{ value: 'a', label: 'A' }]);
+    fixture.componentRef.setInput('value', 'a');
+    fixture.detectChanges();
+    expect(fixture.componentInstance.selectedIconPaths()).toBeNull();
+    expect(fixture.componentInstance.selectedIconColor()).toBeNull();
+  });
+});
+
+describe('DropdownComponent (platform icon)', () => {
+  let fixture: ReturnType<typeof TestBed.createComponent<DropdownComponent>>;
+
+  const PLATFORM_OPTIONS = [
+    { value: 'instagram', label: 'Instagram', platformIcon: 'instagram' as const },
+    { value: 'tiktok', label: 'TikTok', platformIcon: 'tiktok' as const },
+    { value: 'plain', label: 'Plain' },
+  ];
+
+  beforeEach(async () => {
+    await TestBed.configureTestingModule({
+      imports: [DropdownComponent],
+    }).compileComponents();
+    fixture = TestBed.createComponent(DropdownComponent);
+    fixture.componentRef.setInput('options', PLATFORM_OPTIONS);
+    fixture.componentRef.setInput('value', 'instagram');
+    fixture.detectChanges();
+  });
+
+  it('renders an <app-platform-icon> in the trigger when the selected option has platformIcon', () => {
+    const trigger = fixture.nativeElement.querySelector('.dropdown-trigger');
+    const icon = trigger.querySelector('.dropdown-platform-icon');
+    expect(icon).toBeTruthy();
+    expect(icon.getAttribute('data-platform')).toBe('instagram');
+    expect(icon.querySelector('app-platform-icon')).not.toBeNull();
+  });
+
+  it('renders platform icons in each option row that has platformIcon', () => {
+    fixture.componentInstance.open.set(true);
+    fixture.detectChanges();
+    const options = fixture.nativeElement.querySelectorAll('.dropdown-option');
+    expect(options[0].querySelector('.dropdown-platform-icon')).toBeTruthy();
+    expect(options[1].querySelector('.dropdown-platform-icon')).toBeTruthy();
+    // 'plain' has no platformIcon
+    expect(options[2].querySelector('.dropdown-platform-icon')).toBeNull();
+  });
+
+  it('does not render trigger platform icon when the selected option has no platformIcon', () => {
+    fixture.componentRef.setInput('value', 'plain');
+    fixture.detectChanges();
+    expect(
+      fixture.nativeElement.querySelector('.dropdown-trigger .dropdown-platform-icon'),
+    ).toBeNull();
+  });
+});
+
 describe('DropdownComponent (compact size)', () => {
   let fixture: ReturnType<typeof TestBed.createComponent<DropdownComponent>>;
 

@@ -1,0 +1,100 @@
+<header class="detail-header">
+  <button type="button" class="detail-back" (click)="onBack()" aria-label="Back to pipeline">
+    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <polyline points="15 18 9 12 15 6"/>
+    </svg>
+    <span>Back</span>
+  </button>
+
+  <div class="detail-header-row">
+    <span class="stage-badge stage-pipeline">
+      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <rect width="20" height="14" x="2" y="7" rx="2"/>
+        <path d="m2 11 20 0"/>
+        <path d="m4 7 2-4"/>
+        <path d="m10 7 2-4"/>
+        <path d="m16 7 2-4"/>
+      </svg>
+      In Production
+    </span>
+
+    <div class="detail-title-wrap">
+      <app-inline-edit
+        [value]="item.title"
+        [placeholder]="'Untitled post'"
+        [readOnly]="briefApproved"
+        displayClass="detail-title"
+        inputClass="detail-title-input"
+        ariaLabel="Edit title"
+        (valueChange)="onTitleChange($event)"
+      />
+    </div>
+
+    @if (item.platform) {
+      <div class="detail-platform">
+        <app-platform-icon [platform]="item.platform" [size]="14" />
+        <span>{{ platformLabel() }}</span>
+        @if (contentTypeLabel()) {
+          <span class="detail-platform-sep">·</span>
+          <span>{{ contentTypeLabel() }}</span>
+        }
+      </div>
+    }
+
+    <span class="detail-saved" aria-live="polite">Saved</span>
+
+    <div class="detail-actions">
+      @if (item.conceptId) {
+        <button type="button" class="btn-back-to-concept" (click)="onBackToConcept()">
+          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <polyline points="15 18 9 12 15 6"/>
+          </svg>
+          Back to Concept
+        </button>
+      }
+
+      <div class="detail-menu">
+        <button
+          type="button"
+          class="detail-menu-btn"
+          (click)="toggleMenu()"
+          [attr.aria-expanded]="menuOpen()"
+          aria-label="More actions"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <circle cx="12" cy="12" r="1"/>
+            <circle cx="19" cy="12" r="1"/>
+            <circle cx="5" cy="12" r="1"/>
+          </svg>
+        </button>
+        @if (menuOpen()) {
+          <div class="detail-menu-panel" role="menu">
+            <button type="button" role="menuitem" class="detail-menu-item" (click)="onArchive()">
+              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <rect width="20" height="5" x="2" y="3" rx="1"/>
+                <path d="M4 8v11a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8"/>
+                <path d="M10 12h4"/>
+              </svg>
+              Archive
+            </button>
+            <button type="button" role="menuitem" class="detail-menu-item" (click)="onDuplicate()">
+              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <rect width="14" height="14" x="8" y="8" rx="2"/>
+                <path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/>
+              </svg>
+              Duplicate
+            </button>
+            <button type="button" role="menuitem" class="detail-menu-item is-danger" (click)="onDelete()">
+              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M3 6h18"/>
+                <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+                <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
+              </svg>
+              Delete
+            </button>
+          </div>
+        }
+      </div>
+    </div>
+  </div>
+</header>

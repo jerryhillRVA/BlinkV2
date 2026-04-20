@@ -55,6 +55,39 @@ export type ContentTypeContract =
   | 'ln-article'
   | 'ln-video';
 
+export type CtaTypeContract =
+  | 'learn-more'
+  | 'subscribe'
+  | 'comment'
+  | 'download'
+  | 'buy'
+  | 'book-call'
+  | 'other';
+
+export type TonePresetContract =
+  | 'professional'
+  | 'casual'
+  | 'friendly'
+  | 'authoritative'
+  | 'inspiring'
+  | 'playful';
+
+export interface ContentCtaContract {
+  type: CtaTypeContract;
+  text: string;
+}
+
+export interface ContentAttachmentContract {
+  name: string;
+  size: string; // pre-formatted display string, e.g. "2.4 MB"
+  url?: string;
+}
+
+export interface ProductionTargetContract {
+  platform: PlatformContract;
+  contentType: ContentTypeContract;
+}
+
 export interface ContentItemContract {
   id: string;
   conceptId?: string;
@@ -72,7 +105,17 @@ export interface ContentItemContract {
   platform?: PlatformContract;
   contentType?: ContentTypeContract;
   keyMessage?: string;
+  tonePreset?: TonePresetContract;
+  cta?: ContentCtaContract;
+  sourceUrl?: string;
+  attachments?: ContentAttachmentContract[];
+  productionTargets?: ProductionTargetContract[];
+  scheduledAt?: string; // ISO datetime
+  archived?: boolean;
   tags?: string[];
+  briefApproved?: boolean;
+  briefApprovedAt?: string; // ISO datetime
+  briefApprovedBy?: string;
   createdAt: string;
   updatedAt: string;
 }

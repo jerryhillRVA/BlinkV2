@@ -5,6 +5,9 @@ import type {
   ContentTypeContract,
   ContentObjectiveContract,
   ContentItemContract,
+  CtaTypeContract,
+  TonePresetContract,
+  ContentCtaContract,
 } from '@blinksocial/contracts';
 
 export type ContentView =
@@ -23,8 +26,66 @@ export type ContentStatus = ContentStatusContract;
 export type Platform = PlatformContract;
 export type ContentType = ContentTypeContract;
 export type ContentObjective = ContentObjectiveContract;
+export type CtaType = CtaTypeContract;
+export type TonePreset = TonePresetContract;
+export type ContentCta = ContentCtaContract;
 
 export type ContentItem = ContentItemContract;
+
+export type ContentItemType = 'idea' | 'concept' | 'production-brief';
+export type IdeaMode = 'manual' | 'generate';
+
+export interface GeneratedIdea {
+  id: string;
+  title: string;
+  rationale: string;
+  pillarId: string;
+}
+
+interface ContentCreatePayloadBase {
+  title: string;
+  description: string;
+  pillarIds: string[];
+  segmentIds: string[];
+}
+
+export interface IdeaPayload extends ContentCreatePayloadBase {
+  kind: 'idea';
+}
+
+export interface ConceptPayload extends ContentCreatePayloadBase {
+  kind: 'concept';
+  hook: string;
+  objective: ContentObjective;
+  platform?: Platform;
+  contentType?: ContentType;
+  cta?: ContentCta;
+}
+
+export interface ProductionConceptPayload extends ContentCreatePayloadBase {
+  kind: 'production';
+  hook: string;
+  objective: ContentObjective;
+  platform: Platform;
+  contentType: ContentType;
+  cta?: ContentCta;
+}
+
+export interface BriefPayload extends ContentCreatePayloadBase {
+  kind: 'brief';
+  platform: Platform;
+  contentType: ContentType;
+  objective: ContentObjective;
+  keyMessage: string;
+  tonePreset?: TonePreset;
+  cta?: ContentCta;
+}
+
+export type ContentCreatePayload =
+  | IdeaPayload
+  | ConceptPayload
+  | ProductionConceptPayload
+  | BriefPayload;
 
 export interface ContentPillar {
   id: string;
@@ -54,4 +115,5 @@ export interface PipelineColumn {
   colorClass: string;
   iconColor: string;
   iconPaths: string[];
+  addType?: ContentItemType;
 }

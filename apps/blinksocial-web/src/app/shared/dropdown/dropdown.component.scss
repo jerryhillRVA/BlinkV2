@@ -60,6 +60,39 @@
   flex-shrink: 0;
 }
 
+.dropdown-option-icon {
+  flex-shrink: 0;
+}
+
+.dropdown-platform-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+
+  &[data-platform='instagram']  { color: #e1306c; }
+  &[data-platform='tiktok']     { color: #010101; }
+  &[data-platform='youtube']    { color: #ff0000; }
+  &[data-platform='facebook']   { color: #1877f2; }
+  &[data-platform='linkedin']   { color: #0a66c2; }
+  &[data-platform='pinterest']  { color: #e60023; }
+  &[data-platform='x'],
+  &[data-platform='twitter']    { color: #000000; }
+  &[data-platform='threads']    { color: #000000; }
+  &[data-platform='slack']      { color: #4a154b; }
+  &[data-platform='discord']    { color: #5865f2; }
+  &[data-platform='tbd']        { color: var(--blink-on-surface-muted); }
+}
+
+:host-context([data-theme='dark']) {
+  .dropdown-platform-icon {
+    &[data-platform='tiktok'],
+    &[data-platform='x'],
+    &[data-platform='twitter'],
+    &[data-platform='threads'] { color: #ffffff; }
+  }
+}
+
 .dropdown-chevron {
   color: var(--blink-on-surface-muted);
   opacity: 0.5;

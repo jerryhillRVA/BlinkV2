@@ -1,13 +1,18 @@
 import { Component, ElementRef, HostBinding, HostListener, inject, input, output, signal, computed } from '@angular/core';
+import { PlatformIconComponent, type PlatformName } from '../platform-icon/platform-icon.component';
 
 export interface DropdownOption {
   value: string;
   label: string;
   color?: string;
+  iconPaths?: string[];
+  iconColor?: string;
+  platformIcon?: PlatformName;
 }
 
 @Component({
   selector: 'app-dropdown',
+  imports: [PlatformIconComponent],
   templateUrl: './dropdown.component.html',
   styleUrl: './dropdown.component.scss',
 })
@@ -38,6 +43,12 @@ export class DropdownComponent {
   });
 
   selectedColor = computed(() => this.selectedOption()?.color ?? null);
+
+  selectedIconPaths = computed(() => this.selectedOption()?.iconPaths ?? null);
+
+  selectedIconColor = computed(() => this.selectedOption()?.iconColor ?? null);
+
+  selectedPlatformIcon = computed(() => this.selectedOption()?.platformIcon ?? null);
 
   isPlaceholder = computed(() => !this.value());
 

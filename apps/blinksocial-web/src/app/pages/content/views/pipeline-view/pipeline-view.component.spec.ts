@@ -1,5 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { provideNoopAnimations } from '@angular/platform-browser/animations';
+import { ActivatedRoute, Router, provideRouter, convertToParamMap } from '@angular/router';
+import { of } from 'rxjs';
 import { PipelineViewComponent } from './pipeline-view.component';
 import { MOCK_CONTENT_ITEMS, MOCK_PILLARS } from '../../content.mock-data';
 
@@ -10,13 +12,23 @@ describe('PipelineViewComponent', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [PipelineViewComponent],
-      providers: [provideNoopAnimations()],
+      providers: [
+        provideNoopAnimations(),
+        provideRouter([]),
+        {
+          provide: ActivatedRoute,
+          useValue: {
+            paramMap: of(convertToParamMap({ id: 'hive-collective' })),
+            snapshot: { paramMap: convertToParamMap({ id: 'hive-collective' }) },
+          },
+        },
+      ],
     }).compileComponents();
 
     fixture = TestBed.createComponent(PipelineViewComponent);
     component = fixture.componentInstance;
-    component.items = MOCK_CONTENT_ITEMS;
-    component.pillars = MOCK_PILLARS;
+    fixture.componentRef.setInput('items', MOCK_CONTENT_ITEMS);
+    fixture.componentRef.setInput('pillars', MOCK_PILLARS);
     fixture.detectChanges();
   });
 
@@ -51,6 +63,103 @@ describe('PipelineViewComponent', () => {
   it('should render kanban board with 5 columns', () => {
     const columns = fixture.nativeElement.querySelectorAll('.kanban-column');
     expect(columns.length).toBe(5);
+  });
+
+  it('includes per-column count in the title in parentheses (not as a separate badge)', () => {
+    const titles = fixture.nativeElement.querySelectorAll('.column-title');
+    const ideasTitle = titles[0].textContent?.trim() ?? '';
+    // Expect shape like "Ideas (N)"
+    expect(ideasTitle).toMatch(/Ideas \(\d+\)/);
+    // And the separate count badge no longer exists
+    expect(fixture.nativeElement.querySelector('.column-count')).toBeNull();
+  });
+
+  it('renders a + add button in Ideas, Concepts, and In Production column headers only', () => {
+    const columns = fixture.nativeElement.querySelectorAll('.kanban-column');
+    // Ideas, Concepts, In Production: have add button
+    [0, 1, 2].forEach((i) => {
+      expect(columns[i].querySelector('.column-add-btn')).not.toBeNull();
+    });
+    // Review, Published: no add button
+    [3, 4].forEach((i) => {
+      expect(columns[i].querySelector('.column-add-btn')).toBeNull();
+    });
+  });
+
+  it('toggleSort flips order to ascending, affecting sortedItems output', () => {
+    // Default is 'updatedAt' desc; flipping twice on the same field reverses back to asc
+    component.toggleSort('updatedAt');
+    expect(component.sortOrder()).toBe('asc');
+    const asc = component.sortedItems().map((i) => i.updatedAt);
+    const ascExpected = [...asc].sort();
+    expect(asc).toEqual(ascExpected);
+  });
+
+  it('sorts by a different field (title) in asc order', () => {
+    component.toggleSort('title'); // switches field, defaults to desc
+    component.toggleSort('title'); // flips to asc
+    expect(component.sortField()).toBe('title');
+    expect(component.sortOrder()).toBe('asc');
+  });
+
+  it('toggleShowArchived flips true → false → true correctly', () => {
+    expect(component.showArchived()).toBe(false);
+    component.toggleShowArchived();
+    expect(component.showArchived()).toBe(true);
+    component.toggleShowArchived();
+    expect(component.showArchived()).toBe(false);
+  });
+
+  it('hides archived items by default and reveals them when Show Archived is toggled on', () => {
+    const withArchived = [
+      ...MOCK_CONTENT_ITEMS,
+      {
+        ...MOCK_CONTENT_ITEMS[0],
+        id: 'archived-1',
+        title: 'An archived item',
+        archived: true,
+      },
+    ];
+    fixture.componentRef.setInput('items', withArchived);
+    fixture.detectChanges();
+
+    // By default archived items are excluded from filteredItems
+    expect(component.filteredItems().some((i) => i.id === 'archived-1')).toBe(false);
+
+    // Opening the filter panel exposes the Show Archived toggle
+    component.toggleFilterPanel();
+    fixture.detectChanges();
+    const toggle: HTMLButtonElement = fixture.nativeElement.querySelector('.slide-toggle');
+    expect(toggle).not.toBeNull();
+    expect(toggle.getAttribute('role')).toBe('switch');
+    expect(toggle.getAttribute('aria-checked')).toBe('false');
+
+    // Clicking the switch includes archived items and reflects checked state
+    toggle.click();
+    fixture.detectChanges();
+    expect(component.showArchived()).toBe(true);
+    expect(toggle.getAttribute('aria-checked')).toBe('true');
+    expect(toggle.classList.contains('is-on')).toBe(true);
+    expect(component.filteredItems().some((i) => i.id === 'archived-1')).toBe(true);
+  });
+
+  it('renders the Show Archived label using the shared filter-group-label style', () => {
+    component.toggleFilterPanel();
+    fixture.detectChanges();
+    const labels = Array.from(
+      fixture.nativeElement.querySelectorAll('.filter-group-label') as NodeListOf<HTMLElement>,
+    ).map((el) => el.textContent?.trim());
+    expect(labels).toContain('Show Archived');
+  });
+
+  it('clicking the add button emits createItemAs with the column-specific type', () => {
+    const emitted: string[] = [];
+    component.createItemAs.subscribe((t) => emitted.push(t));
+    const addBtns = fixture.nativeElement.querySelectorAll('.column-add-btn') as NodeListOf<HTMLButtonElement>;
+    addBtns[0].click(); // Ideas
+    addBtns[1].click(); // Concepts
+    addBtns[2].click(); // In Production
+    expect(emitted).toEqual(['idea', 'concept', 'production-brief']);
   });
 
   it('should render column headers with labels', () => {
@@ -143,12 +252,17 @@ describe('PipelineViewComponent', () => {
     });
   });
 
-  it('should emit selectItem on card click', () => {
-    const spy = vi.fn();
-    component.selectItem.subscribe(spy);
+  it('navigates to the item detail route on card click', () => {
+    const router = TestBed.inject(Router);
+    const navigateSpy = vi.spyOn(router, 'navigate').mockResolvedValue(true);
     const card = fixture.nativeElement.querySelector('.content-card') as HTMLButtonElement;
     card.click();
-    expect(spy).toHaveBeenCalled();
+    expect(navigateSpy).toHaveBeenCalled();
+    const args = navigateSpy.mock.calls[0][0] as string[];
+    expect(args[0]).toBe('/workspace');
+    expect(args[1]).toBe('hive-collective');
+    expect(args[2]).toBe('content');
+    expect(typeof args[3]).toBe('string');
   });
 
   it('should render view toggle buttons', () => {
@@ -261,8 +375,8 @@ describe('PipelineViewComponent', () => {
 
   it('should handle empty items array', () => {
     const emptyFixture = TestBed.createComponent(PipelineViewComponent);
-    emptyFixture.componentInstance.items = [];
-    emptyFixture.componentInstance.pillars = [];
+    emptyFixture.componentRef.setInput('items', []);
+    emptyFixture.componentRef.setInput('pillars', []);
     emptyFixture.detectChanges();
     expect(emptyFixture.componentInstance.filteredItems().length).toBe(0);
     const empties = emptyFixture.nativeElement.querySelectorAll('.empty-column');
@@ -273,8 +387,8 @@ describe('PipelineViewComponent', () => {
     component.toggleFilterPanel();
     fixture.detectChanges();
     const groups = fixture.nativeElement.querySelectorAll('.filter-group');
-    // Should have 3 groups: Pillars, Platform, Content Types
-    expect(groups.length).toBe(3);
+    // Four groups: Pillars, Platform, Content Types, Show Archived toggle
+    expect(groups.length).toBe(4);
   });
 
   it('should render list view with pillar badges', () => {

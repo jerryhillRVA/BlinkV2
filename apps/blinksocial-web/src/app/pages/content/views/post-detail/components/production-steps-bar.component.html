@@ -1,0 +1,23 @@
+<nav class="steps-bar" aria-label="Production steps">
+  @for (step of steps; track step.id) {
+    <button
+      type="button"
+      class="steps-btn"
+      [class.is-active]="isActive(step.id)"
+      [class.is-approved]="isApprovedBrief(step.id)"
+      [attr.aria-current]="isActive(step.id) ? 'step' : null"
+      (click)="onStep(step.id)"
+    >
+      <span class="steps-num">
+        @if (isApprovedBrief(step.id)) {
+          <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <polyline points="20 6 9 17 4 12"/>
+          </svg>
+        } @else {
+          {{ step.number }}
+        }
+      </span>
+      <span class="steps-label">{{ step.label }}</span>
+    </button>
+  }
+</nav>

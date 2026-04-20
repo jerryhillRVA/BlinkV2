@@ -62,4 +62,12 @@ export const appRoutes: Route[] = [
         (m) => m.ContentComponent
       ),
   },
+  {
+    path: 'workspace/:id/content/:itemId',
+    canActivate: [authGuard],
+    loadComponent: () =>
+      import(
+        './pages/content/views/content-detail/content-detail-page.component'
+      ).then((m) => m.ContentDetailPageComponent),
+  },
 ];

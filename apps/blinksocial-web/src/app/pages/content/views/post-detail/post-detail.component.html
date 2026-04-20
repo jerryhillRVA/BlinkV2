@@ -1,0 +1,56 @@
+@if (store.item(); as item) {
+  <div class="post-detail">
+    <app-post-detail-header
+      [item]="item"
+      [briefApproved]="!!item.briefApproved"
+      (back)="onBack()"
+      (titleChange)="onTitleChange($event)"
+      (backToConcept)="onBackToConcept()"
+      (archive)="onArchive()"
+      (duplicate)="onDuplicate()"
+      (deletePost)="onDelete()"
+    />
+
+    <app-production-steps-bar
+      [activeStep]="store.activeStep()"
+      [briefApproved]="!!item.briefApproved"
+      (stepChange)="store.setActiveStep($event)"
+    />
+
+    <div class="post-body">
+      @switch (store.activeStep()) {
+        @case ('brief') {
+          <div class="brief-grid">
+            <div class="brief-main">
+              <app-brief-step />
+            </div>
+            <aside class="brief-side">
+              <app-brief-status-sidebar
+                [approved]="!!item.briefApproved"
+                [approvedAt]="item.briefApprovedAt"
+                [approvedBy]="item.briefApprovedBy"
+                [requiredDone]="store.requiredFieldsDone()"
+                [requiredTotal]="store.requiredFieldsTotal"
+                [errors]="store.errors()"
+                [warnings]="store.warnings()"
+                [canApprove]="store.canApprove()"
+                (approve)="onApprove()"
+                (unlock)="onUnlock()"
+                (continueToBuilder)="onContinueToBuilder()"
+              />
+            </aside>
+          </div>
+        }
+        @case ('builder') {
+          <app-step-placeholder label="Builder" />
+        }
+        @case ('packaging') {
+          <app-step-placeholder label="Packaging" />
+        }
+        @case ('qa') {
+          <app-step-placeholder label="QA" />
+        }
+      }
+    </div>
+  </div>
+}

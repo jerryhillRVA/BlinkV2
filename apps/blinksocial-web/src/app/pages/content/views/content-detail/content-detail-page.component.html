@@ -1,0 +1,55 @@
+<div class="content-page">
+  <div class="content-bg" aria-hidden="true">
+    <img src="dashboard-bg.jpg" alt="" />
+  </div>
+
+  <main class="content-main content-entering">
+    @if (stateService.loading()) {
+      <div class="loading-state">
+        <p>Loading…</p>
+      </div>
+    } @else if (!item()) {
+      <div class="not-found">
+        <p>This item no longer exists.</p>
+        <button type="button" class="btn-back" (click)="goBack()">
+          Back to pipeline
+        </button>
+      </div>
+    } @else {
+      @switch (item()!.stage) {
+        @case ('idea') {
+          <app-idea-detail
+            [itemId]="item()!.id"
+            (back)="goBack()"
+            (archive)="onArchive()"
+            (duplicate)="onDuplicate()"
+            (copyLink)="onCopyLink()"
+          />
+        }
+        @case ('concept') {
+          <app-concept-detail
+            [itemId]="item()!.id"
+            (back)="goBack()"
+            (moved)="onMoved($event)"
+            (deleted)="onDeleted()"
+          />
+        }
+        @case ('post') {
+          <app-post-detail
+            [itemId]="item()!.id"
+            (back)="goBack()"
+            (deleted)="onDeleted()"
+          />
+        }
+        @default {
+          <div class="placeholder">
+            <p>This view is coming soon.</p>
+            <button type="button" class="btn-back" (click)="goBack()">
+              Back to pipeline
+            </button>
+          </div>
+        }
+      }
+    }
+  </main>
+</div>

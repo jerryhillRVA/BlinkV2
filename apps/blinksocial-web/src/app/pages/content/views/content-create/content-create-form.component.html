@@ -1,0 +1,64 @@
+<div class="app-modal content-create-form">
+  <div class="modal-header">
+    <h2 class="modal-title">{{ modalTitle() }}</h2>
+    <p class="modal-description">{{ modalDescription() }}</p>
+  </div>
+
+  <div class="modal-body">
+    <div class="field">
+      <span class="field-label">Type</span>
+      <app-dropdown
+        [options]="typeDropdown"
+        [value]="state().type"
+        [fullWidth]="true"
+        placeholder="Select type"
+        (valueChange)="setType($event)"
+      />
+    </div>
+
+    @switch (state().type) {
+      @case ('idea') {
+        <app-idea-section />
+      }
+      @case ('concept') {
+        <app-concept-section />
+      }
+      @case ('production-brief') {
+        <app-brief-section />
+      }
+    }
+  </div>
+
+  <div class="modal-footer">
+    <button type="button" class="btn-modal-cancel" (click)="onCancel()">
+      Cancel
+    </button>
+
+    @if (showDraftAssets()) {
+      <button type="button" class="btn-modal-secondary" [disabled]="!canSave()" (click)="onSaveClick()">
+        Save Brief
+      </button>
+      <button type="button" class="btn-modal-create" [disabled]="!canDraftAssets()" (click)="onDraftAssetsClick()">
+        Draft Assets
+      </button>
+    } @else if (showMoveToProduction()) {
+      <button type="button" class="btn-modal-secondary" [disabled]="!canSave()" (click)="onSaveClick()">
+        Save Concept
+      </button>
+      <button type="button" class="btn-modal-create" [disabled]="!canMoveToProduction()" (click)="onMoveToProductionClick()">
+        Move to Production
+      </button>
+    } @else if (showCreateConcept()) {
+      <button type="button" class="btn-modal-secondary" [disabled]="!canSave()" (click)="onSaveClick()">
+        Save Idea
+      </button>
+      <button type="button" class="btn-modal-create" [disabled]="!canSave()" (click)="onCreateConceptClick()">
+        Create Concept
+      </button>
+    } @else {
+      <button type="button" class="btn-modal-create" [disabled]="!canSave()" (click)="onSaveClick()">
+        {{ saveButtonLabel() }}
+      </button>
+    }
+  </div>
+</div>

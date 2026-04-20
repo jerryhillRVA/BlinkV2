@@ -1,8 +1,9 @@
-import { Component, computed, EventEmitter, Input, Output, signal } from '@angular/core';
+import { Component, computed, EventEmitter, Output, inject, signal, input } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { ActivatedRoute, Router } from '@angular/router';
 import { PlatformIconComponent } from '../../../../shared/platform-icon/platform-icon.component';
 import { expandPanel } from '../../../../core/animations/expand-panel.animation';
-import type { ContentItem, ContentPillar, ContentView, ViewMode, SortField, SortOrder, PipelineColumn } from '../../content.types';
+import type { ContentItem, ContentPillar, ContentView, ViewMode, SortField, SortOrder, PipelineColumn, ContentItemType } from '../../content.types';
 import { PIPELINE_COLUMNS, STAGE_CONFIG, STATUS_CONFIG } from '../../content.constants';
 
 @Component({
@@ -13,11 +14,14 @@ import { PIPELINE_COLUMNS, STAGE_CONFIG, STATUS_CONFIG } from '../../content.con
   styleUrl: './pipeline-view.component.scss',
 })
 export class PipelineViewComponent {
-  @Input() items: ContentItem[] = [];
-  @Input() pillars: ContentPillar[] = [];
-  @Output() selectItem = new EventEmitter<ContentItem>();
+  private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
+
+  readonly items = input<ContentItem[]>([]);
+  readonly pillars = input<ContentPillar[]>([]);
   @Output() navigateToStep = new EventEmitter<ContentView>();
   @Output() createItem = new EventEmitter<void>();
+  @Output() createItemAs = new EventEmitter<ContentItemType>();
 
   readonly viewMode = signal<ViewMode>('kanban');
   readonly searchQuery = signal('');
@@ -27,6 +31,7 @@ export class PipelineViewComponent {
   readonly filterPillars = signal<string[]>([]);
   readonly filterPlatforms = signal<string[]>([]);
   readonly filterContentTypes = signal<string[]>([]);
+  readonly showArchived = signal(false);
 
   readonly columns = PIPELINE_COLUMNS;
   readonly stageConfig = STAGE_CONFIG;
@@ -35,7 +40,7 @@ export class PipelineViewComponent {
 
   readonly availableContentTypes = computed(() => {
     const types = new Set<string>();
-    this.items.forEach((i) => {
+    this.items().forEach((i) => {
       if (i.contentType) types.add(i.contentType);
     });
     return Array.from(types).sort();
@@ -49,7 +54,10 @@ export class PipelineViewComponent {
   );
 
   readonly filteredItems = computed(() => {
-    let result = this.items;
+    let result = this.items();
+    if (!this.showArchived()) {
+      result = result.filter((i) => !i.archived);
+    }
     const query = this.searchQuery().toLowerCase();
     if (query) {
       result = result.filter(
@@ -113,7 +121,12 @@ export class PipelineViewComponent {
   }
 
   getPillarName(id: string): string {
-    return this.pillars.find((p) => p.id === id)?.name ?? '';
+    return this.pillars().find((p) => p.id === id)?.name ?? '';
+  }
+
+  openItem(item: ContentItem): void {
+    const workspaceId = this.route.snapshot.paramMap.get('id') ?? '';
+    this.router.navigate(['/workspace', workspaceId, 'content', item.id]);
   }
 
   setViewMode(mode: ViewMode): void {
@@ -159,6 +172,10 @@ export class PipelineViewComponent {
     this.filterPillars.set([]);
     this.filterPlatforms.set([]);
     this.filterContentTypes.set([]);
+  }
+
+  toggleShowArchived(): void {
+    this.showArchived.update((v) => !v);
   }
 
   formatDate(dateStr: string): string {

@@ -1,0 +1,28 @@
+<div class="targets-picker">
+  @for (group of groups(); track group.platform) {
+    <div class="target-group">
+      <div class="target-group-header">
+        <app-platform-icon [platform]="group.platform" [size]="14" />
+        <span class="target-group-label">{{ group.platformLabel }}</span>
+      </div>
+      <div class="target-chips">
+        @for (opt of group.options; track opt.contentType) {
+          <button
+            type="button"
+            class="target-chip"
+            [class.is-selected]="opt.selected"
+            [class.is-in-production]="opt.inProduction"
+            [disabled]="opt.inProduction"
+            [attr.aria-pressed]="opt.selected"
+            (click)="onToggle(group.platform, opt.contentType, opt.inProduction)"
+          >
+            {{ opt.label }}
+            @if (opt.inProduction) {
+              <span class="target-chip-badge">In Production</span>
+            }
+          </button>
+        }
+      </div>
+    </div>
+  }
+</div>

@@ -1,0 +1,116 @@
+:host {
+  display: contents;
+}
+
+.move-dialog {
+  max-width: 32rem;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.move-dialog-header {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.move-dialog-targets {
+  list-style: disc;
+  margin: 0;
+  padding-left: 18px;
+  color: var(--blink-on-surface);
+  font-size: var(--blink-body-small);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.move-dialog-target {
+  line-height: 1.4;
+}
+
+.move-dialog-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.btn-primary,
+.btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 40px;
+  padding: 0 14px;
+  border-radius: 8px;
+  font-family: inherit;
+  font-size: var(--blink-body-medium);
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s, filter 0.15s;
+}
+
+.btn-primary {
+  border: none;
+  background: var(--blink-brand-primary);
+  color: var(--blink-on-brand, #fff);
+
+  &:hover {
+    filter: brightness(0.9);
+  }
+}
+
+.btn-secondary {
+  border: 1px solid var(--blink-outline-variant);
+  background: var(--blink-surface);
+  color: var(--blink-on-surface);
+
+  &:hover {
+    background: var(--blink-surface-hover);
+  }
+}
+
+.move-dialog-workon {
+  border-top: 1px solid var(--blink-outline-variant);
+  padding-top: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.move-dialog-workon-label {
+  margin: 0;
+  font-size: var(--blink-label-small);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--blink-on-surface-secondary);
+}
+
+.move-dialog-workon-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.btn-workon {
+  width: 100%;
+  height: 36px;
+  padding: 0 12px;
+  border-radius: 6px;
+  border: 1px solid var(--blink-outline-variant);
+  background: var(--blink-surface);
+  color: var(--blink-on-surface);
+  font-family: inherit;
+  font-size: var(--blink-body-small);
+  font-weight: 500;
+  text-align: left;
+  cursor: pointer;
+
+  &:hover {
+    border-color: var(--blink-brand-primary);
+    background: var(--blink-brand-primary-lightest-bg, rgba(217, 78, 51, 0.08));
+  }
+}

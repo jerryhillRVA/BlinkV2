@@ -137,7 +137,7 @@
         <div class="filter-group">
           <span class="filter-group-label">Pillars</span>
           <div class="filter-chips">
-            @for (pillar of pillars; track pillar.id) {
+            @for (pillar of pillars(); track pillar.id) {
               <button
                 class="filter-chip"
                 [class.active]="filterPillars().includes(pillar.id)"
@@ -178,6 +178,22 @@
             </div>
           </div>
         }
+        <div class="filter-group">
+          <div class="show-archived-row">
+            <span class="filter-group-label">Show Archived</span>
+            <button
+              type="button"
+              role="switch"
+              class="slide-toggle"
+              [class.is-on]="showArchived()"
+              [attr.aria-checked]="showArchived()"
+              aria-label="Show Archived"
+              (click)="toggleShowArchived()"
+            >
+              <span class="slide-toggle-thumb" aria-hidden="true"></span>
+            </button>
+          </div>
+        </div>
       </div>
     }
 
@@ -194,12 +210,24 @@
                   <path [attr.d]="path" />
                 }
               </svg>
-              <h3 class="column-title">{{ column.label }}</h3>
-              <span class="column-count">{{ getColumnItems(column.id).length }}</span>
+              <h3 class="column-title">{{ column.label }} ({{ getColumnItems(column.id).length }})</h3>
+              @if (column.addType; as addType) {
+                <button
+                  type="button"
+                  class="column-add-btn"
+                  [attr.aria-label]="'Add ' + column.label"
+                  (click)="createItemAs.emit(addType)"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <path d="M12 5v14"/>
+                    <path d="M5 12h14"/>
+                  </svg>
+                </button>
+              }
             </div>
             <div class="column-cards">
               @for (item of getColumnItems(column.id); track item.id) {
-                <button class="content-card" (click)="selectItem.emit(item)">
+                <button class="content-card" (click)="openItem(item)">
                   @if (item.platform) {
                     <span class="card-platform-icon" [ngClass]="'platform-' + item.platform">
                       <app-platform-icon [platform]="item.platform" [size]="14" />
@@ -242,7 +270,7 @@
       <div class="list-items">
         @for (item of sortedItems(); track item.id) {
           @let column = getItemColumn(item);
-          <button class="list-card" (click)="selectItem.emit(item)">
+          <button class="list-card" (click)="openItem(item)">
             <div class="list-card-left">
               <div class="list-card-title-row">
                 @if (column) {
