@@ -1,0 +1,41 @@
+@if (isEditing()) {
+  @if (multiline) {
+    <textarea
+      #inputEl
+      class="inline-edit-input"
+      [class]="inputClass"
+      [ngModel]="draft()"
+      (ngModelChange)="onDraftChange($event)"
+      (blur)="commit()"
+      (keydown)="onKeydown($event)"
+      [placeholder]="placeholder"
+      [attr.aria-label]="ariaLabel"
+      rows="4"
+    ></textarea>
+  } @else {
+    <input
+      #inputEl
+      type="text"
+      class="inline-edit-input"
+      [class]="inputClass"
+      [ngModel]="draft()"
+      (ngModelChange)="onDraftChange($event)"
+      (blur)="commit()"
+      (keydown)="onKeydown($event)"
+      [placeholder]="placeholder"
+      [attr.aria-label]="ariaLabel"
+    />
+  }
+} @else {
+  <button
+    type="button"
+    class="inline-edit-display"
+    [class]="displayClass"
+    [class.is-placeholder]="!value"
+    [class.is-readonly]="readOnly"
+    [attr.aria-label]="ariaLabel"
+    (click)="startEdit()"
+  >
+    <span class="inline-edit-text">{{ value || placeholder }}</span>
+  </button>
+}

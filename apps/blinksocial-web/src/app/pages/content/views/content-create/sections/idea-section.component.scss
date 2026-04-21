@@ -1,0 +1,214 @@
+:host {
+  display: block;
+}
+
+.idea-section {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.field-required {
+  color: var(--blink-brand-primary);
+  font-weight: 700;
+}
+
+.field-hint {
+  margin-left: 6px;
+  font-size: var(--blink-label-small);
+  font-weight: 400;
+  text-transform: none;
+  letter-spacing: 0;
+  color: var(--blink-on-surface-faint);
+}
+
+.mode-toggle {
+  display: inline-flex;
+  border: 1px solid var(--blink-outline-variant);
+  border-radius: 999px;
+  padding: 2px;
+  background: var(--blink-surface-container-low);
+  width: fit-content;
+}
+
+.mode-toggle-btn {
+  padding: 6px 14px;
+  border: none;
+  background: transparent;
+  color: var(--blink-on-surface-muted);
+  font-size: var(--blink-label-large);
+  font-weight: 500;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+
+  &:hover {
+    color: var(--blink-on-surface);
+  }
+
+  &.is-active {
+    background: var(--blink-brand-primary);
+    color: var(--blink-on-brand, #fff);
+  }
+}
+
+.chip-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  border: 1px solid var(--blink-outline-variant);
+  background: var(--blink-surface);
+  color: var(--blink-on-surface);
+  font-size: var(--blink-label-large);
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+
+  &:hover:not(:disabled) {
+    border-color: var(--blink-brand-primary);
+  }
+
+  &.is-active {
+    background: var(--blink-brand-primary-lightest-bg, rgba(217, 78, 51, 0.08));
+    border-color: var(--blink-brand-primary);
+    color: var(--blink-brand-primary);
+    // Note: do NOT change font-weight — bold text has different metrics and
+    // causes the flex-wrap layout to shift when a chip is toggled.
+  }
+
+  &:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+}
+
+.chip-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+.btn-generate {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  height: 40px;
+  border: none;
+  border-radius: 6px;
+  background: var(--blink-brand-primary);
+  color: var(--blink-on-brand, #fff);
+  font-size: var(--blink-body-medium);
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s;
+
+  &:hover:not(:disabled) {
+    background: var(--blink-brand-primary-active, #c4452d);
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+}
+
+.spinner {
+  width: 14px;
+  height: 14px;
+  border: 2px solid currentColor;
+  border-top-color: transparent;
+  border-radius: 50%;
+  animation: sp-spin 0.8s linear infinite;
+}
+
+@keyframes sp-spin {
+  to { transform: rotate(360deg); }
+}
+
+.ideas-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 8px;
+
+  @media (min-width: 560px) {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.idea-card {
+  position: relative;
+  text-align: left;
+  padding: 10px 28px 10px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--blink-outline-variant);
+  background: var(--blink-surface);
+  cursor: pointer;
+  transition: border-color 0.15s, box-shadow 0.15s;
+
+  &:hover {
+    border-color: var(--blink-brand-primary);
+    box-shadow: var(--blink-shadow-sm);
+  }
+
+  &.is-selected {
+    border-color: var(--blink-brand-primary);
+    background: var(--blink-brand-primary-lightest-bg, rgba(217, 78, 51, 0.06));
+  }
+}
+
+.idea-check {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 16px;
+  height: 16px;
+  border-radius: 3px;
+  border: 1.5px solid var(--blink-outline-variant);
+  background: var(--blink-surface);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--blink-brand-primary);
+
+  .idea-card.is-selected & {
+    border-color: var(--blink-brand-primary);
+    background: var(--blink-brand-primary);
+    color: var(--blink-on-brand, #fff);
+  }
+}
+
+.idea-title {
+  margin: 0 0 6px;
+  font-size: var(--blink-label-large);
+  font-weight: 700;
+  color: var(--blink-on-surface-strong);
+  line-height: 1.3;
+}
+
+.idea-pillar-badge {
+  display: inline-block;
+  padding: 2px 6px;
+  border-radius: 4px;
+  border: 1px solid var(--blink-brand-primary);
+  color: var(--blink-brand-primary);
+  font-size: var(--blink-label-small);
+  font-weight: 500;
+  margin-bottom: 4px;
+}
+
+.idea-rationale {
+  margin: 0;
+  font-size: var(--blink-body-small);
+  color: var(--blink-on-surface-muted);
+  line-height: 1.4;
+}

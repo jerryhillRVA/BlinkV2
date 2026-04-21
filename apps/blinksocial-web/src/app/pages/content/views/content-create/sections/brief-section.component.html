@@ -1,0 +1,170 @@
+<div class="brief-section">
+  <div class="field">
+    <label class="field-label" for="brief-title">
+      Title <span class="field-required">*</span>
+    </label>
+    <input
+      id="brief-title"
+      type="text"
+      class="field-input"
+      [ngModel]="state().title"
+      (ngModelChange)="onTitleChange($event)"
+      placeholder="Enter brief title..."
+    />
+  </div>
+
+  <div class="field">
+    <label class="field-label" for="brief-description">Description</label>
+    <textarea
+      id="brief-description"
+      class="field-textarea"
+      rows="3"
+      [ngModel]="state().description"
+      (ngModelChange)="onDescriptionChange($event)"
+      placeholder="Brief description of the content..."
+    ></textarea>
+  </div>
+
+  @if (pillars().length > 0) {
+    <div class="field">
+      <span class="field-label">
+        Content Pillars <span class="field-required">*</span>
+        <span class="field-hint">(1&ndash;{{ maxPillars }} required)</span>
+      </span>
+      <div class="chip-row">
+        @for (p of pillars(); track p.id) {
+          <button
+            type="button"
+            class="chip pillar-chip"
+            [class.is-active]="isPillarSelected(p.id)"
+            [disabled]="!isPillarSelected(p.id) && pillarsAtLimit()"
+            (click)="togglePillar(p.id)"
+          >
+            <span class="chip-dot" [style.background-color]="p.color"></span>
+            {{ p.name }}
+          </button>
+        }
+      </div>
+    </div>
+  }
+
+  <div class="field">
+    <span class="field-label">
+      Platform <span class="field-required">*</span>
+    </span>
+    <app-dropdown
+      [options]="platformDropdown"
+      [value]="state().platform"
+      [fullWidth]="true"
+      placeholder="Select platform"
+      (valueChange)="setPlatform($event)"
+    />
+  </div>
+
+  @if (state().platform && state().platform !== 'tbd') {
+    <div class="field">
+      <span class="field-label">
+        Content Type <span class="field-required">*</span>
+      </span>
+      <app-dropdown
+        [options]="contentTypeDropdown()"
+        [value]="state().contentType"
+        [fullWidth]="true"
+        placeholder="Select content type"
+        (valueChange)="setContentType($event)"
+      />
+    </div>
+  }
+
+  <div class="field">
+    <span class="field-label">
+      Objective <span class="field-required">*</span>
+    </span>
+    <app-dropdown
+      [options]="objectiveDropdown"
+      [value]="state().objective"
+      [fullWidth]="true"
+      placeholder="Select objective"
+      (valueChange)="setObjective($event)"
+    />
+  </div>
+
+  <div class="field">
+    <span class="field-label">Tone Preset</span>
+    <app-dropdown
+      [options]="toneDropdown"
+      [value]="state().tonePreset"
+      [fullWidth]="true"
+      placeholder="Select tone (optional)"
+      (valueChange)="setTone($event)"
+    />
+  </div>
+
+  <div class="field">
+    <label class="field-label" for="brief-key-message">
+      Key Message <span class="field-required">*</span>
+      <span class="field-hint">(max {{ keyMessageMax }})</span>
+    </label>
+    <input
+      id="brief-key-message"
+      type="text"
+      class="field-input"
+      [ngModel]="state().keyMessage"
+      (ngModelChange)="onKeyMessageChange($event)"
+      [maxlength]="keyMessageMax"
+      placeholder="The single core message this content delivers..."
+    />
+    @if (keyMessageCount() > 0) {
+      <p class="char-counter">{{ keyMessageCount() }}/{{ keyMessageMax }} characters</p>
+    }
+  </div>
+
+  @if (segments().length > 0) {
+    <div class="field">
+      <span class="field-label">
+        Audience Segments <span class="field-required">*</span>
+      </span>
+      <div class="chip-row">
+        @for (s of segments(); track s.id) {
+          <button
+            type="button"
+            class="chip"
+            [class.is-active]="isSegmentSelected(s.id)"
+            (click)="toggleSegment(s.id)"
+          >
+            {{ s.name }}
+          </button>
+        }
+      </div>
+    </div>
+  }
+
+  <div class="field">
+    <span class="field-label">Call-to-Action (optional)</span>
+    <app-dropdown
+      [options]="ctaDropdown"
+      [value]="state().ctaType"
+      [fullWidth]="true"
+      placeholder="Select CTA type (optional)"
+      (valueChange)="setCtaType($event)"
+    />
+  </div>
+
+  @if (state().ctaType) {
+    <div class="field">
+      <label class="field-label" for="brief-cta-text">CTA Text</label>
+      <input
+        id="brief-cta-text"
+        type="text"
+        class="field-input"
+        [ngModel]="state().ctaText"
+        (ngModelChange)="onCtaTextChange($event)"
+        [maxlength]="ctaTextMax"
+        placeholder="Enter CTA text..."
+      />
+      @if (ctaTextCount() > 0) {
+        <p class="char-counter">{{ ctaTextCount() }}/{{ ctaTextMax }} characters</p>
+      }
+    </div>
+  }
+</div>

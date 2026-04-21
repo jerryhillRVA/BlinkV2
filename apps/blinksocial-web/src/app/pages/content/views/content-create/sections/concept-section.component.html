@@ -1,0 +1,268 @@
+<div class="concept-section">
+  @if (!state().conceptAiGenerated) {
+    <!-- AI-first pre-generation phase -->
+    <div class="field">
+      <label class="field-label" for="concept-title">
+        Title <span class="field-required">*</span>
+      </label>
+      <input
+        id="concept-title"
+        type="text"
+        class="field-input"
+        [ngModel]="state().title"
+        (ngModelChange)="onTitleChange($event)"
+        placeholder="Enter concept title..."
+      />
+    </div>
+
+    <div class="field">
+      <span class="field-label">
+        Objective <span class="field-required">*</span>
+      </span>
+      <div class="objective-grid" [class.is-disabled]="state().isGeneratingConcept">
+        @for (opt of objectiveButtons; track opt.value) {
+          <button
+            type="button"
+            class="objective-btn"
+            [class.is-active]="state().objective === opt.value"
+            (click)="setObjectiveButton(opt.value)"
+          >
+            {{ opt.label }}
+          </button>
+        }
+      </div>
+    </div>
+
+    <button
+      type="button"
+      class="btn-generate"
+      [disabled]="state().isGeneratingConcept || !state().title.trim() || !state().objective"
+      (click)="generateConcept()"
+    >
+      @if (state().isGeneratingConcept) {
+        <span class="spinner" aria-hidden="true"></span>
+        <span>Generating concept…</span>
+      } @else {
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="m12 3-1.9 5.8a2 2 0 0 1-1.3 1.3L3 12l5.8 1.9a2 2 0 0 1 1.3 1.3L12 21l1.9-5.8a2 2 0 0 1 1.3-1.3L21 12l-5.8-1.9a2 2 0 0 1-1.3-1.3Z"/>
+        </svg>
+        <span>Generate with AI</span>
+      }
+    </button>
+
+    <button type="button" class="link-btn" (click)="fillManually()">
+      Fill in manually
+    </button>
+  } @else {
+    <!-- Manual / post-AI-generation form -->
+    <button type="button" class="back-btn" (click)="backToPregen()">
+      <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="15 18 9 12 15 6"/>
+      </svg>
+      Back
+    </button>
+
+    @if (state().conceptFilledByAI) {
+      <div class="divider">
+        <span class="divider-label">Review & Edit</span>
+      </div>
+    }
+
+    <div class="field">
+      <label class="field-label" for="concept-title-m">
+        Title <span class="field-required">*</span>
+      </label>
+      <input
+        id="concept-title-m"
+        type="text"
+        class="field-input"
+        [ngModel]="state().title"
+        (ngModelChange)="onTitleChange($event)"
+        placeholder="Enter concept title..."
+      />
+    </div>
+
+    <div class="field">
+      <div class="field-label-row">
+        <span class="field-label">
+          Description <span class="field-required">*</span>
+          @if (state().conceptFilledByAI) {
+            <span class="ai-badge">AI</span>
+          }
+        </span>
+        <button type="button" class="assist-btn" [disabled]="state().isAssistingDescription" (click)="assistDescription()">
+          @if (state().isAssistingDescription) {
+            <span class="spinner spinner--sm" aria-hidden="true"></span>
+          } @else {
+            <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3-1.9 5.8a2 2 0 0 1-1.3 1.3L3 12l5.8 1.9a2 2 0 0 1 1.3 1.3L12 21l1.9-5.8a2 2 0 0 1 1.3-1.3L21 12l-5.8-1.9a2 2 0 0 1-1.3-1.3Z"/></svg>
+          }
+          AI Assist
+        </button>
+      </div>
+      <textarea
+        class="field-textarea"
+        rows="3"
+        [ngModel]="state().description"
+        (ngModelChange)="onDescriptionChange($event)"
+        [placeholder]="descriptionMin + '-' + descriptionMax + ' characters required'"
+      ></textarea>
+      <p
+        class="char-counter"
+        [class.is-invalid]="descriptionCount() > 0 && (descriptionCount() < descriptionMin || descriptionCount() > descriptionMax)"
+      >
+        {{ descriptionCount() }}/{{ descriptionMax }} characters (min {{ descriptionMin }})
+      </p>
+    </div>
+
+    <div class="field">
+      <span class="field-label">
+        Content Pillars <span class="field-required">*</span>
+        <span class="field-hint">(1–{{ maxPillars }} required)</span>
+      </span>
+      <div class="chip-row">
+        @for (p of pillars(); track p.id) {
+          <button
+            type="button"
+            class="chip"
+            [class.is-active]="isPillarSelected(p.id)"
+            [disabled]="!isPillarSelected(p.id) && pillarsAtLimit()"
+            (click)="togglePillarIfAllowed(p.id)"
+          >
+            <span class="chip-dot" [style.background-color]="p.color"></span>
+            {{ p.name }}
+          </button>
+        }
+      </div>
+    </div>
+
+    <div class="field">
+      <div class="field-label-row">
+        <span class="field-label">
+          Hook <span class="field-required">*</span>
+          @if (state().conceptFilledByAI) {
+            <span class="ai-badge">AI</span>
+          }
+        </span>
+        <button type="button" class="assist-btn" [disabled]="state().isAssistingHook" (click)="assistHook()">
+          @if (state().isAssistingHook) {
+            <span class="spinner spinner--sm" aria-hidden="true"></span>
+          } @else {
+            <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3-1.9 5.8a2 2 0 0 1-1.3 1.3L3 12l5.8 1.9a2 2 0 0 1 1.3 1.3L12 21l1.9-5.8a2 2 0 0 1 1.3-1.3L21 12l-5.8-1.9a2 2 0 0 1-1.3-1.3Z"/></svg>
+          }
+          AI Assist
+        </button>
+      </div>
+      <input
+        type="text"
+        class="field-input"
+        [ngModel]="state().hook"
+        (ngModelChange)="onHookChange($event)"
+        [maxlength]="hookMax"
+        placeholder="Enter a compelling hook..."
+      />
+      @if (hookCount() > 0) {
+        <p class="char-counter" [class.is-warn]="hookCount() >= 100">
+          {{ hookCount() }}/{{ hookMax }} characters
+        </p>
+      }
+    </div>
+
+    <div class="field">
+      <span class="field-label">
+        Objective <span class="field-required">*</span>
+      </span>
+      <app-dropdown
+        [options]="objectiveDropdown"
+        [value]="state().objective"
+        [fullWidth]="true"
+        placeholder="Select objective"
+        (valueChange)="setObjectiveDropdown($event)"
+      />
+    </div>
+
+    <div class="divider">
+      <span class="divider-label">Optional Fields</span>
+    </div>
+
+    <div class="field">
+      <span class="field-label">Platform</span>
+      <app-dropdown
+        [options]="platformDropdown"
+        [value]="state().platform"
+        [fullWidth]="true"
+        placeholder="Select platform (optional)"
+        (valueChange)="setPlatform($event)"
+      />
+    </div>
+
+    @if (state().platform && state().platform !== 'tbd') {
+      <div class="field">
+        <span class="field-label">Content Type</span>
+        <app-dropdown
+          [options]="contentTypeDropdown()"
+          [value]="state().contentType"
+          [fullWidth]="true"
+          placeholder="Select content type"
+          (valueChange)="setContentType($event)"
+        />
+      </div>
+    }
+
+    @if (segments().length > 0) {
+      <div class="field">
+        <span class="field-label">
+          Audience Segments
+          @if (state().conceptFilledByAI) {
+            <span class="ai-badge">AI</span>
+          }
+        </span>
+        <div class="chip-row">
+          @for (s of segments(); track s.id) {
+            <button
+              type="button"
+              class="chip"
+              [class.is-active]="isSegmentSelected(s.id)"
+              (click)="toggleSegment(s.id)"
+            >
+              {{ s.name }}
+            </button>
+          }
+        </div>
+      </div>
+    }
+
+    <div class="field">
+      <span class="field-label">
+        Call-to-Action (optional)
+        @if (state().conceptFilledByAI && state().ctaType) {
+          <span class="ai-badge">AI</span>
+        }
+      </span>
+      <app-dropdown
+        [options]="ctaDropdown"
+        [value]="state().ctaType"
+        [fullWidth]="true"
+        placeholder="Select CTA type (optional)"
+        (valueChange)="setCtaType($event)"
+      />
+    </div>
+
+    @if (state().ctaType) {
+      <div class="field">
+        <label class="field-label" for="concept-cta-text">CTA Text</label>
+        <input
+          id="concept-cta-text"
+          type="text"
+          class="field-input"
+          [ngModel]="state().ctaText"
+          (ngModelChange)="onCtaTextChange($event)"
+          [maxlength]="ctaTextMax"
+          placeholder="Enter CTA text..."
+        />
+        @if (ctaTextCount() > 0) {
+          <p class="char-counter">{{ ctaTextCount() }}/{{ ctaTextMax }} characters</p>
+        }
+      </div>
+    }
+  }
+</div>

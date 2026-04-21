@@ -203,4 +203,181 @@ describe('ContentComponent', () => {
     // loadAll already called once on init; clear and verify no second call
     expect(mockStateService.loadAll).not.toHaveBeenCalled();
   });
+
+  describe('create modal wiring', () => {
+    beforeEach(() => {
+      mockStateService.saveItem.mockClear();
+      document.body.innerHTML = '';
+    });
+
+    it('openCreate flips showCreate signal', () => {
+      expect(component.showCreate()).toBe(false);
+      component.openCreate();
+      expect(component.showCreate()).toBe(true);
+    });
+
+    it('openCreate(type) records the initial type for the modal', () => {
+      component.openCreate('concept');
+      expect(component.showCreate()).toBe(true);
+      expect(component.createInitialType()).toBe('concept');
+      component.closeCreate();
+      component.openCreate('production-brief');
+      expect(component.createInitialType()).toBe('production-brief');
+      component.closeCreate();
+      component.openCreate();
+      expect(component.createInitialType()).toBeUndefined();
+    });
+
+    it('closeCreate flips showCreate signal', () => {
+      component.openCreate();
+      component.closeCreate();
+      expect(component.showCreate()).toBe(false);
+    });
+
+    it('onCreateSave calls saveItem with a valid ContentItem and closes modal', () => {
+      component.openCreate();
+      component.onCreateSave({
+        kind: 'idea',
+        title: 'My idea',
+        description: '',
+        pillarIds: [],
+        segmentIds: [],
+      });
+      expect(mockStateService.saveItem).toHaveBeenCalledTimes(1);
+      const item = mockStateService.saveItem.mock.calls[0][0];
+      expect(item.title).toBe('My idea');
+      expect(item.stage).toBe('idea');
+      expect(item.status).toBe('draft');
+      expect(item.id).toMatch(/^c-/);
+      expect(component.showCreate()).toBe(false);
+    });
+
+    it('onCreateSaveMany saves every payload and closes modal', () => {
+      component.openCreate();
+      component.onCreateSaveMany([
+        { kind: 'idea', title: 'A', description: '', pillarIds: ['p1'], segmentIds: [] },
+        { kind: 'idea', title: 'B', description: '', pillarIds: ['p2'], segmentIds: [] },
+      ]);
+      expect(mockStateService.saveItem).toHaveBeenCalledTimes(2);
+      expect(component.showCreate()).toBe(false);
+    });
+
+    it('onMoveToProduction saves but does NOT close modal', () => {
+      component.openCreate();
+      component.onMoveToProduction({
+        kind: 'production',
+        title: 'T',
+        description: 'd',
+        pillarIds: ['p1'],
+        segmentIds: ['s1'],
+        hook: 'h',
+        objective: 'engagement',
+        platform: 'instagram',
+        contentType: 'reel',
+      });
+      expect(mockStateService.saveItem).toHaveBeenCalledTimes(1);
+      expect(component.showCreate()).toBe(true);
+    });
+
+    it('onDraftAssets saves, closes modal, and navigates to production view', () => {
+      component.openCreate();
+      component.onDraftAssets({
+        kind: 'brief',
+        title: 'T',
+        description: '',
+        pillarIds: [],
+        segmentIds: ['s1'],
+        platform: 'instagram',
+        contentType: 'reel',
+        objective: 'engagement',
+        keyMessage: 'msg',
+      });
+      expect(mockStateService.saveItem).toHaveBeenCalledTimes(1);
+      expect(component.showCreate()).toBe(false);
+      expect(component.activeView()).toBe('production');
+    });
+
+    it('renders the modal when showCreate is true', () => {
+      component.openCreate();
+      fixture.detectChanges();
+      expect(fixture.nativeElement.querySelector('app-content-create-modal')).toBeTruthy();
+    });
+
+    it('onMoveToProduction keeps modal open (does not call closeCreate)', () => {
+      component.openCreate();
+      const spy = vi.spyOn(component, 'closeCreate');
+      component.onMoveToProduction({
+        kind: 'production',
+        title: 'T',
+        description: 'x'.repeat(60),
+        pillarIds: ['p1'],
+        segmentIds: ['s1'],
+        hook: 'h',
+        objective: 'engagement',
+        platform: 'instagram',
+        contentType: 'reel',
+      });
+      expect(spy).not.toHaveBeenCalled();
+      expect(component.showCreate()).toBe(true);
+    });
+
+    it('onCreateConcept saves the idea and keeps the modal open', () => {
+      component.openCreate();
+      component.onCreateConcept({
+        kind: 'idea',
+        title: 'Promote me',
+        description: '',
+        pillarIds: ['p1'],
+        segmentIds: [],
+      });
+      expect(mockStateService.saveItem).toHaveBeenCalledTimes(1);
+      const item = mockStateService.saveItem.mock.calls[0][0];
+      expect(item.stage).toBe('idea');
+      expect(item.status).toBe('draft');
+      expect(component.showCreate()).toBe(true); // modal stays open
+    });
+
+    it('onCreateSaveMany with empty array still closes the modal and makes no saves', () => {
+      component.openCreate();
+      component.onCreateSaveMany([]);
+      expect(mockStateService.saveItem).not.toHaveBeenCalled();
+      expect(component.showCreate()).toBe(false);
+    });
+  });
+
+  describe('route param fallback', () => {
+    it('coerces a null workspace id to an empty string via ?? fallback', async () => {
+      mockStateService.loadAll.mockClear();
+      const paramMap$ = new BehaviorSubject(convertToParamMap({ id: 'ws-1' }));
+      TestBed.resetTestingModule();
+      await TestBed.configureTestingModule({
+        imports: [ContentComponent],
+        providers: [
+          provideRouter([]),
+          {
+            provide: ActivatedRoute,
+            useValue: {
+              paramMap: paramMap$.asObservable(),
+              snapshot: { paramMap: { get: () => 'ws-1' } },
+            },
+          },
+          { provide: Router, useValue: { navigate: vi.fn() } },
+          { provide: ContentStateService, useValue: mockStateService },
+        ],
+      })
+        .overrideComponent(ContentComponent, { set: { providers: [] } })
+        .compileComponents();
+      const f = TestBed.createComponent(ContentComponent);
+      f.detectChanges();
+      expect(f.componentInstance.workspaceId).toBe('ws-1');
+      // Now emit a paramMap with NO id — ?? '' kicks in
+      vi.useFakeTimers();
+      paramMap$.next(convertToParamMap({}));
+      vi.runAllTimers();
+      vi.useRealTimers();
+      f.detectChanges();
+      expect(f.componentInstance.workspaceId).toBe('');
+      expect(mockStateService.loadAll).toHaveBeenCalledWith('');
+    });
+  });
 });

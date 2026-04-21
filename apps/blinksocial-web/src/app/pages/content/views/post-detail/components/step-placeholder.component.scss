@@ -1,0 +1,37 @@
+:host {
+  display: block;
+}
+
+.step-placeholder {
+  position: relative;
+  overflow: hidden;
+  padding: 32px 20px;
+  border: 1px solid var(--blink-outline-variant);
+  border-radius: 12px;
+  background: var(--blink-surface);
+  text-align: center;
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(to right, var(--blink-brand-primary), #f26b4d);
+  }
+}
+
+.placeholder-title {
+  margin: 0 0 8px 0;
+  font-size: var(--blink-title-medium);
+  font-weight: 700;
+  color: var(--blink-on-surface);
+}
+
+.placeholder-copy {
+  margin: 0;
+  font-size: var(--blink-body-small);
+  color: var(--blink-on-surface-muted);
+  line-height: 1.5;
+}

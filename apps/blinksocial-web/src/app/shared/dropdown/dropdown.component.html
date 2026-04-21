@@ -11,6 +11,18 @@
       @if (selectedColor()) {
         <span class="dropdown-color-dot" [style.background]="selectedColor()"></span>
       }
+      @if (selectedPlatformIcon(); as name) {
+        <span class="dropdown-platform-icon" [attr.data-platform]="name">
+          <app-platform-icon [platform]="name" [size]="16" />
+        </span>
+      }
+      @if (selectedIconPaths(); as iconPaths) {
+        <svg class="dropdown-option-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16" aria-hidden="true" [style.color]="selectedIconColor()">
+          @for (d of iconPaths; track d) {
+            <path [attr.d]="d"></path>
+          }
+        </svg>
+      }
       {{ selectedLabel() }}
     </span>
     <svg class="dropdown-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16" aria-hidden="true">
@@ -31,6 +43,18 @@
           <span class="dropdown-option-label">
             @if (opt.color) {
               <span class="dropdown-color-dot" [style.background]="opt.color"></span>
+            }
+            @if (opt.platformIcon; as name) {
+              <span class="dropdown-platform-icon" [attr.data-platform]="name">
+                <app-platform-icon [platform]="name" [size]="16" />
+              </span>
+            }
+            @if (opt.iconPaths; as iconPaths) {
+              <svg class="dropdown-option-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16" aria-hidden="true" [style.color]="opt.iconColor || null">
+                @for (d of iconPaths; track d) {
+                  <path [attr.d]="d"></path>
+                }
+              </svg>
             }
             {{ opt.label }}
           </span>

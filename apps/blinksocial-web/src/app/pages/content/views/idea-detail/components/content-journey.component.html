@@ -1,0 +1,21 @@
+<div class="journey">
+  <div class="journey-progress" aria-hidden="true">
+    <div class="journey-progress-fill" [style.width.%]="progressPercent()"></div>
+  </div>
+  <ul class="journey-steps">
+    @for (step of steps(); track step.stage) {
+      <li class="journey-step" [class]="'is-' + step.state">
+        <span class="journey-circle" [attr.aria-current]="step.state === 'current' ? 'step' : null">
+          @if (step.state === 'past') {
+            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <polyline points="20 6 9 17 4 12"/>
+            </svg>
+          } @else {
+            {{ step.number }}
+          }
+        </span>
+        <span class="journey-label">{{ step.label }}</span>
+      </li>
+    }
+  </ul>
+</div>

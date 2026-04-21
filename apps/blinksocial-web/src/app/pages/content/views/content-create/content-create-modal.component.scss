@@ -1,0 +1,11 @@
+/*
+ * Overlay + dialog styles reuse the global .app-modal ruleset in styles.scss.
+ * Component-scoped overrides live here.
+ */
+:host {
+  display: contents;
+}
+
+.content-create-dialog {
+  max-width: 34rem;
+}

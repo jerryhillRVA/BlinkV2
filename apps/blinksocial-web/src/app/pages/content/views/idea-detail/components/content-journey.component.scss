@@ -1,0 +1,83 @@
+:host {
+  display: block;
+}
+
+.journey {
+  position: relative;
+  padding: 4px 0;
+}
+
+.journey-progress {
+  position: absolute;
+  top: 16px;
+  left: 12px;
+  right: 12px;
+  height: 2px;
+  background: var(--blink-outline-variant);
+  border-radius: 2px;
+  z-index: 0;
+}
+
+.journey-progress-fill {
+  height: 100%;
+  background: linear-gradient(to right, var(--blink-brand-primary), #f26b4d);
+  border-radius: 2px;
+  transition: width 0.25s ease;
+}
+
+.journey-steps {
+  position: relative;
+  z-index: 1;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.journey-step {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  flex: 1;
+}
+
+.journey-circle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--blink-surface);
+  border: 1.5px solid var(--blink-outline);
+  color: var(--blink-on-surface-muted);
+  font-size: var(--blink-label-small);
+  font-weight: 700;
+
+  .journey-step.is-past & {
+    background: var(--blink-brand-primary);
+    border-color: var(--blink-brand-primary);
+    color: var(--blink-on-brand, #fff);
+  }
+
+  .journey-step.is-current & {
+    background: var(--blink-brand-primary);
+    border-color: var(--blink-brand-primary);
+    color: var(--blink-on-brand, #fff);
+    box-shadow: 0 0 0 4px var(--blink-brand-primary-lightest-bg, rgba(217, 78, 51, 0.12));
+  }
+}
+
+.journey-label {
+  font-size: var(--blink-label-small);
+  font-weight: 600;
+  color: var(--blink-on-surface-muted);
+  text-align: center;
+
+  .journey-step.is-current & {
+    color: var(--blink-on-surface-strong);
+  }
+}

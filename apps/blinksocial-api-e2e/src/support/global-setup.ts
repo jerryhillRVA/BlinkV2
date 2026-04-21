@@ -8,7 +8,16 @@ module.exports = async function () {
   console.log('\nSetting up...\n');
 
   const host = process.env.HOST ?? 'localhost';
-  const port = process.env.PORT ? Number(process.env.PORT) : 3000;
+  // Force-override to 3001 so we don't collide with the web-e2e webServer
+  // (which serves the API on 3000). Nx loads the workspace .env at
+  // bootstrap, which otherwise seeds PORT=3000 here. When both e2e targets
+  // run in parallel via `nx affected -t e2e`, sharing 3000 lets one task
+  // kill the other's server mid-test. Callers can still override by
+  // setting API_E2E_PORT.
+  const port = process.env.API_E2E_PORT
+    ? Number(process.env.API_E2E_PORT)
+    : 3001;
+  process.env.PORT = String(port);
 
   // Kill any existing process on the port to ensure a clean server with fresh in-memory state
   try {

@@ -1,0 +1,63 @@
+<ng-template #dialogTpl>
+  <div
+    class="app-modal modal-overlay move-dialog-overlay"
+    role="presentation"
+    tabindex="-1"
+    (click)="onBackdropClick($event)"
+    (keyup.escape)="onEscape()"
+  >
+    <div
+      class="modal-dialog move-dialog"
+      role="dialog"
+      aria-labelledby="move-dialog-title"
+      aria-modal="true"
+      tabindex="-1"
+      (click)="stopEvent($event)"
+      (keyup.escape)="onEscape()"
+    >
+      <button type="button" class="modal-close" (click)="cancelDialog.emit()" aria-label="Close">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M18 6 6 18"/>
+          <path d="m6 6 12 12"/>
+        </svg>
+      </button>
+
+      <header class="move-dialog-header">
+        <h2 id="move-dialog-title" class="modal-title">Move "{{ title() }}" to Production</h2>
+        <p class="modal-description">
+          {{ targets().length }} production target{{ targets().length === 1 ? '' : 's' }} selected.
+        </p>
+      </header>
+
+      <ul class="move-dialog-targets">
+        @for (t of targets(); track trackByPlatformType($index, t)) {
+          <li class="move-dialog-target">{{ targetLabel(t) }}</li>
+        }
+      </ul>
+
+      <div class="move-dialog-actions">
+        <button type="button" class="btn-primary" (click)="onSelectAll()">
+          Add all to Production Queue
+        </button>
+        <button type="button" class="btn-secondary" (click)="onSelectAllKeep()">
+          Queue all &amp; Keep Concept Card
+        </button>
+      </div>
+
+      <div class="move-dialog-workon">
+        <p class="move-dialog-workon-label">Or start working on one now:</p>
+        <div class="move-dialog-workon-list">
+          @for (t of targets(); track trackByPlatformType($index, t)) {
+            <button
+              type="button"
+              class="btn-workon"
+              (click)="onWorkOn($index)"
+            >
+              Produce {{ targetLabel(t) }}
+            </button>
+          }
+        </div>
+      </div>
+    </div>
+  </div>
+</ng-template>

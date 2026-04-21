@@ -1,0 +1,203 @@
+@if (store.item(); as item) {
+  <div class="brief-step" [class.is-locked]="locked()">
+    <section class="panel">
+      <h3 class="panel-label">
+        Title <span class="panel-required">*</span>
+      </h3>
+      <app-inline-edit
+        [value]="item.title"
+        [placeholder]="'Untitled post'"
+        [readOnly]="locked()"
+        displayClass="brief-title"
+        inputClass="brief-title-input"
+        ariaLabel="Edit title"
+        (valueChange)="onTitleChange($event)"
+      />
+    </section>
+
+    <section class="panel">
+      <h3 class="panel-label">
+        Description <span class="panel-required">*</span>
+      </h3>
+      <app-inline-edit
+        [value]="item.description"
+        [multiline]="true"
+        [placeholder]="descriptionMin + '\u2013' + descriptionMax + ' characters required'"
+        [readOnly]="locked()"
+        displayClass="brief-description"
+        inputClass="brief-description-input"
+        ariaLabel="Edit description"
+        (valueChange)="onDescriptionChange($event)"
+      />
+      <p class="char-counter" [class.is-invalid]="descriptionInvalid()">
+        {{ descriptionCount() }}/{{ descriptionMax }} characters (min {{ descriptionMin }})
+      </p>
+    </section>
+
+    <section class="panel panel-format">
+      <header class="panel-format-header">
+        <h3 class="panel-label">Format</h3>
+        <span class="panel-format-lock">
+          <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <rect width="18" height="11" x="3" y="11" rx="2" ry="2"/>
+            <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+          </svg>
+          Locked
+        </span>
+      </header>
+      <div class="format-grid">
+        <div class="format-cell">
+          <span class="format-cell-label">Platform</span>
+          <div class="format-cell-value">
+            @if (item.platform) {
+              <app-platform-icon [platform]="item.platform" [size]="14" />
+              <span>{{ platformLabel() ?? item.platform }}</span>
+            } @else {
+              <span class="format-cell-empty">Not set</span>
+            }
+          </div>
+        </div>
+        <div class="format-cell">
+          <span class="format-cell-label">Content Type</span>
+          <div class="format-cell-value">
+            @if (item.contentType) {
+              <span>{{ contentTypeLabel() ?? item.contentType }}</span>
+            } @else {
+              <span class="format-cell-empty">Not set</span>
+            }
+          </div>
+        </div>
+      </div>
+      <p class="panel-hint-muted">
+        Platform and content type are locked from the concept stage and cannot be changed during production.
+      </p>
+    </section>
+
+    <section class="panel">
+      <h3 class="panel-label">
+        Content Pillars <span class="panel-required">*</span>
+        <span class="panel-hint">(1&ndash;{{ maxPillars }} required)</span>
+      </h3>
+      @if (store.pillars().length === 0) {
+        <p class="panel-empty">No pillars defined yet.</p>
+      } @else {
+        <div class="chip-grid">
+          @for (p of store.pillars(); track p.id) {
+            <button
+              type="button"
+              class="chip pillar-chip"
+              [class.is-active]="isPillarSelected(p.id)"
+              [disabled]="locked() || (!isPillarSelected(p.id) && pillarsAtLimit())"
+              (click)="togglePillar(p.id)"
+            >
+              <span class="chip-dot" [style.background-color]="p.color"></span>
+              {{ p.name }}
+            </button>
+          }
+        </div>
+      }
+    </section>
+
+    <section class="panel">
+      <h3 class="panel-label">
+        Audience Segments <span class="panel-required">*</span>
+      </h3>
+      @if (store.segments().length === 0) {
+        <p class="panel-empty">No audience segments defined yet.</p>
+      } @else {
+        <div class="chip-grid">
+          @for (s of store.segments(); track s.id) {
+            <button
+              type="button"
+              class="chip"
+              [class.is-active]="isSegmentSelected(s.id)"
+              [disabled]="locked()"
+              (click)="store.toggleSegment(s.id)"
+            >
+              {{ s.name }}
+            </button>
+          }
+        </div>
+      }
+    </section>
+
+    <section class="panel">
+      <h3 class="panel-label">
+        Content Goal <span class="panel-required">*</span>
+      </h3>
+      <div class="objective-grid">
+        @for (opt of objectiveOptions; track opt.value) {
+          <button
+            type="button"
+            class="objective-btn"
+            [class.is-active]="isObjective(opt.value)"
+            [disabled]="locked()"
+            (click)="setObjective(opt.value)"
+          >
+            {{ opt.label }}
+          </button>
+        }
+      </div>
+    </section>
+
+    <section class="panel">
+      <h3 class="panel-label">Tone Preset</h3>
+      <app-dropdown
+        [options]="toneDropdown"
+        [value]="item.tonePreset ?? ''"
+        [fullWidth]="true"
+        placeholder="Select tone (optional)"
+        (valueChange)="onTonePresetChange($event)"
+      />
+    </section>
+
+    <section class="panel">
+      <h3 class="panel-label">
+        Key Message <span class="panel-required">*</span>
+      </h3>
+      <app-inline-edit
+        [value]="item.keyMessage ?? ''"
+        [placeholder]="'The one thing the audience should remember\u2026'"
+        [readOnly]="locked()"
+        displayClass="brief-key-message"
+        inputClass="brief-key-message-input"
+        ariaLabel="Edit key message"
+        (valueChange)="onKeyMessageChange($event)"
+      />
+      <div class="panel-inline-row">
+        <p class="char-counter" [class.is-warn]="keyMessageCount() >= keyMessageMax - 20">
+          {{ keyMessageCount() }}/{{ keyMessageMax }} characters
+        </p>
+        <button type="button" class="assist-btn" [disabled]="locked()" (click)="onKeyMessageAssist()">
+          <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="m12 3-1.9 5.8a2 2 0 0 1-1.3 1.3L3 12l5.8 1.9a2 2 0 0 1 1.3 1.3L12 21l1.9-5.8a2 2 0 0 1 1.3-1.3L21 12l-5.8-1.9a2 2 0 0 1-1.3-1.3Z"/>
+          </svg>
+          AI Assist
+        </button>
+      </div>
+    </section>
+
+    <section class="panel">
+      <h3 class="panel-label">Call-to-Action</h3>
+      <app-dropdown
+        [options]="ctaDropdown"
+        [value]="item.cta?.type ?? ''"
+        [fullWidth]="true"
+        placeholder="Select CTA type (optional)"
+        (valueChange)="onSetCtaType($event)"
+      />
+      @if (item.cta) {
+        <app-inline-edit
+          [value]="item.cta.text"
+          [placeholder]="'Enter CTA text\u2026'"
+          [readOnly]="locked()"
+          displayClass="brief-cta-text"
+          inputClass="brief-cta-input"
+          ariaLabel="Edit CTA text"
+          (valueChange)="onCtaTextChange($event)"
+        />
+        <p class="char-counter">{{ ctaTextCount() }}/{{ ctaTextMax }} characters</p>
+      }
+    </section>
+  </div>
+}

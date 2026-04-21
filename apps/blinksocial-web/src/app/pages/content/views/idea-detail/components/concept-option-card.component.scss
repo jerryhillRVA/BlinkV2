@@ -1,0 +1,135 @@
+:host {
+  display: block;
+}
+
+.option-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 100%;
+  min-height: 300px;
+  padding: 14px;
+  border-radius: 10px;
+  border: 1px solid var(--blink-outline-variant);
+  background: var(--blink-surface);
+  color: var(--blink-on-surface);
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 0.15s, box-shadow 0.15s, background 0.15s;
+
+  &:hover {
+    border-color: var(--blink-brand-primary);
+    box-shadow: var(--blink-shadow-sm);
+  }
+
+  &.is-selected {
+    border-color: var(--blink-brand-primary);
+    background: var(--blink-brand-primary-lightest-bg, rgba(217, 78, 51, 0.06));
+  }
+}
+
+.option-selected-mark {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--blink-brand-primary);
+  color: var(--blink-on-brand, #fff);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.option-angle {
+  margin: 0;
+  padding-right: 30px;
+  font-size: var(--blink-label-large);
+  font-weight: 700;
+  color: var(--blink-on-surface-strong);
+  line-height: 1.35;
+}
+
+.option-description {
+  margin: 0;
+  font-size: var(--blink-body-small);
+  color: var(--blink-on-surface-muted);
+  line-height: 1.5;
+}
+
+.option-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.option-meta-row {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.option-meta-label {
+  font-size: var(--blink-label-small);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--blink-on-surface-secondary);
+}
+
+.option-meta-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.option-meta-chip,
+.option-pillar-chip,
+.option-audience-chip {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 999px;
+  border: 1px solid transparent;
+  font-size: var(--blink-label-small);
+  font-weight: 600;
+}
+
+.option-pillar-chip {
+  border-color: var(--blink-outline-variant);
+  color: var(--blink-on-surface-muted);
+}
+
+.option-audience-chip {
+  border-color: rgba(37, 99, 235, 0.3);
+  background-color: rgba(37, 99, 235, 0.08);
+  color: #1d4ed8;
+}
+
+.option-format-row,
+.option-cta-row {
+  flex-direction: row;
+  align-items: baseline;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.option-format-value {
+  font-size: var(--blink-body-small);
+  color: var(--blink-on-surface);
+  text-transform: capitalize;
+}
+
+.option-objective-alignment {
+  display: block;
+  font-size: var(--blink-body-small);
+  color: var(--blink-on-surface);
+  line-height: 1.4;
+}
+
+.option-cta {
+  font-size: var(--blink-body-small);
+  color: var(--blink-on-surface);
+  font-style: italic;
+}

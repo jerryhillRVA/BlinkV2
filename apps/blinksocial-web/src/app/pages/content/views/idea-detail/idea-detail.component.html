@@ -1,0 +1,120 @@
+@if (store.item(); as item) {
+  <div class="idea-detail">
+    <app-idea-detail-header
+      [item]="item"
+      (back)="onBack()"
+      (advance)="onAdvance()"
+      (archive)="onArchive()"
+      (duplicate)="onDuplicate()"
+      (copyLink)="onCopyLink()"
+      (titleChange)="onTitleChange($event)"
+    />
+
+    <div class="detail-grid">
+      <main class="detail-main">
+        @if (item.hook) {
+          <section class="panel">
+            <h3 class="panel-label">Hook</h3>
+            <blockquote class="detail-hook">
+              <app-inline-edit
+                [value]="item.hook"
+                [placeholder]="'Add a hook…'"
+                displayClass="detail-hook-text"
+                inputClass="detail-hook-input"
+                ariaLabel="Edit hook"
+                (valueChange)="onHookChange($event)"
+              />
+            </blockquote>
+          </section>
+        }
+
+        <section class="panel">
+          <h3 class="panel-label">Description</h3>
+          <app-inline-edit
+            [value]="item.description"
+            [multiline]="true"
+            [placeholder]="'Add a description…'"
+            displayClass="detail-description"
+            inputClass="detail-description-input"
+            ariaLabel="Edit description"
+            (valueChange)="onDescriptionChange($event)"
+          />
+        </section>
+
+        <app-concept-options-panel />
+      </main>
+
+      <aside class="detail-sidebar">
+        <section class="panel">
+          <h3 class="panel-label">
+            Content Pillars
+            <span class="panel-hint">(max {{ maxPillars }})</span>
+          </h3>
+          @if (store.pillars().length === 0) {
+            <p class="panel-empty">No pillars defined yet.</p>
+          } @else {
+            <div class="chip-grid">
+              @for (p of store.pillars(); track p.id) {
+                <button
+                  type="button"
+                  class="chip"
+                  [class.is-active]="isPillarSelected(p.id)"
+                  [disabled]="!isPillarSelected(p.id) && pillarsAtLimit()"
+                  (click)="togglePillar(p.id)"
+                >
+                  <span class="chip-dot" [style.background-color]="p.color"></span>
+                  {{ p.name }}
+                </button>
+              }
+            </div>
+          }
+        </section>
+
+        <section class="panel">
+          <h3 class="panel-label">Audience Segments</h3>
+          @if (store.segments().length === 0) {
+            <p class="panel-empty">No audience segments defined yet.</p>
+          } @else {
+            <div class="chip-grid">
+              @for (s of store.segments(); track s.id) {
+                <button
+                  type="button"
+                  class="chip"
+                  [class.is-active]="isSegmentSelected(s.id)"
+                  (click)="store.toggleSegment(s.id)"
+                >
+                  {{ s.name }}
+                </button>
+              }
+            </div>
+          }
+        </section>
+
+        <section class="panel">
+          <h3 class="panel-label">Business Objective</h3>
+          <div class="panel-warning">
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/>
+              <path d="M12 9v4"/>
+              <path d="M12 17h.01"/>
+            </svg>
+            <span>No business objectives have been set up. Visit Strategy → Objectives.</span>
+          </div>
+        </section>
+
+        <section class="panel panel-journey">
+          <h3 class="panel-label">Content Journey</h3>
+          <app-content-journey [stage]="item.stage" />
+        </section>
+
+        <section class="panel">
+          <h3 class="panel-label">Timestamps</h3>
+          <dl class="detail-timestamps">
+            <div><dt>Created</dt><dd>{{ formatDate(item.createdAt) }}</dd></div>
+            <div><dt>Last updated</dt><dd>{{ formatDate(item.updatedAt) }}</dd></div>
+          </dl>
+        </section>
+      </aside>
+    </div>
+  </div>
+}

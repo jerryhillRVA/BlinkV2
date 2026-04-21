@@ -14,8 +14,9 @@
           <app-pipeline-view
             [items]="stateService.items()"
             [pillars]="stateService.pillars()"
-            (selectItem)="stateService.saveItem($event)"
             (navigateToStep)="setActiveView($event)"
+            (createItem)="openCreate()"
+            (createItemAs)="openCreate($event)"
           />
         }
         @case ('strategy') {
@@ -33,4 +34,18 @@
       }
     }
   </main>
+
+  @if (showCreate()) {
+    <app-content-create-modal
+      [pillars]="stateService.pillars()"
+      [segments]="stateService.segments()"
+      [initialType]="createInitialType()"
+      (saveContent)="onCreateSave($event)"
+      (saveMany)="onCreateSaveMany($event)"
+      (moveToProduction)="onMoveToProduction($event)"
+      (draftAssets)="onDraftAssets($event)"
+      (createConcept)="onCreateConcept($event)"
+      (cancelCreate)="closeCreate()"
+    />
+  }
 </div>

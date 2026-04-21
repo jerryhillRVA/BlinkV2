@@ -1,0 +1,30 @@
+:host {
+  display: block;
+}
+
+.post-detail {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.post-body {
+  display: block;
+}
+
+.brief-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 20px;
+
+  @media (min-width: 960px) {
+    grid-template-columns: minmax(0, 2fr) minmax(280px, 1fr);
+  }
+}
+
+.brief-main,
+.brief-side {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}

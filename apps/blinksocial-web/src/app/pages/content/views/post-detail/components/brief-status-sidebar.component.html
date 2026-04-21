@@ -1,0 +1,100 @@
+<section class="status-panel" aria-label="Brief status">
+  <header class="status-header">
+    <h3 class="status-title">Brief Status</h3>
+    <span
+      class="status-badge"
+      [class.is-approved]="approved()"
+      aria-live="polite"
+    >
+      {{ approved() ? 'Approved' : 'In Review' }}
+    </span>
+  </header>
+
+  @if (approved()) {
+    <div class="status-approved">
+      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <polyline points="20 6 9 17 4 12"/>
+      </svg>
+      <span class="status-approved-text">
+        Approved{{ approvedAt() ? ' ' + (approvedAt() | date: 'mediumDate') : '' }}
+        @if (approvedBy()) { by {{ approvedBy() }} }
+      </span>
+    </div>
+    <button type="button" class="btn-unlock" (click)="onUnlock()">Unlock Brief</button>
+  }
+
+  <div class="status-progress">
+    <div class="status-progress-row">
+      <span class="status-progress-label">
+        {{ requiredDone() }} / {{ requiredTotal() }} required fields
+      </span>
+      <span class="status-progress-percent">{{ progressPercent() }}%</span>
+    </div>
+    <div class="status-progress-bar">
+      <div
+        class="status-progress-fill"
+        [class.is-complete]="progressComplete()"
+        [style.width.%]="progressPercent()"
+      ></div>
+    </div>
+  </div>
+
+  @if (errors().length > 0) {
+    <div class="status-issues is-errors">
+      <h4 class="status-issues-title">Errors</h4>
+      <ul class="status-issues-list">
+        @for (err of errors(); track err.field) {
+          <li class="status-issues-row">
+            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <line x1="18" x2="6" y1="6" y2="18"/>
+              <line x1="6" x2="18" y1="6" y2="18"/>
+            </svg>
+            <span>{{ err.label }}</span>
+          </li>
+        }
+      </ul>
+    </div>
+  }
+
+  @if (warnings().length > 0) {
+    <div class="status-issues is-warnings">
+      <h4 class="status-issues-title">Warnings</h4>
+      <ul class="status-issues-list">
+        @for (warn of warnings(); track warn.field) {
+          <li class="status-issues-row">
+            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/>
+              <path d="M12 9v4"/>
+              <path d="M12 17h.01"/>
+            </svg>
+            <span>{{ warn.label }}</span>
+          </li>
+        }
+      </ul>
+    </div>
+  }
+
+  <div class="status-approve-row">
+    <label class="approve-toggle">
+      <input
+        type="checkbox"
+        [checked]="approved()"
+        [disabled]="!canApprove() && !approved()"
+        (change)="onApproveToggle($event)"
+      />
+      <span class="approve-toggle-track" aria-hidden="true">
+        <span class="approve-toggle-thumb"></span>
+      </span>
+      <span class="approve-toggle-label">Approve Brief</span>
+    </label>
+  </div>
+
+  <button
+    type="button"
+    class="btn-continue"
+    [disabled]="continueDisabled()"
+    (click)="onContinue()"
+  >
+    {{ continueLabel() }}
+  </button>
+</section>

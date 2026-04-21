@@ -1,0 +1,203 @@
+:host {
+  display: block;
+}
+
+.status-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 16px;
+  border: 1px solid var(--blink-outline-variant);
+  border-radius: 12px;
+  background: var(--blink-surface);
+  box-shadow: var(--blink-shadow-sm);
+}
+
+.status-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.status-title {
+  margin: 0;
+  font-size: var(--blink-label-small);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--blink-on-surface-secondary);
+}
+
+.status-badge {
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: var(--blink-surface-container);
+  color: var(--blink-on-surface-muted);
+  font-size: var(--blink-label-small);
+  font-weight: 700;
+
+  &.is-approved {
+    background: rgba(22, 163, 74, 0.12);
+    color: #16a34a;
+  }
+}
+
+.status-approved {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  background: rgba(22, 163, 74, 0.08);
+  color: #166534;
+  font-size: var(--blink-body-small);
+
+  svg { color: #16a34a; flex-shrink: 0; }
+}
+
+.btn-unlock {
+  align-self: flex-start;
+  padding: 6px 10px;
+  border: 1px solid var(--blink-outline-variant);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--blink-on-surface);
+  font-size: var(--blink-label-small);
+  font-weight: 600;
+  cursor: pointer;
+
+  &:hover { background: var(--blink-surface-hover); }
+}
+
+.status-progress { display: flex; flex-direction: column; gap: 6px; }
+
+.status-progress-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  font-size: var(--blink-label-small);
+  color: var(--blink-on-surface-muted);
+}
+
+.status-progress-percent {
+  font-weight: 700;
+  color: var(--blink-on-surface);
+}
+
+.status-progress-bar {
+  height: 6px;
+  border-radius: 3px;
+  background: var(--blink-surface-container);
+  overflow: hidden;
+}
+
+.status-progress-fill {
+  height: 100%;
+  width: 0%;
+  border-radius: 3px;
+  background: var(--blink-brand-primary);
+  transition: width 0.2s ease, background 0.2s ease;
+
+  &.is-complete { background: #16a34a; }
+}
+
+.status-issues { display: flex; flex-direction: column; gap: 6px; }
+
+.status-issues-title {
+  margin: 0;
+  font-size: var(--blink-label-small);
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.is-errors .status-issues-title { color: #b91c1c; }
+.is-warnings .status-issues-title { color: #b45309; }
+
+.status-issues-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.status-issues-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  font-size: var(--blink-body-small);
+  line-height: 1.4;
+  color: var(--blink-on-surface);
+
+  svg { margin-top: 2px; flex-shrink: 0; }
+}
+
+.is-errors .status-issues-row svg { color: #b91c1c; }
+.is-warnings .status-issues-row svg { color: #b45309; }
+
+.status-approve-row {
+  padding-top: 4px;
+  border-top: 1px dashed var(--blink-outline-variant);
+}
+
+.approve-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+
+  input {
+    position: absolute;
+    opacity: 0;
+    width: 0;
+    height: 0;
+  }
+}
+
+.approve-toggle-track {
+  position: relative;
+  width: 34px;
+  height: 18px;
+  border-radius: 999px;
+  background: var(--blink-outline-variant);
+  transition: background 0.15s;
+
+  input:checked + & { background: #16a34a; }
+  input:disabled + & { opacity: 0.5; }
+}
+
+.approve-toggle-thumb {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--blink-surface);
+  transition: transform 0.15s;
+
+  input:checked + .approve-toggle-track & { transform: translateX(16px); }
+}
+
+.approve-toggle-label {
+  font-size: var(--blink-body-small);
+  font-weight: 600;
+  color: var(--blink-on-surface);
+}
+
+.btn-continue {
+  padding: 10px 14px;
+  border: none;
+  border-radius: 8px;
+  background: var(--blink-brand-primary);
+  color: var(--blink-on-brand, #fff);
+  font-size: var(--blink-label-large);
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.15s;
+
+  &:hover:not(:disabled) { background: #b7412a; }
+  &:disabled { opacity: 0.5; cursor: not-allowed; }
+}

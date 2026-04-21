@@ -1,0 +1,57 @@
+<button
+  type="button"
+  class="option-card"
+  [class.is-selected]="selected"
+  [attr.aria-pressed]="selected"
+  (click)="onClick()"
+>
+  @if (selected) {
+    <span class="option-selected-mark" aria-hidden="true">
+      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="20 6 9 17 4 12"/>
+      </svg>
+    </span>
+  }
+
+  <h5 class="option-angle">{{ option.angle }}</h5>
+  <p class="option-description">{{ option.description }}</p>
+
+  <div class="option-meta">
+    @if (option.objectiveAlignment) {
+      <div class="option-meta-row">
+        <span class="option-meta-label">Objective Alignment</span>
+        <span class="option-objective-alignment">{{ option.objectiveAlignment }}</span>
+      </div>
+    }
+    @if (resolvedPillars().length > 0) {
+      <div class="option-meta-row">
+        <span class="option-meta-label">Pillars</span>
+        <div class="option-meta-chips">
+          @for (p of resolvedPillars(); track p.id) {
+            <span class="option-pillar-chip" [style]="pillarChipStyles(p.color)">{{ p.name }}</span>
+          }
+        </div>
+      </div>
+    }
+    @if (segmentNames().length > 0) {
+      <div class="option-meta-row">
+        <span class="option-meta-label">Audience</span>
+        <div class="option-meta-chips">
+          @for (name of segmentNames(); track name) {
+            <span class="option-audience-chip">{{ name }}</span>
+          }
+        </div>
+      </div>
+    }
+    @if (option.suggestedFormatLabel) {
+      <div class="option-meta-row option-format-row">
+        <span class="option-meta-label">Format:</span>
+        <span class="option-format-value">{{ option.suggestedFormatLabel }}</span>
+      </div>
+    }
+    <div class="option-meta-row option-cta-row">
+      <span class="option-meta-label">CTA:</span>
+      <span class="option-cta">{{ option.cta.text }}</span>
+    </div>
+  </div>
+</button>

@@ -1,4 +1,149 @@
-import type { SidebarStep, PipelineColumn, ContentStage, ContentStatus } from './content.types';
+import type {
+  SidebarStep,
+  PipelineColumn,
+  ContentStage,
+  ContentStatus,
+  CtaType,
+  TonePreset,
+  ContentObjective,
+  Platform,
+  ContentType,
+  ContentItemType,
+} from './content.types';
+
+export const AI_SIMULATION_DELAY_MS = 2500;
+export const AI_ASSIST_DELAY_MS = 1500;
+
+export interface ContentTypeOption {
+  value: ContentItemType;
+  label: string;
+  description: string;
+  iconPaths: string[];
+  iconColor: string;
+}
+
+// Lucide icon paths for each item type (mirrors figma prototype)
+export const CONTENT_TYPE_OPTIONS: ContentTypeOption[] = [
+  {
+    value: 'idea',
+    label: 'Idea',
+    description: 'A spark to explore later',
+    iconColor: '#3b82f6', // blue-500
+    // Lucide Lightbulb
+    iconPaths: [
+      'M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5',
+      'M9 18h6',
+      'M10 22h4',
+    ],
+  },
+  {
+    value: 'concept',
+    label: 'Concept',
+    description: 'A shaped post ready for review',
+    iconColor: '#a855f7', // purple-500
+    // Lucide Send
+    iconPaths: [
+      'M14.536 21.686a.5.5 0 0 0 .937-.024l6.5-19a.496.496 0 0 0-.635-.635l-19 6.5a.5.5 0 0 0-.024.937l7.93 3.18a2 2 0 0 1 1.112 1.11z',
+      'M21.854 2.147l-10.94 10.939',
+    ],
+  },
+  {
+    value: 'production-brief',
+    label: 'Production Brief',
+    description: 'Detailed plan for asset creation',
+    iconColor: '#f97316', // orange-500
+    // Lucide FileText
+    iconPaths: [
+      'M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z',
+      'M14 2v4a2 2 0 0 0 2 2h4',
+      'M10 9H8',
+      'M16 13H8',
+      'M16 17H8',
+    ],
+  },
+];
+
+export const OBJECTIVE_OPTIONS: { value: ContentObjective; label: string }[] = [
+  { value: 'awareness', label: 'Awareness' },
+  { value: 'engagement', label: 'Engagement' },
+  { value: 'trust', label: 'Trust' },
+  { value: 'leads', label: 'Leads' },
+  { value: 'conversion', label: 'Conversion' },
+];
+
+export const PLATFORM_OPTIONS: { value: Platform; label: string }[] = [
+  { value: 'tbd', label: 'TBD' },
+  { value: 'instagram', label: 'Instagram' },
+  { value: 'youtube', label: 'YouTube' },
+  { value: 'tiktok', label: 'TikTok' },
+  { value: 'facebook', label: 'Facebook' },
+  { value: 'linkedin', label: 'LinkedIn' },
+];
+
+export const PLATFORM_CONTENT_TYPES: Record<Platform, { value: ContentType; label: string }[]> = {
+  tbd: [],
+  instagram: [
+    { value: 'reel', label: 'Reel' },
+    { value: 'carousel', label: 'Carousel' },
+    { value: 'feed-post', label: 'Feed Post' },
+    { value: 'story', label: 'Story' },
+    { value: 'guide', label: 'Guide' },
+    { value: 'live', label: 'Live' },
+  ],
+  youtube: [
+    { value: 'short-video', label: 'Short' },
+    { value: 'long-form', label: 'Long-form Video' },
+    { value: 'shorts', label: 'Shorts' },
+    { value: 'live-stream', label: 'Live Stream' },
+    { value: 'community-post', label: 'Community Post' },
+  ],
+  tiktok: [
+    { value: 'short-video', label: 'Short Video' },
+    { value: 'photo-carousel', label: 'Photo Carousel' },
+    { value: 'live-stream', label: 'Live Stream' },
+  ],
+  facebook: [
+    { value: 'fb-feed-post', label: 'Feed Post' },
+    { value: 'fb-link-post', label: 'Link Post' },
+    { value: 'fb-reel', label: 'Reel' },
+    { value: 'fb-story', label: 'Story' },
+    { value: 'fb-live', label: 'Live' },
+  ],
+  linkedin: [
+    { value: 'ln-text-post', label: 'Text Post' },
+    { value: 'ln-document', label: 'Document' },
+    { value: 'ln-article', label: 'Article' },
+    { value: 'ln-video', label: 'Video' },
+  ],
+};
+
+export const CTA_TYPES: { value: CtaType; label: string }[] = [
+  { value: 'learn-more', label: 'Learn More' },
+  { value: 'subscribe', label: 'Subscribe' },
+  { value: 'comment', label: 'Comment' },
+  { value: 'download', label: 'Download' },
+  { value: 'buy', label: 'Buy' },
+  { value: 'book-call', label: 'Book a Call' },
+  { value: 'other', label: 'Other' },
+];
+
+export const TONE_PRESETS: { value: TonePreset; label: string }[] = [
+  { value: 'professional', label: 'Professional' },
+  { value: 'casual', label: 'Casual' },
+  { value: 'friendly', label: 'Friendly' },
+  { value: 'authoritative', label: 'Authoritative' },
+  { value: 'inspiring', label: 'Inspiring' },
+  { value: 'playful', label: 'Playful' },
+];
+
+export const DESCRIPTION_MIN_CHARS = 50;
+export const DESCRIPTION_MAX_CHARS = 400;
+export const HOOK_MAX_CHARS = 120;
+export const CTA_TEXT_MAX_CHARS = 120;
+export const KEY_MESSAGE_MAX_CHARS = 140;
+export const MAX_PILLARS_PER_ITEM = 3;
+export const MAX_FOCUS_PILLARS = 2;
+export const GENERATED_IDEAS_COUNT = 6;
 
 // Lucide icon SVG paths for sidebar steps
 export const WORKFLOW_STEPS: SidebarStep[] = [
@@ -62,6 +207,7 @@ export const PIPELINE_COLUMNS: PipelineColumn[] = [
     statuses: ['draft'],
     colorClass: 'column-ideas',
     iconColor: '#3b82f6',
+    addType: 'idea',
     // Lucide Lightbulb
     iconPaths: [
       'M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5',
@@ -76,6 +222,7 @@ export const PIPELINE_COLUMNS: PipelineColumn[] = [
     statuses: ['draft'],
     colorClass: 'column-concepts',
     iconColor: '#a855f7',
+    addType: 'concept',
     // Lucide Send
     iconPaths: [
       'M14.536 21.686a.5.5 0 0 0 .937-.024l6.5-19a.496.496 0 0 0-.635-.635l-19 6.5a.5.5 0 0 0-.024.937l7.93 3.18a2 2 0 0 1 1.112 1.11z',
@@ -89,6 +236,7 @@ export const PIPELINE_COLUMNS: PipelineColumn[] = [
     statuses: ['in-progress'],
     colorClass: 'column-production',
     iconColor: '#eab308',
+    addType: 'production-brief',
     // Lucide PenTool
     iconPaths: [
       'M15.707 21.293a1 1 0 0 1-1.414 0l-1.586-1.586a1 1 0 0 1 0-1.414l5.586-5.586a1 1 0 0 1 1.414 0l1.586 1.586a1 1 0 0 1 0 1.414z',

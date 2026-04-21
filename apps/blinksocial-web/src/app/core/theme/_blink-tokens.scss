@@ -57,6 +57,10 @@
   --blink-outline-variant: #f3f4f6;
   --blink-outline-dashed: #d0d0d0;
 
+  // Skeleton / loading shimmer
+  --blink-skeleton-base: #e4e7eb;
+  --blink-skeleton-highlight: #f3f4f6;
+
   // Shadows
   --blink-shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.06);
   --blink-shadow-md: 0 2px 8px rgba(0, 0, 0, 0.1);
@@ -200,6 +204,10 @@
   --blink-outline: rgba(255, 255, 255, 0.1);
   --blink-outline-variant: #333;
   --blink-outline-dashed: #555;
+
+  // Skeleton / loading shimmer
+  --blink-skeleton-base: #2a2a2a;
+  --blink-skeleton-highlight: #3a3a3a;
 
   // Shadows
   --blink-shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.3);
