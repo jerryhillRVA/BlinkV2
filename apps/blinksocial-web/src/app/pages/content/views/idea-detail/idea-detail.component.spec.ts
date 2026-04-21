@@ -2,6 +2,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { IdeaDetailComponent } from './idea-detail.component';
 import { IdeaDetailStore } from './idea-detail.store';
 import { ContentStateService } from '../../content-state.service';
+import { provideContentItemsApiStubs } from '../../content-items-api.test-util';
 import type {
   AudienceSegment,
   ContentItem,
@@ -40,10 +41,10 @@ function setup(item: ContentItem = makeItem()): {
 } {
   TestBed.configureTestingModule({
     imports: [IdeaDetailComponent],
-    providers: [ContentStateService],
+    providers: [...provideContentItemsApiStubs(), ContentStateService],
   });
   const state = TestBed.inject(ContentStateService);
-  state.items.set([item]);
+  state.setItems([item]);
   state.pillars.set(PILLARS);
   state.segments.set(SEGMENTS);
   const fixture = TestBed.createComponent(IdeaDetailComponent);
@@ -189,7 +190,7 @@ describe('IdeaDetailComponent — empty item', () => {
   it('renders nothing when item is null', () => {
     TestBed.configureTestingModule({
       imports: [IdeaDetailComponent],
-      providers: [ContentStateService, IdeaDetailStore],
+      providers: [...provideContentItemsApiStubs(), ContentStateService, IdeaDetailStore],
     });
     const fixture = TestBed.createComponent(IdeaDetailComponent);
     fixture.detectChanges();
@@ -199,7 +200,7 @@ describe('IdeaDetailComponent — empty item', () => {
   it('defensive helpers return false/0 when store item is null', () => {
     TestBed.configureTestingModule({
       imports: [IdeaDetailComponent],
-      providers: [ContentStateService, IdeaDetailStore],
+      providers: [...provideContentItemsApiStubs(), ContentStateService, IdeaDetailStore],
     });
     const fixture = TestBed.createComponent(IdeaDetailComponent);
     const comp = fixture.componentInstance as unknown as {

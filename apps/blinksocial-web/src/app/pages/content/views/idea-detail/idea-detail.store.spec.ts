@@ -1,6 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { IdeaDetailStore } from './idea-detail.store';
 import { ContentStateService } from '../../content-state.service';
+import { provideContentItemsApiStubs } from '../../content-items-api.test-util';
 import { AI_SIMULATION_DELAY_MS } from '../../content.constants';
 import type {
   AudienceSegment,
@@ -37,9 +38,9 @@ function makeItem(partial: Partial<ContentItem> = {}): ContentItem {
 }
 
 function setup(item: ContentItem): { store: IdeaDetailStore; state: ContentStateService } {
-  TestBed.configureTestingModule({ providers: [ContentStateService, IdeaDetailStore] });
+  TestBed.configureTestingModule({ providers: [...provideContentItemsApiStubs(), ContentStateService, IdeaDetailStore] });
   const state = TestBed.inject(ContentStateService);
-  state.items.set([item]);
+  state.setItems([item]);
   state.pillars.set(PILLARS);
   state.segments.set(SEGMENTS);
   const store = TestBed.inject(IdeaDetailStore);

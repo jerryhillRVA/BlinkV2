@@ -61,4 +61,25 @@ export class MockDataService {
       return null;
     }
   }
+
+  async getItemFile(
+    workspaceId: string,
+    itemId: string,
+  ): Promise<unknown | null> {
+    if (!this.isMockWorkspace(workspaceId)) {
+      return null;
+    }
+    const filePath = join(
+      this.dataDir,
+      workspaceId,
+      'content-items',
+      `${itemId}.json`,
+    );
+    try {
+      const content = await readFile(filePath, 'utf-8');
+      return JSON.parse(content);
+    } catch {
+      return null;
+    }
+  }
 }

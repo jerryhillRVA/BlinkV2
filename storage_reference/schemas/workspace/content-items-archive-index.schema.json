@@ -1,7 +1,7 @@
 {
-  "$id": "https://blinksocial.io/schemas/content-items-index.schema.json",
+  "$id": "https://blinksocial.io/schemas/content-items-archive-index.schema.json",
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "title": "ContentItemsIndex",
+  "title": "ContentItemsArchiveIndex",
   "type": "object",
   "required": ["items", "totalCount", "lastUpdated"],
   "properties": {
@@ -9,7 +9,7 @@
       "type": "array",
       "items": {
         "type": "object",
-        "required": ["id", "stage", "status", "title", "createdAt", "updatedAt"],
+        "required": ["id", "stage", "status", "title", "archived", "createdAt", "updatedAt"],
         "properties": {
           "id": { "type": "string" },
           "stage": { "$ref": "enums.schema.json#/$defs/ContentStage" },
@@ -23,7 +23,7 @@
           "parentIdeaId": { "type": ["string", "null"] },
           "parentConceptId": { "type": ["string", "null"] },
           "scheduledDate": { "type": ["string", "null"], "format": "date" },
-          "archived": { "type": ["boolean", "null"] },
+          "archived": { "const": true },
           "createdAt": { "type": "string", "format": "date-time" },
           "updatedAt": { "type": "string", "format": "date-time" }
         }

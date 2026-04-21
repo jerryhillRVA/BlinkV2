@@ -13,6 +13,10 @@ describe('ContentComponent', () => {
 
   const mockStateService = {
     items: signal([]).asReadonly(),
+    activeItems: signal([]).asReadonly(),
+    archivedItems: signal([]).asReadonly(),
+    indexEntries: signal([]).asReadonly(),
+    archiveIndexEntries: signal([]).asReadonly(),
     pillars: signal([]).asReadonly(),
     segments: signal([]).asReadonly(),
     loading: signal(false),
@@ -26,10 +30,14 @@ describe('ContentComponent', () => {
       performance: 3,
     }),
     loadAll: vi.fn(),
-    saveItem: vi.fn(),
-    deleteItem: vi.fn(),
-    updateStatus: vi.fn(),
-    advanceStage: vi.fn(),
+    loadArchiveIndex: vi.fn(),
+    loadFullItem: vi.fn(),
+    saveItem: vi.fn().mockReturnValue(of({})),
+    deleteItem: vi.fn().mockReturnValue(of({ deleted: true, id: '' })),
+    updateStatus: vi.fn().mockReturnValue(of({})),
+    advanceStage: vi.fn().mockReturnValue(of({})),
+    archive: vi.fn().mockReturnValue(of({})),
+    unarchive: vi.fn().mockReturnValue(of({})),
   };
 
   beforeEach(async () => {

@@ -42,6 +42,9 @@ export class ContentDetailPageComponent {
         ) {
           this.stateService.loadAll(id);
         }
+        if (itemId) {
+          this.stateService.loadFullItem(itemId);
+        }
       });
   }
 
@@ -52,27 +55,32 @@ export class ContentDetailPageComponent {
   protected onArchive(): void {
     const it = this.item();
     if (!it) return;
-    this.stateService.saveItem({
-      ...it,
-      archived: true,
-      updatedAt: new Date().toISOString(),
-    });
-    this.goBack();
+    this.stateService.archive(it.id).subscribe(() => this.goBack());
+  }
+
+  protected onUnarchive(): void {
+    const it = this.item();
+    if (!it) return;
+    this.stateService.unarchive(it.id).subscribe();
   }
 
   protected onDuplicate(): void {
     const it = this.item();
     if (!it) return;
-    const copy: ContentItem = {
-      ...it,
-      id: `c_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`,
+    const { id: _id, createdAt: _c, updatedAt: _u, ...rest } = it;
+    const draft = {
+      ...rest,
       title: `${it.title} (copy)`,
       archived: false,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    };
-    this.stateService.saveItem(copy);
-    this.router.navigate(['/workspace', this.workspaceId(), 'content', copy.id]);
+    } as ContentItem;
+    this.stateService.saveItem(draft).subscribe((saved) => {
+      this.router.navigate([
+        '/workspace',
+        this.workspaceId(),
+        'content',
+        saved.id,
+      ]);
+    });
   }
 
   protected onCopyLink(): void {

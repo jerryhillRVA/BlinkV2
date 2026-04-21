@@ -221,6 +221,8 @@ export class ConceptDetailStore {
       ...item,
       id: generateId('c'),
       conceptId: item.id,
+      parentConceptId: item.id,
+      parentIdeaId: item.parentIdeaId,
       stage: 'post',
       status: 'in-progress',
       platform: t.platform,

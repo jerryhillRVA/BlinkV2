@@ -88,6 +88,19 @@ export interface ProductionTargetContract {
   contentType: ContentTypeContract;
 }
 
+export interface TargetPlatformContract {
+  platform: PlatformContract;
+  contentType: ContentTypeContract;
+  postId?: string | null;
+}
+
+export interface TargetPublishWindowContract {
+  start?: string;
+  end?: string;
+}
+
+export type RiskLevelContract = 'low' | 'medium' | 'high';
+
 export interface ContentItemContract {
   id: string;
   conceptId?: string;
@@ -110,7 +123,18 @@ export interface ContentItemContract {
   sourceUrl?: string;
   attachments?: ContentAttachmentContract[];
   productionTargets?: ProductionTargetContract[];
+  parentIdeaId?: string;
+  parentConceptId?: string;
+  targetPlatforms?: TargetPlatformContract[];
+  angle?: string;
+  formatNotes?: string[];
+  claimsFlag?: boolean;
+  sourceLinks?: string[];
+  riskLevel?: RiskLevelContract;
+  targetPublishWindow?: TargetPublishWindowContract;
+  scheduledDate?: string;
   scheduledAt?: string; // ISO datetime
+  production?: Record<string, unknown>;
   archived?: boolean;
   tags?: string[];
   briefApproved?: boolean;

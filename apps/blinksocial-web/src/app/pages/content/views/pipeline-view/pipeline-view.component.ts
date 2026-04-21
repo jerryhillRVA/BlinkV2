@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
 import { PlatformIconComponent } from '../../../../shared/platform-icon/platform-icon.component';
 import { expandPanel } from '../../../../core/animations/expand-panel.animation';
+import { ContentStateService } from '../../content-state.service';
 import type { ContentItem, ContentPillar, ContentView, ViewMode, SortField, SortOrder, PipelineColumn, ContentItemType } from '../../content.types';
 import { PIPELINE_COLUMNS, STAGE_CONFIG, STATUS_CONFIG } from '../../content.constants';
 
@@ -16,9 +17,22 @@ import { PIPELINE_COLUMNS, STAGE_CONFIG, STATUS_CONFIG } from '../../content.con
 export class PipelineViewComponent {
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
+  private readonly stateService = inject(ContentStateService, { optional: true });
 
   readonly items = input<ContentItem[]>([]);
   readonly pillars = input<ContentPillar[]>([]);
+
+  private readonly sourceItems = computed<ContentItem[]>(() => {
+    const svc = this.stateService;
+    if (svc) {
+      return this.showArchived() ? svc.archivedItems() : svc.activeItems();
+    }
+    // Fallback (input-driven): segregate by archived flag client-side.
+    const all = this.items();
+    return this.showArchived()
+      ? all.filter((i) => i.archived)
+      : all.filter((i) => !i.archived);
+  });
   @Output() navigateToStep = new EventEmitter<ContentView>();
   @Output() createItem = new EventEmitter<void>();
   @Output() createItemAs = new EventEmitter<ContentItemType>();
@@ -40,7 +54,7 @@ export class PipelineViewComponent {
 
   readonly availableContentTypes = computed(() => {
     const types = new Set<string>();
-    this.items().forEach((i) => {
+    this.sourceItems().forEach((i) => {
       if (i.contentType) types.add(i.contentType);
     });
     return Array.from(types).sort();
@@ -54,10 +68,7 @@ export class PipelineViewComponent {
   );
 
   readonly filteredItems = computed(() => {
-    let result = this.items();
-    if (!this.showArchived()) {
-      result = result.filter((i) => !i.archived);
-    }
+    let result = this.sourceItems();
     const query = this.searchQuery().toLowerCase();
     if (query) {
       result = result.filter(
@@ -175,7 +186,11 @@ export class PipelineViewComponent {
   }
 
   toggleShowArchived(): void {
-    this.showArchived.update((v) => !v);
+    const next = !this.showArchived();
+    this.showArchived.set(next);
+    if (next) {
+      this.stateService?.loadArchiveIndex();
+    }
   }
 
   formatDate(dateStr: string): string {

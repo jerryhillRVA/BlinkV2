@@ -3,6 +3,7 @@ import { provideRouter, ActivatedRoute, Router } from '@angular/router';
 import { PostDetailComponent } from './post-detail.component';
 import { PostDetailStore } from './post-detail.store';
 import { ContentStateService } from '../../content-state.service';
+import { provideContentItemsApiStubs } from '../../content-items-api.test-util';
 import type {
   AudienceSegment,
   ContentItem,
@@ -47,6 +48,7 @@ function setup(
   TestBed.configureTestingModule({
     imports: [PostDetailComponent],
     providers: [
+      ...provideContentItemsApiStubs(),
       ContentStateService,
       provideRouter([]),
       {
@@ -62,7 +64,7 @@ function setup(
     ],
   });
   const state = TestBed.inject(ContentStateService);
-  state.items.set([item]);
+  state.setItems([item]);
   state.pillars.set(PILLARS);
   state.segments.set(SEGMENTS);
   const fixture = TestBed.createComponent(PostDetailComponent);

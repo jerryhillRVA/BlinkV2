@@ -231,7 +231,7 @@ export const PIPELINE_COLUMNS: PipelineColumn[] = [
   },
   {
     id: 'in-production',
-    label: 'In Production',
+    label: 'Posts in Production',
     stage: null,
     statuses: ['in-progress'],
     colorClass: 'column-production',

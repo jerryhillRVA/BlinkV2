@@ -2,6 +2,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ConceptDetailComponent } from './concept-detail.component';
 import { ConceptDetailStore } from './concept-detail.store';
 import { ContentStateService } from '../../content-state.service';
+import { provideContentItemsApiStubs } from '../../content-items-api.test-util';
 import type {
   AudienceSegment,
   ContentItem,
@@ -43,10 +44,10 @@ function setup(item: ContentItem = makeItem()): {
 } {
   TestBed.configureTestingModule({
     imports: [ConceptDetailComponent],
-    providers: [ContentStateService],
+    providers: [...provideContentItemsApiStubs(), ContentStateService],
   });
   const state = TestBed.inject(ContentStateService);
-  state.items.set([item]);
+  state.setItems([item]);
   state.pillars.set(PILLARS);
   state.segments.set(SEGMENTS);
   const fixture = TestBed.createComponent(ConceptDetailComponent);
@@ -79,7 +80,7 @@ describe('ConceptDetailComponent — composition', () => {
   it('renders nothing when item is null', () => {
     TestBed.configureTestingModule({
       imports: [ConceptDetailComponent],
-      providers: [ContentStateService],
+      providers: [...provideContentItemsApiStubs(), ContentStateService],
     });
     const fixture = TestBed.createComponent(ConceptDetailComponent);
     fixture.componentRef.setInput('itemId', 'missing');
@@ -268,7 +269,7 @@ describe('ConceptDetailComponent — formatters and helpers', () => {
   it('onDelete is a noop when item is null', () => {
     TestBed.configureTestingModule({
       imports: [ConceptDetailComponent],
-      providers: [ContentStateService],
+      providers: [...provideContentItemsApiStubs(), ContentStateService],
     });
     const fixture = TestBed.createComponent(ConceptDetailComponent);
     fixture.componentRef.setInput('itemId', 'missing');
@@ -282,7 +283,7 @@ describe('ConceptDetailComponent — formatters and helpers', () => {
   it('defensive helpers return false/0 when store item is null', () => {
     TestBed.configureTestingModule({
       imports: [ConceptDetailComponent],
-      providers: [ContentStateService],
+      providers: [...provideContentItemsApiStubs(), ContentStateService],
     });
     const fixture = TestBed.createComponent(ConceptDetailComponent);
     fixture.componentRef.setInput('itemId', 'missing');
@@ -330,7 +331,8 @@ describe('ConceptDetailComponent — formatters and helpers', () => {
 
   it('isInProductionFn delegates to store', () => {
     const { fixture, state } = setup();
-    state.items.update((prev) => [
+    const prev = state.items();
+    state.setItems([
       ...prev,
       {
         ...prev[0],

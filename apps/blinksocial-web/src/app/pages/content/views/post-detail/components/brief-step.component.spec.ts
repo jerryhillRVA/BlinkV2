@@ -2,6 +2,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { BriefStepComponent } from './brief-step.component';
 import { PostDetailStore } from '../post-detail.store';
 import { ContentStateService } from '../../../content-state.service';
+import { provideContentItemsApiStubs } from '../../../content-items-api.test-util';
 import type {
   AudienceSegment,
   ContentItem,
@@ -45,10 +46,10 @@ function setup(item: ContentItem = makeItem()): {
 } {
   TestBed.configureTestingModule({
     imports: [BriefStepComponent],
-    providers: [ContentStateService, PostDetailStore],
+    providers: [...provideContentItemsApiStubs(), ContentStateService, PostDetailStore],
   });
   const state = TestBed.inject(ContentStateService);
-  state.items.set([item]);
+  state.setItems([item]);
   state.pillars.set(PILLARS);
   state.segments.set(SEGMENTS);
   const store = TestBed.inject(PostDetailStore);
@@ -245,7 +246,7 @@ describe('BriefStepComponent — empty item', () => {
   it('renders nothing when the store has no item', () => {
     TestBed.configureTestingModule({
       imports: [BriefStepComponent],
-      providers: [ContentStateService, PostDetailStore],
+      providers: [...provideContentItemsApiStubs(), ContentStateService, PostDetailStore],
     });
     const fixture = TestBed.createComponent(BriefStepComponent);
     fixture.detectChanges();
@@ -255,7 +256,7 @@ describe('BriefStepComponent — empty item', () => {
   it('defensive helpers return false/0 when store item is null', () => {
     TestBed.configureTestingModule({
       imports: [BriefStepComponent],
-      providers: [ContentStateService, PostDetailStore],
+      providers: [...provideContentItemsApiStubs(), ContentStateService, PostDetailStore],
     });
     const fixture = TestBed.createComponent(BriefStepComponent);
     fixture.detectChanges();

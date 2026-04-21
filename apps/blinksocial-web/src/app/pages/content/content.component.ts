@@ -81,13 +81,13 @@ export class ContentComponent {
   }
 
   onCreateSave(payload: ContentCreatePayload): void {
-    this.stateService.saveItem(buildContentItem(payload));
+    this.stateService.saveItem(buildContentItem(payload)).subscribe();
     this.closeCreate();
   }
 
   onCreateSaveMany(payloads: IdeaPayload[]): void {
     for (const payload of payloads) {
-      this.stateService.saveItem(buildContentItem(payload));
+      this.stateService.saveItem(buildContentItem(payload)).subscribe();
     }
     this.closeCreate();
   }
@@ -95,17 +95,17 @@ export class ContentComponent {
   onMoveToProduction(payload: ContentCreatePayload): void {
     // First save the in-progress concept, but keep the modal open so the user
     // can fill in the additional production-required fields revealed by the form.
-    this.stateService.saveItem(buildContentItem(payload));
+    this.stateService.saveItem(buildContentItem(payload)).subscribe();
   }
 
   onCreateConcept(payload: IdeaPayload): void {
     // Persist the Idea now; the form itself switches to Concept mode and keeps
     // the modal open so the user continues shaping the same item.
-    this.stateService.saveItem(buildContentItem(payload));
+    this.stateService.saveItem(buildContentItem(payload)).subscribe();
   }
 
   onDraftAssets(payload: ContentCreatePayload): void {
-    this.stateService.saveItem(buildContentItem(payload));
+    this.stateService.saveItem(buildContentItem(payload)).subscribe();
     this.closeCreate();
     this.setActiveView('production');
   }

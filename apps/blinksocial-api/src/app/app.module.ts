@@ -9,6 +9,7 @@ import { AuthGuard } from '../auth/auth.guard';
 import { LlmModule } from '../llm/llm.module';
 import { SkillsModule } from '../skills/skills.module';
 import { OnboardingModule } from '../onboarding/onboarding.module';
+import { ContentItemsModule } from '../content-items/content-items.module';
 import { AngularSsrModule } from '../angular-ssr/angular-ssr.module';
 
 @Module({
@@ -21,6 +22,7 @@ import { AngularSsrModule } from '../angular-ssr/angular-ssr.module';
     LlmModule,
     SkillsModule,
     OnboardingModule,
+    ContentItemsModule,
     // AngularSsrModule must be last — it registers a catch-all middleware
     AngularSsrModule,
   ],

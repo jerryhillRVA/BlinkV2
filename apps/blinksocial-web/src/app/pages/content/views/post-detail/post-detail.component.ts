@@ -58,6 +58,10 @@ export class PostDetailComponent {
     this.back.emit();
   }
 
+  protected onUnarchive(): void {
+    this.store.unarchive();
+  }
+
   protected onDuplicate(): void {
     const copy = this.store.duplicate();
     if (!copy) return;

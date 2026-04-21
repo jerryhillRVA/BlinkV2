@@ -137,6 +137,16 @@ export class PostDetailStore {
     });
   }
 
+  unarchive(): void {
+    const item = this.item();
+    if (!item) return;
+    this.state.saveItem({
+      ...item,
+      archived: false,
+      updatedAt: new Date().toISOString(),
+    });
+  }
+
   duplicate(): ContentItem | null {
     const item = this.item();
     if (!item) return null;

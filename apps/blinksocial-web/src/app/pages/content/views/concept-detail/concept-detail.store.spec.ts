@@ -1,6 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { ConceptDetailStore } from './concept-detail.store';
 import { ContentStateService } from '../../content-state.service';
+import { provideContentItemsApiStubs } from '../../content-items-api.test-util';
 import { AI_ASSIST_DELAY_MS } from '../../content.constants';
 import type {
   AudienceSegment,
@@ -42,9 +43,9 @@ function setup(item: ContentItem = makeItem()): {
   store: ConceptDetailStore;
   state: ContentStateService;
 } {
-  TestBed.configureTestingModule({ providers: [ContentStateService, ConceptDetailStore] });
+  TestBed.configureTestingModule({ providers: [...provideContentItemsApiStubs(), ContentStateService, ConceptDetailStore] });
   const state = TestBed.inject(ContentStateService);
-  state.items.set([item]);
+  state.setItems([item]);
   state.pillars.set(PILLARS);
   state.segments.set(SEGMENTS);
   const store = TestBed.inject(ConceptDetailStore);
@@ -388,7 +389,8 @@ describe('ConceptDetailStore — lifecycle + helpers', () => {
 
   it('isInProduction returns true when a matching post already exists', () => {
     const { store, state } = setup();
-    state.items.update((prev) => [
+    const prev = state.items();
+    state.setItems([
       ...prev,
       {
         ...prev[0],
