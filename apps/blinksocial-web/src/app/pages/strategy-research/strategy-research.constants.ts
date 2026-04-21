@@ -2,6 +2,10 @@ import type {
   SidebarItem,
   Platform,
   ObjectiveCategory,
+  InfluencerTier,
+  InfluencerStatus,
+  OutreachFormat,
+  CampaignStatus,
 } from './strategy-research.types';
 
 export const AI_SIMULATION_DELAY_MS = 2500;
@@ -21,6 +25,8 @@ export const SIDEBAR_ITEMS: SidebarItem[] = [
   { id: 'series', label: 'Series Builder', section: 'content-tools', iconPath: 'M10 12h11 M10 18h11 M10 6h11 M4 10h2 M4 6h1v4 M6 18H4c0-1 2-2 2-3s-1-1.5-2-1' },
   { id: 'ab-analyzer', label: 'A/B Analyzer', section: 'content-tools', iconPath: 'M14 2v6a2 2 0 0 0 .245.96l5.51 10.08A2 2 0 0 1 18 22H6a2 2 0 0 1-1.755-2.96l5.51-10.08A2 2 0 0 0 10 8V2 M6.453 15h11.094 M8.5 2h7' },
   { id: 'seo', label: 'SEO & Hashtags', section: 'content-tools', iconPath: 'M4 9h16M4 15h16M10 3 8 21M16 3l-2 18' },
+  // Influencer
+  { id: 'influencer-marketing', label: 'Influencer Marketing', section: 'influencer', iconPath: 'M6 7a4 4 0 1 0 8 0 4 4 0 1 0-8 0M10.3 15H7a4 4 0 0 0-4 4v2M14 17a3 3 0 1 0 6 0 3 3 0 1 0-6 0M21 21l-1.9-1.9' },
 ];
 
 export const PLATFORM_OPTIONS: { id: Platform; label: string }[] = [
@@ -95,5 +101,79 @@ export const OBJECTIVE_CATEGORY_CONFIG: Record<ObjectiveCategory, { label: strin
   awareness: { label: 'Awareness', emoji: '📣' },
   trust: { label: 'Trust', emoji: '🤝' },
   community: { label: 'Community', emoji: '👥' },
-  engagement: { label: 'Engagement', emoji: '⚡' },
+  engagement: { label: 'Engagement', emoji: '💬' },
 };
+
+export const INFLUENCER_TIERS: InfluencerTier[] = ['nano', 'micro', 'mid', 'macro', 'mega'];
+
+export const INFLUENCER_TIER_LABELS: Record<InfluencerTier, string> = {
+  nano: 'Nano',
+  micro: 'Micro',
+  mid: 'Mid',
+  macro: 'Macro',
+  mega: 'Mega',
+};
+
+export const INFLUENCER_TIER_ORDER: Record<InfluencerTier, number> = {
+  nano: 1,
+  micro: 2,
+  mid: 3,
+  macro: 4,
+  mega: 5,
+};
+
+export const INFLUENCER_FOLLOWER_RANGES: Record<InfluencerTier, [number, number]> = {
+  nano: [1_000, 9_999],
+  micro: [10_000, 99_999],
+  mid: [100_000, 499_999],
+  macro: [500_000, 999_999],
+  mega: [1_000_000, 5_000_000],
+};
+
+export const INFLUENCER_ENGAGEMENT_RANGES: Record<InfluencerTier, [number, number]> = {
+  nano: [6, 14],
+  micro: [3, 8],
+  mid: [2, 5],
+  macro: [1, 3],
+  mega: [0.5, 2],
+};
+
+export const INFLUENCER_STATUS_OPTIONS: { value: InfluencerStatus; label: string }[] = [
+  { value: 'new', label: 'New' },
+  { value: 'contacted', label: 'Contacted' },
+  { value: 'in-discussion', label: 'In Discussion' },
+  { value: 'passed', label: 'Passed' },
+];
+
+export const OUTREACH_FORMAT_OPTIONS: { value: OutreachFormat; label: string }[] = [
+  { value: 'dm', label: 'DM' },
+  { value: 'email', label: 'Email' },
+];
+
+export const CAMPAIGN_STATUS_OPTIONS: { value: CampaignStatus; label: string }[] = [
+  { value: 'planning', label: 'Planning' },
+  { value: 'active', label: 'Active' },
+  { value: 'completed', label: 'Completed' },
+];
+
+export const INFLUENCER_DISCOVERY_PLATFORMS: { id: Platform; label: string }[] = [
+  { id: 'instagram', label: 'Instagram' },
+  { id: 'tiktok', label: 'TikTok' },
+  { id: 'youtube', label: 'YouTube' },
+];
+
+export const INFLUENCER_DISCOVERY_TIERS: InfluencerTier[] = ['nano', 'micro', 'mid', 'macro'];
+
+export const INFLUENCER_BRIEF_CONTENT_TYPES = [
+  'Reel',
+  'Post',
+  'Story',
+  'YouTube Video',
+  'Carousel',
+];
+
+export const INFLUENCER_STORAGE_KEYS = {
+  shortlist: 'blink_shortlisted_influencers',
+  campaigns: 'blink_influencer_campaigns',
+  dismissed: 'blink_dismissed_influencer_profiles',
+} as const;

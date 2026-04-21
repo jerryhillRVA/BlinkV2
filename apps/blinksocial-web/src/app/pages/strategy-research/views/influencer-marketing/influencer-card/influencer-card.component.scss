@@ -1,0 +1,204 @@
+.influencer-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 1rem;
+  background: var(--blink-surface);
+  border: 1px solid var(--blink-outline-variant);
+  border-radius: 12px;
+  box-shadow: var(--blink-shadow-sm);
+  transition: border-color 0.2s, box-shadow 0.2s;
+
+  &:hover {
+    border-color: var(--blink-outline);
+    box-shadow: var(--blink-shadow-md);
+  }
+}
+
+.influencer-card__dismiss {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  background: transparent;
+  border: none;
+  color: var(--blink-on-surface-muted);
+  border-radius: 4px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  &:hover {
+    background: var(--blink-surface-hover);
+    color: var(--blink-on-surface-strong);
+  }
+}
+
+.influencer-card__identity {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  padding-right: 1.5rem;
+  min-width: 0;
+}
+
+.influencer-card__avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-weight: 700;
+  font-size: var(--blink-label-medium);
+  flex-shrink: 0;
+}
+
+.influencer-card__name-block {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.influencer-card__name {
+  margin: 0;
+  font-size: var(--blink-body-medium);
+  font-weight: 600;
+  color: var(--blink-on-surface-strong);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.influencer-card__handle {
+  margin: 0;
+  font-size: var(--blink-body-small);
+  color: var(--blink-on-surface-muted);
+}
+
+.influencer-card__meta-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.influencer-card__platforms {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+}
+
+.influencer-card__tier {
+  display: inline-flex;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: var(--blink-surface);
+  border: 1px solid var(--blink-pill-border);
+  color: var(--blink-on-surface-secondary);
+  font-size: var(--blink-body-small);
+  font-weight: 500;
+  text-transform: capitalize;
+}
+
+.influencer-card__stats {
+  margin: 0;
+  font-size: var(--blink-body-small);
+  color: var(--blink-on-surface-muted);
+}
+
+.influencer-card__match {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.influencer-card__match-label {
+  font-size: var(--blink-body-small);
+  font-weight: 500;
+  color: var(--blink-on-surface-secondary);
+  white-space: nowrap;
+}
+
+.influencer-card__match-value {
+  font-size: var(--blink-body-small);
+  color: var(--blink-on-surface-muted);
+  white-space: nowrap;
+}
+
+.influencer-card__match-track {
+  flex: 1;
+  height: 6px;
+  border-radius: 999px;
+  background: var(--blink-surface-container-low);
+  overflow: hidden;
+}
+
+.influencer-card__match-fill {
+  height: 100%;
+  background: var(--blink-brand-gradient);
+}
+
+.influencer-card__fit {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.375rem;
+}
+
+.influencer-card__fit-label {
+  font-size: var(--blink-body-small);
+  color: var(--blink-on-surface-muted);
+}
+
+.influencer-card__fit-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: var(--blink-surface-container-low);
+  color: var(--blink-on-surface-secondary);
+  font-size: var(--blink-body-small);
+}
+
+.influencer-card__actions {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.25rem;
+}
+
+.influencer-card__btn {
+  flex: 1;
+  padding: 6px 12px;
+  border-radius: 6px;
+  border: 1px solid var(--blink-pill-border);
+  background: var(--blink-surface);
+  color: var(--blink-on-surface-strong);
+  font-size: var(--blink-body-small);
+  font-weight: 500;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.375rem;
+  transition: background 0.2s, border-color 0.2s, color 0.2s, opacity 0.2s;
+
+  &:hover:not(:disabled) {
+    border-color: var(--blink-on-surface-tertiary);
+    background: var(--blink-surface-hover);
+  }
+
+  &:disabled {
+    cursor: not-allowed;
+  }
+}
+
+.influencer-card__btn--shortlisted {
+  color: var(--blink-brand-primary);
+}

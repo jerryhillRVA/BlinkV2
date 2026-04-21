@@ -9,7 +9,8 @@ export type StrategyView =
   | 'repurposer'
   | 'series'
   | 'ab-analyzer'
-  | 'seo';
+  | 'seo'
+  | 'influencer-marketing';
 
 export type Platform = 'instagram' | 'tiktok' | 'youtube' | 'facebook' | 'linkedin';
 
@@ -282,6 +283,60 @@ export interface AudienceInsight {
 export interface SidebarItem {
   id: StrategyView;
   label: string;
-  section: 'strategy' | 'research' | 'content-tools';
+  section: 'strategy' | 'research' | 'content-tools' | 'influencer';
   iconPath: string;
+}
+
+export type InfluencerTier = 'nano' | 'micro' | 'mid' | 'macro' | 'mega';
+
+export type InfluencerStatus = 'new' | 'contacted' | 'in-discussion' | 'passed';
+
+export type OutreachFormat = 'dm' | 'email';
+
+export type CampaignStatus = 'planning' | 'active' | 'completed';
+
+export interface InfluencerProfile {
+  id: string;
+  name: string;
+  handle: string;
+  platforms: Platform[];
+  tier: InfluencerTier;
+  followers: number;
+  engagementRate: number;
+  niche: string[];
+  audienceAlignment: number;
+  objectiveFit: ObjectiveCategory[];
+  bio: string;
+  avatarColor: string;
+}
+
+export interface ShortlistedInfluencer extends InfluencerProfile {
+  status: InfluencerStatus;
+  addedAt: string;
+}
+
+export interface InfluencerCampaignMetrics {
+  reach?: number;
+  impressions?: number;
+  engagements?: number;
+  clicks?: number;
+  conversions?: number;
+}
+
+export interface InfluencerCampaign {
+  id: string;
+  name: string;
+  influencerId: string;
+  influencerName: string;
+  influencerHandle: string;
+  influencerTier: InfluencerTier;
+  objectiveId?: string;
+  objectiveStatement?: string;
+  platforms: Platform[];
+  status: CampaignStatus;
+  startDate: string;
+  postDate?: string;
+  metrics?: InfluencerCampaignMetrics;
+  createdAt: string;
+  lastSynced?: string;
 }

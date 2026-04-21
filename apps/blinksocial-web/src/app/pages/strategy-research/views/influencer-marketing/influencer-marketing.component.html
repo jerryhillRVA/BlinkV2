@@ -1,0 +1,35 @@
+<div class="influencer-marketing">
+  <nav class="influencer-marketing__tabs" aria-label="Influencer marketing tabs">
+    @for (t of tabs; track t.id) {
+      <button type="button"
+              class="influencer-marketing__tab"
+              [class.influencer-marketing__tab--active]="activeTab() === t.id"
+              (click)="setTab(t.id)">
+        {{ t.label }}@if (t.badge() > 0) { ({{ t.badge() }})}
+      </button>
+    }
+  </nav>
+
+  <div class="influencer-marketing__content">
+    @switch (activeTab()) {
+      @case ('discovery') {
+        <app-influencer-discovery-tab (outreach)="onDiscoveryOutreach($event)" />
+      }
+      @case ('shortlist') {
+        <app-influencer-shortlist-tab
+          (openOutreach)="onOpenOutreach($event)"
+          (openBrief)="onOpenBrief($event)"
+        />
+      }
+      @case ('outreach') {
+        <app-influencer-outreach-tab [initialInfluencer]="outreachInfluencer()" />
+      }
+      @case ('brief') {
+        <app-influencer-brief-tab [initialInfluencer]="briefInfluencer()" />
+      }
+      @case ('campaigns') {
+        <app-influencer-campaigns-tab />
+      }
+    }
+  </div>
+</div>

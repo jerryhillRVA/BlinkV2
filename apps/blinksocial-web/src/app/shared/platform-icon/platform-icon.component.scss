@@ -4,6 +4,16 @@
   line-height: 0;
 }
 
+:host[data-platform='instagram'] { --platform-color: var(--blink-platform-instagram); }
+:host[data-platform='tiktok']    { --platform-color: var(--blink-platform-tiktok); }
+:host[data-platform='youtube']   { --platform-color: var(--blink-platform-youtube); }
+:host[data-platform='pinterest'] { --platform-color: var(--blink-platform-pinterest); }
+:host[data-platform='facebook']  { --platform-color: var(--blink-platform-facebook); }
+:host[data-platform='linkedin']  { --platform-color: var(--blink-platform-linkedin); }
+:host[data-platform='x']         { --platform-color: var(--blink-platform-x); }
+:host[data-platform='twitter']   { --platform-color: var(--blink-platform-x); }
+:host[data-platform='threads']   { --platform-color: var(--blink-platform-threads); }
+
 .platform-icon {
   color: var(--platform-color, currentColor);
   flex-shrink: 0;

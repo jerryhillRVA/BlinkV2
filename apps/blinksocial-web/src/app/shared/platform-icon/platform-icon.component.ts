@@ -1,4 +1,4 @@
-import { Component, input } from '@angular/core';
+import { Component, HostBinding, input } from '@angular/core';
 
 export type PlatformName =
   | 'instagram'
@@ -22,4 +22,9 @@ export type PlatformName =
 export class PlatformIconComponent {
   readonly platform = input.required<PlatformName>();
   readonly size = input(14);
+
+  @HostBinding('attr.data-platform')
+  get platformAttr(): PlatformName {
+    return this.platform();
+  }
 }

@@ -35,6 +35,19 @@ a {
   text-decoration: none;
 }
 
+// Base typography — mirrors the Figma prototype's @layer base rules so UI
+// chrome (buttons, labels, headings) defaults to weight 500 instead of the
+// browser default 400. Any component-scoped font-weight wins over these.
+h1, h2, h3, h4,
+button,
+label {
+  font-weight: 500;
+}
+
+input {
+  font-weight: 400;
+}
+
 // Page entrance animation — applied to every routed top-level component
 // element. Each routed element is freshly created on navigation, so the
 // keyframe runs once per mount: fade in + 8px slide-up.

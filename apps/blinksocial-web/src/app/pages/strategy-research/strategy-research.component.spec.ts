@@ -88,17 +88,18 @@ describe('StrategyResearchComponent', () => {
     expect(sidebar).toBeTruthy();
   });
 
-  it('should render 3 sidebar section labels', () => {
+  it('should render 4 sidebar section labels', () => {
     const labels = fixture.nativeElement.querySelectorAll('.sidebar-section-label');
-    expect(labels.length).toBe(3);
+    expect(labels.length).toBe(4);
     expect(labels[0].textContent).toContain('Strategy');
     expect(labels[1].textContent).toContain('Research');
     expect(labels[2].textContent).toContain('Content Tools');
+    expect(labels[3].textContent).toContain('Influencer');
   });
 
-  it('should render 11 sidebar items', () => {
+  it('should render 12 sidebar items', () => {
     const items = fixture.nativeElement.querySelectorAll('.sidebar-item');
-    expect(items.length).toBe(11);
+    expect(items.length).toBe(12);
   });
 
   it('should highlight active sidebar item', () => {
