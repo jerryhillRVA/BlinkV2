@@ -336,4 +336,12 @@ describe('PostDetailStore — menu actions', () => {
     store.deleteSelf();
     expect(state.items().length).toBe(0);
   });
+
+  it('setStatus persists the new status', () => {
+    const { store } = setup();
+    store.setStatus('scheduled');
+    expect(store.item()?.status).toBe('scheduled');
+    store.setStatus('published');
+    expect(store.item()?.status).toBe('published');
+  });
 });

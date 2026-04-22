@@ -1,15 +1,15 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MoveToProductionDialogComponent } from './move-to-production-dialog.component';
-import type { ProductionTarget } from '../concept-detail.types';
+import type { TargetPlatform } from '../concept-detail.types';
 
-const TARGETS: ProductionTarget[] = [
+const TARGETS: TargetPlatform[] = [
   { platform: 'instagram', contentType: 'reel' },
   { platform: 'tiktok', contentType: 'short-video' },
 ];
 
 function setup(
   title = 'A concept',
-  targets: ProductionTarget[] = TARGETS,
+  targets: TargetPlatform[] = TARGETS,
 ): ComponentFixture<MoveToProductionDialogComponent> {
   TestBed.configureTestingModule({ imports: [MoveToProductionDialogComponent] });
   const fixture = TestBed.createComponent(MoveToProductionDialogComponent);

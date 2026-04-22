@@ -8,10 +8,10 @@ import type {
   TonePresetContract,
   ContentCtaContract,
   ContentAttachmentContract,
-  ProductionTargetContract,
   TargetPlatformContract,
   TargetPublishWindowContract,
   RiskLevelContract,
+  ProductionContract,
 } from '@blinksocial/contracts';
 
 export class ContentItem implements ContentItemContract {
@@ -35,7 +35,6 @@ export class ContentItem implements ContentItemContract {
   cta?: ContentCtaContract;
   sourceUrl?: string;
   attachments?: ContentAttachmentContract[];
-  productionTargets?: ProductionTargetContract[];
   parentIdeaId?: string;
   parentConceptId?: string;
   targetPlatforms?: TargetPlatformContract[];
@@ -47,7 +46,7 @@ export class ContentItem implements ContentItemContract {
   targetPublishWindow?: TargetPublishWindowContract;
   scheduledDate?: string;
   scheduledAt?: string;
-  production?: Record<string, unknown>;
+  production?: ProductionContract;
   archived?: boolean;
   tags?: string[];
   briefApproved?: boolean;

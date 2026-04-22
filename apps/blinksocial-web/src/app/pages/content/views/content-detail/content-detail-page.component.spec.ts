@@ -2,6 +2,7 @@ import { TestBed } from '@angular/core/testing';
 import { provideRouter, ActivatedRoute, Router, convertToParamMap } from '@angular/router';
 import { signal, type WritableSignal } from '@angular/core';
 import { BehaviorSubject, of } from 'rxjs';
+import { MatSnackBar } from '@angular/material/snack-bar';
 import { ContentDetailPageComponent } from './content-detail-page.component';
 import { ContentStateService } from '../../content-state.service';
 import type {
@@ -46,6 +47,7 @@ function createMockState(initialItems: ContentItem[]): {
     items,
     pillars: signal<ContentPillar[]>([]),
     segments: signal<AudienceSegment[]>([]),
+    businessObjectives: signal([]),
     loading: signal(false),
     workspaceId: signal('ws-1'),
     saveItem: vi.fn((i: ContentItem) => {
@@ -103,6 +105,7 @@ function configureTest(
     imports: [ContentDetailPageComponent],
     providers: [
       provideRouter([]),
+      { provide: MatSnackBar, useValue: { open: vi.fn() } },
       {
         provide: ActivatedRoute,
         useValue: {
@@ -173,7 +176,7 @@ describe('ContentDetailPageComponent — stage dispatch', () => {
         segmentIds: ['s1'],
         hook: 'A hook',
         objective: 'awareness',
-        productionTargets: [{ platform: 'instagram', contentType: 'reel' }],
+        targetPlatforms: [{ platform: 'instagram', contentType: 'reel' }],
       }),
     ]);
     const fixture = TestBed.createComponent(ContentDetailPageComponent);
@@ -205,7 +208,7 @@ describe('ContentDetailPageComponent — stage dispatch', () => {
 
   it('renders the "coming soon" placeholder for truly unknown stages', () => {
     configureTest({ id: 'ws-1', itemId: 'c-1' }, [
-      makeItem({ stage: 'production-brief' }),
+      makeItem({ stage: 'unknown-stage' as unknown as ContentItem['stage'] }),
     ]);
     const fixture = TestBed.createComponent(ContentDetailPageComponent);
     fixture.detectChanges();
@@ -335,5 +338,22 @@ describe('ContentDetailPageComponent — actions', () => {
     const spy = vi.spyOn(router, 'navigate').mockResolvedValue(true);
     (fixture.componentInstance as unknown as { onDeleted: () => void }).onDeleted();
     expect(spy).toHaveBeenCalledWith(['/workspace', 'ws-1', 'content']);
+  });
+
+  it('onAdvancedToConcept routes to the new concept detail', () => {
+    configureTest({ id: 'ws-1', itemId: 'c-1' }, [makeItem()]);
+    const fixture = TestBed.createComponent(ContentDetailPageComponent);
+    fixture.detectChanges();
+    const router = TestBed.inject(Router);
+    const spy = vi.spyOn(router, 'navigate').mockResolvedValue(true);
+    (fixture.componentInstance as unknown as {
+      onAdvancedToConcept: (id: string) => void;
+    }).onAdvancedToConcept('new-concept-id');
+    expect(spy).toHaveBeenCalledWith([
+      '/workspace',
+      'ws-1',
+      'content',
+      'new-concept-id',
+    ]);
   });
 });

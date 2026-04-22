@@ -27,12 +27,23 @@ export class ConceptDetailHeaderComponent {
 
   @Input({ required: true }) item!: ContentItem;
   @Input() canMoveToProduction = false;
+  @Input() missingValidations: string[] = [];
 
   @Output() back = new EventEmitter<void>();
   @Output() moveToProduction = new EventEmitter<void>();
   @Output() demoteToIdea = new EventEmitter<void>();
   @Output() deleteConcept = new EventEmitter<void>();
+  @Output() archive = new EventEmitter<void>();
+  @Output() unarchive = new EventEmitter<void>();
+  @Output() duplicate = new EventEmitter<void>();
+  @Output() copyLink = new EventEmitter<void>();
   @Output() titleChange = new EventEmitter<string>();
+
+  protected moveTooltip(): string {
+    if (this.canMoveToProduction) return 'Move this concept into production';
+    if (this.missingValidations.length === 0) return 'Move to Production';
+    return 'Missing: ' + this.missingValidations.join(', ');
+  }
 
   protected readonly menuOpen = signal(false);
 
@@ -87,5 +98,25 @@ export class ConceptDetailHeaderComponent {
   protected onDelete(): void {
     this.closeMenu();
     this.deleteConcept.emit();
+  }
+
+  protected onArchive(): void {
+    this.closeMenu();
+    this.archive.emit();
+  }
+
+  protected onUnarchive(): void {
+    this.closeMenu();
+    this.unarchive.emit();
+  }
+
+  protected onDuplicate(): void {
+    this.closeMenu();
+    this.duplicate.emit();
+  }
+
+  protected onCopy(): void {
+    this.closeMenu();
+    this.copyLink.emit();
   }
 }

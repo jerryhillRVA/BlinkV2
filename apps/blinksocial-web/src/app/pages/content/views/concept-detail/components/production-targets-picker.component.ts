@@ -5,7 +5,7 @@ import {
   PLATFORM_OPTIONS,
 } from '../../../content.constants';
 import type { ContentType, Platform } from '../../../content.types';
-import type { ProductionTarget } from '../concept-detail.types';
+import type { TargetPlatform } from '../concept-detail.types';
 
 interface TargetGroup {
   platform: Platform;
@@ -20,13 +20,13 @@ interface TargetGroup {
   styleUrl: './production-targets-picker.component.scss',
 })
 export class ProductionTargetsPickerComponent {
-  readonly selected = input<ProductionTarget[]>([]);
+  readonly selected = input<TargetPlatform[]>([]);
   /** Returns true when (platform, contentType) is already a post item */
-  readonly isInProduction = input<(target: ProductionTarget) => boolean>(
+  readonly isInProduction = input<(target: TargetPlatform) => boolean>(
     () => false,
   );
 
-  @Output() toggleTarget = new EventEmitter<ProductionTarget>();
+  @Output() toggleTarget = new EventEmitter<TargetPlatform>();
 
   protected readonly groups = computed<TargetGroup[]>(() => {
     const sel = this.selected();
@@ -47,6 +47,6 @@ export class ProductionTargetsPickerComponent {
 
   protected onToggle(platform: Platform, contentType: ContentType, disabled: boolean): void {
     if (disabled) return;
-    this.toggleTarget.emit({ platform, contentType });
+    this.toggleTarget.emit({ platform, contentType, postId: null });
   }
 }

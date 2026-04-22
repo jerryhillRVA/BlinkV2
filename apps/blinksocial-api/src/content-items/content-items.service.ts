@@ -26,11 +26,35 @@ const ARCHIVE_INDEX_FILE = '_content-items-archive-index.json';
 export class ContentItemsService {
   private readonly logger = new Logger(ContentItemsService.name);
 
+  /**
+   * Per-workspace serialization queue for index mutations. Reads + writes of
+   * `_content-items-index.json` / `_content-items-archive-index.json` are NOT
+   * atomic on AFS, so concurrent requests (e.g. AI batch create, Move to
+   * Production with N targets) would otherwise race and drop rows (D-25).
+   */
+  private readonly indexLocks = new Map<string, Promise<unknown>>();
+
   constructor(
     private readonly fs: AgenticFilesystemService,
     @Inject('MOCK_DATA_SERVICE') @Optional()
     private readonly mockDataService: MockDataService | null,
   ) {}
+
+  private withIndexLock<T>(
+    workspaceId: string,
+    fn: () => Promise<T>,
+  ): Promise<T> {
+    const prev = this.indexLocks.get(workspaceId) ?? Promise.resolve();
+    const next = prev.catch(() => undefined).then(fn);
+    // Track the sanitized promise so a rejection from `fn` doesn't poison
+    // the chain for the next caller; the original rejection is still
+    // surfaced to *this* caller via `next`.
+    this.indexLocks.set(
+      workspaceId,
+      next.catch(() => undefined),
+    );
+    return next;
+  }
 
   // --- Projection ---
 
@@ -151,6 +175,7 @@ export class ContentItemsService {
       description: request.description ?? '',
       pillarIds: request.pillarIds ?? [],
       segmentIds: request.segmentIds ?? [],
+      tags: request.tags ?? [],
       archived: request.archived ?? false,
       createdAt: now,
       updatedAt: now,
@@ -171,10 +196,13 @@ export class ContentItemsService {
     }
 
     // Best-effort index update. Ordering: item first, index second.
+    // Serialized per-workspace so concurrent creates don't clobber each other (D-25).
     try {
-      const idx = await this.readIndex(workspaceId);
-      idx.items.push(this.projectIndexEntry(item));
-      await this.writeIndex(workspaceId, idx);
+      await this.withIndexLock(workspaceId, async () => {
+        const idx = await this.readIndex(workspaceId);
+        idx.items.push(this.projectIndexEntry(item));
+        await this.writeIndex(workspaceId, idx);
+      });
     } catch (error) {
       this.logger.error(
         `Item ${item.id} written but index update failed — reconciliation TODO`,
@@ -232,31 +260,34 @@ export class ContentItemsService {
 
       await this.upsertItemFile(workspaceId, updated);
 
+      // Serialize all index writes per workspace (D-25).
       try {
-        const wasArchived = !!existing.archived;
-        const isArchived = !!updated.archived;
-        if (wasArchived !== isArchived) {
-          // archived flag flipped — move the row between indexes atomically
-          const primary = await this.readIndex(workspaceId);
-          const archive = await this.readArchiveIndex(workspaceId);
-          const row = this.projectIndexEntry(updated);
-          if (isArchived) {
-            primary.items = primary.items.filter((r) => r.id !== updated.id);
-            const i = archive.items.findIndex((r) => r.id === updated.id);
-            if (i === -1) archive.items.push(row);
-            else archive.items[i] = row;
+        await this.withIndexLock(workspaceId, async () => {
+          const wasArchived = !!existing.archived;
+          const isArchived = !!updated.archived;
+          if (wasArchived !== isArchived) {
+            // archived flag flipped — move the row between indexes atomically
+            const primary = await this.readIndex(workspaceId);
+            const archive = await this.readArchiveIndex(workspaceId);
+            const row = this.projectIndexEntry(updated);
+            if (isArchived) {
+              primary.items = primary.items.filter((r) => r.id !== updated.id);
+              const i = archive.items.findIndex((r) => r.id === updated.id);
+              if (i === -1) archive.items.push(row);
+              else archive.items[i] = row;
+            } else {
+              archive.items = archive.items.filter((r) => r.id !== updated.id);
+              const i = primary.items.findIndex((r) => r.id === updated.id);
+              if (i === -1) primary.items.push(row);
+              else primary.items[i] = row;
+            }
+            await this.writeIndex(workspaceId, primary);
+            await this.writeArchiveIndex(workspaceId, archive);
           } else {
-            archive.items = archive.items.filter((r) => r.id !== updated.id);
-            const i = primary.items.findIndex((r) => r.id === updated.id);
-            if (i === -1) primary.items.push(row);
-            else primary.items[i] = row;
+            const whichIndex = isArchived ? 'archive' : 'primary';
+            await this.replaceIndexRow(workspaceId, updated, whichIndex);
           }
-          await this.writeIndex(workspaceId, primary);
-          await this.writeArchiveIndex(workspaceId, archive);
-        } else {
-          const whichIndex = isArchived ? 'archive' : 'primary';
-          await this.replaceIndexRow(workspaceId, updated, whichIndex);
-        }
+        });
       } catch (error) {
         this.logger.error(
           `Item ${updated.id} written but index update failed — reconciliation TODO`,
@@ -313,7 +344,9 @@ export class ContentItemsService {
 
       try {
         const whichIndex = existing.archived ? 'archive' : 'primary';
-        await this.removeIndexRow(workspaceId, itemId, whichIndex);
+        await this.withIndexLock(workspaceId, () =>
+          this.removeIndexRow(workspaceId, itemId, whichIndex),
+        );
       } catch (error) {
         this.logger.error(
           `Item ${itemId} deleted but index update failed — reconciliation TODO`,
@@ -530,24 +563,26 @@ export class ContentItemsService {
       await this.upsertItemFile(workspaceId, updated);
 
       try {
-        const primary = await this.readIndex(workspaceId);
-        const archive = await this.readArchiveIndex(workspaceId);
-        const row = this.projectIndexEntry(updated);
+        await this.withIndexLock(workspaceId, async () => {
+          const primary = await this.readIndex(workspaceId);
+          const archive = await this.readArchiveIndex(workspaceId);
+          const row = this.projectIndexEntry(updated);
 
-        if (archived) {
-          primary.items = primary.items.filter((r) => r.id !== itemId);
-          const i = archive.items.findIndex((r) => r.id === itemId);
-          if (i === -1) archive.items.push(row);
-          else archive.items[i] = row;
-        } else {
-          archive.items = archive.items.filter((r) => r.id !== itemId);
-          const i = primary.items.findIndex((r) => r.id === itemId);
-          if (i === -1) primary.items.push(row);
-          else primary.items[i] = row;
-        }
+          if (archived) {
+            primary.items = primary.items.filter((r) => r.id !== itemId);
+            const i = archive.items.findIndex((r) => r.id === itemId);
+            if (i === -1) archive.items.push(row);
+            else archive.items[i] = row;
+          } else {
+            archive.items = archive.items.filter((r) => r.id !== itemId);
+            const i = primary.items.findIndex((r) => r.id === itemId);
+            if (i === -1) primary.items.push(row);
+            else primary.items[i] = row;
+          }
 
-        await this.writeIndex(workspaceId, primary);
-        await this.writeArchiveIndex(workspaceId, archive);
+          await this.writeIndex(workspaceId, primary);
+          await this.writeArchiveIndex(workspaceId, archive);
+        });
       } catch (error) {
         this.logger.error(
           `Item ${itemId} archive flag flipped but index update failed — reconciliation TODO`,

@@ -122,15 +122,33 @@ describe('ContentStateService', () => {
       expect(workspaceApi.getSettings).toHaveBeenCalledWith('ws-1', 'brand-voice');
     });
 
-    it('should fall back to mock items when API returns empty index', () => {
+    it('treats an empty-index API response as legitimately empty (no mock seed)', () => {
       service.loadAll('ws-1');
-      expect(service.items()).toEqual(MOCK_CONTENT_ITEMS);
+      expect(service.items()).toEqual([]);
     });
 
     it('should fall back to mock items on API error', () => {
       itemsApi.getIndex.mockReturnValue(throwError(() => new Error('fail')));
       service.loadAll('ws-1');
       expect(service.items()).toEqual(MOCK_CONTENT_ITEMS);
+    });
+
+    it('populates business objectives from brand-voice api for D-05 binding', () => {
+      workspaceApi.getSettings.mockImplementation((_id: string, key: string) => {
+        if (key === 'business-objectives') {
+          return of([{ id: 'o-1', category: 'growth', statement: 'Grow', target: 1, unit: '', timeframe: '' }]);
+        }
+        return of(null);
+      });
+      service.loadAll('ws-1');
+      expect(service.businessObjectives().length).toBe(1);
+      expect(service.businessObjectives()[0].id).toBe('o-1');
+    });
+
+    it('leaves business objectives empty when brand-voice fails', () => {
+      workspaceApi.getSettings.mockReturnValue(throwError(() => new Error('fail')));
+      service.loadAll('ws-1');
+      expect(service.businessObjectives()).toEqual([]);
     });
 
     it('should use API content items when index has rows and mark real', () => {
@@ -348,10 +366,120 @@ describe('ContentStateService', () => {
         { stage: 'concept' },
       );
     });
+
+    it('should fall back to optimistic update when updateItem errors', () => {
+      const row = indexRow({ id: 'c-concept', stage: 'concept' });
+      itemsApi.getIndex.mockReturnValue(
+        of({ items: [row], totalCount: 1, lastUpdated: '' }),
+      );
+      service.loadAll('ws-1');
+      itemsApi.updateItem.mockReturnValue(throwError(() => new Error('fail')));
+      let result = '';
+      service.advanceStage('c-concept').subscribe((saved) => {
+        result = saved.stage;
+      });
+      expect(result).toBe('post');
+    });
+
+    it('returns current item when stage cannot advance further', () => {
+      const row = indexRow({ id: 'c-post', stage: 'post' });
+      itemsApi.getIndex.mockReturnValue(
+        of({ items: [row], totalCount: 1, lastUpdated: '' }),
+      );
+      service.loadAll('ws-1');
+      service.advanceStage('c-post').subscribe();
+      expect(itemsApi.updateItem).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('loadFullItem', () => {
+    it('short-circuits when workspaceId is empty', () => {
+      service.loadFullItem('c-1');
+      expect(itemsApi.getItem).not.toHaveBeenCalled();
+    });
+
+    it('swallows API errors silently', () => {
+      service.workspaceId.set('ws-1');
+      itemsApi.getItem.mockReturnValue(throwError(() => new Error('fail')));
+      expect(() => service.loadFullItem('c-missing')).not.toThrow();
+    });
+  });
+
+  describe('saveItem error branch', () => {
+    it('falls back to optimistic item when updateItem throws', () => {
+      const row = indexRow({ id: 'c-1' });
+      itemsApi.getIndex.mockReturnValue(
+        of({ items: [row], totalCount: 1, lastUpdated: '' }),
+      );
+      service.loadAll('ws-1');
+      itemsApi.updateItem.mockReturnValue(throwError(() => new Error('fail')));
+      const draft = fullItem({ id: 'c-1', title: 'updated' });
+      let saved = '';
+      service.saveItem(draft).subscribe((item) => {
+        saved = item.title;
+      });
+      expect(saved).toBe('updated');
+    });
+
+    it('falls back to optimistic item when createItem throws', () => {
+      itemsApi.createItem.mockReturnValue(throwError(() => new Error('fail')));
+      const draft = fullItem({ id: 'new-id', title: 'fresh' });
+      let saved = '';
+      service.saveItem(draft).subscribe((item) => {
+        saved = item.title;
+      });
+      expect(saved).toBe('fresh');
+    });
+  });
+
+  describe('archive / unarchive error branches', () => {
+    it('archive falls back to optimistic item on API error', () => {
+      const row = indexRow({ id: 'c-1' });
+      itemsApi.getIndex.mockReturnValue(
+        of({ items: [row], totalCount: 1, lastUpdated: '' }),
+      );
+      service.loadAll('ws-1');
+      itemsApi.archiveItem.mockReturnValue(throwError(() => new Error('fail')));
+      let archived = false;
+      service.archive('c-1').subscribe((item) => {
+        archived = !!item.archived;
+      });
+      expect(archived).toBe(true);
+    });
+
+    it('unarchive falls back to optimistic item on API error', () => {
+      const row = indexRow({ id: 'c-1', archived: true });
+      itemsApi.getArchiveIndex.mockReturnValue(
+        of({ items: [row], totalCount: 1, lastUpdated: '' }),
+      );
+      service.loadAll('ws-1');
+      service.loadArchiveIndex();
+      itemsApi.unarchiveItem.mockReturnValue(throwError(() => new Error('fail')));
+      let result: boolean | undefined;
+      service.unarchive('c-1').subscribe((item) => {
+        result = item.archived;
+      });
+      expect(result).toBe(false);
+    });
+
+    it('updateStatus falls back to optimistic item on API error', () => {
+      const row = indexRow({ id: 'c-1' });
+      itemsApi.getIndex.mockReturnValue(
+        of({ items: [row], totalCount: 1, lastUpdated: '' }),
+      );
+      service.loadAll('ws-1');
+      itemsApi.updateItem.mockReturnValue(throwError(() => new Error('fail')));
+      let status = '';
+      service.updateStatus('c-1', 'review').subscribe((item) => {
+        if (item) status = item.status;
+      });
+      expect(status).toBe('review');
+    });
   });
 
   describe('stepCounts', () => {
-    it('should compute step counts from items', () => {
+    it('should compute step counts from items (mock fallback on API error)', () => {
+      itemsApi.getIndex.mockReturnValue(throwError(() => new Error('fail')));
       service.loadAll('ws-1');
       const counts = service.stepCounts();
       expect(counts.overview).toBe(MOCK_CONTENT_ITEMS.length);

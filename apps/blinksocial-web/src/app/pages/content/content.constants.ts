@@ -66,9 +66,15 @@ export const CONTENT_TYPE_OPTIONS: ContentTypeOption[] = [
 export const OBJECTIVE_OPTIONS: { value: ContentObjective; label: string }[] = [
   { value: 'awareness', label: 'Awareness' },
   { value: 'engagement', label: 'Engagement' },
-  { value: 'trust', label: 'Trust' },
+  { value: 'traffic', label: 'Traffic' },
   { value: 'leads', label: 'Leads' },
+  { value: 'lead-gen', label: 'Lead Generation' },
+  { value: 'sales', label: 'Sales' },
   { value: 'conversion', label: 'Conversion' },
+  { value: 'trust', label: 'Trust' },
+  { value: 'education', label: 'Education' },
+  { value: 'community', label: 'Community' },
+  { value: 'recruiting', label: 'Recruiting' },
 ];
 
 export const PLATFORM_OPTIONS: { value: Platform; label: string }[] = [
@@ -120,6 +126,7 @@ export const PLATFORM_CONTENT_TYPES: Record<Platform, { value: ContentType; labe
 export const CTA_TYPES: { value: CtaType; label: string }[] = [
   { value: 'learn-more', label: 'Learn More' },
   { value: 'subscribe', label: 'Subscribe' },
+  { value: 'follow', label: 'Follow' },
   { value: 'comment', label: 'Comment' },
   { value: 'download', label: 'Download' },
   { value: 'buy', label: 'Buy' },
@@ -188,7 +195,6 @@ export const STAGE_CONFIG: Record<ContentStage, { label: string; colorClass: str
   idea: { label: 'Idea', colorClass: 'stage-idea', dotClass: 'dot-idea' },
   concept: { label: 'Concept', colorClass: 'stage-concept', dotClass: 'dot-concept' },
   post: { label: 'Post', colorClass: 'stage-post', dotClass: 'dot-post' },
-  'production-brief': { label: 'Brief', colorClass: 'stage-brief', dotClass: 'dot-brief' },
 };
 
 export const STATUS_CONFIG: Record<ContentStatus, { label: string }> = {

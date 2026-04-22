@@ -206,12 +206,14 @@ describe('PostDetailComponent — actions', () => {
   });
 
   it('onDelete removes the item and emits deleted', () => {
+    const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(true);
     const { fixture, state } = setup();
     let deleted = 0;
     fixture.componentInstance.deleted.subscribe(() => deleted++);
     (fixture.componentInstance as unknown as { onDelete: () => void }).onDelete();
     expect(state.items().some((i) => i.id === 'post-1')).toBe(false);
     expect(deleted).toBe(1);
+    confirmSpy.mockRestore();
   });
 
   it('onApprove flips briefApproved on the item', () => {
@@ -234,5 +236,25 @@ describe('PostDetailComponent — actions', () => {
     const store = (fixture.componentInstance as unknown as { store: PostDetailStore }).store;
     (fixture.componentInstance as unknown as { onContinueToBuilder: () => void }).onContinueToBuilder();
     expect(store.activeStep()).toBe('builder');
+  });
+
+  it('onStatusChange persists new status through the store', () => {
+    const { fixture } = setup();
+    const store = (fixture.componentInstance as unknown as { store: PostDetailStore }).store;
+    (fixture.componentInstance as unknown as {
+      onStatusChange: (s: 'review') => void;
+    }).onStatusChange('review');
+    expect(store.item()?.status).toBe('review');
+  });
+
+  it('onDelete is a no-op when user cancels the confirm', () => {
+    const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(false);
+    const { fixture, state } = setup();
+    let deleted = 0;
+    fixture.componentInstance.deleted.subscribe(() => deleted++);
+    (fixture.componentInstance as unknown as { onDelete: () => void }).onDelete();
+    expect(state.items().some((i) => i.id === 'post-1')).toBe(true);
+    expect(deleted).toBe(0);
+    confirmSpy.mockRestore();
   });
 });

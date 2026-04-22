@@ -1,0 +1,20 @@
+<ol class="status-stepper" role="tablist" aria-label="Content status">
+  @for (s of steps; track s.value; let i = $index) {
+    <li class="status-step" [ngClass]="stepClass(i)">
+      <button
+        type="button"
+        role="tab"
+        class="status-step-btn"
+        [attr.aria-selected]="s.value === value"
+        [attr.aria-current]="s.value === value ? 'step' : null"
+        (click)="onPick(s.value)"
+      >
+        <span class="status-step-index">{{ i + 1 }}</span>
+        <span class="status-step-label">{{ s.label }}</span>
+      </button>
+      @if (i < steps.length - 1) {
+        <span class="status-step-connector" aria-hidden="true"></span>
+      }
+    </li>
+  }
+</ol>

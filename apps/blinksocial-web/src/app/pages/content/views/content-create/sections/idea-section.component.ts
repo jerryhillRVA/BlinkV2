@@ -14,6 +14,7 @@ export class IdeaSectionComponent {
   protected readonly maxFocusPillars = MAX_FOCUS_PILLARS;
 
   protected readonly pillars = this.store.pillars;
+  protected readonly segments = this.store.segments;
   protected readonly state = this.store.state;
 
   protected readonly focusPillarsAtLimit = computed(
@@ -57,5 +58,13 @@ export class IdeaSectionComponent {
 
   protected isPillarSelected(id: string): boolean {
     return this.state().pillarIds.includes(id);
+  }
+
+  protected toggleSegment(id: string): void {
+    this.store.toggleSegment(id);
+  }
+
+  protected isSegmentSelected(id: string): boolean {
+    return this.state().segmentIds.includes(id);
   }
 }

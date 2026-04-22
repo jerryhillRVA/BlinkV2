@@ -16,7 +16,7 @@ import {
   PLATFORM_CONTENT_TYPES,
   PLATFORM_OPTIONS,
 } from '../../../content.constants';
-import type { ProductionTarget } from '../concept-detail.types';
+import type { TargetPlatform } from '../concept-detail.types';
 
 @Component({
   selector: 'app-move-to-production-dialog',
@@ -29,7 +29,7 @@ export class MoveToProductionDialogComponent implements AfterViewInit {
   private readonly destroyRef = inject(DestroyRef);
 
   readonly title = input<string>('this concept');
-  readonly targets = input.required<ProductionTarget[]>();
+  readonly targets = input.required<TargetPlatform[]>();
 
   @Output() selectAll = new EventEmitter<void>();
   @Output() selectAllKeepConcept = new EventEmitter<void>();
@@ -56,7 +56,7 @@ export class MoveToProductionDialogComponent implements AfterViewInit {
     });
   }
 
-  protected targetLabel(target: ProductionTarget): string {
+  protected targetLabel(target: TargetPlatform): string {
     const platformLabel =
       PLATFORM_OPTIONS.find((p) => p.value === target.platform)?.label ??
       target.platform;
@@ -93,7 +93,7 @@ export class MoveToProductionDialogComponent implements AfterViewInit {
     this.workOn.emit(index);
   }
 
-  protected trackByPlatformType(index: number, t: ProductionTarget): string {
+  protected trackByPlatformType(index: number, t: TargetPlatform): string {
     return `${t.platform}:${t.contentType}:${index}`;
   }
 }

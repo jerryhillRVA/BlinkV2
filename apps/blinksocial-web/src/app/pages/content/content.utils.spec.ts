@@ -104,7 +104,7 @@ describe('buildContentItem', () => {
     expect(item.contentType).toBe('short-video');
   });
 
-  it('builds a Brief item with stage=production-brief and status=in-progress', () => {
+  it('builds a Brief item with stage=post and nested production.brief', () => {
     const payload: BriefPayload = {
       kind: 'brief',
       ...basePayload,
@@ -116,10 +116,34 @@ describe('buildContentItem', () => {
       cta: { type: 'subscribe', text: 'Sub' },
     };
     const item = buildContentItem(payload);
-    expect(item.stage).toBe('production-brief');
+    expect(item.stage).toBe('post');
     expect(item.status).toBe('in-progress');
     expect(item.keyMessage).toBe('key msg');
     expect(item.tonePreset).toBe('friendly');
     expect(item.cta).toEqual({ type: 'subscribe', text: 'Sub' });
+    expect(item.production?.brief?.strategy?.keyMessage).toBe('key msg');
+    expect(item.production?.brief?.strategy?.ctaType).toBe('subscribe');
+    expect(item.production?.brief?.strategy?.ctaText).toBe('Sub');
+    expect(item.production?.brief?.compliance).toEqual({});
+  });
+
+  it('Brief without cta or tonePreset leaves those strategy fields undefined', () => {
+    const payload: BriefPayload = {
+      kind: 'brief',
+      ...basePayload,
+      platform: 'tiktok',
+      contentType: 'short-video',
+      objective: 'engagement',
+      keyMessage: 'msg',
+    };
+    const item = buildContentItem(payload);
+    expect(item.stage).toBe('post');
+    expect(item.cta).toBeUndefined();
+    expect(item.tonePreset).toBeUndefined();
+    const strategy = item.production?.brief?.strategy;
+    expect(strategy?.ctaType).toBeUndefined();
+    expect(strategy?.ctaText).toBeUndefined();
+    expect(strategy?.tonePreset).toBeUndefined();
+    expect(strategy?.keyMessage).toBe('msg');
   });
 });

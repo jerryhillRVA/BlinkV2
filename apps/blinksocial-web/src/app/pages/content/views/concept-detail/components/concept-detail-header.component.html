@@ -64,6 +64,40 @@
               </svg>
               Send back to Idea
             </button>
+            <button type="button" role="menuitem" class="detail-menu-item" (click)="onCopy()">
+              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <rect width="14" height="14" x="8" y="8" rx="2" ry="2"/>
+                <path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/>
+              </svg>
+              Copy link
+            </button>
+            <button type="button" role="menuitem" class="detail-menu-item" (click)="onDuplicate()">
+              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <rect width="14" height="14" x="8" y="8" rx="2" ry="2"/>
+                <path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/>
+              </svg>
+              Duplicate
+            </button>
+            @if (item.archived) {
+              <button type="button" role="menuitem" class="detail-menu-item" (click)="onUnarchive()">
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <rect width="20" height="5" x="2" y="3" rx="1"/>
+                  <path d="M4 8v11a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8"/>
+                  <path d="m9 15 3-3 3 3"/>
+                  <path d="M12 12v7"/>
+                </svg>
+                Unarchive
+              </button>
+            } @else {
+              <button type="button" role="menuitem" class="detail-menu-item" (click)="onArchive()">
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <rect width="20" height="5" x="2" y="3" rx="1"/>
+                  <path d="M4 8v11a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8"/>
+                  <path d="M10 12h4"/>
+                </svg>
+                Archive
+              </button>
+            }
             <button type="button" role="menuitem" class="detail-menu-item is-danger" (click)="onDelete()">
               <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                 <path d="M3 6h18"/>
@@ -80,6 +114,7 @@
         type="button"
         class="btn-advance"
         [disabled]="!canMoveToProduction"
+        [attr.title]="moveTooltip()"
         (click)="onMoveToProduction()"
       >
         <span>Move to Production</span>

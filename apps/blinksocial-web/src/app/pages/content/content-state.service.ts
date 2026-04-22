@@ -13,6 +13,7 @@ import type {
   ContentPillarContract,
   AudienceSegmentContract,
   BrandVoiceSettingsContract,
+  BusinessObjectiveContract,
 } from '@blinksocial/contracts';
 import type {
   ContentItem,
@@ -84,6 +85,7 @@ export class ContentStateService {
 
   readonly pillars = signal<ContentPillar[]>([]);
   readonly segments = signal<AudienceSegment[]>([]);
+  readonly businessObjectives = signal<BusinessObjectiveContract[]>([]);
 
   /** Unified view merging lean rows + full cached items (full wins). */
   readonly items = computed<ContentItem[]>(() => {
@@ -148,13 +150,7 @@ export class ContentStateService {
 
     forkJoin({
       index: this.itemsApi.getIndex(workspaceId).pipe(
-        catchError(() =>
-          of<ContentItemsIndexContract>({
-            items: [],
-            totalCount: 0,
-            lastUpdated: '',
-          }),
-        ),
+        catchError(() => of<ContentItemsIndexContract | null>(null)),
       ),
       brandVoice: this.api
         .getSettings<
@@ -164,23 +160,15 @@ export class ContentStateService {
           }
         >(workspaceId, 'brand-voice')
         .pipe(catchError(() => of(null))),
+      objectives: this.api
+        .getSettings<BusinessObjectiveContract[]>(workspaceId, 'business-objectives')
+        .pipe(catchError(() => of<BusinessObjectiveContract[]>([]))),
     }).subscribe({
       next: (data) => {
         const mock = getMockDataForWorkspace(workspaceId);
-        const hasRealContent = data.index.items.length > 0;
 
-        if (hasRealContent) {
-          this.indexEntries.set(data.index.items);
-          this.archiveIndexEntries.set([]);
-          // Preserve the full-item cache — it may hold archived items the
-          // primary index doesn't list. Stale cache entries for deleted items
-          // are harmless: items() keys off the index, not the cache.
-          this.mockData.markReal('content-items');
-        } else {
-          // Mock fallback: seed indexEntries with projections so the kanban
-          // (which reads activeItems/archivedItems from the indexes) shows
-          // the mock data. Archived rows go to archiveIndexEntries; active
-          // rows to indexEntries. Full items are cached for detail views.
+        if (data.index === null) {
+          // Call failed — graceful fallback to mock data for a visible UI.
           const activeMocks = mock.items.filter((i) => !i.archived);
           const archivedMocks = mock.items.filter((i) => !!i.archived);
           this.indexEntries.set(activeMocks.map(itemToIndexEntry));
@@ -188,11 +176,20 @@ export class ContentStateService {
           this.fullItemCacheSignal.set(
             Object.fromEntries(mock.items.map((i) => [i.id, i])),
           );
+        } else {
+          // Trust the API. Backend delegates to MockDataService for
+          // hive-collective / booze-kills when AGENTIC_FS_URL is unset;
+          // empty response = legitimately empty for configured workspaces.
+          this.indexEntries.set(data.index.items);
+          this.archiveIndexEntries.set([]);
+          if (data.index.items.length > 0) {
+            this.mockData.markReal('content-items');
+          }
         }
 
-        // Pillars and segments come from brand-voice if the API returned them,
-        // regardless of whether content-items are yet present. Only fall back
-        // to mock when brand-voice returned nothing (e.g., AFS unreachable).
+        // Pillars and segments come from brand-voice if the API returned them.
+        // Only fall back to mock when brand-voice returned nothing (e.g., AFS
+        // unreachable for a configured workspace).
         const apiPillars = data.brandVoice?.contentPillars ?? [];
         this.pillars.set(
           apiPillars.length > 0
@@ -216,6 +213,8 @@ export class ContentStateService {
             : mock.segments,
         );
 
+        this.businessObjectives.set(data.objectives ?? []);
+
         this.loading.set(false);
       },
       error: () => {
@@ -229,6 +228,7 @@ export class ContentStateService {
         );
         this.pillars.set(mock.pillars);
         this.segments.set(mock.segments);
+        this.businessObjectives.set([]);
         this.loading.set(false);
       },
     });

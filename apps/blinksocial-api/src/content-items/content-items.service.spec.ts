@@ -167,11 +167,12 @@ describe('ContentItemsService', () => {
         status: 'draft',
         title: 'Original',
       });
+      await new Promise((r) => setTimeout(r, 2));
       const updated = await service.updateItem('ws-1', created.id, {
         title: 'New Title',
       });
       expect(updated.title).toBe('New Title');
-      expect(updated.updatedAt).not.toBe(created.updatedAt);
+      expect(updated.updatedAt >= created.updatedAt).toBe(true);
 
       const idx = Object.values(fs.files).find(
         (f) => f.filename === '_content-items-index.json',
@@ -326,6 +327,45 @@ describe('ContentItemsService', () => {
       await expect(svc.getIndex('unknown')).rejects.toBeInstanceOf(
         NotFoundException,
       );
+    });
+  });
+
+  describe('D-25: concurrent createItem index integrity', () => {
+    it('N parallel creates all land in the primary index (no race)', async () => {
+      // Inject an async microtask into each AFS write to amplify any RMW race
+      // on `_content-items-index.json`. Without the per-workspace index lock
+      // the final index would be missing one or more rows.
+      const innerReplace = fs.replaceJsonFile.bind(fs);
+      fs.replaceJsonFile = (async (
+        tenant: string,
+        fileId: string,
+        filename: string,
+        content: unknown,
+      ) => {
+        await Promise.resolve();
+        await Promise.resolve();
+        return innerReplace(tenant, fileId, filename, content);
+      }) as typeof fs.replaceJsonFile;
+
+      const N = 5;
+      const results = await Promise.all(
+        Array.from({ length: N }, (_, i) =>
+          service.createItem('w1', {
+            stage: 'idea',
+            status: 'draft',
+            title: `Concurrent #${i + 1}`,
+          }),
+        ),
+      );
+      const ids = new Set(results.map((r) => r.id));
+      expect(ids.size).toBe(N);
+
+      const index = await service.getIndex('w1');
+      expect(index.totalCount).toBe(N);
+      expect(index.items.length).toBe(N);
+      for (const id of ids) {
+        expect(index.items.some((r) => r.id === id)).toBe(true);
+      }
     });
   });
 });

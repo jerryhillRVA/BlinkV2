@@ -51,8 +51,8 @@ describe('ContentJourneyComponent', () => {
     expect(fill.style.width).toBe('100%');
   });
 
-  it('off-ladder stage (production-brief) renders all as future with 0% progress', () => {
-    const fixture = setup('production-brief');
+  it('off-ladder stage renders all as future with 0% progress', () => {
+    const fixture = setup('unknown-stage' as unknown as ContentStage);
     const steps = fixture.nativeElement.querySelectorAll('.journey-step');
     expect(steps[0].classList.contains('is-future')).toBe(true);
     expect(steps[1].classList.contains('is-future')).toBe(true);

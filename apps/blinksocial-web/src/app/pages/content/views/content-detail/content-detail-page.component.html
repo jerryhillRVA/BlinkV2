@@ -21,7 +21,9 @@
           <app-idea-detail
             [itemId]="item()!.id"
             (back)="goBack()"
+            (advance)="onAdvancedToConcept($event)"
             (archive)="onArchive()"
+            (unarchive)="onUnarchive()"
             (duplicate)="onDuplicate()"
             (copyLink)="onCopyLink()"
           />
@@ -32,6 +34,10 @@
             (back)="goBack()"
             (moved)="onMoved($event)"
             (deleted)="onDeleted()"
+            (archive)="onArchive()"
+            (unarchive)="onUnarchive()"
+            (duplicate)="onDuplicate()"
+            (copyLink)="onCopyLink()"
           />
         }
         @case ('post') {

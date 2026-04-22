@@ -10,6 +10,7 @@ import {
 import type {
   ContentItem,
   ContentObjective,
+  ContentStatus,
   CtaType,
   TonePreset,
 } from '../../content.types';
@@ -55,6 +56,10 @@ export class PostDetailStore {
 
   updateDescription(description: string): void {
     this.persist({ description });
+  }
+
+  setStatus(status: ContentStatus): void {
+    this.persist({ status });
   }
 
   setObjective(v: ContentObjective | ''): void {

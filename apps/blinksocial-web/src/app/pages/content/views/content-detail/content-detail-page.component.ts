@@ -2,6 +2,7 @@ import { Component, DestroyRef, computed, inject, signal } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ContentStateService } from '../../content-state.service';
+import { ToastService } from '../../../../core/toast/toast.service';
 import { IdeaDetailComponent } from '../idea-detail/idea-detail.component';
 import { ConceptDetailComponent } from '../concept-detail/concept-detail.component';
 import { PostDetailComponent } from '../post-detail/post-detail.component';
@@ -18,6 +19,7 @@ export class ContentDetailPageComponent {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly toast = inject(ToastService);
 
   protected readonly stateService = inject(ContentStateService);
 
@@ -85,11 +87,14 @@ export class ContentDetailPageComponent {
 
   protected onCopyLink(): void {
     const url = `${window.location.origin}/workspace/${this.workspaceId()}/content/${this.item()?.id ?? ''}`;
-    if (navigator.clipboard) {
-      navigator.clipboard.writeText(url).catch(() => {
-        /* v8 ignore next */
-      });
+    if (!navigator.clipboard) {
+      this.toast.showError('Clipboard not available');
+      return;
     }
+    navigator.clipboard
+      .writeText(url)
+      .then(() => this.toast.showSuccess('Link copied to clipboard'))
+      .catch(() => this.toast.showError('Failed to copy link'));
   }
 
   protected onMoved(event: {
@@ -110,5 +115,14 @@ export class ContentDetailPageComponent {
 
   protected onDeleted(): void {
     this.goBack();
+  }
+
+  protected onAdvancedToConcept(conceptId: string): void {
+    this.router.navigate([
+      '/workspace',
+      this.workspaceId(),
+      'content',
+      conceptId,
+    ]);
   }
 }

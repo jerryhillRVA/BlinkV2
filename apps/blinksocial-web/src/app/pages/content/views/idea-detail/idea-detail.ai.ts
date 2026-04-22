@@ -4,14 +4,14 @@ import type {
   ContentPillar,
 } from '../../content.types';
 import { generateId } from '../../content.utils';
-import type { ConceptOption, ConceptProductionTarget } from './idea-detail.types';
+import type { ConceptOption, ConceptTargetPlatform } from './idea-detail.types';
 
 interface Seed {
   angle: string;
   description: string;
   objectiveAlignment: string;
   objective: ContentObjective;
-  targets: ConceptProductionTarget[];
+  targets: Omit<ConceptTargetPlatform, 'postId'>[];
   ctaType: ConceptOption['cta']['type'];
   ctaText: string;
   suggestedFormatLabel: string;
@@ -120,7 +120,7 @@ export function generateConceptOptions(
       objective: seed.objective,
       pillarIds,
       segmentIds,
-      productionTargets: [...seed.targets],
+      targetPlatforms: seed.targets.map((t) => ({ ...t, postId: null })),
       cta: { type: seed.ctaType, text: seed.ctaText },
       suggestedFormatLabel: seed.suggestedFormatLabel,
     };
