@@ -1,10 +1,11 @@
 import { DestroyRef, Injectable, computed, inject, signal } from '@angular/core';
+import type { Observable } from 'rxjs';
 import { ContentStateService } from '../../content-state.service';
 import {
   AI_SIMULATION_DELAY_MS,
   MAX_PILLARS_PER_ITEM,
 } from '../../content.constants';
-import type { ContentItem, ContentObjective } from '../../content.types';
+import type { ContentItem, ContentObjective, ContentStatus } from '../../content.types';
 import { generateId, safeTimeout, toggleArrayItem } from '../../content.utils';
 import { generateConceptOptions } from './idea-detail.ai';
 import type { ConceptOption } from './idea-detail.types';
@@ -25,6 +26,7 @@ export class IdeaDetailStore {
   );
   readonly pillars = this.state.pillars;
   readonly segments = this.state.segments;
+  readonly businessObjectives = this.state.businessObjectives;
 
   readonly conceptOptions = signal<ConceptOption[] | null>(null);
   readonly isGeneratingOptions = signal(false);
@@ -76,6 +78,14 @@ export class IdeaDetailStore {
     this.persist({ segmentIds: toggleArrayItem(item.segmentIds, id) });
   }
 
+  setTags(tags: string[]): void {
+    const cleaned = tags
+      .map((t) => t.trim())
+      .filter((t) => t.length > 0);
+    const deduped = Array.from(new Set(cleaned));
+    this.persist({ tags: deduped });
+  }
+
   setObjectiveId(id: string | undefined): void {
     this.persist({ objectiveId: id });
   }
@@ -83,6 +93,10 @@ export class IdeaDetailStore {
   setSourceUrl(url: string): void {
     const trimmed = url.trim();
     this.persist({ sourceUrl: trimmed.length > 0 ? trimmed : undefined });
+  }
+
+  setStatus(status: ContentStatus): void {
+    this.persist({ status });
   }
 
   setScheduledAt(iso: string | null): void {
@@ -116,27 +130,49 @@ export class IdeaDetailStore {
   }
 
   // ── lifecycle ───────────────────────────────────────────────────────
-  advanceToConcept(): ContentItem | null {
+  /**
+   * Builds the new concept from the source idea and posts it to the server.
+   * The returned observable emits the server-assigned item (authoritative id);
+   * callers must subscribe before navigating so the route uses the real id.
+   */
+  advanceToConcept(): Observable<ContentItem> | null {
     const item = this.item();
     if (!item) return null;
     const selected = this.selectedOption();
-    const patch: Partial<ContentItem> = { stage: 'concept', status: 'draft' };
-    if (selected) {
-      patch.hook = selected.angle;
-      patch.description = selected.description;
-      patch.objective = selected.objective;
-      patch.cta = selected.cta;
-      const mergedPillars = mergeBounded(item.pillarIds, selected.pillarIds, MAX_PILLARS_PER_ITEM);
-      patch.pillarIds = mergedPillars;
-      patch.segmentIds = mergeUnique(item.segmentIds, selected.segmentIds);
-      const firstTarget = selected.productionTargets[0];
-      if (firstTarget) {
-        patch.platform = firstTarget.platform;
-        patch.contentType = firstTarget.contentType;
-      }
+    const now = new Date().toISOString();
+    const concept: ContentItem = {
+      // Placeholder id for the ContentItem shape; stripped on POST — the
+      // server assigns the authoritative id and returns it in the response.
+      id: generateId('c'),
+      stage: 'concept',
+      status: 'draft',
+      parentIdeaId: item.id,
+      title: item.title,
+      description: selected?.description ?? item.description,
+      pillarIds: selected
+        ? mergeBounded(item.pillarIds, selected.pillarIds, MAX_PILLARS_PER_ITEM)
+        : [...item.pillarIds],
+      segmentIds: selected
+        ? mergeUnique(item.segmentIds, selected.segmentIds)
+        : [...item.segmentIds],
+      createdAt: now,
+      updatedAt: now,
+      archived: false,
+      ...(selected
+        ? {
+            hook: selected.angle,
+            objective: selected.objective,
+            cta: selected.cta,
+            targetPlatforms: selected.targetPlatforms.map((t) => ({ ...t })),
+          }
+        : {}),
+    };
+    const firstTarget = selected?.targetPlatforms[0];
+    if (firstTarget) {
+      concept.platform = firstTarget.platform;
+      concept.contentType = firstTarget.contentType;
     }
-    this.persist(patch);
-    return this.item();
+    return this.state.saveItem(concept);
   }
 
   archive(): void {

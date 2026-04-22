@@ -1,6 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { IdeaDetailStore } from './idea-detail.store';
 import { ContentStateService } from '../../content-state.service';
+import { provideContentItemsApiStubs } from '../../content-items-api.test-util';
 import { AI_SIMULATION_DELAY_MS } from '../../content.constants';
 import type {
   AudienceSegment,
@@ -37,9 +38,9 @@ function makeItem(partial: Partial<ContentItem> = {}): ContentItem {
 }
 
 function setup(item: ContentItem): { store: IdeaDetailStore; state: ContentStateService } {
-  TestBed.configureTestingModule({ providers: [ContentStateService, IdeaDetailStore] });
+  TestBed.configureTestingModule({ providers: [...provideContentItemsApiStubs(), ContentStateService, IdeaDetailStore] });
   const state = TestBed.inject(ContentStateService);
-  state.items.set([item]);
+  state.setItems([item]);
   state.pillars.set(PILLARS);
   state.segments.set(SEGMENTS);
   const store = TestBed.inject(IdeaDetailStore);
@@ -205,29 +206,38 @@ describe('IdeaDetailStore — advanceToConcept', () => {
   beforeEach(() => vi.useFakeTimers());
   afterEach(() => vi.useRealTimers());
 
-  it('without a selected option, just sets stage=concept + status=draft', () => {
+  it('without a selected option, creates a new concept linked to the idea via parentIdeaId; idea itself stays as idea', () => {
     const { store } = setup(makeItem());
-    store.advanceToConcept();
-    expect(store.item()?.stage).toBe('concept');
-    expect(store.item()?.status).toBe('draft');
+    const save$ = store.advanceToConcept();
+    expect(save$).not.toBeNull();
+    let concept: ContentItem | undefined;
+    save$!.subscribe((saved) => (concept = saved));
+    expect(concept).toBeDefined();
+    expect(concept!.stage).toBe('concept');
+    expect(concept!.status).toBe('draft');
+    expect(concept!.parentIdeaId).toBe('c-1');
+    // the original idea remains an idea
+    expect(store.item()?.stage).toBe('idea');
   });
 
-  it('with a selected option, merges hook/description/cta/objective + first production target', () => {
+  it('with a selected option, new concept merges hook/description/cta/objective + targetPlatforms from the option', () => {
     const { store } = setup(makeItem({ pillarIds: ['p1'] }));
     store.generateOptions();
     vi.advanceTimersByTime(AI_SIMULATION_DELAY_MS);
     const opt = store.conceptOptions()![0];
     store.selectOption(opt.id);
-    store.advanceToConcept();
-    const item = store.item()!;
-    expect(item.stage).toBe('concept');
-    expect(item.hook).toBe(opt.angle);
-    expect(item.description).toBe(opt.description);
-    expect(item.cta).toEqual(opt.cta);
-    expect(item.objective).toBe(opt.objective);
-    if (opt.productionTargets[0]) {
-      expect(item.platform).toBe(opt.productionTargets[0].platform);
-      expect(item.contentType).toBe(opt.productionTargets[0].contentType);
+    let concept!: ContentItem;
+    store.advanceToConcept()!.subscribe((saved) => (concept = saved));
+    expect(concept.stage).toBe('concept');
+    expect(concept.parentIdeaId).toBe('c-1');
+    expect(concept.hook).toBe(opt.angle);
+    expect(concept.description).toBe(opt.description);
+    expect(concept.cta).toEqual(opt.cta);
+    expect(concept.objective).toBe(opt.objective);
+    expect(concept.targetPlatforms?.length).toBe(opt.targetPlatforms.length);
+    if (opt.targetPlatforms[0]) {
+      expect(concept.platform).toBe(opt.targetPlatforms[0].platform);
+      expect(concept.contentType).toBe(opt.targetPlatforms[0].contentType);
     }
   });
 
@@ -237,8 +247,18 @@ describe('IdeaDetailStore — advanceToConcept', () => {
     vi.advanceTimersByTime(AI_SIMULATION_DELAY_MS);
     const opt = store.conceptOptions()![0];
     store.selectOption(opt.id);
-    store.advanceToConcept();
-    expect(store.item()!.pillarIds.length).toBeLessThanOrEqual(3);
+    let concept!: ContentItem;
+    store.advanceToConcept()!.subscribe((saved) => (concept = saved));
+    expect(concept.pillarIds.length).toBeLessThanOrEqual(3);
+  });
+
+  it('returns the server-assigned id (not the optimistic client id) to callers', () => {
+    const { store } = setup(makeItem());
+    let saved: ContentItem | undefined;
+    store.advanceToConcept()!.subscribe((v) => (saved = v));
+    // The stubbed API assigns `c-test-<rand>` on create — proves we routed
+    // through the server path and did NOT surface the client-generated id.
+    expect(saved?.id).toMatch(/^c-test-/);
   });
 });
 
@@ -248,6 +268,20 @@ describe('IdeaDetailStore — defensive fallbacks', () => {
     store.conceptOptions.set([{ id: 'real' } as ConceptOption]);
     store.selectedOptionId.set('missing');
     expect(store.selectedOption()).toBeNull();
+  });
+});
+
+describe('IdeaDetailStore — tags + status', () => {
+  it('setTags trims, filters blanks, and dedupes', () => {
+    const { store } = setup(makeItem());
+    store.setTags(['  one ', 'two', '', 'one']);
+    expect(store.item()?.tags).toEqual(['one', 'two']);
+  });
+
+  it('setStatus persists the new status', () => {
+    const { store } = setup(makeItem());
+    store.setStatus('scheduled');
+    expect(store.item()?.status).toBe('scheduled');
   });
 });
 

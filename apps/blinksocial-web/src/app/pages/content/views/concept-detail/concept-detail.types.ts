@@ -1,6 +1,6 @@
-import type { ProductionTargetContract } from '@blinksocial/contracts';
+import type { TargetPlatformContract } from '@blinksocial/contracts';
 
-export type ProductionTarget = ProductionTargetContract;
+export type TargetPlatform = TargetPlatformContract;
 
 export interface MoveToProductionOptions {
   keepConcept: boolean;

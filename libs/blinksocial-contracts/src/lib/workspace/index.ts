@@ -22,3 +22,4 @@ export * from './research-source.js';
 export * from './competitor-insight.js';
 export * from './audience-insight.js';
 export * from './content-item.js';
+export * from './content-items-index.js';

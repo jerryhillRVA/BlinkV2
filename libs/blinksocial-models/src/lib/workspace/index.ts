@@ -13,3 +13,5 @@ export { TeamMember, TeamSettings } from './team-settings.model.js';
 export { NotificationChannels, NotificationTriggers, NotificationSettings } from './notification-settings.model.js';
 export { MilestoneTemplate, PhaseTemplate, DeadlineTemplate, ReminderSettings, CalendarSettings } from './calendar-settings.model.js';
 export { ActiveSession, ApiKey, LoginHistoryEntry, SecuritySettings } from './security-settings.model.js';
+export { ContentItem } from './content-item.model.js';
+export { ContentItemsIndexEntry, ContentItemsIndex, ContentItemsArchiveIndex } from './content-items-index.model.js';

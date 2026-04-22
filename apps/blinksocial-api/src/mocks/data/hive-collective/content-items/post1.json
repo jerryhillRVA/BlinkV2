@@ -1,0 +1,189 @@
+{
+  "id": "post1",
+  "stage": "post",
+  "status": "scheduled",
+  "parentConceptId": "concept1",
+  "title": "60-Second Morning Mobility Flow",
+  "description": "Quick morning mobility routine targeting stiff joints. Designed for beginners who want a fast, equipment-free flow.",
+  "pillarIds": ["p1"],
+  "segmentIds": ["s4"],
+  "tags": ["mobility", "morning-routine", "beginner", "no-equipment"],
+  "owner": "user-brett",
+  "createdAt": "2026-02-20T07:00:00Z",
+  "updatedAt": "2026-03-08T16:00:00Z",
+  "hook": "Your body shouldn't feel 80 when you're 40.",
+  "objective": "engagement",
+  "platform": "instagram",
+  "contentType": "reel",
+  "cta": { "type": "other", "text": "Follow for daily flows" },
+  "keyMessage": "A 60-second flow can transform your mornings",
+  "claimsFlag": false,
+  "riskLevel": "low",
+  "scheduledDate": "2026-03-12",
+  "scheduledTime": "07:00",
+  "targetPublishWindow": {
+    "start": "2026-03-10T00:00:00Z",
+    "end": "2026-03-14T23:59:59Z"
+  },
+  "assetRefs": [
+    { "fileId": "af-uuid-001", "filename": "morning-mobility-final.mp4", "role": "primary-media", "mimeType": "video/mp4", "sizeBytes": 29779558 },
+    { "fileId": "af-uuid-002", "filename": "morning-mobility-cover.jpg", "role": "cover", "mimeType": "image/jpeg", "sizeBytes": 245760 },
+    { "fileId": "af-uuid-003", "filename": "morning-mobility-raw.mov", "role": "source-file", "mimeType": "video/quicktime", "sizeBytes": 148897792 }
+  ],
+  "collaborators": ["user-brett"],
+  "production": {
+    "productionStep": "packaging",
+    "brief": {
+      "strategy": {
+        "objective": "engagement",
+        "audienceSegmentIds": ["s4"],
+        "pillarIds": ["p1"],
+        "keyMessage": "A 60-second flow can transform your mornings",
+        "ctaType": "follow",
+        "ctaText": "Follow for daily flows",
+        "tonePreset": "casual",
+        "doChecklist": ["Show clear form cues", "Keep energy upbeat", "Include timer overlay"],
+        "dontChecklist": ["No complex transitions", "Avoid medical claims"]
+      },
+      "platformRules": {
+        "durationTarget": 60,
+        "hookType": "outcome-first",
+        "loopEnding": true
+      },
+      "creativePlan": {
+        "hook": "Your body shouldn't feel 80 when you're 40.",
+        "storyArc": "hook-promise-sections-recap-cta",
+        "musicNotes": "Lo-fi ambient beat, calm energy"
+      },
+      "compliance": {
+        "containsClaims": false,
+        "disclosureNeeded": false
+      },
+      "approved": true,
+      "approvedAt": "2026-02-22T10:00:00Z",
+      "approvedBy": "user-brett",
+      "canonicalType": "VIDEO_SHORT_VERTICAL",
+      "hasTalent": true,
+      "hasMusic": true,
+      "needsAccessibility": true
+    },
+    "sources": [],
+    "outputs": {
+      "hook": "Your body shouldn't feel 80 when you're 40",
+      "hookBank": [
+        "Your body shouldn't feel 80 when you're 40",
+        "This 60-second routine changed my mornings",
+        "No gym. No equipment. Just movement.",
+        "Try this before your coffee tomorrow"
+      ],
+      "postCopy": "Morning mobility in 60 seconds. No equipment needed.\n\nYour joints will thank you. Save this for tomorrow morning.\n\n#morningroutine #mobilitywod #yogaflow #over40fitness",
+      "script": "0:00-0:03 Hook: Your body shouldn't feel 80.\n0:03-0:15 Cat-Cow stretch (3 reps)\n0:15-0:30 Thoracic rotation (each side)\n0:30-0:45 Hip circles (each direction)\n0:45-0:55 Standing reach + fold\n0:55-1:00 CTA: Follow for daily flows",
+      "hashtags": ["#morningroutine", "#mobilitywod", "#yogaflow", "#over40fitness"],
+      "mentions": [],
+      "ctaLine": "Follow for daily flows",
+      "scriptVersions": [
+        { "id": "sv-1", "content": "0:00-0:03 Hook...", "version": 1, "approved": true }
+      ],
+      "blueprintData": {
+        "structurePattern": "hook-teach-expand-cta",
+        "units": [
+          { "id": "u1", "order": 0, "title": "Hook", "role": "hook" },
+          { "id": "u2", "order": 1, "title": "Cat-Cow (15s)", "role": "value" },
+          { "id": "u3", "order": 2, "title": "Thoracic rotation (15s)", "role": "value" },
+          { "id": "u4", "order": 3, "title": "Hip circles (15s)", "role": "value" },
+          { "id": "u5", "order": 4, "title": "CTA: Follow", "role": "cta" }
+        ],
+        "engagementDrivers": ["save", "follow"],
+        "formatCoherenceConfirmed": true,
+        "logicalProgressionConfirmed": true,
+        "accessibilityPlanConfirmed": true,
+        "formatProfile": "Vertical 9:16, 60 seconds",
+        "aspectRatio": "9:16",
+        "runtimeSeconds": 60,
+        "unitCountTarget": 5,
+        "captionsStrategy": "Burned-in SRT captions, white on semi-transparent black",
+        "altTextStrategy": "Each move described in caption text",
+        "motionSafety": ["No rapid strobing", "Gentle transitions"]
+      },
+      "assetsData": {
+        "masterUploads": [
+          { "id": "af-1", "name": "morning-mobility-final.mp4", "size": "28.4 MB", "addedAt": "2026-03-06T10:00:00Z" }
+        ],
+        "creativeVariants": [],
+        "sourceFiles": [
+          { "id": "af-2", "name": "morning-mobility-raw.mov", "size": "142 MB", "addedAt": "2026-03-04T16:00:00Z" }
+        ],
+        "checklistOverrides": {}
+      },
+      "packagingData": {
+        "publishAction": "schedule",
+        "visibility": "public",
+        "scheduleAt": "2026-03-12T12:00:00Z",
+        "title": "60-Second Morning Mobility Flow",
+        "packagedCopy": "Morning mobility in 60 seconds. No equipment needed.\n\nYour joints will thank you. Save this for tomorrow morning.",
+        "keywords": ["morning routine", "mobility", "yoga", "over 40 fitness"],
+        "destinationUrl": "https://hivecollective.io/mobility",
+        "utmSource": "instagram",
+        "utmMedium": "social",
+        "utmCampaign": "morning-mobility-mar26",
+        "igLocation": "Richmond, Virginia"
+      },
+      "qaData": {
+        "humanChecklist": [
+          { "id": "qc-1", "label": "Brand colors correct", "group": "brand", "groupLabel": "Brand", "required": true, "checked": true },
+          { "id": "qc-2", "label": "Logo placement visible", "group": "brand", "groupLabel": "Brand", "required": true, "checked": true },
+          { "id": "qc-3", "label": "Captions present and synced", "group": "accessibility", "groupLabel": "Accessibility", "required": true, "checked": true },
+          { "id": "qc-4", "label": "Alt text complete", "group": "accessibility", "groupLabel": "Accessibility", "required": true, "checked": true },
+          { "id": "qc-5", "label": "All links verified", "group": "links", "groupLabel": "Links", "required": true, "checked": true }
+        ],
+        "approvals": [
+          { "role": "brand-reviewer", "label": "Brand Reviewer", "required": true, "status": "approved", "userName": "Sarah Chen", "timestamp": "2026-03-07T14:00:00Z", "note": "Looks great, on-brand." },
+          { "role": "publisher", "label": "Publisher", "required": true, "status": "approved", "userName": "Brett Lewis", "timestamp": "2026-03-08T10:00:00Z" }
+        ],
+        "qaNotes": "All checks passed. Ready for publish.",
+        "fixAssignee": "",
+        "auditTrail": [
+          { "id": "at-1", "action": "Brief approved", "userName": "Brett Lewis", "timestamp": "2026-02-22T10:00:00Z" },
+          { "id": "at-2", "action": "Draft completed", "userName": "Sarah Chen", "timestamp": "2026-02-24T15:00:00Z" },
+          { "id": "at-3", "action": "Assets uploaded", "userName": "Brett Lewis", "timestamp": "2026-03-06T10:00:00Z" },
+          { "id": "at-4", "action": "QA approved", "userName": "Sarah Chen", "timestamp": "2026-03-07T14:00:00Z" },
+          { "id": "at-5", "action": "Scheduled for publish", "userName": "Brett Lewis", "timestamp": "2026-03-08T10:00:00Z" }
+        ],
+        "approved": true
+      },
+      "activityData": {
+        "events": [
+          { "id": "ev-1", "type": "status", "actor": "user-brett", "message": "Created content item", "timestamp": "2026-02-20T07:00:00Z", "important": false },
+          { "id": "ev-2", "type": "approval", "actor": "user-brett", "message": "Brief approved", "timestamp": "2026-02-22T10:00:00Z", "important": true, "tab": "brief" },
+          { "id": "ev-3", "type": "draft-edit", "actor": "user-sarah", "message": "Draft v1 completed", "timestamp": "2026-02-24T15:00:00Z", "important": true, "tab": "draft" },
+          { "id": "ev-4", "type": "asset", "actor": "user-brett", "message": "Final video uploaded", "timestamp": "2026-03-06T10:00:00Z", "important": true, "tab": "assets" },
+          { "id": "ev-5", "type": "qa", "actor": "user-sarah", "message": "QA checklist completed — all passed", "timestamp": "2026-03-07T14:00:00Z", "important": true, "tab": "qa" },
+          { "id": "ev-6", "type": "packaging", "actor": "user-brett", "message": "Scheduled for Mar 12, 7:00 AM EST", "timestamp": "2026-03-08T10:00:00Z", "important": true, "tab": "packaging" }
+        ],
+        "decisionLog": [
+          { "id": "dl-1", "title": "Hook selection", "note": "Went with 'Your body shouldn't feel 80' — tested best in focus group", "scope": "draft", "actor": "user-sarah", "timestamp": "2026-02-24T15:00:00Z" }
+        ]
+      }
+    },
+    "assets": [
+      { "id": "a-1", "label": "Vertical video (9:16)", "required": true, "completed": true },
+      { "id": "a-2", "label": "Cover still", "required": true, "completed": true },
+      { "id": "a-3", "label": "Captions overlay", "required": true, "completed": true },
+      { "id": "a-4", "label": "Music license", "required": true, "completed": true }
+    ],
+    "tasks": [
+      { "id": "t-1", "label": "Film flow sequence", "assignee": "On-camera", "completed": true },
+      { "id": "t-2", "label": "Edit with music", "assignee": "Editor", "completed": true },
+      { "id": "t-3", "label": "Add captions", "assignee": "Editor", "completed": true },
+      { "id": "t-4", "label": "Select cover still", "assignee": "Designer", "completed": true }
+    ],
+    "versions": [
+      { "label": "Brief Approved", "savedAt": "2026-02-22T10:00:00Z" },
+      { "label": "Draft v1", "savedAt": "2026-02-24T15:00:00Z" },
+      { "label": "Blueprint Locked", "savedAt": "2026-02-25T11:00:00Z" },
+      { "label": "Assets Complete", "savedAt": "2026-03-06T10:00:00Z" },
+      { "label": "QA Approved", "savedAt": "2026-03-07T14:00:00Z" },
+      { "label": "Scheduled", "savedAt": "2026-03-08T10:00:00Z" }
+    ]
+  }
+}

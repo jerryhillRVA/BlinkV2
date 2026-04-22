@@ -144,4 +144,62 @@ describe('ConceptDetailHeaderComponent', () => {
     };
     expect(comp.contentTypeLabel()).toBeNull();
   });
+
+  it('moveTooltip returns the missing-validations list when disabled', () => {
+    const fixture = setup(false);
+    fixture.componentRef.setInput('missingValidations', ['Title', 'Hook']);
+    fixture.detectChanges();
+    const comp = fixture.componentInstance as unknown as {
+      moveTooltip: () => string;
+    };
+    expect(comp.moveTooltip()).toBe('Missing: Title, Hook');
+  });
+
+  it('moveTooltip returns a fallback label when disabled with no reasons', () => {
+    const fixture = setup(false);
+    const comp = fixture.componentInstance as unknown as {
+      moveTooltip: () => string;
+    };
+    expect(comp.moveTooltip()).toBe('Move to Production');
+  });
+
+  it('moveTooltip returns the affirmative label when enabled', () => {
+    const fixture = setup(true);
+    const comp = fixture.componentInstance as unknown as {
+      moveTooltip: () => string;
+    };
+    expect(comp.moveTooltip()).toBe('Move this concept into production');
+  });
+
+  it('kebab menu swaps Archive ↔ Unarchive based on archived flag', () => {
+    const fixture = setup(true, makeItem({ archived: true }));
+    const comp = fixture.componentInstance as unknown as {
+      toggleMenu: () => void;
+    };
+    comp.toggleMenu();
+    fixture.detectChanges();
+    const items = Array.from(
+      fixture.nativeElement.querySelectorAll('.detail-menu-item') as NodeListOf<HTMLElement>,
+    );
+    const labels = items.map((b) => b.textContent?.trim() ?? '');
+    expect(labels.some((l) => l.includes('Unarchive'))).toBe(true);
+    expect(labels.every((l) => !l.startsWith('Archive'))).toBe(true);
+  });
+
+  it('emits archive / unarchive / moveToProduction outputs', () => {
+    const fixture = setup(true, makeItem({ archived: false }));
+    const evts: string[] = [];
+    fixture.componentInstance.archive.subscribe(() => evts.push('archive'));
+    fixture.componentInstance.unarchive.subscribe(() => evts.push('unarchive'));
+    fixture.componentInstance.moveToProduction.subscribe(() => evts.push('move'));
+    const comp = fixture.componentInstance as unknown as {
+      onArchive: () => void;
+      onUnarchive: () => void;
+      onMoveToProduction: () => void;
+    };
+    comp.onArchive();
+    comp.onUnarchive();
+    comp.onMoveToProduction();
+    expect(evts).toEqual(['archive', 'unarchive', 'move']);
+  });
 });

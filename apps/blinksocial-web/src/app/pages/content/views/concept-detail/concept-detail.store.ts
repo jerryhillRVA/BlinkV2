@@ -11,13 +11,19 @@ import {
 import type {
   ContentItem,
   ContentObjective,
+  ContentStatus,
   ContentType,
   CtaType,
   Platform,
 } from '../../content.types';
 import { generateId, safeTimeout, toggleArrayItem } from '../../content.utils';
 import { assistDescriptionFor, assistHookFor } from './concept-detail.ai';
-import type { MoveToProductionOptions, ProductionTarget } from './concept-detail.types';
+import type { MoveToProductionOptions, TargetPlatform } from './concept-detail.types';
+import type {
+  ProductionBriefContract,
+  RiskLevelContract,
+  TargetPublishWindowContract,
+} from '@blinksocial/contracts';
 
 /**
  * Scoped per ConceptDetailComponent. Follows the same persist() chokepoint as
@@ -35,6 +41,7 @@ export class ConceptDetailStore {
   );
   readonly pillars = this.state.pillars;
   readonly segments = this.state.segments;
+  readonly businessObjectives = this.state.businessObjectives;
 
   readonly isAssistingDescription = signal(false);
   readonly isAssistingHook = signal(false);
@@ -83,6 +90,10 @@ export class ConceptDetailStore {
     this.persist({ objective: v === '' ? undefined : v });
   }
 
+  setStatus(status: ContentStatus): void {
+    this.persist({ status });
+  }
+
   setObjectiveId(id: string | undefined): void {
     this.persist({ objectiveId: id });
   }
@@ -106,15 +117,52 @@ export class ConceptDetailStore {
   toggleProductionTarget(platform: Platform, contentType: ContentType): void {
     const item = this.item();
     if (!item) return;
-    const current = item.productionTargets ?? [];
+    const current = item.targetPlatforms ?? [];
     const idx = current.findIndex(
       (t) => t.platform === platform && t.contentType === contentType,
     );
     const next =
       idx >= 0
         ? current.filter((_, i) => i !== idx)
-        : [...current, { platform, contentType }];
-    this.persist({ productionTargets: next });
+        : [...current, { platform, contentType, postId: null }];
+    this.persist({ targetPlatforms: next });
+  }
+
+  // ── concept-level strategy fields (D-07) ────────────────────────────
+  setKeyMessage(v: string): void {
+    const trimmed = v.trim();
+    this.persist({ keyMessage: trimmed.length > 0 ? trimmed : undefined });
+  }
+
+  setAngle(v: string): void {
+    const trimmed = v.trim();
+    this.persist({ angle: trimmed.length > 0 ? trimmed : undefined });
+  }
+
+  setFormatNotes(notes: string[]): void {
+    const cleaned = notes.map((n) => n.trim()).filter((n) => n.length > 0);
+    this.persist({ formatNotes: cleaned });
+  }
+
+  setClaimsFlag(flag: boolean): void {
+    this.persist({ claimsFlag: flag });
+  }
+
+  setSourceLinks(links: string[]): void {
+    const cleaned = links.map((l) => l.trim()).filter((l) => l.length > 0);
+    this.persist({ sourceLinks: cleaned });
+  }
+
+  setRiskLevel(level: RiskLevelContract | undefined): void {
+    this.persist({ riskLevel: level });
+  }
+
+  setTargetPublishWindow(window: TargetPublishWindowContract | undefined): void {
+    if (!window || (!window.start && !window.end)) {
+      this.persist({ targetPublishWindow: undefined });
+      return;
+    }
+    this.persist({ targetPublishWindow: window });
   }
 
   // ── AI actions ──────────────────────────────────────────────────────
@@ -170,7 +218,27 @@ export class ConceptDetailStore {
 
   readonly hasObjective = computed(() => !!this.item()?.objective);
 
-  readonly hasTargets = computed(() => (this.item()?.productionTargets?.length ?? 0) > 0);
+  readonly hasTargets = computed(() => (this.item()?.targetPlatforms?.length ?? 0) > 0);
+
+  /** Move to Production is only reachable from early statuses (D-24). */
+  readonly statusAllowsProduction = computed(() => {
+    const status = this.item()?.status;
+    return status === 'draft' || status === 'in-progress';
+  });
+
+  /** Human-readable list of missing fields, for the Move-to-Production tooltip (D-15, D-24). */
+  readonly missingValidations = computed<string[]>(() => {
+    const missing: string[] = [];
+    if (!this.titleValid()) missing.push('Title');
+    if (!this.descriptionInRange()) missing.push('Description (50–400 chars)');
+    if (!this.hookInRange()) missing.push('Hook');
+    if (!this.pillarsInRange()) missing.push('At least one pillar');
+    if (!this.hasObjective()) missing.push('Content goal');
+    if (!this.hasTargets()) missing.push('Production target');
+    if (!this.ctaValid()) missing.push('CTA text');
+    if (!this.statusAllowsProduction()) missing.push('Status must be Draft or In Progress');
+    return missing;
+  });
 
   readonly ctaValid = computed(() => {
     const cta = this.item()?.cta;
@@ -181,6 +249,7 @@ export class ConceptDetailStore {
 
   readonly canMoveToProduction = computed(
     () =>
+      this.statusAllowsProduction() &&
       this.titleValid() &&
       this.descriptionInRange() &&
       this.hookInRange() &&
@@ -213,25 +282,54 @@ export class ConceptDetailStore {
   moveToProduction(opts: MoveToProductionOptions): ContentItem[] {
     const item = this.item();
     if (!item || !this.canMoveToProduction()) return [];
-    const targets = item.productionTargets ?? [];
+    const targets = item.targetPlatforms ?? [];
     if (targets.length === 0) return [];
 
     const now = new Date().toISOString();
-    const created: ContentItem[] = targets.map((t) => ({
-      ...item,
-      id: generateId('c'),
-      conceptId: item.id,
-      stage: 'post',
-      status: 'in-progress',
-      platform: t.platform,
-      contentType: t.contentType,
-      productionTargets: undefined,
-      createdAt: now,
-      updatedAt: now,
-    }));
+    const created: ContentItem[] = targets.map((t) => {
+      // D-30: only include brief sub-blocks we actually have data for —
+      // platformRules and compliance are collected later in the post editor.
+      const brief: ProductionBriefContract = {
+        strategy: {
+          ...(item.objective ? { objective: item.objective } : {}),
+          audienceSegmentIds: [...(item.segmentIds ?? [])],
+          pillarIds: [...(item.pillarIds ?? [])],
+          ...(item.keyMessage ? { keyMessage: item.keyMessage } : {}),
+          ...(item.cta?.type ? { ctaType: item.cta.type } : {}),
+          ...(item.cta?.text ? { ctaText: item.cta.text } : {}),
+          ...(item.tonePreset ? { tonePreset: item.tonePreset } : {}),
+          doChecklist: [],
+          dontChecklist: [],
+        },
+      };
+      if (item.hook) brief.creativePlan = { hook: item.hook };
+      const post: ContentItem = {
+        ...item,
+        id: generateId('c'),
+        conceptId: item.id,
+        parentConceptId: item.id,
+        parentIdeaId: item.parentIdeaId,
+        stage: 'post',
+        status: 'in-progress',
+        platform: t.platform,
+        contentType: t.contentType,
+        targetPlatforms: undefined,
+        createdAt: now,
+        updatedAt: now,
+        production: { brief },
+      };
+      return post;
+    });
     for (const post of created) {
       this.state.saveItem(post);
     }
+    // Back-fill the concept's targetPlatforms with the newly-created post ids
+    // so downstream consumers (TC-6) can observe the linked postId.
+    const linked = targets.map((t, i) => ({
+      ...t,
+      postId: created[i]?.id ?? t.postId ?? null,
+    }));
+    this.persist({ targetPlatforms: linked });
     if (!opts.keepConcept) {
       this.state.deleteItem(item.id);
     }
@@ -243,7 +341,7 @@ export class ConceptDetailStore {
     this.persist({
       stage: 'idea',
       status: 'draft',
-      productionTargets: undefined,
+      targetPlatforms: undefined,
     });
   }
 
@@ -280,7 +378,7 @@ export class ConceptDetailStore {
    * post item that references this concept (same platform + contentType).
    * Used by the targets picker to disable already-in-production combos.
    */
-  isInProduction(target: ProductionTarget): boolean {
+  isInProduction(target: TargetPlatform): boolean {
     const item = this.item();
     if (!item) return false;
     return this.state.items().some(

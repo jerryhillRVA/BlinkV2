@@ -32,6 +32,7 @@ export class PostDetailHeaderComponent {
   @Output() titleChange = new EventEmitter<string>();
   @Output() backToConcept = new EventEmitter<void>();
   @Output() archive = new EventEmitter<void>();
+  @Output() unarchive = new EventEmitter<void>();
   @Output() duplicate = new EventEmitter<void>();
   @Output() deletePost = new EventEmitter<void>();
 
@@ -82,6 +83,11 @@ export class PostDetailHeaderComponent {
   protected onArchive(): void {
     this.closeMenu();
     this.archive.emit();
+  }
+
+  protected onUnarchive(): void {
+    this.closeMenu();
+    this.unarchive.emit();
   }
 
   protected onDuplicate(): void {

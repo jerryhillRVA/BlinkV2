@@ -8,7 +8,7 @@ import { AgenticFilesystemService } from '../agentic-filesystem/agentic-filesyst
 
 const SYSTEM_TENANT = 'blinksocial_system';
 const SESSIONS_NAMESPACE = 'sessions';
-const SESSIONS_FILENAME = 'sessions.json';
+const SESSIONS_FILENAME = 'sessions-v2.json';
 const SESSION_TTL_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
 
 @Injectable()

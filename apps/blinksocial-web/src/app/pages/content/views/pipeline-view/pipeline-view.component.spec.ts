@@ -10,6 +10,9 @@ describe('PipelineViewComponent', () => {
   let component: PipelineViewComponent;
 
   beforeEach(async () => {
+    // D-27 persists viewMode to localStorage; clear between specs so each
+    // test starts from the default 'kanban' view.
+    localStorage.removeItem('blink-content-view-mode');
     await TestBed.configureTestingModule({
       imports: [PipelineViewComponent],
       providers: [

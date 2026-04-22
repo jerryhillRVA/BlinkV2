@@ -7,9 +7,17 @@
       (titleChange)="onTitleChange($event)"
       (backToConcept)="onBackToConcept()"
       (archive)="onArchive()"
+      (unarchive)="onUnarchive()"
       (duplicate)="onDuplicate()"
       (deletePost)="onDelete()"
     />
+
+    <div class="status-stepper-wrap">
+      <app-status-stepper
+        [value]="item.status"
+        (statusChange)="onStatusChange($event)"
+      />
+    </div>
 
     <app-production-steps-bar
       [activeStep]="store.activeStep()"

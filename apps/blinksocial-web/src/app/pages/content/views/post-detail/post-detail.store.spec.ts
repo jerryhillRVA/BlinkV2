@@ -1,6 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { PostDetailStore } from './post-detail.store';
 import { ContentStateService } from '../../content-state.service';
+import { provideContentItemsApiStubs } from '../../content-items-api.test-util';
 import type {
   AudienceSegment,
   ContentItem,
@@ -45,10 +46,14 @@ function setup(item: ContentItem = makeItem()): {
   state: ContentStateService;
 } {
   TestBed.configureTestingModule({
-    providers: [ContentStateService, PostDetailStore],
+    providers: [
+      ContentStateService,
+      PostDetailStore,
+      ...provideContentItemsApiStubs(),
+    ],
   });
   const state = TestBed.inject(ContentStateService);
-  state.items.set([item]);
+  state.setItems([item]);
   state.pillars.set(PILLARS);
   state.segments.set(SEGMENTS);
   const store = TestBed.inject(PostDetailStore);
@@ -330,5 +335,13 @@ describe('PostDetailStore — menu actions', () => {
     expect(state.items().some((i) => i.id === 'post-1')).toBe(false);
     store.deleteSelf();
     expect(state.items().length).toBe(0);
+  });
+
+  it('setStatus persists the new status', () => {
+    const { store } = setup();
+    store.setStatus('scheduled');
+    expect(store.item()?.status).toBe('scheduled');
+    store.setStatus('published');
+    expect(store.item()?.status).toBe('published');
   });
 });

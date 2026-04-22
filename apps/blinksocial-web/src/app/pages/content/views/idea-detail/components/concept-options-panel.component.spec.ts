@@ -2,6 +2,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ConceptOptionsPanelComponent } from './concept-options-panel.component';
 import { IdeaDetailStore } from '../idea-detail.store';
 import { ContentStateService } from '../../../content-state.service';
+import { provideContentItemsApiStubs } from '../../../content-items-api.test-util';
 import { AI_SIMULATION_DELAY_MS } from '../../../content.constants';
 import type {
   AudienceSegment,
@@ -38,10 +39,10 @@ function setup(): {
 } {
   TestBed.configureTestingModule({
     imports: [ConceptOptionsPanelComponent],
-    providers: [ContentStateService, IdeaDetailStore],
+    providers: [...provideContentItemsApiStubs(), ContentStateService, IdeaDetailStore],
   });
   const state = TestBed.inject(ContentStateService);
-  state.items.set([makeItem()]);
+  state.setItems([makeItem()]);
   state.pillars.set(PILLARS);
   state.segments.set(SEGMENTS);
   const store = TestBed.inject(IdeaDetailStore);

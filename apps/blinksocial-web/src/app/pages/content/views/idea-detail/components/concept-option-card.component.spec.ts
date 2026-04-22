@@ -19,7 +19,7 @@ const OPT: ConceptOption = {
   objective: 'engagement',
   pillarIds: ['p1', 'p2'],
   segmentIds: ['s1'],
-  productionTargets: [{ platform: 'instagram', contentType: 'reel' }],
+  targetPlatforms: [{ platform: 'instagram', contentType: 'reel' }],
   cta: { type: 'comment', text: 'Drop a comment' },
   suggestedFormatLabel: 'Reel',
 };

@@ -7,6 +7,10 @@
   flex-direction: column;
 }
 
+.status-stepper-wrap {
+  margin: 12px 0 4px;
+}
+
 .detail-grid {
   display: grid;
   grid-template-columns: 1fr;
@@ -167,6 +171,35 @@
   height: 8px;
   border-radius: 50%;
   flex-shrink: 0;
+}
+
+.objective-chips,
+.tag-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.chip.is-static {
+  cursor: default;
+  pointer-events: none;
+  background: var(--blink-surface-variant);
+}
+
+.tags-input {
+  width: 100%;
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: 1px solid var(--blink-outline-variant);
+  background: var(--blink-surface);
+  color: var(--blink-on-surface);
+  font-size: var(--blink-body-medium);
+  font-family: inherit;
+
+  &:focus {
+    outline: none;
+    border-color: var(--blink-brand-primary);
+  }
 }
 
 .detail-timestamps {

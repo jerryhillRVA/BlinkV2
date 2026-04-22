@@ -81,7 +81,9 @@
     "reviewNotes": { "type": "string" },
 
     "metrics": { "$ref": "#/$defs/ContentMetrics" },
-    "production": { "$ref": "#/$defs/ProductionData" }
+    "production": { "$ref": "#/$defs/ProductionData" },
+
+    "archived": { "type": "boolean", "default": false }
   },
 
   "$defs": {

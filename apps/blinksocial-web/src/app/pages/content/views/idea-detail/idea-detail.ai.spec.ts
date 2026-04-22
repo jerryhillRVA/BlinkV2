@@ -65,7 +65,7 @@ describe('generateConceptOptions', () => {
   it('every option carries at least one production target', () => {
     const opts = generateConceptOptions(PILLARS, SEGMENTS);
     for (const o of opts) {
-      expect(o.productionTargets.length).toBeGreaterThan(0);
+      expect(o.targetPlatforms.length).toBeGreaterThan(0);
     }
   });
 });

@@ -1,6 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { ConceptDetailStore } from './concept-detail.store';
 import { ContentStateService } from '../../content-state.service';
+import { provideContentItemsApiStubs } from '../../content-items-api.test-util';
 import { AI_ASSIST_DELAY_MS } from '../../content.constants';
 import type {
   AudienceSegment,
@@ -31,7 +32,7 @@ function makeItem(partial: Partial<ContentItem> = {}): ContentItem {
     segmentIds: ['s1'],
     hook: 'A compelling hook',
     objective: 'engagement',
-    productionTargets: [{ platform: 'instagram', contentType: 'reel' }],
+    targetPlatforms: [{ platform: 'instagram', contentType: 'reel' }],
     createdAt: now,
     updatedAt: now,
     ...partial,
@@ -42,9 +43,9 @@ function setup(item: ContentItem = makeItem()): {
   store: ConceptDetailStore;
   state: ContentStateService;
 } {
-  TestBed.configureTestingModule({ providers: [ContentStateService, ConceptDetailStore] });
+  TestBed.configureTestingModule({ providers: [...provideContentItemsApiStubs(), ContentStateService, ConceptDetailStore] });
   const state = TestBed.inject(ContentStateService);
-  state.items.set([item]);
+  state.setItems([item]);
   state.pillars.set(PILLARS);
   state.segments.set(SEGMENTS);
   const store = TestBed.inject(ConceptDetailStore);
@@ -157,16 +158,16 @@ describe('ConceptDetailStore — field mutations', () => {
   });
 
   it('toggleProductionTarget adds / removes', () => {
-    const { store } = setup(makeItem({ productionTargets: [] }));
+    const { store } = setup(makeItem({ targetPlatforms: [] }));
     store.toggleProductionTarget('instagram', 'reel');
-    expect(store.item()?.productionTargets).toEqual([
-      { platform: 'instagram', contentType: 'reel' },
+    expect(store.item()?.targetPlatforms).toEqual([
+      { platform: 'instagram', contentType: 'reel', postId: null },
     ]);
     store.toggleProductionTarget('tiktok', 'short-video');
-    expect(store.item()?.productionTargets?.length).toBe(2);
+    expect(store.item()?.targetPlatforms?.length).toBe(2);
     store.toggleProductionTarget('instagram', 'reel');
-    expect(store.item()?.productionTargets).toEqual([
-      { platform: 'tiktok', contentType: 'short-video' },
+    expect(store.item()?.targetPlatforms).toEqual([
+      { platform: 'tiktok', contentType: 'short-video', postId: null },
     ]);
   });
 
@@ -261,7 +262,7 @@ describe('ConceptDetailStore — validation', () => {
   });
 
   it('fails when no production targets', () => {
-    const { store } = setup(makeItem({ productionTargets: [] }));
+    const { store } = setup(makeItem({ targetPlatforms: [] }));
     expect(store.canMoveToProduction()).toBe(false);
   });
 
@@ -274,13 +275,34 @@ describe('ConceptDetailStore — validation', () => {
     const { store } = setup(makeItem({ cta: { type: 'buy', text: 'x'.repeat(121) } }));
     expect(store.canMoveToProduction()).toBe(false);
   });
+
+  it('D-24: status review blocks Move to Production with a clear missing-validation reason', () => {
+    const { store } = setup(makeItem({ status: 'review' }));
+    expect(store.canMoveToProduction()).toBe(false);
+    expect(store.missingValidations()).toContain('Status must be Draft or In Progress');
+  });
+
+  it('D-24: status scheduled blocks Move to Production', () => {
+    const { store } = setup(makeItem({ status: 'scheduled' }));
+    expect(store.canMoveToProduction()).toBe(false);
+  });
+
+  it('D-24: status published blocks Move to Production', () => {
+    const { store } = setup(makeItem({ status: 'published' }));
+    expect(store.canMoveToProduction()).toBe(false);
+  });
+
+  it('D-24: status in-progress keeps Move to Production available', () => {
+    const { store } = setup(makeItem({ status: 'in-progress' }));
+    expect(store.canMoveToProduction()).toBe(true);
+  });
 });
 
 describe('ConceptDetailStore — moveToProduction', () => {
   it('creates N post items with conceptId and platform/contentType from targets (default: removes concept)', () => {
     const { store, state } = setup(
       makeItem({
-        productionTargets: [
+        targetPlatforms: [
           { platform: 'instagram', contentType: 'reel' },
           { platform: 'tiktok', contentType: 'short-video' },
         ],
@@ -304,7 +326,7 @@ describe('ConceptDetailStore — moveToProduction', () => {
   it('keepConcept=true leaves the concept in place', () => {
     const { store, state } = setup(
       makeItem({
-        productionTargets: [{ platform: 'instagram', contentType: 'reel' }],
+        targetPlatforms: [{ platform: 'instagram', contentType: 'reel' }],
       }),
     );
     const created = store.moveToProduction({ keepConcept: true, workOnIndex: null });
@@ -317,10 +339,63 @@ describe('ConceptDetailStore — moveToProduction', () => {
     expect(store.moveToProduction({ keepConcept: false, workOnIndex: null })).toEqual([]);
   });
 
-  it('created post items drop the productionTargets array', () => {
+  it('created post items drop the targetPlatforms array', () => {
     const { store } = setup();
     const [post] = store.moveToProduction({ keepConcept: true, workOnIndex: null });
-    expect(post.productionTargets).toBeUndefined();
+    expect(post.targetPlatforms).toBeUndefined();
+  });
+
+  it('nests brief.strategy with keyMessage, cta, tonePreset when present', () => {
+    const { store } = setup(
+      makeItem({
+        keyMessage: 'Hook them fast',
+        tonePreset: 'friendly',
+        cta: { type: 'follow', text: 'Follow us' },
+      }),
+    );
+    const [post] = store.moveToProduction({ keepConcept: true, workOnIndex: null });
+    const strategy = post.production?.brief?.strategy;
+    expect(strategy?.keyMessage).toBe('Hook them fast');
+    expect(strategy?.tonePreset).toBe('friendly');
+    expect(strategy?.ctaType).toBe('follow');
+    expect(strategy?.ctaText).toBe('Follow us');
+    expect(post.production?.brief?.creativePlan?.hook).toBe(makeItem().hook);
+    // D-30: empty sub-blocks are omitted from the brief rather than persisted as `{}`.
+    expect(post.production?.brief?.compliance).toBeUndefined();
+    expect(post.production?.brief?.platformRules).toBeUndefined();
+  });
+
+  it('nests brief.strategy minimally when optional fields are absent', () => {
+    const { store } = setup(
+      makeItem({
+        keyMessage: undefined,
+        tonePreset: undefined,
+        cta: undefined,
+        hook: 'Hook', // still need a hook for validation
+      }),
+    );
+    const [post] = store.moveToProduction({ keepConcept: true, workOnIndex: null });
+    const strategy = post.production?.brief?.strategy;
+    expect(strategy?.keyMessage).toBeUndefined();
+    expect(strategy?.tonePreset).toBeUndefined();
+    expect(strategy?.ctaType).toBeUndefined();
+    expect(strategy?.ctaText).toBeUndefined();
+    expect(strategy?.objective).toBe('engagement');
+  });
+
+  it('back-fills targetPlatforms[*].postId with created post ids', () => {
+    const { store } = setup(
+      makeItem({
+        targetPlatforms: [
+          { platform: 'instagram', contentType: 'reel' },
+          { platform: 'tiktok', contentType: 'short-video' },
+        ],
+      }),
+    );
+    const created = store.moveToProduction({ keepConcept: true, workOnIndex: null });
+    const tps = store.item()?.targetPlatforms ?? [];
+    expect(tps[0].postId).toBe(created[0].id);
+    expect(tps[1].postId).toBe(created[1].id);
   });
 });
 
@@ -349,7 +424,7 @@ describe('ConceptDetailStore — lifecycle + helpers', () => {
     store.demoteToIdea();
     expect(store.item()?.stage).toBe('idea');
     expect(store.item()?.status).toBe('draft');
-    expect(store.item()?.productionTargets).toBeUndefined();
+    expect(store.item()?.targetPlatforms).toBeUndefined();
   });
 
   it('archive flips archived=true', () => {
@@ -388,7 +463,8 @@ describe('ConceptDetailStore — lifecycle + helpers', () => {
 
   it('isInProduction returns true when a matching post already exists', () => {
     const { store, state } = setup();
-    state.items.update((prev) => [
+    const prev = state.items();
+    state.setItems([
       ...prev,
       {
         ...prev[0],
@@ -398,7 +474,7 @@ describe('ConceptDetailStore — lifecycle + helpers', () => {
         conceptId: 'c-1',
         platform: 'instagram',
         contentType: 'reel',
-        productionTargets: undefined,
+        targetPlatforms: undefined,
       },
     ]);
     expect(store.isInProduction({ platform: 'instagram', contentType: 'reel' })).toBe(true);
@@ -409,5 +485,90 @@ describe('ConceptDetailStore — lifecycle + helpers', () => {
     const { store } = setup();
     store.setItemId('missing');
     expect(store.isInProduction({ platform: 'instagram', contentType: 'reel' })).toBe(false);
+  });
+});
+
+describe('ConceptDetailStore — strategy field setters (D-07)', () => {
+  it('setKeyMessage trims and clears when empty', () => {
+    const { store } = setup();
+    store.setKeyMessage('  hello  ');
+    expect(store.item()?.keyMessage).toBe('hello');
+    store.setKeyMessage('   ');
+    expect(store.item()?.keyMessage).toBeUndefined();
+  });
+
+  it('setAngle trims and clears when empty', () => {
+    const { store } = setup();
+    store.setAngle('  angle  ');
+    expect(store.item()?.angle).toBe('angle');
+    store.setAngle('');
+    expect(store.item()?.angle).toBeUndefined();
+  });
+
+  it('setFormatNotes filters empty entries', () => {
+    const { store } = setup();
+    store.setFormatNotes(['b-roll', '  ', 'music']);
+    expect(store.item()?.formatNotes).toEqual(['b-roll', 'music']);
+  });
+
+  it('setClaimsFlag toggles the boolean', () => {
+    const { store } = setup();
+    store.setClaimsFlag(true);
+    expect(store.item()?.claimsFlag).toBe(true);
+    store.setClaimsFlag(false);
+    expect(store.item()?.claimsFlag).toBe(false);
+  });
+
+  it('setSourceLinks filters blanks', () => {
+    const { store } = setup();
+    store.setSourceLinks(['https://a', '', 'https://b']);
+    expect(store.item()?.sourceLinks).toEqual(['https://a', 'https://b']);
+  });
+
+  it('setRiskLevel accepts level and undefined', () => {
+    const { store } = setup();
+    store.setRiskLevel('medium');
+    expect(store.item()?.riskLevel).toBe('medium');
+    store.setRiskLevel(undefined);
+    expect(store.item()?.riskLevel).toBeUndefined();
+  });
+
+  it('setTargetPublishWindow stores both bounds and clears when both empty', () => {
+    const { store } = setup();
+    store.setTargetPublishWindow({ start: '2026-01-01', end: '2026-02-01' });
+    expect(store.item()?.targetPublishWindow).toEqual({
+      start: '2026-01-01',
+      end: '2026-02-01',
+    });
+    store.setTargetPublishWindow({ start: undefined, end: undefined });
+    expect(store.item()?.targetPublishWindow).toBeUndefined();
+    store.setTargetPublishWindow(undefined);
+    expect(store.item()?.targetPublishWindow).toBeUndefined();
+  });
+
+  it('setStatus persists the new status', () => {
+    const { store } = setup();
+    store.setStatus('review');
+    expect(store.item()?.status).toBe('review');
+  });
+
+  it('missingValidations surfaces each failing gate', () => {
+    const { store } = setup(makeItem({
+      title: '',
+      description: 'short',
+      hook: '',
+      pillarIds: [],
+      objective: undefined,
+      targetPlatforms: [],
+      cta: { type: 'other', text: '' },
+    }));
+    const missing = store.missingValidations();
+    expect(missing).toContain('Title');
+    expect(missing).toContain('Description (50\u2013400 chars)');
+    expect(missing).toContain('Hook');
+    expect(missing).toContain('At least one pillar');
+    expect(missing).toContain('Content goal');
+    expect(missing).toContain('Production target');
+    expect(missing).toContain('CTA text');
   });
 });

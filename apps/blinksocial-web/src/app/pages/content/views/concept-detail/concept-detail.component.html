@@ -3,12 +3,24 @@
     <app-concept-detail-header
       [item]="item"
       [canMoveToProduction]="store.canMoveToProduction()"
+      [missingValidations]="store.missingValidations()"
       (back)="onBack()"
       (moveToProduction)="onMoveClick()"
       (demoteToIdea)="onDemote()"
       (deleteConcept)="onDelete()"
+      (archive)="onArchive()"
+      (unarchive)="onUnarchive()"
+      (duplicate)="duplicate.emit()"
+      (copyLink)="copyLink.emit()"
       (titleChange)="onTitleChange($event)"
     />
+
+    <div class="status-stepper-wrap">
+      <app-status-stepper
+        [value]="item.status"
+        (statusChange)="onStatusChange($event)"
+      />
+    </div>
 
     <div class="detail-grid">
       <main class="detail-main">
@@ -24,7 +36,11 @@
             (valueChange)="onDescriptionChange($event)"
           />
           <div class="panel-inline-row">
-            <p class="char-counter" [class.is-invalid]="descriptionInvalid()">
+            <p
+              class="char-counter"
+              [class.is-invalid]="descriptionInvalid()"
+              [class.is-warn]="descriptionUnderMin()"
+            >
               {{ descriptionCount() }}/{{ descriptionMax }} characters (min {{ descriptionMin }})
             </p>
             <button type="button" class="assist-btn" [disabled]="store.isAssistingDescription()" (click)="onAssistDescription()">
@@ -91,10 +107,108 @@
             <span class="panel-hint">(pick one or more)</span>
           </h3>
           <app-production-targets-picker
-            [selected]="item.productionTargets ?? []"
+            [selected]="item.targetPlatforms ?? []"
             [isInProduction]="isInProductionFn"
             (toggleTarget)="onToggleTarget($event)"
           />
+        </section>
+
+        <section class="panel">
+          <h3 class="panel-label">Key Message</h3>
+          <app-inline-edit
+            [value]="item.keyMessage ?? ''"
+            [multiline]="true"
+            [placeholder]="'What\u2019s the single message this concept must land?'"
+            displayClass="detail-description"
+            inputClass="detail-description-input"
+            ariaLabel="Edit key message"
+            (valueChange)="onKeyMessageChange($event)"
+          />
+        </section>
+
+        <section class="panel">
+          <h3 class="panel-label">Angle</h3>
+          <app-inline-edit
+            [value]="item.angle ?? ''"
+            [placeholder]="'Unique angle or POV'"
+            displayClass="detail-hook-text"
+            inputClass="detail-hook-input"
+            ariaLabel="Edit angle"
+            (valueChange)="onAngleChange($event)"
+          />
+        </section>
+
+        <section class="panel">
+          <h3 class="panel-label">Format Notes</h3>
+          <input
+            type="text"
+            class="tags-input"
+            placeholder="Comma-separated (e.g. b-roll, talking-head)"
+            [value]="formatNotesDisplay()"
+            (change)="onFormatNotesChange($event)"
+            aria-label="Edit format notes"
+          />
+        </section>
+
+        <section class="panel">
+          <h3 class="panel-label">Claims &amp; Risk</h3>
+          <label class="claims-toggle">
+            <input
+              type="checkbox"
+              [checked]="!!item.claimsFlag"
+              (change)="onClaimsFlagChange($event)"
+            />
+            <span>Contains factual or health claims that need review</span>
+          </label>
+          <div class="risk-row">
+            <span class="panel-hint">Risk Level</span>
+            <div class="risk-buttons">
+              @for (lvl of riskLevels; track lvl) {
+                <button
+                  type="button"
+                  class="risk-btn"
+                  [class.is-active]="item.riskLevel === lvl"
+                  (click)="onRiskLevelChange(lvl)"
+                >
+                  {{ lvl }}
+                </button>
+              }
+            </div>
+          </div>
+        </section>
+
+        <section class="panel">
+          <h3 class="panel-label">Source Links</h3>
+          <textarea
+            class="tags-input"
+            rows="3"
+            placeholder="One URL per line"
+            [value]="sourceLinksDisplay()"
+            (change)="onSourceLinksChange($event)"
+            aria-label="Edit source links"
+          ></textarea>
+        </section>
+
+        <section class="panel">
+          <h3 class="panel-label">Target Publish Window</h3>
+          <div class="publish-window">
+            <label>
+              <span>Start</span>
+              <input
+                type="date"
+                [value]="item.targetPublishWindow?.start ?? ''"
+                (change)="onPublishStartChange($event)"
+              />
+            </label>
+            <label>
+              <span>End</span>
+              <input
+                type="date"
+                [value]="item.targetPublishWindow?.end ?? ''"
+                (change)="onPublishEndChange($event)"
+              />
+            </label>
+          </div>
         </section>
 
         <section class="panel">
@@ -168,14 +282,29 @@
 
         <section class="panel">
           <h3 class="panel-label">Business Objective</h3>
-          <div class="panel-warning">
-            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-              <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/>
-              <path d="M12 9v4"/>
-              <path d="M12 17h.01"/>
-            </svg>
-            <span>No business objectives have been set up. Visit Strategy → Objectives.</span>
-          </div>
+          @if (store.businessObjectives().length === 0) {
+            <div class="panel-warning">
+              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/>
+                <path d="M12 9v4"/>
+                <path d="M12 17h.01"/>
+              </svg>
+              <span>No business objectives have been set up. Visit Strategy → Objectives.</span>
+            </div>
+          } @else {
+            <div class="objective-chips">
+              @for (o of store.businessObjectives(); track o.id) {
+                <button
+                  type="button"
+                  class="chip"
+                  [class.is-active]="item.objectiveId === o.id"
+                  (click)="onObjectiveClick(o.id)"
+                >
+                  {{ o.statement }}
+                </button>
+              }
+            </div>
+          }
         </section>
 
         <section class="panel panel-journey">
@@ -196,7 +325,7 @@
     @if (store.moveDialogOpen()) {
       <app-move-to-production-dialog
         [title]="item.title"
-        [targets]="item.productionTargets ?? []"
+        [targets]="item.targetPlatforms ?? []"
         (selectAll)="onDialogAddAll()"
         (selectAllKeepConcept)="onDialogAddAllKeep()"
         (workOn)="onDialogWorkOn($event)"

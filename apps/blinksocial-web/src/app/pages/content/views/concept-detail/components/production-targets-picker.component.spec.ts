@@ -1,10 +1,10 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ProductionTargetsPickerComponent } from './production-targets-picker.component';
-import type { ProductionTarget } from '../concept-detail.types';
+import type { TargetPlatform } from '../concept-detail.types';
 
 function setup(
-  selected: ProductionTarget[] = [],
-  isInProduction: (t: ProductionTarget) => boolean = () => false,
+  selected: TargetPlatform[] = [],
+  isInProduction: (t: TargetPlatform) => boolean = () => false,
 ): ComponentFixture<ProductionTargetsPickerComponent> {
   TestBed.configureTestingModule({ imports: [ProductionTargetsPickerComponent] });
   const fixture = TestBed.createComponent(ProductionTargetsPickerComponent);
@@ -31,7 +31,7 @@ describe('ProductionTargetsPickerComponent', () => {
   });
 
   it('selected targets receive the is-selected class + aria-pressed=true', () => {
-    const fixture = setup([{ platform: 'instagram', contentType: 'reel' }]);
+    const fixture = setup([{ platform: 'instagram', contentType: 'reel', postId: null }]);
     const selectedChip = Array.from(
       fixture.nativeElement.querySelectorAll('.target-chip') as NodeListOf<HTMLButtonElement>,
     ).find((b) => b.textContent?.trim() === 'Reel') as HTMLButtonElement;
@@ -41,20 +41,20 @@ describe('ProductionTargetsPickerComponent', () => {
 
   it('clicking a chip emits toggleTarget with the correct pair', () => {
     const fixture = setup();
-    const emitted: ProductionTarget[] = [];
+    const emitted: TargetPlatform[] = [];
     fixture.componentInstance.toggleTarget.subscribe((t) => emitted.push(t));
     const chip = Array.from(
       fixture.nativeElement.querySelectorAll('.target-chip') as NodeListOf<HTMLButtonElement>,
     ).find((b) => b.textContent?.trim() === 'Reel') as HTMLButtonElement;
     chip.click();
-    expect(emitted).toEqual([{ platform: 'instagram', contentType: 'reel' }]);
+    expect(emitted).toEqual([{ platform: 'instagram', contentType: 'reel', postId: null }]);
   });
 
   it('chips marked in-production are disabled, carry the badge, do not emit on click', () => {
-    const isInProduction = (t: ProductionTarget) =>
+    const isInProduction = (t: TargetPlatform) =>
       t.platform === 'instagram' && t.contentType === 'reel';
     const fixture = setup([], isInProduction);
-    const emitted: ProductionTarget[] = [];
+    const emitted: TargetPlatform[] = [];
     fixture.componentInstance.toggleTarget.subscribe((t) => emitted.push(t));
     const chip = Array.from(
       fixture.nativeElement.querySelectorAll('.target-chip') as NodeListOf<HTMLButtonElement>,

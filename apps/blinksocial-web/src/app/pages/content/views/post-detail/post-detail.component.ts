@@ -12,6 +12,8 @@ import { ProductionStepsBarComponent } from './components/production-steps-bar.c
 import { BriefStepComponent } from './components/brief-step.component';
 import { BriefStatusSidebarComponent } from './components/brief-status-sidebar.component';
 import { StepPlaceholderComponent } from './components/step-placeholder.component';
+import { StatusStepperComponent } from '../../components/status-stepper/status-stepper.component';
+import type { ContentStatus } from '../../content.types';
 
 @Component({
   selector: 'app-post-detail',
@@ -21,6 +23,7 @@ import { StepPlaceholderComponent } from './components/step-placeholder.componen
     BriefStepComponent,
     BriefStatusSidebarComponent,
     StepPlaceholderComponent,
+    StatusStepperComponent,
   ],
   providers: [PostDetailStore],
   templateUrl: './post-detail.component.html',
@@ -58,6 +61,10 @@ export class PostDetailComponent {
     this.back.emit();
   }
 
+  protected onUnarchive(): void {
+    this.store.unarchive();
+  }
+
   protected onDuplicate(): void {
     const copy = this.store.duplicate();
     if (!copy) return;
@@ -66,6 +73,9 @@ export class PostDetailComponent {
   }
 
   protected onDelete(): void {
+    const item = this.store.item();
+    const label = item?.title ? `"${item.title}"` : 'this post';
+    if (!window.confirm(`Delete ${label}? This cannot be undone.`)) return;
     this.store.deleteSelf();
     this.deleted.emit();
   }
@@ -80,5 +90,9 @@ export class PostDetailComponent {
 
   protected onContinueToBuilder(): void {
     this.store.setActiveStep('builder');
+  }
+
+  protected onStatusChange(status: ContentStatus): void {
+    this.store.setStatus(status);
   }
 }

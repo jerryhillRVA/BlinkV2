@@ -80,15 +80,36 @@ function buildProduction(base: BaseItemFields, payload: ProductionConceptPayload
 }
 
 function buildBrief(base: BaseItemFields, payload: BriefPayload): ContentItem {
+  const keyMessage = payload.keyMessage.trim();
+  const ctaType = payload.cta?.type;
+  const ctaText = payload.cta?.text?.trim();
   return {
     ...base,
-    stage: 'production-brief',
+    stage: 'post',
     status: 'in-progress',
     platform: payload.platform,
     contentType: payload.contentType,
     objective: payload.objective,
-    keyMessage: payload.keyMessage.trim(),
+    keyMessage,
     ...(payload.tonePreset ? { tonePreset: payload.tonePreset } : {}),
-    ...(payload.cta ? { cta: { type: payload.cta.type, text: payload.cta.text.trim() } } : {}),
+    ...(payload.cta ? { cta: { type: payload.cta.type, text: ctaText ?? '' } } : {}),
+    production: {
+      brief: {
+        strategy: {
+          objective: payload.objective,
+          audienceSegmentIds: [...payload.segmentIds],
+          pillarIds: [...payload.pillarIds],
+          keyMessage,
+          ...(ctaType ? { ctaType } : {}),
+          ...(ctaText ? { ctaText } : {}),
+          ...(payload.tonePreset ? { tonePreset: payload.tonePreset } : {}),
+          doChecklist: [],
+          dontChecklist: [],
+        },
+        platformRules: {},
+        creativePlan: {},
+        compliance: {},
+      },
+    },
   };
 }

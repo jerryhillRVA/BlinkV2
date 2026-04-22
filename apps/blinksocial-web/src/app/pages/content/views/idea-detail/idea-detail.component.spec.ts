@@ -2,6 +2,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { IdeaDetailComponent } from './idea-detail.component';
 import { IdeaDetailStore } from './idea-detail.store';
 import { ContentStateService } from '../../content-state.service';
+import { provideContentItemsApiStubs } from '../../content-items-api.test-util';
 import type {
   AudienceSegment,
   ContentItem,
@@ -40,10 +41,10 @@ function setup(item: ContentItem = makeItem()): {
 } {
   TestBed.configureTestingModule({
     imports: [IdeaDetailComponent],
-    providers: [ContentStateService],
+    providers: [...provideContentItemsApiStubs(), ContentStateService],
   });
   const state = TestBed.inject(ContentStateService);
-  state.items.set([item]);
+  state.setItems([item]);
   state.pillars.set(PILLARS);
   state.segments.set(SEGMENTS);
   const fixture = TestBed.createComponent(IdeaDetailComponent);
@@ -189,7 +190,7 @@ describe('IdeaDetailComponent — empty item', () => {
   it('renders nothing when item is null', () => {
     TestBed.configureTestingModule({
       imports: [IdeaDetailComponent],
-      providers: [ContentStateService, IdeaDetailStore],
+      providers: [...provideContentItemsApiStubs(), ContentStateService, IdeaDetailStore],
     });
     const fixture = TestBed.createComponent(IdeaDetailComponent);
     fixture.detectChanges();
@@ -199,7 +200,7 @@ describe('IdeaDetailComponent — empty item', () => {
   it('defensive helpers return false/0 when store item is null', () => {
     TestBed.configureTestingModule({
       imports: [IdeaDetailComponent],
-      providers: [ContentStateService, IdeaDetailStore],
+      providers: [...provideContentItemsApiStubs(), ContentStateService, IdeaDetailStore],
     });
     const fixture = TestBed.createComponent(IdeaDetailComponent);
     const comp = fixture.componentInstance as unknown as {
@@ -213,5 +214,113 @@ describe('IdeaDetailComponent — empty item', () => {
     expect(comp.pillarsAtLimit()).toBe(false);
     expect(comp.formatDate(undefined)).toBe('');
     expect(comp.formatDate('not-a-date')).toBe('');
+  });
+});
+
+describe('IdeaDetailComponent — tags + business-objective + status handlers', () => {
+  it('onTagsChange splits comma-separated input and persists', () => {
+    const { fixture, store } = setup();
+    const comp = fixture.componentInstance as unknown as {
+      onTagsChange: (e: Event) => void;
+      tagsDisplay: () => string;
+    };
+    comp.onTagsChange({ target: { value: 'a, b, c' } } as unknown as Event);
+    expect(store.item()?.tags).toEqual(['a', 'b', 'c']);
+    expect(comp.tagsDisplay()).toBe('a, b, c');
+  });
+
+  it('onObjectiveClick toggles objectiveId', () => {
+    const { fixture, store } = setup();
+    const comp = fixture.componentInstance as unknown as {
+      onObjectiveClick: (id: string) => void;
+    };
+    comp.onObjectiveClick('obj-42');
+    expect(store.item()?.objectiveId).toBe('obj-42');
+    comp.onObjectiveClick('obj-42');
+    expect(store.item()?.objectiveId).toBeUndefined();
+  });
+
+  it('onStatusChange persists the new status', () => {
+    const { fixture, store } = setup();
+    const comp = fixture.componentInstance as unknown as {
+      onStatusChange: (s: 'in-progress') => void;
+    };
+    comp.onStatusChange('in-progress');
+    expect(store.item()?.status).toBe('in-progress');
+  });
+
+  it('onAdvance emits the new concept id when advance succeeds', () => {
+    const { fixture } = setup();
+    const emitted: string[] = [];
+    fixture.componentInstance.advance.subscribe((id) => emitted.push(id));
+    (fixture.componentInstance as unknown as { onAdvance: () => void }).onAdvance();
+    expect(emitted.length).toBe(1);
+    expect(emitted[0]).toMatch(/^c-/);
+  });
+
+  it('onUnarchive emits the unarchive event', () => {
+    const { fixture } = setup();
+    let count = 0;
+    fixture.componentInstance.unarchive.subscribe(() => count++);
+    (fixture.componentInstance as unknown as { onUnarchive: () => void }).onUnarchive();
+    expect(count).toBe(1);
+  });
+
+  it('renders business-objective chips when objectives are loaded', () => {
+    TestBed.configureTestingModule({
+      imports: [IdeaDetailComponent],
+      providers: [...provideContentItemsApiStubs(), ContentStateService],
+    });
+    const state = TestBed.inject(ContentStateService);
+    state.setItems([makeItem()]);
+    state.pillars.set(PILLARS);
+    state.segments.set(SEGMENTS);
+    state.businessObjectives.set([
+      { id: 'obj-1', category: 'growth', statement: 'Grow fast', target: 1, unit: '', timeframe: '' },
+    ]);
+    const fixture = TestBed.createComponent(IdeaDetailComponent);
+    fixture.componentRef.setInput('itemId', 'c-1');
+    fixture.detectChanges();
+    const chips = fixture.nativeElement.querySelectorAll('.objective-chips .chip');
+    expect(chips.length).toBe(1);
+    expect(fixture.nativeElement.querySelector('.panel-warning')).toBeNull();
+  });
+
+  it('tagsDisplay handles items with no tags by returning empty string', () => {
+    const { fixture } = setup(makeItem({ tags: undefined }));
+    const comp = fixture.componentInstance as unknown as {
+      tagsDisplay: () => string;
+    };
+    expect(comp.tagsDisplay()).toBe('');
+  });
+
+  it('renders tag-chips when tags are present on the item', () => {
+    const { fixture } = setup(makeItem({ tags: ['launch', 'Q2'] }));
+    const chips = fixture.nativeElement.querySelectorAll('.tag-chips .chip');
+    expect(chips.length).toBe(2);
+  });
+
+  it('renders the selected-objective chip with is-active when objectiveId matches', () => {
+    TestBed.configureTestingModule({
+      imports: [IdeaDetailComponent],
+      providers: [...provideContentItemsApiStubs(), ContentStateService],
+    });
+    const state = TestBed.inject(ContentStateService);
+    state.setItems([makeItem({ objectiveId: 'obj-a' })]);
+    state.pillars.set(PILLARS);
+    state.segments.set(SEGMENTS);
+    state.businessObjectives.set([
+      { id: 'obj-a', category: 'growth', statement: 'A', target: 1, unit: '', timeframe: '' },
+      { id: 'obj-b', category: 'awareness', statement: 'B', target: 1, unit: '', timeframe: '' },
+    ]);
+    const fixture = TestBed.createComponent(IdeaDetailComponent);
+    fixture.componentRef.setInput('itemId', 'c-1');
+    fixture.detectChanges();
+    const chips = Array.from(
+      fixture.nativeElement.querySelectorAll('.objective-chips .chip') as NodeListOf<HTMLElement>,
+    );
+    expect(chips.length).toBe(2);
+    expect(chips[0].classList.contains('is-active')).toBe(true);
+    expect(chips[1].classList.contains('is-active')).toBe(false);
   });
 });

@@ -70,6 +70,24 @@
         </div>
       </div>
     }
+
+    @if (segments().length > 0) {
+      <div class="field">
+        <span class="field-label">Audience Segments</span>
+        <div class="chip-row">
+          @for (s of segments(); track s.id) {
+            <button
+              type="button"
+              class="chip"
+              [class.is-active]="isSegmentSelected(s.id)"
+              (click)="toggleSegment(s.id)"
+            >
+              {{ s.name }}
+            </button>
+          }
+        </div>
+      </div>
+    }
   } @else {
     <div class="field">
       <span class="field-label">

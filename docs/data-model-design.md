@@ -190,7 +190,7 @@ Each namespace needing list-view filtering maintains a lightweight `_index.json`
 | **Index document** | **Yes** | **Good to ~10K** | **Yes (v1)** |
 | Per-status subdirs | Partial | Poor | No |
 
-See: `schemas/workspace/content-items-index.schema.json`, sample at `data/hive-collective/content-items/_index.json`
+See: `schemas/workspace/content-items-index.schema.json`, sample at `data/hive-collective/content-items/_content-items-index.json`
 
 ---
 

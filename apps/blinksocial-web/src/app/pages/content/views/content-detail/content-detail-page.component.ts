@@ -2,6 +2,7 @@ import { Component, DestroyRef, computed, inject, signal } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ContentStateService } from '../../content-state.service';
+import { ToastService } from '../../../../core/toast/toast.service';
 import { IdeaDetailComponent } from '../idea-detail/idea-detail.component';
 import { ConceptDetailComponent } from '../concept-detail/concept-detail.component';
 import { PostDetailComponent } from '../post-detail/post-detail.component';
@@ -18,6 +19,7 @@ export class ContentDetailPageComponent {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly toast = inject(ToastService);
 
   protected readonly stateService = inject(ContentStateService);
 
@@ -42,6 +44,9 @@ export class ContentDetailPageComponent {
         ) {
           this.stateService.loadAll(id);
         }
+        if (itemId) {
+          this.stateService.loadFullItem(itemId);
+        }
       });
   }
 
@@ -52,36 +57,44 @@ export class ContentDetailPageComponent {
   protected onArchive(): void {
     const it = this.item();
     if (!it) return;
-    this.stateService.saveItem({
-      ...it,
-      archived: true,
-      updatedAt: new Date().toISOString(),
-    });
-    this.goBack();
+    this.stateService.archive(it.id).subscribe(() => this.goBack());
+  }
+
+  protected onUnarchive(): void {
+    const it = this.item();
+    if (!it) return;
+    this.stateService.unarchive(it.id).subscribe();
   }
 
   protected onDuplicate(): void {
     const it = this.item();
     if (!it) return;
-    const copy: ContentItem = {
-      ...it,
-      id: `c_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`,
+    const { id: _id, createdAt: _c, updatedAt: _u, ...rest } = it;
+    const draft = {
+      ...rest,
       title: `${it.title} (copy)`,
       archived: false,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    };
-    this.stateService.saveItem(copy);
-    this.router.navigate(['/workspace', this.workspaceId(), 'content', copy.id]);
+    } as ContentItem;
+    this.stateService.saveItem(draft).subscribe((saved) => {
+      this.router.navigate([
+        '/workspace',
+        this.workspaceId(),
+        'content',
+        saved.id,
+      ]);
+    });
   }
 
   protected onCopyLink(): void {
     const url = `${window.location.origin}/workspace/${this.workspaceId()}/content/${this.item()?.id ?? ''}`;
-    if (navigator.clipboard) {
-      navigator.clipboard.writeText(url).catch(() => {
-        /* v8 ignore next */
-      });
+    if (!navigator.clipboard) {
+      this.toast.showError('Clipboard not available');
+      return;
     }
+    navigator.clipboard
+      .writeText(url)
+      .then(() => this.toast.showSuccess('Link copied to clipboard'))
+      .catch(() => this.toast.showError('Failed to copy link'));
   }
 
   protected onMoved(event: {
@@ -102,5 +115,14 @@ export class ContentDetailPageComponent {
 
   protected onDeleted(): void {
     this.goBack();
+  }
+
+  protected onAdvancedToConcept(conceptId: string): void {
+    this.router.navigate([
+      '/workspace',
+      this.workspaceId(),
+      'content',
+      conceptId,
+    ]);
   }
 }

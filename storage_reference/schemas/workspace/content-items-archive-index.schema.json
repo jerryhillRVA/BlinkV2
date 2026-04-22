@@ -1,0 +1,35 @@
+{
+  "$id": "https://blinksocial.io/schemas/content-items-archive-index.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "ContentItemsArchiveIndex",
+  "type": "object",
+  "required": ["items", "totalCount", "lastUpdated"],
+  "properties": {
+    "items": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "stage", "status", "title", "archived", "createdAt", "updatedAt"],
+        "properties": {
+          "id": { "type": "string" },
+          "stage": { "$ref": "enums.schema.json#/$defs/ContentStage" },
+          "status": { "$ref": "enums.schema.json#/$defs/ContentStatus" },
+          "title": { "type": "string" },
+          "platform": { "oneOf": [{ "$ref": "enums.schema.json#/$defs/Platform" }, { "type": "null" }] },
+          "contentType": { "oneOf": [{ "$ref": "enums.schema.json#/$defs/ContentType" }, { "type": "null" }] },
+          "pillarIds": { "type": "array", "items": { "type": "string" } },
+          "segmentIds": { "type": "array", "items": { "type": "string" } },
+          "owner": { "type": ["string", "null"] },
+          "parentIdeaId": { "type": ["string", "null"] },
+          "parentConceptId": { "type": ["string", "null"] },
+          "scheduledDate": { "type": ["string", "null"], "format": "date" },
+          "archived": { "const": true },
+          "createdAt": { "type": "string", "format": "date-time" },
+          "updatedAt": { "type": "string", "format": "date-time" }
+        }
+      }
+    },
+    "totalCount": { "type": "integer" },
+    "lastUpdated": { "type": "string", "format": "date-time" }
+  }
+}

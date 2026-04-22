@@ -1,7 +1,8 @@
 import { TestBed } from '@angular/core/testing';
 import { provideRouter, ActivatedRoute, Router, convertToParamMap } from '@angular/router';
 import { signal, type WritableSignal } from '@angular/core';
-import { BehaviorSubject } from 'rxjs';
+import { BehaviorSubject, of } from 'rxjs';
+import { MatSnackBar } from '@angular/material/snack-bar';
 import { ContentDetailPageComponent } from './content-detail-page.component';
 import { ContentStateService } from '../../content-state.service';
 import type {
@@ -36,6 +37,9 @@ function createMockState(initialItems: ContentItem[]): {
     saveItem: ReturnType<typeof vi.fn>;
     deleteItem: ReturnType<typeof vi.fn>;
     loadAll: ReturnType<typeof vi.fn>;
+    loadFullItem: ReturnType<typeof vi.fn>;
+    archive: ReturnType<typeof vi.fn>;
+    unarchive: ReturnType<typeof vi.fn>;
   };
 } {
   const items = signal<ContentItem[]>(initialItems);
@@ -43,20 +47,48 @@ function createMockState(initialItems: ContentItem[]): {
     items,
     pillars: signal<ContentPillar[]>([]),
     segments: signal<AudienceSegment[]>([]),
+    businessObjectives: signal([]),
     loading: signal(false),
     workspaceId: signal('ws-1'),
     saveItem: vi.fn((i: ContentItem) => {
+      const savedId = i.id || `c-${Math.random().toString(36).slice(2, 8)}`;
+      const saved = { ...i, id: savedId };
       items.update((prev) => {
-        const idx = prev.findIndex((p) => p.id === i.id);
+        const idx = prev.findIndex((p) => p.id === saved.id);
         return idx >= 0
-          ? prev.map((p, k) => (k === idx ? i : p))
-          : [...prev, i];
+          ? prev.map((p, k) => (k === idx ? saved : p))
+          : [...prev, saved];
       });
+      return of(saved);
     }),
     deleteItem: vi.fn((id: string) => {
       items.update((prev) => prev.filter((p) => p.id !== id));
+      return of({ deleted: true as const, id });
     }),
     loadAll: vi.fn(),
+    loadFullItem: vi.fn(),
+    archive: vi.fn((id: string) => {
+      let updated: ContentItem | undefined;
+      items.update((prev) =>
+        prev.map((p) => {
+          if (p.id !== id) return p;
+          updated = { ...p, archived: true };
+          return updated;
+        }),
+      );
+      return of(updated as ContentItem);
+    }),
+    unarchive: vi.fn((id: string) => {
+      let updated: ContentItem | undefined;
+      items.update((prev) =>
+        prev.map((p) => {
+          if (p.id !== id) return p;
+          updated = { ...p, archived: false };
+          return updated;
+        }),
+      );
+      return of(updated as ContentItem);
+    }),
   };
   return { state };
 }
@@ -73,6 +105,7 @@ function configureTest(
     imports: [ContentDetailPageComponent],
     providers: [
       provideRouter([]),
+      { provide: MatSnackBar, useValue: { open: vi.fn() } },
       {
         provide: ActivatedRoute,
         useValue: {
@@ -143,7 +176,7 @@ describe('ContentDetailPageComponent — stage dispatch', () => {
         segmentIds: ['s1'],
         hook: 'A hook',
         objective: 'awareness',
-        productionTargets: [{ platform: 'instagram', contentType: 'reel' }],
+        targetPlatforms: [{ platform: 'instagram', contentType: 'reel' }],
       }),
     ]);
     const fixture = TestBed.createComponent(ContentDetailPageComponent);
@@ -175,7 +208,7 @@ describe('ContentDetailPageComponent — stage dispatch', () => {
 
   it('renders the "coming soon" placeholder for truly unknown stages', () => {
     configureTest({ id: 'ws-1', itemId: 'c-1' }, [
-      makeItem({ stage: 'production-brief' }),
+      makeItem({ stage: 'unknown-stage' as unknown as ContentItem['stage'] }),
     ]);
     const fixture = TestBed.createComponent(ContentDetailPageComponent);
     fixture.detectChanges();
@@ -194,14 +227,14 @@ describe('ContentDetailPageComponent — actions', () => {
     expect(spy).toHaveBeenCalledWith(['/workspace', 'ws-1', 'content']);
   });
 
-  it('onArchive persists archived=true and routes back', () => {
+  it('onArchive calls state.archive and routes back', () => {
     const { state } = configureTest({ id: 'ws-1', itemId: 'c-1' }, [makeItem()]);
     const fixture = TestBed.createComponent(ContentDetailPageComponent);
     fixture.detectChanges();
     const router = TestBed.inject(Router);
     const spy = vi.spyOn(router, 'navigate').mockResolvedValue(true);
     (fixture.componentInstance as unknown as { onArchive: () => void }).onArchive();
-    expect(state.saveItem.mock.calls.at(-1)?.[0]?.archived).toBe(true);
+    expect(state.archive).toHaveBeenCalledWith('c-1');
     expect(spy).toHaveBeenCalledWith(['/workspace', 'ws-1', 'content']);
   });
 
@@ -212,7 +245,27 @@ describe('ContentDetailPageComponent — actions', () => {
     const fixture = TestBed.createComponent(ContentDetailPageComponent);
     fixture.detectChanges();
     (fixture.componentInstance as unknown as { onArchive: () => void }).onArchive();
-    expect(state.saveItem).not.toHaveBeenCalled();
+    expect(state.archive).not.toHaveBeenCalled();
+  });
+
+  it('onUnarchive calls state.unarchive', () => {
+    const { state } = configureTest({ id: 'ws-1', itemId: 'c-1' }, [
+      makeItem({ archived: true }),
+    ]);
+    const fixture = TestBed.createComponent(ContentDetailPageComponent);
+    fixture.detectChanges();
+    (fixture.componentInstance as unknown as { onUnarchive: () => void }).onUnarchive();
+    expect(state.unarchive).toHaveBeenCalledWith('c-1');
+  });
+
+  it('onUnarchive is a no-op when item is missing', () => {
+    const { state } = configureTest({ id: 'ws-1', itemId: 'missing' }, [
+      makeItem(),
+    ]);
+    const fixture = TestBed.createComponent(ContentDetailPageComponent);
+    fixture.detectChanges();
+    (fixture.componentInstance as unknown as { onUnarchive: () => void }).onUnarchive();
+    expect(state.unarchive).not.toHaveBeenCalled();
   });
 
   it('onDuplicate saves a copy and routes to it', () => {
@@ -285,5 +338,22 @@ describe('ContentDetailPageComponent — actions', () => {
     const spy = vi.spyOn(router, 'navigate').mockResolvedValue(true);
     (fixture.componentInstance as unknown as { onDeleted: () => void }).onDeleted();
     expect(spy).toHaveBeenCalledWith(['/workspace', 'ws-1', 'content']);
+  });
+
+  it('onAdvancedToConcept routes to the new concept detail', () => {
+    configureTest({ id: 'ws-1', itemId: 'c-1' }, [makeItem()]);
+    const fixture = TestBed.createComponent(ContentDetailPageComponent);
+    fixture.detectChanges();
+    const router = TestBed.inject(Router);
+    const spy = vi.spyOn(router, 'navigate').mockResolvedValue(true);
+    (fixture.componentInstance as unknown as {
+      onAdvancedToConcept: (id: string) => void;
+    }).onAdvancedToConcept('new-concept-id');
+    expect(spy).toHaveBeenCalledWith([
+      '/workspace',
+      'ws-1',
+      'content',
+      'new-concept-id',
+    ]);
   });
 });

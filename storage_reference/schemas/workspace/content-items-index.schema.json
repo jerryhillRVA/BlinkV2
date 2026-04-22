@@ -23,6 +23,7 @@
           "parentIdeaId": { "type": ["string", "null"] },
           "parentConceptId": { "type": ["string", "null"] },
           "scheduledDate": { "type": ["string", "null"], "format": "date" },
+          "archived": { "type": ["boolean", "null"] },
           "createdAt": { "type": "string", "format": "date-time" },
           "updatedAt": { "type": "string", "format": "date-time" }
         }

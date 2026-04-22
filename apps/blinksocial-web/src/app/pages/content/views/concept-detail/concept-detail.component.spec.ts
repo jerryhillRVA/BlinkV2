@@ -2,6 +2,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ConceptDetailComponent } from './concept-detail.component';
 import { ConceptDetailStore } from './concept-detail.store';
 import { ContentStateService } from '../../content-state.service';
+import { provideContentItemsApiStubs } from '../../content-items-api.test-util';
 import type {
   AudienceSegment,
   ContentItem,
@@ -30,7 +31,7 @@ function makeItem(partial: Partial<ContentItem> = {}): ContentItem {
     segmentIds: ['s1'],
     hook: 'A punchy hook',
     objective: 'engagement',
-    productionTargets: [{ platform: 'instagram', contentType: 'reel' }],
+    targetPlatforms: [{ platform: 'instagram', contentType: 'reel' }],
     createdAt: now,
     updatedAt: now,
     ...partial,
@@ -43,10 +44,10 @@ function setup(item: ContentItem = makeItem()): {
 } {
   TestBed.configureTestingModule({
     imports: [ConceptDetailComponent],
-    providers: [ContentStateService],
+    providers: [...provideContentItemsApiStubs(), ContentStateService],
   });
   const state = TestBed.inject(ContentStateService);
-  state.items.set([item]);
+  state.setItems([item]);
   state.pillars.set(PILLARS);
   state.segments.set(SEGMENTS);
   const fixture = TestBed.createComponent(ConceptDetailComponent);
@@ -79,7 +80,7 @@ describe('ConceptDetailComponent — composition', () => {
   it('renders nothing when item is null', () => {
     TestBed.configureTestingModule({
       imports: [ConceptDetailComponent],
-      providers: [ContentStateService],
+      providers: [...provideContentItemsApiStubs(), ContentStateService],
     });
     const fixture = TestBed.createComponent(ConceptDetailComponent);
     fixture.componentRef.setInput('itemId', 'missing');
@@ -153,7 +154,7 @@ describe('ConceptDetailComponent — interactions', () => {
   it('move dialog "Work on N" emits moved with workOnItemId = created[N].id', () => {
     const { fixture } = setup(
       makeItem({
-        productionTargets: [
+        targetPlatforms: [
           { platform: 'instagram', contentType: 'reel' },
           { platform: 'tiktok', contentType: 'short-video' },
         ],
@@ -172,6 +173,7 @@ describe('ConceptDetailComponent — interactions', () => {
   });
 
   it('Delete removes item from state and emits deleted', () => {
+    const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(true);
     const { fixture, state } = setup();
     let deleted = 0;
     fixture.componentInstance.deleted.subscribe(() => deleted++);
@@ -179,6 +181,7 @@ describe('ConceptDetailComponent — interactions', () => {
     comp.onDelete();
     expect(deleted).toBe(1);
     expect(state.items().some((i) => i.id === 'c-1')).toBe(false);
+    confirmSpy.mockRestore();
   });
 
   it('Back button emits back', () => {
@@ -198,13 +201,20 @@ describe('ConceptDetailComponent — interactions', () => {
 });
 
 describe('ConceptDetailComponent — formatters and helpers', () => {
-  it('descriptionInvalid true when out-of-range', () => {
-    const { fixture } = setup(makeItem({ description: 'too short' }));
+  it('descriptionInvalid true only when over max (under-min is now a soft warning)', () => {
+    const { fixture, state } = setup(makeItem({ description: 'too short' }));
     const comp = fixture.componentInstance as unknown as {
       descriptionInvalid: () => boolean;
+      descriptionUnderMin: () => boolean;
       descriptionCount: () => number;
     };
     expect(comp.descriptionCount()).toBe('too short'.length);
+    expect(comp.descriptionInvalid()).toBe(false);
+    expect(comp.descriptionUnderMin()).toBe(true);
+
+    // Flip to an over-max description on the same item and re-check.
+    state.setItems([makeItem({ description: 'x'.repeat(500) })]);
+    fixture.detectChanges();
     expect(comp.descriptionInvalid()).toBe(true);
   });
 
@@ -246,7 +256,7 @@ describe('ConceptDetailComponent — formatters and helpers', () => {
     expect(store.item()?.cta).toBeUndefined();
     comp.onToggleTarget({ platform: 'youtube', contentType: 'long-form' });
     expect(
-      store.item()?.productionTargets?.some(
+      store.item()?.targetPlatforms?.some(
         (t) => t.platform === 'youtube' && t.contentType === 'long-form',
       ),
     ).toBe(true);
@@ -268,7 +278,7 @@ describe('ConceptDetailComponent — formatters and helpers', () => {
   it('onDelete is a noop when item is null', () => {
     TestBed.configureTestingModule({
       imports: [ConceptDetailComponent],
-      providers: [ContentStateService],
+      providers: [...provideContentItemsApiStubs(), ContentStateService],
     });
     const fixture = TestBed.createComponent(ConceptDetailComponent);
     fixture.componentRef.setInput('itemId', 'missing');
@@ -282,7 +292,7 @@ describe('ConceptDetailComponent — formatters and helpers', () => {
   it('defensive helpers return false/0 when store item is null', () => {
     TestBed.configureTestingModule({
       imports: [ConceptDetailComponent],
-      providers: [ContentStateService],
+      providers: [...provideContentItemsApiStubs(), ContentStateService],
     });
     const fixture = TestBed.createComponent(ConceptDetailComponent);
     fixture.componentRef.setInput('itemId', 'missing');
@@ -330,7 +340,8 @@ describe('ConceptDetailComponent — formatters and helpers', () => {
 
   it('isInProductionFn delegates to store', () => {
     const { fixture, state } = setup();
-    state.items.update((prev) => [
+    const prev = state.items();
+    state.setItems([
       ...prev,
       {
         ...prev[0],
@@ -340,7 +351,7 @@ describe('ConceptDetailComponent — formatters and helpers', () => {
         conceptId: 'c-1',
         platform: 'instagram',
         contentType: 'reel',
-        productionTargets: undefined,
+        targetPlatforms: undefined,
       },
     ]);
     const comp = fixture.componentInstance as unknown as {
@@ -348,5 +359,188 @@ describe('ConceptDetailComponent — formatters and helpers', () => {
     };
     expect(comp.isInProductionFn({ platform: 'instagram', contentType: 'reel' })).toBe(true);
     expect(comp.isInProductionFn({ platform: 'youtube', contentType: 'long-form' })).toBe(false);
+  });
+});
+
+describe('ConceptDetailComponent — new strategy + status handlers', () => {
+  function setupAs<T>(): { fixture: ComponentFixture<ConceptDetailComponent>; comp: T; store: ConceptDetailStore } {
+    const { fixture } = setup();
+    const comp = fixture.componentInstance as unknown as T;
+    const store = (fixture.componentInstance as unknown as { store: ConceptDetailStore }).store;
+    return { fixture, comp, store };
+  }
+
+  it('onKeyMessageChange / onAngleChange route to store setters', () => {
+    const { comp, store } = setupAs<{
+      onKeyMessageChange: (v: string) => void;
+      onAngleChange: (v: string) => void;
+    }>();
+    comp.onKeyMessageChange('important');
+    comp.onAngleChange('unique');
+    expect(store.item()?.keyMessage).toBe('important');
+    expect(store.item()?.angle).toBe('unique');
+  });
+
+  it('onFormatNotesChange splits csv', () => {
+    const { comp, store } = setupAs<{
+      onFormatNotesChange: (e: Event) => void;
+      formatNotesDisplay: () => string;
+    }>();
+    const evt = { target: { value: 'b-roll, talking-head' } } as unknown as Event;
+    comp.onFormatNotesChange(evt);
+    expect(store.item()?.formatNotes).toEqual(['b-roll', 'talking-head']);
+    expect(comp.formatNotesDisplay()).toBe('b-roll, talking-head');
+  });
+
+  it('onClaimsFlagChange reads checkbox state', () => {
+    const { comp, store } = setupAs<{ onClaimsFlagChange: (e: Event) => void }>();
+    comp.onClaimsFlagChange({ target: { checked: true } } as unknown as Event);
+    expect(store.item()?.claimsFlag).toBe(true);
+  });
+
+  it('onSourceLinksChange splits by newline', () => {
+    const { comp, store } = setupAs<{
+      onSourceLinksChange: (e: Event) => void;
+      sourceLinksDisplay: () => string;
+    }>();
+    comp.onSourceLinksChange({ target: { value: 'https://a\nhttps://b' } } as unknown as Event);
+    expect(store.item()?.sourceLinks).toEqual(['https://a', 'https://b']);
+    expect(comp.sourceLinksDisplay()).toBe('https://a\nhttps://b');
+  });
+
+  it('onRiskLevelChange toggles off when already selected', () => {
+    const { comp, store } = setupAs<{
+      onRiskLevelChange: (l: 'low' | 'medium' | 'high') => void;
+    }>();
+    comp.onRiskLevelChange('medium');
+    expect(store.item()?.riskLevel).toBe('medium');
+    comp.onRiskLevelChange('medium');
+    expect(store.item()?.riskLevel).toBeUndefined();
+  });
+
+  it('onPublishStartChange / onPublishEndChange set bounds individually', () => {
+    const { comp, store } = setupAs<{
+      onPublishStartChange: (e: Event) => void;
+      onPublishEndChange: (e: Event) => void;
+    }>();
+    comp.onPublishStartChange({ target: { value: '2026-06-01' } } as unknown as Event);
+    comp.onPublishEndChange({ target: { value: '2026-06-30' } } as unknown as Event);
+    expect(store.item()?.targetPublishWindow).toEqual({
+      start: '2026-06-01',
+      end: '2026-06-30',
+    });
+  });
+
+  it('onObjectiveClick toggles objectiveId', () => {
+    const { comp, store } = setupAs<{ onObjectiveClick: (id: string) => void }>();
+    comp.onObjectiveClick('obj-1');
+    expect(store.item()?.objectiveId).toBe('obj-1');
+    comp.onObjectiveClick('obj-1');
+    expect(store.item()?.objectiveId).toBeUndefined();
+  });
+
+  it('onStatusChange persists status through the store', () => {
+    const { comp, store } = setupAs<{ onStatusChange: (s: 'review') => void }>();
+    comp.onStatusChange('review');
+    expect(store.item()?.status).toBe('review');
+  });
+
+  it('onArchive / onUnarchive emit the correct outputs', () => {
+    const { fixture } = setup();
+    const archived: boolean[] = [];
+    const unarchived: boolean[] = [];
+    fixture.componentInstance.archive.subscribe(() => archived.push(true));
+    fixture.componentInstance.unarchive.subscribe(() => unarchived.push(true));
+    const comp = fixture.componentInstance as unknown as {
+      onArchive: () => void;
+      onUnarchive: () => void;
+    };
+    comp.onArchive();
+    comp.onUnarchive();
+    expect(archived.length).toBe(1);
+    expect(unarchived.length).toBe(1);
+  });
+
+  it('renders objective chips when business-objectives are present', () => {
+    TestBed.configureTestingModule({
+      imports: [ConceptDetailComponent],
+      providers: [...provideContentItemsApiStubs(), ContentStateService],
+    });
+    const state = TestBed.inject(ContentStateService);
+    state.setItems([makeItem()]);
+    state.pillars.set(PILLARS);
+    state.segments.set(SEGMENTS);
+    state.businessObjectives.set([
+      { id: 'obj-1', category: 'growth', statement: 'Grow fast', target: 1, unit: '', timeframe: '' },
+      { id: 'obj-2', category: 'awareness', statement: 'Own mornings', target: 1, unit: '', timeframe: '' },
+    ]);
+    const fixture = TestBed.createComponent(ConceptDetailComponent);
+    fixture.componentRef.setInput('itemId', 'c-1');
+    fixture.detectChanges();
+    const chips = fixture.nativeElement.querySelectorAll('.objective-chips .chip');
+    expect(chips.length).toBe(2);
+    expect(fixture.nativeElement.querySelector('.panel-warning')).toBeNull();
+  });
+
+  it('onDelete cancelled by confirm leaves the item intact and does not emit deleted', () => {
+    const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(false);
+    const { fixture, state } = setup();
+    let deleted = 0;
+    fixture.componentInstance.deleted.subscribe(() => deleted++);
+    (fixture.componentInstance as unknown as { onDelete: () => void }).onDelete();
+    expect(state.items().some((i) => i.id === 'c-1')).toBe(true);
+    expect(deleted).toBe(0);
+    confirmSpy.mockRestore();
+  });
+
+  it('risk buttons highlight the selected level', () => {
+    const { fixture } = setup(makeItem({ riskLevel: 'medium' }));
+    const buttons = Array.from(
+      fixture.nativeElement.querySelectorAll('.risk-btn') as NodeListOf<HTMLButtonElement>,
+    );
+    expect(buttons.length).toBe(3);
+    expect(buttons[0].classList.contains('is-active')).toBe(false);
+    expect(buttons[1].classList.contains('is-active')).toBe(true);
+    expect(buttons[2].classList.contains('is-active')).toBe(false);
+  });
+
+  it('format-notes and source-links inputs display current values', () => {
+    const { fixture } = setup(makeItem({
+      formatNotes: ['b-roll', 'music'],
+      sourceLinks: ['https://a.com', 'https://b.com'],
+    }));
+    const comp = fixture.componentInstance as unknown as {
+      formatNotesDisplay: () => string;
+      sourceLinksDisplay: () => string;
+    };
+    expect(comp.formatNotesDisplay()).toBe('b-roll, music');
+    expect(comp.sourceLinksDisplay()).toBe('https://a.com\nhttps://b.com');
+  });
+
+  it('publish window inputs bind to item.targetPublishWindow', () => {
+    const { fixture } = setup(makeItem({
+      targetPublishWindow: { start: '2026-06-01', end: '2026-06-30' },
+    }));
+    const dateInputs = fixture.nativeElement.querySelectorAll('.publish-window input[type="date"]');
+    expect(dateInputs.length).toBe(2);
+    expect((dateInputs[0] as HTMLInputElement).value).toBe('2026-06-01');
+    expect((dateInputs[1] as HTMLInputElement).value).toBe('2026-06-30');
+  });
+
+  it('handlers tolerate events with null target', () => {
+    const { fixture } = setup();
+    const comp = fixture.componentInstance as unknown as {
+      onFormatNotesChange: (e: Event) => void;
+      onSourceLinksChange: (e: Event) => void;
+      onClaimsFlagChange: (e: Event) => void;
+      onPublishStartChange: (e: Event) => void;
+      onPublishEndChange: (e: Event) => void;
+    };
+    const nullEvt = { target: null } as unknown as Event;
+    expect(() => comp.onFormatNotesChange(nullEvt)).not.toThrow();
+    expect(() => comp.onSourceLinksChange(nullEvt)).not.toThrow();
+    expect(() => comp.onClaimsFlagChange(nullEvt)).not.toThrow();
+    expect(() => comp.onPublishStartChange(nullEvt)).not.toThrow();
+    expect(() => comp.onPublishEndChange(nullEvt)).not.toThrow();
   });
 });

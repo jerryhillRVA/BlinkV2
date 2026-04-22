@@ -50,18 +50,6 @@ const STAGE_BADGES: Record<ContentStage, StageBadge> = {
       'M21.854 2.147l-10.94 10.939',
     ],
   },
-  'production-brief': {
-    label: 'Brief',
-    toneClass: 'stage-brief',
-    // Lucide FileText
-    iconPaths: [
-      'M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z',
-      'M14 2v4a2 2 0 0 0 2 2h4',
-      'M16 13H8',
-      'M16 17H8',
-      'M10 9H8',
-    ],
-  },
 };
 
 @Component({
@@ -78,6 +66,7 @@ export class IdeaDetailHeaderComponent {
   @Output() back = new EventEmitter<void>();
   @Output() advance = new EventEmitter<void>();
   @Output() archive = new EventEmitter<void>();
+  @Output() unarchive = new EventEmitter<void>();
   @Output() duplicate = new EventEmitter<void>();
   @Output() copyLink = new EventEmitter<void>();
   @Output() titleChange = new EventEmitter<string>();
@@ -136,6 +125,11 @@ export class IdeaDetailHeaderComponent {
   protected onArchive(): void {
     this.closeMenu();
     this.archive.emit();
+  }
+
+  protected onUnarchive(): void {
+    this.closeMenu();
+    this.unarchive.emit();
   }
 
   protected onDuplicate(): void {

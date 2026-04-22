@@ -7,6 +7,10 @@
   flex-direction: column;
 }
 
+.status-stepper-wrap {
+  margin: 12px 0 4px;
+}
+
 .detail-grid {
   display: grid;
   grid-template-columns: 1fr;
@@ -117,6 +121,97 @@
 
   &.is-invalid {
     color: var(--blink-brand-primary);
+  }
+}
+
+.objective-chips,
+.tag-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.tags-input {
+  width: 100%;
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: 1px solid var(--blink-outline-variant);
+  background: var(--blink-surface);
+  color: var(--blink-on-surface);
+  font-size: var(--blink-body-medium);
+  font-family: inherit;
+  resize: vertical;
+
+  &:focus {
+    outline: none;
+    border-color: var(--blink-brand-primary);
+  }
+}
+
+.claims-toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: var(--blink-body-medium);
+  color: var(--blink-on-surface);
+  cursor: pointer;
+}
+
+.risk-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.risk-buttons {
+  display: inline-flex;
+  border: 1px solid var(--blink-outline-variant);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.risk-btn {
+  padding: 6px 12px;
+  background: var(--blink-surface);
+  color: var(--blink-on-surface);
+  border: none;
+  border-right: 1px solid var(--blink-outline-variant);
+  cursor: pointer;
+  font-size: var(--blink-label-medium);
+  text-transform: capitalize;
+
+  &:last-child { border-right: none; }
+
+  &:hover { background: var(--blink-surface-hover); }
+
+  &.is-active {
+    background: var(--blink-brand-primary-lightest-bg, rgba(217, 78, 51, 0.08));
+    color: var(--blink-brand-primary);
+    font-weight: 600;
+  }
+}
+
+.publish-window {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+
+  label {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    font-size: var(--blink-label-small);
+    color: var(--blink-on-surface-faint);
+  }
+
+  input[type='date'] {
+    padding: 6px 8px;
+    border-radius: 6px;
+    border: 1px solid var(--blink-outline-variant);
+    background: var(--blink-surface);
+    color: var(--blink-on-surface);
+    font-family: inherit;
   }
 }
 
