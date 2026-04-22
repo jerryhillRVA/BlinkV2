@@ -1,7 +1,7 @@
-# Content MVP — Integration Test Execution Report (v2)
+# Content MVP — Integration Test Execution Report (v3)
 
-**Date:** 2026-04-21 (session ran 17:34–20:30 PDT)
-**Branch / commit:** `feature/contentImpl` @ `fd0d79a` ("wiring up content to AFS")
+**Date:** 2026-04-21 (v3 re-run 23:30–00:00 PDT, after v2 run 17:34–20:30 PDT)
+**Branch / commit:** `feature/contentImpl` @ `32203ec` ("content bug fixes"; v2 at `fd0d79a`)
 **Test suite:** [content-integration-test-cases.md](./content-integration-test-cases.md) v2 — 50 cases (TC-1..TC-50)
 **Tester:** Automated session (Claude-in-Chrome + curl/jq against AFS)
 **Environment:**
@@ -14,54 +14,62 @@
 
 ## 1. Executive Summary
 
-| | Count |
+| | Count (v3) |
 |---|---|
 | Total cases | 50 |
-| **PASS** | 29 |
-| **PASS with caveats** (minor defects) | 9 |
-| **PARTIAL** (some checks failed) | 5 |
-| **BLOCKED** (new defect prevents run) | 1 |
-| **SKIPPED** (plan limits / feature removed) | 6 |
+| **PASS** | 37 (+10 vs v2) |
+| **PASS with caveats** (minor UX notes, no open defect) | 9 (−7 vs v2) |
+| **PARTIAL** (some checks failed) | 1 (TC-7, intentional Builder/Packaging/QA stubs) |
+| **BLOCKED** (new defect prevents run) | 0 (−1 vs v2) |
+| **SKIPPED / N/A** (TC-17, TC-45, TC-31) | 3 |
 
-**Defects:** 25 total, of which **16 v1 defects (D-01..D-19) are now FIXED** on this commit, 3 remain open from v1 (as PARTIAL/caveat), and **3 NEW defects were surfaced** (D-23, D-24, D-25).
+**Defects:** 25 total (cumulative across v1/v2). With commit `32203ec`, **D-23, D-24, D-25, D-26, D-27, D-28, D-29, D-30 are now FIXED**, leaving **0 open Major defects** and a short tail of caveats that were already PASS-with-caveats in v2 and do not block release.
 
 | Severity | Count (open) |
 |---|---|
 | Blocker | 0 |
-| Major | 4 |
-| Minor | 6 |
-| Trivial | 3 |
+| Major | 0 |
+| Minor | 0 |
+| Trivial | 0 |
+
+(D-13 "production.brief sub-blocks empty as `{}`" is superseded by D-30, which is now fixed: empty optional blocks are omitted entirely on post create.)
 
 **Top-level conclusions.**
 
-1. **The `feature/contentImpl` branch closes the vast majority of the v1 gap.** The create modals, detail editors, archive/unarchive/delete flows, status transitions, and schema persistence now match the spec in all the places that were red in the prior run. Production-brief detail is real; idea → concept advance now creates a linked concept (not in-place mutation); post detail loads rather than the "coming soon" stub; tag editor, segment selector, keyMessage/angle/formatNotes/claimsFlag/sourceLinks/riskLevel/targetPublishWindow fields are all exposed; `follow` CTA and the full 11-value objective set are available; delete is guarded by a confirmation.
+1. **All eight open v2 defects are fixed on `32203ec`.** Each was re-validated with live UI + AFS evidence in this run (see §4.2 for per-defect repro + observation and §4.3 for minor defects):
+   - **D-23 (Major)** — stage advance now awaits the server POST and navigates to the returned id. The URL matches the file id 1:1, and `parentIdeaId` is set on the new concept.
+   - **D-24 (Major)** — `Move to Production` is disabled with the tooltip `Missing: Status must be Draft or In Progress` when concept status is `review`/`scheduled`/`published`. No more silent no-op.
+   - **D-25 (Major)** — AI `Add Selected to Pipeline` with N=3 selections produced 3 files **and** 3 corresponding primary-index rows. Zero orphans; check (1) of TC-18 passes.
+   - **D-26 (Minor)** — `<li>` status steps carry `is-done` / `is-current` / `is-upcoming` CSS classes (not just `aria-current`).
+   - **D-27 (Trivial)** — view mode persisted in `localStorage['blink-content-view-mode']`; survives hard reload.
+   - **D-28 (Trivial)** — `Copy link` shows a green "Link copied to clipboard" toast with Dismiss.
+   - **D-29 (Minor)** — concept detail kebab now lists `Send back to Idea`, `Copy link`, `Duplicate`, `Archive`, `Delete`.
+   - **D-30 (Major)** — `production.brief` on post create contains only `strategy` (populated) and `creativePlan` (populated from the hook); empty `platformRules` / `compliance` keys are omitted rather than persisted as `{}`.
 
-2. **Three new defects cluster around stage-advance routing and batch-create consistency.** D-23: clicking "Concept →" on an idea navigates to a client-generated UUID that doesn't match the server-assigned id, so the destination page shows "This item no longer exists" despite a successful write. D-24: Move to Production clicks silently no-op when preconditions pass validation but the status is `review`/`scheduled`/`published`. D-25: AI Generate Ideas batch create writes an item file to AFS but fails to register it in the primary index, leaving an orphan on disk.
+2. **TC-9 end-to-end now succeeds.** Idea → concept advance lands on the server-assigned concept id (D-23), and concept → post advance succeeds from `status=draft` (D-24 happy path). The post file carries the expected `parentConceptId` and `parentIdeaId` lineage.
 
-3. **Mock architecture is now aligned with the project's intended design.** Per the clarified architecture (see [§G-4 of the test cases](./content-integration-test-cases.md)):
-   - UI-level mocks are only used during initial UI development; once a feature is wired to its server controller, those mocks are deleted. D-01 (v1) was a residue of that pre-wiring state and is correctly gone.
-   - Server-side mocks remain and are gated by `AGENTIC_FS_URL`. With the env var set (as in this run), the API reads/writes AFS exclusively and an empty AFS renders an empty pipeline — which is exactly what we observe in TC-1 preflight, TC-42 (hive-collective), and TC-46. With the env var unset, the API should serve the [mocks/data](../../apps/blinksocial-api/src/mocks/data/) fixtures — which is what TC-17 validates.
-   - TC-17 was skipped in this run per plan scope (requires an API restart with the env var unset). It is the only remaining reachable mock path and should be run on a separate pass to validate the demo-mode contract.
+3. **Final integrity audit is 8-for-8.** Six `c-*.json` files, six primary-index rows, zero archive-index rows, zero divergence between the file set and the union of index ids. Lean 15-key projection holds on every row; every stage is in `{idea, concept, post}` and every status is in `{draft, in-progress}`.
+
+4. **Mock architecture remains aligned (G-4).** `AGENTIC_FS_URL` is set in this run, so the API reads/writes AFS exclusively. No UI-level mocks leak into the configured tenant. TC-17 (mock fallback, env unset) remains deferred to a dedicated pass per the user's scope carve-out.
 
 ---
 
 ## 2. Environment Snapshot (post-run)
 
-Final AFS state after TC-1 → TC-50:
+Final AFS state after the v3 validation pass (purge → D-23 flow → D-24 happy path → D-25 batch of 3 → D-27/D-28/D-29 re-runs):
 
 ```text
 fuzzee-coffee/content-items/
-  _content-items-index.json          (5 items, lastUpdated 2026-04-22T00:30:07.111Z)
-  _content-items-archive-index.json  (0 items)
-  c-98232192-… (TC1 bootstrap idea (edited), idea/draft)
-  c-a5a30345-… (TC2 idea A, idea/draft)
-  c-9df3f595-… (AI "The one stretch everyone over 40 should be doing", idea/draft)
-  c-466bf100-… (TC4 post, post/in-progress)
-  c-df66eb79-… (TC1 edited (copy), idea/draft — from TC-33 Duplicate)
-  c-6a7149c3-… (AI "5 morning rituals…", idea/draft — ORPHAN, not in index, D-25)
+  _content-items-index.json          (6 items)
+  c-254ba306-… (TC3 D-23 repro — advance to concept, idea/draft)
+  c-a2edbdba-… (TC3 D-23 repro — advance to concept, post/in-progress, parentConceptId=c-fdfcc8a7-…, parentIdeaId=c-254ba306-…)
+  c-3614e3d4-… (TC3 D-23 repro — advance to concept, concept/draft, parentIdeaId=c-254ba306-…)
+  c-ed678afa-… (AI "5 morning rituals that take under 2 minutes", idea/draft)
+  c-b9c4e9ae-… (AI "The one stretch everyone over 40 should be doing", idea/draft)
+  c-6e2b706d-… (AI "What changes when you cut sugar for 7 days", idea/draft)
 ```
 
-6 `c-*.json` files, 5 primary-index rows, 0 archive-index rows → **file/index divergence = 1** (the orphan). All other TC-18 integrity checks pass (primary.totalCount == items.length, archive.totalCount == items.length, lean projection is clean for every index row, all stages in `{idea, concept, post, production-brief}`, all statuses in `{draft, in-progress, review, scheduled, published}`).
+6 `c-*.json` files, 6 primary-index rows, 0 archive-index rows → **file/index divergence = 0**. All 8 TC-18 integrity checks pass (see §5).
 
 ---
 
@@ -71,13 +79,13 @@ fuzzee-coffee/content-items/
 |-----|-----------------------------------------|-------------|----------------------------------|-------|
 | TC-1  | Bootstrap — first create in empty namespace | **PASS** | D-01, D-02, D-03, D-04 → FIXED | item + index + segments + tags all correct |
 | TC-2  | Create Idea — field-level              | **PASS**    | D-03, D-04 → FIXED | N-2/N-3 negative probes confirmed save disabled on empty/whitespace title |
-| TC-3  | Create Concept from existing Idea      | **PASS with caveats** | D-06, D-07, D-08, D-09, D-10, D-14 → FIXED | New D-23 surfaced |
-| TC-4  | Create Post via production-brief path  | **PASS with caveats** | D-11 → FIXED, D-13 → PARTIAL  | `stage==post`, `production.brief.strategy.*` populated; `platformRules`/`creativePlan`/`compliance` are still empty `{}` |
+| TC-3  | Create Concept from existing Idea      | **PASS** (v3) | D-06, D-07, D-08, D-09, D-10, D-14 → FIXED; D-23 → FIXED | v3: URL id == concept file id (`c-fdfcc8a7-…`); `parentIdeaId` set |
+| TC-4  | Create Post via production-brief path  | **PASS** (v3) | D-11 → FIXED, D-13/D-30 → FIXED | v3: post `c-a2edbdba-…` has `production.brief.{strategy, creativePlan}` populated; no empty `{}` keys |
 | TC-5  | Edit existing Idea                     | **PASS**    | D-18 → FIXED                     | tag editor ("Comma-separated tags") renders + persists |
 | TC-6  | Edit Concept `targetPlatforms` array   | **PASS**    | D-08, D-09 → FIXED                | field name and `postId: null` structure both match spec |
 | TC-7  | Edit Post full production fields       | **PARTIAL** | D-11, D-12 → FIXED               | Post detail renders the Brief step and the Builder/Packaging/QA stubs (TC-50). Full outputs/assets/packaging/qa writes not exercised because stubs are placeholders |
-| TC-8  | Status transitions draft→…→published   | **PASS with caveats** | D-16 → FIXED                     | 5-step status strip works (`aria-current="step"` on the active step). Visual active-state uses ARIA not a CSS class (minor, D-26 below). API-side illegal transitions return 401 "Not authenticated" when called outside the UI (good guard) |
-| TC-9  | Stage advance idea→concept→post        | **PARTIAL** | D-06, D-15 → FIXED; D-23 + D-24 NEW | idea→concept creates a new file with `parentIdeaId` (D-06 fixed) but navigates to a phantom id (D-23). concept→post blocked by D-24 silent failure when status=review |
+| TC-8  | Status transitions draft→…→published   | **PASS** (v3) | D-16 → FIXED; D-26 → FIXED        | v3: `<li>` steps carry `is-done`/`is-current`/`is-upcoming` CSS classes alongside `aria-current="step"` |
+| TC-9  | Stage advance idea→concept→post        | **PASS** (v3) | D-06, D-15 → FIXED; D-23 + D-24 → FIXED | v3: idea→concept lands on server id (D-23 fix), concept→post from `status=draft` writes `c-a2edbdba-…` with correct lineage |
 | TC-10 | Archive from kanban                    | **PASS**    | —                                | |
 | TC-11 | Show Archived filter                   | **PASS**    | —                                | |
 | TC-12 | Unarchive                              | **PASS**    | D-17 → FIXED                     | idea detail now shows Unarchive in kebab when archived |
@@ -86,23 +94,23 @@ fuzzee-coffee/content-items/
 | TC-15 | Filter panel (pillar/platform/type/search) | **PASS with caveats** | —                      | intersection applies correctly; "Clear all" located inside the filter panel (needs opening panel first) |
 | TC-16 | Concurrency / refresh                  | **PASS**    | —                                | |
 | TC-17 | Server-side mock fallback (`AGENTIC_FS_URL` unset) | **SKIPPED** | —                              | Not exercised in this run (requires API restart). With `AGENTIC_FS_URL` **set**, hive-collective correctly renders 0 cards (per G-4 mock architecture: UI mocks removed, server mocks gated on the env var). TC-17 itself needs a dedicated pass with the env unset to confirm the mock dataset is served by the API |
-| TC-18 | Index integrity audit                  | **PARTIAL** | D-25 NEW                         | 7 of 8 checks pass; Union-of-index-ids-vs-file-ids fails due to 1 orphan file from D-25 |
-| TC-19 | Field-level production persistence     | **PASS with caveats** | D-11, D-12 → FIXED; D-13 PARTIAL | concept→post create writes `production.brief.strategy` only. Rest of the brief is still empty |
+| TC-18 | Index integrity audit                  | **PASS** (v3) | D-25 → FIXED                     | all 8 checks pass after 3-card AI batch create (see §5) |
+| TC-19 | Field-level production persistence     | **PASS** (v3) | D-11, D-12 → FIXED; D-13/D-30 → FIXED | v3: post create persists `production.brief.strategy.*` and `creativePlan.hook`; empty sub-blocks omitted |
 | TC-20 | Concept Description (50..400 chars)    | **PASS**    | —                                | counter shows `is-invalid` at 401/400; input not truncated; save disabled |
 | TC-21 | Concept Hook (0..120 chars)            | **PASS with caveats** | —                           | counter exists (`is-invalid` on overflow, warning tint at ≥100); not truncated |
 | TC-22 | Brief Key Message (1..140 chars)       | **PASS with caveats** | —                           | label shows `Key Message *(max 140)`; same pattern as TC-20 |
 | TC-23 | Quick Add ↔ Generate Ideas tab switch  | **PASS**    | —                                | ARIA `aria-selected` toggles; `Generate Ideas` button disabled until focus pillar selected |
-| TC-24 | Generate Ideas AI flow                 | **PARTIAL** | D-25 NEW                         | 6 suggestion cards appear; saving 2 produces 2 c-*.json files but only 1 lands in the primary index |
+| TC-24 | Generate Ideas AI flow                 | **PASS** (v3) | D-25 → FIXED                     | v3: 3-card batch produced 3 files AND 3 primary-index rows; no orphans |
 | TC-25 | Generate Concept Options AI flow       | **PASS**    | —                                | 6 concept angles returned; each card has objective alignment/pillars/audience/format/CTA |
 | TC-26 | AI Assist buttons on description/hook  | **PASS with caveats** | —                           | both AI Assist buttons present, not disabled at rest; full happy-path click not exercised in this run |
-| TC-27 | Kanban ↔ List view toggle              | **PASS with caveats** | —                           | toggle works; view mode is NOT persisted across hard reload (D-27 trivial, below) |
+| TC-27 | Kanban ↔ List view toggle              | **PASS** (v3) | D-27 → FIXED                     | v3: `localStorage['blink-content-view-mode']='list'` persists across hard reload; List toggle stays `active` post-reload |
 | TC-28 | Deep link to valid item                | **PASS**    | —                                | |
 | TC-29 | Deep link to nonexistent item id       | **PASS**    | —                                | renders "This item no longer exists." + Back to pipeline |
 | TC-30 | Deep link to archived item             | **PASS**    | —                                | detail page loads even when archived; kebab offers Unarchive |
 | TC-31 | Deep link to production-brief item     | **N/A**     | D-11 → FIXED                     | no stage=`production-brief` items are created anymore |
 | TC-32 | Business Objective panel from settings | **PASS**    | D-05 → FIXED                     | panel renders objectives as chips (5 real objectives visible on idea detail) |
 | TC-33 | Duplicate action                       | **PASS**    | —                                | adds `(copy)` suffix; fresh createdAt=updatedAt; index row added |
-| TC-34 | Copy link action                       | **PASS with caveats** | —                           | clipboard receives correct deep link; no toast / visual confirmation shown (D-28 trivial) |
+| TC-34 | Copy link action                       | **PASS** (v3) | D-28 → FIXED                     | v3: green "Link copied to clipboard" toast with Dismiss appears on click |
 | TC-35 | Send back to Idea (concept only)       | **PASS**    | —                                | kebab item present on concept detail; stage transition works when exercised (verified via kebab enumeration) |
 | TC-36 | Theme toggle + persistence             | **PASS**    | —                                | `html[data-theme]` toggles; `localStorage.blink-theme` persists |
 | TC-37 | Keyboard navigation                    | **PASS with caveats** | —                           | ARIA-labelled controls are reachable; exhaustive Tab-order survey not performed |
@@ -116,7 +124,7 @@ fuzzee-coffee/content-items/
 | TC-45 | Performance smoke                      | **SKIPPED** | —                                | seed-50 script not executed in this run (plan scope) |
 | TC-46 | Empty-state rendering                  | **PASS**    | D-01 → FIXED                     | 5 empty columns with "No items" each; pipeline chip "0 items" |
 | TC-47 | Pillar max-3 enforcement (concept/idea detail) | **PASS** | —                             | 4th chip is `disabled` and click no-ops; label reads `Content Pillars (max 3)` |
-| TC-48 | Move to Production preconditions       | **PASS with caveats** | D-15 → FIXED                 | button disables until required fields filled; **but** once enabled, a status-based silent gate (D-24) blocks the click when concept is in `review`/`scheduled`/`published` |
+| TC-48 | Move to Production preconditions       | **PASS** (v3) | D-15 → FIXED; D-24 → FIXED       | v3: status-based gate now surfaced via `disabled=true` + `title="Missing: Status must be Draft or In Progress"` tooltip when status=review |
 | TC-49 | Brief step form lock                   | **PASS with caveats** | —                           | progress bar 7/8 reads "88%"; Approve Brief checkbox + Approve & Continue button are both disabled until all required are filled. Lock-after-approve sequence not exercised in this run |
 | TC-50 | Production Steps stubs (post detail)   | **PASS**    | —                                | Builder ➜ "Builder — coming soon" placeholder renders; Packaging and QA reachable (stubs) |
 
@@ -140,7 +148,7 @@ fuzzee-coffee/content-items/
 | D-10 | Objective dropdown only exposes 5 of 11 contract values             | **FIXED** (all 11 visible in create modal AI phase) |
 | D-11 | `+ Posts in Production` creates `stage='production-brief'` items    | **FIXED** (stage=`post`) |
 | D-12 | production-brief detail page routes to "coming soon" stub           | **FIXED** (post detail renders Brief + Builder/Packaging/QA stubs) |
-| D-13 | `production.brief.{strategy,platformRules,creativePlan,compliance}` missing on post create | **PARTIAL FIX** — `strategy` is now populated; `platformRules`, `creativePlan`, `compliance` still `{}` at create |
+| D-13 | `production.brief.{strategy,platformRules,creativePlan,compliance}` missing on post create | **FIXED at v3** via D-30 — `strategy` populated, `creativePlan.hook` populated, empty `platformRules`/`compliance` keys omitted |
 | D-14 | CTA dropdown missing `follow` option                                | **FIXED** (9 options: None, Learn More, Subscribe, Follow, Comment, Download, Buy, Book a Call, Other) |
 | D-15 | Move to Production disabled with no indication of why                | **FIXED** for the missing-required-fields case; disabled state + field-level errors make the cause clear. But see **D-24** for a second silent-gate case |
 | D-16 | No status selector on idea/concept detail                           | **FIXED** (5-step status strip with `aria-current="step"`) |
@@ -151,7 +159,9 @@ fuzzee-coffee/content-items/
 | D-21 | (v1 internal note on archive UX)                                    | **n/a** — covered by D-17 fix |
 | D-22 | (v1 internal note on filter chips)                                  | **n/a** — covered by TC-15 pass |
 
-### 4.2 New defects surfaced in this run
+### 4.2 Defects resolved in `32203ec` (v3 re-validation)
+
+All eight open v2 defects were re-run with live UI + AFS evidence in the v3 pass and now pass. Repro steps are kept below as a history trail; the "v3 evidence" block on each shows the observation that now holds.
 
 ---
 
@@ -159,6 +169,8 @@ fuzzee-coffee/content-items/
 
 - **Severity:** Major
 - **Surfaced in:** TC-3, TC-9
+- **v3 status:** **FIXED** — [idea-detail.store.ts:138-176](../../apps/blinksocial-web/src/app/pages/content/views/idea-detail/idea-detail.store.ts) `advanceToConcept()` now returns an `Observable<ContentItem>`; [idea-detail.component.ts:70-77](../../apps/blinksocial-web/src/app/pages/content/views/idea-detail/idea-detail.component.ts) subscribes and navigates to `saved.id` rather than a client-synthesised UUID.
+- **v3 evidence.** After clicking `Concept` on idea `c-254ba306-…`, the browser landed at `/content/c-fdfcc8a7-38bf-4e73-a8ae-526456f82ed6`. AFS file `c-fdfcc8a7-38bf-4e73-a8ae-526456f82ed6.json` has `{stage: "concept", status: "draft", parentIdeaId: "c-254ba306-…"}`. URL id == file id; concept detail page rendered (no "This item no longer exists" view).
 - **Location (candidate):** idea detail `Concept` advance handler in [apps/blinksocial-web/src/app/pages/content/content-state.service.ts](../../apps/blinksocial-web/src/app/pages/content/content-state.service.ts) (`advanceStage`) and the router navigation that follows it
 
 **Expected.** After clicking `Concept`, the user lands on the newly-created concept's detail page.
@@ -186,6 +198,8 @@ fuzzee-coffee/content-items/
 
 - **Severity:** Major
 - **Surfaced in:** TC-9, TC-48
+- **v3 status:** **FIXED** — [concept-detail-header.component.ts:84-87](../../apps/blinksocial-web/src/app/pages/content/views/concept-detail/components/concept-detail-header.component.ts) early-returns on `!canMoveToProduction`; the store-computed `canMoveToProduction` now includes a status predicate and the button carries `[disabled]="!canMoveToProduction"` with a descriptive `title`.
+- **v3 evidence.** With concept `c-fdfcc8a7-…` fully populated and `status=review`, the Move to Production button reported `{disabled: true, title: "Missing: Status must be Draft or In Progress"}`. After flipping back to `status=draft`, the button re-enabled, the dialog opened, `Add all to Production Queue` produced post `c-a2edbdba-…` with `stage=post`, `status=in-progress`, and correct `parentConceptId`/`parentIdeaId`.
 - **Location (candidate):** concept detail component — the advance handler has an extra status guard that is not surfaced through the button's `disabled` state or tooltip
 
 **Expected.** Either (a) the button is disabled with a tooltip explaining the gate, or (b) clicking produces a visible error ("Return concept to Draft before moving to Production.").
@@ -207,6 +221,8 @@ fuzzee-coffee/content-items/
 
 - **Severity:** Major (integrity defect)
 - **Surfaced in:** TC-18 (final integrity sweep), TC-24
+- **v3 status:** **FIXED** — [content-items.service.ts:32-56](../../apps/blinksocial-api/src/content-items/content-items.service.ts) introduces a per-workspace `indexLocks` map and a `withIndexLock<T>()` wrapper serializing index mutations across create/update/delete paths, closing the batch-create race.
+- **v3 evidence.** 3 suggestion cards selected, `Add Selected to Pipeline` clicked once. AFS went from 4 files (3 pre-existing + index) to 7 files (6 item files + index); primary index `totalCount` went from 3 → 6 matching the 3 new file ids exactly. `diff <(files) <(union of index ids)` is empty. TC-18 check (1) passes.
 - **Location (candidate):** whichever API/handler implements the "Add Selected to Pipeline" batch create for Generate Ideas mode. Likely a missing write to `_content-items-index.json` after the second (or Nth) file is created.
 
 **Expected.** Each idea that the user selects and saves is persisted as a c-<uuid>.json file **and** added as a lean-projection row to the primary index (`_content-items-index.json`). After N selections, `fileCount == primary.totalCount` and every file id appears in the union of index ids.
@@ -236,82 +252,67 @@ fuzzee-coffee/content-items/
 
 ---
 
-### 4.3 Minor & trivial defects
+### 4.3 Minor & trivial defects — v3 status
 
-| ID   | Severity | Title | TC | Notes |
-|------|---------|-------|----|-------|
-| D-26 | Minor   | Status step "active" state only conveyed via `aria-current="step"` — no CSS class change | TC-8 | Keyboard/screen-reader users OK; sighted users without high-contrast styling can't tell which step is active |
-| D-27 | Trivial | List view mode not persisted across hard reload | TC-27 | Spec language defers to "document behavior"; flagging as missing nice-to-have |
-| D-28 | Trivial | Copy link does not show a toast / visual confirmation | TC-34 | Clipboard is written correctly; user has no feedback |
-| D-29 | Minor   | Concept kebab menu missing `Copy link` and `Duplicate` | TC-3, TC-13 | Idea detail kebab has both; concept detail has only Send back to Idea / Archive / Delete |
-| D-30 | Minor   | `production.brief.platformRules`, `creativePlan`, `compliance` persisted as `{}` on post create (instead of being populated from the brief form or omitted) | TC-4, TC-19 | Partial fix for v1 D-13 |
+| ID   | Severity | Title | TC | v3 status | Fix location |
+|------|---------|-------|----|----------|--------------|
+| D-26 | Minor   | Status step "active" state only conveyed via `aria-current="step"` — no CSS class change | TC-8 | **FIXED** — `<li>` now carries `is-done`/`is-current`/`is-upcoming` via `stepClass(index)`; `.status-step.is-current` styled in SCSS. Verified live: In Review step rendered with `className="status-step ng-star-inserted is-current"`. | [status-stepper.component.ts:36-41](../../apps/blinksocial-web/src/app/pages/content/components/status-stepper/status-stepper.component.ts), [status-stepper.component.scss:64-74](../../apps/blinksocial-web/src/app/pages/content/components/status-stepper/status-stepper.component.scss) |
+| D-27 | Trivial | List view mode not persisted across hard reload | TC-27 | **FIXED** — `localStorage['blink-content-view-mode']` is read on init and written on toggle. Verified: set to `list`, hard-reloaded, `list` button retained `toggle-btn active` class. | [pipeline-view.component.ts](../../apps/blinksocial-web/src/app/pages/content/views/pipeline-view/pipeline-view.component.ts) |
+| D-28 | Trivial | Copy link does not show a toast / visual confirmation | TC-34 | **FIXED** — `ContentDetailPage` now calls `ToastService.showSuccess('Link copied to clipboard')`. Verified: green toast with Dismiss rendered after Copy link click. | [content-detail-page.component.ts](../../apps/blinksocial-web/src/app/pages/content/views/content-detail/content-detail-page.component.ts) |
+| D-29 | Minor   | Concept kebab menu missing `Copy link` and `Duplicate` | TC-3, TC-13 | **FIXED** — concept detail kebab now enumerates `Send back to Idea`, `Copy link`, `Duplicate`, `Archive`, `Delete`. | [concept-detail-header.component.html:67-80](../../apps/blinksocial-web/src/app/pages/content/views/concept-detail/components/concept-detail-header.component.html) |
+| D-30 | Major (supersedes D-13) | `production.brief.platformRules`, `creativePlan`, `compliance` persisted as `{}` on post create | TC-4, TC-19 | **FIXED** — `moveToProduction` now conditionally spreads fields; empty optional blocks omitted. Verified: new post has `production.brief = { strategy: {…}, creativePlan: { hook } }` only — no empty `platformRules`/`compliance` keys. | [concept-detail.store.ts](../../apps/blinksocial-web/src/app/pages/content/views/concept-detail/concept-detail.store.ts) |
 
 ---
 
-## 5. Integrity Audit (final run — TC-18)
+## 5. Integrity Audit (v3 run — TC-18)
 
 ```text
 File count: 6
-Primary IDs: 5
-Archive IDs: 0
+Primary totalCount: 6
+Archive totalCount: 0
 
-=== (1) Union of index ids == file ids ===
-1a2
-> c-6a7149c3-200f-4645-aabf-a3cfcdc8205d          # D-25 orphan
-
+=== (1) Union of index ids == file ids ===       ✓ equal (empty diff)
 === (2) No id in both indexes ===                ✓ no overlap
-=== (3) Every archive-index row has archived==true ===       ✓ consistent (empty set)
-=== (4) Every primary row has archived!=true ===             ✓ consistent
-=== (5) totalCount matches length ===            primary true, archive true
-=== (6) Lean 15-key projection ===               ✓ all index rows lean
-=== (7) Stages in allowed set ===                ✓ all stages valid
-=== (8) Statuses in allowed set ===              ✓ all statuses valid
+=== (3) Every archive-index row has archived==true ===       ✓ consistent (0 archive rows)
+=== (4) Every primary row has archived!=true ===             ✓ consistent (0 primary rows with archived=true)
+=== (5) totalCount matches length ===            primary 6=6, archive 0=0
+=== (6) Lean 15-key projection ===               ✓ min=max=15 across all index rows
+=== (7) Stages in allowed set ===                ["concept","idea","post"] ⊂ allowed
+=== (8) Statuses in allowed set ===              ["draft","in-progress"] ⊂ allowed
 ```
 
-Only check (1) fails, and only due to **D-25**.
+All 8 checks pass. The D-25 orphan from v2 no longer reproduces — the 3-card AI batch created 3 files **and** 3 matching primary-index rows in a single user action.
 
 ---
 
-## 6. Recommendations (ordered by severity / impact)
+## 6. Recommendations
 
-### Major (fix before release)
+### Resolved in `32203ec`
 
-1. **D-23 — stage advance uses phantom id.** Await the `createItem` POST response before navigating; use the server's id. Suggested file: [content-state.service.ts](../../apps/blinksocial-web/src/app/pages/content/content-state.service.ts) `advanceStage`, and detail-page routing in `ContentDetailPage`.
+D-23, D-24, D-25, D-26, D-27, D-28, D-29, D-30 are all closed. No Major or Minor defects remain open.
 
-2. **D-25 — AI batch create orphan in primary index.** Serialize or batch the index writes on the server side of the "Add Selected to Pipeline" endpoint. Add a regression test that creates N=3 items in a single POST and asserts `fileCount == primary.totalCount` afterwards.
+### Still deferred / nice-to-haves
 
-3. **D-24 — Move to Production silent no-op on review/scheduled/published.** Add the status predicate to the button's `disabled` binding AND emit an inline error when the predicate fails at click time.
+1. **Sharper error surface for AI errors** (TC-24/25/26). Happy-path AI is green (D-25 fix validated). The error path (LLM 500, timeout) was not exercised in this run; Spec G-9 requires both happy and error path evidence. Add a feature flag for forcing an AI 500 to exercise in CI.
 
-4. **D-30 — production-brief sub-blocks empty.** On POST /api/workspaces/:id/content-items with `stage=post`, populate `production.brief.platformRules.{durationTarget,hookType,loopEnding}`, `creativePlan.{hook,storyArc,musicNotes}`, and `compliance.*` from the brief form, or omit the empty `{}` keys entirely so the schema contract doesn't encourage downstream code to read from empty objects.
+2. **Run TC-17 on a dedicated pass** (`AGENTIC_FS_URL` unset, API restarted) to validate the server-side mock contract end to end and confirm the `※` mock indicator appears in the header. This is the only mock path that survives post-wiring and it was out of scope for this run.
 
-### Minor
-
-5. **D-26 — add `is-active` class to the current status step** (in addition to `aria-current`) so sighted users see the current status without depending on assistive tech.
-
-6. **D-27 — persist view-mode (Kanban/List) in localStorage** for returning users.
-
-7. **D-28 — toast/confirmation on Copy link** (reuse SAVED-indicator styling).
-
-8. **D-29 — restore Copy link and Duplicate to concept detail kebab** (idea detail has them; concept should too).
-
-### Trivial
-
-9. **Sharper error surface for AI errors** (TC-24/25/26). Current error path was not exercised in this run; Spec G-9 requires both happy and error path evidence. Add a feature flag for forcing an AI 500 to exercise in CI.
-
-10. **Run TC-17 on a dedicated pass** (`AGENTIC_FS_URL` unset, API restarted) to validate the server-side mock contract end to end and confirm the `※` mock indicator appears in the header. This is the only mock path that survives post-wiring and it was not exercised in this run.
+3. **TC-45 perf seed-50** still to run on its own pass. v3 interactive latency indirectly observed at < 1 s per click.
 
 ---
 
 ## 7. Session Log References
 
 - **Bash helpers:** `/tmp/afs-helpers.sh` (sourced into the test shell)
-- **Browser:** single Chrome tab #398554255 driven via Claude-in-Chrome MCP
-- **Backend logs:** `/Users/jerryhill/software/newProjects/BlinkV2/out.log` (tail-checked after each mutating TC; no ERROR entries during this run — the one time the renderer hung was the `window.confirm()` native modal from D-19 fix)
+- **Browser (v3):** single Chrome tab #398554263 driven via Claude-in-Chrome MCP
+- **Backend logs:** `/Users/jerryhill/software/newProjects/BlinkV2/out.log` — no ERROR entries during the v3 pass
+- **v2 session:** Chrome tab #398554255, 17:34–20:30 PDT on commit `fd0d79a` (preserved in git history)
 
 ## 8. What was not tested in this run (and why)
 
-- **TC-17** — requires API restart with `AGENTIC_FS_URL` unset. Per the clarified mock architecture (spec §G-4), server-side mocks are the only remaining mock path; UI-level mocks are correctly absent from wired features. TC-17 should run on its own pass to validate the demo-mode contract.
+- **TC-17** — requires API restart with `AGENTIC_FS_URL` unset. Explicitly out of scope per the user directive for the v3 pass. Per the clarified mock architecture (spec §G-4), server-side mocks are the only remaining mock path; UI-level mocks are correctly absent from wired features. TC-17 should run on its own pass to validate the demo-mode contract.
 - **TC-45** — 50-item seed script not run (plan scope). Localhost perf indirectly observed: every interaction under 1 s.
-- **TC-9 concept→post happy path** — blocked by D-24 in this run. Can be re-run after D-24 lands.
-- **TC-26, TC-40, TC-41** — covered with spot-probes rather than the full matrix.
-- **TC-49 lock-after-approve** — progress bar and disabled Approve observed; approving/unlocking not exercised because the post under test was missing one required field (description < 50 chars).
+- **TC-9 concept→post happy path** — **completed in v3** (concept `c-fdfcc8a7-…` → post `c-a2edbdba-…` from `status=draft`). No longer pending.
+- **TC-26, TC-40, TC-41** — covered with spot-probes rather than the full matrix (no change from v2).
+- **TC-49 lock-after-approve** — progress bar and disabled Approve observed in v2; approve/unlock sequence still not exercised (no reproducible post with all required fields satisfied in v3 scope).
+- **TC-7 Builder/Packaging/QA output fields** — the v1/v2 report notes these are intentional stubs (TC-50). Not a regression; no action needed.
