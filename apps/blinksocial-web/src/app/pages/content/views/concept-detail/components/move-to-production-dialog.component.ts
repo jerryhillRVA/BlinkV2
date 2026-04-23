@@ -32,7 +32,6 @@ export class MoveToProductionDialogComponent implements AfterViewInit {
   readonly targets = input.required<TargetPlatform[]>();
 
   @Output() selectAll = new EventEmitter<void>();
-  @Output() selectAllKeepConcept = new EventEmitter<void>();
   @Output() workOn = new EventEmitter<number>();
   @Output() cancelDialog = new EventEmitter<void>();
 
@@ -83,10 +82,6 @@ export class MoveToProductionDialogComponent implements AfterViewInit {
 
   protected onSelectAll(): void {
     this.selectAll.emit();
-  }
-
-  protected onSelectAllKeep(): void {
-    this.selectAllKeepConcept.emit();
   }
 
   protected onWorkOn(index: number): void {

@@ -206,7 +206,7 @@ describe('IdeaDetailStore — advanceToConcept', () => {
   beforeEach(() => vi.useFakeTimers());
   afterEach(() => vi.useRealTimers());
 
-  it('without a selected option, creates a new concept linked to the idea via parentIdeaId; idea itself stays as idea', () => {
+  it('without a selected option, creates a new concept linked to the idea via parentIdeaId; idea itself stays as idea and both items flip to concepting', () => {
     const { store } = setup(makeItem());
     const save$ = store.advanceToConcept();
     expect(save$).not.toBeNull();
@@ -214,10 +214,11 @@ describe('IdeaDetailStore — advanceToConcept', () => {
     save$!.subscribe((saved) => (concept = saved));
     expect(concept).toBeDefined();
     expect(concept!.stage).toBe('concept');
-    expect(concept!.status).toBe('draft');
+    expect(concept!.status).toBe('concepting');
     expect(concept!.parentIdeaId).toBe('c-1');
-    // the original idea remains an idea
+    // the original idea remains an idea and moves to concepting in sync
     expect(store.item()?.stage).toBe('idea');
+    expect(store.item()?.status).toBe('concepting');
   });
 
   it('with a selected option, new concept merges hook/description/cta/objective + targetPlatforms from the option', () => {
@@ -278,10 +279,28 @@ describe('IdeaDetailStore — tags + status', () => {
     expect(store.item()?.tags).toEqual(['one', 'two']);
   });
 
-  it('setStatus persists the new status', () => {
-    const { store } = setup(makeItem());
-    store.setStatus('scheduled');
-    expect(store.item()?.status).toBe('scheduled');
+  it('setStatus syncs the idea + any linked concepts', () => {
+    const { store, state } = setup(makeItem());
+    // Seed a concept linked to the idea so we can observe propagation.
+    state.setItems([
+      state.items()[0],
+      {
+        id: 'c-concept',
+        stage: 'concept',
+        status: 'draft',
+        parentIdeaId: 'c-1',
+        title: 'Linked concept',
+        description: '',
+        pillarIds: [],
+        segmentIds: [],
+        createdAt: '2026-01-01T00:00:00Z',
+        updatedAt: '2026-01-01T00:00:00Z',
+      },
+    ]);
+    store.setStatus('concepting');
+    expect(store.item()?.status).toBe('concepting');
+    const concept = state.items().find((i) => i.id === 'c-concept');
+    expect(concept?.status).toBe('concepting');
   });
 });
 

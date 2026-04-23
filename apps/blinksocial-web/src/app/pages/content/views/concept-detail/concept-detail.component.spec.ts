@@ -121,8 +121,8 @@ describe('ConceptDetailComponent — interactions', () => {
     expect(fixture.nativeElement.querySelector('app-move-to-production-dialog')).not.toBeNull();
   });
 
-  it('move dialog "Add all" emits moved with created posts and closes', () => {
-    const { fixture } = setup();
+  it('move dialog "Add all" emits moved, keeps the concept in state, and closes', () => {
+    const { fixture, state } = setup();
     const emits: Array<{ created: ContentItem[]; workOnItemId: string | null }> = [];
     fixture.componentInstance.moved.subscribe((e) => emits.push(e));
     const comp = fixture.componentInstance as unknown as {
@@ -135,19 +135,6 @@ describe('ConceptDetailComponent — interactions', () => {
     expect(emits.length).toBe(1);
     expect(emits[0].created.length).toBe(1);
     expect(emits[0].workOnItemId).toBeNull();
-  });
-
-  it('move dialog "Keep concept" emits moved but keeps the concept in state', () => {
-    const { fixture, state } = setup();
-    const emits: Array<{ created: ContentItem[] }> = [];
-    fixture.componentInstance.moved.subscribe((e) => emits.push(e));
-    const comp = fixture.componentInstance as unknown as {
-      onMoveClick: () => void;
-      onDialogAddAllKeep: () => void;
-    };
-    comp.onMoveClick();
-    comp.onDialogAddAllKeep();
-    expect(emits.length).toBe(1);
     expect(state.items().some((i) => i.id === 'c-1')).toBe(true);
   });
 
@@ -329,11 +316,9 @@ describe('ConceptDetailComponent — formatters and helpers', () => {
     fixture.componentInstance.moved.subscribe((e) => emits.push(e));
     const comp = fixture.componentInstance as unknown as {
       onDialogAddAll: () => void;
-      onDialogAddAllKeep: () => void;
       onDialogWorkOn: (i: number) => void;
     };
     comp.onDialogAddAll();
-    comp.onDialogAddAllKeep();
     comp.onDialogWorkOn(0);
     expect(emits.length).toBe(0);
   });

@@ -1,20 +1,12 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { NgClass } from '@angular/common';
-import type { ContentStatus } from '../../content.types';
-import { STATUS_CONFIG } from '../../content.constants';
+import type { ContentStage, ContentStatus } from '../../content.types';
+import { STATUS_CONFIG, STATUSES_BY_STAGE } from '../../content.constants';
 
 interface Step {
   value: ContentStatus;
   label: string;
 }
-
-const STEPS: Step[] = [
-  { value: 'draft', label: STATUS_CONFIG.draft.label },
-  { value: 'in-progress', label: STATUS_CONFIG['in-progress'].label },
-  { value: 'review', label: STATUS_CONFIG.review.label },
-  { value: 'scheduled', label: STATUS_CONFIG.scheduled.label },
-  { value: 'published', label: STATUS_CONFIG.published.label },
-];
 
 @Component({
   selector: 'app-status-stepper',
@@ -24,13 +16,19 @@ const STEPS: Step[] = [
 })
 export class StatusStepperComponent {
   @Input({ required: true }) value!: ContentStatus;
+  @Input({ required: true }) stage!: ContentStage;
 
   @Output() statusChange = new EventEmitter<ContentStatus>();
 
-  protected readonly steps = STEPS;
+  protected get steps(): Step[] {
+    return STATUSES_BY_STAGE[this.stage].map((v) => ({
+      value: v,
+      label: STATUS_CONFIG[v].label,
+    }));
+  }
 
   protected activeIndex(): number {
-    return STEPS.findIndex((s) => s.value === this.value);
+    return this.steps.findIndex((s) => s.value === this.value);
   }
 
   protected stepClass(index: number): 'is-done' | 'is-current' | 'is-upcoming' {

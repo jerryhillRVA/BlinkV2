@@ -15,6 +15,7 @@
     <div class="status-stepper-wrap">
       <app-status-stepper
         [value]="item.status"
+        [stage]="item.stage"
         (statusChange)="onStatusChange($event)"
       />
     </div>

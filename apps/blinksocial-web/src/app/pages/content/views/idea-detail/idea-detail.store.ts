@@ -96,7 +96,9 @@ export class IdeaDetailStore {
   }
 
   setStatus(status: ContentStatus): void {
-    this.persist({ status });
+    const item = this.item();
+    if (!item) return;
+    this.state.syncIdeaConceptStatus(item.id, status);
   }
 
   setScheduledAt(iso: string | null): void {
@@ -145,7 +147,7 @@ export class IdeaDetailStore {
       // server assigns the authoritative id and returns it in the response.
       id: generateId('c'),
       stage: 'concept',
-      status: 'draft',
+      status: 'concepting',
       parentIdeaId: item.id,
       title: item.title,
       description: selected?.description ?? item.description,
@@ -172,6 +174,8 @@ export class IdeaDetailStore {
       concept.platform = firstTarget.platform;
       concept.contentType = firstTarget.contentType;
     }
+    // Parent idea moves to 'concepting' alongside the newly-created concept.
+    this.state.syncIdeaConceptStatus(item.id, 'concepting');
     return this.state.saveItem(concept);
   }
 

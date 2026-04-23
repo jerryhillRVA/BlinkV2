@@ -157,21 +157,14 @@ export class ConceptDetailComponent {
   }
 
   protected onDialogAddAll(): void {
-    const created = this.store.moveToProduction({ keepConcept: false, workOnIndex: null });
-    if (created.length > 0) {
-      this.moved.emit({ created, workOnItemId: null });
-    }
-  }
-
-  protected onDialogAddAllKeep(): void {
-    const created = this.store.moveToProduction({ keepConcept: true, workOnIndex: null });
+    const created = this.store.moveToProduction();
     if (created.length > 0) {
       this.moved.emit({ created, workOnItemId: null });
     }
   }
 
   protected onDialogWorkOn(index: number): void {
-    const created = this.store.moveToProduction({ keepConcept: true, workOnIndex: index });
+    const created = this.store.moveToProduction();
     const workOnItemId = created[index]?.id ?? null;
     if (created.length > 0) {
       this.moved.emit({ created, workOnItemId });

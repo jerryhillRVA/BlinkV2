@@ -2,6 +2,8 @@ export type ContentStageContract = 'idea' | 'concept' | 'post';
 
 export type ContentStatusContract =
   | 'draft'
+  | 'concepting'
+  | 'posting'
   | 'in-progress'
   | 'review'
   | 'scheduled'

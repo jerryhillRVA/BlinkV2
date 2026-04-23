@@ -18,7 +18,7 @@ import type {
 } from '../../content.types';
 import { generateId, safeTimeout, toggleArrayItem } from '../../content.utils';
 import { assistDescriptionFor, assistHookFor } from './concept-detail.ai';
-import type { MoveToProductionOptions, TargetPlatform } from './concept-detail.types';
+import type { TargetPlatform } from './concept-detail.types';
 import type {
   ProductionBriefContract,
   RiskLevelContract,
@@ -91,7 +91,9 @@ export class ConceptDetailStore {
   }
 
   setStatus(status: ContentStatus): void {
-    this.persist({ status });
+    const item = this.item();
+    if (!item) return;
+    this.state.syncIdeaConceptStatus(item.id, status);
   }
 
   setObjectiveId(id: string | undefined): void {
@@ -223,7 +225,7 @@ export class ConceptDetailStore {
   /** Move to Production is only reachable from early statuses (D-24). */
   readonly statusAllowsProduction = computed(() => {
     const status = this.item()?.status;
-    return status === 'draft' || status === 'in-progress';
+    return status === 'draft' || status === 'concepting';
   });
 
   /** Human-readable list of missing fields, for the Move-to-Production tooltip (D-15, D-24). */
@@ -236,7 +238,7 @@ export class ConceptDetailStore {
     if (!this.hasObjective()) missing.push('Content goal');
     if (!this.hasTargets()) missing.push('Production target');
     if (!this.ctaValid()) missing.push('CTA text');
-    if (!this.statusAllowsProduction()) missing.push('Status must be Draft or In Progress');
+    if (!this.statusAllowsProduction()) missing.push('Status must be Draft or Concepting');
     return missing;
   });
 
@@ -270,16 +272,14 @@ export class ConceptDetailStore {
   }
 
   /**
-   * Creates one `stage: 'post'` item per production target. When
-   * `keepConcept` is false (the default) the concept item itself is removed
-   * from the board so the user sees the card transition cleanly into
-   * In Production cards. When `workOnIndex` is set, the indexed post item is
-   * the one the page should navigate to.
+   * Creates one `stage: 'post'` item per production target. The concept is
+   * always kept so the lineage (idea → concept → posts) is preserved and the
+   * concept's status syncs to 'posting' alongside the parent idea.
    *
    * Returns the created post items (in target order). Returns [] if the
    * concept is missing, invalid, or has no targets.
    */
-  moveToProduction(opts: MoveToProductionOptions): ContentItem[] {
+  moveToProduction(): ContentItem[] {
     const item = this.item();
     if (!item || !this.canMoveToProduction()) return [];
     const targets = item.targetPlatforms ?? [];
@@ -330,19 +330,35 @@ export class ConceptDetailStore {
       postId: created[i]?.id ?? t.postId ?? null,
     }));
     this.persist({ targetPlatforms: linked });
-    if (!opts.keepConcept) {
-      this.state.deleteItem(item.id);
-    }
+    // Concept is always kept; propagate 'posting' up to the parent idea and
+    // across any sibling concepts so the full lineage reflects the new state.
+    this.state.syncIdeaConceptStatus(item.id, 'posting');
     this.moveDialogOpen.set(false);
     return created;
   }
 
   demoteToIdea(): void {
+    const item = this.item();
+    if (!item) return;
+    const parentIdeaId = item.parentIdeaId;
+    const hasSiblingConcept =
+      !!parentIdeaId &&
+      this.state
+        .items()
+        .some(
+          (i) =>
+            i.id !== item.id &&
+            i.stage === 'concept' &&
+            i.parentIdeaId === parentIdeaId,
+        );
     this.persist({
       stage: 'idea',
       status: 'draft',
       targetPlatforms: undefined,
     });
+    if (parentIdeaId && !hasSiblingConcept) {
+      this.state.syncIdeaConceptStatus(parentIdeaId, 'draft');
+    }
   }
 
   archive(): void {

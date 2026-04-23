@@ -199,10 +199,57 @@ export const STAGE_CONFIG: Record<ContentStage, { label: string; colorClass: str
 
 export const STATUS_CONFIG: Record<ContentStatus, { label: string }> = {
   draft: { label: 'Draft' },
+  concepting: { label: 'Concepting' },
+  posting: { label: 'Posting' },
   'in-progress': { label: 'In Progress' },
   review: { label: 'In Review' },
   scheduled: { label: 'Scheduled' },
   published: { label: 'Published' },
+};
+
+export const STATUSES_BY_STAGE: Record<ContentStage, ContentStatus[]> = {
+  idea: ['draft', 'concepting', 'posting'],
+  concept: ['draft', 'concepting', 'posting'],
+  post: ['draft', 'in-progress', 'review', 'scheduled', 'published'],
+};
+
+export interface StageBadge {
+  label: string;
+  toneClass: string;
+  iconPaths: string[];
+}
+
+export const STAGE_BADGES: Record<ContentStage, StageBadge> = {
+  idea: {
+    label: 'Idea',
+    toneClass: 'stage-idea',
+    // Lucide Lightbulb
+    iconPaths: [
+      'M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5',
+      'M9 18h6',
+      'M10 22h4',
+    ],
+  },
+  concept: {
+    label: 'Concept',
+    toneClass: 'stage-concept',
+    // Lucide PenTool
+    iconPaths: [
+      'M15.707 21.293a1 1 0 0 1-1.414 0l-1.586-1.586a1 1 0 0 1 0-1.414l5.586-5.586a1 1 0 0 1 1.414 0l1.586 1.586a1 1 0 0 1 0 1.414z',
+      'M18 13l-1.375-6.874a1 1 0 0 0-.746-.776L3.235 2.028a1 1 0 0 0-1.207 1.207L5.35 15.879a1 1 0 0 0 .776.746L13 18',
+      'M2.3 2.3l7.286 7.286',
+      'M11 11a2 2 0 1 1-4 0 2 2 0 0 1 4 0z',
+    ],
+  },
+  post: {
+    label: 'Post',
+    toneClass: 'stage-post',
+    // Lucide Send
+    iconPaths: [
+      'M14.536 21.686a.5.5 0 0 0 .937-.024l6.5-19a.496.496 0 0 0-.635-.635l-19 6.5a.5.5 0 0 0-.024.937l7.93 3.18a2 2 0 0 1 1.112 1.11z',
+      'M21.854 2.147l-10.94 10.939',
+    ],
+  },
 };
 
 export const PIPELINE_COLUMNS: PipelineColumn[] = [
@@ -210,7 +257,8 @@ export const PIPELINE_COLUMNS: PipelineColumn[] = [
     id: 'ideas',
     label: 'Ideas',
     stage: 'idea',
-    statuses: ['draft'],
+    // Any status — idea stays in this column across its lifecycle.
+    statuses: [],
     colorClass: 'column-ideas',
     iconColor: '#3b82f6',
     addType: 'idea',
@@ -225,7 +273,8 @@ export const PIPELINE_COLUMNS: PipelineColumn[] = [
     id: 'concepts',
     label: 'Concepts',
     stage: 'concept',
-    statuses: ['draft'],
+    // Any status — concept stays in this column across its lifecycle.
+    statuses: [],
     colorClass: 'column-concepts',
     iconColor: '#a855f7',
     addType: 'concept',

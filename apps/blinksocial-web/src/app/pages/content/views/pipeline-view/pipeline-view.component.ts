@@ -9,6 +9,22 @@ import { PIPELINE_COLUMNS, STAGE_CONFIG, STATUS_CONFIG } from '../../content.con
 
 const VIEW_MODE_STORAGE_KEY = 'blink-content-view-mode';
 
+/**
+ * Pipeline column match rule. A column can filter by:
+ *   - stage only (e.g. Ideas, Concepts) — any status in that stage shows up
+ *   - stage + specific statuses (reserved for future use)
+ *   - status only (e.g. In Production, Review, Published — any stage)
+ * An empty `statuses` array means "any status in this stage".
+ */
+function matchesColumn(item: ContentItem, col: PipelineColumn): boolean {
+  const anyStatus = col.statuses.length === 0;
+  if (col.stage) {
+    if (item.stage !== col.stage) return false;
+    return anyStatus || col.statuses.includes(item.status);
+  }
+  return anyStatus || col.statuses.includes(item.status);
+}
+
 @Component({
   selector: 'app-pipeline-view',
   imports: [CommonModule, PlatformIconComponent],
@@ -115,23 +131,11 @@ export class PipelineViewComponent {
   getColumnItems(columnId: string): ContentItem[] {
     const col = this.columns.find((c) => c.id === columnId);
     if (!col) return [];
-    return this.filteredItems().filter((item) => {
-      if (col.stage && item.stage === col.stage && col.statuses.includes(item.status)) {
-        return true;
-      }
-      if (!col.stage && col.statuses.includes(item.status)) {
-        return true;
-      }
-      return false;
-    });
+    return this.filteredItems().filter((item) => matchesColumn(item, col));
   }
 
   getItemColumn(item: ContentItem): PipelineColumn | undefined {
-    return this.columns.find((col) => {
-      if (col.stage && item.stage === col.stage && col.statuses.includes(item.status)) return true;
-      if (!col.stage && col.statuses.includes(item.status)) return true;
-      return false;
-    });
+    return this.columns.find((col) => matchesColumn(item, col));
   }
 
   getPillarName(id: string): string {

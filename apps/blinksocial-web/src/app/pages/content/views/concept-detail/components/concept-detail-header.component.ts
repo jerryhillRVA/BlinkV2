@@ -8,17 +8,20 @@ import {
   inject,
   signal,
 } from '@angular/core';
+import { NgClass } from '@angular/common';
 import { PlatformIconComponent } from '../../../../../shared/platform-icon/platform-icon.component';
 import { InlineEditComponent } from '../../../../../shared/inline-edit/inline-edit.component';
 import {
   PLATFORM_OPTIONS,
   PLATFORM_CONTENT_TYPES,
+  STAGE_BADGES,
+  type StageBadge,
 } from '../../../content.constants';
 import type { ContentItem } from '../../../content.types';
 
 @Component({
   selector: 'app-concept-detail-header',
-  imports: [PlatformIconComponent, InlineEditComponent],
+  imports: [NgClass, PlatformIconComponent, InlineEditComponent],
   templateUrl: './concept-detail-header.component.html',
   styleUrl: './concept-detail-header.component.scss',
 })
@@ -38,6 +41,10 @@ export class ConceptDetailHeaderComponent {
   @Output() duplicate = new EventEmitter<void>();
   @Output() copyLink = new EventEmitter<void>();
   @Output() titleChange = new EventEmitter<string>();
+
+  protected stageBadge(): StageBadge {
+    return STAGE_BADGES[this.item.stage] ?? STAGE_BADGES.concept;
+  }
 
   protected moveTooltip(): string {
     if (this.canMoveToProduction) return 'Move this concept into production';

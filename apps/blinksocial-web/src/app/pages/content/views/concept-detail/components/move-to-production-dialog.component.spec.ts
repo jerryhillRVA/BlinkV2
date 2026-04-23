@@ -58,25 +58,27 @@ describe('MoveToProductionDialogComponent', () => {
     fixture.destroy();
   });
 
-  it('primary + secondary + per-target workOn buttons emit correctly', () => {
+  it('primary + per-target workOn buttons emit correctly', () => {
     const fixture = setup();
     const selectAll: number[] = [];
-    const selectAllKeep: number[] = [];
     const workOn: number[] = [];
     fixture.componentInstance.selectAll.subscribe(() => selectAll.push(1));
-    fixture.componentInstance.selectAllKeepConcept.subscribe(() => selectAllKeep.push(1));
     fixture.componentInstance.workOn.subscribe((i) => workOn.push(i));
 
     (document.body.querySelector('.btn-primary') as HTMLButtonElement).click();
-    (document.body.querySelector('.btn-secondary') as HTMLButtonElement).click();
     const workButtons = document.body.querySelectorAll(
       '.btn-workon',
     ) as NodeListOf<HTMLButtonElement>;
     workButtons[1].click();
 
     expect(selectAll.length).toBe(1);
-    expect(selectAllKeep.length).toBe(1);
     expect(workOn).toEqual([1]);
+    fixture.destroy();
+  });
+
+  it('does not render a "Keep Concept Card" secondary button', () => {
+    const fixture = setup();
+    expect(document.body.querySelector('.btn-secondary')).toBeNull();
     fixture.destroy();
   });
 

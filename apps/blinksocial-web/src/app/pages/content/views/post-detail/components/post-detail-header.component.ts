@@ -8,17 +8,20 @@ import {
   inject,
   signal,
 } from '@angular/core';
+import { NgClass } from '@angular/common';
 import { PlatformIconComponent } from '../../../../../shared/platform-icon/platform-icon.component';
 import { InlineEditComponent } from '../../../../../shared/inline-edit/inline-edit.component';
 import {
   PLATFORM_CONTENT_TYPES,
   PLATFORM_OPTIONS,
+  STAGE_BADGES,
+  type StageBadge,
 } from '../../../content.constants';
 import type { ContentItem } from '../../../content.types';
 
 @Component({
   selector: 'app-post-detail-header',
-  imports: [PlatformIconComponent, InlineEditComponent],
+  imports: [NgClass, PlatformIconComponent, InlineEditComponent],
   templateUrl: './post-detail-header.component.html',
   styleUrl: './post-detail-header.component.scss',
 })
@@ -37,6 +40,10 @@ export class PostDetailHeaderComponent {
   @Output() deletePost = new EventEmitter<void>();
 
   protected readonly menuOpen = signal(false);
+
+  protected stageBadge(): StageBadge {
+    return STAGE_BADGES[this.item.stage] ?? STAGE_BADGES.post;
+  }
 
   protected platformLabel(): string | null {
     const p = this.item.platform;

@@ -134,7 +134,7 @@ export class ContentStateService {
       production: all.filter(
         (i) =>
           i.status === 'in-progress' ||
-          (i.stage === 'concept' && i.status === 'draft'),
+          (i.stage === 'concept' && i.status === 'concepting'),
       ).length,
       review:
         all.filter((i) => i.status === 'review').length +
@@ -215,6 +215,7 @@ export class ContentStateService {
 
         this.businessObjectives.set(data.objectives ?? []);
 
+        this.reconcileLineageStatuses();
         this.loading.set(false);
       },
       error: () => {
@@ -229,9 +230,112 @@ export class ContentStateService {
         this.pillars.set(mock.pillars);
         this.segments.set(mock.segments);
         this.businessObjectives.set([]);
+        this.reconcileLineageStatuses();
         this.loading.set(false);
       },
     });
+  }
+
+  /**
+   * In-memory migration that fixes idea/concept statuses based on existing
+   * lineage. Runs once after loadAll. Addresses pre-migration data where:
+   *   - Concepts still carry status 'draft' (should be 'concepting').
+   *   - Posts reference parent ideas/concepts that were never upgraded to
+   *     'posting' when the post was created.
+   *   - A post's parentConceptId may dangle (concept deleted during
+   *     moveToProduction) but parentIdeaId still resolves a real idea.
+   * Only mutates local signals — does not write to the backend. If the user
+   * subsequently edits status via the stepper, the normal sync path persists
+   * the reconciled values.
+   */
+  private reconcileLineageStatuses(): void {
+    const entries = [...this.indexEntries(), ...this.archiveIndexEntries()];
+    const cache = this.fullItemCacheSignal();
+    const byId = new Map<string, ContentItemsIndexEntryContract>(
+      entries.map((e) => [e.id, e]),
+    );
+    const newStatus = new Map<string, ContentStatus>();
+
+    const resolveAnchorIdeaId = (
+      entry: ContentItemsIndexEntryContract,
+    ): string | null => {
+      if (entry.parentIdeaId) return entry.parentIdeaId;
+      if (entry.parentConceptId) {
+        const concept = byId.get(entry.parentConceptId);
+        return concept?.parentIdeaId ?? null;
+      }
+      return null;
+    };
+
+    // Pass 1: posts propagate 'posting' to anchor idea + every sibling concept.
+    for (const entry of entries) {
+      if (entry.stage !== 'post') continue;
+      const anchorIdeaId = resolveAnchorIdeaId(entry);
+      if (!anchorIdeaId) continue;
+      const idea = byId.get(anchorIdeaId);
+      if (idea?.stage === 'idea' && idea.status !== 'posting') {
+        newStatus.set(idea.id, 'posting');
+      }
+      for (const sibling of entries) {
+        if (
+          sibling.stage === 'concept' &&
+          sibling.parentIdeaId === anchorIdeaId &&
+          sibling.status !== 'posting'
+        ) {
+          newStatus.set(sibling.id, 'posting');
+        }
+      }
+    }
+
+    // Pass 2: concepts still on 'draft' roll up to 'concepting'; parent ideas
+    // with any child concept roll up to at least 'concepting' (not demoting
+    // anyone already scheduled for 'posting').
+    for (const entry of entries) {
+      if (entry.stage !== 'concept') continue;
+      if (entry.status === 'draft' && newStatus.get(entry.id) !== 'posting') {
+        newStatus.set(entry.id, 'concepting');
+      }
+      if (entry.parentIdeaId) {
+        const idea = byId.get(entry.parentIdeaId);
+        if (
+          idea?.stage === 'idea' &&
+          idea.status === 'draft' &&
+          newStatus.get(idea.id) !== 'posting'
+        ) {
+          newStatus.set(idea.id, 'concepting');
+        }
+      }
+    }
+
+    // Pass 3: normalize legacy statuses on idea/concept items that don't fit
+    // the new lifecycle (draft/concepting/posting). Anything else on an idea
+    // or concept (e.g. 'in-progress' from before the split) becomes
+    // 'concepting' as a sensible default so the stepper renders correctly.
+    const newLifecycle: ContentStatus[] = ['draft', 'concepting', 'posting'];
+    for (const entry of entries) {
+      if (entry.stage !== 'idea' && entry.stage !== 'concept') continue;
+      if (newStatus.has(entry.id)) continue;
+      if (!newLifecycle.includes(entry.status)) {
+        newStatus.set(entry.id, 'concepting');
+      }
+    }
+
+    if (newStatus.size === 0) return;
+
+    const bumpStatus = <T extends { id: string; status: ContentStatus }>(
+      row: T,
+    ): T => {
+      const s = newStatus.get(row.id);
+      return s ? { ...row, status: s } : row;
+    };
+
+    this.indexEntries.update((rows) => rows.map(bumpStatus));
+    this.archiveIndexEntries.update((rows) => rows.map(bumpStatus));
+    const nextCache: Record<string, ContentItem> = {};
+    for (const [id, item] of Object.entries(cache)) {
+      nextCache[id] = bumpStatus(item);
+    }
+    this.fullItemCacheSignal.set(nextCache);
   }
 
   loadArchiveIndex(): void {
@@ -329,6 +433,46 @@ export class ContentStateService {
         tap((saved) => saved && this.applySavedItem(saved)),
       );
     return this.share(source$);
+  }
+
+  /**
+   * Syncs status across an idea and its child concepts. Given any idea or
+   * concept id, resolves the anchor idea (self if stage='idea', else
+   * `parentIdeaId`), then updates the idea plus every concept sharing that
+   * `parentIdeaId` to `status`. Items already at `status` are skipped. Posts
+   * are never touched — post status is terminal.
+   */
+  syncIdeaConceptStatus(sourceId: string, status: ContentStatus): void {
+    const current = this.items().find((i) => i.id === sourceId);
+    if (!current) return;
+
+    const anchorIdeaId =
+      current.stage === 'idea' ? current.id : current.parentIdeaId;
+
+    const targets: ContentItem[] = [];
+    if (anchorIdeaId) {
+      const idea = this.items().find(
+        (i) => i.id === anchorIdeaId && i.stage === 'idea',
+      );
+      if (idea) targets.push(idea);
+      for (const item of this.items()) {
+        if (item.stage === 'concept' && item.parentIdeaId === anchorIdeaId) {
+          targets.push(item);
+        }
+      }
+    } else if (current.stage === 'concept') {
+      // Orphan concept — update only the concept itself.
+      targets.push(current);
+    }
+
+    for (const t of targets) {
+      if (t.status === status) continue;
+      this.saveItem({
+        ...t,
+        status,
+        updatedAt: new Date().toISOString(),
+      });
+    }
   }
 
   advanceStage(id: string): Observable<ContentItem> {

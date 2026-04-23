@@ -279,7 +279,7 @@ describe('ConceptDetailStore — validation', () => {
   it('D-24: status review blocks Move to Production with a clear missing-validation reason', () => {
     const { store } = setup(makeItem({ status: 'review' }));
     expect(store.canMoveToProduction()).toBe(false);
-    expect(store.missingValidations()).toContain('Status must be Draft or In Progress');
+    expect(store.missingValidations()).toContain('Status must be Draft or Concepting');
   });
 
   it('D-24: status scheduled blocks Move to Production', () => {
@@ -292,14 +292,19 @@ describe('ConceptDetailStore — validation', () => {
     expect(store.canMoveToProduction()).toBe(false);
   });
 
-  it('D-24: status in-progress keeps Move to Production available', () => {
-    const { store } = setup(makeItem({ status: 'in-progress' }));
+  it('D-24: status concepting keeps Move to Production available', () => {
+    const { store } = setup(makeItem({ status: 'concepting' }));
     expect(store.canMoveToProduction()).toBe(true);
+  });
+
+  it('D-24: status in-progress blocks Move to Production (not a concept status)', () => {
+    const { store } = setup(makeItem({ status: 'in-progress' }));
+    expect(store.canMoveToProduction()).toBe(false);
   });
 });
 
 describe('ConceptDetailStore — moveToProduction', () => {
-  it('creates N post items with conceptId and platform/contentType from targets (default: removes concept)', () => {
+  it('creates N post items with conceptId + platform/contentType from targets; keeps the concept in place to preserve lineage', () => {
     const { store, state } = setup(
       makeItem({
         targetPlatforms: [
@@ -309,39 +314,53 @@ describe('ConceptDetailStore — moveToProduction', () => {
       }),
     );
     const before = state.items().length;
-    const created = store.moveToProduction({ keepConcept: false, workOnIndex: null });
+    const created = store.moveToProduction();
     expect(created.length).toBe(2);
     expect(created[0].stage).toBe('post');
     expect(created[0].status).toBe('in-progress');
     expect(created[0].conceptId).toBe('c-1');
     expect(created[0].platform).toBe('instagram');
     expect(created[1].contentType).toBe('short-video');
-    // Concept was removed, 2 posts added → +1 net
-    expect(state.items().length).toBe(before + 1);
-    expect(state.items().some((i) => i.id === 'c-1')).toBe(false);
+    // Concept is preserved, 2 posts added → +2 net
+    expect(state.items().length).toBe(before + 2);
+    expect(state.items().some((i) => i.id === 'c-1')).toBe(true);
     // Dialog closes
     expect(store.moveDialogOpen()).toBe(false);
   });
 
-  it('keepConcept=true leaves the concept in place', () => {
+  it('promotes the parent idea and the concept to posting when moving to production', () => {
+    const parentIdea: ContentItem = {
+      id: 'i-1',
+      stage: 'idea',
+      status: 'concepting',
+      title: 'Parent idea',
+      description: '',
+      pillarIds: [],
+      segmentIds: [],
+      createdAt: '2026-01-01T00:00:00Z',
+      updatedAt: '2026-01-01T00:00:00Z',
+    };
     const { store, state } = setup(
       makeItem({
+        parentIdeaId: 'i-1',
+        status: 'concepting',
         targetPlatforms: [{ platform: 'instagram', contentType: 'reel' }],
       }),
     );
-    const created = store.moveToProduction({ keepConcept: true, workOnIndex: null });
-    expect(created.length).toBe(1);
-    expect(state.items().some((i) => i.id === 'c-1')).toBe(true);
+    state.setItems([parentIdea, state.items().find((i) => i.id === 'c-1')!]);
+    store.moveToProduction();
+    expect(state.items().find((i) => i.id === 'i-1')?.status).toBe('posting');
+    expect(state.items().find((i) => i.id === 'c-1')?.status).toBe('posting');
   });
 
   it('returns [] when canMoveToProduction is false', () => {
     const { store } = setup(makeItem({ title: '' }));
-    expect(store.moveToProduction({ keepConcept: false, workOnIndex: null })).toEqual([]);
+    expect(store.moveToProduction()).toEqual([]);
   });
 
   it('created post items drop the targetPlatforms array', () => {
     const { store } = setup();
-    const [post] = store.moveToProduction({ keepConcept: true, workOnIndex: null });
+    const [post] = store.moveToProduction();
     expect(post.targetPlatforms).toBeUndefined();
   });
 
@@ -353,7 +372,7 @@ describe('ConceptDetailStore — moveToProduction', () => {
         cta: { type: 'follow', text: 'Follow us' },
       }),
     );
-    const [post] = store.moveToProduction({ keepConcept: true, workOnIndex: null });
+    const [post] = store.moveToProduction();
     const strategy = post.production?.brief?.strategy;
     expect(strategy?.keyMessage).toBe('Hook them fast');
     expect(strategy?.tonePreset).toBe('friendly');
@@ -374,7 +393,7 @@ describe('ConceptDetailStore — moveToProduction', () => {
         hook: 'Hook', // still need a hook for validation
       }),
     );
-    const [post] = store.moveToProduction({ keepConcept: true, workOnIndex: null });
+    const [post] = store.moveToProduction();
     const strategy = post.production?.brief?.strategy;
     expect(strategy?.keyMessage).toBeUndefined();
     expect(strategy?.tonePreset).toBeUndefined();
@@ -392,7 +411,7 @@ describe('ConceptDetailStore — moveToProduction', () => {
         ],
       }),
     );
-    const created = store.moveToProduction({ keepConcept: true, workOnIndex: null });
+    const created = store.moveToProduction();
     const tps = store.item()?.targetPlatforms ?? [];
     expect(tps[0].postId).toBe(created[0].id);
     expect(tps[1].postId).toBe(created[1].id);
@@ -425,6 +444,60 @@ describe('ConceptDetailStore — lifecycle + helpers', () => {
     expect(store.item()?.stage).toBe('idea');
     expect(store.item()?.status).toBe('draft');
     expect(store.item()?.targetPlatforms).toBeUndefined();
+  });
+
+  it('demoteToIdea resets the parent idea to draft when no sibling concepts remain', () => {
+    const { store, state } = setup(makeItem({ parentIdeaId: 'i-1' }));
+    state.setItems([
+      {
+        id: 'i-1',
+        stage: 'idea',
+        status: 'concepting',
+        title: 'Parent idea',
+        description: '',
+        pillarIds: [],
+        segmentIds: [],
+        createdAt: '2026-01-01T00:00:00Z',
+        updatedAt: '2026-01-01T00:00:00Z',
+      },
+      state.items().find((i) => i.id === 'c-1')!,
+    ]);
+    store.demoteToIdea();
+    const idea = state.items().find((i) => i.id === 'i-1');
+    expect(idea?.status).toBe('draft');
+  });
+
+  it('demoteToIdea leaves the parent idea alone when other sibling concepts still point at it', () => {
+    const { store, state } = setup(makeItem({ parentIdeaId: 'i-1' }));
+    state.setItems([
+      {
+        id: 'i-1',
+        stage: 'idea',
+        status: 'concepting',
+        title: 'Parent idea',
+        description: '',
+        pillarIds: [],
+        segmentIds: [],
+        createdAt: '2026-01-01T00:00:00Z',
+        updatedAt: '2026-01-01T00:00:00Z',
+      },
+      {
+        id: 'c-sibling',
+        stage: 'concept',
+        status: 'concepting',
+        parentIdeaId: 'i-1',
+        title: 'Sibling concept',
+        description: '',
+        pillarIds: [],
+        segmentIds: [],
+        createdAt: '2026-01-01T00:00:00Z',
+        updatedAt: '2026-01-01T00:00:00Z',
+      },
+      state.items().find((i) => i.id === 'c-1')!,
+    ]);
+    store.demoteToIdea();
+    const idea = state.items().find((i) => i.id === 'i-1');
+    expect(idea?.status).toBe('concepting');
   });
 
   it('archive flips archived=true', () => {
@@ -546,10 +619,23 @@ describe('ConceptDetailStore — strategy field setters (D-07)', () => {
     expect(store.item()?.targetPublishWindow).toBeUndefined();
   });
 
-  it('setStatus persists the new status', () => {
-    const { store } = setup();
-    store.setStatus('review');
-    expect(store.item()?.status).toBe('review');
+  it('setStatus syncs the concept and its parent idea', () => {
+    const parentIdea: ContentItem = {
+      id: 'i-1',
+      stage: 'idea',
+      status: 'draft',
+      title: 'Parent idea',
+      description: '',
+      pillarIds: [],
+      segmentIds: [],
+      createdAt: '2026-01-01T00:00:00Z',
+      updatedAt: '2026-01-01T00:00:00Z',
+    };
+    const { store, state } = setup(makeItem({ parentIdeaId: 'i-1' }));
+    state.setItems([parentIdea, state.items().find((i) => i.id === 'c-1')!]);
+    store.setStatus('concepting');
+    expect(store.item()?.status).toBe('concepting');
+    expect(state.items().find((i) => i.id === 'i-1')?.status).toBe('concepting');
   });
 
   it('missingValidations surfaces each failing gate', () => {

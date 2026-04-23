@@ -32,12 +32,12 @@ function setup(
 }
 
 describe('PostDetailHeaderComponent', () => {
-  it('renders back, Pipeline stage badge, inline title, Saved, and menu button', () => {
+  it('renders back, Post stage badge, inline title, Saved, and menu button', () => {
     const fixture = setup();
     expect(fixture.nativeElement.querySelector('.detail-back')).not.toBeNull();
     const badge = fixture.nativeElement.querySelector('.stage-badge') as HTMLElement;
-    expect(badge.classList.contains('stage-pipeline')).toBe(true);
-    expect(badge.textContent?.trim()).toContain('In Production');
+    expect(badge.classList.contains('stage-post')).toBe(true);
+    expect(badge.textContent?.trim()).toContain('Post');
     expect(fixture.nativeElement.querySelector('app-inline-edit')).not.toBeNull();
     expect(
       (fixture.nativeElement.querySelector('.detail-saved') as HTMLElement).textContent?.trim(),
