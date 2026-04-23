@@ -1,5 +1,8 @@
 import { test, expect } from '@playwright/test';
-import { mockAuthenticatedUser } from './helpers/login';
+import {
+  mockAuthenticatedUser,
+  mockAuthenticatedUserNoWorkspaces,
+} from './helpers/login';
 
 test.describe('Profile Settings Page', () => {
   test.beforeEach(async ({ page }) => {
@@ -76,5 +79,42 @@ test.describe('Profile Menu Navigation', () => {
     await expect(page.locator('.profile-menu')).toBeVisible();
     await page.locator('.profile-menu-backdrop').click();
     await expect(page.locator('.profile-menu')).not.toBeVisible();
+  });
+});
+
+// Issue #23 — workspace nav on /profile-settings
+test.describe('Profile Settings — Workspace Nav', () => {
+  test('should show workspace selector and both nav tabs on /profile-settings', async ({
+    page,
+  }) => {
+    await mockAuthenticatedUser(page);
+    await page.goto('/profile-settings');
+    await expect(page.locator('.ws-selector-btn')).toBeVisible();
+    const navItems = page.locator('.ws-nav-item');
+    await expect(navItems).toHaveCount(2);
+    await expect(navItems.nth(0)).toContainText('Content');
+    await expect(navItems.nth(1)).toContainText('Strategy');
+    // No tab should be active on /profile-settings
+    await expect(page.locator('.ws-nav-item.active')).toHaveCount(0);
+  });
+
+  test('should navigate to /workspace/:id/content when Content tab is clicked', async ({
+    page,
+  }) => {
+    await mockAuthenticatedUser(page);
+    await page.goto('/profile-settings');
+    await expect(page.locator('.ws-selector-btn')).toBeVisible();
+    await page.locator('.ws-nav-item').filter({ hasText: 'Content' }).click();
+    await expect(page).toHaveURL(/\/workspace\/[^/]+\/content$/);
+  });
+
+  test('should hide workspace selector and tabs when user has no workspaces', async ({
+    page,
+  }) => {
+    await mockAuthenticatedUserNoWorkspaces(page);
+    await page.goto('/profile-settings');
+    await expect(page.locator('h1')).toHaveText('Profile Settings');
+    await expect(page.locator('.ws-selector-btn')).toHaveCount(0);
+    await expect(page.locator('.workspace-nav')).toHaveCount(0);
   });
 });

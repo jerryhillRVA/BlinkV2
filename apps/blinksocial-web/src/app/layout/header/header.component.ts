@@ -14,6 +14,16 @@ import type { WorkspaceSummaryContract } from '@blinksocial/contracts';
   styleUrl: './header.component.scss',
 })
 export class HeaderComponent implements OnInit {
+  /**
+   * Non-workspace routes where we still want the workspace selector + nav
+   * tabs visible (keyed to the user's last-active or first workspace).
+   * See issue #23 — deep-linking to /profile-settings otherwise strands the
+   * user with no way back into a workspace.
+   */
+  private static readonly NAV_ELIGIBLE_ROUTES: readonly string[] = [
+    '/profile-settings',
+  ];
+
   @Output() logout = new EventEmitter<void>();
 
   protected readonly themeService = inject(ThemeService);
@@ -26,20 +36,45 @@ export class HeaderComponent implements OnInit {
   readonly workspaceId = signal<string | null>(null);
   readonly currentTab = signal<string | null>(null);
   readonly wsDropdownOpen = signal(false);
+  /** True when the current route is in NAV_ELIGIBLE_ROUTES (e.g. /profile-settings). */
+  readonly isNavEligibleRoute = signal(false);
 
   /** Cached workspace summaries (loaded once, reused across navigations) */
   private readonly workspaceSummaries = signal<WorkspaceSummaryContract[]>([]);
   private workspacesLoaded = false;
 
+  /**
+   * The workspace the selector + nav tabs should key off. On workspace routes
+   * this matches `workspaceId()`; on other nav-eligible routes it falls back
+   * to `lastWorkspaceId → user.workspaces[0] → null` (same chain as
+   * `settingsWorkspaceId`, which already drives the settings-gear link).
+   */
+  readonly effectiveWorkspaceId = computed(() => {
+    const current = this.workspaceId();
+    if (current) return current;
+    return this.settingsWorkspaceId();
+  });
+
+  /**
+   * Whether to render the workspace selector + Content/Strategy tabs.
+   * True on any workspace route, plus explicit whitelist (e.g. /profile-settings),
+   * and only when an effective workspace exists (hides for zero-workspace users).
+   */
+  readonly showWorkspaceNav = computed(() => {
+    const onEligibleRoute =
+      this.workspaceId() != null || this.isNavEligibleRoute();
+    return onEligibleRoute && this.effectiveWorkspaceId() != null;
+  });
+
   readonly workspaceName = computed(() => {
-    const wsId = this.workspaceId();
+    const wsId = this.effectiveWorkspaceId();
     if (!wsId) return null;
     const summary = this.workspaceSummaries().find((w) => w.id === wsId);
     return summary?.name ?? wsId;
   });
 
   readonly otherWorkspaces = computed(() => {
-    const wsId = this.workspaceId();
+    const wsId = this.effectiveWorkspaceId();
     return this.workspaceSummaries().filter(
       (w) => w.id !== wsId && (!w.status || w.status === 'active')
     );
@@ -79,6 +114,11 @@ export class HeaderComponent implements OnInit {
     const match = url.match(/^\/workspace\/([^/]+)/);
     const id = match ? match[1] : null;
     this.workspaceId.set(id);
+
+    const urlPath = url.split('?')[0].split('#')[0];
+    const eligible = HeaderComponent.NAV_ELIGIBLE_ROUTES.includes(urlPath);
+    this.isNavEligibleRoute.set(eligible);
+
     if (id) {
       this.authService.lastWorkspaceId.set(id);
       const tabMatch = url.match(/^\/workspace\/[^/]+\/(\w+)/);
@@ -86,6 +126,12 @@ export class HeaderComponent implements OnInit {
       this.loadWorkspacesIfNeeded();
     } else {
       this.currentTab.set(null);
+      // On eligible non-workspace routes (e.g. /profile-settings), still load
+      // workspace summaries so the selector can resolve names rather than
+      // showing raw workspace IDs.
+      if (eligible) {
+        this.loadWorkspacesIfNeeded();
+      }
     }
   }
 

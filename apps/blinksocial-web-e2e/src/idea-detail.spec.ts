@@ -47,14 +47,19 @@ test.describe('Idea detail page', () => {
     await expect(page.locator('app-concept-option-card')).toHaveCount(6, { timeout: 10_000 });
   });
 
-  test('Concept CTA stays on the same URL and switches to the Concept detail layout', async ({ page }) => {
+  test('Concept CTA navigates to the Concept detail page', async ({ page }) => {
+    // Each content item has its own URL; advancing an idea navigates to the
+    // newly-created concept's `/workspace/:id/content/:conceptId` URL and
+    // swaps the idea-detail view for the concept-detail view.
     await page.locator('.kanban-column').first().locator('.content-card').first().click();
     await expect(page.locator('app-idea-detail')).toBeVisible();
-    const detailUrl = page.url();
+    const ideaUrl = page.url();
     const advance = page.locator('app-idea-detail-header .btn-advance');
     await advance.click();
     await expect(page.locator('app-concept-detail')).toBeVisible();
     await expect(page.locator('app-idea-detail')).toHaveCount(0);
-    expect(page.url()).toBe(detailUrl);
+    // URL changed to a different content item under the same workspace
+    await expect(page).toHaveURL(/\/workspace\/[^/]+\/content\/[^/]+$/);
+    expect(page.url()).not.toBe(ideaUrl);
   });
 });

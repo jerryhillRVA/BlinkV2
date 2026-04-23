@@ -25,6 +25,6 @@ Ticket to design: **#$ARGUMENTS**
 6. **On approval**:
    - Append the `## Design` section to the issue body via `gh issue edit $ARGUMENTS --body-file /tmp/updated-body.md`.
    - Move the ticket to `Ready` via the `github-projects` skill.
-   - Post a short comment: "Design complete, moved to Ready. See design section in issue body." with signature block.
+   - Post a **one-line** comment: `Design complete, moved to Ready. See \`## Design\` in issue body.` plus signature. No summary or restatement — the design is already in the issue body.
 
 7. **Report back** with the final design summary and confirmation of the move.

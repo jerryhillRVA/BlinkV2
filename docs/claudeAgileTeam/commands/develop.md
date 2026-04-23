@@ -25,9 +25,8 @@ Developing ticket **$ARGUMENTS** (empty = auto-pick top of Ready).
 4. **Read the full ticket body** including the design section. This is your spec. Do not start coding without it.
 
 5. **Implement**:
-   - Make changes per the design. Commit in logical chunks with Conventional Commits:
-     - `feat(scope): short description` / `fix(...)`  / `refactor(...)` / `test(...)` / `docs(...)`
-     - Each commit body ends with `Refs #<issue>`.
+   - Make changes per the design. Commit in logical chunks with Conventional Commits. **Keep commit messages short** — single subject line, `Refs #<issue>` trailer. Only include a body when the "why" isn't obvious from the diff, and keep it under ~6 lines. Long HEREDOCs can hang shells and slow hook runs.
+     - `feat(scope): short description` / `fix(...)` / `refactor(...)` / `test(...)` / `docs(...)`
    - Keep the AC checklist in mind; check each item off mentally (or in a scratch file) as implementation progresses.
 
 6. **Definition-of-Done gate** — run from project root, all must pass:
@@ -40,11 +39,10 @@ Developing ticket **$ARGUMENTS** (empty = auto-pick top of Ready).
 
 7. **Push and report**:
    - `git push -u origin <branch>`
-   - Post a comment with:
-     - Summary of what was implemented
-     - List of commits (short SHA + message)
-     - Which ACs are believed satisfied and where (`file:line` anchors)
-     - Anything deferred / worth flagging for QA
+   - Post a **concise** comment (target: one short paragraph + one bullet list, scannable in 10 seconds):
+     - One-sentence summary of what shipped
+     - Bullet list of ACs believed satisfied (no file:line anchors unless a reviewer would otherwise miss them)
+     - One line flagging anything deferred / worth a second look in QA
      - Signature with the HEAD commit SHA
    - Move ticket to `In QA`.
 
