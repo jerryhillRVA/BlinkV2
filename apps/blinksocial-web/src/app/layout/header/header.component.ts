@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Output, inject, signal, computed, OnInit, DestroyRef } from '@angular/core';
+import { Component, EventEmitter, Output, HostListener, inject, signal, computed, OnInit, DestroyRef } from '@angular/core';
 import { NavigationEnd, Router, RouterLink } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { filter, catchError, of } from 'rxjs';
@@ -158,6 +158,11 @@ export class HeaderComponent implements OnInit {
 
   closeWsDropdown(): void {
     this.wsDropdownOpen.set(false);
+  }
+
+  @HostListener('document:keydown.escape')
+  onDocumentEscape(): void {
+    if (this.wsDropdownOpen()) this.closeWsDropdown();
   }
 
   addWorkspace(): void {

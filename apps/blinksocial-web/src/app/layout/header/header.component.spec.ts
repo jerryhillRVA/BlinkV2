@@ -448,6 +448,22 @@ describe('HeaderComponent', () => {
       expect(el.querySelector('.ws-dropdown')).toBeFalsy();
     });
 
+    it('should close workspace dropdown when Escape is pressed anywhere', async () => {
+      const router = TestBed.inject(Router);
+      const fixture = TestBed.createComponent(HeaderComponent);
+      fixture.detectChanges();
+      await router.navigateByUrl('/workspace/abc123/content');
+      fixture.detectChanges();
+      fixture.componentInstance.toggleWsDropdown();
+      fixture.detectChanges();
+      const el: HTMLElement = fixture.nativeElement;
+      expect(el.querySelector('.ws-dropdown')).toBeTruthy();
+      (el.querySelector('.ws-selector-btn') as HTMLElement).focus();
+      document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+      fixture.detectChanges();
+      expect(el.querySelector('.ws-dropdown')).toBeFalsy();
+    });
+
     it('should highlight strategy tab when on strategy route', async () => {
       const router = TestBed.inject(Router);
       const fixture = TestBed.createComponent(HeaderComponent);
