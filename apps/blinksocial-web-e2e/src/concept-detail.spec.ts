@@ -32,7 +32,7 @@ test.describe('Concept detail page', () => {
     await expect(page.locator('.move-dialog')).toBeVisible();
   });
 
-  test('dialog "Add all" removes the concept and adds post cards to In Production', async ({ page }) => {
+  test('dialog "Add all to Production Queue" returns to the pipeline board', async ({ page }) => {
     await openFirstConceptCard(page);
     await page.locator('app-concept-detail-header .btn-advance').click();
     const dialog = page.locator('.move-dialog');
@@ -42,12 +42,18 @@ test.describe('Concept detail page', () => {
     await expect(page.locator('app-pipeline-view')).toBeVisible();
   });
 
-  test('dialog "Keep concept" keeps the concept card and adds posts', async ({ page }) => {
+  test('dialog "Add all" retains the concept card in the Concepts column', async ({ page }) => {
     await openFirstConceptCard(page);
+    const conceptTitle = (
+      await page.locator('app-concept-detail-header .detail-title').first().innerText()
+    ).trim();
     await page.locator('app-concept-detail-header .btn-advance').click();
     const dialog = page.locator('.move-dialog');
-    await dialog.getByRole('button', { name: /Queue all.*Keep Concept/i }).click();
+    await expect(dialog).toBeVisible();
+    await dialog.getByRole('button', { name: /Add all to Production Queue/i }).click();
     await expect(page).toHaveURL(/\/workspace\/hive-collective\/content$/);
+    const conceptsColumn = page.locator('.kanban-column').nth(1);
+    await expect(conceptsColumn.locator('.content-card', { hasText: conceptTitle })).toBeVisible();
   });
 
   test('dialog "Work on one" navigates to the created post URL', async ({ page }) => {

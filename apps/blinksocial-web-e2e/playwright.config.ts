@@ -21,6 +21,11 @@ export default defineConfig({
     ['list'],
     ['html', { open: 'never' }],
   ],
+  // Angular SSR dev server saturates under default worker count (half CPUs);
+  // page.goto times out across browsers. 2 workers keeps the suite stable.
+  workers: process.env['CI'] ? 1 : 2,
+  // SSR routes can take >30s to first-paint under concurrent load.
+  timeout: 60_000,
   /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
   use: {
     baseURL,
@@ -33,12 +38,14 @@ export default defineConfig({
       command: 'npx nx run blinksocial-api:serve',
       url: 'http://localhost:3000/api/health',
       reuseExistingServer: true,
+      timeout: 180_000,
       cwd: workspaceRoot,
     },
     {
       command: 'npx nx run blinksocial-web:serve',
       url: 'http://localhost:4200',
       reuseExistingServer: true,
+      timeout: 180_000,
       cwd: workspaceRoot,
     },
   ],
