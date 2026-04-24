@@ -1,0 +1,328 @@
+<div class="calendar-page" data-testid="calendar-page">
+  <header class="calendar-page-header">
+    <div class="title-block">
+      <h1>Calendar</h1>
+      <p class="subtitle">Publish schedule + production deadlines across platforms.</p>
+    </div>
+    <div class="view-switcher" role="tablist" aria-label="Calendar view">
+      <button
+        class="view-btn"
+        [class.active]="viewMode() === 'month'"
+        (click)="setView('month')"
+        data-testid="view-btn-month"
+      >Month</button>
+      <button
+        class="view-btn"
+        [class.active]="viewMode() === 'week'"
+        (click)="setView('week')"
+        data-testid="view-btn-week"
+      >Week</button>
+      <button
+        class="view-btn"
+        [class.active]="viewMode() === 'day'"
+        (click)="setView('day')"
+        data-testid="view-btn-day"
+      >Day</button>
+      <button
+        class="view-btn"
+        [class.active]="viewMode() === 'list'"
+        (click)="setView('list')"
+        data-testid="view-btn-list"
+      >List</button>
+    </div>
+  </header>
+
+  <div class="calendar-body">
+    <aside class="calendar-sidebar" [class.collapsed]="upcomingCollapsed()">
+      <div class="filter-bar" data-testid="filter-bar">
+        <h2 class="sidebar-title">Filters</h2>
+        <label class="search-field">
+          <span class="label">Search</span>
+          <input
+            type="search"
+            [value]="filter().search"
+            (input)="setSearch($any($event.target).value)"
+            placeholder="Title or owner"
+            data-testid="filter-search"
+          />
+        </label>
+
+        <fieldset class="filter-group">
+          <legend>Platform</legend>
+          @for (p of platformOptions; track p) {
+            <label class="chip">
+              <input
+                type="checkbox"
+                [checked]="isFilterActive('platform', p)"
+                (change)="togglePlatform(p)"
+                [attr.data-testid]="'filter-platform-' + p"
+              />
+              {{ platformLabel(p) }}
+            </label>
+          }
+        </fieldset>
+
+        <fieldset class="filter-group">
+          <legend>Status</legend>
+          @for (s of statusOptions; track s) {
+            <label class="chip">
+              <input
+                type="checkbox"
+                [checked]="isFilterActive('status', s)"
+                (change)="toggleStatus(s)"
+                [attr.data-testid]="'filter-status-' + s"
+              />
+              {{ statusLabel(s) }}
+            </label>
+          }
+        </fieldset>
+
+        @if (ownerOptions().length > 0) {
+          <fieldset class="filter-group">
+            <legend>Owner</legend>
+            @for (o of ownerOptions(); track o) {
+              <label class="chip">
+                <input
+                  type="checkbox"
+                  [checked]="isFilterActive('owner', o)"
+                  (change)="toggleOwner(o)"
+                />
+                {{ o }}
+              </label>
+            }
+          </fieldset>
+        }
+
+        <div class="toggle-group">
+          <label class="toggle">
+            <input
+              type="checkbox"
+              [checked]="filter().showMilestones"
+              (change)="toggleShowMilestones()"
+              data-testid="toggle-show-milestones"
+            />
+            Show milestones
+          </label>
+          <label class="toggle">
+            <input
+              type="checkbox"
+              [checked]="filter().showPublished"
+              (change)="toggleShowPublished()"
+              data-testid="toggle-show-published"
+            />
+            Show published
+          </label>
+        </div>
+      </div>
+
+      <div class="upcoming-panel" data-testid="upcoming-panel">
+        <div class="upcoming-header">
+          <h2 class="sidebar-title">Upcoming</h2>
+          <button
+            class="collapse-btn"
+            (click)="toggleUpcomingPanel()"
+            [attr.aria-expanded]="!upcomingCollapsed()"
+            data-testid="upcoming-toggle"
+          >{{ upcomingCollapsed() ? '+' : '–' }}</button>
+        </div>
+        @if (!upcomingCollapsed()) {
+          <ul class="upcoming-list">
+            @for (ev of upcomingEvents(); track ev.id) {
+              <li
+                class="upcoming-row"
+                [class.severity-overdue]="ev.severity === 'overdue'"
+                [class.severity-at-risk]="ev.severity === 'at-risk'"
+                [class.severity-blocked]="ev.severity === 'blocked'"
+                (click)="openEvent(ev)"
+                (keydown.enter)="openEvent(ev)"
+                tabindex="0"
+                role="button"
+                [attr.data-testid]="'upcoming-row-' + ev.id"
+              >
+                <span class="row-date">{{ ev.date | date: 'MMM d' }}</span>
+                <span class="row-title">{{ eventLabel(ev) }}</span>
+                @if (severityLabel(ev)) {
+                  <span class="severity-badge" [attr.aria-label]="severityLabel(ev)">
+                    <span class="severity-icon" aria-hidden="true">!</span>
+                    {{ severityLabel(ev) }}
+                  </span>
+                }
+              </li>
+            }
+            @if (upcomingEvents().length === 0) {
+              <li class="empty-row">No upcoming items in the next 14 days.</li>
+            }
+          </ul>
+        }
+      </div>
+    </aside>
+
+    <main class="calendar-main" data-testid="calendar-main">
+      <div class="date-nav" role="toolbar" aria-label="Date navigation">
+        <button class="nav-btn" (click)="goPrev()" data-testid="nav-prev" aria-label="Previous">‹</button>
+        <button class="nav-btn" (click)="goToday()" data-testid="nav-today">Today</button>
+        <button class="nav-btn" (click)="goNext()" data-testid="nav-next" aria-label="Next">›</button>
+        <span class="cursor-label" data-testid="cursor-label">{{ monthHeader() }}</span>
+      </div>
+
+      @if (loading()) {
+        <div class="loading-state" data-testid="calendar-loading">Loading calendar…</div>
+      } @else if (loadError()) {
+        <div class="error-state" data-testid="calendar-error">{{ loadError() }}</div>
+      } @else {
+        @switch (viewMode()) {
+          @case ('month') {
+            <div class="month-grid" data-testid="month-grid">
+              <div class="weekday-row">
+                <span>Sun</span><span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span>
+              </div>
+              @for (week of monthDays(); track $index) {
+                <div class="week-row">
+                  @for (day of week; track $index) {
+                    <div
+                      class="day-cell"
+                      [class.out-of-month]="!sameMonth(day)"
+                      [class.is-reference]="isReferenceDay(day)"
+                      [attr.data-day]="day.toISOString().slice(0,10)"
+                    >
+                      <span class="day-num">{{ day | date: 'd':'UTC' }}</span>
+                      @for (ev of trimmedEventsForCell(day).visible; track ev.id) {
+                        <button
+                          class="event-pill"
+                          [class.kind-publish]="ev.kind === 'publish'"
+                          [class.kind-milestone]="ev.kind === 'milestone'"
+                          [class.severity-overdue]="ev.severity === 'overdue'"
+                          [class.severity-at-risk]="ev.severity === 'at-risk'"
+                          [class.severity-blocked]="ev.severity === 'blocked'"
+                          (click)="openEvent(ev)"
+                          [attr.data-testid]="'event-pill-' + ev.id"
+                          [attr.data-platform]="ev.item.platform"
+                          [attr.title]="eventLabel(ev)"
+                        >
+                          <span class="pill-icon" aria-hidden="true">
+                            {{ ev.kind === 'publish' ? '→' : '⚑' }}
+                          </span>
+                          <span class="pill-label">{{ eventLabel(ev) }}</span>
+                          @if (severityLabel(ev)) {
+                            <span class="pill-severity">
+                              <span class="severity-icon" aria-hidden="true">!</span>
+                              {{ severityLabel(ev) }}
+                            </span>
+                          }
+                        </button>
+                      }
+                      @if (trimmedEventsForCell(day).overflow > 0) {
+                        <span class="overflow-count">+{{ trimmedEventsForCell(day).overflow }} more</span>
+                      }
+                    </div>
+                  }
+                </div>
+              }
+            </div>
+          }
+          @case ('week') {
+            <div class="week-view" data-testid="week-grid">
+              @for (day of weekDays(); track $index) {
+                <div class="week-day-col">
+                  <div class="week-day-head">{{ day | date: 'EEE d':'UTC' }}</div>
+                  <div class="all-day-lane">
+                    <div class="lane-label">All day</div>
+                    @for (ev of eventsForDay(day); track ev.id) {
+                      @if (ev.kind === 'milestone') {
+                        <button
+                          class="event-pill kind-milestone"
+                          [class.severity-overdue]="ev.severity === 'overdue'"
+                          (click)="openEvent(ev)"
+                          [attr.data-testid]="'event-pill-' + ev.id"
+                        >{{ eventLabel(ev) }}</button>
+                      }
+                    }
+                  </div>
+                  <div class="timed-lane">
+                    <div class="lane-label">Timed</div>
+                    @for (ev of eventsForDay(day); track ev.id) {
+                      @if (ev.kind === 'publish') {
+                        <button
+                          class="event-pill kind-publish"
+                          [class.severity-at-risk]="ev.severity === 'at-risk'"
+                          (click)="openEvent(ev)"
+                          [attr.data-testid]="'event-pill-' + ev.id"
+                        >
+                          <span class="pill-time">{{ ev.date | date: 'shortTime':'UTC' }}</span>
+                          {{ eventLabel(ev) }}
+                        </button>
+                      }
+                    }
+                  </div>
+                </div>
+              }
+            </div>
+          }
+          @case ('day') {
+            <div class="day-view" data-testid="day-grid">
+              <div class="day-head">{{ cursorDate() | date: 'EEEE, MMM d':'UTC' }}</div>
+              <ul class="day-events">
+                @for (ev of eventsForDay(cursorDate()); track ev.id) {
+                  <li
+                    class="day-row event-pill"
+                    [class.kind-publish]="ev.kind === 'publish'"
+                    [class.kind-milestone]="ev.kind === 'milestone'"
+                    (click)="openEvent(ev)"
+                    (keydown.enter)="openEvent(ev)"
+                    tabindex="0"
+                    [attr.data-testid]="'event-pill-' + ev.id"
+                  >
+                    <span class="row-time">{{ ev.date | date: 'shortTime':'UTC' }}</span>
+                    <span class="row-body">{{ eventLabel(ev) }}</span>
+                  </li>
+                }
+                @if (eventsForDay(cursorDate()).length === 0) {
+                  <li class="empty-row">Nothing scheduled for this day.</li>
+                }
+              </ul>
+            </div>
+          }
+          @case ('list') {
+            <div class="list-view" data-testid="list-grid">
+              @for (group of listGroupedEvents(); track group.dateKey) {
+                <section class="list-group">
+                  <h3 class="list-day-header">{{ group.date | date: 'EEEE, MMM d':'UTC' }}</h3>
+                  <ul>
+                    @for (ev of group.events; track ev.id) {
+                      <li
+                        class="list-row event-pill"
+                        [class.kind-publish]="ev.kind === 'publish'"
+                        [class.kind-milestone]="ev.kind === 'milestone'"
+                        [class.severity-overdue]="ev.severity === 'overdue'"
+                        [class.severity-at-risk]="ev.severity === 'at-risk'"
+                        [class.severity-blocked]="ev.severity === 'blocked'"
+                        (click)="openEvent(ev)"
+                        (keydown.enter)="openEvent(ev)"
+                        tabindex="0"
+                        [attr.data-testid]="'event-pill-' + ev.id"
+                      >
+                        <span class="row-title">{{ eventLabel(ev) }}</span>
+                        <span class="row-meta">
+                          {{ platformLabel(ev.item.platform) }} • {{ statusLabel(ev.item.status) }}
+                        </span>
+                        @if (severityLabel(ev)) {
+                          <span class="severity-badge">
+                            <span class="severity-icon" aria-hidden="true">!</span>
+                            {{ severityLabel(ev) }}
+                          </span>
+                        }
+                      </li>
+                    }
+                  </ul>
+                </section>
+              }
+              @if (listGroupedEvents().length === 0) {
+                <p class="empty-row">No events match your filters.</p>
+              }
+            </div>
+          }
+        }
+      }
+    </main>
+  </div>
+</div>

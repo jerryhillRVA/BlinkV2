@@ -63,6 +63,14 @@ export const appRoutes: Route[] = [
       ),
   },
   {
+    path: 'workspace/:id/calendar',
+    canActivate: [authGuard],
+    loadComponent: () =>
+      import('./pages/calendar/calendar-page.component').then(
+        (m) => m.CalendarPageComponent
+      ),
+  },
+  {
     path: 'workspace/:id/content/:itemId',
     canActivate: [authGuard],
     loadComponent: () =>
