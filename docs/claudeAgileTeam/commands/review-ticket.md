@@ -6,9 +6,10 @@ allowed-tools: Bash, Read, Glob, Grep, Edit, Write
 
 Preparing review packet for ticket **#$ARGUMENTS**.
 
-1. **Preconditions**:
-   - Status is `In Review`. If it's earlier, suggest the correct command. If it's Done, report the merge commit.
-   - Find the associated PR: `gh pr list --state open --search "#$ARGUMENTS in:body" --json number,url`.
+1. **Preconditions** (hard aborts — do not proceed if any fail):
+   - **Status must be `In Review`.** Query the board via the `github-projects` skill. If the status is anything else, **abort immediately** and print: (a) the actual current status, and (b) the correct command to run instead (`/design-ticket` for Backlog, `/develop` for Ready, `/test-ticket` for In QA, `/remediate-ticket` for In Progress with a defect report, etc.). Do not build or post the packet.
+   - If status is `Done`, abort and report the merge commit instead.
+   - Find the associated PR: `gh pr list --state open --search "#$ARGUMENTS in:body" --json number,url`. If none found, abort.
 
 2. **Gather inputs**:
    - Issue body (especially ACs and design).

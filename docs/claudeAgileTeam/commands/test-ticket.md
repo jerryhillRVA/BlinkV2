@@ -32,9 +32,11 @@ Invoke the `ui-persistence-testing` skill for the methodology. This command is t
 
 8. **Promotion decision**:
    - **Zero blockers and zero majors** → promote:
-     - Move ticket to `In Review`.
-     - Create PR: `gh pr create --base <defaultBranch> --head <branch> --title "<issue title> (#<n>)" --body-file /tmp/pr-body.md`
+     - **Create PR first** (before moving status): `gh pr create --base <defaultBranch> --head <branch> --title "<issue title> (#<n>)" --body-file /tmp/pr-body.md`
      - PR body: reference the issue with `Closes #<n>`, summarize the implementation, link to the most recent test report comment, include the AC checklist.
+     - **Sleep 10 seconds**: GitHub Projects' "Pull request linked to issue" workflow fires asynchronously on PR creation and will set the issue's status to the workflow's default (typically `In Progress`). Wait for that automation to complete before our explicit move, otherwise it races and clobbers us. `sleep 10`.
+     - **Move ticket to `In Review`** (overrides the automation).
+     - **Verify**: re-query the ticket's Status field. If not `In Review`, retry the move once, sleep 5s, re-query. If still wrong, stop and report — don't assume success.
      - Post a short comment on the issue: "All tests passed on run <N>. Moved to In Review and opened PR #<pr>."
      - Recommend the user run `/review-ticket <n>` to generate the review packet.
    - **Any blockers or majors** → stay In QA:
