@@ -2,9 +2,11 @@ import { TestBed } from '@angular/core/testing';
 import { provideRouter, Router } from '@angular/router';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { of } from 'rxjs';
 import { HeaderComponent } from './header.component';
 import { ThemeService } from '../../core/theme/theme.service';
 import { AuthService } from '../../core/auth/auth.service';
+import { DashboardApiService } from '../../pages/dashboard/dashboard-api.service';
 import { Component } from '@angular/core';
 
 @Component({ template: '' })
@@ -446,6 +448,22 @@ describe('HeaderComponent', () => {
       expect(el.querySelector('.ws-dropdown')).toBeFalsy();
     });
 
+    it('should close workspace dropdown when Escape is pressed anywhere', async () => {
+      const router = TestBed.inject(Router);
+      const fixture = TestBed.createComponent(HeaderComponent);
+      fixture.detectChanges();
+      await router.navigateByUrl('/workspace/abc123/content');
+      fixture.detectChanges();
+      fixture.componentInstance.toggleWsDropdown();
+      fixture.detectChanges();
+      const el: HTMLElement = fixture.nativeElement;
+      expect(el.querySelector('.ws-dropdown')).toBeTruthy();
+      (el.querySelector('.ws-selector-btn') as HTMLElement).focus();
+      document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+      fixture.detectChanges();
+      expect(el.querySelector('.ws-dropdown')).toBeFalsy();
+    });
+
     it('should highlight strategy tab when on strategy route', async () => {
       const router = TestBed.inject(Router);
       const fixture = TestBed.createComponent(HeaderComponent);
@@ -457,7 +475,10 @@ describe('HeaderComponent', () => {
       expect(activeItem?.textContent).toContain('Strategy');
     });
 
-    it('should clear workspace nav when navigating away from workspace', async () => {
+    it('should keep workspace nav visible on /profile-settings but with no active tab', async () => {
+      // See issue #23 — deep-linking to /profile-settings should not strand
+      // the user. The nav stays visible, keyed to lastWorkspaceId, but no tab
+      // is marked active since the user is not on a workspace page.
       const router = TestBed.inject(Router);
       const fixture = TestBed.createComponent(HeaderComponent);
       fixture.detectChanges();
@@ -466,7 +487,8 @@ describe('HeaderComponent', () => {
       expect(fixture.nativeElement.querySelector('.workspace-nav')).toBeTruthy();
       await router.navigateByUrl('/profile-settings');
       fixture.detectChanges();
-      expect(fixture.nativeElement.querySelector('.workspace-nav')).toBeFalsy();
+      expect(fixture.nativeElement.querySelector('.workspace-nav')).toBeTruthy();
+      expect(fixture.nativeElement.querySelector('.ws-nav-item.active')).toBeFalsy();
     });
 
     it('should call switchWorkspace and navigate', async () => {
@@ -579,6 +601,123 @@ describe('HeaderComponent', () => {
       const fixture = TestBed.createComponent(HeaderComponent);
       fixture.detectChanges();
       expect(fixture.componentInstance.currentRole()).toBe('Admin');
+    });
+
+    // Issue #23 — workspace nav on /profile-settings
+    describe('on /profile-settings', () => {
+      it('should show workspace selector and both nav tabs when user has workspaces', async () => {
+        const router = TestBed.inject(Router);
+        const authService = TestBed.inject(AuthService);
+        authService.lastWorkspaceId.set('abc123');
+        const fixture = TestBed.createComponent(HeaderComponent);
+        fixture.detectChanges();
+        await router.navigateByUrl('/profile-settings');
+        fixture.detectChanges();
+        const el: HTMLElement = fixture.nativeElement;
+        expect(el.querySelector('.ws-selector-btn')).toBeTruthy();
+        expect(el.querySelectorAll('.ws-nav-item').length).toBe(2);
+      });
+
+      it('should show the last-active workspace name in the selector', async () => {
+        const router = TestBed.inject(Router);
+        const authService = TestBed.inject(AuthService);
+        authService.currentUser.set({
+          id: 'u1',
+          email: 'a@b.com',
+          displayName: 'Test',
+          workspaces: [
+            { workspaceId: 'ws-alpha', role: 'Admin' },
+            { workspaceId: 'ws-beta', role: 'Editor' },
+          ],
+        });
+        authService.lastWorkspaceId.set('ws-beta');
+        const fixture = TestBed.createComponent(HeaderComponent);
+        fixture.detectChanges();
+        await router.navigateByUrl('/profile-settings');
+        fixture.detectChanges();
+        // No summaries loaded; falls back to raw workspace id
+        expect(fixture.componentInstance.workspaceName()).toBe('ws-beta');
+      });
+
+      it('should not mark any tab as active', async () => {
+        const router = TestBed.inject(Router);
+        const authService = TestBed.inject(AuthService);
+        authService.lastWorkspaceId.set('abc123');
+        const fixture = TestBed.createComponent(HeaderComponent);
+        fixture.detectChanges();
+        await router.navigateByUrl('/profile-settings');
+        fixture.detectChanges();
+        const el: HTMLElement = fixture.nativeElement;
+        expect(el.querySelector('.ws-nav-item.active')).toBeFalsy();
+        expect(fixture.componentInstance.currentTab()).toBeNull();
+      });
+
+      it('should fallback to user.workspaces[0] when lastWorkspaceId is null', async () => {
+        const router = TestBed.inject(Router);
+        const authService = TestBed.inject(AuthService);
+        authService.currentUser.set({
+          id: 'u1',
+          email: 'a@b.com',
+          displayName: 'Test',
+          workspaces: [
+            { workspaceId: 'ws-first', role: 'Admin' },
+            { workspaceId: 'ws-second', role: 'Editor' },
+          ],
+        });
+        // lastWorkspaceId is null by default
+        const fixture = TestBed.createComponent(HeaderComponent);
+        fixture.detectChanges();
+        await router.navigateByUrl('/profile-settings');
+        fixture.detectChanges();
+        expect(fixture.componentInstance.effectiveWorkspaceId()).toBe('ws-first');
+      });
+
+      it('should hide workspace selector and tabs when user has no workspaces', async () => {
+        const router = TestBed.inject(Router);
+        const authService = TestBed.inject(AuthService);
+        authService.currentUser.set({
+          id: 'u1',
+          email: 'a@b.com',
+          displayName: 'Test',
+          workspaces: [],
+        });
+        const fixture = TestBed.createComponent(HeaderComponent);
+        fixture.detectChanges();
+        await router.navigateByUrl('/profile-settings');
+        fixture.detectChanges();
+        const el: HTMLElement = fixture.nativeElement;
+        expect(el.querySelector('.ws-selector-btn')).toBeFalsy();
+        expect(el.querySelector('.workspace-nav')).toBeFalsy();
+      });
+
+      it('should load workspace summaries when deep-linking to /profile-settings', async () => {
+        const api = TestBed.inject(DashboardApiService);
+        const spy = vi
+          .spyOn(api, 'listWorkspaces')
+          .mockReturnValue(of({ workspaces: [] }));
+        const router = TestBed.inject(Router);
+        const fixture = TestBed.createComponent(HeaderComponent);
+        fixture.detectChanges();
+        // Not called yet — initial router.url is '/', not eligible
+        expect(spy).not.toHaveBeenCalled();
+        await router.navigateByUrl('/profile-settings');
+        fixture.detectChanges();
+        expect(spy).toHaveBeenCalledTimes(1);
+      });
+
+      it('should link Content and Strategy tabs to the effective workspace', async () => {
+        const router = TestBed.inject(Router);
+        const authService = TestBed.inject(AuthService);
+        authService.lastWorkspaceId.set('abc123');
+        const fixture = TestBed.createComponent(HeaderComponent);
+        fixture.detectChanges();
+        await router.navigateByUrl('/profile-settings');
+        fixture.detectChanges();
+        const el: HTMLElement = fixture.nativeElement;
+        const links = el.querySelectorAll<HTMLAnchorElement>('.ws-nav-item');
+        expect(links[0].getAttribute('href')).toBe('/workspace/abc123/content');
+        expect(links[1].getAttribute('href')).toBe('/workspace/abc123/strategy');
+      });
     });
   });
 });

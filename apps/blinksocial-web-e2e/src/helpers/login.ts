@@ -26,3 +26,27 @@ export const mockAuthenticatedUser = async (page: Page) => {
     }),
   );
 };
+
+/**
+ * Variant of mockAuthenticatedUser for users with no workspaces.
+ * Used to verify the workspace nav hides on non-workspace routes when
+ * there's no workspace to key off (issue #23).
+ */
+export const mockAuthenticatedUserNoWorkspaces = async (page: Page) => {
+  await page.route('**/api/auth/status', (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        authenticated: true,
+        needsBootstrap: false,
+        user: {
+          id: 'e2e-no-ws-id',
+          email: 'newuser@blinksocial.com',
+          displayName: 'No Workspace User',
+          workspaces: [],
+        },
+      }),
+    }),
+  );
+};

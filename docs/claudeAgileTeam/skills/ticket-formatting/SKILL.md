@@ -5,14 +5,19 @@ description: Use whenever writing ticket bodies, design docs, test reports, or c
 
 # Ticket and comment formatting standards
 
+## Brevity preference
+
+**Keep automated comments short.** A comment should be scannable in 5–10 seconds. One paragraph + a short bullet list is the target shape. Avoid dumping commit lists, long file:line tables, or restating the design — anyone who needs that detail will open the issue body or the PR diff.
+
+**Keep commit messages short.** Use a single Conventional Commit subject line plus a `Refs #<n>` trailer. Reserve a commit body (more than 3 lines) for commits where the "why" genuinely isn't obvious from the diff. Avoid HEREDOCs longer than ~10 lines in `git commit -m` — long HEREDOCs can hang or mis-escape in some shells.
+
 ## Every automated comment ends with a signature block
 
 ```markdown
----
-<sub>🤖 posted by `/command-name` · commit `<sha-short>` · <UTC timestamp></sub>
+— `/command-name` · <UTC date>
 ```
 
-Omit `commit` for commands that don't produce code. Use UTC ISO-8601 (date portion is fine: `2026-04-23`).
+Use a short em-dash line, not a horizontal rule. Include `commit <sha-short>` only when the command produced code. Use UTC ISO date (`2026-04-23`) — no timestamp needed.
 
 ## Issue body template (emitted by `/create-ticket`)
 
@@ -111,12 +116,9 @@ Omit `commit` for commands that don't produce code. Use UTC ISO-8601 (date porti
 ```markdown
 ## Remediation — run <N>
 
-Addressed defects from test run <N-1>:
-
-- **D1** (<title>) — fixed in `<sha>`. Root cause: <one line>.
+- **D1** — <one-line root cause> (`<sha>`)
 - **D2** — ...
 
-Changed files: `src/a.ts`, `src/b.ts`
 Ready for re-test.
 
 <signature block>
