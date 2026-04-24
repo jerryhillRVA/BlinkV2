@@ -168,6 +168,44 @@
   --blink-toast-success-bg: var(--blink-icon-green);
   --blink-toast-success-text: #fff;
   --blink-toast-action-text: #fff;
+
+  // Calendar
+  --blink-calendar-production-bg: #dbeafe;
+  --blink-calendar-production-accent: #3b82f6;
+  --blink-calendar-review-bg: #ede9fe;
+  --blink-calendar-review-accent: #8b5cf6;
+  --blink-calendar-publish-bg: rgba(217, 78, 51, 0.1);
+  --blink-calendar-overdue-text: #b91c1c;
+  --blink-calendar-overdue-bg: #fef2f2;
+  --blink-calendar-atrisk: #f59e0b;
+  --blink-calendar-atrisk-bg: #fffbeb;
+  --blink-status-warning-bg-strong: #fef3c7;
+  --blink-violet-bg: #ede9fe;
+  --blink-violet-border: #ddd6fe;
+  --blink-violet-text: #7c3aed;
+
+  // Pill status colors (status-tinted event pills, matching prototype)
+  --blink-pill-status-intake-bg: #f3f4f6;
+  --blink-pill-status-intake-text: #4b5563;
+  --blink-pill-status-intake-border: #e5e7eb;
+  --blink-pill-status-in-progress-bg: #dbeafe;
+  --blink-pill-status-in-progress-text: #1d4ed8;
+  --blink-pill-status-in-progress-border: #bfdbfe;
+  --blink-pill-status-in-review-bg: #ede9fe;
+  --blink-pill-status-in-review-text: #6d28d9;
+  --blink-pill-status-in-review-border: #ddd6fe;
+  --blink-pill-status-revisions-bg: #fef3c7;
+  --blink-pill-status-revisions-text: #b45309;
+  --blink-pill-status-revisions-border: #fde68a;
+  --blink-pill-status-approved-bg: #dcfce7;
+  --blink-pill-status-approved-text: #15803d;
+  --blink-pill-status-approved-border: #bbf7d0;
+  --blink-pill-status-scheduled-bg: #dcfce7;
+  --blink-pill-status-scheduled-text: #15803d;
+  --blink-pill-status-scheduled-border: #86efac;
+  --blink-pill-status-published-bg: #d1fae5;
+  --blink-pill-status-published-text: #065f46;
+  --blink-pill-status-published-border: #a7f3d0;
 }
 
 @mixin dark-tokens {
@@ -316,4 +354,42 @@
   --blink-toast-success-bg: var(--blink-icon-green);
   --blink-toast-success-text: #fff;
   --blink-toast-action-text: #fff;
+
+  // Calendar
+  --blink-calendar-production-bg: rgba(59, 130, 246, 0.18);
+  --blink-calendar-production-accent: #60a5fa;
+  --blink-calendar-review-bg: rgba(139, 92, 246, 0.18);
+  --blink-calendar-review-accent: #a78bfa;
+  --blink-calendar-publish-bg: rgba(217, 78, 51, 0.18);
+  --blink-calendar-overdue-text: #fca5a5;
+  --blink-calendar-overdue-bg: rgba(239, 68, 68, 0.12);
+  --blink-calendar-atrisk: #fbbf24;
+  --blink-calendar-atrisk-bg: rgba(245, 158, 11, 0.12);
+  --blink-status-warning-bg-strong: rgba(251, 191, 36, 0.18);
+  --blink-violet-bg: rgba(139, 92, 246, 0.18);
+  --blink-violet-border: rgba(139, 92, 246, 0.4);
+  --blink-violet-text: #a78bfa;
+
+  // Pill status colors (dark mode)
+  --blink-pill-status-intake-bg: rgba(156, 163, 175, 0.18);
+  --blink-pill-status-intake-text: #d1d5db;
+  --blink-pill-status-intake-border: rgba(156, 163, 175, 0.35);
+  --blink-pill-status-in-progress-bg: rgba(59, 130, 246, 0.18);
+  --blink-pill-status-in-progress-text: #93c5fd;
+  --blink-pill-status-in-progress-border: rgba(59, 130, 246, 0.4);
+  --blink-pill-status-in-review-bg: rgba(139, 92, 246, 0.18);
+  --blink-pill-status-in-review-text: #c4b5fd;
+  --blink-pill-status-in-review-border: rgba(139, 92, 246, 0.4);
+  --blink-pill-status-revisions-bg: rgba(251, 191, 36, 0.18);
+  --blink-pill-status-revisions-text: #fcd34d;
+  --blink-pill-status-revisions-border: rgba(251, 191, 36, 0.4);
+  --blink-pill-status-approved-bg: rgba(34, 197, 94, 0.18);
+  --blink-pill-status-approved-text: #86efac;
+  --blink-pill-status-approved-border: rgba(34, 197, 94, 0.4);
+  --blink-pill-status-scheduled-bg: rgba(34, 197, 94, 0.18);
+  --blink-pill-status-scheduled-text: #86efac;
+  --blink-pill-status-scheduled-border: rgba(34, 197, 94, 0.4);
+  --blink-pill-status-published-bg: rgba(16, 185, 129, 0.18);
+  --blink-pill-status-published-text: #6ee7b7;
+  --blink-pill-status-published-border: rgba(16, 185, 129, 0.4);
 }

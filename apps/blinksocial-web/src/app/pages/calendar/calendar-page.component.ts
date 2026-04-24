@@ -26,6 +26,7 @@ import {
   CalendarViewMode,
   EMPTY_FILTER_STATE,
 } from './calendar.types';
+import { CalendarPeekCardComponent } from './peek-card/peek-card.component';
 
 const MILESTONE_LABELS: Record<string, string> = {
   brief_due: 'Brief Due',
@@ -71,7 +72,7 @@ const UPCOMING_HORIZON_DAYS = 14;
 
 @Component({
   selector: 'app-calendar-page',
-  imports: [CommonModule, FormsModule, DatePipe],
+  imports: [CommonModule, FormsModule, DatePipe, CalendarPeekCardComponent],
   templateUrl: './calendar-page.component.html',
   styleUrl: './calendar-page.component.scss',
 })
@@ -90,6 +91,24 @@ export class CalendarPageComponent implements OnInit {
   readonly cursorDate = signal<Date>(new Date('2026-05-01T00:00:00.000Z'));
   readonly filter = signal<CalendarFilterState>({ ...EMPTY_FILTER_STATE });
   readonly upcomingCollapsed = signal(false);
+  readonly filtersOpen = signal(false);
+
+  readonly peekEvent = signal<CalendarEventView | null>(null);
+  readonly peekAnchor = signal<{ x: number; y: number; width: number; height: number } | null>(null);
+  private peekCloseTimer: ReturnType<typeof setTimeout> | null = null;
+
+  readonly transitioning = signal(false);
+  readonly activeFilterCount = computed(() => {
+    const f = this.filter();
+    return (
+      f.platforms.length +
+      f.statuses.length +
+      f.owners.length +
+      (f.search ? 1 : 0) +
+      (f.showMilestones ? 0 : 1) +
+      (f.showPublished ? 0 : 1)
+    );
+  });
 
   readonly referenceDate = computed<Date>(() => {
     const r = this.response();
@@ -183,6 +202,38 @@ export class CalendarPageComponent implements OnInit {
       .map(([dateKey, events]) => ({ dateKey, date: new Date(dateKey), events }));
   });
 
+  readonly insightWarnings = computed(() => {
+    const r = this.response();
+    if (!r) return [] as { headline: string; detail: string }[];
+    const warnings: { headline: string; detail: string }[] = [];
+    const ref = this.referenceDate();
+    const start = ref;
+    const end = new Date(ref.getTime() + 7 * DAY_MS);
+    const next7 = r.items.filter((it) => {
+      if (!it.scheduleAt) return false;
+      const d = new Date(it.scheduleAt);
+      return d >= start && d <= end;
+    });
+    if (next7.length === 0) {
+      warnings.push({
+        headline: '7-day publish gap ahead',
+        detail:
+          'No content scheduled in the next 7 days. Fill gaps to maintain cadence.',
+      });
+    }
+    const noDate = r.items.filter(
+      (it) => !it.scheduleAt && it.status !== 'published',
+    );
+    if (noDate.length > 0) {
+      warnings.push({
+        headline: `${noDate.length} item${noDate.length === 1 ? '' : 's'} without a publish date`,
+        detail:
+          'Set a publish date to auto-generate milestones and production windows.',
+      });
+    }
+    return warnings;
+  });
+
   readonly upcomingEvents = computed<CalendarEventView[]>(() => {
     const ref = this.referenceDate();
     const horizon = new Date(ref.getTime() + UPCOMING_HORIZON_DAYS * DAY_MS);
@@ -205,13 +256,24 @@ export class CalendarPageComponent implements OnInit {
   });
 
   ngOnInit(): void {
+    let isFirst = true;
     this.route.paramMap
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((params) => {
         const id = params.get('id');
         if (!id) return;
+        const changed = id !== this.workspaceId();
         this.workspaceId.set(id);
-        this.load(id);
+        if (isFirst) {
+          isFirst = false;
+          this.load(id);
+        } else if (changed) {
+          this.transitioning.set(true);
+          setTimeout(() => {
+            this.load(id);
+            this.transitioning.set(false);
+          }, 0);
+        }
       });
   }
 
@@ -269,6 +331,11 @@ export class CalendarPageComponent implements OnInit {
     this.cursorDate.set(r ? new Date(r.referenceDate) : new Date());
   }
 
+  goToDay(day: Date): void {
+    this.cursorDate.set(new Date(day));
+    this.viewMode.set('day');
+  }
+
   togglePlatform(platform: PlatformContract): void {
     this.filter.update((f) => {
       const platforms = f.platforms.includes(platform)
@@ -312,6 +379,18 @@ export class CalendarPageComponent implements OnInit {
     this.upcomingCollapsed.update((v) => !v);
   }
 
+  toggleFiltersOpen(): void {
+    this.filtersOpen.update((v) => !v);
+  }
+
+  closeFilters(): void {
+    this.filtersOpen.set(false);
+  }
+
+  clearAllFilters(): void {
+    this.filter.set({ ...EMPTY_FILTER_STATE });
+  }
+
   eventsForDay(day: Date): CalendarEventView[] {
     const dayKey = day.toISOString().slice(0, 10);
     return this.filteredEvents().filter(
@@ -350,6 +429,18 @@ export class CalendarPageComponent implements OnInit {
     return `${mtype} • ${ev.item.title}`;
   }
 
+  /** Compact label shown directly inside cell pills — no platform prefix. */
+  pillLabel(ev: CalendarEventView): string {
+    if (ev.kind === 'publish') return ev.item.title;
+    const mtype = MILESTONE_LABELS[ev.milestoneType] ?? ev.milestoneType;
+    return `${mtype} · ${ev.item.title}`;
+  }
+
+  milestoneShortLabel(ev: CalendarEventView): string {
+    if (ev.kind !== 'milestone') return '';
+    return MILESTONE_LABELS[ev.milestoneType] ?? ev.milestoneType;
+  }
+
   severityLabel(ev: CalendarEventView): string | null {
     if (!ev.severity) return null;
     if (ev.severity === 'overdue') return 'Overdue';
@@ -363,6 +454,78 @@ export class CalendarPageComponent implements OnInit {
 
   statusLabel(status: string): string {
     return STATUS_LABELS[status] ?? status;
+  }
+
+  onPillEnter(ev: CalendarEventView, target: HTMLElement): void {
+    if (this.peekCloseTimer) {
+      clearTimeout(this.peekCloseTimer);
+      this.peekCloseTimer = null;
+    }
+    const rect = target.getBoundingClientRect();
+    this.peekAnchor.set({
+      x: rect.left,
+      y: rect.top,
+      width: rect.width,
+      height: rect.height,
+    });
+    this.peekEvent.set(ev);
+  }
+
+  onPillLeave(): void {
+    if (this.peekCloseTimer) clearTimeout(this.peekCloseTimer);
+    this.peekCloseTimer = setTimeout(() => {
+      this.peekEvent.set(null);
+      this.peekAnchor.set(null);
+    }, 220);
+  }
+
+  onPeekEnter(): void {
+    if (this.peekCloseTimer) {
+      clearTimeout(this.peekCloseTimer);
+      this.peekCloseTimer = null;
+    }
+  }
+
+  onPeekLeave(): void {
+    this.onPillLeave();
+  }
+
+  closePeek(): void {
+    if (this.peekCloseTimer) {
+      clearTimeout(this.peekCloseTimer);
+      this.peekCloseTimer = null;
+    }
+    this.peekEvent.set(null);
+    this.peekAnchor.set(null);
+  }
+
+  copyEventLink(ev: CalendarEventView): void {
+    const wsId = this.workspaceId();
+    const url = `${typeof window !== 'undefined' ? window.location.origin : ''}/workspace/${wsId}/content/${ev.contentId}`;
+    if (typeof navigator !== 'undefined' && navigator.clipboard) {
+      void navigator.clipboard.writeText(url);
+    }
+    this.closePeek();
+  }
+
+  peekSummary(ev: CalendarEventView): string {
+    const date = ev.date;
+    const datePart = date.toLocaleDateString('en-US', {
+      weekday: 'short',
+      month: 'short',
+      day: 'numeric',
+      timeZone: 'UTC',
+    });
+    if (ev.kind === 'milestone') {
+      const label = MILESTONE_LABELS[ev.milestoneType] ?? ev.milestoneType;
+      return `${label}: ${datePart} • All day`;
+    }
+    const time = date.toLocaleTimeString('en-US', {
+      hour: 'numeric',
+      minute: '2-digit',
+      timeZone: 'UTC',
+    });
+    return `Publishes: ${datePart} • ${time}`;
   }
 
   openEvent(ev: CalendarEventView): void {

@@ -98,7 +98,7 @@ describe('CalendarPageComponent', () => {
     const fixture = TestBed.createComponent(CalendarPageComponent);
     fixture.detectChanges();
     const el: HTMLElement = fixture.nativeElement;
-    expect(el.querySelector('h1')?.textContent).toBe('Calendar');
+    expect(el.querySelector('h1')?.textContent?.trim()).toBe('Content Calendar');
     expect(fixture.componentInstance.viewMode()).toBe('month');
     expect(el.querySelector('[data-testid="month-grid"]')).toBeTruthy();
   });
@@ -442,6 +442,158 @@ describe('CalendarPageComponent', () => {
     expect(c.severityLabel(atRisk)).toBe('At-risk');
     expect(c.severityLabel(blocked)).toBe('Blocked');
     expect(c.severityLabel(none)).toBeNull();
+  });
+
+  it('toggles the filters popover open and closed and clears all filters', () => {
+    setupTestBed(() => of(buildResponse()));
+    const fixture = TestBed.createComponent(CalendarPageComponent);
+    fixture.detectChanges();
+    const c = fixture.componentInstance;
+
+    expect(c.filtersOpen()).toBe(false);
+    c.toggleFiltersOpen();
+    expect(c.filtersOpen()).toBe(true);
+    c.toggleFiltersOpen();
+    expect(c.filtersOpen()).toBe(false);
+
+    c.toggleFiltersOpen();
+    c.closeFilters();
+    expect(c.filtersOpen()).toBe(false);
+
+    c.togglePlatform('instagram');
+    c.toggleStatus('approved');
+    c.setSearch('foo');
+    c.toggleShowMilestones();
+    c.toggleShowPublished();
+    expect(c.activeFilterCount()).toBe(5);
+
+    c.clearAllFilters();
+    expect(c.activeFilterCount()).toBe(0);
+    expect(c.filter().platforms).toEqual([]);
+    expect(c.filter().statuses).toEqual([]);
+    expect(c.filter().search).toBe('');
+  });
+
+  it('exposes insight warnings for a 7-day publish gap and items without a publish date', () => {
+    setupTestBed(() =>
+      of({
+        workspaceId: 'hive-collective',
+        referenceDate: REF_ISO,
+        items: [
+          buildItem({
+            id: 'no-date',
+            scheduleAt: null as unknown as string,
+            status: 'in-progress',
+          }),
+        ],
+        milestones: [],
+      }),
+    );
+    const fixture = TestBed.createComponent(CalendarPageComponent);
+    fixture.detectChanges();
+    const w = fixture.componentInstance.insightWarnings();
+    expect(w.length).toBe(2);
+    expect(w[0].headline).toMatch(/publish gap/i);
+    expect(w[1].headline).toMatch(/without a publish date/i);
+  });
+
+  it('returns empty insight warnings when there are no issues', () => {
+    setupTestBed(() => of(buildResponse()));
+    const fixture = TestBed.createComponent(CalendarPageComponent);
+    fixture.detectChanges();
+    expect(fixture.componentInstance.insightWarnings().length).toBe(0);
+  });
+
+  it('pillLabel returns just the title for publishes and "<Type> · <Title>" for milestones', () => {
+    setupTestBed(() => of(buildResponse()));
+    const fixture = TestBed.createComponent(CalendarPageComponent);
+    fixture.detectChanges();
+    const c = fixture.componentInstance;
+    const pub = c.allEvents().find((e) => e.kind === 'publish');
+    const ms = c.allEvents().find((e) => e.kind === 'milestone');
+    if (!pub || !ms) throw new Error('events missing');
+    expect(c.pillLabel(pub)).toBe(pub.item.title);
+    expect(c.pillLabel(ms)).toMatch(/Draft Due · |QA Due · /);
+  });
+
+  it('goToDay sets the cursor to the given day and switches to day view', () => {
+    setupTestBed(() => of(buildResponse()));
+    const fixture = TestBed.createComponent(CalendarPageComponent);
+    fixture.detectChanges();
+    const c = fixture.componentInstance;
+    const target = new Date('2026-05-15T00:00:00.000Z');
+    c.goToDay(target);
+    expect(c.cursorDate().toISOString()).toBe(target.toISOString());
+    expect(c.viewMode()).toBe('day');
+  });
+
+  it('milestoneShortLabel returns the labeled milestone type for milestone events and empty for publishes', () => {
+    setupTestBed(() => of(buildResponse()));
+    const fixture = TestBed.createComponent(CalendarPageComponent);
+    fixture.detectChanges();
+    const c = fixture.componentInstance;
+    const ms = c.allEvents().find((e) => e.kind === 'milestone');
+    const pub = c.allEvents().find((e) => e.kind === 'publish');
+    if (!ms || !pub) throw new Error('events missing');
+    expect(c.milestoneShortLabel(ms)).toMatch(/Draft Due|QA Due/);
+    expect(c.milestoneShortLabel(pub)).toBe('');
+  });
+
+  it('peek lifecycle: enter sets event+anchor, leave clears, peek hover keeps it open', async () => {
+    setupTestBed(() => of(buildResponse()));
+    const fixture = TestBed.createComponent(CalendarPageComponent);
+    fixture.detectChanges();
+    const c = fixture.componentInstance;
+    const ev = c.allEvents()[0];
+    const fakeTarget = {
+      getBoundingClientRect: () => ({ left: 10, top: 20, width: 100, height: 20 }),
+    } as unknown as HTMLElement;
+
+    c.onPillEnter(ev, fakeTarget);
+    expect(c.peekEvent()).toBe(ev);
+    expect(c.peekAnchor()).toEqual({ x: 10, y: 20, width: 100, height: 20 });
+
+    c.onPeekEnter(); // Cancels close timer
+    c.onPillLeave(); // Schedules close
+    c.onPeekEnter(); // Cancels again — still open
+    expect(c.peekEvent()).toBe(ev);
+
+    c.closePeek();
+    expect(c.peekEvent()).toBeNull();
+    expect(c.peekAnchor()).toBeNull();
+  });
+
+  it('peekSummary returns a publish-style line for publish events and a milestone line for milestones', () => {
+    setupTestBed(() => of(buildResponse()));
+    const fixture = TestBed.createComponent(CalendarPageComponent);
+    fixture.detectChanges();
+    const c = fixture.componentInstance;
+    const pub = c.allEvents().find((e) => e.kind === 'publish');
+    const ms = c.allEvents().find((e) => e.kind === 'milestone');
+    if (!pub || !ms) throw new Error('events missing');
+    expect(c.peekSummary(pub)).toMatch(/^Publishes:/);
+    expect(c.peekSummary(ms)).toMatch(/All day$/);
+  });
+
+  it('copyEventLink writes a workspace URL to the clipboard and closes the peek', () => {
+    setupTestBed(() => of(buildResponse()));
+    const fixture = TestBed.createComponent(CalendarPageComponent);
+    fixture.detectChanges();
+    const c = fixture.componentInstance;
+    const writeText = vi.fn();
+    Object.defineProperty(navigator, 'clipboard', {
+      value: { writeText },
+      configurable: true,
+    });
+    const ev = c.allEvents()[0];
+    c.onPillEnter(ev, {
+      getBoundingClientRect: () => ({ left: 0, top: 0, width: 0, height: 0 }),
+    } as unknown as HTMLElement);
+    c.copyEventLink(ev);
+    expect(writeText).toHaveBeenCalled();
+    const url = writeText.mock.calls[0][0] as string;
+    expect(url).toMatch(/\/workspace\/hive-collective\/content\/item-/);
+    expect(c.peekEvent()).toBeNull();
   });
 
   it('does nothing when the route has no id param', () => {

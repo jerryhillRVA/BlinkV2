@@ -1,0 +1,77 @@
+<div
+  class="peek-card"
+  role="dialog"
+  aria-label="Event details"
+  data-testid="peek-card"
+  [style.top.px]="anchor.y"
+  [style.left.px]="anchor.x + anchor.width + 8"
+  (mouseenter)="peekEnter.emit()"
+  (mouseleave)="peekLeave.emit()"
+>
+  <div class="peek-head">
+    <button class="peek-title" (click)="openItem.emit(event)">{{ event.item.title }}</button>
+    <button class="peek-close" (click)="closed.emit()" aria-label="Close">
+      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+    </button>
+  </div>
+
+  <div class="peek-chips">
+    <span class="status-badge" [attr.data-status]="event.item.status">
+      <span class="status-dot" aria-hidden="true"></span>
+      {{ statusLabel }}
+    </span>
+    <span class="platform-badge" [attr.data-platform]="event.item.platform">
+      {{ platformLabel }}
+    </span>
+    @if (event.kind === 'milestone' && milestoneLabel) {
+      <span class="kind-badge">
+        <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg>
+        {{ milestoneLabel }}
+      </span>
+    }
+  </div>
+
+  <div class="peek-summary">
+    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M8 2v4"/><path d="M16 2v4"/><rect width="18" height="18" x="3" y="4" rx="2"/><path d="M3 10h18"/>
+    </svg>
+    {{ summary }}
+  </div>
+
+  @if (severityLabel) {
+    <div
+      class="peek-severity"
+      [class.sev-overdue]="event.severity === 'overdue'"
+      [class.sev-at-risk]="event.severity === 'at-risk'"
+      [class.sev-blocked]="event.severity === 'blocked'"
+    >
+      <span class="severity-icon" aria-hidden="true">!</span>
+      <strong>{{ severityLabel }}</strong>
+      @if (event.severity === 'overdue') { — deadline has passed }
+      @if (event.severity === 'at-risk') { — schedule is tight }
+      @if (event.severity === 'blocked') { — required step not approved }
+    </div>
+  }
+
+  <div class="peek-meta">
+    <div class="peek-meta-row">
+      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+      {{ event.item.owner }}
+    </div>
+  </div>
+
+  <div class="peek-actions">
+    <button class="peek-btn peek-btn-secondary" (click)="editDates.emit(event)" data-testid="peek-edit">
+      <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg>
+      Edit Dates
+    </button>
+    <button class="peek-btn peek-btn-primary" (click)="openItem.emit(event)" data-testid="peek-open">
+      <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
+      Open Item
+    </button>
+  </div>
+  <button class="peek-link-btn" (click)="copyLink.emit(event)" data-testid="peek-copy">
+    <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+    Copy Link
+  </button>
+</div>

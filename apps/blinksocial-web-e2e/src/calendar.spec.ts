@@ -99,7 +99,9 @@ test.describe('Calendar — navigation entry points', () => {
     await expect(calendarTab).toBeVisible();
     await calendarTab.click();
     await expect(page).toHaveURL(/\/workspace\/hive-collective\/calendar$/);
-    await expect(page.locator('h1')).toHaveText('Calendar');
+    await expect(page.locator('[data-testid="calendar-page"] h1')).toHaveText(
+      'Content Calendar',
+    );
     await expect(page.locator('[data-testid="month-grid"]')).toBeVisible();
     await expect(page.locator('[data-testid="view-btn-month"]')).toHaveClass(
       /active/,
@@ -116,7 +118,9 @@ test.describe('Calendar — navigation entry points', () => {
     const calendarBtn = card.locator('.quick-item', { hasText: 'Calendar' });
     await calendarBtn.click();
     await expect(page).toHaveURL(/\/workspace\/hive-collective\/calendar$/);
-    await expect(page.locator('h1')).toHaveText('Calendar');
+    await expect(page.locator('[data-testid="calendar-page"] h1')).toHaveText(
+      'Content Calendar',
+    );
   });
 });
 
@@ -167,18 +171,19 @@ test.describe('Calendar — page interactions', () => {
   test('TC6 toggling a platform filter narrows visible events', async ({
     page,
   }) => {
-    const instagramPills = page
-      .locator('[data-testid^="event-pill-"]')
-      .filter({ has: page.locator('.pill-label:has-text("Instagram")') });
-    const youtubePills = page
-      .locator('[data-testid^="event-pill-"]')
-      .filter({ has: page.locator('.pill-label:has-text("YouTube")') });
+    const instagramPills = page.locator(
+      '[data-testid="month-grid"] .event-pill[data-platform="instagram"]',
+    );
+    const youtubePills = page.locator(
+      '[data-testid="month-grid"] .event-pill[data-platform="youtube"]',
+    );
     const beforeInsta = await instagramPills.count();
     const beforeYouTube = await youtubePills.count();
     expect(beforeInsta + beforeYouTube).toBeGreaterThan(0);
 
+    await page.locator('[data-testid="filters-toggle"]').click();
     await page.locator('[data-testid="filter-platform-instagram"]').check();
-    await expect(page.locator('.pill-label:has-text("YouTube")')).toHaveCount(0);
+    await expect(youtubePills).toHaveCount(0);
     expect(await instagramPills.count()).toBeGreaterThan(0);
   });
 
