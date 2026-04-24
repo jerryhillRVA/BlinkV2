@@ -108,4 +108,15 @@ describe('WorkspaceCardComponent', () => {
     (items[0] as HTMLButtonElement).click();
     expect(spy).toHaveBeenCalledWith('hive-collective');
   });
+
+  it('should emit goToCalendar with workspace id when Calendar quick-access is clicked', () => {
+    const fixture = createComponent('hive-collective', 'Hive Collective', '#d94e33');
+    const spy = vi.fn();
+    fixture.componentInstance.goToCalendar.subscribe(spy);
+    const el: HTMLElement = fixture.nativeElement;
+    const items = el.querySelectorAll('.quick-item');
+    // Calendar is the second quick-access button
+    (items[1] as HTMLButtonElement).click();
+    expect(spy).toHaveBeenCalledWith('hive-collective');
+  });
 });
