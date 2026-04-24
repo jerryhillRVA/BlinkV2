@@ -7,3 +7,4 @@ export interface HealthResponseContract {
 export * from './workspace/index.js';
 export * from './system/index.js';
 export * from './onboarding/index.js';
+export * from './calendar/index.js';
