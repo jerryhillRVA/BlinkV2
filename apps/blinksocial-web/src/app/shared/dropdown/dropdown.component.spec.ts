@@ -345,3 +345,76 @@ describe('DropdownComponent (click outside)', () => {
     expect(fixture.componentInstance.open()).toBe(false);
   });
 });
+
+describe('DropdownComponent (placeholder + colour + flag inputs)', () => {
+  let fixture: ReturnType<typeof TestBed.createComponent<DropdownComponent>>;
+
+  beforeEach(async () => {
+    await TestBed.configureTestingModule({
+      imports: [DropdownComponent],
+    }).compileComponents();
+    fixture = TestBed.createComponent(DropdownComponent);
+    fixture.componentRef.setInput('options', [
+      { value: 'red', label: 'Red', color: '#f00' },
+      { value: 'blue', label: 'Blue' },
+    ]);
+  });
+
+  it('renders the placeholder when value is empty and reports isPlaceholder()', () => {
+    fixture.componentRef.setInput('value', '');
+    fixture.componentRef.setInput('placeholder', 'Pick a colour');
+    fixture.detectChanges();
+    expect(fixture.componentInstance.isPlaceholder()).toBe(true);
+    expect(fixture.componentInstance.selectedLabel()).toBe('Pick a colour');
+    const trigger = fixture.nativeElement.querySelector('.dropdown-trigger');
+    expect(trigger.textContent).toContain('Pick a colour');
+    expect(
+      fixture.nativeElement.querySelector('.dropdown-value--placeholder'),
+    ).toBeTruthy();
+  });
+
+  it('renders the colour swatch in the trigger when the selected option has a colour', () => {
+    fixture.componentRef.setInput('value', 'red');
+    fixture.detectChanges();
+    expect(fixture.componentInstance.selectedColor()).toBe('#f00');
+    const dot = fixture.nativeElement.querySelector(
+      '.dropdown-trigger .dropdown-color-dot',
+    );
+    expect(dot).toBeTruthy();
+  });
+
+  it('returns null selectedColor when the selected option lacks a colour', () => {
+    fixture.componentRef.setInput('value', 'blue');
+    fixture.detectChanges();
+    expect(fixture.componentInstance.selectedColor()).toBeNull();
+    expect(
+      fixture.nativeElement.querySelector('.dropdown-trigger .dropdown-color-dot'),
+    ).toBeNull();
+  });
+
+  it('applies the dropdown-full host class when fullWidth is true', () => {
+    fixture.componentRef.setInput('value', 'red');
+    fixture.componentRef.setInput('fullWidth', true);
+    fixture.detectChanges();
+    expect(fixture.componentInstance.hostFull).toBe(true);
+    expect(
+      (fixture.nativeElement as HTMLElement).classList.contains('dropdown-host-full'),
+    ).toBe(true);
+  });
+
+  it('applies the dropdown-filled wrapper class when filled is true', () => {
+    fixture.componentRef.setInput('value', 'red');
+    fixture.componentRef.setInput('filled', true);
+    fixture.detectChanges();
+    const wrapper = fixture.nativeElement.querySelector('.dropdown-wrapper');
+    expect(wrapper.classList.contains('dropdown-filled')).toBe(true);
+  });
+
+  it('applies the dropdown-sm wrapper class when size is "sm"', () => {
+    fixture.componentRef.setInput('value', 'red');
+    fixture.componentRef.setInput('size', 'sm');
+    fixture.detectChanges();
+    const wrapper = fixture.nativeElement.querySelector('.dropdown-wrapper');
+    expect(wrapper.classList.contains('dropdown-sm')).toBe(true);
+  });
+});

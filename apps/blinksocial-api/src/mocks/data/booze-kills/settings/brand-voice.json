@@ -12,5 +12,49 @@
   "logoUrl": "https://cdn.boozekills.org/logo.svg",
   "visualGuidelines": "Electric blue (#2b6bff) + dark navy + white. Bold sans-serif. High contrast for mobile readability.",
   "typographyGuidelines": "Headlines: Space Grotesk Bold 28-36px. Body: Inter Regular 16px. Stats: Space Grotesk Medium 48px.",
-  "photographyGuidelines": "Real people, real situations. No stock photos. Documentary-style. Diverse ages 18-30. Urban and campus settings."
+  "photographyGuidelines": "Real people, real situations. No stock photos. Documentary-style. Diverse ages 18-30. Urban and campus settings.",
+  "audienceOptions": ["Sober Curious", "Recovery Community", "Health Conscious"],
+  "contentPillars": [
+    {
+      "id": "bk-p1",
+      "name": "Health Impacts",
+      "description": "Science-backed content about alcohol's effects on health",
+      "color": "#ef4444",
+      "themes": ["Sleep", "Gut Health", "Neuroscience"],
+      "audienceSegmentIds": ["bk-s1", "bk-s3"],
+      "targetPlatforms": ["youtube", "instagram"]
+    },
+    {
+      "id": "bk-p2",
+      "name": "Sober Living",
+      "description": "Tips, stories, and resources for alcohol-free living",
+      "color": "#10b981",
+      "themes": ["Dry January", "Social Situations", "Habits"],
+      "audienceSegmentIds": ["bk-s1"],
+      "targetPlatforms": ["instagram", "tiktok"]
+    },
+    {
+      "id": "bk-p3",
+      "name": "Community Stories",
+      "description": "Real stories from people on their sobriety journey",
+      "color": "#3b82f6",
+      "themes": ["First Year", "Recovery", "Community"],
+      "audienceSegmentIds": ["bk-s2"],
+      "targetPlatforms": ["instagram", "youtube"]
+    },
+    {
+      "id": "bk-p4",
+      "name": "Alternatives & Recipes",
+      "description": "Mocktails, NA drinks, and social alternatives",
+      "color": "#f59e0b",
+      "themes": ["Mocktails", "NA Beer", "Entertaining"],
+      "audienceSegmentIds": ["bk-s1"],
+      "targetPlatforms": ["instagram", "tiktok"]
+    }
+  ],
+  "audienceSegments": [
+    { "id": "bk-s1", "name": "Sober Curious", "description": "People exploring reducing or eliminating alcohol" },
+    { "id": "bk-s2", "name": "Recovery Community", "description": "People actively in recovery from alcohol dependency" },
+    { "id": "bk-s3", "name": "Health Conscious", "description": "Health-focused individuals interested in alcohol's impact" }
+  ]
 }

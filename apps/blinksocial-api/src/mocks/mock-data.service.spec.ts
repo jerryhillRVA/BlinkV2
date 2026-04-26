@@ -90,7 +90,68 @@ describe('MockDataService', () => {
       expect(result['brandVoiceDescription']).toBeDefined();
       expect(result['contentPillars']).toBeDefined();
       const pillars = result['contentPillars'] as { id: string; name: string }[];
-      expect(pillars.length).toBeGreaterThan(0);
+      expect(pillars).toHaveLength(5);
+      expect(pillars.map((p) => p.id)).toEqual(['p1', 'p2', 'p3', 'p4', 'p5']);
+    });
+
+    it('should return brand-voice settings with audienceSegments for hive-collective', async () => {
+      const result = await service.getSettings('hive-collective', 'brand-voice') as Record<string, unknown>;
+      const segments = result['audienceSegments'] as { id: string }[];
+      expect(segments).toHaveLength(5);
+      expect(segments.map((s) => s.id)).toEqual(['s1', 's2', 's3', 's4', 's5']);
+    });
+
+    it('should return brand-voice settings with contentPillars for booze-kills', async () => {
+      const result = await service.getSettings('booze-kills', 'brand-voice') as Record<string, unknown>;
+      const pillars = result['contentPillars'] as { id: string; name: string }[];
+      expect(pillars).toHaveLength(4);
+      expect(pillars.map((p) => p.id)).toEqual(['bk-p1', 'bk-p2', 'bk-p3', 'bk-p4']);
+    });
+
+    it('should return brand-voice settings with audienceSegments for booze-kills', async () => {
+      const result = await service.getSettings('booze-kills', 'brand-voice') as Record<string, unknown>;
+      const segments = result['audienceSegments'] as { id: string }[];
+      expect(segments).toHaveLength(3);
+      expect(segments.map((s) => s.id)).toEqual(['bk-s1', 'bk-s2', 'bk-s3']);
+    });
+  });
+
+  describe('getNamespaceAggregate', () => {
+    it('should return populated content-items index for booze-kills', async () => {
+      const result = await service.getNamespaceAggregate(
+        'booze-kills',
+        'content-items',
+        '_content-items-index.json',
+      ) as { items: { id: string; pillarIds: string[] }[]; totalCount: number };
+      expect(result.totalCount).toBe(10);
+      expect(result.items).toHaveLength(10);
+      // Every item's pillarIds should resolve against the brand-voice pillar IDs
+      const brandVoice = await service.getSettings('booze-kills', 'brand-voice') as {
+        contentPillars: { id: string }[];
+      };
+      const pillarIds = new Set(brandVoice.contentPillars.map((p) => p.id));
+      result.items.forEach((item) => {
+        item.pillarIds.forEach((pid) => {
+          expect(pillarIds.has(pid)).toBe(true);
+        });
+      });
+    });
+
+    it('should ensure hive-collective content-item pillarIds resolve against brand-voice pillars', async () => {
+      const index = await service.getNamespaceAggregate(
+        'hive-collective',
+        'content-items',
+        '_content-items-index.json',
+      ) as { items: { id: string; pillarIds: string[] }[] };
+      const brandVoice = await service.getSettings('hive-collective', 'brand-voice') as {
+        contentPillars: { id: string }[];
+      };
+      const pillarIds = new Set(brandVoice.contentPillars.map((p) => p.id));
+      index.items.forEach((item) => {
+        item.pillarIds.forEach((pid) => {
+          expect(pillarIds.has(pid)).toBe(true);
+        });
+      });
     });
   });
 });
