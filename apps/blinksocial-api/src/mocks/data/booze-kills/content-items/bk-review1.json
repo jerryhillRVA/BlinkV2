@@ -1,0 +1,34 @@
+{
+  "id": "bk-review1",
+  "stage": "post",
+  "status": "review",
+  "title": "My First Year Sober: Real Talk",
+  "description": "Personal-story carousel from a community member (Jess) on the highs and lows of the first 365 days without alcohol. Honest, non-romanticised, framed as peer-to-peer rather than testimonial.",
+  "pillarIds": ["bk-p3"],
+  "segmentIds": ["bk-s2"],
+  "tags": ["community-story", "first-year", "carousel"],
+  "owner": "user-mara",
+  "hook": "Nobody talks about the boring parts of getting sober.",
+  "objective": "community",
+  "platform": "instagram",
+  "contentType": "carousel",
+  "keyMessage": "Sobriety is mostly mundane — and that's the point.",
+  "tonePreset": "casual",
+  "claimsFlag": false,
+  "riskLevel": "medium",
+  "createdAt": "2026-02-10T12:00:00Z",
+  "updatedAt": "2026-02-28T14:00:00Z",
+  "production": {
+    "brief": {
+      "strategy": {
+        "objective": "community",
+        "audienceSegmentIds": ["bk-s2"],
+        "pillarIds": ["bk-p3"],
+        "keyMessage": "Sobriety is mostly mundane — and that's the point.",
+        "ctaType": "comment",
+        "ctaText": "What surprised you about getting sober? Tell us below.",
+        "tonePreset": "casual"
+      }
+    }
+  }
+}

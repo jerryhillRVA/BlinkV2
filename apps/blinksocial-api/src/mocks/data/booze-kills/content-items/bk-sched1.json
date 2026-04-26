@@ -1,0 +1,44 @@
+{
+  "id": "bk-sched1",
+  "stage": "post",
+  "status": "scheduled",
+  "title": "NA Beer Taste Test: Top 5 Picks",
+  "description": "Side-by-side blind taste test of the five best non-alcoholic beers on the U.S. market right now, ranked by host + two guest tasters. Quick cuts, big on-screen ranking, no sponsor reads.",
+  "pillarIds": ["bk-p4"],
+  "segmentIds": ["bk-s1"],
+  "tags": ["na-beer", "taste-test", "ranking", "tiktok"],
+  "owner": "user-jordan",
+  "hook": "We tried 20 NA beers so you don't have to.",
+  "objective": "engagement",
+  "platform": "tiktok",
+  "contentType": "short-video",
+  "keyMessage": "The NA beer category is finally good enough to recommend without caveats.",
+  "tonePreset": "playful",
+  "scheduledDate": "2026-04-30",
+  "scheduledAt": "2026-04-30T17:00:00Z",
+  "claimsFlag": false,
+  "riskLevel": "low",
+  "createdAt": "2026-02-05T10:00:00Z",
+  "updatedAt": "2026-02-25T11:00:00Z",
+  "production": {
+    "brief": {
+      "strategy": {
+        "objective": "engagement",
+        "audienceSegmentIds": ["bk-s1"],
+        "pillarIds": ["bk-p4"],
+        "keyMessage": "The NA beer category is finally good enough to recommend without caveats.",
+        "ctaType": "follow",
+        "ctaText": "Follow for the full mocktail + NA series.",
+        "tonePreset": "playful"
+      },
+      "platformRules": {
+        "durationTarget": 60,
+        "hookType": "outcome-first",
+        "loopEnding": true
+      }
+    },
+    "outputs": {
+      "ctaLine": "Follow for the full mocktail + NA series."
+    }
+  }
+}

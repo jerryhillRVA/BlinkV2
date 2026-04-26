@@ -1,0 +1,36 @@
+{
+  "id": "bk-pub1",
+  "stage": "post",
+  "status": "published",
+  "title": "Dry January Results: What We Learned",
+  "description": "Community roundup of Dry January experiences and aggregated self-reported health outcomes (sleep, energy, weight, mood) across ~400 community members.",
+  "pillarIds": ["bk-p2", "bk-p1"],
+  "segmentIds": ["bk-s1", "bk-s3"],
+  "tags": ["dry-january", "community-data", "reel"],
+  "owner": "user-mara",
+  "hook": "30 days changed everything. Here are the numbers.",
+  "objective": "awareness",
+  "platform": "instagram",
+  "contentType": "reel",
+  "keyMessage": "Aggregated community data shows consistent improvements after 30 alcohol-free days.",
+  "tonePreset": "inspiring",
+  "scheduledDate": "2026-02-15",
+  "scheduledAt": "2026-02-15T14:00:00Z",
+  "claimsFlag": true,
+  "sourceLinks": ["https://example.com/community-survey/dry-jan-2026"],
+  "riskLevel": "low",
+  "createdAt": "2026-02-01T08:00:00Z",
+  "updatedAt": "2026-02-15T10:00:00Z",
+  "production": {
+    "brief": {
+      "strategy": {
+        "objective": "awareness",
+        "audienceSegmentIds": ["bk-s1", "bk-s3"],
+        "pillarIds": ["bk-p2", "bk-p1"],
+        "keyMessage": "Aggregated community data shows consistent improvements after 30 alcohol-free days.",
+        "ctaType": "follow",
+        "ctaText": "Follow for the next challenge."
+      }
+    }
+  }
+}

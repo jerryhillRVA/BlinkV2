@@ -1,0 +1,13 @@
+{
+  "id": "bk-idea1",
+  "stage": "idea",
+  "status": "draft",
+  "title": "What Happens to Your Body After 30 Days Sober",
+  "description": "Timeline of physical changes when you stop drinking for a month — covering sleep, skin, liver markers, energy, and mental clarity. Cite peer-reviewed sources for each milestone.",
+  "pillarIds": ["bk-p1"],
+  "segmentIds": ["bk-s1", "bk-s3"],
+  "tags": ["dry-month", "physical-health", "explainer"],
+  "sourceUrl": "https://example.com/research/30-day-sobriety-timeline",
+  "createdAt": "2026-03-01T09:00:00Z",
+  "updatedAt": "2026-03-01T09:00:00Z"
+}

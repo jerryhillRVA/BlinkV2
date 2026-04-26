@@ -154,4 +154,53 @@ describe('MockDataService', () => {
       });
     });
   });
+
+  describe('getItemFile', () => {
+    it('returns null for an unknown workspace', async () => {
+      const result = await service.getItemFile('unknown', 'bk-idea1');
+      expect(result).toBeNull();
+    });
+
+    it('returns null when the item file does not exist', async () => {
+      const result = await service.getItemFile('booze-kills', 'does-not-exist');
+      expect(result).toBeNull();
+    });
+
+    it('returns every booze-kills item from its index keyed by id', async () => {
+      const index = await service.getNamespaceAggregate(
+        'booze-kills',
+        'content-items',
+        '_content-items-index.json',
+      ) as { items: { id: string }[] };
+      expect(index.items).toHaveLength(10);
+      for (const entry of index.items) {
+        const item = await service.getItemFile('booze-kills', entry.id) as
+          | { id: string; pillarIds: string[]; stage: string; title: string }
+          | null;
+        expect(item).not.toBeNull();
+        expect(item?.id).toBe(entry.id);
+      }
+    });
+
+    it('booze-kills item pillarIds match the brand-voice pillar IDs (no orphan refs)', async () => {
+      const brandVoice = await service.getSettings('booze-kills', 'brand-voice') as {
+        contentPillars: { id: string }[];
+      };
+      const pillarIds = new Set(brandVoice.contentPillars.map((p) => p.id));
+      const index = await service.getNamespaceAggregate(
+        'booze-kills',
+        'content-items',
+        '_content-items-index.json',
+      ) as { items: { id: string }[] };
+      for (const entry of index.items) {
+        const item = await service.getItemFile('booze-kills', entry.id) as
+          | { pillarIds: string[] }
+          | null;
+        expect(item).not.toBeNull();
+        item?.pillarIds.forEach((pid) => {
+          expect(pillarIds.has(pid)).toBe(true);
+        });
+      }
+    });
+  });
 });
