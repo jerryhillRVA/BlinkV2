@@ -151,9 +151,6 @@ export class CalendarService {
       CONTENT_ITEMS_NAMESPACE,
       CONTENT_ITEMS_INDEX_FILE,
     )) as ContentItemsIndexContract | null;
-    if (!index || !Array.isArray(index.items) || index.items.length === 0) {
-      return null;
-    }
     const settings = (await this.mockDataService.getSettings(
       workspaceId,
       CALENDAR_SETTINGS_TAB,
@@ -161,23 +158,27 @@ export class CalendarService {
 
     const items: CalendarContentItemContract[] = [];
     const milestones: CalendarMilestoneContract[] = [];
-    for (const entry of index.items) {
+    const entries = Array.isArray(index?.items) ? index.items : [];
+    for (const entry of entries) {
       if (entry.archived) continue;
       const calItem = mapContentItemToCalendarItem(entry);
       if (!calItem) continue;
       items.push(calItem);
-      const derived = deriveMilestonesForItem(
-        calItem.id,
-        calItem.scheduleAt as string,
-        calItem.canonicalType,
-        calItem.owner,
-        settings,
-      );
-      milestones.push(...derived);
-    }
-
-    if (items.length === 0) {
-      return null;
+      // Only apply deadline templates when the source item has an explicit
+      // contentType. Items with null contentType fall back to IMAGE_SINGLE
+      // for visual rendering, but we don't want that default to inherit
+      // IMAGE_SINGLE's milestone schedule.
+      if (entry.contentType) {
+        milestones.push(
+          ...deriveMilestonesForItem(
+            calItem.id,
+            calItem.scheduleAt as string,
+            calItem.canonicalType,
+            calItem.owner,
+            settings,
+          ),
+        );
+      }
     }
 
     return {

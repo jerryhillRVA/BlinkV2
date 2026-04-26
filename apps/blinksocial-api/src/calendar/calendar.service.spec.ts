@@ -202,15 +202,72 @@ describe('CalendarService', () => {
     expect(result.items.map((i) => i.id)).toEqual(['real-2']);
   });
 
-  it('falls back to synthetic when mock workspace has no fixture and no content items', async () => {
+  it('returns an empty derived response (NOT synthetic) when a mock workspace has no fixture and no content items', async () => {
     const service = await buildService({
       isMockWorkspace: (id) => id === 'hive-collective',
       getNamespaceAggregate: async () => null,
       getSettings: async () => null,
     });
     const result = await service.getCalendar('hive-collective');
-    expect(result.items.length).toBeGreaterThanOrEqual(28);
-    expect(result.items[0].id).toMatch(/^calitem-hive-collective-/);
+    expect(result.workspaceId).toBe('hive-collective');
+    expect(result.items).toEqual([]);
+    expect(result.milestones).toEqual([]);
+  });
+
+  it('does not apply deadline-template milestones to items without an explicit contentType', async () => {
+    const index: ContentItemsIndexContract = {
+      items: [
+        {
+          id: 'untyped-1',
+          stage: 'post',
+          status: 'in-progress',
+          title: 'Item without contentType',
+          platform: null,
+          contentType: null,
+          pillarIds: [],
+          segmentIds: [],
+          owner: null,
+          parentIdeaId: null,
+          parentConceptId: null,
+          scheduledDate: '2026-05-10',
+          archived: false,
+          createdAt: '2026-04-01T08:00:00Z',
+          updatedAt: '2026-04-15T10:00:00Z',
+        },
+      ],
+      totalCount: 1,
+      lastUpdated: '2026-04-26T00:00:00.000Z',
+    };
+    // Settings define a template for IMAGE_SINGLE — the visual default for
+    // unset contentType. We must NOT pick it up.
+    const settings: CalendarSettingsContract = {
+      enableDeadlineTemplates: true,
+      deadlineTemplates: {
+        IMAGE_SINGLE: {
+          milestones: [
+            { milestoneType: 'draft_due', offsetDays: -3, required: true },
+          ],
+          phases: [],
+        },
+      },
+      reminderSettings: {
+        milestone72h: false,
+        milestone24h: false,
+        milestoneOverdue: false,
+        publish24h: false,
+      },
+      autoCreateOnPublish: false,
+    };
+    const service = await buildService({
+      isMockWorkspace: (id) => id === 'hive-collective',
+      getNamespaceAggregate: async (_id, ns) =>
+        ns === 'content-items' ? index : null,
+      getSettings: async (_id, tab) => (tab === 'calendar' ? settings : null),
+    });
+    const result = await service.getCalendar('hive-collective');
+    expect(result.items.map((i) => i.id)).toEqual(['untyped-1']);
+    expect(result.items[0].canonicalType).toBe('IMAGE_SINGLE');
+    expect(result.milestones).toEqual([]);
   });
 
   it('generates a synthetic dataset for a non-mock workspace', async () => {
