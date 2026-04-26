@@ -33,6 +33,7 @@ describe('HeaderComponent', () => {
           { path: 'profile-settings', component: DummyComponent },
           { path: 'workspace/:id/settings', component: DummyComponent },
           { path: 'workspace/:id/content', component: DummyComponent },
+          { path: 'workspace/:id/calendar', component: DummyComponent },
           { path: 'workspace/:id/strategy', component: DummyComponent },
         ]),
         provideHttpClient(),
@@ -386,7 +387,7 @@ describe('HeaderComponent', () => {
       expect(el.querySelector('.ws-selector-btn')).toBeTruthy();
     });
 
-    it('should show Content and Strategy nav items', async () => {
+    it('should show Content, Calendar, and Strategy nav items in order', async () => {
       const router = TestBed.inject(Router);
       const fixture = TestBed.createComponent(HeaderComponent);
       fixture.detectChanges();
@@ -394,9 +395,32 @@ describe('HeaderComponent', () => {
       fixture.detectChanges();
       const el: HTMLElement = fixture.nativeElement;
       const navItems = el.querySelectorAll('.ws-nav-item');
-      expect(navItems.length).toBe(2);
+      expect(navItems.length).toBe(3);
       expect(navItems[0].textContent).toContain('Content');
-      expect(navItems[1].textContent).toContain('Strategy');
+      expect(navItems[1].textContent).toContain('Calendar');
+      expect(navItems[2].textContent).toContain('Strategy');
+    });
+
+    it('should highlight Calendar tab when on calendar route', async () => {
+      const router = TestBed.inject(Router);
+      const fixture = TestBed.createComponent(HeaderComponent);
+      fixture.detectChanges();
+      await router.navigateByUrl('/workspace/abc123/calendar');
+      fixture.detectChanges();
+      const el: HTMLElement = fixture.nativeElement;
+      const activeItem = el.querySelector('.ws-nav-item.active');
+      expect(activeItem?.textContent).toContain('Calendar');
+    });
+
+    it('should link Calendar tab to the effective workspace', async () => {
+      const router = TestBed.inject(Router);
+      const fixture = TestBed.createComponent(HeaderComponent);
+      fixture.detectChanges();
+      await router.navigateByUrl('/workspace/abc123/content');
+      fixture.detectChanges();
+      const el: HTMLElement = fixture.nativeElement;
+      const links = el.querySelectorAll<HTMLAnchorElement>('.ws-nav-item');
+      expect(links[1].getAttribute('href')).toBe('/workspace/abc123/calendar');
     });
 
     it('should highlight active tab', async () => {
@@ -605,7 +629,7 @@ describe('HeaderComponent', () => {
 
     // Issue #23 — workspace nav on /profile-settings
     describe('on /profile-settings', () => {
-      it('should show workspace selector and both nav tabs when user has workspaces', async () => {
+      it('should show workspace selector and all nav tabs when user has workspaces', async () => {
         const router = TestBed.inject(Router);
         const authService = TestBed.inject(AuthService);
         authService.lastWorkspaceId.set('abc123');
@@ -615,7 +639,7 @@ describe('HeaderComponent', () => {
         fixture.detectChanges();
         const el: HTMLElement = fixture.nativeElement;
         expect(el.querySelector('.ws-selector-btn')).toBeTruthy();
-        expect(el.querySelectorAll('.ws-nav-item').length).toBe(2);
+        expect(el.querySelectorAll('.ws-nav-item').length).toBe(3);
       });
 
       it('should show the last-active workspace name in the selector', async () => {
@@ -705,7 +729,7 @@ describe('HeaderComponent', () => {
         expect(spy).toHaveBeenCalledTimes(1);
       });
 
-      it('should link Content and Strategy tabs to the effective workspace', async () => {
+      it('should link Content, Calendar, and Strategy tabs to the effective workspace', async () => {
         const router = TestBed.inject(Router);
         const authService = TestBed.inject(AuthService);
         authService.lastWorkspaceId.set('abc123');
@@ -716,7 +740,8 @@ describe('HeaderComponent', () => {
         const el: HTMLElement = fixture.nativeElement;
         const links = el.querySelectorAll<HTMLAnchorElement>('.ws-nav-item');
         expect(links[0].getAttribute('href')).toBe('/workspace/abc123/content');
-        expect(links[1].getAttribute('href')).toBe('/workspace/abc123/strategy');
+        expect(links[1].getAttribute('href')).toBe('/workspace/abc123/calendar');
+        expect(links[2].getAttribute('href')).toBe('/workspace/abc123/strategy');
       });
     });
   });

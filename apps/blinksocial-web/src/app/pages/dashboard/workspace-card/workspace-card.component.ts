@@ -19,4 +19,5 @@ export class WorkspaceCardComponent {
   @Output() goToWorkspace = new EventEmitter<string>();
   @Output() goToStrategy = new EventEmitter<string>();
   @Output() goToContent = new EventEmitter<string>();
+  @Output() goToCalendar = new EventEmitter<string>();
 }

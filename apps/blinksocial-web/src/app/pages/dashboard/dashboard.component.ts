@@ -73,4 +73,8 @@ export class DashboardComponent implements OnInit {
   onGoToContent(id: string) {
     this.router.navigate(['/workspace', id, 'content']);
   }
+
+  onGoToCalendar(id: string) {
+    this.router.navigate(['/workspace', id, 'calendar']);
+  }
 }
