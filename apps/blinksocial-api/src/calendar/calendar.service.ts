@@ -6,12 +6,21 @@ import type {
   CalendarMilestoneContract,
   CalendarMilestoneTypeContract,
   CalendarResponseContract,
+  CalendarSettingsContract,
+  ContentItemsIndexContract,
   PlatformContract,
 } from '@blinksocial/contracts';
 import type { MockDataService } from '../mocks/mock-data.service';
+import {
+  deriveMilestonesForItem,
+  mapContentItemToCalendarItem,
+} from './calendar-mappers';
 
 const CALENDAR_NAMESPACE = 'calendar';
 const CALENDAR_FIXTURE_FILE = 'dataset.json';
+const CONTENT_ITEMS_NAMESPACE = 'content-items';
+const CONTENT_ITEMS_INDEX_FILE = '_content-items-index.json';
+const CALENDAR_SETTINGS_TAB = 'calendar';
 const REFERENCE_DATE = '2026-05-01T00:00:00.000Z';
 
 const PLATFORMS: PlatformContract[] = [
@@ -124,7 +133,59 @@ export class CalendarService {
     if (fixture) {
       return fixture;
     }
+    const derived = await this.tryDeriveFromMockContent(workspaceId);
+    if (derived) {
+      return derived;
+    }
     return this.generateSynthetic(workspaceId);
+  }
+
+  private async tryDeriveFromMockContent(
+    workspaceId: string,
+  ): Promise<CalendarResponseContract | null> {
+    if (!this.mockDataService?.isMockWorkspace(workspaceId)) {
+      return null;
+    }
+    const index = (await this.mockDataService.getNamespaceAggregate(
+      workspaceId,
+      CONTENT_ITEMS_NAMESPACE,
+      CONTENT_ITEMS_INDEX_FILE,
+    )) as ContentItemsIndexContract | null;
+    if (!index || !Array.isArray(index.items) || index.items.length === 0) {
+      return null;
+    }
+    const settings = (await this.mockDataService.getSettings(
+      workspaceId,
+      CALENDAR_SETTINGS_TAB,
+    )) as CalendarSettingsContract | null;
+
+    const items: CalendarContentItemContract[] = [];
+    const milestones: CalendarMilestoneContract[] = [];
+    for (const entry of index.items) {
+      if (entry.archived) continue;
+      const calItem = mapContentItemToCalendarItem(entry);
+      if (!calItem) continue;
+      items.push(calItem);
+      const derived = deriveMilestonesForItem(
+        calItem.id,
+        calItem.scheduleAt as string,
+        calItem.canonicalType,
+        calItem.owner,
+        settings,
+      );
+      milestones.push(...derived);
+    }
+
+    if (items.length === 0) {
+      return null;
+    }
+
+    return {
+      workspaceId,
+      referenceDate: REFERENCE_DATE,
+      items,
+      milestones,
+    };
   }
 
   private async tryLoadFixture(
