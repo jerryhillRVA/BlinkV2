@@ -70,6 +70,13 @@ const DAY_MS = 24 * 60 * 60 * 1000;
 const MAX_EVENTS_PER_CELL = 3;
 const UPCOMING_HORIZON_DAYS = 14;
 
+const ALLOWED_VIEW_MODES: readonly CalendarViewMode[] = [
+  'month',
+  'week',
+  'day',
+  'list',
+];
+
 @Component({
   selector: 'app-calendar-page',
   imports: [CommonModule, FormsModule, DatePipe, CalendarPeekCardComponent],
@@ -256,6 +263,20 @@ export class CalendarPageComponent implements OnInit {
   });
 
   ngOnInit(): void {
+    const qp = this.route.snapshot.queryParamMap;
+    const qView = qp.get('calendarView');
+    if (qView && (ALLOWED_VIEW_MODES as readonly string[]).includes(qView)) {
+      this.viewMode.set(qView as CalendarViewMode);
+    }
+    const qCursor = qp.get('calendarCursor');
+    if (qCursor) {
+      const d = new Date(qCursor);
+      if (!isNaN(d.getTime())) {
+        this.cursorFromQuery = d;
+        this.cursorDate.set(d);
+      }
+    }
+
     let isFirst = true;
     this.route.paramMap
       .pipe(takeUntilDestroyed(this.destroyRef))
@@ -277,6 +298,8 @@ export class CalendarPageComponent implements OnInit {
       });
   }
 
+  private cursorFromQuery: Date | null = null;
+
   private load(workspaceId: string): void {
     this.loading.set(true);
     this.loadError.set(null);
@@ -286,7 +309,11 @@ export class CalendarPageComponent implements OnInit {
       .subscribe({
         next: (res) => {
           this.response.set(res);
-          this.cursorDate.set(new Date(res.referenceDate));
+          if (this.cursorFromQuery) {
+            this.cursorFromQuery = null;
+          } else {
+            this.cursorDate.set(new Date(res.referenceDate));
+          }
           this.loading.set(false);
         },
         error: () => {
@@ -534,7 +561,12 @@ export class CalendarPageComponent implements OnInit {
       ? 'packaging'
       : MILESTONE_TAB_MAP[ev.milestoneType] ?? 'brief';
     this.router.navigate(['/workspace', wsId, 'content', ev.contentId], {
-      queryParams: { tab },
+      queryParams: {
+        tab,
+        from: 'calendar',
+        calendarView: this.viewMode(),
+        calendarCursor: this.cursorDate().toISOString(),
+      },
     });
   }
 

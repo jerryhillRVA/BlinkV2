@@ -51,6 +51,18 @@ export class ContentDetailPageComponent {
   }
 
   protected goBack(): void {
+    const qp = this.route.snapshot.queryParamMap;
+    if (qp.get('from') === 'calendar') {
+      const queryParams: Record<string, string> = {};
+      const view = qp.get('calendarView');
+      const cursor = qp.get('calendarCursor');
+      if (view) queryParams['calendarView'] = view;
+      if (cursor) queryParams['calendarCursor'] = cursor;
+      this.router.navigate(['/workspace', this.workspaceId(), 'calendar'], {
+        queryParams,
+      });
+      return;
+    }
     this.router.navigate(['/workspace', this.workspaceId(), 'content']);
   }
 

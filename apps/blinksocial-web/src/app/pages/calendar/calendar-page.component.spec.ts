@@ -74,6 +74,7 @@ type GetCalendarReturn = ReturnType<CalendarApiService['getCalendar']>;
 function setupTestBed(
   getCalendar: () => GetCalendarReturn,
   paramMap: Record<string, string> = { id: 'hive-collective' },
+  queryParams: Record<string, string> = {},
 ) {
   const router = { navigate: vi.fn() } as unknown as Router;
   TestBed.configureTestingModule({
@@ -82,7 +83,10 @@ function setupTestBed(
       { provide: Router, useValue: router },
       {
         provide: ActivatedRoute,
-        useValue: { paramMap: of(convertToParamMap(paramMap)) },
+        useValue: {
+          paramMap: of(convertToParamMap(paramMap)),
+          snapshot: { queryParamMap: convertToParamMap(queryParams) },
+        },
       },
       { provide: CalendarApiService, useValue: { getCalendar } },
     ],
@@ -281,7 +285,14 @@ describe('CalendarPageComponent', () => {
     fixture.componentInstance.openEvent(publish);
     expect(router.navigate).toHaveBeenCalledWith(
       ['/workspace', 'hive-collective', 'content', publish.contentId],
-      { queryParams: { tab: 'packaging' } },
+      {
+        queryParams: {
+          tab: 'packaging',
+          from: 'calendar',
+          calendarView: 'month',
+          calendarCursor: REF_ISO,
+        },
+      },
     );
   });
 
@@ -297,7 +308,66 @@ describe('CalendarPageComponent', () => {
     fixture.componentInstance.openEvent(milestone);
     expect(router.navigate).toHaveBeenCalledWith(
       ['/workspace', 'hive-collective', 'content', milestone.contentId],
-      { queryParams: { tab: 'draft' } },
+      {
+        queryParams: {
+          tab: 'draft',
+          from: 'calendar',
+          calendarView: 'month',
+          calendarCursor: REF_ISO,
+        },
+      },
+    );
+  });
+
+  it('seeds viewMode from the calendarView query param when present', () => {
+    setupTestBed(() => of(buildResponse()), { id: 'hive-collective' }, {
+      calendarView: 'week',
+    });
+    const fixture = TestBed.createComponent(CalendarPageComponent);
+    fixture.detectChanges();
+    expect(fixture.componentInstance.viewMode()).toBe('week');
+  });
+
+  it('seeds cursorDate from the calendarCursor query param and overrides the API referenceDate', () => {
+    const cursor = '2026-06-15T00:00:00.000Z';
+    setupTestBed(() => of(buildResponse()), { id: 'hive-collective' }, {
+      calendarCursor: cursor,
+    });
+    const fixture = TestBed.createComponent(CalendarPageComponent);
+    fixture.detectChanges();
+    expect(fixture.componentInstance.cursorDate().toISOString()).toBe(cursor);
+  });
+
+  it('falls back to default view + reference date when query params are invalid', () => {
+    setupTestBed(() => of(buildResponse()), { id: 'hive-collective' }, {
+      calendarView: 'not-a-real-view',
+      calendarCursor: 'not-a-real-date',
+    });
+    const fixture = TestBed.createComponent(CalendarPageComponent);
+    fixture.detectChanges();
+    expect(fixture.componentInstance.viewMode()).toBe('month');
+    expect(fixture.componentInstance.cursorDate().toISOString()).toBe(REF_ISO);
+  });
+
+  it('forwards the active view + cursor when opening an event after the user changes view', () => {
+    const router = setupTestBed(() => of(buildResponse()));
+    const fixture = TestBed.createComponent(CalendarPageComponent);
+    fixture.detectChanges();
+    const c = fixture.componentInstance;
+    c.setView('week');
+    const newCursor = new Date('2026-05-20T00:00:00.000Z');
+    c.cursorDate.set(newCursor);
+    const ev = c.allEvents()[0];
+    c.openEvent(ev);
+    expect(router.navigate).toHaveBeenLastCalledWith(
+      ['/workspace', 'hive-collective', 'content', ev.contentId],
+      {
+        queryParams: expect.objectContaining({
+          from: 'calendar',
+          calendarView: 'week',
+          calendarCursor: newCursor.toISOString(),
+        }),
+      },
     );
   });
 
