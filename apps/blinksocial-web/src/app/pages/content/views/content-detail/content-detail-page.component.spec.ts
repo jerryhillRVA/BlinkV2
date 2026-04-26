@@ -94,13 +94,18 @@ function createMockState(initialItems: ContentItem[]): {
 }
 
 function configureTest(
-  params: { id?: string; itemId?: string },
+  params: {
+    id?: string;
+    itemId?: string;
+    queryParams?: Record<string, string>;
+  },
   items: ContentItem[],
   overrides: Partial<Record<string, unknown>> = {},
 ) {
   const { state } = createMockState(items);
   Object.assign(state, overrides);
   const paramMap$ = new BehaviorSubject(convertToParamMap(params));
+  const queryParams = params.queryParams ?? {};
   TestBed.configureTestingModule({
     imports: [ContentDetailPageComponent],
     providers: [
@@ -113,6 +118,9 @@ function configureTest(
           snapshot: {
             paramMap: {
               get: (k: string) => params[k as 'id' | 'itemId'] ?? null,
+            },
+            queryParamMap: {
+              get: (k: string) => queryParams[k] ?? null,
             },
           },
         },
@@ -225,6 +233,55 @@ describe('ContentDetailPageComponent — actions', () => {
     const spy = vi.spyOn(router, 'navigate').mockResolvedValue(true);
     (fixture.componentInstance as unknown as { goBack: () => void }).goBack();
     expect(spy).toHaveBeenCalledWith(['/workspace', 'ws-1', 'content']);
+  });
+
+  it('goBack routes to the calendar when from=calendar', () => {
+    configureTest(
+      {
+        id: 'ws-1',
+        itemId: 'c-1',
+        queryParams: { from: 'calendar' },
+      },
+      [makeItem()],
+    );
+    const fixture = TestBed.createComponent(ContentDetailPageComponent);
+    fixture.detectChanges();
+    const router = TestBed.inject(Router);
+    const spy = vi.spyOn(router, 'navigate').mockResolvedValue(true);
+    (fixture.componentInstance as unknown as { goBack: () => void }).goBack();
+    expect(spy).toHaveBeenCalledWith(
+      ['/workspace', 'ws-1', 'calendar'],
+      { queryParams: {} },
+    );
+  });
+
+  it('goBack forwards calendarView and calendarCursor when from=calendar', () => {
+    configureTest(
+      {
+        id: 'ws-1',
+        itemId: 'c-1',
+        queryParams: {
+          from: 'calendar',
+          calendarView: 'week',
+          calendarCursor: '2026-05-15T00:00:00.000Z',
+        },
+      },
+      [makeItem()],
+    );
+    const fixture = TestBed.createComponent(ContentDetailPageComponent);
+    fixture.detectChanges();
+    const router = TestBed.inject(Router);
+    const spy = vi.spyOn(router, 'navigate').mockResolvedValue(true);
+    (fixture.componentInstance as unknown as { goBack: () => void }).goBack();
+    expect(spy).toHaveBeenCalledWith(
+      ['/workspace', 'ws-1', 'calendar'],
+      {
+        queryParams: {
+          calendarView: 'week',
+          calendarCursor: '2026-05-15T00:00:00.000Z',
+        },
+      },
+    );
   });
 
   it('onArchive calls state.archive and routes back', () => {
