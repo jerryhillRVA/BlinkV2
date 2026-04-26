@@ -756,6 +756,54 @@ describe('NewWorkspaceFormService', () => {
     expect(requestWithSkills.skills?.skills[0].skillId).toBe('reporting-agent');
   });
 
+  // Direct CreateWorkspaceRequest model coverage — exercises the absent-field
+  // branches (skills/businessObjectives/brandPositioning/channelStrategy/
+  // contentMix all optional) so the model class hits both sides of each `if`.
+  it('constructs CreateWorkspaceRequest without any optional fields', () => {
+    service.workspaceName.set('Test');
+    const baseData = service.formData();
+    const req = new CreateWorkspaceRequest({
+      general: baseData.general,
+      platforms: baseData.platforms,
+      brandVoice: baseData.brandVoice,
+      contentPillars: baseData.contentPillars,
+      audienceSegments: baseData.audienceSegments,
+    });
+    expect(req.skills).toBeUndefined();
+    expect(req.businessObjectives).toBeUndefined();
+    expect(req.brandPositioning).toBeUndefined();
+    expect(req.channelStrategy).toBeUndefined();
+    expect(req.contentMix).toBeUndefined();
+  });
+
+  it('constructs CreateWorkspaceRequest with every optional field present', () => {
+    service.workspaceName.set('Test');
+    const baseData = service.formData();
+    const req = new CreateWorkspaceRequest({
+      ...baseData,
+      skills: {
+        skills: [{ id: 'sk-1', skillId: 'editor', name: 'Editor', role: 'editor' }],
+      },
+      businessObjectives: [
+        { id: 'bo-1', category: 'growth', statement: 'Grow', target: 100, unit: 'followers', timeframe: 'Q1', status: 'on-track' },
+      ],
+      brandPositioning: {
+        targetCustomer: 'Devs',
+        problemSolved: 'Slow builds',
+        solution: 'Fast builds',
+        differentiator: 'Faster than X',
+        positioningStatement: 'For devs who hate waiting.',
+      },
+      channelStrategy: { channels: [] },
+      contentMix: { targets: [] },
+    });
+    expect(req.skills).toBeDefined();
+    expect(req.businessObjectives?.length).toBe(1);
+    expect(req.brandPositioning).toBeDefined();
+    expect(req.channelStrategy).toBeDefined();
+    expect(req.contentMix).toBeDefined();
+  });
+
   // --- AUDIENCES computed (dynamic from audienceSegments) ---
 
   it('should return audience segment names for AUDIENCES when segments have names', () => {

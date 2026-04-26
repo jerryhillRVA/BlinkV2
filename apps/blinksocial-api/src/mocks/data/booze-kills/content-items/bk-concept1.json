@@ -1,0 +1,25 @@
+{
+  "id": "bk-concept1",
+  "stage": "concept",
+  "status": "concepting",
+  "title": "Alcohol & Sleep: The Myth of the Nightcap",
+  "description": "Deep dive into how alcohol disrupts sleep cycles — REM suppression, fragmented architecture, rebound insomnia — and why the cultural \"nightcap\" idea is counterproductive. Built around a single sleep-study graph rendered in the brand's electric-blue palette.",
+  "pillarIds": ["bk-p1"],
+  "segmentIds": ["bk-s1", "bk-s3"],
+  "tags": ["sleep-science", "myth-busting", "carousel"],
+  "hook": "That glass of wine isn't helping you sleep. Here's what it's actually doing.",
+  "objective": "education",
+  "keyMessage": "Alcohol fragments your sleep architecture even at small doses.",
+  "claimsFlag": true,
+  "sourceLinks": [
+    "https://example.com/research/alcohol-rem-suppression",
+    "https://example.com/research/sleep-fragmentation-2024"
+  ],
+  "riskLevel": "low",
+  "targetPlatforms": [
+    { "platform": "instagram", "contentType": "carousel", "postId": null },
+    { "platform": "linkedin", "contentType": "ln-document", "postId": null }
+  ],
+  "createdAt": "2026-02-25T11:00:00Z",
+  "updatedAt": "2026-02-28T15:00:00Z"
+}

@@ -235,9 +235,10 @@
                   }
                   <div class="card-pillars">
                     @for (pillarId of item.pillarIds; track pillarId) {
-                      <span class="pillar-badge">
-                        {{ getPillarName(pillarId) }}
-                      </span>
+                      @let pillarName = getPillarName(pillarId);
+                      @if (pillarName) {
+                        <span class="pillar-badge">{{ pillarName }}</span>
+                      }
                     }
                     @if (item.contentType) {
                       <span class="type-badge">{{ item.contentType }}</span>
@@ -287,7 +288,10 @@
               <p class="list-card-description">{{ item.description }}</p>
               <div class="list-card-badges">
                 @for (pillarId of item.pillarIds; track pillarId) {
-                  <span class="pillar-badge">{{ getPillarName(pillarId) }}</span>
+                  @let pillarName = getPillarName(pillarId);
+                  @if (pillarName) {
+                    <span class="pillar-badge">{{ pillarName }}</span>
+                  }
                 }
                 @if (item.platform) {
                   <span class="list-card-platform" [ngClass]="'platform-' + item.platform">

@@ -84,16 +84,17 @@ test.describe('Profile Menu Navigation', () => {
 
 // Issue #23 — workspace nav on /profile-settings
 test.describe('Profile Settings — Workspace Nav', () => {
-  test('should show workspace selector and both nav tabs on /profile-settings', async ({
+  test('should show workspace selector and the workspace nav tabs on /profile-settings', async ({
     page,
   }) => {
     await mockAuthenticatedUser(page);
     await page.goto('/profile-settings');
     await expect(page.locator('.ws-selector-btn')).toBeVisible();
     const navItems = page.locator('.ws-nav-item');
-    await expect(navItems).toHaveCount(2);
+    await expect(navItems).toHaveCount(3);
     await expect(navItems.nth(0)).toContainText('Content');
-    await expect(navItems.nth(1)).toContainText('Strategy');
+    await expect(navItems.nth(1)).toContainText('Calendar');
+    await expect(navItems.nth(2)).toContainText('Strategy');
     // No tab should be active on /profile-settings
     await expect(page.locator('.ws-nav-item.active')).toHaveCount(0);
   });

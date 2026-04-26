@@ -13,26 +13,60 @@
   "visualGuidelines": "Warm coral (#d94e33) + neutral earth tones. Clean sans-serif typography (Inter). Natural lighting, real bodies, inclusive representation.",
   "typographyGuidelines": "Headlines: Inter Bold 24-32px. Body: Inter Regular 16px. Captions: Inter Medium 14px.",
   "photographyGuidelines": "Real women, natural poses, diverse body types and skin tones. No overly filtered or retouched images. Prefer outdoor/natural light settings.",
-  "audienceOptions": ["Engineers", "Founders", "Social Media Managers", "Tech Enthusiasts", "Executives"],
+  "audienceOptions": ["Active 40s", "Thriving 50s", "Yoga Enthusiasts", "Fitness Beginners", "Holistic Health Seekers"],
   "contentPillars": [
     {
-      "id": "pillar-1",
-      "name": "Industry News",
-      "description": "Timely updates on industry shifts and breaking tech news.",
+      "id": "p1",
+      "name": "Yoga & Movement",
+      "description": "Yoga flows, stretching routines, and mindful movement practices",
       "color": "#d94e33",
-      "themes": ["AI", "Software Development", "Venture Capital"],
-      "audienceSegmentIds": ["Engineers"],
-      "targetPlatforms": ["youtube", "linkedin"]
+      "themes": ["Yoga", "Mobility", "Stretching"],
+      "audienceSegmentIds": ["s3", "s4"],
+      "targetPlatforms": ["instagram", "youtube"]
     },
     {
-      "id": "pillar-2",
-      "name": "How-To Guides",
-      "description": "Practical tutorials and educational deep-dives.",
+      "id": "p2",
+      "name": "Wellness & Mindfulness",
+      "description": "Stress management, meditation, sleep, and mental health",
+      "color": "#10b981",
+      "themes": ["Meditation", "Sleep", "Mental Health"],
+      "audienceSegmentIds": ["s2", "s5"],
+      "targetPlatforms": ["instagram", "tiktok"]
+    },
+    {
+      "id": "p3",
+      "name": "Fitness & Strength",
+      "description": "Strength training, cardio, and fitness routines for women 40+",
       "color": "#3b82f6",
-      "themes": ["Tutorials", "Productivity", "Automation"],
-      "audienceSegmentIds": ["Social Media Managers"],
+      "themes": ["Strength Training", "Cardio", "Bone Health"],
+      "audienceSegmentIds": ["s1", "s2"],
       "targetPlatforms": ["youtube", "instagram"]
+    },
+    {
+      "id": "p4",
+      "name": "Nutrition & Recipes",
+      "description": "Healthy eating, meal prep, and nutrition for hormonal health",
+      "color": "#f59e0b",
+      "themes": ["Meal Prep", "Anti-Inflammatory", "Gut Health"],
+      "audienceSegmentIds": ["s5", "s1"],
+      "targetPlatforms": ["instagram", "youtube"]
+    },
+    {
+      "id": "p5",
+      "name": "Aging & Confidence",
+      "description": "Body positivity, aging gracefully, and empowerment content",
+      "color": "#8b5cf6",
+      "themes": ["Body Positivity", "Menopause", "Empowerment"],
+      "audienceSegmentIds": ["s2", "s3"],
+      "targetPlatforms": ["tiktok", "instagram"]
     }
+  ],
+  "audienceSegments": [
+    { "id": "s1", "name": "Active 40s", "description": "Women in their 40s maintaining fitness and managing perimenopause" },
+    { "id": "s2", "name": "Thriving 50s", "description": "Women in their 50s focused on strength, flexibility, and menopause wellness" },
+    { "id": "s3", "name": "Yoga Enthusiasts", "description": "Women passionate about yoga practice and mindful movement" },
+    { "id": "s4", "name": "Fitness Beginners", "description": "Women new to fitness or restarting their wellness journey" },
+    { "id": "s5", "name": "Holistic Health Seekers", "description": "Women focused on whole-body wellness and natural living" }
   ],
   "voiceAttributes": [
     {

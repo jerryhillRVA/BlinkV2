@@ -182,6 +182,143 @@ describe('PipelineViewComponent', () => {
     expect(badges.length).toBeGreaterThan(0);
   });
 
+  it('renders pillar badge with the resolved pillar name when the id matches', () => {
+    const badges = Array.from(
+      fixture.nativeElement.querySelectorAll('.pillar-badge') as NodeListOf<HTMLElement>,
+    ).map((el) => el.textContent?.trim() ?? '');
+    const pillarNames = MOCK_PILLARS.map((p) => p.name);
+    expect(badges.length).toBeGreaterThan(0);
+    badges.forEach((text) => {
+      expect(text.length).toBeGreaterThan(0);
+      expect(pillarNames).toContain(text);
+    });
+  });
+
+  it('does not render an empty pillar badge when the id cannot be resolved (kanban view)', () => {
+    const itemWithUnknownPillar = {
+      ...MOCK_CONTENT_ITEMS[0],
+      id: 'unknown-pillar-1',
+      pillarIds: ['nonexistent'],
+    };
+    fixture.componentRef.setInput('items', [itemWithUnknownPillar]);
+    fixture.componentRef.setInput('pillars', MOCK_PILLARS);
+    fixture.detectChanges();
+    const badges = fixture.nativeElement.querySelectorAll('.pillar-badge');
+    expect(badges.length).toBe(0);
+  });
+
+  it('does not render an empty pillar badge when the id cannot be resolved (list view)', () => {
+    component.setViewMode('list');
+    const itemWithUnknownPillar = {
+      ...MOCK_CONTENT_ITEMS[0],
+      id: 'unknown-pillar-2',
+      pillarIds: ['nonexistent'],
+    };
+    fixture.componentRef.setInput('items', [itemWithUnknownPillar]);
+    fixture.componentRef.setInput('pillars', MOCK_PILLARS);
+    fixture.detectChanges();
+    const badges = fixture.nativeElement.querySelectorAll('.pillar-badge');
+    expect(badges.length).toBe(0);
+  });
+
+  it('renders only resolvable pillar badges when an item mixes known and unknown ids', () => {
+    const itemWithMixedPillars = {
+      ...MOCK_CONTENT_ITEMS[0],
+      id: 'mixed-pillars',
+      pillarIds: ['p1', 'nonexistent', 'p2'],
+    };
+    fixture.componentRef.setInput('items', [itemWithMixedPillars]);
+    fixture.componentRef.setInput('pillars', MOCK_PILLARS);
+    fixture.detectChanges();
+    const card = fixture.nativeElement.querySelector('.content-card');
+    const badges = Array.from(
+      card.querySelectorAll('.pillar-badge') as NodeListOf<HTMLElement>,
+    ).map((el) => el.textContent?.trim() ?? '');
+    expect(badges).toEqual(['Yoga & Movement', 'Wellness & Mindfulness']);
+  });
+
+  describe('loadViewMode branches', () => {
+    async function recreate(): Promise<PipelineViewComponent> {
+      await TestBed.resetTestingModule()
+        .configureTestingModule({
+          imports: [PipelineViewComponent],
+          providers: [
+            provideNoopAnimations(),
+            provideRouter([]),
+            {
+              provide: ActivatedRoute,
+              useValue: {
+                paramMap: of(convertToParamMap({ id: 'hive-collective' })),
+                snapshot: { paramMap: convertToParamMap({ id: 'hive-collective' }) },
+              },
+            },
+          ],
+        })
+        .compileComponents();
+      const f = TestBed.createComponent(PipelineViewComponent);
+      f.componentRef.setInput('items', MOCK_CONTENT_ITEMS);
+      f.componentRef.setInput('pillars', MOCK_PILLARS);
+      f.detectChanges();
+      return f.componentInstance;
+    }
+
+    it('restores stored "list" view mode from localStorage on init', async () => {
+      localStorage.setItem('blink-content-view-mode', 'list');
+      try {
+        const c = await recreate();
+        expect(c.viewMode()).toBe('list');
+      } finally {
+        localStorage.removeItem('blink-content-view-mode');
+      }
+    });
+
+    it('restores stored "kanban" view mode from localStorage on init', async () => {
+      localStorage.setItem('blink-content-view-mode', 'kanban');
+      try {
+        const c = await recreate();
+        expect(c.viewMode()).toBe('kanban');
+      } finally {
+        localStorage.removeItem('blink-content-view-mode');
+      }
+    });
+
+    it('falls back to kanban view mode for unrecognized localStorage values', async () => {
+      localStorage.setItem('blink-content-view-mode', 'garbage');
+      try {
+        const c = await recreate();
+        expect(c.viewMode()).toBe('kanban');
+      } finally {
+        localStorage.removeItem('blink-content-view-mode');
+      }
+    });
+
+    it('falls back to kanban view mode when localStorage.getItem throws', async () => {
+      const original = Storage.prototype.getItem;
+      Storage.prototype.getItem = () => {
+        throw new Error('localStorage blocked');
+      };
+      try {
+        const c = await recreate();
+        expect(c.viewMode()).toBe('kanban');
+      } finally {
+        Storage.prototype.getItem = original;
+      }
+    });
+
+    it('silently ignores localStorage.setItem failures when persisting view mode', () => {
+      const original = Storage.prototype.setItem;
+      Storage.prototype.setItem = () => {
+        throw new Error('localStorage blocked');
+      };
+      try {
+        expect(() => component.setViewMode('list')).not.toThrow();
+        expect(component.viewMode()).toBe('list');
+      } finally {
+        Storage.prototype.setItem = original;
+      }
+    });
+  });
+
   it('should render "New Content" button', () => {
     const btn = fixture.nativeElement.querySelector('.btn-new-content');
     expect(btn).toBeTruthy();

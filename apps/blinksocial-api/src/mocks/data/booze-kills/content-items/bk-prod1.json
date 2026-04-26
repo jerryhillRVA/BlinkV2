@@ -1,0 +1,70 @@
+{
+  "id": "bk-prod1",
+  "stage": "post",
+  "status": "in-progress",
+  "title": "How Alcohol Affects Your Gut Microbiome",
+  "description": "Long-form YouTube explainer (8–10 min) on the relationship between alcohol consumption and gut health: dysbiosis, intestinal permeability, downstream inflammation. Animated diagrams over a host narration.",
+  "pillarIds": ["bk-p1"],
+  "segmentIds": ["bk-s3"],
+  "tags": ["gut-health", "microbiome", "long-form", "youtube"],
+  "owner": "user-mara",
+  "hook": "Your gut bacteria are begging you to read this.",
+  "objective": "education",
+  "platform": "youtube",
+  "contentType": "long-form",
+  "keyMessage": "Even moderate drinking measurably shifts your gut microbiome.",
+  "claimsFlag": true,
+  "sourceLinks": [
+    "https://example.com/research/alcohol-microbiome-2024",
+    "https://example.com/research/intestinal-permeability"
+  ],
+  "riskLevel": "medium",
+  "createdAt": "2026-02-15T09:00:00Z",
+  "updatedAt": "2026-03-01T16:00:00Z",
+  "production": {
+    "brief": {
+      "strategy": {
+        "objective": "education",
+        "audienceSegmentIds": ["bk-s3"],
+        "pillarIds": ["bk-p1"],
+        "keyMessage": "Even moderate drinking measurably shifts your gut microbiome.",
+        "ctaType": "subscribe",
+        "ctaText": "Subscribe for the rest of the gut-health series.",
+        "tonePreset": "authoritative",
+        "doChecklist": [
+          "Cite each study on screen",
+          "Use peer language, not lecture tone",
+          "Include alt-text-friendly captions"
+        ],
+        "dontChecklist": [
+          "Don't use shame framing",
+          "Don't overstate causality past what the studies show"
+        ]
+      },
+      "platformRules": {
+        "durationTarget": 540,
+        "hookType": "question-first",
+        "loopEnding": false
+      },
+      "creativePlan": {
+        "hook": "Your gut bacteria are begging you to read this.",
+        "storyArc": "hook-mechanism-evidence-implication-cta",
+        "musicNotes": "Subtle ambient bed under host VO; no score during stat callouts."
+      },
+      "compliance": {
+        "containsClaims": true,
+        "disclosureNeeded": true,
+        "disclosureCopy": "Educational content. Not medical advice."
+      }
+    },
+    "outputs": {
+      "hook": "Your gut bacteria are begging you to read this.",
+      "hookBank": [
+        "Your gut bacteria are begging you to read this.",
+        "One drink. Measurable change in your microbiome.",
+        "What alcohol does to your gut starts at the first sip."
+      ],
+      "ctaLine": "Subscribe for the rest of the gut-health series."
+    }
+  }
+}

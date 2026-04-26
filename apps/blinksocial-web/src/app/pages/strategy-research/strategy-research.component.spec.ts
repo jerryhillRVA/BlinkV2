@@ -1,7 +1,8 @@
 import { TestBed } from '@angular/core/testing';
 import { provideRouter, ActivatedRoute, convertToParamMap } from '@angular/router';
 import { signal } from '@angular/core';
-import { of } from 'rxjs';
+import { of, Subject } from 'rxjs';
+import type { ParamMap } from '@angular/router';
 import { StrategyResearchComponent } from './strategy-research.component';
 import { StrategyResearchStateService } from './strategy-research-state.service';
 
@@ -217,5 +218,99 @@ describe('StrategyResearchComponent', () => {
 
   it('should call loadAll with workspace ID from paramMap', () => {
     expect(mockStateService.loadAll).toHaveBeenCalledWith('test-workspace');
+  });
+
+  describe('paramMap branch coverage', () => {
+    it('falls back to empty workspace id when paramMap returns null (no reload)', async () => {
+      mockStateService.loadAll.mockClear();
+      await TestBed.resetTestingModule()
+        .configureTestingModule({
+          imports: [StrategyResearchComponent],
+          providers: [
+            provideRouter([]),
+            {
+              provide: ActivatedRoute,
+              useValue: {
+                paramMap: of(convertToParamMap({})),
+                snapshot: { paramMap: { get: () => null } },
+              },
+            },
+            { provide: StrategyResearchStateService, useValue: mockStateService },
+          ],
+        })
+        .overrideComponent(StrategyResearchComponent, {
+          set: { providers: [] },
+        })
+        .compileComponents();
+      const f = TestBed.createComponent(StrategyResearchComponent);
+      f.detectChanges();
+      // The ?? '' fallback resolves the missing id to ''. Since workspaceId
+      // is initialised to '' as well, the inner branch is skipped — exactly
+      // what we want: no spurious reload when there's no workspace in the URL.
+      expect(f.componentInstance.workspaceId).toBe('');
+      expect(mockStateService.loadAll).not.toHaveBeenCalled();
+    });
+
+    it('does not reload when paramMap emits the same workspace id twice', async () => {
+      mockStateService.loadAll.mockClear();
+      const params$ = new Subject<ParamMap>();
+      await TestBed.resetTestingModule()
+        .configureTestingModule({
+          imports: [StrategyResearchComponent],
+          providers: [
+            provideRouter([]),
+            {
+              provide: ActivatedRoute,
+              useValue: {
+                paramMap: params$.asObservable(),
+                snapshot: { paramMap: { get: () => 'test-workspace' } },
+              },
+            },
+            { provide: StrategyResearchStateService, useValue: mockStateService },
+          ],
+        })
+        .overrideComponent(StrategyResearchComponent, {
+          set: { providers: [] },
+        })
+        .compileComponents();
+      const f = TestBed.createComponent(StrategyResearchComponent);
+      f.detectChanges();
+      params$.next(convertToParamMap({ id: 'ws-1' }));
+      params$.next(convertToParamMap({ id: 'ws-1' }));
+      params$.next(convertToParamMap({ id: 'ws-2' }));
+      expect(mockStateService.loadAll).toHaveBeenCalledTimes(2);
+      expect(mockStateService.loadAll).toHaveBeenNthCalledWith(1, 'ws-1');
+      expect(mockStateService.loadAll).toHaveBeenNthCalledWith(2, 'ws-2');
+    });
+
+    it('resets activeView to brand-voice when workspace id changes', async () => {
+      const params$ = new Subject<ParamMap>();
+      await TestBed.resetTestingModule()
+        .configureTestingModule({
+          imports: [StrategyResearchComponent],
+          providers: [
+            provideRouter([]),
+            {
+              provide: ActivatedRoute,
+              useValue: {
+                paramMap: params$.asObservable(),
+                snapshot: { paramMap: { get: () => 'ws-a' } },
+              },
+            },
+            { provide: StrategyResearchStateService, useValue: mockStateService },
+          ],
+        })
+        .overrideComponent(StrategyResearchComponent, {
+          set: { providers: [] },
+        })
+        .compileComponents();
+      const f = TestBed.createComponent(StrategyResearchComponent);
+      f.detectChanges();
+      params$.next(convertToParamMap({ id: 'ws-a' }));
+      f.componentInstance.setActiveView('pillars');
+      expect(f.componentInstance.activeView()).toBe('pillars');
+      params$.next(convertToParamMap({ id: 'ws-b' }));
+      expect(f.componentInstance.activeView()).toBe('brand-voice');
+    });
   });
 });

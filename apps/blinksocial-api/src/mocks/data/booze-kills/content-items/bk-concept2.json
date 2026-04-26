@@ -1,0 +1,20 @@
+{
+  "id": "bk-concept2",
+  "stage": "concept",
+  "status": "concepting",
+  "title": "Weekend Mocktail Series: Spring Edition",
+  "description": "Three sophisticated, host-grade mocktail recipes for spring entertaining: rhubarb-rosemary spritz, cucumber-elderflower fizz, and a smoked-citrus zero-proof old-fashioned. Each gets its own vertical reel + a cover carousel.",
+  "pillarIds": ["bk-p4"],
+  "segmentIds": ["bk-s1"],
+  "tags": ["mocktails", "recipes", "entertaining", "spring"],
+  "hook": "Your guests won't believe these are alcohol-free.",
+  "objective": "engagement",
+  "keyMessage": "Going alcohol-free doesn't mean compromising on the host experience.",
+  "riskLevel": "low",
+  "targetPlatforms": [
+    { "platform": "instagram", "contentType": "reel", "postId": null },
+    { "platform": "tiktok", "contentType": "short-video", "postId": null }
+  ],
+  "createdAt": "2026-02-20T14:00:00Z",
+  "updatedAt": "2026-02-27T10:00:00Z"
+}
