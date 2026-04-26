@@ -227,3 +227,155 @@ test.describe('Calendar — page interactions', () => {
     expect(colorDark).not.toBe(colorLight);
   });
 });
+
+type RoundTripFixture = {
+  workspace: string;
+  contentId: string;
+  title: string;
+  scheduleAt: string;
+  platform: 'instagram' | 'youtube';
+  canonicalType: 'IMAGE_SINGLE' | 'VIDEO_SHORT_VERTICAL' | 'VIDEO_LONG_HORIZONTAL';
+  contentType: 'reel' | 'long-form' | 'feed-post';
+};
+
+const ROUND_TRIP_FIXTURES: RoundTripFixture[] = [
+  {
+    workspace: 'booze-kills',
+    contentId: 'bk-pub1',
+    title: 'Dry January Results: What We Learned',
+    scheduleAt: '2026-05-04T14:00:00.000Z',
+    platform: 'instagram',
+    canonicalType: 'VIDEO_SHORT_VERTICAL',
+    contentType: 'reel',
+  },
+  {
+    workspace: 'hive-collective',
+    contentId: 'post1',
+    title: '60-Second Morning Mobility Flow',
+    scheduleAt: '2026-05-12T14:00:00.000Z',
+    platform: 'instagram',
+    canonicalType: 'VIDEO_SHORT_VERTICAL',
+    contentType: 'reel',
+  },
+];
+
+test.describe('Calendar — content round-trip in mock mode', () => {
+  for (const fx of ROUND_TRIP_FIXTURES) {
+    test(`TC10 (${fx.workspace}) calendar event click resolves to a populated content detail page`, async ({
+      page,
+    }) => {
+      await mockAuthenticatedUser(page);
+      await page.route('**/api/workspaces', (route) =>
+        route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify(WORKSPACES_PAYLOAD),
+        }),
+      );
+      await page.route(
+        new RegExp(`/api/calendar/${fx.workspace}$`),
+        (route) =>
+          route.fulfill({
+            status: 200,
+            contentType: 'application/json',
+            body: JSON.stringify({
+              workspaceId: fx.workspace,
+              referenceDate: REFERENCE_DATE,
+              items: [
+                {
+                  id: fx.contentId,
+                  title: fx.title,
+                  platform: fx.platform,
+                  canonicalType: fx.canonicalType,
+                  status: 'scheduled',
+                  owner: 'Ava Chen',
+                  scheduleAt: fx.scheduleAt,
+                  blockers: [],
+                },
+              ],
+              milestones: [],
+            }),
+          }),
+      );
+      const itemPayload = {
+        id: fx.contentId,
+        stage: 'post' as const,
+        status: 'scheduled' as const,
+        title: fx.title,
+        description: 'Round-trip fixture content',
+        pillarIds: [],
+        segmentIds: [],
+        platform: fx.platform,
+        contentType: fx.contentType,
+        scheduledDate: fx.scheduleAt.slice(0, 10),
+        scheduledAt: fx.scheduleAt,
+        createdAt: '2026-04-01T08:00:00Z',
+        updatedAt: '2026-04-20T08:00:00Z',
+      };
+      await page.route(
+        new RegExp(
+          `/api/workspaces/${fx.workspace}/content-items/index$`,
+        ),
+        (route) =>
+          route.fulfill({
+            status: 200,
+            contentType: 'application/json',
+            body: JSON.stringify({
+              items: [
+                {
+                  id: itemPayload.id,
+                  stage: itemPayload.stage,
+                  status: itemPayload.status,
+                  title: itemPayload.title,
+                  platform: itemPayload.platform,
+                  contentType: itemPayload.contentType,
+                  pillarIds: [],
+                  segmentIds: [],
+                  owner: null,
+                  parentIdeaId: null,
+                  parentConceptId: null,
+                  scheduledDate: itemPayload.scheduledDate,
+                  archived: false,
+                  createdAt: itemPayload.createdAt,
+                  updatedAt: itemPayload.updatedAt,
+                },
+              ],
+              totalCount: 1,
+              lastUpdated: '2026-04-26T00:00:00.000Z',
+            }),
+          }),
+      );
+      await page.route(
+        new RegExp(
+          `/api/workspaces/${fx.workspace}/content-items/${fx.contentId}$`,
+        ),
+        (route) =>
+          route.fulfill({
+            status: 200,
+            contentType: 'application/json',
+            body: JSON.stringify(itemPayload),
+          }),
+      );
+
+      await page.goto(`/workspace/${fx.workspace}/calendar`);
+      await expect(page.locator('[data-testid="month-grid"]')).toBeVisible();
+
+      const publishPill = page
+        .locator(`[data-testid="event-pill-publish-${fx.contentId}"]`)
+        .first();
+      await expect(publishPill).toBeVisible();
+
+      await publishPill.click();
+      await expect(page).toHaveURL(
+        new RegExp(
+          `/workspace/${fx.workspace}/content/${fx.contentId}(\\?.*)?$`,
+        ),
+      );
+      await expect(page.locator('app-post-detail')).toBeVisible();
+      await expect(page.getByText('This item no longer exists.')).toHaveCount(
+        0,
+      );
+      await expect(page.getByText(fx.title).first()).toBeVisible();
+    });
+  }
+});

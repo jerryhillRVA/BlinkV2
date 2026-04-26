@@ -16,6 +16,8 @@
   "tonePreset": "casual",
   "claimsFlag": false,
   "riskLevel": "medium",
+  "scheduledDate": "2026-05-08",
+  "scheduledAt": "2026-05-08T16:00:00Z",
   "createdAt": "2026-02-10T12:00:00Z",
   "updatedAt": "2026-02-28T14:00:00Z",
   "production": {

@@ -1,0 +1,22 @@
+{
+  "id": "post3",
+  "stage": "post",
+  "status": "in-progress",
+  "title": "Why Your Sleep Is Out of Sync (And the Fix)",
+  "description": "Long-form YouTube explainer connecting circadian disruption with hormonal imbalance, with three practical resets.",
+  "pillarIds": ["p1", "p4"],
+  "segmentIds": ["s5"],
+  "tags": ["sleep", "circadian", "hormones"],
+  "owner": "user-sarah",
+  "objective": "education",
+  "platform": "youtube",
+  "contentType": "long-form",
+  "keyMessage": "Most sleep problems are circadian, not behavioral.",
+  "tonePreset": "authoritative",
+  "claimsFlag": true,
+  "riskLevel": "medium",
+  "scheduledDate": "2026-05-19",
+  "scheduledAt": "2026-05-19T15:00:00Z",
+  "createdAt": "2026-04-05T10:00:00Z",
+  "updatedAt": "2026-04-21T14:00:00Z"
+}

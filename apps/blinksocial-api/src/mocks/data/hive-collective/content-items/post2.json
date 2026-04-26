@@ -1,0 +1,22 @@
+{
+  "id": "post2",
+  "stage": "post",
+  "status": "scheduled",
+  "title": "Anti-Inflammatory Breakfast Bowl Walkthrough",
+  "description": "Step-by-step photo carousel showing how to build a hormone-friendly breakfast bowl in under five minutes.",
+  "pillarIds": ["p4"],
+  "segmentIds": ["s1", "s5"],
+  "tags": ["breakfast", "anti-inflammatory", "carousel"],
+  "owner": "user-sarah",
+  "objective": "education",
+  "platform": "instagram",
+  "contentType": "carousel",
+  "keyMessage": "A balanced breakfast can be fast and ingredient-light.",
+  "tonePreset": "friendly",
+  "claimsFlag": false,
+  "riskLevel": "low",
+  "scheduledDate": "2026-05-04",
+  "scheduledAt": "2026-05-04T13:00:00Z",
+  "createdAt": "2026-04-12T09:00:00Z",
+  "updatedAt": "2026-04-22T11:00:00Z"
+}

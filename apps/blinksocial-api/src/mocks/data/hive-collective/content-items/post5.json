@@ -1,0 +1,22 @@
+{
+  "id": "post5",
+  "stage": "post",
+  "status": "published",
+  "title": "Walking Meditations: A 7-Day Reset",
+  "description": "Story frame set of seven prompts, one per day, framed for evening cooldowns.",
+  "pillarIds": ["p2"],
+  "segmentIds": ["s4"],
+  "tags": ["meditation", "story", "evening"],
+  "owner": "user-sarah",
+  "objective": "community",
+  "platform": "instagram",
+  "contentType": "story",
+  "keyMessage": "Walking meditation is the lowest-friction practice that actually sticks.",
+  "tonePreset": "inspiring",
+  "claimsFlag": false,
+  "riskLevel": "low",
+  "scheduledDate": "2026-04-22",
+  "scheduledAt": "2026-04-22T19:00:00Z",
+  "createdAt": "2026-03-25T11:00:00Z",
+  "updatedAt": "2026-04-22T19:30:00Z"
+}
