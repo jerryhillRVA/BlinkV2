@@ -61,9 +61,7 @@
           "localhost",
           ".local",
           ".internal"
-        ],
-        "hmr": false,
-        "liveReload": false
+        ]
       },
       "configurations": {
         "production": {
