@@ -106,6 +106,7 @@ function configureTest(
   Object.assign(state, overrides);
   const paramMap$ = new BehaviorSubject(convertToParamMap(params));
   const queryParams = params.queryParams ?? {};
+  const queryParamMap$ = new BehaviorSubject(convertToParamMap(queryParams));
   TestBed.configureTestingModule({
     imports: [ContentDetailPageComponent],
     providers: [
@@ -115,6 +116,7 @@ function configureTest(
         provide: ActivatedRoute,
         useValue: {
           paramMap: paramMap$.asObservable(),
+          queryParamMap: queryParamMap$.asObservable(),
           snapshot: {
             paramMap: {
               get: (k: string) => params[k as 'id' | 'itemId'] ?? null,
@@ -406,11 +408,94 @@ describe('ContentDetailPageComponent — actions', () => {
     (fixture.componentInstance as unknown as {
       onAdvancedToConcept: (id: string) => void;
     }).onAdvancedToConcept('new-concept-id');
-    expect(spy).toHaveBeenCalledWith([
-      '/workspace',
-      'ws-1',
-      'content',
-      'new-concept-id',
-    ]);
+    expect(spy).toHaveBeenCalledWith(
+      ['/workspace', 'ws-1', 'content', 'new-concept-id'],
+      undefined,
+    );
+  });
+
+  it('onAdvancedToConcept forwards calendar params when present', () => {
+    configureTest(
+      {
+        id: 'ws-1',
+        itemId: 'c-1',
+        queryParams: {
+          from: 'calendar',
+          calendarView: 'week',
+          calendarCursor: '2026-05-15T00:00:00.000Z',
+        },
+      },
+      [makeItem()],
+    );
+    const fixture = TestBed.createComponent(ContentDetailPageComponent);
+    fixture.detectChanges();
+    const router = TestBed.inject(Router);
+    const spy = vi.spyOn(router, 'navigate').mockResolvedValue(true);
+    (fixture.componentInstance as unknown as {
+      onAdvancedToConcept: (id: string) => void;
+    }).onAdvancedToConcept('new-concept-id');
+    expect(spy).toHaveBeenCalledWith(
+      ['/workspace', 'ws-1', 'content', 'new-concept-id'],
+      {
+        queryParams: {
+          from: 'calendar',
+          calendarView: 'week',
+          calendarCursor: '2026-05-15T00:00:00.000Z',
+        },
+      },
+    );
+  });
+
+  it('onDuplicate forwards calendar params when present', () => {
+    configureTest(
+      {
+        id: 'ws-1',
+        itemId: 'c-1',
+        queryParams: {
+          from: 'calendar',
+          calendarView: 'month',
+          calendarCursor: '2026-05-01T00:00:00.000Z',
+        },
+      },
+      [makeItem()],
+    );
+    const fixture = TestBed.createComponent(ContentDetailPageComponent);
+    fixture.detectChanges();
+    const router = TestBed.inject(Router);
+    const spy = vi.spyOn(router, 'navigate').mockResolvedValue(true);
+    (fixture.componentInstance as unknown as { onDuplicate: () => void }).onDuplicate();
+    const lastCall = spy.mock.calls.at(-1);
+    expect(lastCall?.[1]).toEqual({
+      queryParams: {
+        from: 'calendar',
+        calendarView: 'month',
+        calendarCursor: '2026-05-01T00:00:00.000Z',
+      },
+    });
+  });
+
+  it('backLabel flips to "Back to calendar" when from=calendar', () => {
+    configureTest(
+      {
+        id: 'ws-1',
+        itemId: 'c-1',
+        queryParams: { from: 'calendar' },
+      },
+      [makeItem()],
+    );
+    const fixture = TestBed.createComponent(ContentDetailPageComponent);
+    fixture.detectChanges();
+    expect(
+      (fixture.componentInstance as unknown as { backLabel: () => string }).backLabel(),
+    ).toBe('Back to calendar');
+  });
+
+  it('backLabel defaults to "Back to pipeline" when from is absent', () => {
+    configureTest({ id: 'ws-1', itemId: 'c-1' }, [makeItem()]);
+    const fixture = TestBed.createComponent(ContentDetailPageComponent);
+    fixture.detectChanges();
+    expect(
+      (fixture.componentInstance as unknown as { backLabel: () => string }).backLabel(),
+    ).toBe('Back to pipeline');
   });
 });

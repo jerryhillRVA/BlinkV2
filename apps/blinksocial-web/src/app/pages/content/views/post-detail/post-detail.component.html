@@ -2,6 +2,7 @@
   <div class="post-detail">
     <app-post-detail-header
       [item]="item"
+      [backLabel]="backLabel"
       [briefApproved]="!!item.briefApproved"
       (back)="onBack()"
       (titleChange)="onTitleChange($event)"

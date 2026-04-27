@@ -32,6 +32,8 @@ export class IdeaDetailComponent {
     if (value !== undefined) this.store.setItemId(value);
   }
 
+  @Input() backLabel = 'Back to pipeline';
+
   protected readonly maxPillars = MAX_PILLARS_PER_ITEM;
 
   @Output() back = new EventEmitter<void>();

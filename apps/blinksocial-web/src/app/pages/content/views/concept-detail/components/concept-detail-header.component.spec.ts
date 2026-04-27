@@ -72,6 +72,17 @@ describe('ConceptDetailHeaderComponent', () => {
     expect(count).toBe(1);
   });
 
+  it('Back button aria-label defaults to "Back to pipeline" and reflects backLabel input', () => {
+    const fixture = setup();
+    let btn = fixture.nativeElement.querySelector('.detail-back') as HTMLButtonElement;
+    expect(btn.getAttribute('aria-label')).toBe('Back to pipeline');
+
+    fixture.componentRef.setInput('backLabel', 'Back to calendar');
+    fixture.detectChanges();
+    btn = fixture.nativeElement.querySelector('.detail-back') as HTMLButtonElement;
+    expect(btn.getAttribute('aria-label')).toBe('Back to calendar');
+  });
+
   it('hides platform chip when platform is unset', () => {
     const fixture = setup(true, makeItem({ platform: undefined }));
     expect(fixture.nativeElement.querySelector('.detail-platform')).toBeNull();

@@ -29,6 +29,7 @@ export class PostDetailHeaderComponent {
   private readonly elRef = inject(ElementRef);
 
   @Input({ required: true }) item!: ContentItem;
+  @Input() backLabel = 'Back to pipeline';
   @Input() briefApproved = false;
 
   @Output() back = new EventEmitter<void>();
