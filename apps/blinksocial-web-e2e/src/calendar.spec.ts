@@ -297,65 +297,10 @@ test.describe('Calendar — content round-trip in mock mode', () => {
             }),
           }),
       );
-      const itemPayload = {
-        id: fx.contentId,
-        stage: 'post' as const,
-        status: 'scheduled' as const,
-        title: fx.title,
-        description: 'Round-trip fixture content',
-        pillarIds: [],
-        segmentIds: [],
-        platform: fx.platform,
-        contentType: fx.contentType,
-        scheduledDate: fx.scheduleAt.slice(0, 10),
-        scheduledAt: fx.scheduleAt,
-        createdAt: '2026-04-01T08:00:00Z',
-        updatedAt: '2026-04-20T08:00:00Z',
-      };
-      await page.route(
-        new RegExp(
-          `/api/workspaces/${fx.workspace}/content-items/index$`,
-        ),
-        (route) =>
-          route.fulfill({
-            status: 200,
-            contentType: 'application/json',
-            body: JSON.stringify({
-              items: [
-                {
-                  id: itemPayload.id,
-                  stage: itemPayload.stage,
-                  status: itemPayload.status,
-                  title: itemPayload.title,
-                  platform: itemPayload.platform,
-                  contentType: itemPayload.contentType,
-                  pillarIds: [],
-                  segmentIds: [],
-                  owner: null,
-                  parentIdeaId: null,
-                  parentConceptId: null,
-                  scheduledDate: itemPayload.scheduledDate,
-                  archived: false,
-                  createdAt: itemPayload.createdAt,
-                  updatedAt: itemPayload.updatedAt,
-                },
-              ],
-              totalCount: 1,
-              lastUpdated: '2026-04-26T00:00:00.000Z',
-            }),
-          }),
-      );
-      await page.route(
-        new RegExp(
-          `/api/workspaces/${fx.workspace}/content-items/${fx.contentId}$`,
-        ),
-        (route) =>
-          route.fulfill({
-            status: 200,
-            contentType: 'application/json',
-            body: JSON.stringify(itemPayload),
-          }),
-      );
+      // Content-items index and detail are served by the dev API, which
+      // delegates to MockDataService when AGENTIC_FS_URL is unset. The
+      // seeded fixtures for `post1` (hive-collective) and `bk-pub1`
+      // (booze-kills) carry the titles asserted below.
 
       await page.goto(`/workspace/${fx.workspace}/calendar`);
       await expect(page.locator('[data-testid="month-grid"]')).toBeVisible();
