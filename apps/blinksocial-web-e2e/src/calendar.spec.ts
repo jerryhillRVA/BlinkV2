@@ -1,5 +1,6 @@
 import { test, expect, type Page } from '@playwright/test';
 import { mockAuthenticatedUser } from './helpers/login';
+import { mockHiveContent } from './helpers/content-mocks';
 
 const REFERENCE_DATE = '2026-05-01T00:00:00.000Z';
 
@@ -297,65 +298,27 @@ test.describe('Calendar — content round-trip in mock mode', () => {
             }),
           }),
       );
-      const itemPayload = {
+      const itemDetail = {
         id: fx.contentId,
         stage: 'post' as const,
         status: 'scheduled' as const,
         title: fx.title,
         description: 'Round-trip fixture content',
-        pillarIds: [],
-        segmentIds: [],
         platform: fx.platform,
         contentType: fx.contentType,
+        pillarIds: [],
+        segmentIds: [],
         scheduledDate: fx.scheduleAt.slice(0, 10),
         scheduledAt: fx.scheduleAt,
+        archived: false,
         createdAt: '2026-04-01T08:00:00Z',
         updatedAt: '2026-04-20T08:00:00Z',
       };
-      await page.route(
-        new RegExp(
-          `/api/workspaces/${fx.workspace}/content-items/index$`,
-        ),
-        (route) =>
-          route.fulfill({
-            status: 200,
-            contentType: 'application/json',
-            body: JSON.stringify({
-              items: [
-                {
-                  id: itemPayload.id,
-                  stage: itemPayload.stage,
-                  status: itemPayload.status,
-                  title: itemPayload.title,
-                  platform: itemPayload.platform,
-                  contentType: itemPayload.contentType,
-                  pillarIds: [],
-                  segmentIds: [],
-                  owner: null,
-                  parentIdeaId: null,
-                  parentConceptId: null,
-                  scheduledDate: itemPayload.scheduledDate,
-                  archived: false,
-                  createdAt: itemPayload.createdAt,
-                  updatedAt: itemPayload.updatedAt,
-                },
-              ],
-              totalCount: 1,
-              lastUpdated: '2026-04-26T00:00:00.000Z',
-            }),
-          }),
-      );
-      await page.route(
-        new RegExp(
-          `/api/workspaces/${fx.workspace}/content-items/${fx.contentId}$`,
-        ),
-        (route) =>
-          route.fulfill({
-            status: 200,
-            contentType: 'application/json',
-            body: JSON.stringify(itemPayload),
-          }),
-      );
+      await mockHiveContent(page, {
+        workspaceId: fx.workspace,
+        indexItems: [itemDetail],
+        details: { [fx.contentId]: itemDetail },
+      });
 
       await page.goto(`/workspace/${fx.workspace}/calendar`);
       await expect(page.locator('[data-testid="month-grid"]')).toBeVisible();
