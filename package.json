@@ -7,7 +7,7 @@
     "start:api": "nx serve blinksocial-api",
     "start:web": "nx serve blinksocial-web",
     "predevServer": "pkill -f 'n[x] serve blinksocial' 2>/dev/null; sudo -v",
-    "devServer": "concurrently \"nx serve blinksocial-api\" \"sudo -E env PATH=$PATH $(command -v node) ./node_modules/.bin/nx serve blinksocial-web --port 80 --host 0.0.0.0\"",
+    "devServer": "concurrently \"nx serve blinksocial-api\" \"sudo -E env PATH=$PATH $(command -v node) ./node_modules/.bin/nx serve blinksocial-web --port 80 --host 0.0.0.0 --allowed-hosts=all\"",
     "build": "nx build blinksocial-web && nx build blinksocial-api",
     "build:api": "nx build blinksocial-api",
     "build:web": "nx build blinksocial-web",
