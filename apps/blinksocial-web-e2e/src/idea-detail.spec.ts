@@ -1,9 +1,11 @@
 import { test, expect } from '@playwright/test';
 import { mockAuthenticatedUser } from './helpers/login';
+import { mockHiveContent } from './helpers/content-mocks';
 
 test.describe('Idea detail page', () => {
   test.beforeEach(async ({ page }) => {
     await mockAuthenticatedUser(page);
+    await mockHiveContent(page);
     await page.goto('/workspace/hive-collective/content');
     await expect(page.locator('app-pipeline-view')).toBeVisible();
   });

@@ -3,6 +3,7 @@ import { forkJoin, catchError, of, Observable, map, tap, shareReplay } from 'rxj
 import { WorkspaceSettingsApiService } from '../workspace-settings/workspace-settings-api.service';
 import { ContentItemsApiService } from './content-items-api.service';
 import { MockDataService } from '../../core/mock-data/mock-data.service';
+import { ToastService } from '../../core/toast/toast.service';
 import type {
   ContentItemContract,
   ContentItemsIndexEntryContract,
@@ -23,7 +24,8 @@ import type {
   ContentStage,
   ContentView,
 } from './content.types';
-import { getMockDataForWorkspace } from './content.mock-data';
+
+const LOAD_ERROR_MESSAGE = "Couldn't load content. Try refreshing.";
 
 function indexEntryToItem(entry: ContentItemsIndexEntryContract): ContentItem {
   return {
@@ -73,6 +75,7 @@ export class ContentStateService {
   private readonly api = inject(WorkspaceSettingsApiService);
   private readonly itemsApi = inject(ContentItemsApiService);
   private readonly mockData = inject(MockDataService);
+  private readonly toast = inject(ToastService);
 
   readonly workspaceId = signal('');
   readonly loading = signal(false);
@@ -165,17 +168,11 @@ export class ContentStateService {
         .pipe(catchError(() => of<BusinessObjectiveContract[]>([]))),
     }).subscribe({
       next: (data) => {
-        const mock = getMockDataForWorkspace(workspaceId);
-
         if (data.index === null) {
-          // Call failed — graceful fallback to mock data for a visible UI.
-          const activeMocks = mock.items.filter((i) => !i.archived);
-          const archivedMocks = mock.items.filter((i) => !!i.archived);
-          this.indexEntries.set(activeMocks.map(itemToIndexEntry));
-          this.archiveIndexEntries.set(archivedMocks.map(itemToIndexEntry));
-          this.fullItemCacheSignal.set(
-            Object.fromEntries(mock.items.map((i) => [i.id, i])),
-          );
+          this.indexEntries.set([]);
+          this.archiveIndexEntries.set([]);
+          this.fullItemCacheSignal.set({});
+          this.toast.showError(LOAD_ERROR_MESSAGE);
         } else {
           // Trust the API. Backend delegates to MockDataService for
           // hive-collective / booze-kills when AGENTIC_FS_URL is unset;
@@ -187,30 +184,23 @@ export class ContentStateService {
           }
         }
 
-        // Pillars and segments come from brand-voice if the API returned them.
-        // Only fall back to mock when brand-voice returned nothing (e.g., AFS
-        // unreachable for a configured workspace).
         const apiPillars = data.brandVoice?.contentPillars ?? [];
         this.pillars.set(
-          apiPillars.length > 0
-            ? apiPillars.map((p) => ({
-                id: p.id,
-                name: p.name,
-                description: p.description,
-                color: p.color,
-              }))
-            : mock.pillars,
+          apiPillars.map((p) => ({
+            id: p.id,
+            name: p.name,
+            description: p.description,
+            color: p.color,
+          })),
         );
 
         const apiSegments = data.brandVoice?.audienceSegments ?? [];
         this.segments.set(
-          apiSegments.length > 0
-            ? apiSegments.map((s) => ({
-                id: s.id,
-                name: s.name,
-                description: s.description ?? '',
-              }))
-            : mock.segments,
+          apiSegments.map((s) => ({
+            id: s.id,
+            name: s.name,
+            description: s.description ?? '',
+          })),
         );
 
         this.businessObjectives.set(data.objectives ?? []);
@@ -219,18 +209,13 @@ export class ContentStateService {
         this.loading.set(false);
       },
       error: () => {
-        const mock = getMockDataForWorkspace(workspaceId);
-        const activeMocks = mock.items.filter((i) => !i.archived);
-        const archivedMocks = mock.items.filter((i) => !!i.archived);
-        this.indexEntries.set(activeMocks.map(itemToIndexEntry));
-        this.archiveIndexEntries.set(archivedMocks.map(itemToIndexEntry));
-        this.fullItemCacheSignal.set(
-          Object.fromEntries(mock.items.map((i) => [i.id, i])),
-        );
-        this.pillars.set(mock.pillars);
-        this.segments.set(mock.segments);
+        this.indexEntries.set([]);
+        this.archiveIndexEntries.set([]);
+        this.fullItemCacheSignal.set({});
+        this.pillars.set([]);
+        this.segments.set([]);
         this.businessObjectives.set([]);
-        this.reconcileLineageStatuses();
+        this.toast.showError(LOAD_ERROR_MESSAGE);
         this.loading.set(false);
       },
     });

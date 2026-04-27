@@ -4,7 +4,7 @@ import { ContentStateService } from './content-state.service';
 import { WorkspaceSettingsApiService } from '../workspace-settings/workspace-settings-api.service';
 import { ContentItemsApiService } from './content-items-api.service';
 import { MockDataService } from '../../core/mock-data/mock-data.service';
-import { MOCK_CONTENT_ITEMS, MOCK_PILLARS, MOCK_SEGMENTS } from './content.mock-data';
+import { ToastService } from '../../core/toast/toast.service';
 import type { ContentItemsIndexEntryContract, ContentItemContract } from '@blinksocial/contracts';
 
 function indexRow(
@@ -63,6 +63,7 @@ describe('ContentStateService', () => {
     deleteItem: ReturnType<typeof vi.fn>;
   };
   let mockDataService: { markReal: ReturnType<typeof vi.fn>; isMock: ReturnType<typeof vi.fn> };
+  let toastService: { showError: ReturnType<typeof vi.fn>; showSuccess: ReturnType<typeof vi.fn> };
 
   beforeEach(() => {
     workspaceApi = {
@@ -86,6 +87,10 @@ describe('ContentStateService', () => {
       markReal: vi.fn(),
       isMock: vi.fn().mockReturnValue(true),
     };
+    toastService = {
+      showError: vi.fn(),
+      showSuccess: vi.fn(),
+    };
 
     TestBed.configureTestingModule({
       providers: [
@@ -93,6 +98,7 @@ describe('ContentStateService', () => {
         { provide: WorkspaceSettingsApiService, useValue: workspaceApi },
         { provide: ContentItemsApiService, useValue: itemsApi },
         { provide: MockDataService, useValue: mockDataService },
+        { provide: ToastService, useValue: toastService },
       ],
     });
 
@@ -127,10 +133,20 @@ describe('ContentStateService', () => {
       expect(service.items()).toEqual([]);
     });
 
-    it('should fall back to mock items on API error', () => {
+    it('renders empty list and toasts an error when index API fails', () => {
       itemsApi.getIndex.mockReturnValue(throwError(() => new Error('fail')));
       service.loadAll('ws-1');
-      expect(service.items()).toEqual(MOCK_CONTENT_ITEMS);
+      expect(service.items()).toEqual([]);
+      expect(toastService.showError).toHaveBeenCalledWith(
+        "Couldn't load content. Try refreshing.",
+      );
+      expect(toastService.showError).toHaveBeenCalledTimes(1);
+    });
+
+    it('does not toast on a successful empty index', () => {
+      service.loadAll('ws-1');
+      expect(service.items()).toEqual([]);
+      expect(toastService.showError).not.toHaveBeenCalled();
     });
 
     it('populates business objectives from brand-voice api for D-05 binding', () => {
@@ -162,14 +178,24 @@ describe('ContentStateService', () => {
       expect(mockDataService.markReal).toHaveBeenCalledWith('content-items');
     });
 
-    it('should fall back to mock pillars when brand-voice returns null', () => {
+    it('leaves pillars empty when brand-voice returns null', () => {
       service.loadAll('ws-1');
-      expect(service.pillars()).toEqual(MOCK_PILLARS);
+      expect(service.pillars()).toEqual([]);
     });
 
-    it('should fall back to mock segments when brand-voice returns null', () => {
+    it('leaves segments empty when brand-voice returns null', () => {
       service.loadAll('ws-1');
-      expect(service.segments()).toEqual(MOCK_SEGMENTS);
+      expect(service.segments()).toEqual([]);
+    });
+
+    it('leaves pillars and segments empty when brand-voice errors', () => {
+      workspaceApi.getSettings.mockImplementation((_id: string, key: string) => {
+        if (key === 'brand-voice') return throwError(() => new Error('fail'));
+        return of(null);
+      });
+      service.loadAll('ws-1');
+      expect(service.pillars()).toEqual([]);
+      expect(service.segments()).toEqual([]);
     });
 
     it('should use API pillars when real content items and brand-voice pillars exist', () => {
@@ -478,11 +504,31 @@ describe('ContentStateService', () => {
   });
 
   describe('stepCounts', () => {
-    it('should compute step counts from items (mock fallback on API error)', () => {
-      itemsApi.getIndex.mockReturnValue(throwError(() => new Error('fail')));
+    it('computes step counts from API rows', () => {
+      itemsApi.getIndex.mockReturnValue(
+        of({
+          items: [
+            indexRow({ id: 'a', stage: 'idea', status: 'draft' }),
+            indexRow({ id: 'b', stage: 'post', status: 'in-progress' }),
+            indexRow({ id: 'c', stage: 'post', status: 'review' }),
+            indexRow({ id: 'd', stage: 'post', status: 'published' }),
+          ],
+          totalCount: 4,
+          lastUpdated: '',
+        }),
+      );
       service.loadAll('ws-1');
       const counts = service.stepCounts();
-      expect(counts.overview).toBe(MOCK_CONTENT_ITEMS.length);
+      expect(counts.overview).toBe(4);
+      expect(counts.production).toBe(1);
+      expect(counts.review).toBe(1);
+      expect(counts.performance).toBe(1);
+    });
+
+    it('zeroes step counts when index errors', () => {
+      itemsApi.getIndex.mockReturnValue(throwError(() => new Error('fail')));
+      service.loadAll('ws-1');
+      expect(service.stepCounts().overview).toBe(0);
     });
   });
 

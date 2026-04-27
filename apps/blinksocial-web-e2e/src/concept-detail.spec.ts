@@ -1,5 +1,6 @@
 import { test, expect, type Page } from '@playwright/test';
 import { mockAuthenticatedUser } from './helpers/login';
+import { mockHiveContent } from './helpers/content-mocks';
 
 async function openFirstConceptCard(page: Page): Promise<void> {
   const firstCard = page.locator('.kanban-column').nth(1).locator('.content-card').first();
@@ -12,6 +13,7 @@ async function openFirstConceptCard(page: Page): Promise<void> {
 test.describe('Concept detail page', () => {
   test.beforeEach(async ({ page }) => {
     await mockAuthenticatedUser(page);
+    await mockHiveContent(page);
     await page.goto('/workspace/hive-collective/content');
     await expect(page.locator('app-pipeline-view')).toBeVisible();
   });

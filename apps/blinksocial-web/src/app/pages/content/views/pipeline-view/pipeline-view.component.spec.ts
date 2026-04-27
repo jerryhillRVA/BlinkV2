@@ -3,7 +3,81 @@ import { provideNoopAnimations } from '@angular/platform-browser/animations';
 import { ActivatedRoute, Router, provideRouter, convertToParamMap } from '@angular/router';
 import { of } from 'rxjs';
 import { PipelineViewComponent } from './pipeline-view.component';
-import { MOCK_CONTENT_ITEMS, MOCK_PILLARS } from '../../content.mock-data';
+import type {
+  ContentItem,
+  ContentPillar,
+} from '../../content.types';
+
+const FIXTURE_PILLARS: ContentPillar[] = [
+  { id: 'p1', name: 'Yoga & Movement', description: 'Yoga and movement', color: '#d94e33' },
+  { id: 'p2', name: 'Wellness & Mindfulness', description: 'Wellness and mindfulness', color: '#10b981' },
+];
+
+const FIXTURE_ITEMS: ContentItem[] = [
+  {
+    id: 'fx-1',
+    stage: 'idea',
+    status: 'draft',
+    title: 'Morning Yoga Flow',
+    description: 'A short yoga flow for the morning.',
+    pillarIds: ['p1'],
+    segmentIds: [],
+    platform: 'instagram',
+    contentType: 'reel',
+    createdAt: '2026-04-10T09:00:00Z',
+    updatedAt: '2026-04-15T09:00:00Z',
+  },
+  {
+    id: 'fx-2',
+    stage: 'concept',
+    status: 'concepting',
+    title: 'Mindful Breathing 101',
+    description: 'Three breathing techniques for stress relief.',
+    pillarIds: ['p2'],
+    segmentIds: [],
+    platform: 'tiktok',
+    contentType: 'short-video',
+    createdAt: '2026-04-11T09:00:00Z',
+    updatedAt: '2026-04-14T09:00:00Z',
+  },
+  {
+    id: 'fx-3',
+    stage: 'post',
+    status: 'in-progress',
+    title: 'Yoga Flow Long Form',
+    description: 'Extended yoga session for intermediate practitioners.',
+    pillarIds: ['p1', 'p2'],
+    segmentIds: [],
+    platform: 'youtube',
+    contentType: 'long-form',
+    createdAt: '2026-04-12T09:00:00Z',
+    updatedAt: '2026-04-13T09:00:00Z',
+  },
+  {
+    id: 'fx-4',
+    stage: 'post',
+    status: 'review',
+    title: 'Wellness Tips for Spring',
+    description: 'Seasonal wellness tips for spring renewal.',
+    pillarIds: ['p2'],
+    segmentIds: [],
+    platform: 'instagram',
+    contentType: 'carousel',
+    createdAt: '2026-04-09T09:00:00Z',
+    updatedAt: '2026-04-12T09:00:00Z',
+  },
+  {
+    id: 'fx-5',
+    stage: 'post',
+    status: 'published',
+    title: 'Generic Plan Update',
+    description: 'A general update post.',
+    pillarIds: [],
+    segmentIds: [],
+    createdAt: '2026-04-01T09:00:00Z',
+    updatedAt: '2026-04-08T09:00:00Z',
+  },
+];
 
 describe('PipelineViewComponent', () => {
   let fixture: ReturnType<typeof TestBed.createComponent<PipelineViewComponent>>;
@@ -30,8 +104,8 @@ describe('PipelineViewComponent', () => {
 
     fixture = TestBed.createComponent(PipelineViewComponent);
     component = fixture.componentInstance;
-    fixture.componentRef.setInput('items', MOCK_CONTENT_ITEMS);
-    fixture.componentRef.setInput('pillars', MOCK_PILLARS);
+    fixture.componentRef.setInput('items', FIXTURE_ITEMS);
+    fixture.componentRef.setInput('pillars', FIXTURE_PILLARS);
     fixture.detectChanges();
   });
 
@@ -60,7 +134,7 @@ describe('PipelineViewComponent', () => {
 
   it('should show item count in header', () => {
     const count = fixture.nativeElement.querySelector('.header-count');
-    expect(count.textContent).toContain(String(MOCK_CONTENT_ITEMS.length));
+    expect(count.textContent).toContain(String(FIXTURE_ITEMS.length));
   });
 
   it('should render kanban board with 5 columns', () => {
@@ -115,9 +189,9 @@ describe('PipelineViewComponent', () => {
 
   it('hides archived items by default and reveals them when Show Archived is toggled on', () => {
     const withArchived = [
-      ...MOCK_CONTENT_ITEMS,
+      ...FIXTURE_ITEMS,
       {
-        ...MOCK_CONTENT_ITEMS[0],
+        ...FIXTURE_ITEMS[0],
         id: 'archived-1',
         title: 'An archived item',
         archived: true,
@@ -186,7 +260,7 @@ describe('PipelineViewComponent', () => {
     const badges = Array.from(
       fixture.nativeElement.querySelectorAll('.pillar-badge') as NodeListOf<HTMLElement>,
     ).map((el) => el.textContent?.trim() ?? '');
-    const pillarNames = MOCK_PILLARS.map((p) => p.name);
+    const pillarNames = FIXTURE_PILLARS.map((p) => p.name);
     expect(badges.length).toBeGreaterThan(0);
     badges.forEach((text) => {
       expect(text.length).toBeGreaterThan(0);
@@ -196,12 +270,12 @@ describe('PipelineViewComponent', () => {
 
   it('does not render an empty pillar badge when the id cannot be resolved (kanban view)', () => {
     const itemWithUnknownPillar = {
-      ...MOCK_CONTENT_ITEMS[0],
+      ...FIXTURE_ITEMS[0],
       id: 'unknown-pillar-1',
       pillarIds: ['nonexistent'],
     };
     fixture.componentRef.setInput('items', [itemWithUnknownPillar]);
-    fixture.componentRef.setInput('pillars', MOCK_PILLARS);
+    fixture.componentRef.setInput('pillars', FIXTURE_PILLARS);
     fixture.detectChanges();
     const badges = fixture.nativeElement.querySelectorAll('.pillar-badge');
     expect(badges.length).toBe(0);
@@ -210,12 +284,12 @@ describe('PipelineViewComponent', () => {
   it('does not render an empty pillar badge when the id cannot be resolved (list view)', () => {
     component.setViewMode('list');
     const itemWithUnknownPillar = {
-      ...MOCK_CONTENT_ITEMS[0],
+      ...FIXTURE_ITEMS[0],
       id: 'unknown-pillar-2',
       pillarIds: ['nonexistent'],
     };
     fixture.componentRef.setInput('items', [itemWithUnknownPillar]);
-    fixture.componentRef.setInput('pillars', MOCK_PILLARS);
+    fixture.componentRef.setInput('pillars', FIXTURE_PILLARS);
     fixture.detectChanges();
     const badges = fixture.nativeElement.querySelectorAll('.pillar-badge');
     expect(badges.length).toBe(0);
@@ -223,12 +297,12 @@ describe('PipelineViewComponent', () => {
 
   it('renders only resolvable pillar badges when an item mixes known and unknown ids', () => {
     const itemWithMixedPillars = {
-      ...MOCK_CONTENT_ITEMS[0],
+      ...FIXTURE_ITEMS[0],
       id: 'mixed-pillars',
       pillarIds: ['p1', 'nonexistent', 'p2'],
     };
     fixture.componentRef.setInput('items', [itemWithMixedPillars]);
-    fixture.componentRef.setInput('pillars', MOCK_PILLARS);
+    fixture.componentRef.setInput('pillars', FIXTURE_PILLARS);
     fixture.detectChanges();
     const card = fixture.nativeElement.querySelector('.content-card');
     const badges = Array.from(
@@ -256,8 +330,8 @@ describe('PipelineViewComponent', () => {
         })
         .compileComponents();
       const f = TestBed.createComponent(PipelineViewComponent);
-      f.componentRef.setInput('items', MOCK_CONTENT_ITEMS);
-      f.componentRef.setInput('pillars', MOCK_PILLARS);
+      f.componentRef.setInput('items', FIXTURE_ITEMS);
+      f.componentRef.setInput('pillars', FIXTURE_PILLARS);
       f.detectChanges();
       return f.componentInstance;
     }
@@ -344,7 +418,7 @@ describe('PipelineViewComponent', () => {
     component.toggleFilterPanel();
     fixture.detectChanges();
     const chips = fixture.nativeElement.querySelectorAll('.filter-chip');
-    expect(chips.length).toBeGreaterThanOrEqual(MOCK_PILLARS.length);
+    expect(chips.length).toBeGreaterThanOrEqual(FIXTURE_PILLARS.length);
   });
 
   it('should filter items by pillar', () => {
@@ -378,14 +452,14 @@ describe('PipelineViewComponent', () => {
     component.setViewMode('list');
     fixture.detectChanges();
     const cards = fixture.nativeElement.querySelectorAll('.list-card');
-    expect(cards.length).toBe(MOCK_CONTENT_ITEMS.length);
+    expect(cards.length).toBe(FIXTURE_ITEMS.length);
   });
 
   it('should filter items by search query', () => {
     component.searchQuery.set('yoga');
     fixture.detectChanges();
     const filtered = component.filteredItems();
-    expect(filtered.length).toBeLessThan(MOCK_CONTENT_ITEMS.length);
+    expect(filtered.length).toBeLessThan(FIXTURE_ITEMS.length);
     filtered.forEach((item) => {
       const text = (item.title + item.description).toLowerCase();
       expect(text).toContain('yoga');
