@@ -1,5 +1,6 @@
 import { test, expect, type Page } from '@playwright/test';
 import { mockAuthenticatedUser } from './helpers/login';
+import { mockHiveContent } from './helpers/content-mocks';
 
 const REFERENCE_DATE = '2026-05-01T00:00:00.000Z';
 
@@ -297,10 +298,27 @@ test.describe('Calendar — content round-trip in mock mode', () => {
             }),
           }),
       );
-      // Content-items index and detail are served by the dev API, which
-      // delegates to MockDataService when AGENTIC_FS_URL is unset. The
-      // seeded fixtures for `post1` (hive-collective) and `bk-pub1`
-      // (booze-kills) carry the titles asserted below.
+      const itemDetail = {
+        id: fx.contentId,
+        stage: 'post' as const,
+        status: 'scheduled' as const,
+        title: fx.title,
+        description: 'Round-trip fixture content',
+        platform: fx.platform,
+        contentType: fx.contentType,
+        pillarIds: [],
+        segmentIds: [],
+        scheduledDate: fx.scheduleAt.slice(0, 10),
+        scheduledAt: fx.scheduleAt,
+        archived: false,
+        createdAt: '2026-04-01T08:00:00Z',
+        updatedAt: '2026-04-20T08:00:00Z',
+      };
+      await mockHiveContent(page, {
+        workspaceId: fx.workspace,
+        indexItems: [itemDetail],
+        details: { [fx.contentId]: itemDetail },
+      });
 
       await page.goto(`/workspace/${fx.workspace}/calendar`);
       await expect(page.locator('[data-testid="month-grid"]')).toBeVisible();
