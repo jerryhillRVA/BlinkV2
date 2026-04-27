@@ -56,7 +56,7 @@
       "executor": "@angular/build:dev-server",
       "options": {
         "proxyConfig": "apps/blinksocial-web/proxy.conf.json",
-        "allowedHosts": ["all"]
+        "allowedHosts": true
       },
       "configurations": {
         "production": {
