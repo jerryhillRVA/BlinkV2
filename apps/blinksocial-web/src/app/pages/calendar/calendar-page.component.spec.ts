@@ -349,6 +349,32 @@ describe('CalendarPageComponent', () => {
     expect(fixture.componentInstance.cursorDate().toISOString()).toBe(REF_ISO);
   });
 
+  it('clears the query-cursor flag on API error so a retried load uses the API referenceDate', () => {
+    let calls = 0;
+    setupTestBed(
+      () => {
+        calls += 1;
+        if (calls === 1) {
+          return throwError(() => new Error('boom')) as unknown as ReturnType<
+            CalendarApiService['getCalendar']
+          >;
+        }
+        return of(buildResponse());
+      },
+      { id: 'hive-collective' },
+      { calendarCursor: '2026-06-15T00:00:00.000Z' },
+    );
+    const fixture = TestBed.createComponent(CalendarPageComponent);
+    fixture.detectChanges();
+    const c = fixture.componentInstance;
+    expect(c.loadError()).not.toBeNull();
+    expect(c.cursorDate().toISOString()).toBe('2026-06-15T00:00:00.000Z');
+
+    (c as unknown as { load: (id: string) => void }).load('hive-collective');
+    expect(c.loadError()).toBeNull();
+    expect(c.cursorDate().toISOString()).toBe(REF_ISO);
+  });
+
   it('forwards the active view + cursor when opening an event after the user changes view', () => {
     const router = setupTestBed(() => of(buildResponse()));
     const fixture = TestBed.createComponent(CalendarPageComponent);

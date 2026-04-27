@@ -70,12 +70,19 @@ const DAY_MS = 24 * 60 * 60 * 1000;
 const MAX_EVENTS_PER_CELL = 3;
 const UPCOMING_HORIZON_DAYS = 14;
 
-const ALLOWED_VIEW_MODES: readonly CalendarViewMode[] = [
+const ALLOWED_VIEW_MODES = [
   'month',
   'week',
   'day',
   'list',
-];
+] as const satisfies readonly CalendarViewMode[];
+
+type _AllViewModesCovered =
+  Exclude<CalendarViewMode, (typeof ALLOWED_VIEW_MODES)[number]> extends never
+    ? true
+    : never;
+const _allViewModesCovered: _AllViewModesCovered = true;
+void _allViewModesCovered;
 
 @Component({
   selector: 'app-calendar-page',
@@ -317,6 +324,7 @@ export class CalendarPageComponent implements OnInit {
           this.loading.set(false);
         },
         error: () => {
+          this.cursorFromQuery = null;
           this.loadError.set('Failed to load calendar data.');
           this.loading.set(false);
         },
