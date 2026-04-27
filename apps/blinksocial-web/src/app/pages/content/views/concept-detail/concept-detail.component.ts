@@ -64,6 +64,8 @@ export class ConceptDetailComponent {
     this.store.setItemId(value);
   }
 
+  @Input() backLabel = 'Back to pipeline';
+
   @Output() back = new EventEmitter<void>();
   @Output() moved = new EventEmitter<{ created: ContentItem[]; workOnItemId: string | null }>();
   @Output() deleted = new EventEmitter<void>();

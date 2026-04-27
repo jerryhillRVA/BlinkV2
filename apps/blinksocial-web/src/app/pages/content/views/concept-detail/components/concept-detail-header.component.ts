@@ -29,6 +29,7 @@ export class ConceptDetailHeaderComponent {
   private readonly elRef = inject(ElementRef);
 
   @Input({ required: true }) item!: ContentItem;
+  @Input() backLabel = 'Back to pipeline';
   @Input() canMoveToProduction = false;
   @Input() missingValidations: string[] = [];
 

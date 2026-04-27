@@ -20,6 +20,7 @@
         @case ('idea') {
           <app-idea-detail
             [itemId]="item()!.id"
+            [backLabel]="backLabel()"
             (back)="goBack()"
             (advance)="onAdvancedToConcept($event)"
             (archive)="onArchive()"
@@ -31,6 +32,7 @@
         @case ('concept') {
           <app-concept-detail
             [itemId]="item()!.id"
+            [backLabel]="backLabel()"
             (back)="goBack()"
             (moved)="onMoved($event)"
             (deleted)="onDeleted()"
@@ -43,6 +45,7 @@
         @case ('post') {
           <app-post-detail
             [itemId]="item()!.id"
+            [backLabel]="backLabel()"
             (back)="goBack()"
             (deleted)="onDeleted()"
           />

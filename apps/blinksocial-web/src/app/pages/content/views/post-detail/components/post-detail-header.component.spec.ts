@@ -75,6 +75,17 @@ describe('PostDetailHeaderComponent', () => {
     expect(fired).toBe(1);
   });
 
+  it('Back button aria-label defaults to "Back to pipeline" and reflects backLabel input', () => {
+    const fixture = setup();
+    let btn = fixture.nativeElement.querySelector('.detail-back') as HTMLButtonElement;
+    expect(btn.getAttribute('aria-label')).toBe('Back to pipeline');
+
+    fixture.componentRef.setInput('backLabel', 'Back to calendar');
+    fixture.detectChanges();
+    btn = fixture.nativeElement.querySelector('.detail-back') as HTMLButtonElement;
+    expect(btn.getAttribute('aria-label')).toBe('Back to calendar');
+  });
+
   it('emits backToConcept when the link is clicked', () => {
     const fixture = setup(makeItem({ conceptId: 'c-42' }));
     let fired = 0;

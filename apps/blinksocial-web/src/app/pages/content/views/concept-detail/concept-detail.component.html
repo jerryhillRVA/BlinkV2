@@ -2,6 +2,7 @@
   <div class="concept-detail">
     <app-concept-detail-header
       [item]="item"
+      [backLabel]="backLabel"
       [canMoveToProduction]="store.canMoveToProduction()"
       [missingValidations]="store.missingValidations()"
       (back)="onBack()"

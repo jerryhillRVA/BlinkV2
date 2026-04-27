@@ -38,6 +38,8 @@ export class PostDetailComponent {
     if (value !== undefined) this.store.setItemId(value);
   }
 
+  @Input() backLabel = 'Back to pipeline';
+
   @Output() back = new EventEmitter<void>();
   @Output() deleted = new EventEmitter<void>();
 

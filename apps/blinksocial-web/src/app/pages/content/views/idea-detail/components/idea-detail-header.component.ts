@@ -28,6 +28,7 @@ export class IdeaDetailHeaderComponent {
   private readonly elRef = inject(ElementRef);
 
   @Input({ required: true }) item!: ContentItem;
+  @Input() backLabel = 'Back to pipeline';
 
   @Output() back = new EventEmitter<void>();
   @Output() advance = new EventEmitter<void>();

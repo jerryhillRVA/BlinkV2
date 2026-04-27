@@ -65,6 +65,22 @@ describe('IdeaDetailHeaderComponent', () => {
     expect(count).toBe(1);
   });
 
+  it('Back button aria-label defaults to "Back to pipeline"', () => {
+    const fixture = setup();
+    const btn = fixture.nativeElement.querySelector('.detail-back') as HTMLButtonElement;
+    expect(btn.getAttribute('aria-label')).toBe('Back to pipeline');
+  });
+
+  it('Back button aria-label reflects the bound backLabel input', () => {
+    TestBed.configureTestingModule({ imports: [IdeaDetailHeaderComponent] });
+    const fixture = TestBed.createComponent(IdeaDetailHeaderComponent);
+    fixture.componentRef.setInput('item', makeItem());
+    fixture.componentRef.setInput('backLabel', 'Back to calendar');
+    fixture.detectChanges();
+    const btn = fixture.nativeElement.querySelector('.detail-back') as HTMLButtonElement;
+    expect(btn.getAttribute('aria-label')).toBe('Back to calendar');
+  });
+
   it('Concept CTA uses a solid brand color background (no gradient)', () => {
     const fixture = setup();
     const btn = fixture.nativeElement.querySelector('.btn-advance') as HTMLButtonElement;

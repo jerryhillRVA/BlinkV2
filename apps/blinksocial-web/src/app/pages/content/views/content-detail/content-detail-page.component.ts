@@ -25,9 +25,14 @@ export class ContentDetailPageComponent {
 
   protected readonly workspaceId = signal('');
   protected readonly itemId = signal<string | null>(null);
+  protected readonly from = signal<string | null>(null);
 
   protected readonly item = computed<ContentItem | null>(
     () => this.stateService.items().find((i) => i.id === this.itemId()) ?? null,
+  );
+
+  protected readonly backLabel = computed(() =>
+    this.from() === 'calendar' ? 'Back to calendar' : 'Back to pipeline',
   );
 
   constructor() {
@@ -48,6 +53,24 @@ export class ContentDetailPageComponent {
           this.stateService.loadFullItem(itemId);
         }
       });
+
+    this.route.queryParamMap
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((qp) => {
+        this.from.set(qp.get('from'));
+      });
+  }
+
+  private collectCalendarQueryParams(): Record<string, string> {
+    const qp = this.route.snapshot.queryParamMap;
+    const out: Record<string, string> = {};
+    const from = qp.get('from');
+    const view = qp.get('calendarView');
+    const cursor = qp.get('calendarCursor');
+    if (from) out['from'] = from;
+    if (view) out['calendarView'] = view;
+    if (cursor) out['calendarCursor'] = cursor;
+    return out;
   }
 
   protected goBack(): void {
@@ -78,6 +101,7 @@ export class ContentDetailPageComponent {
     this.stateService.unarchive(it.id).subscribe();
   }
 
+  /** Preserves from/calendarView/calendarCursor so Back from the duplicate still returns to Calendar. */
   protected onDuplicate(): void {
     const it = this.item();
     if (!it) return;
@@ -88,12 +112,12 @@ export class ContentDetailPageComponent {
       archived: false,
     } as ContentItem;
     this.stateService.saveItem(draft).subscribe((saved) => {
-      this.router.navigate([
-        '/workspace',
-        this.workspaceId(),
-        'content',
-        saved.id,
-      ]);
+      const queryParams = this.collectCalendarQueryParams();
+      const extras = Object.keys(queryParams).length > 0 ? { queryParams } : undefined;
+      this.router.navigate(
+        ['/workspace', this.workspaceId(), 'content', saved.id],
+        extras,
+      );
     });
   }
 
@@ -129,12 +153,13 @@ export class ContentDetailPageComponent {
     this.goBack();
   }
 
+  /** Preserves from/calendarView/calendarCursor so Back from the new concept still returns to Calendar. */
   protected onAdvancedToConcept(conceptId: string): void {
-    this.router.navigate([
-      '/workspace',
-      this.workspaceId(),
-      'content',
-      conceptId,
-    ]);
+    const queryParams = this.collectCalendarQueryParams();
+    const extras = Object.keys(queryParams).length > 0 ? { queryParams } : undefined;
+    this.router.navigate(
+      ['/workspace', this.workspaceId(), 'content', conceptId],
+      extras,
+    );
   }
 }
