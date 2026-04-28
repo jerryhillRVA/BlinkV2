@@ -1,9 +1,16 @@
-import { Injectable, Logger, BadRequestException } from '@nestjs/common';
+import {
+  Injectable,
+  Logger,
+  BadRequestException,
+  HttpException,
+  HttpStatus,
+} from '@nestjs/common';
 import { SkillRunnerService } from '../skills/skill-runner.service';
 import { SessionStore, type OnboardingSessionState } from './session-store';
 import { WorkspacesService } from '../workspaces/workspaces.service';
 import { UserService } from '../auth/user.service';
 import { AgenticFilesystemService } from '../agentic-filesystem/agentic-filesystem.service';
+import { BlueprintValidationService } from './blueprint-validation.service';
 import type {
   DiscoverySectionId,
   DiscoverySectionContract,
@@ -37,6 +44,7 @@ export class OnboardingService {
     private readonly userService: UserService,
     private readonly fs: AgenticFilesystemService,
     private readonly workspaceBuilder: WorkspaceBuilderService,
+    private readonly blueprintValidator: BlueprintValidationService,
   ) {}
 
   async createSession(
@@ -282,6 +290,17 @@ export class OnboardingService {
       }
       // Always set deliveredDate to today — LLM may return stale dates
       blueprint.deliveredDate = new Date().toISOString().slice(0, 10);
+
+      const validation = this.blueprintValidator.validate(blueprint);
+      if (!validation.valid) {
+        throw new HttpException(
+          {
+            message: 'Generated blueprint failed schema validation',
+            errors: validation.errors,
+          },
+          HttpStatus.UNPROCESSABLE_ENTITY,
+        );
+      }
 
       const markdownDocument = this.renderBlueprintMarkdown(blueprint);
 
@@ -564,6 +583,12 @@ export class OnboardingService {
     for (const item of bp.brandVoice.dontList) {
       lines.push(`- ${item}`);
     }
+    lines.push('');
+
+    // Target Audience
+    lines.push('## Target Audience');
+    lines.push('');
+    lines.push(bp.targetAudience);
     lines.push('');
 
     // Audience

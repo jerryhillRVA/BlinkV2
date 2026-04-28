@@ -7,10 +7,16 @@ import { OnboardingController } from './onboarding.controller';
 import { OnboardingService } from './onboarding.service';
 import { SessionStore } from './session-store';
 import { WorkspaceBuilderService } from './workspace-builder.service';
+import { BlueprintValidationService } from './blueprint-validation.service';
 
 @Module({
   imports: [SkillsModule, AgenticFilesystemModule, WorkspacesModule, AuthModule],
   controllers: [OnboardingController],
-  providers: [OnboardingService, SessionStore, WorkspaceBuilderService],
+  providers: [
+    OnboardingService,
+    SessionStore,
+    WorkspaceBuilderService,
+    BlueprintValidationService,
+  ],
 })
 export class OnboardingModule {}

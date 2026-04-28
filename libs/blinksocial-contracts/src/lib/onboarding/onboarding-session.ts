@@ -105,6 +105,7 @@ export interface BlueprintDocumentContract {
     doList: string[];
     dontList: string[];
   };
+  targetAudience: string;
   audienceProfiles: BlueprintAudienceContract[];
   competitorLandscape: BlueprintCompetitorContract[];
   contentPillars: BlueprintPillarContract[];
