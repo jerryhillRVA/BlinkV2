@@ -1,5 +1,8 @@
 import { Component, inject, signal } from '@angular/core';
+import { HttpErrorResponse } from '@angular/common/http';
 import { NewWorkspaceFormService } from '../../new-workspace-form.service';
+import { NewWorkspaceApiService } from '../../new-workspace-api.service';
+import { ToastService } from '../../../../core/toast/toast.service';
 import { TooltipComponent } from '../../../../shared/tooltip/tooltip.component';
 import { OutlineButtonComponent } from '../../../../shared/outline-button/outline-button.component';
 
@@ -11,6 +14,8 @@ import { OutlineButtonComponent } from '../../../../shared/outline-button/outlin
 })
 export class StepBrandPositioningComponent {
   protected readonly formService = inject(NewWorkspaceFormService);
+  private readonly api = inject(NewWorkspaceApiService);
+  private readonly toast = inject(ToastService);
   readonly isGenerating = signal(false);
 
   readonly TONE_OPTIONS = [
@@ -23,10 +28,44 @@ export class StepBrandPositioningComponent {
     if (!bp.targetCustomer && !bp.problemSolved && !bp.solution && !bp.differentiator) return;
 
     this.isGenerating.set(true);
-    setTimeout(() => {
-      const statement = `For ${bp.targetCustomer || '[target customer]'} who ${bp.problemSolved || '[face this problem]'}, ${bp.solution || '[our solution]'} is the answer that ${bp.differentiator || '[sets us apart]'}.`;
-      this.formService.updateBrandPositioning('positioningStatement', statement);
-      this.isGenerating.set(false);
-    }, 1500);
+    this.api
+      .generatePositioningStatement({
+        targetCustomer: bp.targetCustomer || undefined,
+        problemSolved: bp.problemSolved || undefined,
+        solution: bp.solution || undefined,
+        differentiator: bp.differentiator || undefined,
+        workspaceName: this.formService.workspaceName() || undefined,
+        purpose: this.formService.purpose() || undefined,
+        mission: this.formService.mission() || undefined,
+      })
+      .subscribe({
+        next: (res) => {
+          this.formService.updateBrandPositioning(
+            'positioningStatement',
+            res.positioningStatement,
+          );
+          this.isGenerating.set(false);
+        },
+        error: (err: HttpErrorResponse) => {
+          this.toast.showError(this.extractMessage(err, 'Could not generate a positioning statement.'));
+          this.isGenerating.set(false);
+        },
+      });
+  }
+
+  private extractMessage(err: HttpErrorResponse, fallback: string): string {
+    const status = typeof err?.status === 'number' ? err.status : 0;
+    const body = err?.error;
+    const bodyMessage =
+      body && typeof body === 'object' && typeof body.message === 'string'
+        ? body.message
+        : '';
+    // Suppress Nest's generic 5xx envelope ({ statusCode: 500, message: "Internal server error" })
+    // — it leaks an unhelpful string to the user. Keep specific 4xx messages
+    // (BadRequestException etc.) which are intentionally human-readable.
+    if (bodyMessage && (status < 500 || bodyMessage !== 'Internal server error')) {
+      return bodyMessage;
+    }
+    return fallback;
   }
 }

@@ -5,6 +5,10 @@ import type {
   CreateWorkspaceRequestContract,
   CreateWorkspaceResponseContract,
   WizardStateContract,
+  GeneratePositioningStatementRequestContract,
+  GeneratePositioningStatementResponseContract,
+  SuggestBusinessObjectivesRequestContract,
+  SuggestBusinessObjectivesResponseContract,
 } from '@blinksocial/contracts';
 
 @Injectable({ providedIn: 'root' })
@@ -41,6 +45,24 @@ export class NewWorkspaceApiService {
     return this.http.post(
       `/api/workspaces/${workspaceId}/finalize`,
       {}
+    );
+  }
+
+  generatePositioningStatement(
+    request: GeneratePositioningStatementRequestContract
+  ): Observable<GeneratePositioningStatementResponseContract> {
+    return this.http.post<GeneratePositioningStatementResponseContract>(
+      '/api/wizard-ai/positioning-statement',
+      request
+    );
+  }
+
+  suggestBusinessObjectives(
+    request: SuggestBusinessObjectivesRequestContract
+  ): Observable<SuggestBusinessObjectivesResponseContract> {
+    return this.http.post<SuggestBusinessObjectivesResponseContract>(
+      '/api/wizard-ai/business-objectives',
+      request
     );
   }
 }

@@ -1,20 +1,41 @@
 import { TestBed } from '@angular/core/testing';
+import { provideHttpClient } from '@angular/common/http';
+import {
+  HttpTestingController,
+  provideHttpClientTesting,
+} from '@angular/common/http/testing';
+import { provideAnimations } from '@angular/platform-browser/animations';
 import { StepBrandPositioningComponent } from './step-brand-positioning.component';
 import { NewWorkspaceFormService } from '../../new-workspace-form.service';
+import { ToastService } from '../../../../core/toast/toast.service';
 
 describe('StepBrandPositioningComponent', () => {
   let fixture: ReturnType<typeof TestBed.createComponent<StepBrandPositioningComponent>>;
   let formService: NewWorkspaceFormService;
+  let httpMock: HttpTestingController;
+  let toast: { showError: ReturnType<typeof vi.fn>; showSuccess: ReturnType<typeof vi.fn> };
 
   beforeEach(async () => {
+    toast = { showError: vi.fn(), showSuccess: vi.fn() };
     await TestBed.configureTestingModule({
       imports: [StepBrandPositioningComponent],
-      providers: [NewWorkspaceFormService],
+      providers: [
+        NewWorkspaceFormService,
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        provideAnimations(),
+        { provide: ToastService, useValue: toast },
+      ],
     }).compileComponents();
 
     formService = TestBed.inject(NewWorkspaceFormService);
+    httpMock = TestBed.inject(HttpTestingController);
     fixture = TestBed.createComponent(StepBrandPositioningComponent);
     fixture.detectChanges();
+  });
+
+  afterEach(() => {
+    httpMock.verify();
   });
 
   it('should create', () => {
@@ -42,7 +63,6 @@ describe('StepBrandPositioningComponent', () => {
 
   it('should not show positioning statement textarea by default', () => {
     const textareas = fixture.nativeElement.querySelectorAll('.field-textarea');
-    // Only the brand voice textarea should be present
     expect(textareas.length).toBe(1);
   });
 
@@ -64,25 +84,79 @@ describe('StepBrandPositioningComponent', () => {
     expect(textarea).toBeTruthy();
   });
 
-  it('should not generate statement when all fields empty', () => {
+  it('should not generate or trigger HTTP when all four positioning fields are empty', () => {
     fixture.componentInstance.generatePositioningStatement();
     expect(fixture.componentInstance.isGenerating()).toBe(false);
+    httpMock.expectNone('/api/wizard-ai/positioning-statement');
   });
 
-  it('should generate positioning statement when fields populated', () => {
-    vi.useFakeTimers();
-    formService.updateBrandPositioning('targetCustomer', 'Developers');
-    formService.updateBrandPositioning('problemSolved', 'lack tooling');
-    formService.updateBrandPositioning('solution', 'our platform');
-    formService.updateBrandPositioning('differentiator', 'AI-powered');
+  it('posts the four positioning fields plus workspace context and applies the response', () => {
+    formService.workspaceName.set('My WS');
+    formService.purpose.set('A purpose');
+    formService.updateBrandPositioning('targetCustomer', 'Devs');
+    formService.updateBrandPositioning('solution', 'Fast tools');
 
     fixture.componentInstance.generatePositioningStatement();
     expect(fixture.componentInstance.isGenerating()).toBe(true);
 
-    vi.advanceTimersByTime(1500);
+    const req = httpMock.expectOne('/api/wizard-ai/positioning-statement');
+    expect(req.request.method).toBe('POST');
+    expect(req.request.body).toMatchObject({
+      targetCustomer: 'Devs',
+      solution: 'Fast tools',
+      workspaceName: 'My WS',
+      purpose: 'A purpose',
+    });
+    expect(req.request.body.problemSolved).toBeUndefined();
+    expect(req.request.body.differentiator).toBeUndefined();
+
+    req.flush({ positioningStatement: 'A coherent statement.' });
+
+    expect(formService.brandPositioning().positioningStatement).toBe('A coherent statement.');
     expect(fixture.componentInstance.isGenerating()).toBe(false);
-    expect(formService.brandPositioning().positioningStatement).toContain('Developers');
-    vi.useRealTimers();
+  });
+
+  it('shows a toast and resets loading on backend error, preserving existing statement', () => {
+    formService.updateBrandPositioning('positioningStatement', 'Existing');
+    formService.updateBrandPositioning('targetCustomer', 'Devs');
+
+    fixture.componentInstance.generatePositioningStatement();
+    const req = httpMock.expectOne('/api/wizard-ai/positioning-statement');
+    req.flush(
+      { message: 'Server exploded' },
+      { status: 500, statusText: 'Server Error' },
+    );
+
+    expect(toast.showError).toHaveBeenCalledWith('Server exploded');
+    expect(fixture.componentInstance.isGenerating()).toBe(false);
+    expect(formService.brandPositioning().positioningStatement).toBe('Existing');
+  });
+
+  it('falls back to default error message when error body has no message', () => {
+    formService.updateBrandPositioning('targetCustomer', 'Devs');
+
+    fixture.componentInstance.generatePositioningStatement();
+    const req = httpMock.expectOne('/api/wizard-ai/positioning-statement');
+    req.flush(null, { status: 500, statusText: 'Server Error' });
+
+    expect(toast.showError).toHaveBeenCalled();
+    const arg = (toast.showError.mock.calls[0]?.[0] as string) ?? '';
+    expect(arg.length).toBeGreaterThan(0);
+  });
+
+  it('suppresses Nest generic 5xx envelope and shows the friendly fallback', () => {
+    formService.updateBrandPositioning('targetCustomer', 'Devs');
+
+    fixture.componentInstance.generatePositioningStatement();
+    const req = httpMock.expectOne('/api/wizard-ai/positioning-statement');
+    req.flush(
+      { statusCode: 500, message: 'Internal server error' },
+      { status: 500, statusText: 'Internal Server Error' },
+    );
+
+    expect(toast.showError).toHaveBeenCalledWith(
+      'Could not generate a positioning statement.',
+    );
   });
 
   it('should update brand positioning field via input', () => {
@@ -103,15 +177,12 @@ describe('StepBrandPositioningComponent', () => {
 
   it('should update all brand positioning fields via template inputs', () => {
     const inputs = fixture.nativeElement.querySelectorAll('.positioning-fields .field-input') as NodeListOf<HTMLInputElement>;
-    // Problem (index 1)
     inputs[1].value = 'need better tools';
     inputs[1].dispatchEvent(new Event('input'));
     expect(formService.brandPositioning().problemSolved).toBe('need better tools');
-    // Solution (index 2)
     inputs[2].value = 'our platform';
     inputs[2].dispatchEvent(new Event('input'));
     expect(formService.brandPositioning().solution).toBe('our platform');
-    // Differentiator (index 3)
     inputs[3].value = 'AI-first';
     inputs[3].dispatchEvent(new Event('input'));
     expect(formService.brandPositioning().differentiator).toBe('AI-first');
@@ -124,25 +195,23 @@ describe('StepBrandPositioningComponent', () => {
     expect(formService.brandVoice()).toBe('bold and confident');
   });
 
-  it('should show positioning statement textarea after generation', () => {
-    vi.useFakeTimers();
+  it('shows positioning statement textarea after successful generation', () => {
     formService.updateBrandPositioning('targetCustomer', 'Devs');
     fixture.componentInstance.generatePositioningStatement();
-    vi.advanceTimersByTime(1500);
-    vi.useRealTimers();
+    const req = httpMock.expectOne('/api/wizard-ai/positioning-statement');
+    req.flush({ positioningStatement: 'A statement.' });
     fixture.detectChanges();
     const textareas = fixture.nativeElement.querySelectorAll('.field-textarea');
     expect(textareas.length).toBe(2);
   });
 
-  it('should click generate button via template', () => {
+  it('clicks generate button via template and triggers HTTP', () => {
     formService.updateBrandPositioning('targetCustomer', 'Devs');
     fixture.detectChanges();
-    vi.useFakeTimers();
     const btn = fixture.nativeElement.querySelector('app-outline-button .outline-btn') as HTMLButtonElement;
     btn.click();
     expect(fixture.componentInstance.isGenerating()).toBe(true);
-    vi.advanceTimersByTime(1500);
-    vi.useRealTimers();
+    const req = httpMock.expectOne('/api/wizard-ai/positioning-statement');
+    req.flush({ positioningStatement: 'X' });
   });
 });

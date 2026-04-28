@@ -1,7 +1,23 @@
 import { TestBed } from '@angular/core/testing';
-import { Platform } from '@blinksocial/contracts';
-import { NewWorkspaceFormService } from './new-workspace-form.service';
+import { Platform, type BusinessObjectiveContract } from '@blinksocial/contracts';
+import { NewWorkspaceFormService, MAX_OBJECTIVES } from './new-workspace-form.service';
 import { CreateWorkspaceRequest } from '@blinksocial/models';
+
+function suggestion(
+  partial: Partial<BusinessObjectiveContract>,
+  i = 0,
+): BusinessObjectiveContract {
+  return {
+    id: `ai-${i}`,
+    category: 'growth',
+    statement: `S${i}`,
+    target: 0,
+    unit: '',
+    timeframe: '',
+    status: 'on-track',
+    ...partial,
+  };
+}
 
 describe('NewWorkspaceFormService', () => {
   let service: NewWorkspaceFormService;
@@ -826,14 +842,143 @@ describe('NewWorkspaceFormService', () => {
 
   // --- addObjective/removeObjective boundary tests ---
 
-  it('should not add objective beyond max of 10', () => {
-    // Start with default 1, add 9 more to reach 10
-    for (let i = 0; i < 9; i++) {
+  it('should not add objective beyond MAX_OBJECTIVES', () => {
+    expect(MAX_OBJECTIVES).toBe(10);
+    // Start with default 1, add until cap
+    while (service.businessObjectives().length < MAX_OBJECTIVES) {
       service.addObjective();
     }
-    expect(service.businessObjectives().length).toBe(10);
+    expect(service.businessObjectives().length).toBe(MAX_OBJECTIVES);
     service.addObjective(); // Should be a no-op
-    expect(service.businessObjectives().length).toBe(10);
+    expect(service.businessObjectives().length).toBe(MAX_OBJECTIVES);
+  });
+
+  // --- mergeObjectiveSuggestions ---
+
+  describe('mergeObjectiveSuggestions', () => {
+    it('drops the empty placeholder and appends suggestions', () => {
+      service.mergeObjectiveSuggestions([
+        suggestion({ statement: 'A' }, 0),
+        suggestion({ statement: 'B' }, 1),
+      ]);
+      const list = service.businessObjectives();
+      expect(list).toHaveLength(2);
+      expect(list.map((o) => o.statement)).toEqual(['A', 'B']);
+      expect(list.every((o) => typeof o.id === 'number')).toBe(true);
+    });
+
+    it('preserves a non-empty existing entry and appends', () => {
+      service.updateObjective(
+        service.businessObjectives()[0].id,
+        'statement',
+        'Manual',
+      );
+      service.mergeObjectiveSuggestions([
+        suggestion({ statement: 'AI 1' }, 0),
+      ]);
+      const list = service.businessObjectives();
+      expect(list).toHaveLength(2);
+      expect(list[0].statement).toBe('Manual');
+      expect(list[1].statement).toBe('AI 1');
+    });
+
+    it('skips dupes case-insensitively against existing', () => {
+      service.updateObjective(
+        service.businessObjectives()[0].id,
+        'statement',
+        'Grow audience',
+      );
+      service.mergeObjectiveSuggestions([
+        suggestion({ statement: 'GROW AUDIENCE' }, 0),
+        suggestion({ statement: 'New goal' }, 1),
+      ]);
+      const list = service.businessObjectives();
+      expect(list).toHaveLength(2);
+      expect(list[1].statement).toBe('New goal');
+    });
+
+    it('skips dupes within a single batch of suggestions', () => {
+      service.mergeObjectiveSuggestions([
+        suggestion({ statement: 'Same goal' }, 0),
+        suggestion({ statement: ' SAME GOAL ' }, 1),
+        suggestion({ statement: 'Different' }, 2),
+      ]);
+      const list = service.businessObjectives();
+      expect(list).toHaveLength(2);
+      expect(list.map((o) => o.statement)).toEqual(['Same goal', 'Different']);
+    });
+
+    it('skips suggestions whose statement is empty', () => {
+      service.mergeObjectiveSuggestions([
+        suggestion({ statement: '   ' }, 0),
+        suggestion({ statement: 'Real one' }, 1),
+      ]);
+      // empty placeholder replaced by single real one
+      expect(service.businessObjectives()).toHaveLength(1);
+      expect(service.businessObjectives()[0].statement).toBe('Real one');
+    });
+
+    it('caps at MAX_OBJECTIVES with suggestions dropping first', () => {
+      // Seed MAX_OBJECTIVES - 1 non-empty manual entries; fresh state has 1.
+      const seedCount = MAX_OBJECTIVES - 1;
+      const seedStatements = Array.from({ length: seedCount }, (_, i) => `seed-${i + 1}`);
+      service.updateObjective(
+        service.businessObjectives()[0].id,
+        'statement',
+        seedStatements[0],
+      );
+      for (let i = 1; i < seedCount; i++) {
+        service.addObjective();
+        service.updateObjective(
+          service.businessObjectives()[i].id,
+          'statement',
+          seedStatements[i],
+        );
+      }
+
+      service.mergeObjectiveSuggestions([
+        suggestion({ statement: 'sug-1' }, 0),
+        suggestion({ statement: 'sug-2' }, 1),
+        suggestion({ statement: 'sug-3' }, 2),
+      ]);
+
+      const list = service.businessObjectives();
+      expect(list).toHaveLength(MAX_OBJECTIVES);
+      expect(list.slice(0, seedCount).map((o) => o.statement)).toEqual(seedStatements);
+      // Only one suggestion fits — the rest drop because suggestions go last.
+      expect(list[seedCount].statement).toBe('sug-1');
+    });
+
+    it('restores an empty placeholder when nothing valid exists after merge', () => {
+      service.mergeObjectiveSuggestions([]); // empty + no suggestions
+      const list = service.businessObjectives();
+      expect(list).toHaveLength(1);
+      expect(list[0].statement).toBe('');
+    });
+
+    it('coerces suggestion target number to string and copies all fields', () => {
+      service.mergeObjectiveSuggestions([
+        suggestion(
+          { statement: 'X', target: 1500, unit: 'subs', timeframe: 'Q1', category: 'engagement' },
+          0,
+        ),
+      ]);
+      const merged = service.businessObjectives()[0];
+      expect(merged.statement).toBe('X');
+      expect(merged.target).toBe('1500');
+      expect(merged.unit).toBe('subs');
+      expect(merged.timeframe).toBe('Q1');
+      expect(merged.category).toBe('engagement');
+    });
+
+    it('assigns unique ids across rapid sequential merges', () => {
+      service.mergeObjectiveSuggestions([
+        suggestion({ statement: 'A' }, 0),
+        suggestion({ statement: 'B' }, 1),
+      ]);
+      const ids = service.businessObjectives().map((o) => o.id);
+      expect(new Set(ids).size).toBe(ids.length);
+    });
   });
 
   it('should not remove the last objective', () => {

@@ -22,8 +22,20 @@ const PILLAR_COLORS = [
   '#8b5cf6', '#ec4899', '#06b6d4', '#84cc16',
 ];
 
+// Mirrors the businessObjectives.maxItems cap in
+// libs/blinksocial-contracts/src/lib/schemas/workspaces/create-workspace-request.schema.json.
+// Keep these two in sync — the schema rejects more than this on submit.
+export const MAX_OBJECTIVES = 10;
+
 @Injectable()
 export class NewWorkspaceFormService {
+  // Monotonic counter so that objectives created in the same millisecond
+  // (e.g. from a batch AI merge) don't collide on id.
+  private nextObjectiveIdCounter = 1_000_000;
+  private nextObjectiveId(): number {
+    return ++this.nextObjectiveIdCounter;
+  }
+
   // Step 1 — Strategic Foundation
   readonly workspaceName = signal('');
   readonly purpose = signal('');
@@ -276,10 +288,10 @@ export class NewWorkspaceFormService {
 
   // Step 2 helpers — Business Objectives
   addObjective(): void {
-    if (this.businessObjectives().length >= 10) return;
+    if (this.businessObjectives().length >= MAX_OBJECTIVES) return;
     this.businessObjectives.update((objs) => [
       ...objs,
-      { id: Date.now(), category: 'growth', statement: '', target: '', unit: '', timeframe: '' },
+      { id: this.nextObjectiveId(), category: 'growth', statement: '', target: '', unit: '', timeframe: '' },
     ]);
   }
 
@@ -293,6 +305,52 @@ export class NewWorkspaceFormService {
     this.businessObjectives.update((objs) =>
       objs.map((o) => (o.id === id ? { ...o, [field]: value } : o))
     );
+  }
+
+  /**
+   * Merge AI-suggested objectives into the existing list non-destructively.
+   * Drops empty placeholders, dedups against existing statements
+   * (case-insensitive), and caps the merged list at MAX_OBJECTIVES with
+   * suggestions dropping first.
+   */
+  mergeObjectiveSuggestions(suggestions: BusinessObjectiveContract[]): void {
+    this.businessObjectives.update((existing) => {
+      const kept = existing.filter((o) => o.statement.trim().length > 0);
+      const seenKeys = new Set(kept.map((o) => o.statement.trim().toLowerCase()));
+      const merged: UIBusinessObjective[] = [...kept];
+
+      for (const s of suggestions) {
+        if (merged.length >= MAX_OBJECTIVES) break;
+        const statement = (s.statement ?? '').trim();
+        if (!statement) continue;
+        const key = statement.toLowerCase();
+        if (seenKeys.has(key)) continue;
+        merged.push({
+          id: this.nextObjectiveId(),
+          category: s.category ?? 'growth',
+          statement,
+          target: s.target != null ? String(s.target) : '',
+          unit: s.unit ?? '',
+          timeframe: s.timeframe ?? '',
+        });
+        seenKeys.add(key);
+      }
+
+      // If kept was empty AND no suggestions came in (or all were empty/dups),
+      // restore one empty placeholder so the wizard remains in a valid form shape.
+      if (merged.length === 0) {
+        merged.push({
+          id: this.nextObjectiveId(),
+          category: 'growth',
+          statement: '',
+          target: '',
+          unit: '',
+          timeframe: '',
+        });
+      }
+
+      return merged;
+    });
   }
 
   // Step 3 helpers — Brand Positioning & Voice
