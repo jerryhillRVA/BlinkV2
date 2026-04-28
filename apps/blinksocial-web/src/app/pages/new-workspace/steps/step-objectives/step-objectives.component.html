@@ -1,7 +1,7 @@
 <div class="step-objectives">
   <div class="step-header">
     <h2>Business Objectives</h2>
-    <p class="step-subtitle">What does success look like? Define 2–4 measurable goals that your content strategy will serve.</p>
+    <p class="step-subtitle">What does success look like? Define 2–10 measurable goals that your content strategy will serve.</p>
   </div>
 
   <div class="callout">
@@ -55,6 +55,15 @@
       </div>
     }
   </div>
+
+  @if (formService.businessObjectives().length < 10) {
+    <div class="add-objective-wrapper">
+      <app-outline-button (clicked)="formService.addObjective()">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
+        Add Objective
+      </app-outline-button>
+    </div>
+  }
 
   <div class="actions-row">
     <app-outline-button (clicked)="suggestObjectives()" [disabled]="isSuggesting()">

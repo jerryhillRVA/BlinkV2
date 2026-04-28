@@ -19,6 +19,158 @@ description: Use whenever writing ticket bodies, design docs, test reports, or c
 
 Use a short em-dash line, not a horizontal rule. Include `commit <sha-short>` only when the command produced code. Use UTC ISO date (`2026-04-23`) — no timestamp needed.
 
+## Attachments — canonical format and uploader
+
+Any artifact that benefits from screenshots, wireframes, payload dumps, or design assets uses this format. **Omit the section entirely when there are no attachments — never emit an empty header.**
+
+### Markdown format
+
+```markdown
+## Attachments
+
+### <filename or short label>
+*<one-line description — what it is, why it matters>*
+
+<!-- images render inline: -->
+![<alt text>](<browser_download_url>)
+
+<!-- non-images render as a download link: -->
+[📎 <filename>](<browser_download_url>)
+```
+
+Stack multiple attachments as repeated `### <label>` blocks. When attachments belong to a sub-item (e.g. a single defect inside a test report), nest the heading one level deeper and label it `Attachments` rather than emitting a fresh `## Attachments` top-level heading.
+
+### Hosting — the `ticket-attachments` release
+
+GitHub strips inline data URIs from rendered bodies, so file bytes are hosted on a dedicated GitHub Release tagged `ticket-attachments`. The release is auto-created on first use; subsequent uploads append. The release tag is hardcoded — no `kanban.config.json` field. Auth uses the existing `gh auth` token; no extra scope is required beyond what `gh issue create` already needs.
+
+The release is **not** part of the project's semver release stream — it's a stable bucket whose only purpose is to hold issue/PR attachment bytes. Do not delete it.
+
+### Uploader helper (`upload_attachment`)
+
+```bash
+upload_attachment() {
+  # Usage: upload_attachment <local-path> <label-slug>
+  #   <label-slug> is a short identifier (e.g. "issue-42" or a slug from the ticket title)
+  #   used to keep asset names readable. Echo the resulting browser_download_url to stdout.
+  local local_path="$1"
+  local label_slug="$2"
+
+  [ -f "$local_path" ] || { echo "upload_attachment: no such file: $local_path" >&2; return 1; }
+
+  # Idempotent: ensure the attachment-store release exists.
+  if ! gh release view ticket-attachments >/dev/null 2>&1; then
+    gh release create ticket-attachments \
+      --title "Ticket attachments" \
+      --notes "Attachment store for tickets — do not delete." >/dev/null
+  fi
+
+  # Collision-proof asset name: <slug>-<sha8>-<basename>.
+  # Re-uploading the same bytes produces the same sha8, so the URL is stable.
+  local sha8 base unique
+  sha8=$(sha256sum "$local_path" | cut -c1-8)
+  base=$(basename "$local_path")
+  unique="${label_slug}-${sha8}-${base}"
+
+  # gh release upload supports `<file>#<display-name>` to rename the asset on upload.
+  gh release upload ticket-attachments "${local_path}#${unique}" --clobber >/dev/null
+
+  gh api "repos/{owner}/{repo}/releases/tags/ticket-attachments" \
+    --jq ".assets[] | select(.name == \"${unique}\") | .browser_download_url"
+}
+```
+
+Callers pipe each accepted attachment through this helper, capture the echoed URL, and splice it into the body before `gh issue create` / `gh issue comment` / `gh issue edit`. Because URLs are stable on first upload, no second-pass `gh issue edit` is needed to fix attachment links.
+
+### Downloader helper (`download_attachments`)
+
+```bash
+download_attachments() {
+  # Usage: download_attachments <issue_number> [out_dir]
+  #
+  # Downloads every ticket-attachments / user-attachments asset referenced
+  # in the issue body or any comment to <out_dir> (default
+  # /tmp/ticket-<n>-attachments) and prints a TSV manifest — one line per
+  # successfully-downloaded file: "<local_path>\t<alt_text>".
+  # Empty stdout when the ticket has no attachments. Per-URL failures
+  # emit a stderr warning and continue; never aborts the caller.
+  local issue_num="$1"
+  local out_dir="${2:-/tmp/ticket-${issue_num}-attachments}"
+  mkdir -p "$out_dir"
+
+  local content
+  content=$(gh issue view "$issue_num" --json body,comments \
+    --jq '[.body] + [.comments[].body] | join("\n")')
+  [ -z "$content" ] && return 0
+
+  # Extract URL+alt pairs from markdown images, markdown links, and <img>
+  # tags; keep only allowlisted hosts (ticket-attachments release or
+  # github.com/user-attachments); dedupe by URL.
+  local pairs
+  pairs=$(printf '%s\n' "$content" | awk '
+    {
+      line = $0
+      while (match(line, /!\[[^]]*\]\(https:\/\/[^)]+\)/)) {
+        chunk = substr(line, RSTART, RLENGTH)
+        alt = chunk; sub(/^!\[/, "", alt); sub(/\].*/, "", alt)
+        url = chunk; sub(/^[^(]*\(/, "", url); sub(/\)$/, "", url)
+        print url "\t" alt
+        line = substr(line, RSTART + RLENGTH)
+      }
+      line = $0
+      while (match(line, /\[[^]]+\]\(https:\/\/[^)]+\)/)) {
+        chunk = substr(line, RSTART, RLENGTH)
+        alt = chunk; sub(/^\[(📎 ?)?/, "", alt); sub(/\].*/, "", alt)
+        url = chunk; sub(/^[^(]*\(/, "", url); sub(/\)$/, "", url)
+        print url "\t" alt
+        line = substr(line, RSTART + RLENGTH)
+      }
+      line = $0
+      while (match(line, /<img[^>]+src="https:\/\/[^"]+"/)) {
+        chunk = substr(line, RSTART, RLENGTH)
+        url = chunk; sub(/.*src="/, "", url); sub(/".*/, "", url)
+        print url "\t"
+        line = substr(line, RSTART + RLENGTH)
+      }
+    }
+  ' \
+    | grep -E '^https://github\.com/.+/releases/download/ticket-attachments/|^https://github\.com/user-attachments/assets/' \
+    | awk -F'\t' '!seen[$1]++')
+  [ -z "$pairs" ] && return 0
+
+  local token
+  token=$(gh auth token 2>/dev/null || true)
+  while IFS=$'\t' read -r url alt; do
+    [ -z "$url" ] && continue
+    local hash base local_path
+    hash=$(printf '%s' "$url" | shasum | cut -c1-8)
+    base=$(basename "${url%%\?*}" | sed 's/[^A-Za-z0-9._-]/_/g')
+    [ -z "$base" ] && base="asset"
+    local_path="${out_dir}/${hash}-${base}"
+
+    if curl -sSL --fail \
+        ${token:+-H "Authorization: token ${token}"} \
+        -o "$local_path" "$url"; then
+      printf '%s\t%s\n' "$local_path" "$alt"
+    else
+      echo "download_attachments: failed to fetch $url" >&2
+    fi
+  done <<< "$pairs"
+}
+```
+
+Callers run `download_attachments <n>` once early in their flow, capture the TSV manifest, and use the **Read** tool on each `<local_path>` so images become multimodal context for the rest of the conversation. The function never fails the calling command — missing or unreachable attachments degrade gracefully to text-only context.
+
+### Auto-detecting attachments in user input
+
+Commands that gather attachments (`/create-ticket`, `/test-ticket`, `/remediate-ticket`, `/review-ticket`) should treat the following as **implicit attachments** — no need to re-ask:
+
+- Image files dropped into the conversation by the user.
+- Absolute paths in user messages that resolve to existing files (e.g. `/Users/.../wireframe.png`, `~/Downloads/spec.pdf`).
+- Glob expansions the user explicitly types (e.g. `./screenshots/*.png`).
+
+Always show the resolved attachment list **inside the draft body** for user confirmation **before** any bytes leave the machine, so the user can prune or correct labels and descriptions.
+
 ## Issue body template (emitted by `/create-ticket`)
 
 ```markdown
@@ -38,6 +190,9 @@ Use a short em-dash line, not a horizontal rule. Include `commit <sha-short>` on
 
 ## Notes
 <open questions, decisions deferred, assumptions>
+
+## Attachments
+<see "Attachments — canonical format and uploader" above; omit this heading entirely when there are no attachments>
 ```
 
 ## Design doc (appended to issue body by `/design-ticket`, under a `## Design` heading)
@@ -56,6 +211,7 @@ Use a short em-dash line, not a horizontal rule. Include `commit <sha-short>` on
 
 ### UI changes
 <affected screens, components, wireframe sketch or description, or "none">
+<embed wireframes/mockups using the canonical Attachments format above>
 
 ### Risks & mitigations
 | Risk | Likelihood | Mitigation |
@@ -99,8 +255,10 @@ Use a short em-dash line, not a horizontal rule. Include `commit <sha-short>` on
 - **Steps to reproduce**: …
 - **Expected**: …
 - **Actual**: …
-- **Evidence**: <screenshot path, DB query result, API payload>
 - **Suspected cause**: <file:line if known>
+
+##### Attachments
+<screenshots, payload dumps, DB rows — see canonical Attachments format above; omit this subsection when none>
 
 ### UI ↔ API ↔ DB parity
 | Field | UI | API payload | DB row | Match |
@@ -118,6 +276,9 @@ Use a short em-dash line, not a horizontal rule. Include `commit <sha-short>` on
 
 - **D1** — <one-line root cause> (`<sha>`)
 - **D2** — ...
+
+## Attachments
+<see canonical Attachments format above; omit this heading entirely when there are no attachments>
 
 Ready for re-test.
 
@@ -153,6 +314,9 @@ Ready for re-test.
 ### Linked artifacts
 - Issue: #<n>
 - Latest test report: <link to comment>
+
+### Supporting attachments
+<see canonical Attachments format above; omit this subsection when none>
 
 <signature block>
 ```
