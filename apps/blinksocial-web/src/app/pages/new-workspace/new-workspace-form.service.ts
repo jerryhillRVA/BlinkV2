@@ -276,7 +276,7 @@ export class NewWorkspaceFormService {
 
   // Step 2 helpers — Business Objectives
   addObjective(): void {
-    if (this.businessObjectives().length >= 4) return;
+    if (this.businessObjectives().length >= 10) return;
     this.businessObjectives.update((objs) => [
       ...objs,
       { id: Date.now(), category: 'growth', statement: '', target: '', unit: '', timeframe: '' },

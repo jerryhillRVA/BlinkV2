@@ -826,14 +826,14 @@ describe('NewWorkspaceFormService', () => {
 
   // --- addObjective/removeObjective boundary tests ---
 
-  it('should not add objective beyond max of 4', () => {
-    // Start with default 1, add 3 more to reach 4
-    service.addObjective();
-    service.addObjective();
-    service.addObjective();
-    expect(service.businessObjectives().length).toBe(4);
+  it('should not add objective beyond max of 10', () => {
+    // Start with default 1, add 9 more to reach 10
+    for (let i = 0; i < 9; i++) {
+      service.addObjective();
+    }
+    expect(service.businessObjectives().length).toBe(10);
     service.addObjective(); // Should be a no-op
-    expect(service.businessObjectives().length).toBe(4);
+    expect(service.businessObjectives().length).toBe(10);
   });
 
   it('should not remove the last objective', () => {

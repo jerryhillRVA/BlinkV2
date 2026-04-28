@@ -103,6 +103,39 @@ describe('validateCreateWorkspaceRequest', () => {
     expect(result.valid).toBe(false);
   });
 
+  it('should pass when businessObjectives has 10 items (the cap)', () => {
+    const req = buildValidRequest();
+    req.businessObjectives = Array.from({ length: 10 }, (_, i) => ({
+      id: `obj-${i + 1}`,
+      category: 'growth',
+      statement: `Goal ${i + 1}`,
+      target: 100,
+      unit: 'x',
+      timeframe: 'Q1 2027',
+      status: 'on-track',
+    }));
+    const result = validateCreateWorkspaceRequest(req);
+    expect(result.valid).toBe(true);
+  });
+
+  it('should fail when businessObjectives exceeds 10 items', () => {
+    const req = buildValidRequest();
+    req.businessObjectives = Array.from({ length: 11 }, (_, i) => ({
+      id: `obj-${i + 1}`,
+      category: 'growth',
+      statement: `Goal ${i + 1}`,
+      target: 100,
+      unit: 'x',
+      timeframe: 'Q1 2027',
+      status: 'on-track',
+    }));
+    const result = validateCreateWorkspaceRequest(req);
+    expect(result.valid).toBe(false);
+    if (!result.valid) {
+      expect(result.errors.some((e) => e.field.includes('businessObjectives'))).toBe(true);
+    }
+  });
+
   it('should pass for a minimal valid request with empty arrays', () => {
     const req: CreateWorkspaceRequestContract = {
       general: { workspaceName: 'Minimal' },
