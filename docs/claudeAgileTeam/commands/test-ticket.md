@@ -19,6 +19,8 @@ Invoke the `ui-persistence-testing` skill for the methodology. This command is t
    - Else: start `devCommand` in background. Wait up to 60s for URL to respond. If it doesn't come up, file that as a blocker defect and stop.
 
 4. **Read the design's test plan** from the issue body. Build a working list of TCs.
+   - Run `download_attachments $ARGUMENTS` from the `ticket-formatting` skill. The helper scans both the body and all comments — wireframes and mockups in the design are the visual contract; defect screenshots from prior test runs are useful regression signal.
+   - Use the **Read** tool on every local path in the returned manifest before driving the UI, so the rendered app can be compared against what the design actually showed. Empty manifest → skip silently.
 
 5. **Execute each TC** via Claude for Chrome, following the `ui-persistence-testing` skill's three-layer assertion model. For each TC capture:
    - Screenshots at key steps

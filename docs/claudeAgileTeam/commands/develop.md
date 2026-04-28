@@ -23,6 +23,8 @@ Developing ticket **$ARGUMENTS** (empty = auto-pick top of Ready).
    - `git status` — must be clean before starting. If not, abort with the dirty files listed.
 
 4. **Read the full ticket body** including the design section. This is your spec. Do not start coding without it.
+   - Run `download_attachments $ARGUMENTS` from the `ticket-formatting` skill. The helper scans both the body and **all comments** (clarifications often land in comments after `/design-ticket`).
+   - Use the **Read** tool on every local path in the returned manifest before writing any code, so wireframes and mockups become visual context. Empty manifest → skip silently.
 
 5. **Implement**:
    - Make changes per the design. Commit in logical chunks with Conventional Commits. **Keep commit messages short** — single subject line, `Refs #<issue>` trailer. Only include a body when the "why" isn't obvious from the diff, and keep it under ~6 lines. Long HEREDOCs can hang shells and slow hook runs.

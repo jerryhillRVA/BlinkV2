@@ -9,6 +9,7 @@ Ticket to design: **#$ARGUMENTS**
 1. **Preconditions** (use the `github-projects` skill):
    - Ticket is in `Backlog`. If not, abort with a clear message.
    - Read current issue body — don't overwrite acceptance criteria, only add to the body.
+   - **Load any visual attachments** referenced in the body or comments. Run `download_attachments $ARGUMENTS` from the `ticket-formatting` skill, then use the **Read** tool on every local path in the returned manifest. This pulls wireframes, mockups, and screenshots into context as images so the design responds to what the user actually drew, not just to the markdown URL. Skip silently if the manifest is empty.
 
 2. **Explore the relevant code** before proposing a design:
    - Identify likely affected modules with `grep` / `glob`.

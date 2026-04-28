@@ -208,7 +208,7 @@ Print:
 
 ### The `ticket-attachments` release
 
-The first time `/create-ticket` (or any other command) uploads an attachment, it auto-creates a GitHub Release tagged `ticket-attachments` to host the file bytes. Subsequent uploads append assets to that same release. **Do not delete it** — every existing inline image and download link in your tickets points back to it. It's intentionally not part of your semver release stream; treat it like a shared bucket alongside your real releases.
+The first time `/create-ticket` (or any other command) uploads an attachment, it auto-creates a GitHub Release tagged `ticket-attachments` to host the file bytes. Subsequent uploads append assets to that same release. **Do not delete it** — every existing inline image and download link in your tickets points back to it. It's intentionally not part of your semver release stream; treat it like a shared bucket alongside your real releases. `/design-ticket`, `/develop`, and `/test-ticket` pull these (and any GitHub `user-attachments` URLs pasted into bodies or comments) back down via the `download_attachments` helper so wireframes and screenshots become visual context for design, implementation, and testing.
 
 ---
 
