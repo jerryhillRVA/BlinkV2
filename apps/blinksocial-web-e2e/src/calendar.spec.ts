@@ -437,8 +437,13 @@ test.describe('Calendar — content round-trip in mock mode', () => {
         }),
     );
 
+    const calendarNav = page.locator('.ws-nav-item', { hasText: 'Calendar' });
+    const contentNav = page.locator('.ws-nav-item', { hasText: 'Content' });
+
     await page.goto(`/workspace/${fx.workspace}/calendar`);
     await expect(page.locator('[data-testid="month-grid"]')).toBeVisible();
+    await expect(calendarNav).toHaveClass(/active/);
+    await expect(contentNav).not.toHaveClass(/active/);
 
     const publishPill = page
       .locator(`[data-testid="event-pill-publish-${fx.contentId}"]`)
@@ -453,6 +458,9 @@ test.describe('Calendar — content round-trip in mock mode', () => {
     );
     await expect(page).toHaveURL(/calendarView=month/);
     await expect(page.locator('app-post-detail')).toBeVisible();
+    // Issue #63 — header keeps Calendar active on a calendar-sourced detail URL.
+    await expect(calendarNav).toHaveClass(/active/);
+    await expect(contentNav).not.toHaveClass(/active/);
 
     await page.locator('app-post-detail .detail-back').click();
 
@@ -465,6 +473,8 @@ test.describe('Calendar — content round-trip in mock mode', () => {
     await expect(page.locator('[data-testid="view-btn-month"]')).toHaveClass(
       /active/,
     );
+    await expect(calendarNav).toHaveClass(/active/);
+    await expect(contentNav).not.toHaveClass(/active/);
   });
 
   test('TC12 calendar restores Week view + cursor when query params are present', async ({

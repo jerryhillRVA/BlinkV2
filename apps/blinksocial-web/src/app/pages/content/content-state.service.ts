@@ -1,4 +1,5 @@
-import { Injectable, inject, signal, computed } from '@angular/core';
+import { Injectable, inject, signal, computed, PLATFORM_ID } from '@angular/core';
+import { isPlatformBrowser } from '@angular/common';
 import { forkJoin, catchError, of, Observable, map, tap, shareReplay } from 'rxjs';
 import { WorkspaceSettingsApiService } from '../workspace-settings/workspace-settings-api.service';
 import { ContentItemsApiService } from './content-items-api.service';
@@ -76,6 +77,11 @@ export class ContentStateService {
   private readonly itemsApi = inject(ContentItemsApiService);
   private readonly mockData = inject(MockDataService);
   private readonly toast = inject(ToastService);
+  // Skip API fetches during SSR. The dev API delegates to MockDataService
+  // when AGENTIC_FS_URL is unset, but those server-side responses defeat
+  // Playwright's page.route mocks (which only intercept browser requests).
+  // Letting the client always fetch keeps tests + dev mode coherent.
+  private readonly platformId = inject(PLATFORM_ID);
 
   readonly workspaceId = signal('');
   readonly loading = signal(false);
@@ -148,6 +154,10 @@ export class ContentStateService {
 
   loadAll(workspaceId: string): void {
     this.workspaceId.set(workspaceId);
+    if (!isPlatformBrowser(this.platformId)) {
+      this.loading.set(false);
+      return;
+    }
     this.loading.set(true);
     this.archiveLoaded = false;
 
@@ -335,6 +345,7 @@ export class ContentStateService {
   loadFullItem(itemId: string): void {
     const workspaceId = this.workspaceId();
     if (!workspaceId || !itemId) return;
+    if (!isPlatformBrowser(this.platformId)) return;
     if (this.fullItemCacheSignal()[itemId]) return;
     this.itemsApi
       .getItem(workspaceId, itemId)
