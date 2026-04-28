@@ -134,9 +134,12 @@ export class AgenticFilesystemService {
    * Fetch the raw bytes of a previously-uploaded file. Used to replay
    * binary attachments (images / PDFs) into LLM context on subsequent
    * onboarding turns.
+   *
+   * AFS exposes raw download at `GET /v1/{tenant}/files/{file_id}` (no
+   * `/content` suffix — that path 404s).
    */
   async downloadBinaryFile(tenant: string, fileId: string): Promise<Buffer> {
-    const url = `${this.baseUrl}/v1/${tenant}/files/${fileId}/content`;
+    const url = `${this.baseUrl}/v1/${tenant}/files/${fileId}`;
     const response = await axios.get<ArrayBuffer>(url, {
       responseType: 'arraybuffer',
     });
