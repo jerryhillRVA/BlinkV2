@@ -79,4 +79,30 @@ describe('NewWorkspaceApiService', () => {
     expect(req.request.method).toBe('POST');
     req.flush({});
   });
+
+  it('should POST positioning-statement to wizard-ai endpoint', () => {
+    let result: { positioningStatement: string } | undefined;
+    service
+      .generatePositioningStatement({ targetCustomer: 'Devs' })
+      .subscribe((res) => (result = res));
+
+    const req = httpMock.expectOne('/api/wizard-ai/positioning-statement');
+    expect(req.request.method).toBe('POST');
+    expect(req.request.body).toEqual({ targetCustomer: 'Devs' });
+    req.flush({ positioningStatement: 'Hi' });
+    expect(result?.positioningStatement).toBe('Hi');
+  });
+
+  it('should POST business-objectives to wizard-ai endpoint', () => {
+    let result: { suggestions: unknown[] } | undefined;
+    service
+      .suggestBusinessObjectives({ workspaceName: 'WS' })
+      .subscribe((res) => (result = res));
+
+    const req = httpMock.expectOne('/api/wizard-ai/business-objectives');
+    expect(req.request.method).toBe('POST');
+    expect(req.request.body).toEqual({ workspaceName: 'WS' });
+    req.flush({ suggestions: [] });
+    expect(result?.suggestions).toEqual([]);
+  });
 });

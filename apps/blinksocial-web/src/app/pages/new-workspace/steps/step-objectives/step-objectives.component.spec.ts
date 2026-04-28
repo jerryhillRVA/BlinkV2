@@ -1,20 +1,58 @@
 import { TestBed } from '@angular/core/testing';
+import { provideHttpClient } from '@angular/common/http';
+import {
+  HttpTestingController,
+  provideHttpClientTesting,
+} from '@angular/common/http/testing';
+import { provideAnimations } from '@angular/platform-browser/animations';
 import { StepObjectivesComponent } from './step-objectives.component';
-import { NewWorkspaceFormService } from '../../new-workspace-form.service';
+import { NewWorkspaceFormService, MAX_OBJECTIVES } from '../../new-workspace-form.service';
+import { ToastService } from '../../../../core/toast/toast.service';
+import type { BusinessObjectiveContract } from '@blinksocial/contracts';
+
+function makeSuggestion(
+  partial: Partial<BusinessObjectiveContract>,
+  i = 0,
+): BusinessObjectiveContract {
+  return {
+    id: `ai-${i}`,
+    category: 'growth',
+    statement: `Suggestion ${i}`,
+    target: 0,
+    unit: '',
+    timeframe: '',
+    status: 'on-track',
+    ...partial,
+  };
+}
 
 describe('StepObjectivesComponent', () => {
   let fixture: ReturnType<typeof TestBed.createComponent<StepObjectivesComponent>>;
   let formService: NewWorkspaceFormService;
+  let httpMock: HttpTestingController;
+  let toast: { showError: ReturnType<typeof vi.fn>; showSuccess: ReturnType<typeof vi.fn> };
 
   beforeEach(async () => {
+    toast = { showError: vi.fn(), showSuccess: vi.fn() };
     await TestBed.configureTestingModule({
       imports: [StepObjectivesComponent],
-      providers: [NewWorkspaceFormService],
+      providers: [
+        NewWorkspaceFormService,
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        provideAnimations(),
+        { provide: ToastService, useValue: toast },
+      ],
     }).compileComponents();
 
     formService = TestBed.inject(NewWorkspaceFormService);
+    httpMock = TestBed.inject(HttpTestingController);
     fixture = TestBed.createComponent(StepObjectivesComponent);
     fixture.detectChanges();
+  });
+
+  afterEach(() => {
+    httpMock.verify();
   });
 
   it('should create', () => {
@@ -72,16 +110,130 @@ describe('StepObjectivesComponent', () => {
     expect(inputs.length).toBe(3);
   });
 
-  it('should suggest objectives via AI button', () => {
-    vi.useFakeTimers();
-    fixture.componentInstance.suggestObjectives();
-    expect(fixture.componentInstance.isSuggesting()).toBe(true);
+  it('appends suggestions without overwriting a manual goal', () => {
+    formService.workspaceName.set('TC5 WS');
+    const seedId = formService.businessObjectives()[0].id;
+    formService.updateObjective(seedId, 'statement', 'Manual user goal');
 
-    vi.advanceTimersByTime(1500);
+    fixture.componentInstance.suggestObjectives();
+    const req = httpMock.expectOne('/api/wizard-ai/business-objectives');
+    expect(req.request.body).toMatchObject({
+      workspaceName: 'TC5 WS',
+      existingObjectives: [{ statement: 'Manual user goal', category: 'growth' }],
+    });
+    req.flush({
+      suggestions: [
+        makeSuggestion({ statement: 'Hit 5% engagement', category: 'engagement' }, 0),
+        makeSuggestion({ statement: 'Reach 50k subs', category: 'awareness' }, 1),
+      ],
+    });
+
+    const list = formService.businessObjectives();
+    expect(list).toHaveLength(3);
+    expect(list[0].statement).toBe('Manual user goal');
+    expect(list.map((o) => o.statement)).toContain('Hit 5% engagement');
     expect(fixture.componentInstance.isSuggesting()).toBe(false);
-    expect(formService.businessObjectives().length).toBe(2);
-    expect(formService.businessObjectives()[0].statement).toContain('25,000');
-    vi.useRealTimers();
+  });
+
+  it('drops the empty placeholder when merging suggestions from a fresh wizard', () => {
+    formService.workspaceName.set('TC6 WS');
+    fixture.componentInstance.suggestObjectives();
+    const req = httpMock.expectOne('/api/wizard-ai/business-objectives');
+    expect(req.request.body.existingObjectives).toBeUndefined();
+
+    req.flush({
+      suggestions: [
+        makeSuggestion({ statement: 'Goal A' }, 0),
+        makeSuggestion({ statement: 'Goal B' }, 1),
+      ],
+    });
+
+    expect(formService.businessObjectives()).toHaveLength(2);
+    expect(formService.businessObjectives().every((o) => o.statement.length > 0)).toBe(true);
+  });
+
+  it('skips dupes case-insensitively', () => {
+    formService.workspaceName.set('WS');
+    formService.updateObjective(
+      formService.businessObjectives()[0].id,
+      'statement',
+      'Grow audience',
+    );
+
+    fixture.componentInstance.suggestObjectives();
+    const req = httpMock.expectOne('/api/wizard-ai/business-objectives');
+    req.flush({
+      suggestions: [
+        makeSuggestion({ statement: 'GROW AUDIENCE' }, 0),
+        makeSuggestion({ statement: 'New unique goal' }, 1),
+      ],
+    });
+
+    const list = formService.businessObjectives();
+    expect(list).toHaveLength(2);
+    expect(list[0].statement).toBe('Grow audience');
+    expect(list[1].statement).toBe('New unique goal');
+  });
+
+  it('caps the merged list at MAX_OBJECTIVES, dropping suggestions first', () => {
+    formService.workspaceName.set('WS');
+    const seed = formService.businessObjectives()[0].id;
+    formService.updateObjective(seed, 'statement', 'A');
+    formService.addObjective();
+    formService.updateObjective(formService.businessObjectives()[1].id, 'statement', 'B');
+    formService.addObjective();
+    formService.updateObjective(formService.businessObjectives()[2].id, 'statement', 'C');
+    expect(formService.businessObjectives()).toHaveLength(3);
+
+    fixture.componentInstance.suggestObjectives();
+    const req = httpMock.expectOne('/api/wizard-ai/business-objectives');
+    req.flush({
+      suggestions: [
+        makeSuggestion({ statement: 'D' }, 0),
+        makeSuggestion({ statement: 'E' }, 1),
+        makeSuggestion({ statement: 'F' }, 2),
+      ],
+    });
+
+    const list = formService.businessObjectives();
+    expect(list).toHaveLength(MAX_OBJECTIVES);
+    expect(list.slice(0, 3).map((o) => o.statement)).toEqual(['A', 'B', 'C']);
+    expect(list[3].statement).toBe('D');
+  });
+
+  it('toasts and preserves the list on backend error', () => {
+    formService.workspaceName.set('WS');
+    formService.updateObjective(
+      formService.businessObjectives()[0].id,
+      'statement',
+      'Manual goal',
+    );
+
+    fixture.componentInstance.suggestObjectives();
+    const req = httpMock.expectOne('/api/wizard-ai/business-objectives');
+    req.flush(
+      { message: 'LLM unavailable' },
+      { status: 500, statusText: 'Server Error' },
+    );
+
+    expect(toast.showError).toHaveBeenCalledWith('LLM unavailable');
+    expect(fixture.componentInstance.isSuggesting()).toBe(false);
+    const list = formService.businessObjectives();
+    expect(list).toHaveLength(1);
+    expect(list[0].statement).toBe('Manual goal');
+  });
+
+  it('passes audienceSegments when present', () => {
+    formService.workspaceName.set('WS');
+    formService.audienceSegments.set([
+      { id: 1, name: 'Founders' },
+      { id: 2, name: '' },
+    ]);
+
+    fixture.componentInstance.suggestObjectives();
+    const req = httpMock.expectOne('/api/wizard-ai/business-objectives');
+    expect(req.request.body.audienceSegments).toEqual([{ name: 'Founders' }]);
+    req.flush({ suggestions: [] });
   });
 
   it('should remove an objective when remove button clicked', () => {
