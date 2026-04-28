@@ -3,6 +3,7 @@ import { Router } from '@angular/router';
 import { OnboardApiService } from './onboard-api.service';
 import type {
   OnboardingMessageContract,
+  OnboardingAttachmentContract,
   DiscoverySectionContract,
   DiscoverySectionId,
   BlueprintDocumentContract,
@@ -55,21 +56,60 @@ export class OnboardStateService {
     });
   }
 
-  sendMessage(content: string): void {
+  sendMessage(content: string, files: File[] = []): void {
     const sid = this.sessionId();
     if (!sid) return;
 
     const now = new Date().toISOString();
     const msgsBefore = this.messages();
+    // Build optimistic attachment records so the user immediately sees their
+    // chips inside the freshly-sent bubble. Server-assigned ids/fileIds
+    // overwrite these in `next` once the response arrives.
+    const optimisticAttachments: OnboardingAttachmentContract[] = files.map((f) => ({
+      id: `pending-${Math.random().toString(36).slice(2, 10)}`,
+      filename: f.name,
+      mimeType: f.type,
+      sizeBytes: f.size,
+      fileId: '',
+      kind: f.type.startsWith('image/')
+        ? 'image'
+        : f.type === 'application/pdf'
+        ? 'pdf'
+        : f.type.startsWith('text/')
+        ? 'text'
+        : 'document',
+    }));
+
     this.messages.update((msgs) => [
       ...msgs,
-      { role: 'user', content, timestamp: now },
+      {
+        role: 'user',
+        content,
+        timestamp: now,
+        ...(optimisticAttachments.length > 0
+          ? { attachments: optimisticAttachments }
+          : {}),
+      },
     ]);
     this.isLoading.set(true);
     this.error.set(null);
 
-    this.api.sendMessage(sid, content).subscribe({
+    this.api.sendMessage(sid, content, files.length > 0 ? files : undefined).subscribe({
       next: (res) => {
+        // Replace the optimistic user-message attachments with the canonical
+        // persisted records (preserves the assistant message we just appended).
+        if (res.messageAttachments && res.messageAttachments.length > 0) {
+          this.messages.update((msgs) => {
+            const next = [...msgs];
+            for (let i = next.length - 1; i >= 0; i--) {
+              if (next[i].role === 'user') {
+                next[i] = { ...next[i], attachments: res.messageAttachments };
+                break;
+              }
+            }
+            return next;
+          });
+        }
         this.messages.update((msgs) => [
           ...msgs,
           {

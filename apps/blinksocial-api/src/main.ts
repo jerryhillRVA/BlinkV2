@@ -7,10 +7,20 @@ config({ path: resolve(process.cwd(), '.env') });
 import { Logger } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import cookieParser from 'cookie-parser';
+import express from 'express';
 import { AppModule } from './app/app.module';
+
+/**
+ * 25 MB combined-body limit. The onboarding chat accepts files up to 10 MB
+ * each (per `FilesInterceptor` in `OnboardingController`); the higher form
+ * cap accommodates a few text fields + multipart boundary overhead.
+ */
+const BODY_LIMIT = '25mb';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+  app.use(express.json({ limit: BODY_LIMIT }));
+  app.use(express.urlencoded({ limit: BODY_LIMIT, extended: true }));
   app.use(cookieParser());
   const port = process.env['PORT'] || 3000;
   await app.listen(port);

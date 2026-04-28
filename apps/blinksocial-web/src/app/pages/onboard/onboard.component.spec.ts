@@ -524,4 +524,257 @@ describe('OnboardComponent', () => {
 
     expect(fixture.nativeElement.querySelector('.chat-area')).toBeTruthy();
   });
+
+  describe('attachments composer', () => {
+    function makeFile(name: string, type: string, sizeBytes: number) {
+      return new File([new Uint8Array(sizeBytes)], name, { type });
+    }
+
+    /** JSDOM lacks a real `FileList`; build a structurally-compatible stand-in. */
+    function fakeFileList(files: File[]): FileList {
+      const list: Record<number | string, unknown> = {
+        length: files.length,
+        item: (i: number) => files[i] ?? null,
+        [Symbol.iterator]: function* () {
+          for (const f of files) yield f;
+        },
+      };
+      files.forEach((f, i) => {
+        list[i] = f;
+      });
+      return list as unknown as FileList;
+    }
+
+    function setInputFiles(input: HTMLInputElement, files: File[]) {
+      Object.defineProperty(input, 'files', {
+        value: fakeFileList(files),
+        configurable: true,
+      });
+      input.dispatchEvent(new Event('change'));
+    }
+
+    function dropFiles(
+      fixture: ReturnType<typeof TestBed.createComponent<OnboardComponent>>,
+      files: File[],
+    ) {
+      const target: HTMLElement = fixture.nativeElement.querySelector('.onboard-page');
+      const event = new Event('drop', { bubbles: true });
+      Object.defineProperty(event, 'dataTransfer', {
+        value: {
+          files: fakeFileList(files),
+          types: ['Files'],
+        },
+        configurable: true,
+      });
+      target.dispatchEvent(event);
+      fixture.detectChanges();
+    }
+
+    it('+ button opens the hidden file input', () => {
+      const fixture = createAndInitComponent();
+      const input: HTMLInputElement = fixture.nativeElement.querySelector(
+        '[data-testid="onboard-file-input"]',
+      );
+      const spy = vi.spyOn(input, 'click');
+      const btn: HTMLButtonElement = fixture.nativeElement.querySelector('.attach-btn');
+      btn.click();
+      expect(spy).toHaveBeenCalledTimes(1);
+    });
+
+    it('renders chips for picked files and removes them on × click', () => {
+      const fixture = createAndInitComponent();
+      const file = makeFile('notes.txt', 'text/plain', 50);
+      const input: HTMLInputElement = fixture.nativeElement.querySelector(
+        '[data-testid="onboard-file-input"]',
+      );
+      setInputFiles(input, [file]);
+      fixture.detectChanges();
+
+      const pending = fixture.nativeElement.querySelector(
+        '[data-testid="pending-attachments"]',
+      );
+      expect(pending).toBeTruthy();
+      expect(pending.textContent).toContain('notes.txt');
+
+      // Click × to remove
+      const removeBtn: HTMLButtonElement = pending.querySelector('.chip-remove');
+      removeBtn.click();
+      fixture.detectChanges();
+      expect(fixture.nativeElement.querySelector('[data-testid="pending-attachments"]')).toBeFalsy();
+    });
+
+    it('shows an error chip for files >10 MB and keeps valid siblings', () => {
+      const fixture = createAndInitComponent();
+      const valid = makeFile('ok.txt', 'text/plain', 100);
+      const oversized = makeFile('big.pdf', 'application/pdf', 11 * 1024 * 1024);
+
+      const input: HTMLInputElement = fixture.nativeElement.querySelector(
+        '[data-testid="onboard-file-input"]',
+      );
+      setInputFiles(input, [valid, oversized]);
+      fixture.detectChanges();
+
+      const chips = fixture.nativeElement.querySelectorAll('app-composer-attachment-chip');
+      expect(chips.length).toBe(2);
+      expect(fixture.nativeElement.textContent).toContain('exceeds 10 MB limit');
+    });
+
+    it('rejects unsupported types with an error chip', () => {
+      const fixture = createAndInitComponent();
+      const evil = makeFile('evil.exe', 'application/x-msdownload', 100);
+      const input: HTMLInputElement = fixture.nativeElement.querySelector(
+        '[data-testid="onboard-file-input"]',
+      );
+      setInputFiles(input, [evil]);
+      fixture.detectChanges();
+
+      expect(fixture.nativeElement.textContent).toContain('Unsupported file type');
+    });
+
+    it('drag-drop adds files via the chat-area', () => {
+      const fixture = createAndInitComponent();
+      const f = makeFile('photo.png', 'image/png', 100);
+      dropFiles(fixture, [f]);
+      const pending = fixture.nativeElement.querySelector(
+        '[data-testid="pending-attachments"]',
+      );
+      expect(pending?.textContent).toContain('photo.png');
+    });
+
+    it('on send with files, posts FormData and clears the chip row', () => {
+      const fixture = createAndInitComponent();
+      const file = makeFile('note.txt', 'text/plain', 50);
+      const input: HTMLInputElement = fixture.nativeElement.querySelector(
+        '[data-testid="onboard-file-input"]',
+      );
+      setInputFiles(input, [file]);
+      fixture.detectChanges();
+
+      fixture.componentInstance.userInput = 'see attached';
+      fixture.componentInstance.onSendMessage();
+      fixture.detectChanges();
+
+      const req = httpMock.expectOne('/api/onboarding/sessions/test-123/messages');
+      expect(req.request.body).toBeInstanceOf(FormData);
+      const fd = req.request.body as FormData;
+      expect(fd.get('content')).toBe('see attached');
+      expect((fd.get('files') as File).name).toBe('note.txt');
+      req.flush({
+        agentMessage: 'Got it.',
+        sections: mockSessionResponse.sections,
+        currentSection: 'business',
+        readyToGenerate: false,
+      });
+      fixture.detectChanges();
+
+      expect(fixture.nativeElement.querySelector('[data-testid="pending-attachments"]')).toBeFalsy();
+    });
+
+    it('on send without files, posts JSON (back-compat)', () => {
+      const fixture = createAndInitComponent();
+      fixture.componentInstance.userInput = 'just text';
+      fixture.componentInstance.onSendMessage();
+      const req = httpMock.expectOne('/api/onboarding/sessions/test-123/messages');
+      expect(req.request.body).toEqual({ content: 'just text' });
+      req.flush({
+        agentMessage: 'ok',
+        sections: mockSessionResponse.sections,
+        currentSection: 'business',
+        readyToGenerate: false,
+      });
+    });
+
+    it('+ button is keyboard-accessible (has aria-label)', () => {
+      const fixture = createAndInitComponent();
+      const btn: HTMLButtonElement = fixture.nativeElement.querySelector('.attach-btn');
+      expect(btn.getAttribute('aria-label')).toBe('Attach files');
+    });
+
+    it('flags total upload > 25 MB on the second file', () => {
+      const fixture = createAndInitComponent();
+      // Two 9 MB files = 18 MB OK; a third 9 MB file pushes total to 27 MB.
+      const f1 = makeFile('a.pdf', 'application/pdf', 9 * 1024 * 1024);
+      const f2 = makeFile('b.pdf', 'application/pdf', 9 * 1024 * 1024);
+      const f3 = makeFile('c.pdf', 'application/pdf', 9 * 1024 * 1024);
+      const input: HTMLInputElement = fixture.nativeElement.querySelector(
+        '[data-testid="onboard-file-input"]',
+      );
+      setInputFiles(input, [f1, f2, f3]);
+      fixture.detectChanges();
+      expect(fixture.nativeElement.textContent).toContain('Total upload exceeds 25 MB');
+    });
+
+    it('ignores drag events that do not carry files', () => {
+      const fixture = createAndInitComponent();
+      const target: HTMLElement = fixture.nativeElement.querySelector('.onboard-page');
+      const evt = new Event('dragenter', { bubbles: true });
+      Object.defineProperty(evt, 'dataTransfer', {
+        value: { types: ['text/plain'], files: fakeFileList([]) },
+        configurable: true,
+      });
+      target.dispatchEvent(evt);
+      fixture.detectChanges();
+      expect(fixture.nativeElement.querySelector('[data-testid="drop-overlay"]')).toBeFalsy();
+    });
+
+    it('shows drop overlay during a file drag, hides on dragleave', () => {
+      const fixture = createAndInitComponent();
+      const target: HTMLElement = fixture.nativeElement.querySelector('.onboard-page');
+      const enter = new Event('dragenter', { bubbles: true });
+      Object.defineProperty(enter, 'dataTransfer', {
+        value: { types: ['Files'], files: fakeFileList([]) },
+        configurable: true,
+      });
+      target.dispatchEvent(enter);
+      fixture.detectChanges();
+      expect(fixture.nativeElement.querySelector('[data-testid="drop-overlay"]')).toBeTruthy();
+
+      const leave = new Event('dragleave', { bubbles: true });
+      Object.defineProperty(leave, 'dataTransfer', {
+        value: { types: ['Files'], files: fakeFileList([]) },
+        configurable: true,
+      });
+      target.dispatchEvent(leave);
+      fixture.detectChanges();
+      expect(fixture.nativeElement.querySelector('[data-testid="drop-overlay"]')).toBeFalsy();
+    });
+
+    it('covers dragover with files (preventDefault path)', () => {
+      const fixture = createAndInitComponent();
+      const target: HTMLElement = fixture.nativeElement.querySelector('.onboard-page');
+      const evt = new Event('dragover', { bubbles: true, cancelable: true });
+      Object.defineProperty(evt, 'dataTransfer', {
+        value: { types: ['Files'], files: fakeFileList([]) },
+        configurable: true,
+      });
+      target.dispatchEvent(evt);
+      // No assertion needed beyond running the handler — it preventDefaults.
+      expect(evt.defaultPrevented).toBe(true);
+    });
+
+    it('rejects .doc by MIME (application/msword)', () => {
+      const fixture = createAndInitComponent();
+      const doc = makeFile('legacy.doc', 'application/msword', 100);
+      const input: HTMLInputElement = fixture.nativeElement.querySelector(
+        '[data-testid="onboard-file-input"]',
+      );
+      setInputFiles(input, [doc]);
+      fixture.detectChanges();
+      expect(fixture.nativeElement.textContent).toContain('Legacy .doc not supported');
+    });
+
+    it('handles a filename with no extension cleanly', () => {
+      const fixture = createAndInitComponent();
+      const noExt = makeFile('readme', 'text/plain', 50);
+      const input: HTMLInputElement = fixture.nativeElement.querySelector(
+        '[data-testid="onboard-file-input"]',
+      );
+      setInputFiles(input, [noExt]);
+      fixture.detectChanges();
+      // text/plain MIME is accepted even without an extension.
+      expect(
+        fixture.nativeElement.querySelector('[data-testid="pending-attachments"]'),
+      ).toBeTruthy();
+    });
+  });
 });

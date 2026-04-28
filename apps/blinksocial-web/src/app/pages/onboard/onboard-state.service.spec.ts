@@ -142,6 +142,43 @@ describe('OnboardStateService', () => {
     expect(service.messages()).toEqual([]);
   });
 
+  it('sends multipart with files and replaces optimistic chips with persisted records', () => {
+    service.sessionId.set('sess-1');
+    const file = new File(['hi'], 'note.txt', { type: 'text/plain' });
+    service.sendMessage('see attached', [file]);
+
+    // Optimistic user message has a pending attachment chip
+    const optimistic = service.messages().at(-1);
+    expect(optimistic?.role).toBe('user');
+    expect(optimistic?.attachments?.[0].filename).toBe('note.txt');
+    expect(optimistic?.attachments?.[0].id.startsWith('pending-')).toBe(true);
+
+    const req = httpMock.expectOne('/api/onboarding/sessions/sess-1/messages');
+    expect(req.request.body).toBeInstanceOf(FormData);
+    req.flush({
+      agentMessage: 'Got it.',
+      sections: [],
+      currentSection: 'business',
+      readyToGenerate: false,
+      messageAttachments: [
+        {
+          id: 'srv-1',
+          filename: 'note.txt',
+          mimeType: 'text/plain',
+          sizeBytes: 2,
+          fileId: 'afs-1',
+          kind: 'text',
+        },
+      ],
+    });
+
+    // Optimistic id replaced; assistant reply appended.
+    const userMsg = service.messages().find((m) => m.role === 'user');
+    expect(userMsg?.attachments?.[0].id).toBe('srv-1');
+    expect(userMsg?.attachments?.[0].fileId).toBe('afs-1');
+    expect(service.messages().at(-1)?.role).toBe('assistant');
+  });
+
   it('should handle send message error', () => {
     service.sessionId.set('sess-1');
     service.sendMessage('test');

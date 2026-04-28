@@ -90,6 +90,28 @@ describe('OnboardApiService', () => {
     req.flush({ workspaceId: 'ws-1', tenantId: 'tenant-1', wizardData: {} });
   });
 
+  it('uses FormData (multipart) when sending with attachments', () => {
+    const file = new File(['hello'], 'note.txt', { type: 'text/plain' });
+    service.sendMessage('abc-123', 'see notes', [file]).subscribe();
+
+    const req = httpMock.expectOne('/api/onboarding/sessions/abc-123/messages');
+    expect(req.request.method).toBe('POST');
+    expect(req.request.body).toBeInstanceOf(FormData);
+    const fd = req.request.body as FormData;
+    expect(fd.get('content')).toBe('see notes');
+    const files = fd.getAll('files');
+    expect(files.length).toBe(1);
+    expect((files[0] as File).name).toBe('note.txt');
+    req.flush({ agentMessage: 'ok', sections: [], currentSection: 'business', readyToGenerate: false });
+  });
+
+  it('falls back to JSON when no files are passed', () => {
+    service.sendMessage('abc-123', 'just text', []).subscribe();
+    const req = httpMock.expectOne('/api/onboarding/sessions/abc-123/messages');
+    expect(req.request.body).toEqual({ content: 'just text' });
+    req.flush({ agentMessage: 'ok', sections: [], currentSection: 'business', readyToGenerate: false });
+  });
+
   it('should resume session by workspace', () => {
     service.resumeSession('tenant-abc').subscribe((res) => {
       expect(res.sessionId).toBe('resumed-1');

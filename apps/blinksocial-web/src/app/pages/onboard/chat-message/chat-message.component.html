@@ -8,6 +8,18 @@
     </div>
   }
   <div class="bubble">
-    <p class="content">{{ message().content }}</p>
+    @if (message().content) {
+      <p class="content">{{ message().content }}</p>
+    }
+    @if ((message().attachments ?? []).length > 0) {
+      <div class="attachments" data-testid="message-attachments">
+        @for (att of message().attachments ?? []; track att.id) {
+          <app-composer-attachment-chip
+            [filename]="att.filename"
+            [sizeBytes]="att.sizeBytes"
+            [removable]="false" />
+        }
+      </div>
+    }
   </div>
 </div>

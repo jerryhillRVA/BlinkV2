@@ -1,6 +1,20 @@
+/**
+ * A single block within a multimodal message. Mirrors the shape Anthropic
+ * accepts so providers can pass it through unchanged.
+ */
+export type LlmContentBlock =
+  | { type: 'text'; text: string }
+  | { type: 'image'; mediaType: string; base64Data: string }
+  | { type: 'document'; mediaType: string; base64Data: string };
+
 export interface LlmMessage {
   role: 'system' | 'user' | 'assistant';
-  content: string;
+  /**
+   * Plain text (back-compat) or an array of multimodal content blocks.
+   * Providers translate to their native shape; existing callers passing
+   * strings continue to work.
+   */
+  content: string | LlmContentBlock[];
 }
 
 export interface LlmCompletionOptions {

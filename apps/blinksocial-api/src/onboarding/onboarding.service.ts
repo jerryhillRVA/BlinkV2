@@ -5,12 +5,17 @@ import {
   HttpException,
   HttpStatus,
 } from '@nestjs/common';
+import { randomUUID } from 'crypto';
 import { SkillRunnerService } from '../skills/skill-runner.service';
 import { SessionStore, type OnboardingSessionState } from './session-store';
 import { WorkspacesService } from '../workspaces/workspaces.service';
 import { UserService } from '../auth/user.service';
 import { AgenticFilesystemService } from '../agentic-filesystem/agentic-filesystem.service';
 import { BlueprintValidationService } from './blueprint-validation.service';
+import {
+  AttachmentExtractorService,
+  type ExtractedAttachment,
+} from './attachment-extractor.service';
 import type {
   DiscoverySectionId,
   DiscoverySectionContract,
@@ -20,10 +25,25 @@ import type {
   GenerateBlueprintResponseContract,
   BlueprintDocumentContract,
   CreateWorkspaceFromBlueprintResponseContract,
+  OnboardingMessageContract,
+  OnboardingAttachmentContract,
 } from '@blinksocial/contracts';
+import type { LlmContentBlock, LlmMessage } from '../llm/llm-provider.interface';
 import { WorkspaceBuilderService } from './workspace-builder.service';
 
 const SKILL_ID = 'onboarding-consultant';
+
+/** Per-session ceiling on combined extracted-attachment text fed to the LLM. */
+const MAX_EXTRACTED_TEXT_PER_SESSION = 100_000;
+/** Maximum number of images carried forward to subsequent turns (FIFO). */
+const MAX_IMAGES_CARRIED = 10;
+/** Maximum textPreview length stored on the message attachment record. */
+const TEXT_PREVIEW_CHARS = 280;
+/** AFS namespace where attachment binaries live. */
+const ATTACHMENT_NAMESPACE = 'onboarding-attachments';
+/** AFS namespace where extracted-text sidecar JSON lives. */
+const ATTACHMENT_TEXT_NAMESPACE = 'settings';
+const ATTACHMENT_TEXT_PATH_PREFIX = 'onboarding-attachments-text';
 
 interface AgentTurnResponse {
   agentMessage: string;
@@ -31,6 +51,14 @@ interface AgentTurnResponse {
   sectionsCovered?: string[];
   readyToGenerate?: boolean;
   currentSection?: string;
+}
+
+/** A single inbound attachment as received by the controller. */
+export interface IncomingAttachment {
+  filename: string;
+  mimeType: string;
+  buffer: Buffer;
+  sizeBytes: number;
 }
 
 @Injectable()
@@ -45,6 +73,7 @@ export class OnboardingService {
     private readonly fs: AgenticFilesystemService,
     private readonly workspaceBuilder: WorkspaceBuilderService,
     private readonly blueprintValidator: BlueprintValidationService,
+    private readonly attachmentExtractor: AttachmentExtractorService,
   ) {}
 
   async createSession(
@@ -98,8 +127,14 @@ export class OnboardingService {
     const now = new Date().toISOString();
     const updatedSession = this.sessionStore.update(session.id, {
       messages: [
-        { role: 'user', content: initialUserMessage, timestamp: now },
         {
+          id: randomUUID(),
+          role: 'user',
+          content: initialUserMessage,
+          timestamp: now,
+        },
+        {
+          id: randomUUID(),
           role: 'assistant',
           content: turnResponse.agentMessage,
           timestamp: now,
@@ -125,6 +160,7 @@ export class OnboardingService {
     sessionId: string,
     userId: string,
     content: string,
+    incomingAttachments: IncomingAttachment[] = [],
   ): Promise<SendMessageResponseContract> {
     const session = this.sessionStore.get(sessionId);
     if (!session) {
@@ -139,17 +175,72 @@ export class OnboardingService {
       );
     }
 
+    const messageId = randomUUID();
     const now = new Date().toISOString();
-    const updatedMessages = [
-      ...session.messages,
-      { role: 'user' as const, content, timestamp: now },
-    ];
 
-    // Build conversation history for the LLM
-    const conversationHistory = updatedMessages.map((m) => ({
-      role: m.role as 'user' | 'assistant',
-      content: m.content,
-    }));
+    // 1. Process inbound attachments — validate, extract text, persist binary + sidecar.
+    const persistedAttachments: OnboardingAttachmentContract[] = [];
+    const newlyExtractedThisTurn = new Map<string, ExtractedAttachment>();
+    for (const file of incomingAttachments) {
+      try {
+        this.attachmentExtractor.validate(file.filename, file.mimeType, file.sizeBytes);
+        const extracted = await this.attachmentExtractor.extract(
+          file.filename,
+          file.mimeType,
+          file.buffer,
+        );
+        const attId = randomUUID();
+        const fileId = await this.uploadAttachmentBinary(
+          session.tenantId,
+          messageId,
+          attId,
+          file,
+        );
+        await this.uploadAttachmentText(session.tenantId, attId, extracted);
+        const record: OnboardingAttachmentContract = {
+          id: attId,
+          filename: this.sanitizeFilename(file.filename),
+          mimeType: file.mimeType,
+          sizeBytes: file.sizeBytes,
+          fileId,
+          kind: extracted.kind,
+          textPreview: extracted.text
+            ? extracted.text.slice(0, TEXT_PREVIEW_CHARS)
+            : undefined,
+        };
+        persistedAttachments.push(record);
+        newlyExtractedThisTurn.set(attId, extracted);
+      } catch (err) {
+        if (err instanceof BadRequestException) {
+          throw err;
+        }
+        this.logger.error(
+          `Failed to process attachment "${file.filename}": ${err instanceof Error ? err.message : String(err)}`,
+        );
+        throw new BadRequestException(
+          `File "${file.filename}" could not be processed.`,
+        );
+      }
+    }
+
+    // 2. Build the new user message and append to history.
+    const userMessage: OnboardingMessageContract = {
+      id: messageId,
+      role: 'user',
+      content,
+      timestamp: now,
+      ...(persistedAttachments.length > 0
+        ? { attachments: persistedAttachments }
+        : {}),
+    };
+    const updatedMessages = [...session.messages, userMessage];
+
+    // 3. Assemble LLM conversation, replaying historical attachments as content blocks.
+    const conversationHistory = await this.buildConversationHistory(
+      session,
+      updatedMessages,
+      newlyExtractedThisTurn,
+    );
 
     const stateContext = this.buildStateContext(session);
 
@@ -161,7 +252,7 @@ export class OnboardingService {
 
     const turnResponse = this.parseTurnResponse(result.content, result.parsed);
 
-    // Update discovery data
+    // 4. Update discovery data
     const discoveryData = { ...session.discoveryData };
     if (turnResponse.sectionsUpdated) {
       for (const [sectionId, data] of Object.entries(
@@ -174,7 +265,6 @@ export class OnboardingService {
       }
     }
 
-    // Update sections covered (only grows, never shrinks)
     const sectionsCovered = [
       ...new Set([
         ...session.sectionsCovered,
@@ -182,7 +272,6 @@ export class OnboardingService {
       ]),
     ] as DiscoverySectionId[];
 
-    // Validate readyToGenerate — all 7 sections must be covered
     const allSectionIds: DiscoverySectionId[] = [
       'business',
       'brand_voice',
@@ -196,16 +285,15 @@ export class OnboardingService {
       turnResponse.readyToGenerate === true &&
       allSectionIds.every((s) => sectionsCovered.includes(s));
 
-    // Save updated state
+    // 5. Save updated state
+    const assistantMessage: OnboardingMessageContract = {
+      id: randomUUID(),
+      role: 'assistant',
+      content: turnResponse.agentMessage,
+      timestamp: new Date().toISOString(),
+    };
     const updatedSession = this.sessionStore.update(sessionId, {
-      messages: [
-        ...updatedMessages,
-        {
-          role: 'assistant',
-          content: turnResponse.agentMessage,
-          timestamp: new Date().toISOString(),
-        },
-      ],
+      messages: [...updatedMessages, assistantMessage],
       discoveryData,
       sectionsCovered,
       currentSection:
@@ -214,7 +302,6 @@ export class OnboardingService {
       readyToGenerate,
     });
 
-    // Persist session to AFS (fire-and-forget)
     this.persistSessionToAfs(updatedSession);
 
     return {
@@ -222,6 +309,9 @@ export class OnboardingService {
       sections: this.buildSectionsResponse(updatedSession),
       currentSection: updatedSession.currentSection,
       readyToGenerate,
+      ...(persistedAttachments.length > 0
+        ? { messageAttachments: persistedAttachments }
+        : {}),
     };
   }
 
@@ -263,16 +353,27 @@ export class OnboardingService {
     this.sessionStore.update(sessionId, { status: 'generating' });
 
     try {
+      // Pull historical attachment text + replay representative images to
+      // ensure the Blueprint reflects uploaded materials.
+      const attachmentBlocks = await this.buildBlueprintAttachmentBlocks(session);
+      const userBlocks: LlmContentBlock[] = [
+        {
+          type: 'text',
+          text: `Generate the Blink Blueprint document based on the following discovery data:\n\n${JSON.stringify(session.discoveryData, null, 2)}\n\nUse the blueprint-template.md instructions to create a comprehensive, tailored content strategy document. Return ONLY valid JSON matching the BlueprintDocumentContract schema.`,
+        },
+        ...attachmentBlocks,
+      ];
+
       const result = await this.skillRunner.run({
         skillId: SKILL_ID,
         conversationHistory: [
           {
             role: 'user',
-            content: `Generate the Blink Blueprint document based on the following discovery data:\n\n${JSON.stringify(session.discoveryData, null, 2)}\n\nUse the blueprint-template.md instructions to create a comprehensive, tailored content strategy document. Return ONLY valid JSON matching the BlueprintDocumentContract schema.`,
+            content: attachmentBlocks.length > 0 ? userBlocks : userBlocks[0].type === 'text' ? userBlocks[0].text : '',
           },
         ],
         additionalContext:
-          'MODE: BLUEPRINT_GENERATION\n\nYou are now in blueprint generation mode. Use the discovery data provided to generate a complete Blink Blueprint content strategy document. Return a JSON object matching the blueprint schema exactly.',
+          'MODE: BLUEPRINT_GENERATION\n\nYou are now in blueprint generation mode. Use the discovery data provided AND any uploaded attachment context to generate a complete Blink Blueprint content strategy document. Return a JSON object matching the blueprint schema exactly.',
         maxTokens: 8192,
         temperature: 0.5,
       });
@@ -419,6 +520,358 @@ export class OnboardingService {
 
     return result;
   }
+
+  // ---------------------------------------------------------------------------
+  // Attachment helpers
+  // ---------------------------------------------------------------------------
+
+  /**
+   * Sanitize a user-supplied filename for filesystem storage. Strips path
+   * separators and control characters; preserves basic readability.
+   */
+  private sanitizeFilename(name: string): string {
+    // eslint-disable-next-line no-control-regex -- intentionally strip control bytes
+    return name.replace(/[\\/\x00-\x1f]/g, '_').slice(0, 200);
+  }
+
+  private async uploadAttachmentBinary(
+    tenantId: string | undefined,
+    messageId: string,
+    attachmentId: string,
+    file: IncomingAttachment,
+  ): Promise<string> {
+    if (!tenantId || !this.fs.isConfigured()) {
+      // No AFS configured — return a synthetic id so the session record is
+      // still well-formed; binary won't survive process restart.
+      return `local-${attachmentId}`;
+    }
+    const safeName = `${attachmentId}__${this.sanitizeFilename(file.filename)}`;
+    try {
+      const result = await this.fs.uploadBinaryFile(
+        tenantId,
+        ATTACHMENT_NAMESPACE,
+        safeName,
+        file.mimeType,
+        file.buffer,
+        [`messageId:${messageId}`],
+      );
+      return result.file_id;
+    } catch (err) {
+      this.logger.error(
+        `Failed to upload attachment binary "${file.filename}" for tenant ${tenantId}: ${err instanceof Error ? err.message : String(err)}`,
+      );
+      throw new BadRequestException(
+        `Could not store "${file.filename}". Please try again.`,
+      );
+    }
+  }
+
+  private async uploadAttachmentText(
+    tenantId: string | undefined,
+    attachmentId: string,
+    extracted: ExtractedAttachment,
+  ): Promise<void> {
+    if (!extracted.text || !tenantId || !this.fs.isConfigured()) {
+      return;
+    }
+    try {
+      await this.fs.uploadJsonFile(
+        tenantId,
+        ATTACHMENT_TEXT_NAMESPACE,
+        `${ATTACHMENT_TEXT_PATH_PREFIX}-${attachmentId}.json`,
+        { text: extracted.text, truncated: extracted.truncated ?? false },
+      );
+    } catch (err) {
+      this.logger.warn(
+        `Failed to upload attachment text sidecar for ${attachmentId}: ${err instanceof Error ? err.message : String(err)}`,
+      );
+      // Non-fatal — chip preview still works from the in-memory copy this turn.
+    }
+  }
+
+  /**
+   * Look up the cached extracted text for a previously-uploaded attachment.
+   * Returns `undefined` if AFS is not configured, the sidecar is missing, or
+   * the read fails — callers should fall back to the chip's textPreview.
+   */
+  private async loadAttachmentText(
+    tenantId: string | undefined,
+    attachmentId: string,
+  ): Promise<string | undefined> {
+    if (!tenantId || !this.fs.isConfigured()) {
+      return undefined;
+    }
+    try {
+      const settings = await this.workspacesService.getSettings(
+        tenantId,
+        `${ATTACHMENT_TEXT_PATH_PREFIX}-${attachmentId}`,
+      );
+      if (settings && typeof settings === 'object' && 'text' in settings) {
+        return String((settings as { text: unknown }).text ?? '');
+      }
+    } catch {
+      // Settle for textPreview in this case.
+    }
+    return undefined;
+  }
+
+  /**
+   * Build the full LLM conversation: text-only history for older messages,
+   * with attachment content blocks added to (a) any prior message that had
+   * attachments (text/image carry-forward), and (b) the latest user turn
+   * where new uploads are still in their full form.
+   *
+   * Caps applied:
+   *  - At most {@link MAX_IMAGES_CARRIED} most-recent images survive.
+   *  - Combined extracted text capped at
+   *    {@link MAX_EXTRACTED_TEXT_PER_SESSION} chars (FIFO drop oldest).
+   *  - PDFs from prior turns downgrade to their extracted text (the doc
+   *    block only travels on the turn it was uploaded).
+   */
+  private async buildConversationHistory(
+    session: OnboardingSessionState,
+    messages: OnboardingMessageContract[],
+    newlyExtractedThisTurn: Map<string, ExtractedAttachment>,
+  ): Promise<LlmMessage[]> {
+    // First pass: collect all attachments in chronological order.
+    type AttachmentEntry = {
+      messageIdx: number;
+      record: OnboardingAttachmentContract;
+      isCurrentTurn: boolean;
+    };
+    const allAttachments: AttachmentEntry[] = [];
+    messages.forEach((msg, idx) => {
+      for (const att of msg.attachments ?? []) {
+        allAttachments.push({
+          messageIdx: idx,
+          record: att,
+          isCurrentTurn: newlyExtractedThisTurn.has(att.id),
+        });
+      }
+    });
+
+    // Image cap: keep the most-recent N images, drop older ones from the
+    // outbound LLM payload (they remain on the session record for the UI).
+    const imageEntries = allAttachments.filter((a) => a.record.kind === 'image');
+    const droppedImageIds = new Set<string>();
+    if (imageEntries.length > MAX_IMAGES_CARRIED) {
+      for (const e of imageEntries.slice(0, imageEntries.length - MAX_IMAGES_CARRIED)) {
+        droppedImageIds.add(e.record.id);
+      }
+      this.logger.warn(
+        `Dropping ${droppedImageIds.size} oldest image attachment(s) from LLM context (cap=${MAX_IMAGES_CARRIED}).`,
+      );
+    }
+
+    // Text budget: walk newest → oldest, accumulate until cap.
+    const textEntries = allAttachments.filter(
+      (a) => a.record.kind === 'pdf' || a.record.kind === 'document' || a.record.kind === 'text',
+    );
+    let usedTextBudget = 0;
+    const truncatedTextIds = new Set<string>();
+    const includedTextById = new Map<string, string>();
+    for (let i = textEntries.length - 1; i >= 0; i--) {
+      const entry = textEntries[i];
+      const text = await this.resolveAttachmentText(
+        session.tenantId,
+        entry.record,
+        newlyExtractedThisTurn,
+      );
+      if (!text) continue;
+      const remaining = MAX_EXTRACTED_TEXT_PER_SESSION - usedTextBudget;
+      if (remaining <= 0) {
+        truncatedTextIds.add(entry.record.id);
+        continue;
+      }
+      const slice = text.length > remaining ? text.slice(0, remaining) : text;
+      includedTextById.set(entry.record.id, slice);
+      usedTextBudget += slice.length;
+      if (slice.length < text.length) {
+        truncatedTextIds.add(entry.record.id);
+      }
+    }
+    if (truncatedTextIds.size > 0) {
+      this.logger.warn(
+        `Truncated ${truncatedTextIds.size} attachment text payload(s) at ${MAX_EXTRACTED_TEXT_PER_SESSION}-char per-session cap.`,
+      );
+    }
+
+    // Build the per-message LLM payloads.
+    const llmMessages: LlmMessage[] = [];
+    for (let idx = 0; idx < messages.length; idx++) {
+      const msg = messages[idx];
+      const role = msg.role;
+      const messageAttachments = (msg.attachments ?? []).filter((a) => {
+        if (a.kind === 'image') return !droppedImageIds.has(a.id);
+        return true;
+      });
+
+      if (messageAttachments.length === 0) {
+        llmMessages.push({ role, content: msg.content });
+        continue;
+      }
+
+      const blocks: LlmContentBlock[] = [];
+      if (msg.content && msg.content.trim().length > 0) {
+        blocks.push({ type: 'text', text: msg.content });
+      }
+      for (const att of messageAttachments) {
+        if (att.kind === 'image') {
+          const imgBlock = await this.attachmentImageBlock(
+            session.tenantId,
+            att,
+            newlyExtractedThisTurn,
+          );
+          if (imgBlock) blocks.push(imgBlock);
+        } else if (att.kind === 'pdf') {
+          // Doc block only on the turn it was uploaded; later turns degrade
+          // to the extracted text included via includedTextById below.
+          if (newlyExtractedThisTurn.has(att.id)) {
+            const docBlock = await this.attachmentDocumentBlock(
+              session.tenantId,
+              att,
+              newlyExtractedThisTurn,
+            );
+            if (docBlock) blocks.push(docBlock);
+          }
+        }
+        const includedText = includedTextById.get(att.id);
+        if (includedText) {
+          blocks.push({
+            type: 'text',
+            text: `[Attachment: ${att.filename}]\n${includedText}`,
+          });
+        }
+      }
+
+      if (blocks.length === 0) {
+        // Fall back to plain string so we never emit an empty content array.
+        llmMessages.push({ role, content: msg.content });
+      } else {
+        llmMessages.push({ role, content: blocks });
+      }
+    }
+
+    return llmMessages;
+  }
+
+  private async resolveAttachmentText(
+    tenantId: string | undefined,
+    record: OnboardingAttachmentContract,
+    newlyExtractedThisTurn: Map<string, ExtractedAttachment>,
+  ): Promise<string | undefined> {
+    const fresh = newlyExtractedThisTurn.get(record.id);
+    if (fresh?.text) return fresh.text;
+    const cached = await this.loadAttachmentText(tenantId, record.id);
+    if (cached) return cached;
+    return record.textPreview;
+  }
+
+  private async attachmentImageBlock(
+    tenantId: string | undefined,
+    record: OnboardingAttachmentContract,
+    newlyExtractedThisTurn: Map<string, ExtractedAttachment>,
+  ): Promise<LlmContentBlock | null> {
+    const buffer = await this.loadAttachmentBinary(
+      tenantId,
+      record,
+      newlyExtractedThisTurn,
+    );
+    if (!buffer) return null;
+    return {
+      type: 'image',
+      mediaType: record.mimeType || 'image/png',
+      base64Data: buffer.toString('base64'),
+    };
+  }
+
+  private async attachmentDocumentBlock(
+    tenantId: string | undefined,
+    record: OnboardingAttachmentContract,
+    newlyExtractedThisTurn: Map<string, ExtractedAttachment>,
+  ): Promise<LlmContentBlock | null> {
+    const buffer = await this.loadAttachmentBinary(
+      tenantId,
+      record,
+      newlyExtractedThisTurn,
+    );
+    if (!buffer) return null;
+    return {
+      type: 'document',
+      mediaType: 'application/pdf',
+      base64Data: buffer.toString('base64'),
+    };
+  }
+
+  private async loadAttachmentBinary(
+    tenantId: string | undefined,
+    record: OnboardingAttachmentContract,
+    newlyExtractedThisTurn: Map<string, ExtractedAttachment>,
+  ): Promise<Buffer | null> {
+    // No binary kept on the in-memory extraction record — we always re-read
+    // from AFS so the stateless path is identical for current + historical.
+    if (!tenantId || !this.fs.isConfigured()) {
+      // Without AFS we cannot replay binary content on subsequent turns;
+      // fall through to text fallback.
+      void newlyExtractedThisTurn;
+      return null;
+    }
+    try {
+      return await this.fs.downloadBinaryFile(tenantId, record.fileId);
+    } catch (err) {
+      this.logger.warn(
+        `Failed to fetch attachment ${record.id} (${record.filename}) for LLM replay: ${err instanceof Error ? err.message : String(err)}`,
+      );
+      return null;
+    }
+  }
+
+  /**
+   * Build content blocks summarising all session attachments for the
+   * blueprint-generation prompt: a text manifest + image replays (capped).
+   */
+  private async buildBlueprintAttachmentBlocks(
+    session: OnboardingSessionState,
+  ): Promise<LlmContentBlock[]> {
+    const records = session.messages.flatMap((m) => m.attachments ?? []);
+    if (records.length === 0) return [];
+
+    const manifestLines: string[] = [
+      '',
+      '## Uploaded reference materials',
+      '',
+    ];
+    for (const r of records) {
+      const cached = await this.loadAttachmentText(session.tenantId, r.id);
+      const snippet = (cached ?? r.textPreview ?? '').slice(0, 2000);
+      manifestLines.push(`### ${r.filename} (${r.kind})`);
+      if (snippet) {
+        manifestLines.push(snippet);
+      } else {
+        manifestLines.push('_(binary asset — see image content blocks below)_');
+      }
+      manifestLines.push('');
+    }
+    const blocks: LlmContentBlock[] = [
+      { type: 'text', text: manifestLines.join('\n') },
+    ];
+
+    // Replay up to 10 images.
+    const images = records.filter((r) => r.kind === 'image').slice(-MAX_IMAGES_CARRIED);
+    for (const img of images) {
+      const block = await this.attachmentImageBlock(
+        session.tenantId,
+        img,
+        new Map(),
+      );
+      if (block) blocks.push(block);
+    }
+    return blocks;
+  }
+
+  // ---------------------------------------------------------------------------
+  // Existing helpers (unchanged behaviour)
+  // ---------------------------------------------------------------------------
 
   private persistSessionToAfs(session: OnboardingSessionState): void {
     if (!session.tenantId || !this.fs.isConfigured()) {

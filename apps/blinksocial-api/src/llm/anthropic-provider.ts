@@ -5,6 +5,7 @@ import type {
   LlmCompletionOptions,
   LlmCompletionResult,
   LlmMessage,
+  LlmContentBlock,
 } from './llm-provider.interface';
 
 const DEFAULT_MODEL = 'claude-sonnet-4-6';
@@ -46,15 +47,24 @@ export class AnthropicProvider implements LlmProvider {
     const conversationMessages = options.messages
       .filter((m): m is LlmMessage & { role: 'user' | 'assistant' } => m.role !== 'system');
 
+    // System messages must be plain text — Anthropic's `system` field is a string.
+    const systemText =
+      systemMessage && typeof systemMessage.content === 'string'
+        ? systemMessage.content
+        : undefined;
+
     const response = await this.client.messages.create({
       model: this.model,
       max_tokens: options.maxTokens ?? DEFAULT_MAX_TOKENS,
       temperature: options.temperature,
       stop_sequences: options.stopSequences,
-      ...(systemMessage ? { system: systemMessage.content } : {}),
+      ...(systemText ? { system: systemText } : {}),
       messages: conversationMessages.map((m) => ({
         role: m.role,
-        content: m.content,
+        content:
+          typeof m.content === 'string'
+            ? m.content
+            : this.toAnthropicContentBlocks(m.content),
       })),
     });
 
@@ -71,5 +81,43 @@ export class AnthropicProvider implements LlmProvider {
         outputTokens: response.usage.output_tokens,
       },
     };
+  }
+
+  /**
+   * Translate our provider-neutral content blocks into the shape the
+   * Anthropic SDK expects on `messages[].content`.
+   */
+  private toAnthropicContentBlocks(
+    blocks: LlmContentBlock[],
+  ): Array<
+    | Anthropic.Messages.TextBlockParam
+    | Anthropic.Messages.ImageBlockParam
+    | Anthropic.Messages.DocumentBlockParam
+  > {
+    return blocks.map((b) => {
+      if (b.type === 'text') {
+        return { type: 'text', text: b.text } as Anthropic.Messages.TextBlockParam;
+      }
+      if (b.type === 'image') {
+        return {
+          type: 'image',
+          source: {
+            type: 'base64',
+            media_type:
+              b.mediaType as Anthropic.Messages.Base64ImageSource['media_type'],
+            data: b.base64Data,
+          },
+        } as Anthropic.Messages.ImageBlockParam;
+      }
+      // document — Anthropic supports base64 PDFs natively.
+      return {
+        type: 'document',
+        source: {
+          type: 'base64',
+          media_type: 'application/pdf',
+          data: b.base64Data,
+        },
+      } as Anthropic.Messages.DocumentBlockParam;
+    });
   }
 }

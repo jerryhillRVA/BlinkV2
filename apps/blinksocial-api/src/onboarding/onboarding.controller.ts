@@ -7,14 +7,22 @@ import {
   Req,
   ForbiddenException,
   Logger,
+  UseInterceptors,
+  UploadedFiles,
 } from '@nestjs/common';
+import { FilesInterceptor } from '@nestjs/platform-express';
 import type { Request } from 'express';
 import type {
   UserContract,
   CreateSessionRequestContract,
   SendMessageRequestContract,
 } from '@blinksocial/contracts';
-import { OnboardingService } from './onboarding.service';
+import { OnboardingService, type IncomingAttachment } from './onboarding.service';
+
+/** Per-file size cap, mirrored in `AttachmentExtractorService.MAX_ATTACHMENT_BYTES`. */
+const MAX_ATTACHMENT_BYTES = 10 * 1024 * 1024;
+/** Maximum number of attachments accepted in a single turn. */
+const MAX_FILES_PER_TURN = 20;
 
 @Controller('api/onboarding')
 export class OnboardingController {
@@ -37,14 +45,31 @@ export class OnboardingController {
   }
 
   @Post('sessions/:id/messages')
+  @UseInterceptors(
+    FilesInterceptor('files', MAX_FILES_PER_TURN, {
+      limits: { fileSize: MAX_ATTACHMENT_BYTES },
+    }),
+  )
   async sendMessage(
     @Req() req: Request,
     @Param('id') sessionId: string,
     @Body() body: SendMessageRequestContract,
+    @UploadedFiles() files?: Express.Multer.File[],
   ) {
     const user = this.extractUser(req);
     this.assertAdminAccess(user);
-    return this.onboardingService.handleMessage(sessionId, user.id, body.content);
+    const incoming: IncomingAttachment[] = (files ?? []).map((f) => ({
+      filename: f.originalname,
+      mimeType: f.mimetype,
+      buffer: f.buffer,
+      sizeBytes: f.size,
+    }));
+    return this.onboardingService.handleMessage(
+      sessionId,
+      user.id,
+      body.content ?? '',
+      incoming,
+    );
   }
 
   @Get('sessions/:id')
