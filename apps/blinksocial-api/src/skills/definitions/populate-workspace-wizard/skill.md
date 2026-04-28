@@ -38,7 +38,7 @@ Return ONLY a valid JSON object (no markdown fences, no explanation) matching Cr
 - `status`: `"creating"`
 
 ### brandVoice (BrandVoiceSettingsContract)
-- `brandVoiceDescription`: from `brandVoice.positioningStatement`
+- `brandVoiceDescription`: synthesize a single coherent prose paragraph (≤ 800 characters; HARD CAP 2000) that reflects the brand's voice and tone, drawing on **all five** Blueprint `brandVoice` fields together: `positioningStatement`, `contentMission`, `voiceAttributes` (incorporate the attribute names and their descriptions), `doList` (let these inform the voice's affirmative qualities), and `dontList` (let these inform what the voice avoids). Write in natural prose — no bullet lists, no markdown headings, no leading dashes/asterisks/bullets. Do not copy `positioningStatement` verbatim; weave its meaning into the paragraph alongside the other fields.
 - `toneGuidelines`: from `brandVoice.voiceAttributes` — map each to `"{attribute}: {description}"`
 - `toneTags`: extract 3-6 short tone descriptor words from `brandVoice.voiceAttributes` (e.g., "professional", "bold", "witty", "empathetic")
 - `voiceAttributes`: array of objects, one per `brandVoice.voiceAttributes` entry:
