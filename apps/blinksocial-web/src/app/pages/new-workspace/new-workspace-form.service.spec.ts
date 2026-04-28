@@ -843,7 +843,7 @@ describe('NewWorkspaceFormService', () => {
   // --- addObjective/removeObjective boundary tests ---
 
   it('should not add objective beyond MAX_OBJECTIVES', () => {
-    expect(MAX_OBJECTIVES).toBe(4);
+    expect(MAX_OBJECTIVES).toBe(10);
     // Start with default 1, add until cap
     while (service.businessObjectives().length < MAX_OBJECTIVES) {
       service.addObjective();
@@ -919,23 +919,34 @@ describe('NewWorkspaceFormService', () => {
     });
 
     it('caps at MAX_OBJECTIVES with suggestions dropping first', () => {
-      // Seed MAX_OBJECTIVES - 1 manual entries (3) — fresh state has 1, add 2.
-      service.updateObjective(service.businessObjectives()[0].id, 'statement', 'A');
-      service.addObjective();
-      service.updateObjective(service.businessObjectives()[1].id, 'statement', 'B');
-      service.addObjective();
-      service.updateObjective(service.businessObjectives()[2].id, 'statement', 'C');
+      // Seed MAX_OBJECTIVES - 1 non-empty manual entries; fresh state has 1.
+      const seedCount = MAX_OBJECTIVES - 1;
+      const seedStatements = Array.from({ length: seedCount }, (_, i) => `seed-${i + 1}`);
+      service.updateObjective(
+        service.businessObjectives()[0].id,
+        'statement',
+        seedStatements[0],
+      );
+      for (let i = 1; i < seedCount; i++) {
+        service.addObjective();
+        service.updateObjective(
+          service.businessObjectives()[i].id,
+          'statement',
+          seedStatements[i],
+        );
+      }
 
       service.mergeObjectiveSuggestions([
-        suggestion({ statement: 'D' }, 0),
-        suggestion({ statement: 'E' }, 1),
-        suggestion({ statement: 'F' }, 2),
+        suggestion({ statement: 'sug-1' }, 0),
+        suggestion({ statement: 'sug-2' }, 1),
+        suggestion({ statement: 'sug-3' }, 2),
       ]);
 
       const list = service.businessObjectives();
       expect(list).toHaveLength(MAX_OBJECTIVES);
-      expect(list.slice(0, 3).map((o) => o.statement)).toEqual(['A', 'B', 'C']);
-      expect(list[3].statement).toBe('D');
+      expect(list.slice(0, seedCount).map((o) => o.statement)).toEqual(seedStatements);
+      // Only one suggestion fits — the rest drop because suggestions go last.
+      expect(list[seedCount].statement).toBe('sug-1');
     });
 
     it('restores an empty placeholder when nothing valid exists after merge', () => {

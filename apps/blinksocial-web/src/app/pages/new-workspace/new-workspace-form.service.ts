@@ -22,7 +22,10 @@ const PILLAR_COLORS = [
   '#8b5cf6', '#ec4899', '#06b6d4', '#84cc16',
 ];
 
-export const MAX_OBJECTIVES = 4;
+// Mirrors the businessObjectives.maxItems cap in
+// libs/blinksocial-contracts/src/lib/schemas/workspaces/create-workspace-request.schema.json.
+// Keep these two in sync — the schema rejects more than this on submit.
+export const MAX_OBJECTIVES = 10;
 
 @Injectable()
 export class NewWorkspaceFormService {

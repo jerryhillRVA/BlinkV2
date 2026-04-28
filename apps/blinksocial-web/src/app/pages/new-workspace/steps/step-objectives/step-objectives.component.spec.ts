@@ -177,28 +177,39 @@ describe('StepObjectivesComponent', () => {
 
   it('caps the merged list at MAX_OBJECTIVES, dropping suggestions first', () => {
     formService.workspaceName.set('WS');
-    const seed = formService.businessObjectives()[0].id;
-    formService.updateObjective(seed, 'statement', 'A');
-    formService.addObjective();
-    formService.updateObjective(formService.businessObjectives()[1].id, 'statement', 'B');
-    formService.addObjective();
-    formService.updateObjective(formService.businessObjectives()[2].id, 'statement', 'C');
-    expect(formService.businessObjectives()).toHaveLength(3);
+    // Seed MAX_OBJECTIVES - 1 non-empty manual entries; fresh state has 1.
+    const seedCount = MAX_OBJECTIVES - 1;
+    const seedStatements = Array.from({ length: seedCount }, (_, i) => `seed-${i + 1}`);
+    formService.updateObjective(
+      formService.businessObjectives()[0].id,
+      'statement',
+      seedStatements[0],
+    );
+    for (let i = 1; i < seedCount; i++) {
+      formService.addObjective();
+      formService.updateObjective(
+        formService.businessObjectives()[i].id,
+        'statement',
+        seedStatements[i],
+      );
+    }
+    expect(formService.businessObjectives()).toHaveLength(seedCount);
 
     fixture.componentInstance.suggestObjectives();
     const req = httpMock.expectOne('/api/wizard-ai/business-objectives');
     req.flush({
       suggestions: [
-        makeSuggestion({ statement: 'D' }, 0),
-        makeSuggestion({ statement: 'E' }, 1),
-        makeSuggestion({ statement: 'F' }, 2),
+        makeSuggestion({ statement: 'sug-1' }, 0),
+        makeSuggestion({ statement: 'sug-2' }, 1),
+        makeSuggestion({ statement: 'sug-3' }, 2),
       ],
     });
 
     const list = formService.businessObjectives();
     expect(list).toHaveLength(MAX_OBJECTIVES);
-    expect(list.slice(0, 3).map((o) => o.statement)).toEqual(['A', 'B', 'C']);
-    expect(list[3].statement).toBe('D');
+    expect(list.slice(0, seedCount).map((o) => o.statement)).toEqual(seedStatements);
+    // Only one suggestion fits — the rest drop because suggestions go last.
+    expect(list[seedCount].statement).toBe('sug-1');
   });
 
   it('toasts and preserves the list on backend error', () => {
