@@ -223,6 +223,19 @@ describe('StepObjectivesComponent', () => {
     expect(list[0].statement).toBe('Manual goal');
   });
 
+  it('suppresses Nest generic 5xx envelope and shows the friendly fallback', () => {
+    formService.workspaceName.set('WS');
+
+    fixture.componentInstance.suggestObjectives();
+    const req = httpMock.expectOne('/api/wizard-ai/business-objectives');
+    req.flush(
+      { statusCode: 500, message: 'Internal server error' },
+      { status: 500, statusText: 'Internal Server Error' },
+    );
+
+    expect(toast.showError).toHaveBeenCalledWith('Could not suggest objectives.');
+  });
+
   it('passes audienceSegments when present', () => {
     formService.workspaceName.set('WS');
     formService.audienceSegments.set([

@@ -57,11 +57,18 @@ export class StepObjectivesComponent {
   }
 
   private extractMessage(err: HttpErrorResponse, fallback: string): string {
+    const status = typeof err?.status === 'number' ? err.status : 0;
     const body = err?.error;
-    if (body && typeof body === 'object' && typeof body.message === 'string') {
-      return body.message;
+    const bodyMessage =
+      body && typeof body === 'object' && typeof body.message === 'string'
+        ? body.message
+        : '';
+    // Suppress Nest's generic 5xx envelope ({ statusCode: 500, message: "Internal server error" })
+    // — it leaks an unhelpful string to the user. Keep specific 4xx messages
+    // (BadRequestException etc.) which are intentionally human-readable.
+    if (bodyMessage && (status < 500 || bodyMessage !== 'Internal server error')) {
+      return bodyMessage;
     }
-    if (typeof err?.message === 'string' && err.message) return err.message;
     return fallback;
   }
 }

@@ -144,6 +144,21 @@ describe('StepBrandPositioningComponent', () => {
     expect(arg.length).toBeGreaterThan(0);
   });
 
+  it('suppresses Nest generic 5xx envelope and shows the friendly fallback', () => {
+    formService.updateBrandPositioning('targetCustomer', 'Devs');
+
+    fixture.componentInstance.generatePositioningStatement();
+    const req = httpMock.expectOne('/api/wizard-ai/positioning-statement');
+    req.flush(
+      { statusCode: 500, message: 'Internal server error' },
+      { status: 500, statusText: 'Internal Server Error' },
+    );
+
+    expect(toast.showError).toHaveBeenCalledWith(
+      'Could not generate a positioning statement.',
+    );
+  });
+
   it('should update brand positioning field via input', () => {
     const inputs = fixture.nativeElement.querySelectorAll('.positioning-fields .field-input');
     if (inputs.length > 0) {
