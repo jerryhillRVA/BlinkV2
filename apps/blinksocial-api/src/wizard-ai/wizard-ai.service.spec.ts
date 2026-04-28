@@ -40,6 +40,13 @@ describe('WizardAiService', () => {
           temperature: 0.5,
         }),
       );
+      const callArg = skillRunner.run.mock.calls[0][0];
+      expect(callArg.conversationHistory).toEqual([
+        {
+          role: 'user',
+          content: expect.stringContaining('"targetCustomer":"Devs"'),
+        },
+      ]);
     });
 
     it('works with only one positioning field set', async () => {
@@ -208,14 +215,19 @@ describe('WizardAiService', () => {
       expect(res.suggestions[1].target).toBe(0);
     });
 
-    it('passes existingObjectives through to additionalContext', async () => {
+    it('passes existingObjectives through as a user-turn JSON message', async () => {
       skillRunner.run.mockResolvedValue(happyResponse());
       await service.suggestBusinessObjectives({
         workspaceName: 'WS',
         existingObjectives: [{ statement: 'Manual goal', category: 'growth' }],
       });
       const callArg = skillRunner.run.mock.calls[0][0];
-      expect(callArg.additionalContext).toContain('Manual goal');
+      expect(callArg.conversationHistory).toEqual([
+        {
+          role: 'user',
+          content: expect.stringContaining('"statement":"Manual goal"'),
+        },
+      ]);
       expect(callArg.skillId).toBe('business-objectives-suggest');
       expect(callArg.temperature).toBe(0.6);
     });

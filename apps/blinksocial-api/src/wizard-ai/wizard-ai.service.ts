@@ -49,7 +49,7 @@ export class WizardAiService {
 
     const result = await this.skillRunner.run({
       skillId: POSITIONING_SKILL_ID,
-      additionalContext: JSON.stringify(req),
+      conversationHistory: [{ role: 'user', content: JSON.stringify(req) }],
       temperature: 0.5,
     });
 
@@ -90,7 +90,7 @@ export class WizardAiService {
 
     const result = await this.skillRunner.run({
       skillId: OBJECTIVES_SKILL_ID,
-      additionalContext: JSON.stringify(req),
+      conversationHistory: [{ role: 'user', content: JSON.stringify(req) }],
       temperature: 0.6,
     });
 
