@@ -37,6 +37,19 @@ export default [
       '**/*.mjs',
     ],
     // Override or add rules here
-    rules: {},
+    rules: {
+      // Underscore-prefixed identifiers are the project's convention for
+      // intentionally-unused params/vars (e.g. fixture _tenant, destructured
+      // _segments). Honour that convention so the linter stays useful.
+      '@typescript-eslint/no-unused-vars': [
+        'warn',
+        {
+          argsIgnorePattern: '^_',
+          varsIgnorePattern: '^_',
+          caughtErrorsIgnorePattern: '^_',
+          destructuredArrayIgnorePattern: '^_',
+        },
+      ],
+    },
   },
 ];

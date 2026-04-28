@@ -38,7 +38,11 @@ export class AngularSsrMiddleware implements NestMiddleware {
         this.reqHandler = serverBundle.reqHandler;
       }
 
-      await this.reqHandler!(req, res, next);
+      const handler = this.reqHandler;
+      if (!handler) {
+        throw new Error('Angular SSR request handler failed to load');
+      }
+      await handler(req, res, next);
     } catch (error) {
       this.logger.error('Angular SSR rendering failed', error);
       next();

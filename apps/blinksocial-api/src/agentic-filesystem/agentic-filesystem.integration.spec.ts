@@ -62,7 +62,8 @@ const TEST_NAMESPACE = '__test_ns__';
     const entries = await service.listDirectory(TEST_TENANT, TEST_NAMESPACE);
     const found = entries.find((e) => e.file_id === uploaded.file_id);
     expect(found).toBeTruthy();
-    expect(found!.name).toBe(filename);
+    if (!found) throw new Error('uploaded file not in directory listing');
+    expect(found.name).toBe(filename);
   }, 15_000);
 
   it('should list tenants', async () => {

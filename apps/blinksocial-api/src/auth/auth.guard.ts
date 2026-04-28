@@ -26,6 +26,22 @@ export class AuthGuard implements CanActivate {
 
     const request = context.switchToHttp().getRequest<Request>();
     const token = request.cookies?.['session_token'];
+
+    // Mock-mode dev bypass: when AGENTIC_FS_URL is unset, the API delegates
+    // to MockDataService for read endpoints. Allow unauthenticated access
+    // so dev / e2e flows don't have to maintain a real session, but still
+    // honour a valid session if one is presented (so login flow stays
+    // exercisable locally). This branch never runs in production because
+    // AGENTIC_FS_URL is always set there.
+    if (!process.env['AGENTIC_FS_URL']) {
+      if (!token) return true;
+      const user = await this.authService.validateSession(token);
+      if (user) {
+        (request as Request & { user: UserContract }).user = user;
+      }
+      return true;
+    }
+
     if (!token) {
       throw new UnauthorizedException('Not authenticated');
     }

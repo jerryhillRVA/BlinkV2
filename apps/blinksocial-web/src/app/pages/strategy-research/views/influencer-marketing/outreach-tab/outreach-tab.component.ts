@@ -128,7 +128,8 @@ export class OutreachTabComponent {
   }
 
   private buildMessage(): string {
-    const inf = this.selectedInfluencer()!;
+    const inf = this.selectedInfluencer();
+    if (!inf) return '';
     const objective = this.stateService.objectives().find((o) => o.id === this.selectedObjectiveId());
     const platform = this.selectedPlatform() as Platform;
     const brandVoice = this.stateService.brandVoice();
