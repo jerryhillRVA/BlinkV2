@@ -184,6 +184,12 @@ export class OnboardStateService {
       lines.push(`**Content Mission:** ${bp.brandVoice.contentMission}`);
       lines.push('');
     }
+    if (bp.targetAudience) {
+      lines.push('## Target Audience');
+      lines.push('');
+      lines.push(bp.targetAudience);
+      lines.push('');
+    }
     if (bp.audienceProfiles?.length) {
       lines.push('## Audience Profiles');
       lines.push('');

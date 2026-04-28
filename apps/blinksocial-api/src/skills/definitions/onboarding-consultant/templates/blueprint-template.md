@@ -20,6 +20,9 @@ Define 3-5 measurable objectives with specific metrics, categories (Audience Gro
 - List 3-5 voice attributes with descriptions
 - Create DO and DON'T lists for tone (5-7 items each)
 
+### Target Audience
+Write 1–2 paragraphs (≥50 chars) synthesizing *who* this brand serves overall — the audience-level north star — that frames the per-segment profiles below. This is distinct from the segment-specific profiles: it is the unifying description of the audience as a whole.
+
 ### Audience Profiles
 For each audience segment identified (typically 2-4):
 - Demographics and psychographics

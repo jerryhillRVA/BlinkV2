@@ -9,6 +9,7 @@
     "businessObjectives",
     "brandVoice",
     "audienceProfiles",
+    "targetAudience",
     "competitorLandscape",
     "contentPillars",
     "channelsAndCadence",
@@ -69,6 +70,7 @@
         }
       }
     },
+    "targetAudience": { "type": "string", "minLength": 50 },
     "competitorLandscape": {
       "type": "array",
       "items": {

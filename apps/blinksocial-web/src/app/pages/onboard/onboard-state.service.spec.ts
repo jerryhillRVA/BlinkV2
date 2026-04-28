@@ -316,10 +316,67 @@ describe('OnboardStateService', () => {
       sections: [],
       currentSection: 'business',
       readyToGenerate: true,
-      blueprint: { clientName: 'Test Co', strategicSummary: 'Summary' },
+      blueprint: {
+        clientName: 'Test Co',
+        strategicSummary: 'Summary',
+        targetAudience: 'Test target audience summary spanning fifty plus characters here.',
+      },
     });
 
     expect(service.blueprint()).toBeTruthy();
     expect(service.status()).toBe('complete');
+  });
+
+  it('renders Target Audience section when resuming a completed session with that field', () => {
+    service.resumeSession('tenant-with-target');
+
+    const req = httpMock.expectOne('/api/onboarding/sessions/by-workspace/tenant-with-target');
+    req.flush({
+      sessionId: 'resumed-3',
+      status: 'complete',
+      messages: [],
+      sections: [],
+      currentSection: 'business',
+      readyToGenerate: true,
+      blueprint: {
+        clientName: 'Acme',
+        strategicSummary: 'Strategy.',
+        brandVoice: { positioningStatement: 'Pos.', contentMission: 'Mission.' },
+        targetAudience: 'Independent fitness coaches building digital practices and seeking systems.',
+        audienceProfiles: [{ name: 'Solo coach', demographics: '30-45' }],
+      },
+    });
+
+    const md = service.markdownDocument() ?? '';
+    const brandIdx = md.indexOf('## Brand & Voice');
+    const targetIdx = md.indexOf('## Target Audience');
+    const audienceIdx = md.indexOf('## Audience Profiles');
+    expect(brandIdx).toBeGreaterThan(-1);
+    expect(targetIdx).toBeGreaterThan(brandIdx);
+    expect(audienceIdx).toBeGreaterThan(targetIdx);
+    expect(md).toContain('Independent fitness coaches building digital practices');
+  });
+
+  it('omits Target Audience section when resuming a legacy blueprint without that field', () => {
+    service.resumeSession('tenant-legacy');
+
+    const req = httpMock.expectOne('/api/onboarding/sessions/by-workspace/tenant-legacy');
+    req.flush({
+      sessionId: 'resumed-legacy',
+      status: 'complete',
+      messages: [],
+      sections: [],
+      currentSection: 'business',
+      readyToGenerate: true,
+      blueprint: {
+        clientName: 'Legacy Co',
+        strategicSummary: 'Legacy summary',
+        // targetAudience intentionally omitted (legacy session)
+      },
+    });
+
+    const md = service.markdownDocument() ?? '';
+    expect(md).not.toContain('## Target Audience');
+    expect(md).toContain('## Strategic Summary');
   });
 });
