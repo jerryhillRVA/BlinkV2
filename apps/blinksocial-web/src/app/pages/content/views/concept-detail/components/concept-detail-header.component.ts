@@ -29,11 +29,9 @@ export class ConceptDetailHeaderComponent {
   private readonly elRef = inject(ElementRef);
 
   @Input({ required: true }) item!: ContentItem;
-  @Input() backLabel = 'Back to pipeline';
   @Input() canMoveToProduction = false;
   @Input() missingValidations: string[] = [];
 
-  @Output() back = new EventEmitter<void>();
   @Output() moveToProduction = new EventEmitter<void>();
   @Output() demoteToIdea = new EventEmitter<void>();
   @Output() deleteConcept = new EventEmitter<void>();
@@ -83,10 +81,6 @@ export class ConceptDetailHeaderComponent {
     if (!this.elRef.nativeElement.contains(event.target)) {
       this.closeMenu();
     }
-  }
-
-  protected onBack(): void {
-    this.back.emit();
   }
 
   protected onMoveToProduction(): void {

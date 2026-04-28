@@ -6,6 +6,7 @@ import { IdeaDetailStore } from './idea-detail.store';
 import { IdeaDetailHeaderComponent } from './components/idea-detail-header.component';
 import { ConceptOptionsPanelComponent } from './components/concept-options-panel.component';
 import { ContentJourneyComponent } from './components/content-journey.component';
+import { DetailBackButtonComponent } from '../_shared/detail-back-button/detail-back-button.component';
 import { StatusStepperComponent } from '../../components/status-stepper/status-stepper.component';
 import { MAX_PILLARS_PER_ITEM } from '../../content.constants';
 import type { ContentStatus } from '../../content.types';
@@ -18,6 +19,7 @@ import type { ContentStatus } from '../../content.types';
     IdeaDetailHeaderComponent,
     ConceptOptionsPanelComponent,
     ContentJourneyComponent,
+    DetailBackButtonComponent,
     StatusStepperComponent,
   ],
   providers: [IdeaDetailStore],

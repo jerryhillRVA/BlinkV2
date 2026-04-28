@@ -29,10 +29,8 @@ export class PostDetailHeaderComponent {
   private readonly elRef = inject(ElementRef);
 
   @Input({ required: true }) item!: ContentItem;
-  @Input() backLabel = 'Back to pipeline';
   @Input() briefApproved = false;
 
-  @Output() back = new EventEmitter<void>();
   @Output() titleChange = new EventEmitter<string>();
   @Output() backToConcept = new EventEmitter<void>();
   @Output() archive = new EventEmitter<void>();
@@ -74,10 +72,6 @@ export class PostDetailHeaderComponent {
     if (!this.elRef.nativeElement.contains(event.target)) {
       this.closeMenu();
     }
-  }
-
-  protected onBack(): void {
-    this.back.emit();
   }
 
   protected onTitleChange(v: string): void {

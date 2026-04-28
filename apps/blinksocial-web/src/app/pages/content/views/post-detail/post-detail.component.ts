@@ -12,6 +12,7 @@ import { ProductionStepsBarComponent } from './components/production-steps-bar.c
 import { BriefStepComponent } from './components/brief-step.component';
 import { BriefStatusSidebarComponent } from './components/brief-status-sidebar.component';
 import { StepPlaceholderComponent } from './components/step-placeholder.component';
+import { DetailBackButtonComponent } from '../_shared/detail-back-button/detail-back-button.component';
 import { StatusStepperComponent } from '../../components/status-stepper/status-stepper.component';
 import type { ContentStatus } from '../../content.types';
 
@@ -23,6 +24,7 @@ import type { ContentStatus } from '../../content.types';
     BriefStepComponent,
     BriefStatusSidebarComponent,
     StepPlaceholderComponent,
+    DetailBackButtonComponent,
     StatusStepperComponent,
   ],
   providers: [PostDetailStore],

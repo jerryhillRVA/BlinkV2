@@ -32,9 +32,8 @@ function setup(
 }
 
 describe('PostDetailHeaderComponent', () => {
-  it('renders back, Post stage badge, inline title, Saved, and menu button', () => {
+  it('renders Post stage badge, inline title, Saved, and menu button; back-button slot is empty without projected content', () => {
     const fixture = setup();
-    expect(fixture.nativeElement.querySelector('.detail-back')).not.toBeNull();
     const badge = fixture.nativeElement.querySelector('.stage-badge') as HTMLElement;
     expect(badge.classList.contains('stage-post')).toBe(true);
     expect(badge.textContent?.trim()).toContain('Post');
@@ -43,6 +42,7 @@ describe('PostDetailHeaderComponent', () => {
       (fixture.nativeElement.querySelector('.detail-saved') as HTMLElement).textContent?.trim(),
     ).toBe('Saved');
     expect(fixture.nativeElement.querySelector('.detail-menu-btn')).not.toBeNull();
+    expect(fixture.nativeElement.querySelector('.detail-back')).toBeNull();
   });
 
   it('renders platform + contentType meta when both set', () => {
@@ -65,25 +65,6 @@ describe('PostDetailHeaderComponent', () => {
   it('shows "Back to Concept" button when conceptId is set', () => {
     const fixture = setup(makeItem({ conceptId: 'c-42' }));
     expect(fixture.nativeElement.querySelector('.btn-back-to-concept')).not.toBeNull();
-  });
-
-  it('emits back when the back button is clicked', () => {
-    const fixture = setup();
-    let fired = 0;
-    fixture.componentInstance.back.subscribe(() => fired++);
-    (fixture.nativeElement.querySelector('.detail-back') as HTMLButtonElement).click();
-    expect(fired).toBe(1);
-  });
-
-  it('Back button aria-label defaults to "Back to pipeline" and reflects backLabel input', () => {
-    const fixture = setup();
-    let btn = fixture.nativeElement.querySelector('.detail-back') as HTMLButtonElement;
-    expect(btn.getAttribute('aria-label')).toBe('Back to pipeline');
-
-    fixture.componentRef.setInput('backLabel', 'Back to calendar');
-    fixture.detectChanges();
-    btn = fixture.nativeElement.querySelector('.detail-back') as HTMLButtonElement;
-    expect(btn.getAttribute('aria-label')).toBe('Back to calendar');
   });
 
   it('emits backToConcept when the link is clicked', () => {

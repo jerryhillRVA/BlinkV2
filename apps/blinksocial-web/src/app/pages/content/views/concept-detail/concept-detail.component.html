@@ -2,10 +2,8 @@
   <div class="concept-detail">
     <app-concept-detail-header
       [item]="item"
-      [backLabel]="backLabel"
       [canMoveToProduction]="store.canMoveToProduction()"
       [missingValidations]="store.missingValidations()"
-      (back)="onBack()"
       (moveToProduction)="onMoveClick()"
       (demoteToIdea)="onDemote()"
       (deleteConcept)="onDelete()"
@@ -14,7 +12,9 @@
       (duplicate)="duplicate.emit()"
       (copyLink)="copyLink.emit()"
       (titleChange)="onTitleChange($event)"
-    />
+    >
+      <app-detail-back-button [ariaLabel]="backLabel" (back)="onBack()" />
+    </app-concept-detail-header>
 
     <div class="status-stepper-wrap">
       <app-status-stepper
