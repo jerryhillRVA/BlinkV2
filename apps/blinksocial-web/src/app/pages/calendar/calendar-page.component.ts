@@ -2,11 +2,12 @@ import {
   Component,
   DestroyRef,
   OnInit,
+  PLATFORM_ID,
   computed,
   inject,
   signal,
 } from '@angular/core';
-import { CommonModule, DatePipe } from '@angular/common';
+import { CommonModule, DatePipe, isPlatformBrowser } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
@@ -95,6 +96,9 @@ export class CalendarPageComponent implements OnInit {
   private readonly router = inject(Router);
   private readonly api = inject(CalendarApiService);
   private readonly destroyRef = inject(DestroyRef);
+  // Defer fetches until the browser hydrates — see ContentStateService for
+  // the why; same SSR-vs-Playwright-mocks coherence concern.
+  private readonly platformId = inject(PLATFORM_ID);
 
   readonly workspaceId = signal<string>('');
   readonly loading = signal(true);
@@ -308,6 +312,10 @@ export class CalendarPageComponent implements OnInit {
   private cursorFromQuery: Date | null = null;
 
   private load(workspaceId: string): void {
+    if (!isPlatformBrowser(this.platformId)) {
+      this.loading.set(false);
+      return;
+    }
     this.loading.set(true);
     this.loadError.set(null);
     this.api

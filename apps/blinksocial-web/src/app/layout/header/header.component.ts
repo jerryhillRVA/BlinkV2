@@ -123,6 +123,12 @@ export class HeaderComponent implements OnInit {
       this.authService.lastWorkspaceId.set(id);
       const tabMatch = url.match(/^\/workspace\/[^/]+\/(\w+)/);
       this.currentTab.set(tabMatch ? tabMatch[1] : null);
+      // Calendar-sourced detail screens (e.g. /workspace/<id>/content/<itemId>?from=calendar)
+      // keep the Calendar tab active so the header doesn't flip while Back returns to Calendar.
+      // calendar-page.component.ts `openEvent()` is the sole writer of the literal `from=calendar`.
+      if (/[?&]from=calendar(?:&|$)/.test(url)) {
+        this.currentTab.set('calendar');
+      }
       this.loadWorkspacesIfNeeded();
     } else {
       this.currentTab.set(null);

@@ -33,6 +33,7 @@ describe('HeaderComponent', () => {
           { path: 'profile-settings', component: DummyComponent },
           { path: 'workspace/:id/settings', component: DummyComponent },
           { path: 'workspace/:id/content', component: DummyComponent },
+          { path: 'workspace/:id/content/:itemId', component: DummyComponent },
           { path: 'workspace/:id/calendar', component: DummyComponent },
           { path: 'workspace/:id/strategy', component: DummyComponent },
         ]),
@@ -486,6 +487,69 @@ describe('HeaderComponent', () => {
       document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
       fixture.detectChanges();
       expect(el.querySelector('.ws-dropdown')).toBeFalsy();
+    });
+
+    // Issue #63 — calendar-sourced detail screens keep Calendar active.
+    describe('on a calendar-sourced detail URL (?from=calendar)', () => {
+      it('should highlight Calendar (not Content) on /content/<itemId>?from=calendar', async () => {
+        const router = TestBed.inject(Router);
+        const fixture = TestBed.createComponent(HeaderComponent);
+        fixture.detectChanges();
+        await router.navigateByUrl(
+          '/workspace/abc123/content/item-1?from=calendar&calendarView=month&calendarCursor=2026-05-01T00:00:00.000Z',
+        );
+        fixture.detectChanges();
+        expect(fixture.componentInstance.currentTab()).toBe('calendar');
+        const el: HTMLElement = fixture.nativeElement;
+        const activeItem = el.querySelector('.ws-nav-item.active');
+        expect(activeItem?.textContent).toContain('Calendar');
+        const navItems = el.querySelectorAll('.ws-nav-item');
+        const contentItem = Array.from(navItems).find((i) =>
+          i.textContent?.includes('Content'),
+        );
+        expect(contentItem?.classList.contains('active')).toBe(false);
+      });
+    });
+    describe('on a pipeline-sourced detail URL (no from)', () => {
+      it('should keep Content active on /content/<itemId> with no query', async () => {
+        const router = TestBed.inject(Router);
+        const fixture = TestBed.createComponent(HeaderComponent);
+        fixture.detectChanges();
+        await router.navigateByUrl('/workspace/abc123/content/item-1');
+        fixture.detectChanges();
+        expect(fixture.componentInstance.currentTab()).toBe('content');
+        const el: HTMLElement = fixture.nativeElement;
+        const activeItem = el.querySelector('.ws-nav-item.active');
+        expect(activeItem?.textContent).toContain('Content');
+      });
+
+      it('should keep Content active when from has a non-calendar value', async () => {
+        const router = TestBed.inject(Router);
+        const fixture = TestBed.createComponent(HeaderComponent);
+        fixture.detectChanges();
+        await router.navigateByUrl('/workspace/abc123/content/item-1?from=strategy');
+        fixture.detectChanges();
+        expect(fixture.componentInstance.currentTab()).toBe('content');
+      });
+    });
+    it('should keep Calendar active across calendar → detail → back round-trip', async () => {
+      const router = TestBed.inject(Router);
+      const fixture = TestBed.createComponent(HeaderComponent);
+      fixture.detectChanges();
+
+      await router.navigateByUrl('/workspace/abc123/calendar');
+      fixture.detectChanges();
+      expect(fixture.componentInstance.currentTab()).toBe('calendar');
+
+      await router.navigateByUrl(
+        '/workspace/abc123/content/item-1?from=calendar&calendarView=week&calendarCursor=2026-05-01T00:00:00.000Z',
+      );
+      fixture.detectChanges();
+      expect(fixture.componentInstance.currentTab()).toBe('calendar');
+
+      await router.navigateByUrl('/workspace/abc123/calendar?calendarView=week');
+      fixture.detectChanges();
+      expect(fixture.componentInstance.currentTab()).toBe('calendar');
     });
 
     it('should highlight strategy tab when on strategy route', async () => {
