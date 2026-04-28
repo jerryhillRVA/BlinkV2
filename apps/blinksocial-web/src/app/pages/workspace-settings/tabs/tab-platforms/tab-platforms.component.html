@@ -7,17 +7,6 @@
     <div class="card-content">
       <div class="field-grid">
         <div class="field-group">
-          <label class="field-label" for="default-platform">
-            Default Platform
-            <app-tooltip text="The platform used as default when creating new content." />
-          </label>
-          <app-dropdown
-            [options]="platformDropdownOptions"
-            [value]="settings.globalRules.defaultPlatform"
-            (valueChange)="updateDefaultPlatform($event)"
-          />
-        </div>
-        <div class="field-group">
           <label class="field-label" for="max-ideas">
             Max Ideas Per Platform/Month
             <app-tooltip text="Maximum number of content ideas generated per platform each month." />

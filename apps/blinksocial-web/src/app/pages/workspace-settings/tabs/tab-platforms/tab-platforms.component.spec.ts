@@ -55,28 +55,15 @@ describe('TabPlatformsComponent', () => {
     expect(titles[1]?.textContent).toContain('Platforms');
   });
 
-  it('should render dropdown component', () => {
-    const dropdown = fixture.nativeElement.querySelector('app-dropdown');
-    expect(dropdown).toBeTruthy();
+  it('should not render the default-platform dropdown (removed in #58)', () => {
+    expect(fixture.nativeElement.querySelector('app-dropdown')).toBeNull();
+    expect(fixture.nativeElement.querySelector('.dropdown-trigger')).toBeNull();
   });
 
-  it('should not clip dropdown with overflow hidden on card container', () => {
-    const card = fixture.nativeElement.querySelector('.tab-card') as HTMLElement;
-    const style = getComputedStyle(card);
-    expect(style.overflow).not.toBe('hidden');
-  });
-
-  it('should stack first card above second card for dropdown visibility', () => {
-    const cards = fixture.nativeElement.querySelectorAll('.tab-card');
-    const firstCardStyle = getComputedStyle(cards[0]);
-    expect(firstCardStyle.position).toBe('relative');
-    expect(Number(firstCardStyle.zIndex)).toBeGreaterThan(0);
-  });
-
-  it('should render dropdown trigger with current platform name', () => {
-    const trigger = fixture.nativeElement.querySelector('.dropdown-trigger') as HTMLButtonElement;
-    expect(trigger).toBeTruthy();
-    expect(trigger.textContent).toContain('YouTube');
+  it('should not crash when settings include legacy defaultPlatform field', () => {
+    // makeMockSettings includes defaultPlatform — proves forward-compat
+    expect(fixture.componentInstance).toBeTruthy();
+    expect(state.platformSettings()?.globalRules.defaultPlatform).toBe(Platform.YouTube);
   });
 
   it('should render max ideas input with correct value', () => {
@@ -84,9 +71,9 @@ describe('TabPlatformsComponent', () => {
     expect(input.value).toBe('30');
   });
 
-  it('should render tooltips', () => {
+  it('should render tooltip on max ideas only', () => {
     const tooltips = fixture.nativeElement.querySelectorAll('app-tooltip');
-    expect(tooltips.length).toBe(2);
+    expect(tooltips.length).toBe(1);
   });
 
   it('should render all platform rows (all enum values except tbd)', () => {
@@ -168,17 +155,6 @@ describe('TabPlatformsComponent', () => {
     expect(state.platformSettings()?.platforms.find((p) => p.platformId === 'twitter')?.enabled).toBe(true);
   });
 
-  it('should update default platform when option is clicked', () => {
-    const trigger = fixture.nativeElement.querySelector('.dropdown-trigger') as HTMLButtonElement;
-    trigger.click();
-    fixture.detectChanges();
-    const options = fixture.nativeElement.querySelectorAll('.dropdown-option');
-    const instagramIdx = fixture.componentInstance.platformOptions.indexOf(Platform.Instagram);
-    (options[instagramIdx] as HTMLButtonElement).click();
-    fixture.detectChanges();
-    expect(state.platformSettings()?.globalRules.defaultPlatform).toBe('instagram');
-  });
-
   it('should update max ideas on input change', () => {
     const input = fixture.nativeElement.querySelector('#max-ideas') as HTMLInputElement;
     input.value = '50';
@@ -239,11 +215,6 @@ describe('TabPlatformsComponent (null guard)', () => {
     fixture.detectChanges();
   });
 
-  it('should not update when settings is null', () => {
-    fixture.componentInstance.updateDefaultPlatform('instagram');
-    expect(state.platformSettings()).toBeNull();
-  });
-
   it('should not update max ideas when settings is null', () => {
     fixture.componentInstance.updateMaxIdeas('50');
     expect(state.platformSettings()).toBeNull();
@@ -256,7 +227,7 @@ describe('TabPlatformsComponent (null guard)', () => {
 
   it('should not update max ideas with NaN', () => {
     state.platformSettings.set({
-      globalRules: { defaultPlatform: Platform.YouTube, maxIdeasPerMonth: 30 },
+      globalRules: { maxIdeasPerMonth: 30 },
       platforms: [],
     });
     fixture.componentInstance.updateMaxIdeas('abc');

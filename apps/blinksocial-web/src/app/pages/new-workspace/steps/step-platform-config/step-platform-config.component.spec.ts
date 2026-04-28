@@ -40,13 +40,6 @@ describe('StepPlatformConfigComponent', () => {
     expect(el.querySelector('.global-rules')).toBeTruthy();
   });
 
-  it('should have Default Platform select', () => {
-    const fixture = TestBed.createComponent(StepPlatformConfigComponent);
-    fixture.detectChanges();
-    const el: HTMLElement = fixture.nativeElement;
-    expect(el.querySelector('#default-platform')).toBeTruthy();
-  });
-
   it('should have Max Ideas input', () => {
     const fixture = TestBed.createComponent(StepPlatformConfigComponent);
     fixture.detectChanges();
@@ -132,13 +125,10 @@ describe('StepPlatformConfigComponent', () => {
     expect(details.length).toBe(8);
   });
 
-  it('should update default platform via select change', () => {
+  it('should not render the default platform select (removed in #58)', () => {
     const fixture = TestBed.createComponent(StepPlatformConfigComponent);
     fixture.detectChanges();
-    const select = fixture.nativeElement.querySelector('#default-platform') as HTMLSelectElement;
-    select.value = 'Instagram';
-    select.dispatchEvent(new Event('change'));
-    expect(formService.defaultPlatform()).toBe('Instagram');
+    expect(fixture.nativeElement.querySelector('#default-platform')).toBeNull();
   });
 
   it('should update max ideas via input', () => {

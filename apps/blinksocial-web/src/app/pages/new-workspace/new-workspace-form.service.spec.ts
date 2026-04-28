@@ -271,7 +271,7 @@ describe('NewWorkspaceFormService', () => {
     service.workspaceName.set('My Workspace');
     const data = service.formData();
     expect(data.general.workspaceName).toBe('My Workspace');
-    expect(data.platforms.globalRules.defaultPlatform).toBe('youtube');
+    expect(data.platforms.globalRules.defaultPlatform).toBeUndefined();
     expect(data.platforms.globalRules.maxIdeasPerMonth).toBe(30);
     expect(data.contentPillars.length).toBe(2);
     expect(data.audienceSegments.length).toBe(1);
@@ -525,12 +525,11 @@ describe('NewWorkspaceFormService', () => {
             { platformId: Platform.YouTube, enabled: true },
             { platformId: Platform.Instagram, enabled: true },
           ],
-          globalRules: { defaultPlatform: Platform.YouTube, maxIdeasPerMonth: 20 },
+          globalRules: { maxIdeasPerMonth: 20 },
         },
       });
       expect(service.enabledPlatforms().has('YouTube')).toBe(true);
       expect(service.enabledPlatforms().has('Instagram')).toBe(true);
-      expect(service.defaultPlatform()).toBe('YouTube');
       expect(service.maxIdeasPerMonth()).toBe(20);
     });
 
@@ -590,11 +589,10 @@ describe('NewWorkspaceFormService', () => {
           platforms: [
             { platformId: 'unknown-platform' as never, enabled: true },
           ],
-          globalRules: { defaultPlatform: 'unknown-platform' as never, maxIdeasPerMonth: 5 },
+          globalRules: { maxIdeasPerMonth: 5 },
         },
       });
       expect(service.enabledPlatforms().has('unknown-platform')).toBe(true);
-      expect(service.defaultPlatform()).toBe('unknown-platform');
     });
 
     it('should filter out disabled platforms', () => {
@@ -604,11 +602,25 @@ describe('NewWorkspaceFormService', () => {
             { platformId: Platform.YouTube, enabled: true },
             { platformId: Platform.Instagram, enabled: false },
           ],
-          globalRules: { defaultPlatform: Platform.YouTube, maxIdeasPerMonth: 10 },
+          globalRules: { maxIdeasPerMonth: 10 },
         },
       });
       expect(service.enabledPlatforms().has('YouTube')).toBe(true);
       expect(service.enabledPlatforms().has('Instagram')).toBe(false);
+    });
+
+    it('should silently ignore legacy globalRules.defaultPlatform on resume', () => {
+      // Forward-compat: persisted data from before #58 still carries defaultPlatform.
+      // The wizard no longer surfaces or stores it; verify the resume path doesn't crash.
+      expect(() =>
+        service.populateFromWizardData({
+          platforms: {
+            platforms: [{ platformId: Platform.YouTube, enabled: true }],
+            globalRules: { defaultPlatform: Platform.YouTube, maxIdeasPerMonth: 7 },
+          },
+        }),
+      ).not.toThrow();
+      expect(service.maxIdeasPerMonth()).toBe(7);
     });
 
     it('should handle pillar with empty themes array', () => {
@@ -650,7 +662,6 @@ describe('NewWorkspaceFormService', () => {
         platforms: {
           platforms: [],
           globalRules: {
-            defaultPlatform: Platform.YouTube,
             maxIdeasPerMonth: 10,
             contentWarningToggle: true,
             aiDisclaimerToggle: false,
@@ -711,12 +722,23 @@ describe('NewWorkspaceFormService', () => {
       const result = service.stepValidation(2);
       expect(result.valid).toBe(false);
       if (!result.valid) {
-        expect(result.error).toContain('objective');
+        expect(result.error).toBe('At least 2 objectives with a statement are required.');
       }
     });
 
-    it('should return valid for step 2 when at least one objective has a statement', () => {
+    it('should return error for step 2 when only one objective has a statement', () => {
       service.updateObjective(service.businessObjectives()[0].id, 'statement', 'Grow audience');
+      const result = service.stepValidation(2);
+      expect(result.valid).toBe(false);
+      if (!result.valid) {
+        expect(result.error).toBe('At least 2 objectives with a statement are required.');
+      }
+    });
+
+    it('should return valid for step 2 when at least two objectives have statements', () => {
+      service.updateObjective(service.businessObjectives()[0].id, 'statement', 'Grow audience');
+      service.addObjective();
+      service.updateObjective(service.businessObjectives()[1].id, 'statement', 'Drive revenue');
       const result = service.stepValidation(2);
       expect(result.valid).toBe(true);
     });
@@ -851,6 +873,19 @@ describe('NewWorkspaceFormService', () => {
     expect(service.businessObjectives().length).toBe(MAX_OBJECTIVES);
     service.addObjective(); // Should be a no-op
     expect(service.businessObjectives().length).toBe(MAX_OBJECTIVES);
+  });
+
+  it('seed and added objectives all use the monotonic counter (no Date.now collisions)', () => {
+    const seedId = service.businessObjectives()[0].id;
+    service.addObjective();
+    service.addObjective();
+    const ids = service.businessObjectives().map((o) => o.id);
+    expect(ids).toHaveLength(3);
+    expect(new Set(ids).size).toBe(3); // all distinct
+    // Counter starts at 1_000_000; next() increments first, so seed >= 1_000_001.
+    expect(seedId).toBeGreaterThanOrEqual(1_000_001);
+    expect(ids[1]).toBeGreaterThan(seedId);
+    expect(ids[2]).toBeGreaterThan(ids[1]);
   });
 
   // --- mergeObjectiveSuggestions ---
@@ -1014,7 +1049,6 @@ describe('NewWorkspaceFormService', () => {
     expect(fresh.toneTags()).toEqual([]);
     expect(fresh.contentWarning()).toBe(false);
     expect(fresh.aiDisclaimer()).toBe(true);
-    expect(fresh.defaultPlatform()).toBe('YouTube');
     expect(fresh.maxIdeasPerMonth()).toBe(30);
   });
 });

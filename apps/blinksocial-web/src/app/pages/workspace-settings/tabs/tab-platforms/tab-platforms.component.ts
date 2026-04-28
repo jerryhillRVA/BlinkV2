@@ -3,14 +3,12 @@ import { CommonModule } from '@angular/common';
 import { WorkspaceSettingsStateService } from '../../workspace-settings-state.service';
 import { PLATFORM_OPTIONS, PLATFORM_DISPLAY_NAMES } from '@blinksocial/contracts';
 import type { Platform } from '@blinksocial/contracts';
-import { DropdownComponent } from '../../../../shared/dropdown/dropdown.component';
-import type { DropdownOption } from '../../../../shared/dropdown/dropdown.component';
 import { TooltipComponent } from '../../../../shared/tooltip/tooltip.component';
 import { PlatformIconComponent } from '../../../../shared/platform-icon/platform-icon.component';
 
 @Component({
   selector: 'app-tab-platforms',
-  imports: [CommonModule, DropdownComponent, TooltipComponent, PlatformIconComponent],
+  imports: [CommonModule, TooltipComponent, PlatformIconComponent],
   templateUrl: './tab-platforms.component.html',
   styleUrl: './tab-platforms.component.scss',
 })
@@ -18,10 +16,6 @@ export class TabPlatformsComponent {
   protected readonly state = inject(WorkspaceSettingsStateService);
 
   readonly platformOptions = PLATFORM_OPTIONS;
-  readonly platformDropdownOptions: DropdownOption[] = this.platformOptions.map((p) => ({
-    value: p,
-    label: PLATFORM_DISPLAY_NAMES[p] ?? p,
-  }));
 
   get settings() {
     return this.state.platformSettings();
@@ -34,15 +28,6 @@ export class TabPlatformsComponent {
   isPlatformEnabled(platformId: string): boolean {
     const match = this.settings?.platforms.find((p) => p.platformId === platformId);
     return match?.enabled ?? false;
-  }
-
-  updateDefaultPlatform(value: string): void {
-    const current = this.state.platformSettings();
-    if (!current) return;
-    this.state.platformSettings.set({
-      ...current,
-      globalRules: { ...current.globalRules, defaultPlatform: value as Platform },
-    });
   }
 
   updateMaxIdeas(value: string): void {

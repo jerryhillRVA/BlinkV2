@@ -43,7 +43,7 @@ export class NewWorkspaceFormService {
 
   // Step 2 — Business Objectives
   readonly businessObjectives = signal<UIBusinessObjective[]>([
-    { id: 1, category: 'growth', statement: '', target: '', unit: '', timeframe: '' },
+    { id: this.nextObjectiveId(), category: 'growth', statement: '', target: '', unit: '', timeframe: '' },
   ]);
 
   // Step 3 — Brand & Voice
@@ -64,7 +64,6 @@ export class NewWorkspaceFormService {
 
   // Step 5 — Platforms
   readonly enabledPlatforms = signal<Set<string>>(new Set(['YouTube', 'LinkedIn']));
-  readonly defaultPlatform = signal('YouTube');
   readonly maxIdeasPerMonth = signal(30);
   readonly contentWarning = signal(false);
   readonly aiDisclaimer = signal(true);
@@ -114,9 +113,6 @@ export class NewWorkspaceFormService {
   ]);
 
   readonly formData = computed<CreateWorkspaceRequest>(() => {
-    const defaultPlatformEnum =
-      displayNameToPlatform(this.defaultPlatform()) ?? Platform.YouTube;
-
     const enabledPlatformsList = Array.from(this.enabledPlatforms());
     const platformConfigs = enabledPlatformsList.map((displayName) => ({
       platformId: displayNameToPlatform(displayName) ?? Platform.Tbd,
@@ -230,7 +226,6 @@ export class NewWorkspaceFormService {
       },
       platforms: {
         globalRules: {
-          defaultPlatform: defaultPlatformEnum,
           maxIdeasPerMonth: this.maxIdeasPerMonth(),
           contentWarningToggle: this.contentWarning(),
           aiDisclaimerToggle: this.aiDisclaimer(),
@@ -268,9 +263,9 @@ export class NewWorkspaceFormService {
         return { valid: true };
       }
       case 2: {
-        const hasStatement = this.businessObjectives().some((o) => o.statement.trim());
-        if (!hasStatement) {
-          return { valid: false, error: 'At least one objective with a statement is required.' };
+        const filled = this.businessObjectives().filter((o) => o.statement.trim()).length;
+        if (filled < 2) {
+          return { valid: false, error: 'At least 2 objectives with a statement are required.' };
         }
         return { valid: true };
       }
@@ -609,12 +604,6 @@ export class NewWorkspaceFormService {
           .map((p) => this.platformToDisplayName(p.platformId))
       );
       this.enabledPlatforms.set(displayNames);
-    }
-
-    if (formData.platforms?.globalRules?.defaultPlatform) {
-      this.defaultPlatform.set(
-        this.platformToDisplayName(formData.platforms.globalRules.defaultPlatform)
-      );
     }
 
     if (formData.platforms?.globalRules?.maxIdeasPerMonth != null) {

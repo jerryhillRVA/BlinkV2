@@ -34,7 +34,7 @@ describe('NewWorkspaceApiService', () => {
     const request: CreateWorkspaceRequestContract = {
       general: { workspaceName: 'Test' },
       platforms: {
-        globalRules: { defaultPlatform: 'youtube' as never, maxIdeasPerMonth: 10 },
+        globalRules: { maxIdeasPerMonth: 10 },
         platforms: [],
       },
       brandVoice: {},

@@ -1,10 +1,15 @@
 import { Platform } from './enums.js';
 
 export interface PlatformGlobalRulesContract {
-  defaultPlatform: Platform;
   maxIdeasPerMonth: number;
   contentWarningToggle?: boolean;
   aiDisclaimerToggle?: boolean;
+  /**
+   * @deprecated Retained as optional for forward-compatibility with persisted
+   * workspace settings written before #58. Not surfaced in the wizard or
+   * settings UI and not consumed by any downstream code path.
+   */
+  defaultPlatform?: Platform;
 }
 
 export interface PlatformConfigContract {

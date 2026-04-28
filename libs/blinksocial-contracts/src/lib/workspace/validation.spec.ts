@@ -8,7 +8,6 @@ function buildValidRequest(): CreateWorkspaceRequestContract {
     },
     platforms: {
       globalRules: {
-        defaultPlatform: 'youtube' as never,
         maxIdeasPerMonth: 30,
         contentWarningToggle: false,
         aiDisclaimerToggle: true,
@@ -141,7 +140,6 @@ describe('validateCreateWorkspaceRequest', () => {
       general: { workspaceName: 'Minimal' },
       platforms: {
         globalRules: {
-          defaultPlatform: 'youtube' as never,
           maxIdeasPerMonth: 1,
         },
         platforms: [],
@@ -151,6 +149,20 @@ describe('validateCreateWorkspaceRequest', () => {
       audienceSegments: [],
       skills: { skills: [] },
     };
+    const result = validateCreateWorkspaceRequest(req);
+    expect(result.valid).toBe(true);
+  });
+
+  it('should pass when globalRules.defaultPlatform is omitted (post-#58 wizard payload)', () => {
+    const req = buildValidRequest();
+    delete (req.platforms.globalRules as Record<string, unknown>)['defaultPlatform'];
+    const result = validateCreateWorkspaceRequest(req);
+    expect(result.valid).toBe(true);
+  });
+
+  it('should pass when globalRules.defaultPlatform is present (legacy payload, forward-compat)', () => {
+    const req = buildValidRequest();
+    (req.platforms.globalRules as Record<string, unknown>)['defaultPlatform'] = 'youtube';
     const result = validateCreateWorkspaceRequest(req);
     expect(result.valid).toBe(true);
   });

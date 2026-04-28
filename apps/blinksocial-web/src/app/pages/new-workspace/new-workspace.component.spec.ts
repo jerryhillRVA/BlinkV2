@@ -434,4 +434,21 @@ describe('NewWorkspaceComponent', () => {
     );
     httpMock.match(() => true).forEach((r) => r.flush({}));
   });
+
+  it('should block Next on step 2 with fewer than 2 objectives and surface the toast', () => {
+    const fixture = TestBed.createComponent(NewWorkspaceComponent);
+    fixture.detectChanges();
+    const formService = fixture.debugElement.injector.get(NewWorkspaceFormService);
+    formService.workspaceName.set('WS');
+    formService.updateObjective(formService.businessObjectives()[0].id, 'statement', 'Just one');
+    fixture.componentInstance.currentStep.set(2);
+    fixture.detectChanges();
+
+    fixture.componentInstance.onNext();
+
+    expect(toastService.showError).toHaveBeenCalledWith(
+      'At least 2 objectives with a statement are required.',
+    );
+    expect(fixture.componentInstance.currentStep()).toBe(2);
+  });
 });
