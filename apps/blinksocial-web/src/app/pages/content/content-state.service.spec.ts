@@ -143,6 +143,19 @@ describe('ContentStateService', () => {
       expect(toastService.showError).toHaveBeenCalledTimes(1);
     });
 
+    it('toasts exactly once when all three APIs fail simultaneously', () => {
+      itemsApi.getIndex.mockReturnValue(throwError(() => new Error('idx')));
+      workspaceApi.getSettings.mockReturnValue(
+        throwError(() => new Error('settings')),
+      );
+      service.loadAll('ws-1');
+      expect(service.items()).toEqual([]);
+      expect(service.pillars()).toEqual([]);
+      expect(service.segments()).toEqual([]);
+      expect(service.businessObjectives()).toEqual([]);
+      expect(toastService.showError).toHaveBeenCalledTimes(1);
+    });
+
     it('does not toast on a successful empty index', () => {
       service.loadAll('ws-1');
       expect(service.items()).toEqual([]);

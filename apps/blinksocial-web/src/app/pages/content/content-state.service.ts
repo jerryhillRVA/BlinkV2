@@ -166,58 +166,46 @@ export class ContentStateService {
       objectives: this.api
         .getSettings<BusinessObjectiveContract[]>(workspaceId, 'business-objectives')
         .pipe(catchError(() => of<BusinessObjectiveContract[]>([]))),
-    }).subscribe({
-      next: (data) => {
-        if (data.index === null) {
-          this.indexEntries.set([]);
-          this.archiveIndexEntries.set([]);
-          this.fullItemCacheSignal.set({});
-          this.toast.showError(LOAD_ERROR_MESSAGE);
-        } else {
-          // Trust the API. Backend delegates to MockDataService for
-          // hive-collective / booze-kills when AGENTIC_FS_URL is unset;
-          // empty response = legitimately empty for configured workspaces.
-          this.indexEntries.set(data.index.items);
-          this.archiveIndexEntries.set([]);
-          if (data.index.items.length > 0) {
-            this.mockData.markReal('content-items');
-          }
-        }
-
-        const apiPillars = data.brandVoice?.contentPillars ?? [];
-        this.pillars.set(
-          apiPillars.map((p) => ({
-            id: p.id,
-            name: p.name,
-            description: p.description,
-            color: p.color,
-          })),
-        );
-
-        const apiSegments = data.brandVoice?.audienceSegments ?? [];
-        this.segments.set(
-          apiSegments.map((s) => ({
-            id: s.id,
-            name: s.name,
-            description: s.description ?? '',
-          })),
-        );
-
-        this.businessObjectives.set(data.objectives ?? []);
-
-        this.reconcileLineageStatuses();
-        this.loading.set(false);
-      },
-      error: () => {
+    }).subscribe((data) => {
+      if (data.index === null) {
         this.indexEntries.set([]);
         this.archiveIndexEntries.set([]);
         this.fullItemCacheSignal.set({});
-        this.pillars.set([]);
-        this.segments.set([]);
-        this.businessObjectives.set([]);
         this.toast.showError(LOAD_ERROR_MESSAGE);
-        this.loading.set(false);
-      },
+      } else {
+        // Trust the API. Backend delegates to MockDataService for
+        // hive-collective / booze-kills when AGENTIC_FS_URL is unset;
+        // empty response = legitimately empty for configured workspaces.
+        this.indexEntries.set(data.index.items);
+        this.archiveIndexEntries.set([]);
+        if (data.index.items.length > 0) {
+          this.mockData.markReal('content-items');
+        }
+      }
+
+      const apiPillars = data.brandVoice?.contentPillars ?? [];
+      this.pillars.set(
+        apiPillars.map((p) => ({
+          id: p.id,
+          name: p.name,
+          description: p.description,
+          color: p.color,
+        })),
+      );
+
+      const apiSegments = data.brandVoice?.audienceSegments ?? [];
+      this.segments.set(
+        apiSegments.map((s) => ({
+          id: s.id,
+          name: s.name,
+          description: s.description ?? '',
+        })),
+      );
+
+      this.businessObjectives.set(data.objectives ?? []);
+
+      this.reconcileLineageStatuses();
+      this.loading.set(false);
     });
   }
 
