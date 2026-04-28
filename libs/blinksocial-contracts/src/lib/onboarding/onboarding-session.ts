@@ -1,5 +1,8 @@
 import type { DiscoverySectionContract, DiscoverySectionId } from './discovery-section.js';
-import type { OnboardingMessageContract } from './onboarding-message.js';
+import type {
+  OnboardingMessageContract,
+  OnboardingAttachmentContract,
+} from './onboarding-message.js';
 import type { CreateWorkspaceRequestContract } from '../workspace/create-workspace-request.js';
 
 export type OnboardingSessionStatus =
@@ -22,6 +25,11 @@ export interface CreateSessionResponseContract {
   sections: DiscoverySectionContract[];
 }
 
+/**
+ * Sent on the JSON path. The multipart path uses the same field names as
+ * form fields plus repeatable `files` parts (see
+ * `POST /api/onboarding/sessions/:id/messages`).
+ */
 export interface SendMessageRequestContract {
   content: string;
 }
@@ -31,6 +39,12 @@ export interface SendMessageResponseContract {
   sections: DiscoverySectionContract[];
   currentSection: DiscoverySectionId;
   readyToGenerate: boolean;
+  /**
+   * Canonical persisted attachment records for the just-sent user message.
+   * Present when files were uploaded — lets the FE swap optimistic chips
+   * for server-assigned ids/fileIds.
+   */
+  messageAttachments?: OnboardingAttachmentContract[];
 }
 
 export interface GetSessionResponseContract {

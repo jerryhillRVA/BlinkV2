@@ -108,6 +108,7 @@
 }
 
 .chat-area {
+  position: relative;
   display: flex;
   flex-direction: column;
   flex: 1;
@@ -118,6 +119,44 @@
   background: var(--blink-surface);
   box-shadow: var(--blink-shadow-lg);
   backdrop-filter: blur(8px);
+}
+
+.drop-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--blink-brand-primary-lightest-bg);
+  border: 2px dashed var(--blink-brand-primary);
+  border-radius: 24px;
+  pointer-events: none;
+}
+
+.drop-overlay-inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  color: var(--blink-brand-primary);
+  font-weight: 600;
+
+  p {
+    margin: 0;
+    font-size: var(--blink-title-medium);
+  }
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  border: 0;
 }
 
 .message-list {
@@ -217,10 +256,49 @@
   }
 }
 
+.pending-attachments {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 10px;
+  padding: 8px;
+  background: var(--blink-surface-container);
+  border: 1px solid var(--blink-outline-variant);
+  border-radius: 12px;
+}
+
 .input-row {
   display: flex;
   gap: 8px;
   align-items: flex-end;
+}
+
+.attach-btn {
+  appearance: none;
+  border: 1px solid var(--blink-outline-variant);
+  width: 40px;
+  height: 40px;
+  min-width: 40px;
+  border-radius: 10px;
+  background: var(--blink-surface-hover);
+  color: var(--blink-on-surface);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s, color 0.2s;
+
+  &:hover:not(:disabled),
+  &:focus-visible:not(:disabled) {
+    background: var(--blink-brand-primary-light-bg);
+    color: var(--blink-brand-primary);
+    outline: none;
+  }
+
+  &:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
 }
 
 .message-input {

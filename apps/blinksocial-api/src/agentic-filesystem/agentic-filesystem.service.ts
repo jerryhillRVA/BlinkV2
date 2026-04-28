@@ -98,6 +98,51 @@ export class AgenticFilesystemService {
     return response.data;
   }
 
+  /**
+   * Upload arbitrary binary bytes (images, PDFs, .docx, …) under a
+   * tenant/namespace path. Mirrors {@link uploadJsonFile} / {@link uploadTextFile}
+   * but takes a raw {@link Buffer} so callers don't have to round-trip
+   * through `Blob`.
+   */
+  async uploadBinaryFile(
+    tenant: string,
+    namespace: string,
+    filename: string,
+    mimeType: string,
+    buffer: Buffer,
+    tags?: string[]
+  ): Promise<FileUploadResult> {
+    const url = `${this.baseUrl}/v1/${tenant}/files`;
+    // `Blob` accepts a Buffer in Node 20+; keeping `as never` cast minimal
+    // because TypeScript's lib defs don't narrow the constructor's overloads
+    // for Node-side BlobPart unions.
+    const blob = new Blob([new Uint8Array(buffer)], { type: mimeType });
+
+    const formData = new FormData();
+    formData.append('file', blob, filename);
+    formData.append('namespace', namespace);
+    formData.append('path', '');
+    if (tags && tags.length > 0) {
+      formData.append('tags', tags.join(','));
+    }
+
+    const response = await axios.post(url, formData);
+    return response.data;
+  }
+
+  /**
+   * Fetch the raw bytes of a previously-uploaded file. Used to replay
+   * binary attachments (images / PDFs) into LLM context on subsequent
+   * onboarding turns.
+   */
+  async downloadBinaryFile(tenant: string, fileId: string): Promise<Buffer> {
+    const url = `${this.baseUrl}/v1/${tenant}/files/${fileId}/content`;
+    const response = await axios.get<ArrayBuffer>(url, {
+      responseType: 'arraybuffer',
+    });
+    return Buffer.from(response.data);
+  }
+
   async batchRetrieve(
     tenant: string,
     fileIds: string[]

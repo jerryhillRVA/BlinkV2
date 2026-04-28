@@ -8,7 +8,9 @@ import { WorkspacesService } from '../workspaces/workspaces.service';
 import { UserService } from '../auth/user.service';
 import { AgenticFilesystemService } from '../agentic-filesystem/agentic-filesystem.service';
 import { WorkspaceBuilderService } from './workspace-builder.service';
+import { AttachmentExtractorService } from './attachment-extractor.service';
 import type { BlueprintDocumentContract } from '@blinksocial/contracts';
+import type { LlmContentBlock, LlmMessage } from '../llm/llm-provider.interface';
 
 function buildValidBlueprint(): BlueprintDocumentContract {
   return {
@@ -59,6 +61,7 @@ describe('OnboardingService', () => {
   let service: OnboardingService;
   let sessionStore: SessionStore;
   let skillRunner: { run: ReturnType<typeof vi.fn> };
+  let extractor: AttachmentExtractorService;
 
   beforeEach(async () => {
     skillRunner = { run: vi.fn() };
@@ -68,6 +71,7 @@ describe('OnboardingService', () => {
         OnboardingService,
         SessionStore,
         BlueprintValidationService,
+        AttachmentExtractorService,
         { provide: SkillRunnerService, useValue: skillRunner },
         {
           provide: WorkspacesService,
@@ -82,7 +86,13 @@ describe('OnboardingService', () => {
         },
         {
           provide: AgenticFilesystemService,
-          useValue: { isConfigured: () => false, uploadJsonFile: vi.fn(), uploadTextFile: vi.fn() },
+          useValue: {
+            isConfigured: () => false,
+            uploadJsonFile: vi.fn(),
+            uploadTextFile: vi.fn(),
+            uploadBinaryFile: vi.fn(),
+            downloadBinaryFile: vi.fn(),
+          },
         },
         {
           provide: WorkspaceBuilderService,
@@ -93,6 +103,7 @@ describe('OnboardingService', () => {
 
     service = module.get(OnboardingService);
     sessionStore = module.get(SessionStore);
+    extractor = module.get(AttachmentExtractorService);
   });
 
   describe('renderBlueprintMarkdown', () => {
@@ -172,6 +183,131 @@ describe('OnboardingService', () => {
       const after = sessionStore.get(created.id) as OnboardingSessionState;
       expect(after.status).toBe('complete');
       expect(after.blueprint?.targetAudience).toBe(valid.targetAudience);
+    });
+  });
+
+  describe('handleMessage with attachments', () => {
+    function turnReply(extra: Record<string, unknown> = {}) {
+      return {
+        content: '',
+        parsed: {
+          agentMessage: 'Got it.',
+          sectionsUpdated: {},
+          sectionsCovered: [],
+          readyToGenerate: false,
+          currentSection: 'business',
+          ...extra,
+        },
+        usage: { inputTokens: 0, outputTokens: 0 },
+      };
+    }
+
+    it('passes a content-block array containing a text attachment block to the LLM', async () => {
+      const created = sessionStore.create('user-1');
+      skillRunner.run.mockResolvedValue(turnReply());
+
+      await service.handleMessage(created.id, 'user-1', 'See attached.', [
+        {
+          filename: 'notes.txt',
+          mimeType: 'text/plain',
+          buffer: Buffer.from('Hello from a brand brief.', 'utf8'),
+          sizeBytes: 25,
+        },
+      ]);
+
+      const call = skillRunner.run.mock.calls.at(-1)?.[0] as {
+        conversationHistory: LlmMessage[];
+      };
+      const lastMessage = call.conversationHistory.at(-1);
+      expect(lastMessage?.role).toBe('user');
+      const blocks = lastMessage?.content as LlmContentBlock[];
+      expect(Array.isArray(blocks)).toBe(true);
+      expect(blocks.find((b) => b.type === 'text' && b.text.includes('Hello from a brand brief'))).toBeTruthy();
+
+      const stored = sessionStore.get(created.id);
+      const userMsg = stored?.messages.find((m) => m.role === 'user');
+      expect(userMsg?.attachments?.length).toBe(1);
+      expect(userMsg?.attachments?.[0].kind).toBe('text');
+    });
+
+    it('rejects unsupported file types with BadRequest', async () => {
+      const created = sessionStore.create('user-1');
+      skillRunner.run.mockResolvedValue(turnReply());
+      await expect(
+        service.handleMessage(created.id, 'user-1', 'try this', [
+          {
+            filename: 'evil.exe',
+            mimeType: 'application/x-msdownload',
+            buffer: Buffer.alloc(8),
+            sizeBytes: 8,
+          },
+        ]),
+      ).rejects.toThrow(/unsupported type/i);
+      // Session unchanged.
+      const stored = sessionStore.get(created.id);
+      expect(stored?.messages.length).toBe(0);
+    });
+
+    it('rejects legacy .doc with explicit error', async () => {
+      const created = sessionStore.create('user-1');
+      skillRunner.run.mockResolvedValue(turnReply());
+      await expect(
+        service.handleMessage(created.id, 'user-1', '', [
+          {
+            filename: 'old.doc',
+            mimeType: 'application/msword',
+            buffer: Buffer.alloc(8),
+            sizeBytes: 8,
+          },
+        ]),
+      ).rejects.toThrow(/legacy \.doc not supported/i);
+    });
+
+    it('still sends a plain string message when no attachments are present', async () => {
+      const created = sessionStore.create('user-1');
+      skillRunner.run.mockResolvedValue(turnReply());
+
+      await service.handleMessage(created.id, 'user-1', 'just text', []);
+
+      const call = skillRunner.run.mock.calls.at(-1)?.[0] as {
+        conversationHistory: LlmMessage[];
+      };
+      const lastMessage = call.conversationHistory.at(-1);
+      expect(typeof lastMessage?.content).toBe('string');
+      expect(lastMessage?.content).toBe('just text');
+    });
+
+    it('keeps text from a prior turn in subsequent turns (FIFO budget)', async () => {
+      const created = sessionStore.create('user-1');
+      skillRunner.run.mockResolvedValue(turnReply());
+
+      // Turn 1: upload text
+      await service.handleMessage(created.id, 'user-1', 'turn one', [
+        {
+          filename: 'brief.md',
+          mimeType: 'text/markdown',
+          buffer: Buffer.from('We are a coral-coloured fitness brand.', 'utf8'),
+          sizeBytes: 39,
+        },
+      ]);
+
+      // Turn 2: no new uploads — prior attachment text must replay.
+      skillRunner.run.mockClear();
+      skillRunner.run.mockResolvedValue(turnReply());
+      await service.handleMessage(created.id, 'user-1', 'follow up', []);
+
+      const call = skillRunner.run.mock.calls.at(-1)?.[0] as {
+        conversationHistory: LlmMessage[];
+      };
+      // Locate the historical user message that originally carried the attachment.
+      const historicalUser = call.conversationHistory.find(
+        (m) => Array.isArray(m.content) && (m.content as LlmContentBlock[]).some((b) => b.type === 'text' && b.text.includes('coral-coloured')),
+      );
+      expect(historicalUser).toBeTruthy();
+    });
+
+    it('exposes the attached extractor as a dependency (smoke)', () => {
+      expect(extractor).toBeInstanceOf(AttachmentExtractorService);
     });
   });
 });

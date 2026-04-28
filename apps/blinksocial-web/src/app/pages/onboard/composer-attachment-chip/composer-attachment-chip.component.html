@@ -1,0 +1,22 @@
+<div class="chip" [class.chip--error]="!!error">
+  <svg class="chip-icon" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+    <path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l8.57-8.57A4 4 0 1 1 17.99 8.78l-8.49 8.49a2 2 0 1 1-2.83-2.83l7.07-7.07"/>
+  </svg>
+  <span class="chip-name" [title]="filename">{{ filename }}</span>
+  <span class="chip-size">{{ sizeLabel }}</span>
+  @if (error) {
+    <span class="chip-error">{{ error }}</span>
+  }
+  @if (removable) {
+    <button
+      type="button"
+      class="chip-remove"
+      [attr.aria-label]="'Remove attachment ' + filename"
+      (click)="remove.emit()"
+    >
+      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M18 6 6 18"/><path d="m6 6 12 12"/>
+      </svg>
+    </button>
+  }
+</div>

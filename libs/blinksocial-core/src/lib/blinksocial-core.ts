@@ -3,3 +3,4 @@ export function formatTimestamp(date: Date = new Date()): string {
 }
 
 export { generateTenantId } from './generate-tenant-id.js';
+export { formatSize } from './format-size.js';

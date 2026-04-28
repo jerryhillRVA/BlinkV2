@@ -1,0 +1,70 @@
+:host {
+  display: inline-flex;
+  max-width: 100%;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 8px 4px 10px;
+  border-radius: 999px;
+  background: var(--blink-surface-container);
+  border: 1px solid var(--blink-outline-variant);
+  font-size: var(--blink-body-small);
+  color: var(--blink-on-surface);
+  max-width: 100%;
+  min-width: 0;
+}
+
+.chip--error {
+  border-color: rgb(220 38 38 / 60%);
+  background: rgb(220 38 38 / 8%);
+}
+
+.chip-icon {
+  flex: 0 0 auto;
+  color: var(--blink-on-surface-muted);
+}
+
+.chip-name {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 500;
+}
+
+.chip-size {
+  flex: 0 0 auto;
+  color: var(--blink-on-surface-muted);
+  font-variant-numeric: tabular-nums;
+  font-size: var(--blink-label-small);
+}
+
+.chip-error {
+  flex: 0 0 auto;
+  color: rgb(220 38 38);
+  font-size: var(--blink-label-small);
+}
+
+.chip-remove {
+  appearance: none;
+  border: none;
+  background: transparent;
+  color: var(--blink-on-surface-muted);
+  cursor: pointer;
+  padding: 2px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+
+  &:hover,
+  &:focus-visible {
+    color: var(--blink-on-surface);
+    background: var(--blink-surface-hover);
+    outline: none;
+  }
+}

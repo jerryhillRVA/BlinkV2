@@ -49,5 +49,16 @@
   margin: 0;
   white-space: pre-wrap;
   word-wrap: break-word;
-  font-size: 14px;
+  font-size: var(--blink-body-medium);
+}
+
+.attachments {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.content + .attachments {
+  margin-top: 10px;
 }

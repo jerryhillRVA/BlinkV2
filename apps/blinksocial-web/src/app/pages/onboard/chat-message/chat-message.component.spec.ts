@@ -62,4 +62,47 @@ describe('ChatMessageComponent', () => {
     const content = fixture.nativeElement.querySelector('.content');
     expect(content.textContent).toContain('Hello! Let me help you onboard.');
   });
+
+  it('renders attachment chips when message has attachments', async () => {
+    @Component({
+      imports: [ChatMessageComponent],
+      template: `<app-chat-message [message]="message" />`,
+    })
+    class WithAttachmentsHost {
+      message: OnboardingMessageContract = {
+        id: 'm1',
+        role: 'user',
+        content: 'See attached',
+        timestamp: new Date().toISOString(),
+        attachments: [
+          {
+            id: 'a1',
+            filename: 'brief.pdf',
+            mimeType: 'application/pdf',
+            sizeBytes: 1500,
+            fileId: 'f1',
+            kind: 'pdf',
+          },
+        ],
+      };
+    }
+    await TestBed.resetTestingModule()
+      .configureTestingModule({ imports: [WithAttachmentsHost] })
+      .compileComponents();
+    const fixture = TestBed.createComponent(WithAttachmentsHost);
+    fixture.detectChanges();
+
+    const chips = fixture.nativeElement.querySelector('[data-testid="message-attachments"]');
+    expect(chips).toBeTruthy();
+    expect(chips.textContent).toContain('brief.pdf');
+    // Read-only chips should not render the remove button
+    const removeBtn = chips.querySelector('.chip-remove');
+    expect(removeBtn).toBeFalsy();
+  });
+
+  it('omits the attachments block when message has no attachments', () => {
+    const fixture = TestBed.createComponent(UserHostComponent);
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('[data-testid="message-attachments"]')).toBeFalsy();
+  });
 });
