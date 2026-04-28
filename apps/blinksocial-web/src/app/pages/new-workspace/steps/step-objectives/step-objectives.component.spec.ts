@@ -48,7 +48,7 @@ describe('StepObjectivesComponent', () => {
   });
 
   it('should render AI Suggest Objectives button', () => {
-    const btn = fixture.nativeElement.querySelector('app-outline-button .outline-btn');
+    const btn = fixture.nativeElement.querySelector('.actions-row app-outline-button .outline-btn');
     expect(btn).toBeTruthy();
     expect(btn.textContent).toContain('AI Suggest Objectives');
   });
@@ -119,5 +119,40 @@ describe('StepObjectivesComponent', () => {
     metricInputs[2].value = 'Q4 2026';
     metricInputs[2].dispatchEvent(new Event('input'));
     expect(formService.businessObjectives()[0].timeframe).toBe('Q4 2026');
+  });
+
+  it('should reflect the 2–10 range in the subtitle copy', () => {
+    const subtitle = fixture.nativeElement.querySelector('.step-subtitle');
+    expect(subtitle?.textContent).toContain('Define 2–10 measurable goals');
+  });
+
+  it('should render Add Objective button when count is below cap', () => {
+    const wrapper = fixture.nativeElement.querySelector('.add-objective-wrapper');
+    expect(wrapper).toBeTruthy();
+    expect(wrapper.textContent).toContain('Add Objective');
+  });
+
+  it('should grow the objective list when Add Objective is clicked', () => {
+    expect(formService.businessObjectives().length).toBe(1);
+    const addBtn = fixture.nativeElement.querySelector('.add-objective-wrapper .outline-btn') as HTMLButtonElement;
+    addBtn.click();
+    fixture.detectChanges();
+    expect(formService.businessObjectives().length).toBe(2);
+  });
+
+  it('should hide Add Objective button when count reaches the cap of 10', () => {
+    formService.businessObjectives.set(
+      Array.from({ length: 10 }, (_, i) => ({
+        id: i + 1,
+        category: 'growth',
+        statement: '',
+        target: '',
+        unit: '',
+        timeframe: '',
+      }))
+    );
+    fixture.detectChanges();
+    const wrapper = fixture.nativeElement.querySelector('.add-objective-wrapper');
+    expect(wrapper).toBeNull();
   });
 });
