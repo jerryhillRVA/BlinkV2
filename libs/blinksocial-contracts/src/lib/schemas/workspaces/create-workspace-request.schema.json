@@ -20,7 +20,7 @@
     "businessObjectives": {
       "type": "array",
       "items": { "$ref": "https://blinksocial.io/schemas/business-objective.schema.json" },
-      "maxItems": 4
+      "maxItems": 10
     },
     "brandPositioning": { "$ref": "https://blinksocial.io/schemas/brand-positioning.schema.json" }
   }
