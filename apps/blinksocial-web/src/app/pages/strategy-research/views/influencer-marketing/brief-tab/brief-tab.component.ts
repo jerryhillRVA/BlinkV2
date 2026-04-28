@@ -164,7 +164,8 @@ export class BriefTabComponent {
   }
 
   private buildBrief(): string {
-    const inf = this.selectedInfluencer()!;
+    const inf = this.selectedInfluencer();
+    if (!inf) return '';
     const f = this.form();
     const objective = this.stateService.objectives().find((o) => o.id === this.selectedObjectiveId());
     const platformLabels = this.selectedPlatforms().map((p) => PLATFORM_LABELS[p]).join(', ') || 'TBD';

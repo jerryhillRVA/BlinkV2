@@ -90,6 +90,15 @@ function buildFakeFs() {
   };
 }
 
+function readContent<T>(
+  fs: ReturnType<typeof buildFakeFs>,
+  filename: string,
+): T {
+  const found = Object.values(fs.files).find((f) => f.filename === filename);
+  if (!found) throw new Error(`fixture file not written: ${filename}`);
+  return found.content as T;
+}
+
 describe('ContentItemsService', () => {
   let service: ContentItemsService;
   let fs: ReturnType<typeof buildFakeFs>;
@@ -142,9 +151,10 @@ describe('ContentItemsService', () => {
       const names = Object.values(fs.files).map((f) => f.filename);
       expect(names).toContain(`${created.id}.json`);
       expect(names).toContain('_content-items-index.json');
-      const idx = Object.values(fs.files).find(
-        (f) => f.filename === '_content-items-index.json',
-      )!.content as { items: { id: string }[]; totalCount: number };
+      const idx = readContent<{
+        items: { id: string }[];
+        totalCount: number;
+      }>(fs, '_content-items-index.json');
       expect(idx.items).toHaveLength(1);
       expect(idx.items[0].id).toBe(created.id);
       expect(idx.totalCount).toBe(1);
@@ -174,9 +184,9 @@ describe('ContentItemsService', () => {
       expect(updated.title).toBe('New Title');
       expect(updated.updatedAt >= created.updatedAt).toBe(true);
 
-      const idx = Object.values(fs.files).find(
-        (f) => f.filename === '_content-items-index.json',
-      )!.content as { items: { id: string; title: string }[] };
+      const idx = readContent<{
+        items: { id: string; title: string }[];
+      }>(fs, '_content-items-index.json');
       expect(idx.items.find((r) => r.id === created.id)?.title).toBe('New Title');
     });
 
@@ -198,24 +208,27 @@ describe('ContentItemsService', () => {
       const archived = await service.archiveItem('ws-1', created.id);
       expect(archived.archived).toBe(true);
 
-      const primary = Object.values(fs.files).find(
-        (f) => f.filename === '_content-items-index.json',
-      )!.content as { items: { id: string }[] };
-      const archive = Object.values(fs.files).find(
-        (f) => f.filename === '_content-items-archive-index.json',
-      )!.content as { items: { id: string; archived: boolean }[] };
+      const primary = readContent<{ items: { id: string }[] }>(
+        fs,
+        '_content-items-index.json',
+      );
+      const archive = readContent<{
+        items: { id: string; archived: boolean }[];
+      }>(fs, '_content-items-archive-index.json');
       expect(primary.items.find((r) => r.id === created.id)).toBeUndefined();
       expect(archive.items.find((r) => r.id === created.id)?.archived).toBe(true);
 
       const unarchived = await service.unarchiveItem('ws-1', created.id);
       expect(unarchived.archived).toBe(false);
 
-      const primary2 = Object.values(fs.files).find(
-        (f) => f.filename === '_content-items-index.json',
-      )!.content as { items: { id: string }[] };
-      const archive2 = Object.values(fs.files).find(
-        (f) => f.filename === '_content-items-archive-index.json',
-      )!.content as { items: { id: string }[] };
+      const primary2 = readContent<{ items: { id: string }[] }>(
+        fs,
+        '_content-items-index.json',
+      );
+      const archive2 = readContent<{ items: { id: string }[] }>(
+        fs,
+        '_content-items-archive-index.json',
+      );
       expect(primary2.items.find((r) => r.id === created.id)).toBeDefined();
       expect(archive2.items.find((r) => r.id === created.id)).toBeUndefined();
     });
@@ -243,9 +256,10 @@ describe('ContentItemsService', () => {
       expect(res).toEqual({ deleted: true, id: created.id });
       const names = Object.values(fs.files).map((f) => f.filename);
       expect(names).not.toContain(`${created.id}.json`);
-      const idx = Object.values(fs.files).find(
-        (f) => f.filename === '_content-items-index.json',
-      )!.content as { items: { id: string }[] };
+      const idx = readContent<{ items: { id: string }[] }>(
+        fs,
+        '_content-items-index.json',
+      );
       expect(idx.items.find((r) => r.id === created.id)).toBeUndefined();
     });
   });

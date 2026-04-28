@@ -96,8 +96,13 @@ export class AccountController {
       if (!added) throw new BadRequestException('Failed to add workspace access');
 
       const updated = await this.userService.findById(existing.id);
+      if (!updated) {
+        throw new BadRequestException(
+          `User ${existing.id} disappeared after workspace-access update`,
+        );
+      }
       return {
-        user: this.authService.toAuthUserInfo(updated!),
+        user: this.authService.toAuthUserInfo(updated),
         temporaryPassword: '',
         message: `Existing user ${body.email} added to workspace`,
       };

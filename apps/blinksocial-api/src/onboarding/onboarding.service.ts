@@ -7,8 +7,6 @@ import { AgenticFilesystemService } from '../agentic-filesystem/agentic-filesyst
 import type {
   DiscoverySectionId,
   DiscoverySectionContract,
-  DISCOVERY_SECTIONS,
-  DISCOVERY_SECTION_IDS,
   CreateSessionResponseContract,
   SendMessageResponseContract,
   GetSessionResponseContract,
