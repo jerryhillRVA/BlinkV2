@@ -152,6 +152,17 @@ export class WorkspaceBuilderService {
       data.skills = undefined;
     }
 
+    // Defensive truncation for brandVoiceDescription — schema cap is 2000 chars
+    // (libs/blinksocial-contracts/src/lib/schemas/workspaces/brand-voice.schema.json).
+    // The skill prompt asks for ~800 chars, but LLMs occasionally overrun.
+    if (data.brandVoice && typeof (data.brandVoice as Record<string, unknown>).brandVoiceDescription === 'string') {
+      const bv = data.brandVoice as Record<string, unknown>;
+      const desc = bv.brandVoiceDescription as string;
+      if (desc.length > 2000) {
+        bv.brandVoiceDescription = desc.substring(0, 1999) + '\u2026';
+      }
+    }
+
     // Truncate content pillar descriptions to 500 chars and ensure targetPlatforms
     if (data.contentPillars && Array.isArray(data.contentPillars)) {
       data.contentPillars = data.contentPillars.map((p) => {
