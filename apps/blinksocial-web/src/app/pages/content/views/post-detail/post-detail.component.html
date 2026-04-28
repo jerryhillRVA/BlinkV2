@@ -2,16 +2,16 @@
   <div class="post-detail">
     <app-post-detail-header
       [item]="item"
-      [backLabel]="backLabel"
       [briefApproved]="!!item.briefApproved"
-      (back)="onBack()"
       (titleChange)="onTitleChange($event)"
       (backToConcept)="onBackToConcept()"
       (archive)="onArchive()"
       (unarchive)="onUnarchive()"
       (duplicate)="onDuplicate()"
       (deletePost)="onDelete()"
-    />
+    >
+      <app-detail-back-button [ariaLabel]="backLabel" (back)="onBack()" />
+    </app-post-detail-header>
 
     <div class="status-stepper-wrap">
       <app-status-stepper

@@ -31,9 +31,8 @@ function setup(
 }
 
 describe('ConceptDetailHeaderComponent', () => {
-  it('renders Back, Concept badge, inline title, Saved indicator, and primary CTA', () => {
+  it('renders Concept badge, inline title, Saved indicator, and primary CTA; back-button slot is empty without projected content', () => {
     const fixture = setup();
-    expect(fixture.nativeElement.querySelector('.detail-back')).not.toBeNull();
     const badge = fixture.nativeElement.querySelector('.stage-badge') as HTMLElement;
     expect(badge.classList.contains('stage-concept')).toBe(true);
     expect(badge.textContent?.trim()).toContain('Concept');
@@ -42,6 +41,7 @@ describe('ConceptDetailHeaderComponent', () => {
     expect(saved.textContent?.trim()).toBe('Saved');
     const cta = fixture.nativeElement.querySelector('.btn-advance') as HTMLButtonElement;
     expect(cta.textContent).toContain('Move to Production');
+    expect(fixture.nativeElement.querySelector('.detail-back')).toBeNull();
   });
 
   it('primary CTA is disabled when canMoveToProduction is false', () => {
@@ -62,25 +62,6 @@ describe('ConceptDetailHeaderComponent', () => {
     // Even calling the handler directly should be a no-op
     (fixture.componentInstance as unknown as { onMoveToProduction: () => void }).onMoveToProduction();
     expect(emitted.length).toBe(1);
-  });
-
-  it('Back button emits back', () => {
-    const fixture = setup();
-    let count = 0;
-    fixture.componentInstance.back.subscribe(() => count++);
-    (fixture.nativeElement.querySelector('.detail-back') as HTMLButtonElement).click();
-    expect(count).toBe(1);
-  });
-
-  it('Back button aria-label defaults to "Back to pipeline" and reflects backLabel input', () => {
-    const fixture = setup();
-    let btn = fixture.nativeElement.querySelector('.detail-back') as HTMLButtonElement;
-    expect(btn.getAttribute('aria-label')).toBe('Back to pipeline');
-
-    fixture.componentRef.setInput('backLabel', 'Back to calendar');
-    fixture.detectChanges();
-    btn = fixture.nativeElement.querySelector('.detail-back') as HTMLButtonElement;
-    expect(btn.getAttribute('aria-label')).toBe('Back to calendar');
   });
 
   it('hides platform chip when platform is unset', () => {

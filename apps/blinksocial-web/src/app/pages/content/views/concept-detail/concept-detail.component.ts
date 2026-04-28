@@ -8,6 +8,7 @@ import { ConceptDetailHeaderComponent } from './components/concept-detail-header
 import { ProductionTargetsPickerComponent } from './components/production-targets-picker.component';
 import { MoveToProductionDialogComponent } from './components/move-to-production-dialog.component';
 import { ContentJourneyComponent } from '../idea-detail/components/content-journey.component';
+import { DetailBackButtonComponent } from '../_shared/detail-back-button/detail-back-button.component';
 import { StatusStepperComponent } from '../../components/status-stepper/status-stepper.component';
 import type { ContentStatus } from '../../content.types';
 import {
@@ -38,6 +39,7 @@ import type { RiskLevelContract } from '@blinksocial/contracts';
     ProductionTargetsPickerComponent,
     MoveToProductionDialogComponent,
     ContentJourneyComponent,
+    DetailBackButtonComponent,
     StatusStepperComponent,
   ],
   providers: [ConceptDetailStore],

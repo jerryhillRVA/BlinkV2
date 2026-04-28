@@ -139,6 +139,33 @@ describe('PostDetailComponent — actions', () => {
     expect(fired).toBe(1);
   });
 
+  it('projects app-detail-back-button into the header with the bound aria-label, and clicking it fires back', () => {
+    const { fixture } = setup();
+    fixture.componentRef.setInput('backLabel', 'Back to calendar');
+    fixture.detectChanges();
+
+    const projected = fixture.nativeElement.querySelector(
+      'app-post-detail-header app-detail-back-button',
+    );
+    expect(projected).not.toBeNull();
+    const btn = projected.querySelector('.detail-back') as HTMLButtonElement;
+    expect(btn).not.toBeNull();
+    expect(btn.getAttribute('aria-label')).toBe('Back to calendar');
+
+    let fired = 0;
+    fixture.componentInstance.back.subscribe(() => fired++);
+    btn.click();
+    expect(fired).toBe(1);
+  });
+
+  it('default aria-label on the projected back button is "Back to pipeline"', () => {
+    const { fixture } = setup();
+    const btn = fixture.nativeElement.querySelector(
+      'app-post-detail-header app-detail-back-button .detail-back',
+    ) as HTMLButtonElement;
+    expect(btn.getAttribute('aria-label')).toBe('Back to pipeline');
+  });
+
   it('onTitleChange routes to store.updateTitle', () => {
     const { fixture } = setup();
     const store = (fixture.componentInstance as unknown as { store: PostDetailStore }).store;

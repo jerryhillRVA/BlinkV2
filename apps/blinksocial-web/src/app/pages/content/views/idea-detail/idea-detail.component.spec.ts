@@ -156,6 +156,42 @@ describe('IdeaDetailComponent — event forwarding', () => {
     expect(emitted.length).toBe(1);
   });
 
+  it('projects app-detail-back-button into the header with the bound aria-label, and clicking it fires the wrapper back output', () => {
+    TestBed.configureTestingModule({
+      imports: [IdeaDetailComponent],
+      providers: [...provideContentItemsApiStubs(), ContentStateService],
+    });
+    const state = TestBed.inject(ContentStateService);
+    state.setItems([makeItem()]);
+    state.pillars.set(PILLARS);
+    state.segments.set(SEGMENTS);
+    const fixture = TestBed.createComponent(IdeaDetailComponent);
+    fixture.componentRef.setInput('itemId', 'c-1');
+    fixture.componentRef.setInput('backLabel', 'Back to calendar');
+    fixture.detectChanges();
+
+    const projected = fixture.nativeElement.querySelector(
+      'app-idea-detail-header app-detail-back-button',
+    );
+    expect(projected).not.toBeNull();
+    const btn = projected.querySelector('.detail-back') as HTMLButtonElement;
+    expect(btn).not.toBeNull();
+    expect(btn.getAttribute('aria-label')).toBe('Back to calendar');
+
+    let fired = 0;
+    fixture.componentInstance.back.subscribe(() => fired++);
+    btn.click();
+    expect(fired).toBe(1);
+  });
+
+  it('default aria-label on the projected back button is "Back to pipeline"', () => {
+    const { fixture } = setup();
+    const btn = fixture.nativeElement.querySelector(
+      'app-idea-detail-header app-detail-back-button .detail-back',
+    ) as HTMLButtonElement;
+    expect(btn.getAttribute('aria-label')).toBe('Back to pipeline');
+  });
+
   it('header advance event bubbles through advance output', () => {
     const { fixture } = setup();
     const emitted: number[] = [];

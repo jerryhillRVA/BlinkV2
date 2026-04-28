@@ -27,14 +27,14 @@ function setup(item: ContentItem = makeItem()): ComponentFixture<IdeaDetailHeade
 }
 
 describe('IdeaDetailHeaderComponent', () => {
-  it('renders the Back button, stage badge (Idea), and inline-editable title', () => {
+  it('renders the stage badge (Idea) and inline-editable title; back button slot is empty when no content is projected', () => {
     const fixture = setup();
-    expect(fixture.nativeElement.querySelector('.detail-back')).not.toBeNull();
     const badge: HTMLElement = fixture.nativeElement.querySelector('.stage-badge');
     expect(badge.textContent?.trim()).toContain('Idea');
     expect(badge.classList.contains('stage-idea')).toBe(true);
     expect(fixture.nativeElement.querySelector('app-inline-edit')).not.toBeNull();
     expect((fixture.nativeElement.textContent as string)).toContain('A testable idea');
+    expect(fixture.nativeElement.querySelector('.detail-back')).toBeNull();
   });
 
   it('stage badge switches with the item stage', () => {
@@ -55,30 +55,6 @@ describe('IdeaDetailHeaderComponent', () => {
     expect(chip).not.toBeNull();
     expect(chip.textContent).toContain('Instagram');
     expect(chip.textContent).toContain('Reel');
-  });
-
-  it('Back button emits back', () => {
-    const fixture = setup();
-    let count = 0;
-    fixture.componentInstance.back.subscribe(() => count++);
-    (fixture.nativeElement.querySelector('.detail-back') as HTMLButtonElement).click();
-    expect(count).toBe(1);
-  });
-
-  it('Back button aria-label defaults to "Back to pipeline"', () => {
-    const fixture = setup();
-    const btn = fixture.nativeElement.querySelector('.detail-back') as HTMLButtonElement;
-    expect(btn.getAttribute('aria-label')).toBe('Back to pipeline');
-  });
-
-  it('Back button aria-label reflects the bound backLabel input', () => {
-    TestBed.configureTestingModule({ imports: [IdeaDetailHeaderComponent] });
-    const fixture = TestBed.createComponent(IdeaDetailHeaderComponent);
-    fixture.componentRef.setInput('item', makeItem());
-    fixture.componentRef.setInput('backLabel', 'Back to calendar');
-    fixture.detectChanges();
-    const btn = fixture.nativeElement.querySelector('.detail-back') as HTMLButtonElement;
-    expect(btn.getAttribute('aria-label')).toBe('Back to calendar');
   });
 
   it('Concept CTA uses a solid brand color background (no gradient)', () => {

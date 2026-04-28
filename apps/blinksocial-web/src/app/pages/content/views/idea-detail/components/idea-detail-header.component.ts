@@ -28,9 +28,7 @@ export class IdeaDetailHeaderComponent {
   private readonly elRef = inject(ElementRef);
 
   @Input({ required: true }) item!: ContentItem;
-  @Input() backLabel = 'Back to pipeline';
 
-  @Output() back = new EventEmitter<void>();
   @Output() advance = new EventEmitter<void>();
   @Output() archive = new EventEmitter<void>();
   @Output() unarchive = new EventEmitter<void>();
@@ -70,10 +68,6 @@ export class IdeaDetailHeaderComponent {
     if (!this.elRef.nativeElement.contains(event.target)) {
       this.closeMenu();
     }
-  }
-
-  protected onBack(): void {
-    this.back.emit();
   }
 
   protected onAdvance(): void {
