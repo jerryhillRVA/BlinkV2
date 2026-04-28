@@ -82,6 +82,85 @@ upload_attachment() {
 
 Callers pipe each accepted attachment through this helper, capture the echoed URL, and splice it into the body before `gh issue create` / `gh issue comment` / `gh issue edit`. Because URLs are stable on first upload, no second-pass `gh issue edit` is needed to fix attachment links.
 
+### Downloader helper (`download_attachments`)
+
+```bash
+download_attachments() {
+  # Usage: download_attachments <issue_number> [out_dir]
+  #
+  # Downloads every ticket-attachments / user-attachments asset referenced
+  # in the issue body or any comment to <out_dir> (default
+  # /tmp/ticket-<n>-attachments) and prints a TSV manifest — one line per
+  # successfully-downloaded file: "<local_path>\t<alt_text>".
+  # Empty stdout when the ticket has no attachments. Per-URL failures
+  # emit a stderr warning and continue; never aborts the caller.
+  local issue_num="$1"
+  local out_dir="${2:-/tmp/ticket-${issue_num}-attachments}"
+  mkdir -p "$out_dir"
+
+  local content
+  content=$(gh issue view "$issue_num" --json body,comments \
+    --jq '[.body] + [.comments[].body] | join("\n")')
+  [ -z "$content" ] && return 0
+
+  # Extract URL+alt pairs from markdown images, markdown links, and <img>
+  # tags; keep only allowlisted hosts (ticket-attachments release or
+  # github.com/user-attachments); dedupe by URL.
+  local pairs
+  pairs=$(printf '%s\n' "$content" | awk '
+    {
+      line = $0
+      while (match(line, /!\[[^]]*\]\(https:\/\/[^)]+\)/)) {
+        chunk = substr(line, RSTART, RLENGTH)
+        alt = chunk; sub(/^!\[/, "", alt); sub(/\].*/, "", alt)
+        url = chunk; sub(/^[^(]*\(/, "", url); sub(/\)$/, "", url)
+        print url "\t" alt
+        line = substr(line, RSTART + RLENGTH)
+      }
+      line = $0
+      while (match(line, /\[[^]]+\]\(https:\/\/[^)]+\)/)) {
+        chunk = substr(line, RSTART, RLENGTH)
+        alt = chunk; sub(/^\[(📎 ?)?/, "", alt); sub(/\].*/, "", alt)
+        url = chunk; sub(/^[^(]*\(/, "", url); sub(/\)$/, "", url)
+        print url "\t" alt
+        line = substr(line, RSTART + RLENGTH)
+      }
+      line = $0
+      while (match(line, /<img[^>]+src="https:\/\/[^"]+"/)) {
+        chunk = substr(line, RSTART, RLENGTH)
+        url = chunk; sub(/.*src="/, "", url); sub(/".*/, "", url)
+        print url "\t"
+        line = substr(line, RSTART + RLENGTH)
+      }
+    }
+  ' \
+    | grep -E '^https://github\.com/.+/releases/download/ticket-attachments/|^https://github\.com/user-attachments/assets/' \
+    | awk -F'\t' '!seen[$1]++')
+  [ -z "$pairs" ] && return 0
+
+  local token
+  token=$(gh auth token 2>/dev/null || true)
+  while IFS=$'\t' read -r url alt; do
+    [ -z "$url" ] && continue
+    local hash base local_path
+    hash=$(printf '%s' "$url" | shasum | cut -c1-8)
+    base=$(basename "${url%%\?*}" | sed 's/[^A-Za-z0-9._-]/_/g')
+    [ -z "$base" ] && base="asset"
+    local_path="${out_dir}/${hash}-${base}"
+
+    if curl -sSL --fail \
+        ${token:+-H "Authorization: token ${token}"} \
+        -o "$local_path" "$url"; then
+      printf '%s\t%s\n' "$local_path" "$alt"
+    else
+      echo "download_attachments: failed to fetch $url" >&2
+    fi
+  done <<< "$pairs"
+}
+```
+
+Callers run `download_attachments <n>` once early in their flow, capture the TSV manifest, and use the **Read** tool on each `<local_path>` so images become multimodal context for the rest of the conversation. The function never fails the calling command — missing or unreachable attachments degrade gracefully to text-only context.
+
 ### Auto-detecting attachments in user input
 
 Commands that gather attachments (`/create-ticket`, `/test-ticket`, `/remediate-ticket`, `/review-ticket`) should treat the following as **implicit attachments** — no need to re-ask:
