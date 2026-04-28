@@ -20,7 +20,7 @@ This folder is checked into the repo. The actual installed copies live under `.c
 |---|---|
 | `.claude/kanban.config.json` | Project IDs, status option IDs, DoD commands, dev URL. Generated once per install from your GitHub Project V2. |
 | `.claude/skills/github-projects/SKILL.md` | Projects V2 `gh` CLI + GraphQL helpers — used by every column-move command. |
-| `.claude/skills/ticket-formatting/SKILL.md` | Markdown templates for issue body, design doc, test report, remediation note, review packet; plus the signature block every automated comment ends with. |
+| `.claude/skills/ticket-formatting/SKILL.md` | Markdown templates for issue body, design doc, test report, remediation note, review packet; plus the signature block every automated comment ends with; plus the canonical Attachments section + `upload_attachment` helper used to host files on the per-repo `ticket-attachments` GitHub Release. |
 | `.claude/skills/ui-persistence-testing/SKILL.md` | Methodology for three-layer (UI ↔ API payload ↔ DB row) parity testing via the Claude for Chrome plugin. |
 | `.claude/commands/*.md` | The 13 slash commands: `/create-ticket`, `/design-ticket`, `/refine-ticket`, `/develop`, `/test-ticket`, `/remediate-ticket`, `/review-ticket`, `/block-ticket`, `/unblock-ticket`, `/hotfix`, `/board-status`, `/help`, `/ticket-status`. |
 
@@ -58,6 +58,8 @@ Before install, confirm all of these:
 5. You know:
    - The **`OWNER`** of the project (`gh` user login for personal projects, org login for org projects).
    - The **`PROJECT_NUMBER`** — find it in the URL `https://github.com/users/<OWNER>/projects/<N>` (or `https://github.com/orgs/<OWNER>/projects/<N>`).
+
+> **No extra `gh` scope is required for ticket attachments.** The `upload_attachment` helper hosts files on a GitHub Release tagged `ticket-attachments`, which uses the same auth as `gh issue create` — if you can already create issues, you can already upload attachments.
 
 ### Column naming
 
@@ -203,6 +205,10 @@ Print:
 | `appBaseUrl` | The URL `/test-ticket` drives via Claude for Chrome. The **user-facing** port, not the API port. |
 | `dbInspectCommand` | Any command returning rows as JSON — e.g. `psql -h localhost -d myapp -t -A -F$'\t' -c`, or a wrapper script. If empty, `/test-ticket` skips DB parity and does UI↔API checks only. |
 | `wipLimit` | `/board-status` warns when `In Progress + In QA + In Review` exceeds this. Tune to your team size. |
+
+### The `ticket-attachments` release
+
+The first time `/create-ticket` (or any other command) uploads an attachment, it auto-creates a GitHub Release tagged `ticket-attachments` to host the file bytes. Subsequent uploads append assets to that same release. **Do not delete it** — every existing inline image and download link in your tickets points back to it. It's intentionally not part of your semver release stream; treat it like a shared bucket alongside your real releases.
 
 ---
 
