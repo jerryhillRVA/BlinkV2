@@ -6,16 +6,16 @@ import type {
 import { Platform } from '@blinksocial/contracts';
 
 export class PlatformGlobalRules implements PlatformGlobalRulesContract {
-  readonly defaultPlatform: Platform;
   readonly maxIdeasPerMonth: number;
   readonly contentWarningToggle?: boolean;
   readonly aiDisclaimerToggle?: boolean;
+  readonly defaultPlatform?: Platform;
 
   constructor(data: PlatformGlobalRulesContract) {
-    this.defaultPlatform = data.defaultPlatform;
     this.maxIdeasPerMonth = data.maxIdeasPerMonth;
     this.contentWarningToggle = data.contentWarningToggle;
     this.aiDisclaimerToggle = data.aiDisclaimerToggle;
+    this.defaultPlatform = data.defaultPlatform;
   }
 }
 

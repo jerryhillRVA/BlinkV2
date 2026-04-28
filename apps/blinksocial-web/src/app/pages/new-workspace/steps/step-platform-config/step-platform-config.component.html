@@ -10,14 +10,6 @@
     <div class="global-rules-body">
       <div class="global-grid">
         <div class="field-group">
-          <label class="field-label-sm" for="default-platform">Default Platform</label>
-          <select id="default-platform" class="field-select" (change)="formService.defaultPlatform.set($any($event.target).value)">
-            @for (p of PLATFORMS; track p) {
-              <option [value]="p" [selected]="formService.defaultPlatform() === p">{{ p }}</option>
-            }
-          </select>
-        </div>
-        <div class="field-group">
           <label class="field-label-sm" for="max-ideas">Max Ideas Per Month</label>
           <input id="max-ideas" type="number" class="field-input" [value]="formService.maxIdeasPerMonth()" (input)="formService.maxIdeasPerMonth.set(+$any($event.target).value)" />
         </div>

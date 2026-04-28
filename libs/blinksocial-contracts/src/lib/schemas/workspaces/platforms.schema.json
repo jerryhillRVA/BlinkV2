@@ -7,12 +7,12 @@
   "properties": {
     "globalRules": {
       "type": "object",
-      "required": ["defaultPlatform", "maxIdeasPerMonth"],
+      "required": ["maxIdeasPerMonth"],
       "properties": {
-        "defaultPlatform": { "$ref": "https://blinksocial.io/schemas/enums.schema.json#/$defs/Platform" },
         "maxIdeasPerMonth": { "type": "integer", "minimum": 1 },
         "contentWarningToggle": { "type": "boolean", "default": false },
-        "aiDisclaimerToggle": { "type": "boolean", "default": false }
+        "aiDisclaimerToggle": { "type": "boolean", "default": false },
+        "defaultPlatform": { "$ref": "https://blinksocial.io/schemas/enums.schema.json#/$defs/Platform" }
       }
     },
     "platforms": {
