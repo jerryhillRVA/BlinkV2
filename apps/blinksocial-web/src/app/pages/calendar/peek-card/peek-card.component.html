@@ -1,10 +1,12 @@
 <div
+  #peekRoot
   class="peek-card"
+  [class.is-flipped]="placement().flipped"
   role="dialog"
   aria-label="Event details"
   data-testid="peek-card"
-  [style.top.px]="anchor.y"
-  [style.left.px]="anchor.x + anchor.width + 8"
+  [style.top.px]="placement().top"
+  [style.left.px]="placement().left"
   (mouseenter)="peekEnter.emit()"
   (mouseleave)="peekLeave.emit()"
 >

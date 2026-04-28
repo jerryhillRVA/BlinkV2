@@ -19,6 +19,10 @@
   transform-origin: top left;
   animation: peek-in 140ms ease-out both;
   pointer-events: auto;
+
+  &.is-flipped {
+    transform-origin: top right;
+  }
 }
 
 .peek-head {

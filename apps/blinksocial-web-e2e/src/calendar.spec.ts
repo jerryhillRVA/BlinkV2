@@ -229,6 +229,138 @@ test.describe('Calendar — page interactions', () => {
   });
 });
 
+const SATURDAY_PEEK_PAYLOAD = {
+  workspaceId: 'hive-collective',
+  referenceDate: REFERENCE_DATE,
+  items: [
+    {
+      id: 'sat-top',
+      title: 'QA Due • Anti-Inflammatory Breakfast Bowl Walkthrough',
+      platform: 'instagram',
+      canonicalType: 'IMAGE_SINGLE',
+      status: 'in-progress',
+      owner: 'Ava Chen',
+      scheduleAt: '2026-05-02T15:00:00.000Z',
+      blockers: [],
+    },
+    {
+      id: 'sat-bottom',
+      title: 'Bottom-row Saturday publish',
+      platform: 'instagram',
+      canonicalType: 'IMAGE_SINGLE',
+      status: 'approved',
+      owner: 'Ava Chen',
+      scheduleAt: '2026-05-30T15:00:00.000Z',
+      blockers: [],
+    },
+    {
+      id: 'midweek',
+      title: 'Mid-week publish',
+      platform: 'youtube',
+      canonicalType: 'VIDEO_LONG_HORIZONTAL',
+      status: 'approved',
+      owner: 'Marcus Lee',
+      scheduleAt: '2026-05-13T15:00:00.000Z',
+      blockers: [],
+    },
+  ],
+  milestones: [],
+};
+
+async function installPeekMocks(page: Page) {
+  await mockAuthenticatedUser(page);
+  await page.route('**/api/workspaces', (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify(WORKSPACES_PAYLOAD),
+    }),
+  );
+  await page.route('**/api/calendar/**', (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify(SATURDAY_PEEK_PAYLOAD),
+    }),
+  );
+}
+
+test.describe('Calendar — peek card placement', () => {
+  test.beforeEach(async ({ page }) => {
+    await installPeekMocks(page);
+    await page.setViewportSize({ width: 1280, height: 800 });
+    await page.goto('/workspace/hive-collective/calendar');
+    await expect(page.locator('[data-testid="month-grid"]')).toBeVisible();
+  });
+
+  test('TC13 hovering a Saturday-column chip keeps the peek card inside the viewport', async ({
+    page,
+  }) => {
+    const chip = page.locator('[data-testid="event-pill-publish-sat-top"]').first();
+    await expect(chip).toBeVisible();
+    await chip.hover();
+    const card = page.locator('[data-testid="peek-card"]');
+    await expect(card).toBeVisible();
+    const inside = await card.evaluate((el) => {
+      const r = el.getBoundingClientRect();
+      return r.left >= 0 && r.right <= window.innerWidth;
+    });
+    expect(inside).toBe(true);
+  });
+
+  test('TC14 hovering a mid-week chip preserves right-of-anchor placement', async ({
+    page,
+  }) => {
+    const chip = page.locator('[data-testid="event-pill-publish-midweek"]').first();
+    await expect(chip).toBeVisible();
+    await chip.hover();
+    const card = page.locator('[data-testid="peek-card"]');
+    await expect(card).toBeVisible();
+    const layout = await chip.evaluate((chipEl) => {
+      const cardEl = document.querySelector('[data-testid="peek-card"]') as HTMLElement;
+      const a = chipEl.getBoundingClientRect();
+      const c = cardEl.getBoundingClientRect();
+      return { chipRight: a.right, cardLeft: c.left };
+    });
+    expect(layout.cardLeft).toBeGreaterThanOrEqual(layout.chipRight);
+  });
+
+  test('TC15 bottom-row Saturday chip keeps the peek card inside the viewport vertically', async ({
+    page,
+  }) => {
+    const chip = page.locator('[data-testid="event-pill-publish-sat-bottom"]').first();
+    await expect(chip).toBeVisible();
+    await chip.hover();
+    const card = page.locator('[data-testid="peek-card"]');
+    await expect(card).toBeVisible();
+    const inside = await card.evaluate((el) => {
+      const r = el.getBoundingClientRect();
+      return (
+        r.top >= 0 &&
+        r.bottom <= window.innerHeight &&
+        r.left >= 0 &&
+        r.right <= window.innerWidth
+      );
+    });
+    expect(inside).toBe(true);
+  });
+
+  test('TC16 peek card background uses themeable tokens after positioning change', async ({
+    page,
+  }) => {
+    const chip = page.locator('[data-testid="event-pill-publish-sat-top"]').first();
+    await chip.hover();
+    const card = page.locator('[data-testid="peek-card"]');
+    await expect(card).toBeVisible();
+    const colorLight = await card.evaluate((el) => getComputedStyle(el).backgroundColor);
+    await page.locator('.theme-toggle-btn').click();
+    await chip.hover();
+    await expect(card).toBeVisible();
+    const colorDark = await card.evaluate((el) => getComputedStyle(el).backgroundColor);
+    expect(colorDark).not.toBe(colorLight);
+  });
+});
+
 type RoundTripFixture = {
   workspace: string;
   contentId: string;

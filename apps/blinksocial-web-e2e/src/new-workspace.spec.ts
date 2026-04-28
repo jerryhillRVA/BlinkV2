@@ -31,9 +31,12 @@ async function advanceToStep(page: import('@playwright/test').Page, targetStep: 
     await page.locator('#workspace-name').fill('E2E Test Workspace');
     await page.locator('.wizard-next').click();
   }
-  // Step 2 → 3: requires an objective statement
+  // Step 2 → 3: requires at least 2 objective statements
   if (targetStep > 2) {
-    await page.locator('.objective-card .field-input').first().fill('Grow followers to 10k');
+    const cards = page.locator('.objective-card');
+    await cards.nth(0).locator('.field-input').first().fill('Grow followers to 10k');
+    await page.getByRole('button', { name: 'Add Objective' }).click();
+    await cards.nth(1).locator('.field-input').first().fill('Increase content engagement');
     await page.locator('.wizard-next').click();
   }
   // Steps 3→4, 4→5 need segment name on step 4
