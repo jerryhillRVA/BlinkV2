@@ -3,14 +3,15 @@ import { AnthropicProvider } from './anthropic-provider';
 /**
  * The provider is constructed against `process.env['ANTHROPIC_API_KEY']`. We
  * set a fake key, then swap the internal SDK client with a mock so we can
- * inspect the wire shape without making a real API call.
+ * inspect the wire shape without making a real API call. The provider uses
+ * `messages.stream(...).finalMessage()`, so the mock returns a stream-like
+ * object whose `finalMessage()` resolves with the canned response.
  */
-function buildProvider(create: ReturnType<typeof vi.fn>) {
+function buildProvider(streamSpy: ReturnType<typeof vi.fn>) {
   process.env['ANTHROPIC_API_KEY'] = 'test-key';
   const provider = new AnthropicProvider();
-  // private field swap — test-only access
-  (provider as unknown as { client: { messages: { create: typeof create } } }).client = {
-    messages: { create },
+  (provider as unknown as { client: { messages: { stream: typeof streamSpy } } }).client = {
+    messages: { stream: streamSpy },
   };
   return provider;
 }
@@ -19,11 +20,18 @@ describe('AnthropicProvider', () => {
   let create: ReturnType<typeof vi.fn>;
 
   beforeEach(() => {
-    create = vi.fn().mockResolvedValue({
-      content: [{ type: 'text', text: 'hi' }],
-      stop_reason: 'end_turn',
-      usage: { input_tokens: 5, output_tokens: 2 },
-    });
+    // `create` is named for the original SDK method but is called by the
+    // streaming mock so existing assertions on `create.mock.calls[0][0]`
+    // continue to work without churn.
+    create = vi.fn().mockImplementation((args: unknown) => ({
+      finalMessage: () =>
+        Promise.resolve({
+          content: [{ type: 'text', text: 'hi' }],
+          stop_reason: 'end_turn',
+          usage: { input_tokens: 5, output_tokens: 2 },
+        }),
+      _args: args,
+    }));
   });
 
   it('forwards string-content messages to the SDK unchanged', async () => {

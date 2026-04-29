@@ -15,6 +15,16 @@ function makeMockSettings() {
   };
 }
 
+function makeMockSettingsWithBootstrap() {
+  return {
+    members: [
+      { id: 'u1', name: 'Brett Lewis', email: 'blewis@jackreiley.com', role: 'Admin' as const, status: 'active' as const, joinedAt: '2026-01-15T10:00:00Z' },
+      { id: 'u-bootstrap', name: 'Blink Admin', email: 'blinkadmin@blinksocial.com', role: 'Admin' as const, status: 'active' as const, joinedAt: '2026-01-01T00:00:00Z' },
+      { id: 'u2', name: 'Maya Rodriguez', email: 'maya@hivecollective.io', role: 'Viewer' as const, status: 'active' as const, joinedAt: '2026-02-01T10:00:00Z' },
+    ],
+  };
+}
+
 function setupAuthAsAdmin(authService: AuthService) {
   authService.currentUser.set({
     id: 'u1',
@@ -404,6 +414,357 @@ describe('TabTeamComponent (non-admin)', () => {
     expect(labels.length).toBe(2);
     const dropdowns = fixture.nativeElement.querySelectorAll('app-dropdown');
     expect(dropdowns.length).toBe(0);
+  });
+});
+
+describe('TabTeamComponent (reset password — visibility)', () => {
+  let fixture: ReturnType<typeof TestBed.createComponent<TabTeamComponent>>;
+
+  beforeEach(async () => {
+    await TestBed.configureTestingModule({
+      imports: [TabTeamComponent],
+      providers: [
+        WorkspaceSettingsStateService,
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        provideRouter([]),
+      ],
+    }).compileComponents();
+
+    const state = TestBed.inject(WorkspaceSettingsStateService);
+    state.workspaceId.set('test-ws');
+    state.teamSettings.set(makeMockSettingsWithBootstrap());
+
+    const authService = TestBed.inject(AuthService);
+    setupAuthAsAdmin(authService);
+
+    fixture = TestBed.createComponent(TabTeamComponent);
+    fixture.detectChanges();
+  });
+
+  it('renders reset button on a non-self, non-bootstrap admin row with aria-label', () => {
+    const btn = fixture.nativeElement.querySelector(
+      '.member-reset-btn[data-member-id="u2"]',
+    );
+    expect(btn).toBeTruthy();
+    expect(btn?.getAttribute('aria-label')).toBe('Reset password');
+  });
+
+  it('hides reset button on the admin\'s own row', () => {
+    const btn = fixture.nativeElement.querySelector(
+      '.member-reset-btn[data-member-id="u1"]',
+    );
+    expect(btn).toBeNull();
+  });
+
+  it('hides reset button on the bootstrap admin row', () => {
+    const btn = fixture.nativeElement.querySelector(
+      '.member-reset-btn[data-member-id="u-bootstrap"]',
+    );
+    expect(btn).toBeNull();
+  });
+
+  it('hides reset button for non-admin viewers', () => {
+    const authService = TestBed.inject(AuthService);
+    authService.currentUser.set({
+      id: 'u2',
+      email: 'maya@hivecollective.io',
+      displayName: 'Maya',
+      workspaces: [{ workspaceId: 'test-ws', role: 'Viewer' }],
+    });
+    fixture.detectChanges();
+    const btns = fixture.nativeElement.querySelectorAll('.member-reset-btn');
+    expect(btns.length).toBe(0);
+  });
+});
+
+describe('TabTeamComponent (reset password — dialog flow)', () => {
+  let fixture: ReturnType<typeof TestBed.createComponent<TabTeamComponent>>;
+  let httpMock: import('@angular/common/http/testing').HttpTestingController;
+
+  beforeEach(async () => {
+    const { HttpTestingController } = await import('@angular/common/http/testing');
+    TestBed.resetTestingModule();
+
+    await TestBed.configureTestingModule({
+      imports: [TabTeamComponent],
+      providers: [
+        WorkspaceSettingsStateService,
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        provideRouter([]),
+      ],
+    }).compileComponents();
+
+    const state = TestBed.inject(WorkspaceSettingsStateService);
+    state.workspaceId.set('test-ws');
+    state.teamSettings.set(makeMockSettings());
+
+    const authService = TestBed.inject(AuthService);
+    setupAuthAsAdmin(authService);
+
+    httpMock = TestBed.inject(HttpTestingController);
+    fixture = TestBed.createComponent(TabTeamComponent);
+    fixture.detectChanges();
+  });
+
+  afterEach(() => {
+    httpMock.match(() => true).forEach((r) => r.flush({}));
+  });
+
+  it('opens dialog with the target email when reset button is clicked', () => {
+    const target = fixture.componentInstance.members.find((m) => m.id === 'u2');
+    fixture.componentInstance.openResetDialog(target!);
+    fixture.detectChanges();
+
+    const dialog = fixture.nativeElement.querySelector('.confirm-modal');
+    expect(dialog).toBeTruthy();
+    expect(dialog?.textContent).toContain('maya@hivecollective.io');
+    expect(fixture.componentInstance.resetTarget()?.id).toBe('u2');
+  });
+
+  it('does not open dialog when canShowResetButton returns false (self-row)', () => {
+    const self = fixture.componentInstance.members.find((m) => m.id === 'u1');
+    fixture.componentInstance.openResetDialog(self!);
+    fixture.detectChanges();
+    expect(fixture.componentInstance.resetTarget()).toBeNull();
+    expect(fixture.nativeElement.querySelector('.confirm-modal')).toBeNull();
+  });
+
+  it('cancel closes the dialog without firing an HTTP request', () => {
+    const target = fixture.componentInstance.members.find((m) => m.id === 'u2');
+    fixture.componentInstance.openResetDialog(target!);
+    fixture.detectChanges();
+    fixture.componentInstance.cancelResetDialog();
+    fixture.detectChanges();
+    expect(fixture.componentInstance.resetTarget()).toBeNull();
+    expect(fixture.nativeElement.querySelector('.confirm-modal')).toBeNull();
+    httpMock.expectNone(
+      '/api/account/test-ws/users/u2/password-reset',
+    );
+  });
+
+  it('confirm posts to the reset endpoint and populates the temp-password banner', async () => {
+    const target = fixture.componentInstance.members.find((m) => m.id === 'u2');
+    fixture.componentInstance.openResetDialog(target!);
+    fixture.detectChanges();
+
+    const promise = fixture.componentInstance.confirmResetPassword();
+    const req = httpMock.expectOne(
+      '/api/account/test-ws/users/u2/password-reset',
+    );
+    expect(req.request.method).toBe('POST');
+    expect(req.request.body).toEqual({});
+    req.flush({
+      user: { id: 'u2', email: 'maya@hivecollective.io', displayName: 'Maya', workspaces: [] },
+      temporaryPassword: 'newPassword123',
+      message: 'Password reset',
+    });
+    await promise;
+    fixture.detectChanges();
+
+    expect(fixture.componentInstance.tempPassword()).toBe('newPassword123');
+    expect(fixture.componentInstance.tempPasswordEmail()).toBe(
+      'maya@hivecollective.io',
+    );
+    expect(fixture.componentInstance.resetTarget()).toBeNull();
+    const banner = fixture.nativeElement.querySelector('.temp-password-banner');
+    expect(banner).toBeTruthy();
+    const code = fixture.nativeElement.querySelector('.temp-password-code');
+    expect(code?.textContent).toBe('newPassword123');
+  });
+
+  it('keeps the dialog open and shows the server error inline on failure', async () => {
+    const target = fixture.componentInstance.members.find((m) => m.id === 'u2');
+    fixture.componentInstance.openResetDialog(target!);
+    fixture.detectChanges();
+
+    const promise = fixture.componentInstance.confirmResetPassword();
+    const req = httpMock.expectOne(
+      '/api/account/test-ws/users/u2/password-reset',
+    );
+    req.flush(
+      { message: "Cannot reset bootstrap admin's password" },
+      { status: 400, statusText: 'Bad Request' },
+    );
+    await promise;
+    fixture.detectChanges();
+
+    expect(fixture.componentInstance.resetTarget()).not.toBeNull();
+    expect(fixture.nativeElement.querySelector('.confirm-modal')).toBeTruthy();
+    const err = fixture.nativeElement.querySelector('.confirm-modal-error');
+    expect(err?.textContent).toContain("Cannot reset bootstrap admin's password");
+    expect(fixture.componentInstance.tempPassword()).toBeNull();
+    expect(fixture.nativeElement.querySelector('.temp-password-banner')).toBeNull();
+  });
+
+  it('confirmResetPassword no-ops when no target is set', async () => {
+    fixture.componentInstance.resetTarget.set(null);
+    await fixture.componentInstance.confirmResetPassword();
+    httpMock.expectNone(
+      () => true,
+    );
+    expect(fixture.componentInstance.resetLoading()).toBe(false);
+  });
+
+  it('cancelResetDialog is a no-op while a reset is in flight', () => {
+    const target = fixture.componentInstance.members.find((m) => m.id === 'u2');
+    fixture.componentInstance.openResetDialog(target!);
+    fixture.componentInstance.resetLoading.set(true);
+    fixture.componentInstance.cancelResetDialog();
+    expect(fixture.componentInstance.resetTarget()).not.toBeNull();
+  });
+
+  it('falls back to "Failed to reset password" when the server returns no message', async () => {
+    const target = fixture.componentInstance.members.find((m) => m.id === 'u2');
+    fixture.componentInstance.openResetDialog(target!);
+    fixture.detectChanges();
+
+    const promise = fixture.componentInstance.confirmResetPassword();
+    const req = httpMock.expectOne(
+      '/api/account/test-ws/users/u2/password-reset',
+    );
+    req.flush(null, { status: 500, statusText: 'Server Error' });
+    await promise;
+    fixture.detectChanges();
+    expect(fixture.componentInstance.resetError()).toBe('Failed to reset password');
+  });
+
+  it('confirmResetPassword no-ops when already loading', async () => {
+    fixture.componentInstance.resetTarget.set({
+      id: 'u2',
+      name: 'Maya',
+      email: 'm@x.co',
+      role: 'Viewer',
+      status: 'active',
+    });
+    fixture.componentInstance.resetLoading.set(true);
+    await fixture.componentInstance.confirmResetPassword();
+    httpMock.expectNone('/api/account/test-ws/users/u2/password-reset');
+  });
+
+  it('cancelResetDialog without an open target is a no-op', () => {
+    fixture.componentInstance.resetTarget.set(null);
+    fixture.componentInstance.cancelResetDialog();
+    expect(fixture.componentInstance.resetTarget()).toBeNull();
+  });
+});
+
+describe('TabTeamComponent (focus trap + helpers)', () => {
+  let fixture: ReturnType<typeof TestBed.createComponent<TabTeamComponent>>;
+
+  beforeEach(async () => {
+    TestBed.resetTestingModule();
+    await TestBed.configureTestingModule({
+      imports: [TabTeamComponent],
+      providers: [
+        WorkspaceSettingsStateService,
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        provideRouter([]),
+      ],
+    }).compileComponents();
+
+    const state = TestBed.inject(WorkspaceSettingsStateService);
+    state.workspaceId.set('test-ws');
+    state.teamSettings.set(makeMockSettings());
+
+    const authService = TestBed.inject(AuthService);
+    setupAuthAsAdmin(authService);
+
+    fixture = TestBed.createComponent(TabTeamComponent);
+    document.body.appendChild(fixture.nativeElement);
+    fixture.detectChanges();
+  });
+
+  afterEach(() => {
+    fixture.nativeElement.remove();
+  });
+
+  it('canShowResetButton returns false when there is no current user', () => {
+    const authService = TestBed.inject(AuthService);
+    authService.currentUser.set(null);
+    fixture.detectChanges();
+    const member = fixture.componentInstance.members[1];
+    expect(fixture.componentInstance.canShowResetButton(member)).toBe(false);
+  });
+
+  it('trapDialogFocus is a no-op for non-Tab keys', () => {
+    fixture.componentInstance.openResetDialog(
+      fixture.componentInstance.members[1],
+    );
+    fixture.detectChanges();
+    const event = new KeyboardEvent('keydown', { key: 'Enter' });
+    const preventSpy = vi.spyOn(event, 'preventDefault');
+    fixture.componentInstance.trapDialogFocus(event);
+    expect(preventSpy).not.toHaveBeenCalled();
+  });
+
+  it('trapDialogFocus is a no-op when the dialog is not rendered', () => {
+    const event = new KeyboardEvent('keydown', { key: 'Tab' });
+    const preventSpy = vi.spyOn(event, 'preventDefault');
+    fixture.componentInstance.trapDialogFocus(event);
+    expect(preventSpy).not.toHaveBeenCalled();
+  });
+
+  it('trapDialogFocus moves focus to confirm when Tab is pressed from cancel', async () => {
+    fixture.componentInstance.openResetDialog(
+      fixture.componentInstance.members[1],
+    );
+    fixture.detectChanges();
+    await fixture.whenStable();
+    const cancel = fixture.nativeElement.querySelector(
+      '.confirm-modal-cancel',
+    ) as HTMLButtonElement;
+    const confirm = fixture.nativeElement.querySelector(
+      '.confirm-modal-confirm',
+    ) as HTMLButtonElement;
+    cancel.focus();
+    const event = new KeyboardEvent('keydown', { key: 'Tab' });
+    fixture.componentInstance.trapDialogFocus(event);
+    expect(document.activeElement).toBe(confirm);
+  });
+
+  it('trapDialogFocus moves focus to cancel when Shift-Tab is pressed from confirm', async () => {
+    fixture.componentInstance.openResetDialog(
+      fixture.componentInstance.members[1],
+    );
+    fixture.detectChanges();
+    await fixture.whenStable();
+    const cancel = fixture.nativeElement.querySelector(
+      '.confirm-modal-cancel',
+    ) as HTMLButtonElement;
+    const confirm = fixture.nativeElement.querySelector(
+      '.confirm-modal-confirm',
+    ) as HTMLButtonElement;
+    confirm.focus();
+    const event = new KeyboardEvent('keydown', { key: 'Tab', shiftKey: true });
+    fixture.componentInstance.trapDialogFocus(event);
+    expect(document.activeElement).toBe(cancel);
+  });
+
+  it('trapDialogFocus from neither button defaults to confirm on Tab and cancel on Shift-Tab', async () => {
+    fixture.componentInstance.openResetDialog(
+      fixture.componentInstance.members[1],
+    );
+    fixture.detectChanges();
+    await fixture.whenStable();
+    const cancel = fixture.nativeElement.querySelector(
+      '.confirm-modal-cancel',
+    ) as HTMLButtonElement;
+    const confirm = fixture.nativeElement.querySelector(
+      '.confirm-modal-confirm',
+    ) as HTMLButtonElement;
+    document.body.focus();
+    fixture.componentInstance.trapDialogFocus(
+      new KeyboardEvent('keydown', { key: 'Tab' }),
+    );
+    expect(document.activeElement).toBe(confirm);
+    document.body.focus();
+    fixture.componentInstance.trapDialogFocus(
+      new KeyboardEvent('keydown', { key: 'Tab', shiftKey: true }),
+    );
+    expect(document.activeElement).toBe(cancel);
   });
 });
 

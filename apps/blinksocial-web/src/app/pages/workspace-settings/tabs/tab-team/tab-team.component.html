@@ -9,7 +9,6 @@
           <circle cx="7.5" cy="15.5" r="5.5"/>
         </svg>
         <div>
-          <strong>User created successfully</strong>
           <p>Temporary password for <strong>{{ tempPasswordEmail() }}</strong>:</p>
           <code class="temp-password-code">{{ tempPassword() }}</code>
           <p class="temp-password-hint">Share this with the user. They should change it on the Profile Settings page after logging in.</p>
@@ -114,6 +113,23 @@
               <span class="member-role-label">{{ displayRole(member.role) }}</span>
             }
           </div>
+          @if (canShowResetButton(member)) {
+            <button
+              class="member-reset-btn"
+              type="button"
+              aria-label="Reset password"
+              [attr.data-member-id]="member.id"
+              (click)="openResetDialog(member)"
+            >
+              <!-- Lucide KeyRound icon -->
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16">
+                <path d="M2 18a4 4 0 0 1 4-4h.01"/>
+                <path d="m21.5 9.5-3-3"/>
+                <path d="m22 2-9.6 9.6"/>
+                <circle cx="7.5" cy="15.5" r="5.5"/>
+              </svg>
+            </button>
+          }
           @if (isAdmin) {
             <button class="member-remove-btn" type="button" aria-label="Remove member" (click)="removeMember(member.id)">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16">
@@ -131,4 +147,54 @@
       }
     </div>
   </div>
+
+  <!-- Reset password confirm dialog -->
+  @if (resetTarget(); as target) {
+    <div
+      class="confirm-modal-backdrop"
+      tabindex="-1"
+      (click)="cancelResetDialog()"
+      (keydown.escape)="cancelResetDialog()"
+    >
+      <div
+        class="confirm-modal"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="reset-dialog-title"
+        (click)="$event.stopPropagation()"
+        (keydown)="trapDialogFocus($event)"
+      >
+        <h3 id="reset-dialog-title" class="confirm-modal-title">Reset password?</h3>
+        <p class="confirm-modal-body">
+          Reset password for <strong>{{ target.email }}</strong>? This will sign them
+          out of all active sessions. They'll need the new temporary password to sign back in.
+        </p>
+        @if (resetError(); as err) {
+          <div class="confirm-modal-error">{{ err }}</div>
+        }
+        <div class="confirm-modal-actions">
+          <button
+            class="confirm-modal-cancel"
+            type="button"
+            (click)="cancelResetDialog()"
+            [disabled]="resetLoading()"
+          >
+            Cancel
+          </button>
+          <button
+            class="confirm-modal-confirm"
+            type="button"
+            (click)="confirmResetPassword()"
+            [disabled]="resetLoading()"
+          >
+            @if (resetLoading()) {
+              Resetting…
+            } @else {
+              Reset password
+            }
+          </button>
+        </div>
+      </div>
+    </div>
+  }
 }
