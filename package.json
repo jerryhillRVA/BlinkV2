@@ -4,8 +4,8 @@
   "license": "MIT",
   "scripts": {
     "prestart": "node scripts/check-ports.mjs",
-    "start": "concurrently \"nx serve blinksocial-api --port=${API_PORT:-3000}\" \"nx serve blinksocial-web --port=${WEB_PORT:-4200}\"",
-    "start:api": "nx serve blinksocial-api --port=${API_PORT:-3000}",
+    "start": "concurrently \"PORT=${API_PORT:-3000} nx serve blinksocial-api\" \"nx serve blinksocial-web --port=${WEB_PORT:-4200}\"",
+    "start:api": "PORT=${API_PORT:-3000} nx serve blinksocial-api",
     "start:web": "nx serve blinksocial-web --port=${WEB_PORT:-4200}",
     "check-ports": "node scripts/check-ports.mjs",
     "predevServer": "if [ \"$BLINK_DEV_SUDO\" = \"1\" ]; then sudo -v; else echo 'devServer is gated behind BLINK_DEV_SUDO=1 — singleton-only (port 80). See docs/worktrees.md.' >&2; exit 1; fi",
