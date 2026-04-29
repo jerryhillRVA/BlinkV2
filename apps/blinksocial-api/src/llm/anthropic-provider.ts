@@ -61,7 +61,15 @@ export class AnthropicProvider implements LlmProvider {
         ? systemMessage.content
         : undefined;
 
-    const response = await this.client.messages.create({
+    // Use the streaming API. The non-streaming `messages.create()` call
+    // refuses any request whose `max_tokens` is high enough that output
+    // could plausibly take more than 10 minutes ("Streaming is required
+    // for operations that may take longer than 10 minutes"). Since we
+    // deliberately set `max_tokens` to the model ceiling (#71 — never
+    // truncate artifacts), we must use streaming. We still hand callers
+    // a single assembled `LlmCompletionResult`, so this is invisible to
+    // every consumer.
+    const stream = this.client.messages.stream({
       model: this.model,
       max_tokens: options.maxTokens ?? DEFAULT_MAX_TOKENS,
       temperature: options.temperature,
@@ -75,6 +83,8 @@ export class AnthropicProvider implements LlmProvider {
             : this.toAnthropicContentBlocks(m.content),
       })),
     });
+
+    const response = await stream.finalMessage();
 
     const textBlock = response.content.find((block) => block.type === 'text');
     const content = textBlock?.type === 'text' ? textBlock.text : '';
