@@ -132,6 +132,31 @@
   flex-shrink: 0;
 }
 
+.member-reset-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--blink-on-surface-muted);
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background 0.15s, color 0.15s;
+
+  &:hover {
+    background: var(--blink-surface-hover);
+    color: var(--blink-on-surface-strong);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--blink-brand-primary);
+    outline-offset: 2px;
+  }
+}
+
 .member-remove-btn {
   display: flex;
   align-items: center;
@@ -339,4 +364,104 @@
   padding: 24px;
   color: var(--blink-on-surface-muted);
   font-size: 13px;
+}
+
+// ─── Confirm Modal (reset password) ───
+
+.confirm-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 16px;
+}
+
+.confirm-modal {
+  background: var(--blink-surface);
+  color: var(--blink-on-surface);
+  border: 1px solid var(--blink-outline-variant);
+  border-radius: 12px;
+  box-shadow: var(--blink-shadow-lg);
+  width: 100%;
+  max-width: 440px;
+  padding: 20px 24px 16px;
+}
+
+.confirm-modal-title {
+  margin: 0 0 8px;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--blink-on-surface-strong);
+}
+
+.confirm-modal-body {
+  margin: 0 0 12px;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--blink-on-surface-medium);
+
+  strong {
+    color: var(--blink-on-surface-strong);
+  }
+}
+
+.confirm-modal-error {
+  padding: 8px 12px;
+  background: var(--blink-error-bg, #fef2f2);
+  color: var(--blink-error-text, #991b1b);
+  border: 1px solid var(--blink-error-border, #fecaca);
+  border-radius: 6px;
+  font-size: 12px;
+  margin-bottom: 12px;
+}
+
+.confirm-modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.confirm-modal-cancel {
+  padding: 6px 16px;
+  border: 1px solid var(--blink-outline-variant);
+  border-radius: 6px;
+  background: var(--blink-surface);
+  color: var(--blink-on-surface);
+  font-size: 13px;
+  cursor: pointer;
+  transition: background 0.15s;
+
+  &:hover:not(:disabled) {
+    background: var(--blink-surface-hover);
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+}
+
+.confirm-modal-confirm {
+  padding: 6px 16px;
+  border: none;
+  border-radius: 6px;
+  background: var(--blink-brand-primary, #d94e33);
+  color: white;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.15s;
+
+  &:hover:not(:disabled) {
+    opacity: 0.9;
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
 }

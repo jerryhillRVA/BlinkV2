@@ -6,7 +6,7 @@ import { AgenticFilesystemService } from '../agentic-filesystem/agentic-filesyst
 import { UserService } from './user.service';
 import { SessionService } from './session.service';
 
-const BOOTSTRAP_EMAIL = 'blinkadmin@blinksocial.com';
+export const BOOTSTRAP_EMAIL = 'blinkadmin@blinksocial.com';
 const BOOTSTRAP_PASSWORD = 'blinksocial';
 const BOOTSTRAP_DISPLAY_NAME = 'Blink Admin';
 
