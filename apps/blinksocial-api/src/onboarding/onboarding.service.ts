@@ -30,6 +30,7 @@ import type {
 } from '@blinksocial/contracts';
 import type { LlmContentBlock, LlmMessage } from '../llm/llm-provider.interface';
 import { WorkspaceBuilderService } from './workspace-builder.service';
+import { renderBlueprintMarkdown } from '@blinksocial/core';
 
 const SKILL_ID = 'onboarding-consultant';
 
@@ -439,7 +440,11 @@ export class OnboardingService {
           },
         ],
         additionalContext,
-        maxTokens: 8192,
+        // Bumped from 8192 (#71): the structured-completeness rule adds
+        // ~10 required subsections to every Blueprint, pushing typical
+        // outputs past the old ceiling. 12000 leaves headroom for 4-pillar
+        // / 4-segment Blueprints without truncating the LLM response.
+        maxTokens: 12000,
         temperature: 0.5,
       });
 
@@ -468,7 +473,23 @@ export class OnboardingService {
         );
       }
 
-      const markdownDocument = this.renderBlueprintMarkdown(blueprint);
+      // Cross-field guard (cannot be expressed in JSON Schema): every
+      // content pillar MUST appear as a row in `contentChannelMatrix`,
+      // and the row count must equal the pillar count. Without this,
+      // the LLM occasionally drops a pillar from the matrix while
+      // leaving the rest of the structure schema-valid (#71).
+      const matrixError = this.validateContentChannelMatrix(blueprint);
+      if (matrixError) {
+        throw new HttpException(
+          {
+            message: 'Generated blueprint failed cross-field validation',
+            errors: [matrixError],
+          },
+          HttpStatus.UNPROCESSABLE_ENTITY,
+        );
+      }
+
+      const markdownDocument = renderBlueprintMarkdown(blueprint);
 
       // Stamp completedAt only on the FIRST successful generation, so the
       // post-completion "messages added since generation" slice (used by
@@ -1126,138 +1147,34 @@ export class OnboardingService {
     }));
   }
 
-  private renderBlueprintMarkdown(
+  /**
+   * Cross-field guard for `contentChannelMatrix`. JSON Schema can validate
+   * the row shape but cannot enforce that every `contentPillars[].name`
+   * appears as a `pillar` in the matrix and that the row count matches.
+   *
+   * Returns `null` when the matrix is consistent with the pillar list, or
+   * a `ValidationErrorContract`-shaped object when it isn't (caller wraps
+   * it in a 422 HttpException).
+   */
+  private validateContentChannelMatrix(
     bp: BlueprintDocumentContract,
-  ): string {
-    const lines: string[] = [];
-
-    lines.push(`# THE BLINK BLUEPRINT`);
-    lines.push('');
-    lines.push(`**Prepared for:** ${bp.clientName}`);
-    lines.push(`**Delivered:** ${bp.deliveredDate}`);
-    lines.push('');
-    lines.push('---');
-    lines.push('');
-
-    // Strategic Summary
-    lines.push('## Strategic Summary');
-    lines.push('');
-    lines.push(bp.strategicSummary);
-    lines.push('');
-
-    // Business Objectives
-    lines.push('## Business Objectives');
-    lines.push('');
-    for (const obj of bp.businessObjectives) {
-      lines.push(
-        `- **${obj.objective}** (${obj.category}) — ${obj.timeHorizon} — *${obj.metric}*`,
-      );
+  ): { field: string; message: string } | null {
+    const pillars = bp.contentPillars?.map((p) => p.name) ?? [];
+    const rows = bp.contentChannelMatrix?.map((r) => r.pillar) ?? [];
+    if (rows.length !== pillars.length) {
+      return {
+        field: '/contentChannelMatrix',
+        message: `Expected ${pillars.length} rows (one per content pillar), received ${rows.length}.`,
+      };
     }
-    lines.push('');
-
-    // Brand & Voice
-    lines.push('## Brand & Voice');
-    lines.push('');
-    lines.push(`> ${bp.brandVoice.positioningStatement}`);
-    lines.push('');
-    lines.push(`**Content Mission:** ${bp.brandVoice.contentMission}`);
-    lines.push('');
-    lines.push('### Voice Attributes');
-    lines.push('');
-    for (const attr of bp.brandVoice.voiceAttributes) {
-      lines.push(`- **${attr.attribute}:** ${attr.description}`);
+    const rowSet = new Set(rows);
+    const missing = pillars.filter((p) => !rowSet.has(p));
+    if (missing.length > 0) {
+      return {
+        field: '/contentChannelMatrix',
+        message: `Missing rows for pillars: ${missing.join(', ')}.`,
+      };
     }
-    lines.push('');
-    lines.push('### Do');
-    for (const item of bp.brandVoice.doList) {
-      lines.push(`- ${item}`);
-    }
-    lines.push('');
-    lines.push("### Don't");
-    for (const item of bp.brandVoice.dontList) {
-      lines.push(`- ${item}`);
-    }
-    lines.push('');
-
-    // Target Audience
-    lines.push('## Target Audience');
-    lines.push('');
-    lines.push(bp.targetAudience);
-    lines.push('');
-
-    // Audience
-    lines.push('## Audience Profiles');
-    lines.push('');
-    for (const aud of bp.audienceProfiles) {
-      lines.push(`### ${aud.name}`);
-      lines.push(`**Demographics:** ${aud.demographics}`);
-      lines.push(`**Pain Points:** ${aud.painPoints.join(', ')}`);
-      lines.push(`**Channels:** ${aud.channels.join(', ')}`);
-      lines.push(`**Content Hook:** ${aud.contentHook}`);
-      lines.push('');
-    }
-
-    // Competitors
-    lines.push('## Competitor Landscape');
-    lines.push('');
-    for (const comp of bp.competitorLandscape) {
-      lines.push(`### ${comp.name}`);
-      lines.push(`**Platforms:** ${comp.platforms.join(', ')}`);
-      lines.push(
-        `**Strengths:** ${comp.strengths.join('; ')}`,
-      );
-      lines.push(`**Gaps:** ${comp.gaps.join('; ')}`);
-      lines.push(`**Relevancy:** ${comp.relevancy}`);
-      lines.push('');
-    }
-
-    // Content Pillars
-    lines.push('## Content Pillars');
-    lines.push('');
-    for (const pillar of bp.contentPillars) {
-      lines.push(
-        `### ${pillar.name} (${pillar.sharePercent}%)`,
-      );
-      lines.push(pillar.description);
-      lines.push(`**Formats:** ${pillar.formats.join(', ')}`);
-      lines.push('');
-    }
-
-    // Channels & Cadence
-    lines.push('## Channels & Cadence');
-    lines.push('');
-    for (const ch of bp.channelsAndCadence) {
-      lines.push(`### ${ch.channel} — ${ch.role}`);
-      lines.push(`**Frequency:** ${ch.frequency}`);
-      lines.push(`**Best Times:** ${ch.bestTimes}`);
-      lines.push(
-        `**Content Types:** ${ch.contentTypes.join(', ')}`,
-      );
-      lines.push('');
-    }
-
-    // Performance Scorecard
-    lines.push('## Performance Scorecard');
-    lines.push('');
-    lines.push(
-      '| Metric | Baseline | 30-Day Target | 90-Day Target |',
-    );
-    lines.push('|--------|----------|---------------|---------------|');
-    for (const m of bp.performanceScorecard) {
-      lines.push(
-        `| ${m.metric} | ${m.baseline} | ${m.thirtyDayTarget} | ${m.ninetyDayTarget} |`,
-      );
-    }
-    lines.push('');
-
-    // Quick Wins
-    lines.push('## First 30 Days — Quick Wins');
-    lines.push('');
-    bp.quickWins.forEach((win, i) => {
-      lines.push(`${i + 1}. ${win}`);
-    });
-    lines.push('');
-
-    return lines.join('\n');
+    return null;
   }
 }

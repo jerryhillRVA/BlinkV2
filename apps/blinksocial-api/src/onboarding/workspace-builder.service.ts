@@ -2,6 +2,7 @@ import { Injectable, Logger, BadRequestException } from '@nestjs/common';
 import { SkillRunnerService } from '../skills/skill-runner.service';
 import { WorkspacesService } from '../workspaces/workspaces.service';
 import { AgenticFilesystemService } from '../agentic-filesystem/agentic-filesystem.service';
+import { renderBlueprintMarkdown } from '@blinksocial/core';
 import type {
   BlueprintDocumentContract,
   CreateWorkspaceRequestContract,
@@ -74,7 +75,7 @@ export class WorkspaceBuilderService {
 
     // 5. Save blueprint.md and wizard-state.json to AFS (fire-and-forget for non-critical)
     if (this.fs.isConfigured()) {
-      const markdownContent = this.renderBlueprintMarkdown(blueprint);
+      const markdownContent = renderBlueprintMarkdown(blueprint);
 
       const wizardState = {
         currentStep: 0,
@@ -234,49 +235,4 @@ export class WorkspaceBuilderService {
     return data as CreateWorkspaceRequestContract;
   }
 
-  private renderBlueprintMarkdown(bp: BlueprintDocumentContract): string {
-    const lines: string[] = [];
-
-    lines.push(`# THE BLINK BLUEPRINT`);
-    lines.push('');
-    lines.push(`**Prepared for:** ${bp.clientName}`);
-    lines.push(`**Delivered:** ${bp.deliveredDate}`);
-    lines.push('');
-    lines.push('---');
-    lines.push('');
-    lines.push('## Strategic Summary');
-    lines.push('');
-    lines.push(bp.strategicSummary);
-    lines.push('');
-
-    if (bp.brandVoice) {
-      lines.push('## Brand & Voice');
-      lines.push('');
-      lines.push(`> ${bp.brandVoice.positioningStatement}`);
-      lines.push('');
-      lines.push(`**Content Mission:** ${bp.brandVoice.contentMission}`);
-      lines.push('');
-    }
-
-    if (bp.contentPillars?.length) {
-      lines.push('## Content Pillars');
-      lines.push('');
-      for (const pillar of bp.contentPillars) {
-        lines.push(`### ${pillar.name} (${pillar.sharePercent}%)`);
-        lines.push(pillar.description);
-        lines.push('');
-      }
-    }
-
-    if (bp.channelsAndCadence?.length) {
-      lines.push('## Channels & Cadence');
-      lines.push('');
-      for (const ch of bp.channelsAndCadence) {
-        lines.push(`- **${ch.channel}** — ${ch.frequency} — ${ch.role}`);
-      }
-      lines.push('');
-    }
-
-    return lines.join('\n');
-  }
 }
