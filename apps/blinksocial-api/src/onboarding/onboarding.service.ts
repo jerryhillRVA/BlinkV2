@@ -440,11 +440,9 @@ export class OnboardingService {
           },
         ],
         additionalContext,
-        // Bumped from 8192 (#71): the structured-completeness rule adds
-        // ~10 required subsections to every Blueprint, pushing typical
-        // outputs past the old ceiling. 12000 leaves headroom for 4-pillar
-        // / 4-segment Blueprints without truncating the LLM response.
-        maxTokens: 12000,
+        // No `maxTokens` cap — Blueprints must never be truncated for
+        // verbose brands (#71). The provider applies the model's true
+        // ceiling; usage is tracked via `result.usage`.
         temperature: 0.5,
       });
 

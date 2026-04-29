@@ -28,7 +28,9 @@ export class WorkspaceBuilderService {
     sessionId: string,
     existingTenantId?: string,
   ): Promise<CreateWorkspaceFromBlueprintResponseContract> {
-    // 1. Run the populate-workspace-wizard skill
+    // 1. Run the populate-workspace-wizard skill — no `maxTokens` cap so
+    //    rich Blueprints don't get their wizard payload truncated mid-
+    //    array. Usage tracked via `result.usage` if needed.
     const result = await this.skillRunner.run({
       skillId: SKILL_ID,
       conversationHistory: [
@@ -37,7 +39,6 @@ export class WorkspaceBuilderService {
           content: JSON.stringify(blueprint),
         },
       ],
-      maxTokens: 8192,
       temperature: 0.3,
     });
 

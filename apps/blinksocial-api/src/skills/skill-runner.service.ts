@@ -32,7 +32,13 @@ export class SkillRunnerService {
 
     const result = await this.llmService.complete({
       messages,
-      maxTokens: context.maxTokens ?? 4096,
+      // Pass through the caller's `maxTokens` if they specified one; otherwise
+      // leave undefined so the provider applies its model-aware ceiling. We
+      // deliberately do NOT cap output here — truncating an artifact mid-
+      // generation makes downstream validation flaky and forces the LLM to
+      // omit content for verbose brands. Token usage is tracked separately
+      // via the returned `usage` payload.
+      ...(context.maxTokens !== undefined ? { maxTokens: context.maxTokens } : {}),
       temperature: context.temperature ?? 0.7,
     });
 
