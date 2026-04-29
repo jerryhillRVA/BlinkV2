@@ -1,12 +1,13 @@
 /* eslint-disable */
 import axios from 'axios';
+import { resolveApiE2ePort } from './port-helpers';
 
 module.exports = async function () {
   // Configure axios for tests to use.
   const host = process.env.HOST ?? 'localhost';
-  // Must match the port in global-setup.ts (which force-overrides to 3001
-  // to avoid colliding with web-e2e's webServer on 3000).
-  const port = process.env.API_E2E_PORT ?? '3001';
+  // Single source of truth — global-setup.ts owns the env→port resolution
+  // so the two halves of the e2e bootstrap cannot drift apart.
+  const port = resolveApiE2ePort();
   axios.defaults.baseURL = `http://${host}:${port}`;
 
   // Login with the bootstrap admin credentials to get a session cookie.

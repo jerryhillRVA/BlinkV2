@@ -1,5 +1,7 @@
 # Blink Social v2
 
+> **Working in a `git worktree`?** See [`docs/worktrees.md`](docs/worktrees.md) for the per-agent port allocation, bootstrap flow, and recovery snippets. `npm start` will fail-fast with the offending PID if your worktree's port band is occupied — pick a different band in `.env` rather than killing the other worktree's server.
+
 ## Project Structure
 
 Nx monorepo with Angular 21 (frontend) and NestJS 11 (backend).

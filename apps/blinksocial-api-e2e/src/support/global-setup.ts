@@ -1,5 +1,6 @@
 import { waitForPortOpen } from '@nx/node/utils';
-import { exec, execSync } from 'child_process';
+import { exec } from 'child_process';
+import { ensurePortFree, resolveApiE2ePort } from './port-helpers';
 
 /* eslint-disable */
 var __TEARDOWN_MESSAGE__: string;
@@ -14,19 +15,15 @@ module.exports = async function () {
   // run in parallel via `nx affected -t e2e`, sharing 3000 lets one task
   // kill the other's server mid-test. Callers can still override by
   // setting API_E2E_PORT.
-  const port = process.env.API_E2E_PORT
-    ? Number(process.env.API_E2E_PORT)
-    : 3001;
+  const port = resolveApiE2ePort();
   process.env.PORT = String(port);
 
-  // Kill any existing process on the port to ensure a clean server with fresh in-memory state
-  try {
-    execSync(`lsof -ti:${port} | xargs kill -9 2>/dev/null`, { stdio: 'ignore' });
-    // Brief pause to let the port release
-    await new Promise((resolve) => setTimeout(resolve, 500));
-  } catch {
-    // No process on port — that's fine
-  }
+  // Fail-fast when something is already listening on the port. The
+  // previous "force-cleanup" approach SIGKILLed whatever owned the port,
+  // including a sibling worktree's e2e run. global-teardown only stops
+  // the server *this* setup spawned, which is the right blast radius —
+  // see docs/worktrees.md.
+  ensurePortFree(port);
 
   // Start the API server in the background
   const serverProcess = exec('node apps/blinksocial-api/dist/main.js', {

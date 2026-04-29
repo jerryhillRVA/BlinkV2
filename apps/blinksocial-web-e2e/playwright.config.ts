@@ -2,8 +2,17 @@ import { defineConfig, devices } from '@playwright/test';
 import { nxE2EPreset } from '@nx/playwright/preset';
 import { workspaceRoot } from '@nx/devkit';
 
-// For CI, you may want to set BASE_URL to the deployed application.
-const baseURL = process.env['BASE_URL'] || 'http://localhost:4200';
+// Per-worktree port + URL resolution. See docs/worktrees.md for the agent
+// port-band convention. Defaults preserve previous behavior (3000 / 4200).
+const apiPort = process.env['API_PORT'] || '3000';
+const webPort = process.env['WEB_PORT'] || '4200';
+const baseURL = process.env['BASE_URL'] || `http://localhost:${webPort}`;
+const apiBaseURL =
+  process.env['API_BASE_URL'] || `http://localhost:${apiPort}`;
+// reuseExistingServer used to default to true, which let one worktree's
+// Playwright run silently bind to another worktree's running server and
+// validate the wrong code. Default false; opt-in via E2E_REUSE_SERVER=true.
+const reuseExistingServer = process.env['E2E_REUSE_SERVER'] === 'true';
 
 /**
  * Read environment variables from file.
@@ -35,16 +44,18 @@ export default defineConfig({
   /* Run your local dev servers before starting the tests */
   webServer: [
     {
-      command: 'npx nx run blinksocial-api:serve',
-      url: 'http://localhost:3000/api/health',
-      reuseExistingServer: true,
+      // The API reads PORT from env (NestJS bootstrap), not a --port flag.
+      command: `npx nx run blinksocial-api:serve`,
+      url: `${apiBaseURL}/api/health`,
+      reuseExistingServer,
       timeout: 180_000,
       cwd: workspaceRoot,
+      env: { ...process.env, PORT: apiPort } as Record<string, string>,
     },
     {
-      command: 'npx nx run blinksocial-web:serve',
-      url: 'http://localhost:4200',
-      reuseExistingServer: true,
+      command: `npx nx run blinksocial-web:serve --port=${webPort}`,
+      url: baseURL,
+      reuseExistingServer,
       timeout: 180_000,
       cwd: workspaceRoot,
     },
