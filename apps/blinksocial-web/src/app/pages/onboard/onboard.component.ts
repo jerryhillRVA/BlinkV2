@@ -7,6 +7,7 @@ import {
   AfterViewChecked,
   HostListener,
   signal,
+  effect,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -68,6 +69,9 @@ export class OnboardComponent implements OnInit, AfterViewChecked {
 
   @ViewChild('messageList') private messageListRef!: ElementRef<HTMLDivElement>;
   @ViewChild('fileInput') private fileInputRef!: ElementRef<HTMLInputElement>;
+  @ViewChild('messageInput') private messageInputRef?: ElementRef<HTMLTextAreaElement>;
+  @ViewChild('blueprintTab') private blueprintTabRef?: ElementRef<HTMLButtonElement>;
+  @ViewChild('chatTab') private chatTabRef?: ElementRef<HTMLButtonElement>;
 
   /** Exposed to template for the hidden `<input>`'s `accept` attribute. */
   protected readonly acceptAttribute = ACCEPT_ATTRIBUTE;
@@ -75,6 +79,13 @@ export class OnboardComponent implements OnInit, AfterViewChecked {
   userInput = '';
   workspaceName = signal('');
   sessionStarted = signal(false);
+  /**
+   * Active panel in the post-generation tabbed/split layout. On desktop both
+   * panels are visible regardless of value (CSS handles it); on mobile this
+   * drives which one is rendered at full width. Persists across regenerations
+   * because nothing else writes to it.
+   */
+  protected readonly activeTab = signal<'blueprint' | 'chat'>('blueprint');
   /** Chips rendered above the textarea before send. */
   protected readonly pendingAttachments = signal<PendingAttachment[]>([]);
   /** Drives the dashed-border drop overlay. Desktop only. */
@@ -83,6 +94,23 @@ export class OnboardComponent implements OnInit, AfterViewChecked {
   protected readonly isTouchDevice = signal(false);
   private dragDepth = 0;
   private shouldScrollToBottom = false;
+
+  constructor() {
+    // After every successful generation (initial or revision), the state
+    // service appends a canned post-generation prompt and bumps a counter.
+    // React by moving keyboard focus into the chat textarea so the user
+    // can immediately request revisions or continue without clicking.
+    effect(() => {
+      const count = this.state.postGenerationPromptCount();
+      if (count > 0) {
+        // Defer to next microtask so the DOM has settled (the textarea
+        // becomes visible the moment status flips to 'complete').
+        queueMicrotask(() => {
+          this.messageInputRef?.nativeElement.focus();
+        });
+      }
+    });
+  }
 
   ngOnInit(): void {
     if (typeof window !== 'undefined') {
@@ -169,6 +197,47 @@ export class OnboardComponent implements OnInit, AfterViewChecked {
 
   onBackToDashboard(): void {
     this.router.navigate(['/']);
+  }
+
+  // ---------------------------------------------------------------------------
+  // Post-generation split / tabbed layout
+  // ---------------------------------------------------------------------------
+
+  /** Click handler for the mobile tab buttons. */
+  protected onSelectTab(tab: 'blueprint' | 'chat'): void {
+    this.activeTab.set(tab);
+  }
+
+  /**
+   * ArrowLeft / ArrowRight on the tablist moves focus AND selection to the
+   * sibling tab, matching ARIA Authoring Practices for the tab pattern.
+   * Home/End jump to the first/last tab.
+   */
+  protected onTabKeydown(event: KeyboardEvent): void {
+    const order: ('blueprint' | 'chat')[] = ['blueprint', 'chat'];
+    const current = this.activeTab();
+    let next: 'blueprint' | 'chat' | null = null;
+    switch (event.key) {
+      case 'ArrowRight':
+        next = order[(order.indexOf(current) + 1) % order.length];
+        break;
+      case 'ArrowLeft':
+        next = order[(order.indexOf(current) - 1 + order.length) % order.length];
+        break;
+      case 'Home':
+        next = order[0];
+        break;
+      case 'End':
+        next = order[order.length - 1];
+        break;
+      default:
+        return;
+    }
+    if (!next) return;
+    event.preventDefault();
+    this.activeTab.set(next);
+    const targetRef = next === 'blueprint' ? this.blueprintTabRef : this.chatTabRef;
+    targetRef?.nativeElement.focus();
   }
 
   scrollToBottom(): void {

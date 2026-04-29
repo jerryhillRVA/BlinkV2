@@ -21,6 +21,13 @@ export interface OnboardingSessionState {
   currentSection: DiscoverySectionId;
   readyToGenerate: boolean;
   blueprint: BlueprintDocumentContract | null;
+  /**
+   * ISO timestamp of the moment the Blueprint first finished generating.
+   * Used by the post-generation revision flow to slice "messages added
+   * since the Blueprint was generated" and feed them as the revision
+   * conversation. `null` until the first successful generation.
+   */
+  completedAt?: string | null;
 }
 
 const SESSION_TTL_MS = 24 * 60 * 60 * 1000; // 24 hours
@@ -45,6 +52,7 @@ export class SessionStore {
       currentSection: 'business',
       readyToGenerate: false,
       blueprint: null,
+      completedAt: null,
     };
 
     this.sessions.set(id, session);

@@ -416,4 +416,135 @@ describe('OnboardStateService', () => {
     expect(md).not.toContain('## Target Audience');
     expect(md).toContain('## Strategic Summary');
   });
+
+  // -------------------------------------------------------------------------
+  // Post-generation revision flow (#70)
+  // -------------------------------------------------------------------------
+
+  describe('post-generation revision flow', () => {
+    function flushFirstGeneration(strategicSummary = 'Initial summary') {
+      service.sessionId.set('sess-1');
+      service.generateBlueprint();
+      const req = httpMock.expectOne('/api/onboarding/sessions/sess-1/generate');
+      req.flush({
+        blueprint: { clientName: 'Acme', strategicSummary },
+        markdownDocument: '# Blueprint',
+      });
+    }
+
+    it('appends a canned post-generation prompt and bumps postGenerationPromptCount on success', () => {
+      const before = service.messages().length;
+      flushFirstGeneration();
+      const messages = service.messages();
+      expect(messages.length).toBe(before + 1);
+      expect(messages.at(-1)?.role).toBe('assistant');
+      expect(messages.at(-1)?.content).toMatch(/Blueprint is ready/i);
+      expect(service.postGenerationPromptCount()).toBe(1);
+    });
+
+    it('auto-triggers generateBlueprint when sendMessage response carries readyToRevise=true', () => {
+      // Seed: status complete + prior blueprint
+      service.sessionId.set('sess-1');
+      service.status.set('complete');
+      service.blueprint.set({ clientName: 'Acme', strategicSummary: 'Old' } as any);
+      service.markdownDocument.set('# Old');
+
+      service.sendMessage('yes go ahead');
+      const messagesReq = httpMock.expectOne('/api/onboarding/sessions/sess-1/messages');
+      messagesReq.flush({
+        agentMessage: 'Regenerating now…',
+        sections: [],
+        currentSection: 'business',
+        readyToGenerate: false,
+        readyToRevise: true,
+      });
+
+      // The generate request should fire automatically.
+      const genReq = httpMock.expectOne('/api/onboarding/sessions/sess-1/generate');
+      genReq.flush({
+        blueprint: { clientName: 'Acme', strategicSummary: 'New tighter summary' },
+        markdownDocument: '# New',
+      });
+
+      expect(service.blueprint()?.strategicSummary).toBe('New tighter summary');
+      expect(service.markdownDocument()).toContain('# New');
+      // Canned prompt should have appeared after the revision regeneration too.
+      expect(service.messages().at(-1)?.content).toMatch(/Blueprint is ready/i);
+    });
+
+    it('does NOT auto-trigger generateBlueprint when readyToRevise is missing or false', () => {
+      service.sessionId.set('sess-1');
+      service.status.set('complete');
+      service.blueprint.set({ clientName: 'Acme', strategicSummary: 'Old' } as any);
+
+      service.sendMessage('Make it punchier please');
+      const req = httpMock.expectOne('/api/onboarding/sessions/sess-1/messages');
+      req.flush({
+        agentMessage: 'Plan: I will trim the summary…',
+        sections: [],
+        currentSection: 'business',
+        readyToGenerate: false,
+        // readyToRevise omitted — this is the plan turn, not the confirm turn
+      });
+
+      // No second request should fire.
+      httpMock.expectNone('/api/onboarding/sessions/sess-1/generate');
+      expect(service.status()).toBe('complete');
+      expect(service.blueprint()?.strategicSummary).toBe('Old');
+    });
+
+    it('does NOT auto-trigger when readyToRevise=true arrives in active (discovery) status', () => {
+      service.sessionId.set('sess-1');
+      // status defaults to 'active'; no prior blueprint
+      service.sendMessage('yes go ahead');
+      const req = httpMock.expectOne('/api/onboarding/sessions/sess-1/messages');
+      req.flush({
+        agentMessage: 'ok',
+        sections: [],
+        currentSection: 'business',
+        readyToGenerate: false,
+        readyToRevise: true, // misbehaved/legacy server — must be ignored
+      });
+      httpMock.expectNone('/api/onboarding/sessions/sess-1/generate');
+    });
+
+    it('preserves prior blueprint and resets status to complete when revision regen fails', () => {
+      // First, complete a generation.
+      flushFirstGeneration('Original summary');
+      expect(service.status()).toBe('complete');
+      const priorBlueprint = service.blueprint();
+      const priorMarkdown = service.markdownDocument();
+
+      // Trigger another generateBlueprint (revision) and have it fail.
+      service.generateBlueprint();
+      const req = httpMock.expectOne('/api/onboarding/sessions/sess-1/generate');
+      req.flush({ message: 'LLM exploded' }, { status: 500, statusText: 'Error' });
+
+      // Status returns to complete (not active), blueprint and markdown preserved.
+      expect(service.status()).toBe('complete');
+      expect(service.blueprint()).toEqual(priorBlueprint);
+      expect(service.markdownDocument()).toBe(priorMarkdown);
+      expect(service.error()).toBeTruthy();
+    });
+
+    it('first-time generation failure still resets status to active (no prior blueprint to preserve)', () => {
+      service.sessionId.set('sess-1');
+      // No prior blueprint
+      service.generateBlueprint();
+      const req = httpMock.expectOne('/api/onboarding/sessions/sess-1/generate');
+      req.flush({ message: 'boom' }, { status: 500, statusText: 'Error' });
+      expect(service.status()).toBe('active');
+    });
+
+    it('does not duplicate the post-generation prompt when called twice in a row', () => {
+      flushFirstGeneration('First');
+      const countAfterFirst = service.messages().length;
+      // Imagine an unexpected re-emission — the helper should be idempotent.
+      (service as unknown as { appendPostGenerationPrompt: () => void })
+        .appendPostGenerationPrompt();
+      expect(service.messages().length).toBe(countAfterFirst);
+      // Counter only bumped once.
+      expect(service.postGenerationPromptCount()).toBe(1);
+    });
+  });
 });

@@ -310,4 +310,267 @@ describe('OnboardingService', () => {
       expect(extractor).toBeInstanceOf(AttachmentExtractorService);
     });
   });
+
+  // ---------------------------------------------------------------------------
+  // Post-generation revision flow (#70)
+  // ---------------------------------------------------------------------------
+
+  describe('handleMessage in revision mode', () => {
+    function turnReply(extra: Record<string, unknown> = {}) {
+      return {
+        content: '',
+        parsed: {
+          agentMessage: 'Got it.',
+          sectionsUpdated: {},
+          sectionsCovered: [],
+          readyToGenerate: false,
+          currentSection: 'business',
+          ...extra,
+        },
+        usage: { inputTokens: 0, outputTokens: 0 },
+      };
+    }
+
+    function seedCompletedSession(): OnboardingSessionState {
+      const created = sessionStore.create('user-1');
+      return sessionStore.update(created.id, {
+        status: 'complete',
+        blueprint: buildValidBlueprint(),
+        completedAt: '2026-04-28T00:00:00.000Z',
+      });
+    }
+
+    it('accepts messages while session.status is "complete"', async () => {
+      const session = seedCompletedSession();
+      skillRunner.run.mockResolvedValue(turnReply());
+
+      await expect(
+        service.handleMessage(session.id, 'user-1', 'Make the summary tighter', []),
+      ).resolves.toBeTruthy();
+
+      const stored = sessionStore.get(session.id);
+      // User + assistant appended to the existing (post-generation) message log.
+      expect(stored?.messages.at(-1)?.role).toBe('assistant');
+      expect(stored?.messages.find((m) => m.content === 'Make the summary tighter')).toBeTruthy();
+    });
+
+    it('passes MODE: REVISION + existing blueprint JSON in additionalContext when complete', async () => {
+      const session = seedCompletedSession();
+      skillRunner.run.mockResolvedValue(turnReply());
+
+      await service.handleMessage(session.id, 'user-1', 'Tweak voice attributes', []);
+
+      const call = skillRunner.run.mock.calls.at(-1)?.[0] as {
+        additionalContext: string;
+      };
+      expect(call.additionalContext).toContain('MODE: REVISION');
+      // Blueprint JSON dump should be embedded so the LLM can reason about
+      // which sections to revise.
+      expect(call.additionalContext).toContain('"clientName": "Acme"');
+      expect(call.additionalContext).toContain('"strategicSummary"');
+    });
+
+    it('still rejects messages when status is "generating"', async () => {
+      const created = sessionStore.create('user-1');
+      sessionStore.update(created.id, { status: 'generating' });
+      await expect(
+        service.handleMessage(created.id, 'user-1', 'hi', []),
+      ).rejects.toThrow(/cannot send messages/i);
+    });
+
+    it('still rejects messages when status is "abandoned"', async () => {
+      const created = sessionStore.create('user-1');
+      sessionStore.update(created.id, { status: 'abandoned' });
+      await expect(
+        service.handleMessage(created.id, 'user-1', 'hi', []),
+      ).rejects.toThrow(/cannot send messages/i);
+    });
+
+    it('propagates readyToRevise: true from the LLM into SendMessageResponseContract', async () => {
+      const session = seedCompletedSession();
+      skillRunner.run.mockResolvedValue(
+        turnReply({ readyToRevise: true, agentMessage: 'Regenerating now…' }),
+      );
+
+      const res = await service.handleMessage(
+        session.id,
+        'user-1',
+        'yes go ahead',
+        [],
+      );
+
+      expect(res.readyToRevise).toBe(true);
+    });
+
+    it('does NOT echo readyToRevise when in active (discovery) mode', async () => {
+      const created = sessionStore.create('user-1');
+      // Even if the LLM mistakenly emits readyToRevise mid-discovery, the
+      // service must not surface it: the flag is only meaningful after
+      // generation has completed.
+      skillRunner.run.mockResolvedValue(turnReply({ readyToRevise: true }));
+
+      const res = await service.handleMessage(created.id, 'user-1', 'hi', []);
+      expect(res.readyToRevise).toBeUndefined();
+    });
+
+    it('does NOT mutate discoveryData / sectionsCovered in revision mode', async () => {
+      const session = seedCompletedSession();
+      sessionStore.update(session.id, {
+        discoveryData: { business: { businessName: 'Acme' } },
+        sectionsCovered: ['business', 'brand_voice'],
+      });
+      // LLM erroneously claims to cover a new section — must be ignored.
+      skillRunner.run.mockResolvedValue(
+        turnReply({ sectionsCovered: ['audience'], sectionsUpdated: { audience: { fake: true } } }),
+      );
+
+      await service.handleMessage(session.id, 'user-1', 'edit summary', []);
+
+      const stored = sessionStore.get(session.id);
+      expect(stored?.sectionsCovered).toEqual(['business', 'brand_voice']);
+      expect(stored?.discoveryData).toEqual({ business: { businessName: 'Acme' } });
+    });
+  });
+
+  describe('generateBlueprint revision branch', () => {
+    function seedCompletedSession(): OnboardingSessionState {
+      const created = sessionStore.create('user-1');
+      sessionStore.update(created.id, {
+        discoveryData: { business: { businessName: 'Acme' } },
+      });
+      return sessionStore.update(created.id, {
+        status: 'complete',
+        blueprint: buildValidBlueprint(),
+        completedAt: '2026-04-28T00:00:00.000Z',
+        messages: [
+          { id: 'u1', role: 'user', content: 'tighten the summary', timestamp: '2026-04-28T01:00:00.000Z' },
+          { id: 'a1', role: 'assistant', content: 'Plan: I will trim the strategic summary…', timestamp: '2026-04-28T01:00:30.000Z' },
+          { id: 'u2', role: 'user', content: 'yes go ahead', timestamp: '2026-04-28T01:01:00.000Z' },
+          { id: 'a2', role: 'assistant', content: 'Regenerating now…', timestamp: '2026-04-28T01:01:30.000Z' },
+        ],
+      });
+    }
+
+    it('uses MODE: BLUEPRINT_REVISION and includes prior blueprint + post-completion messages in the prompt', async () => {
+      const session = seedCompletedSession();
+      const valid = buildValidBlueprint();
+      valid.strategicSummary =
+        'A brand-new tightened summary that still spans more than one hundred characters to satisfy the validator schema.';
+      skillRunner.run.mockResolvedValue({
+        content: '',
+        parsed: valid as unknown as Record<string, unknown>,
+        usage: { inputTokens: 0, outputTokens: 0 },
+      });
+
+      const res = await service.generateBlueprint(session.id, 'user-1');
+
+      const call = skillRunner.run.mock.calls.at(-1)?.[0] as {
+        additionalContext: string;
+        conversationHistory: LlmMessage[];
+      };
+      expect(call.additionalContext).toContain('MODE: BLUEPRINT_REVISION');
+      const userBlocks = call.conversationHistory[0].content as
+        | string
+        | LlmContentBlock[];
+      const promptText =
+        typeof userBlocks === 'string'
+          ? userBlocks
+          : (userBlocks.find((b) => b.type === 'text') as { text: string }).text;
+      expect(promptText).toContain('EXISTING BLUEPRINT');
+      expect(promptText).toContain('REVISION CONVERSATION SINCE GENERATION');
+      // Slice should include only post-completion messages.
+      expect(promptText).toContain('tighten the summary');
+      expect(promptText).toContain('yes go ahead');
+      // Prior blueprint embedded.
+      expect(promptText).toContain('"strategicSummary"');
+
+      // Returned blueprint reflects the new generation.
+      expect(res.blueprint.strategicSummary).toContain('tightened summary');
+    });
+
+    it('preserves prior blueprint and resets status to "complete" when revision regen fails', async () => {
+      const session = seedCompletedSession();
+      const priorSummary = session.blueprint?.strategicSummary;
+      skillRunner.run.mockRejectedValue(new Error('LLM exploded'));
+
+      await expect(
+        service.generateBlueprint(session.id, 'user-1'),
+      ).rejects.toThrow(/LLM exploded/);
+
+      const after = sessionStore.get(session.id);
+      expect(after?.status).toBe('complete');
+      expect(after?.blueprint?.strategicSummary).toBe(priorSummary);
+    });
+
+    it('first-time generation behaviour unchanged — uses BLUEPRINT_GENERATION mode and resets to "active" on failure', async () => {
+      const created = sessionStore.create('user-1');
+      sessionStore.update(created.id, {
+        discoveryData: { business: { businessName: 'Acme' } },
+      });
+      // session.blueprint is null → generation mode
+      skillRunner.run.mockRejectedValue(new Error('boom'));
+
+      await expect(
+        service.generateBlueprint(created.id, 'user-1'),
+      ).rejects.toThrow(/boom/);
+
+      const after = sessionStore.get(created.id);
+      expect(after?.status).toBe('active');
+      expect(after?.blueprint).toBeNull();
+
+      // And on success the additionalContext is BLUEPRINT_GENERATION (not REVISION).
+      const valid = buildValidBlueprint();
+      skillRunner.run.mockResolvedValue({
+        content: '',
+        parsed: valid as unknown as Record<string, unknown>,
+        usage: { inputTokens: 0, outputTokens: 0 },
+      });
+      await service.generateBlueprint(created.id, 'user-1');
+      const call = skillRunner.run.mock.calls.at(-1)?.[0] as {
+        additionalContext: string;
+      };
+      expect(call.additionalContext).toContain('MODE: BLUEPRINT_GENERATION');
+      expect(call.additionalContext).not.toContain('MODE: BLUEPRINT_REVISION');
+    });
+
+    it('stamps completedAt on first successful generation and preserves it across revisions', async () => {
+      const created = sessionStore.create('user-1');
+      sessionStore.update(created.id, {
+        discoveryData: { business: { businessName: 'Acme' } },
+      });
+
+      const valid = buildValidBlueprint();
+      skillRunner.run.mockResolvedValue({
+        content: '',
+        parsed: valid as unknown as Record<string, unknown>,
+        usage: { inputTokens: 0, outputTokens: 0 },
+      });
+
+      await service.generateBlueprint(created.id, 'user-1');
+      const afterFirst = sessionStore.get(created.id);
+      const firstCompletedAt = afterFirst?.completedAt;
+      expect(firstCompletedAt).toBeTruthy();
+
+      // Add a revision message so the slice has content, then regenerate.
+      sessionStore.update(created.id, {
+        messages: [
+          ...(afterFirst?.messages ?? []),
+          { id: 'u', role: 'user', content: 'tweak', timestamp: new Date().toISOString() },
+        ],
+      });
+
+      const valid2 = buildValidBlueprint();
+      valid2.strategicSummary =
+        'Another summary spanning well past the one-hundred-character minLength enforced by the validator service.';
+      skillRunner.run.mockResolvedValue({
+        content: '',
+        parsed: valid2 as unknown as Record<string, unknown>,
+        usage: { inputTokens: 0, outputTokens: 0 },
+      });
+      await service.generateBlueprint(created.id, 'user-1');
+
+      const afterSecond = sessionStore.get(created.id);
+      expect(afterSecond?.completedAt).toBe(firstCompletedAt);
+    });
+  });
 });

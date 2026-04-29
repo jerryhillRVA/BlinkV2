@@ -45,6 +45,16 @@ export interface SendMessageResponseContract {
    * for server-assigned ids/fileIds.
    */
   messageAttachments?: OnboardingAttachmentContract[];
+  /**
+   * Set to `true` by the agent when the user has confirmed a revision plan
+   * after the Blueprint was first generated. The frontend treats this as a
+   * signal to immediately re-invoke `generateBlueprint`, mirroring the
+   * `readyToGenerate` pattern used at the end of discovery.
+   *
+   * Only meaningful while the session is in `complete` status (post-generation
+   * revision flow). Absent or `false` in all other turns.
+   */
+  readyToRevise?: boolean;
 }
 
 export interface GetSessionResponseContract {

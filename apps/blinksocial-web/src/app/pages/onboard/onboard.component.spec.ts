@@ -355,14 +355,18 @@ describe('OnboardComponent', () => {
     expect(preview).toBeTruthy();
   });
 
-  it('should not show chat area when complete', () => {
+  it('keeps chat area mounted alongside the blueprint preview when complete (#70)', () => {
     const fixture = createAndInitComponent();
     fixture.componentInstance['state'].status.set('complete');
     fixture.componentInstance['state'].markdownDocument.set('# Blueprint');
     fixture.detectChanges();
 
+    // Both panels render simultaneously so the user can chat for revisions
+    // while the Blueprint stays visible (split view on desktop, tabbed on mobile).
     const chatArea = fixture.nativeElement.querySelector('.chat-area');
-    expect(chatArea).toBeFalsy();
+    const preview = fixture.nativeElement.querySelector('app-blueprint-preview');
+    expect(chatArea).toBeTruthy();
+    expect(preview).toBeTruthy();
   });
 
   it('should scroll to bottom after sending message', () => {
@@ -775,6 +779,184 @@ describe('OnboardComponent', () => {
       expect(
         fixture.nativeElement.querySelector('[data-testid="pending-attachments"]'),
       ).toBeTruthy();
+    });
+  });
+
+  // ---------------------------------------------------------------------------
+  // Post-generation revision flow (#70)
+  // ---------------------------------------------------------------------------
+
+  describe('post-generation revision UI', () => {
+    function makeComplete(
+      fixture: ReturnType<typeof TestBed.createComponent<OnboardComponent>>,
+    ): void {
+      const state = fixture.componentInstance['state'];
+      state.status.set('complete');
+      state.markdownDocument.set('# Blueprint');
+      state.blueprint.set({ clientName: 'Acme', strategicSummary: 'X' } as any);
+      fixture.detectChanges();
+    }
+
+    it('renders both blueprint and chat panels when complete', () => {
+      const fixture = createAndInitComponent();
+      makeComplete(fixture);
+      expect(
+        fixture.nativeElement.querySelector('[data-testid="blueprint-panel"]'),
+      ).toBeTruthy();
+      expect(
+        fixture.nativeElement.querySelector('[data-testid="chat-panel"]'),
+      ).toBeTruthy();
+    });
+
+    it('chat textarea is enabled when complete (no longer locked out)', () => {
+      const fixture = createAndInitComponent();
+      makeComplete(fixture);
+      const textarea = fixture.nativeElement.querySelector(
+        '.message-input',
+      ) as HTMLTextAreaElement;
+      expect(textarea).toBeTruthy();
+      expect(textarea.disabled).toBe(false);
+    });
+
+    it('renders a tablist with two role=tab buttons when complete', () => {
+      const fixture = createAndInitComponent();
+      makeComplete(fixture);
+      const tablist = fixture.nativeElement.querySelector('[role="tablist"]');
+      expect(tablist).toBeTruthy();
+      const tabs = fixture.nativeElement.querySelectorAll('[role="tab"]');
+      expect(tabs.length).toBe(2);
+      const blueprintTab = fixture.nativeElement.querySelector(
+        '[data-testid="tab-blueprint"]',
+      ) as HTMLElement;
+      const chatTab = fixture.nativeElement.querySelector(
+        '[data-testid="tab-chat"]',
+      ) as HTMLElement;
+      // Blueprint tab is the default active selection.
+      expect(blueprintTab.getAttribute('aria-selected')).toBe('true');
+      expect(chatTab.getAttribute('aria-selected')).toBe('false');
+    });
+
+    it('clicking a tab flips activeTab and aria-selected', () => {
+      const fixture = createAndInitComponent();
+      makeComplete(fixture);
+      const chatTab = fixture.nativeElement.querySelector(
+        '[data-testid="tab-chat"]',
+      ) as HTMLButtonElement;
+      chatTab.click();
+      fixture.detectChanges();
+      expect(
+        (fixture.componentInstance as unknown as { activeTab: () => string })
+          .activeTab(),
+      ).toBe('chat');
+      const blueprintTab = fixture.nativeElement.querySelector(
+        '[data-testid="tab-blueprint"]',
+      ) as HTMLElement;
+      expect(blueprintTab.getAttribute('aria-selected')).toBe('false');
+      expect(chatTab.getAttribute('aria-selected')).toBe('true');
+    });
+
+    it('ArrowRight on the active tab moves selection to the next tab', () => {
+      const fixture = createAndInitComponent();
+      makeComplete(fixture);
+      const blueprintTab = fixture.nativeElement.querySelector(
+        '[data-testid="tab-blueprint"]',
+      ) as HTMLElement;
+      blueprintTab.dispatchEvent(
+        new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true }),
+      );
+      fixture.detectChanges();
+      expect(
+        (fixture.componentInstance as unknown as { activeTab: () => string })
+          .activeTab(),
+      ).toBe('chat');
+    });
+
+    it('ArrowLeft from chat returns selection to blueprint', () => {
+      const fixture = createAndInitComponent();
+      makeComplete(fixture);
+      (
+        fixture.componentInstance as unknown as {
+          onSelectTab: (t: 'blueprint' | 'chat') => void;
+        }
+      ).onSelectTab('chat');
+      fixture.detectChanges();
+      const chatTab = fixture.nativeElement.querySelector(
+        '[data-testid="tab-chat"]',
+      ) as HTMLElement;
+      chatTab.dispatchEvent(
+        new KeyboardEvent('keydown', { key: 'ArrowLeft', bubbles: true }),
+      );
+      fixture.detectChanges();
+      expect(
+        (fixture.componentInstance as unknown as { activeTab: () => string })
+          .activeTab(),
+      ).toBe('blueprint');
+    });
+
+    it('Home jumps to the first tab; End jumps to the last', () => {
+      const fixture = createAndInitComponent();
+      makeComplete(fixture);
+      const blueprintTab = fixture.nativeElement.querySelector(
+        '[data-testid="tab-blueprint"]',
+      ) as HTMLElement;
+      blueprintTab.dispatchEvent(
+        new KeyboardEvent('keydown', { key: 'End', bubbles: true }),
+      );
+      fixture.detectChanges();
+      expect(
+        (fixture.componentInstance as unknown as { activeTab: () => string })
+          .activeTab(),
+      ).toBe('chat');
+      const chatTab = fixture.nativeElement.querySelector(
+        '[data-testid="tab-chat"]',
+      ) as HTMLElement;
+      chatTab.dispatchEvent(
+        new KeyboardEvent('keydown', { key: 'Home', bubbles: true }),
+      );
+      fixture.detectChanges();
+      expect(
+        (fixture.componentInstance as unknown as { activeTab: () => string })
+          .activeTab(),
+      ).toBe('blueprint');
+    });
+
+    it('non-tab keys are ignored', () => {
+      const fixture = createAndInitComponent();
+      makeComplete(fixture);
+      const blueprintTab = fixture.nativeElement.querySelector(
+        '[data-testid="tab-blueprint"]',
+      ) as HTMLElement;
+      blueprintTab.dispatchEvent(
+        new KeyboardEvent('keydown', { key: 'a', bubbles: true }),
+      );
+      expect(
+        (fixture.componentInstance as unknown as { activeTab: () => string })
+          .activeTab(),
+      ).toBe('blueprint');
+    });
+
+    it('moves keyboard focus to the chat textarea after the post-generation prompt is appended', async () => {
+      const fixture = createAndInitComponent();
+      const state = fixture.componentInstance['state'];
+      // Switch to complete so the textarea is reachable; the effect listens
+      // to postGenerationPromptCount, mirroring what generateBlueprint does
+      // on a successful response.
+      state.status.set('complete');
+      state.markdownDocument.set('# Blueprint');
+      state.blueprint.set({ clientName: 'Acme', strategicSummary: 'X' } as any);
+      fixture.detectChanges();
+
+      // Bump the counter — same trigger used by the production path.
+      state.postGenerationPromptCount.update((n) => n + 1);
+      fixture.detectChanges();
+      // Wait one microtask for the queued focus call.
+      await Promise.resolve();
+
+      const textarea = fixture.nativeElement.querySelector(
+        '.message-input',
+      ) as HTMLTextAreaElement;
+      // jsdom focus is observable via document.activeElement.
+      expect(document.activeElement).toBe(textarea);
     });
   });
 });

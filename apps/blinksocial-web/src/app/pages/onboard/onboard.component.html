@@ -61,8 +61,69 @@
       </div>
     }
 
-    @if (state.status() !== 'complete') {
-      <div class="chat-area">
+    <div
+      class="post-generation-layout"
+      [class.is-split]="state.status() === 'complete'"
+      [attr.data-tab]="activeTab()">
+
+      @if (state.status() === 'complete') {
+        <div class="tab-bar" role="tablist" aria-label="Onboarding view">
+          <button
+            #blueprintTab
+            type="button"
+            role="tab"
+            id="onboard-tab-blueprint"
+            class="tab"
+            [class.active]="activeTab() === 'blueprint'"
+            [attr.aria-selected]="activeTab() === 'blueprint'"
+            [attr.tabindex]="activeTab() === 'blueprint' ? 0 : -1"
+            aria-controls="onboard-panel-blueprint"
+            data-testid="tab-blueprint"
+            (click)="onSelectTab('blueprint')"
+            (keydown)="onTabKeydown($event)">
+            Blueprint
+          </button>
+          <button
+            #chatTab
+            type="button"
+            role="tab"
+            id="onboard-tab-chat"
+            class="tab"
+            [class.active]="activeTab() === 'chat'"
+            [attr.aria-selected]="activeTab() === 'chat'"
+            [attr.tabindex]="activeTab() === 'chat' ? 0 : -1"
+            aria-controls="onboard-panel-chat"
+            data-testid="tab-chat"
+            (click)="onSelectTab('chat')"
+            (keydown)="onTabKeydown($event)">
+            Chat
+          </button>
+        </div>
+      }
+
+      @if (state.status() === 'complete' && state.markdownDocument()) {
+        <div
+          class="blueprint-section"
+          role="tabpanel"
+          id="onboard-panel-blueprint"
+          aria-labelledby="onboard-tab-blueprint"
+          data-testid="blueprint-panel">
+          <app-blueprint-preview
+            [markdownContent]="state.markdownDocument()!"
+            [clientName]="state.blueprint()?.clientName ?? ''"
+            [isCreating]="state.isCreatingWorkspace()"
+            [isGenerating]="state.status() === 'generating'"
+            (download)="onDownloadBlueprint()"
+            (createWorkspace)="onCreateWorkspace()" />
+        </div>
+      }
+
+      <div
+        class="chat-area"
+        [attr.role]="state.status() === 'complete' ? 'tabpanel' : null"
+        [attr.id]="state.status() === 'complete' ? 'onboard-panel-chat' : null"
+        [attr.aria-labelledby]="state.status() === 'complete' ? 'onboard-tab-chat' : null"
+        data-testid="chat-panel">
         @if (isDragging() && !isTouchDevice()) {
           <div class="drop-overlay" data-testid="drop-overlay" aria-hidden="true">
             <div class="drop-overlay-inner">
@@ -141,6 +202,7 @@
               (change)="onFilePicked($event)"
             />
             <textarea
+              #messageInput
               [(ngModel)]="userInput"
               placeholder="Type your response..."
               (keydown)="onKeyDown($event)"
@@ -160,18 +222,8 @@
           </div>
         </div>
       </div>
-    } @else {
-      <div class="blueprint-section">
-        @if (state.markdownDocument()) {
-          <app-blueprint-preview
-            [markdownContent]="state.markdownDocument()!"
-            [clientName]="state.blueprint()?.clientName ?? ''"
-            [isCreating]="state.isCreatingWorkspace()"
-            (download)="onDownloadBlueprint()"
-            (createWorkspace)="onCreateWorkspace()" />
-        }
-      </div>
-    }
+
+    </div>
 
     @if (state.status() === 'generating') {
       <div class="generating-overlay">

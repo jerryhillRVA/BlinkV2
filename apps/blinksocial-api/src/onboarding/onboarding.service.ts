@@ -50,8 +50,44 @@ interface AgentTurnResponse {
   sectionsUpdated?: Record<string, Record<string, unknown>>;
   sectionsCovered?: string[];
   readyToGenerate?: boolean;
+  /**
+   * Set by the LLM when it has just received explicit user confirmation of a
+   * proposed revision plan in post-generation chat. Triggers an automatic
+   * regeneration on the frontend.
+   */
+  readyToRevise?: boolean;
   currentSection?: string;
 }
+
+/**
+ * Additional-context block fed to the LLM during post-generation revision
+ * chat. Tells the agent (a) what the current Blueprint looks like, (b) the
+ * two-step plan-then-confirm protocol it must follow, (c) how to handle
+ * rollback requests, and (d) how to signal confirmation via the
+ * `readyToRevise` flag in its JSON response.
+ */
+const REVISION_MODE_CONTEXT_HEADER = 'MODE: REVISION';
+const REVISION_MODE_INSTRUCTIONS = [
+  '',
+  'You are now in REVISION mode. The Blueprint has already been generated and',
+  'is shown to the user alongside this chat. Follow this protocol:',
+  '',
+  '1. If the user requests a change to the Blueprint, reply with a short prose',
+  '   plan describing which sections you will revise and what will change. End',
+  '   the message with an explicit confirmation question (e.g. "Shall I apply',
+  '   these changes?"). Do NOT set readyToRevise on this turn.',
+  '2. Only when the user clearly confirms the most recent plan (e.g. "yes",',
+  '   "go ahead", "apply it", "looks good"), set "readyToRevise": true in your',
+  '   JSON response and acknowledge briefly ("Regenerating your Blueprint now…").',
+  '3. If the user asks to revert to a previous Blueprint, explain that this',
+  '   version does not retain prior Blueprints, and offer to re-shape the',
+  '   current one toward the previous form. Do NOT set readyToRevise.',
+  '4. If the user asks a non-revision question, answer normally without',
+  '   proposing a plan and without setting readyToRevise.',
+  '',
+  'Existing Blueprint (JSON):',
+].join('\n');
+
 
 /** A single inbound attachment as received by the controller. */
 export interface IncomingAttachment {
@@ -169,11 +205,16 @@ export class OnboardingService {
     if (session.userId !== userId) {
       throw new BadRequestException('Session does not belong to this user');
     }
-    if (session.status !== 'active') {
+    // Accept messages while the session is gathering discovery data (`active`)
+    // and after the Blueprint has been generated (`complete`) — the latter
+    // drives the post-generation revision chat (#70). Reject `generating` to
+    // avoid racing the LLM, and `abandoned` outright.
+    if (session.status !== 'active' && session.status !== 'complete') {
       throw new BadRequestException(
         `Session is ${session.status}, cannot send messages`,
       );
     }
+    const isRevisionMode = session.status === 'complete';
 
     const messageId = randomUUID();
     const now = new Date().toISOString();
@@ -242,7 +283,9 @@ export class OnboardingService {
       newlyExtractedThisTurn,
     );
 
-    const stateContext = this.buildStateContext(session);
+    const stateContext = isRevisionMode
+      ? this.buildRevisionStateContext(session)
+      : this.buildStateContext(session);
 
     const result = await this.skillRunner.run({
       skillId: SKILL_ID,
@@ -252,38 +295,46 @@ export class OnboardingService {
 
     const turnResponse = this.parseTurnResponse(result.content, result.parsed);
 
-    // 4. Update discovery data
+    // 4. Update discovery data — only meaningful during the discovery phase.
+    //    In revision mode we never mutate discoveryData / sectionsCovered;
+    //    the session has already passed those gates and the LLM's role is
+    //    only to plan and apply Blueprint edits.
     const discoveryData = { ...session.discoveryData };
-    if (turnResponse.sectionsUpdated) {
-      for (const [sectionId, data] of Object.entries(
-        turnResponse.sectionsUpdated,
-      )) {
-        discoveryData[sectionId] = {
-          ...(discoveryData[sectionId] || {}),
-          ...data,
-        };
+    let sectionsCovered = session.sectionsCovered;
+    let readyToGenerate = session.readyToGenerate;
+
+    if (!isRevisionMode) {
+      if (turnResponse.sectionsUpdated) {
+        for (const [sectionId, data] of Object.entries(
+          turnResponse.sectionsUpdated,
+        )) {
+          discoveryData[sectionId] = {
+            ...(discoveryData[sectionId] || {}),
+            ...data,
+          };
+        }
       }
+
+      sectionsCovered = [
+        ...new Set([
+          ...session.sectionsCovered,
+          ...(turnResponse.sectionsCovered || []),
+        ]),
+      ] as DiscoverySectionId[];
+
+      const allSectionIds: DiscoverySectionId[] = [
+        'business',
+        'brand_voice',
+        'audience',
+        'competitors',
+        'content',
+        'channels',
+        'expectations',
+      ];
+      readyToGenerate =
+        turnResponse.readyToGenerate === true &&
+        allSectionIds.every((s) => sectionsCovered.includes(s));
     }
-
-    const sectionsCovered = [
-      ...new Set([
-        ...session.sectionsCovered,
-        ...(turnResponse.sectionsCovered || []),
-      ]),
-    ] as DiscoverySectionId[];
-
-    const allSectionIds: DiscoverySectionId[] = [
-      'business',
-      'brand_voice',
-      'audience',
-      'competitors',
-      'content',
-      'channels',
-      'expectations',
-    ];
-    const readyToGenerate =
-      turnResponse.readyToGenerate === true &&
-      allSectionIds.every((s) => sectionsCovered.includes(s));
 
     // 5. Save updated state
     const assistantMessage: OnboardingMessageContract = {
@@ -311,6 +362,9 @@ export class OnboardingService {
       readyToGenerate,
       ...(persistedAttachments.length > 0
         ? { messageAttachments: persistedAttachments }
+        : {}),
+      ...(isRevisionMode && turnResponse.readyToRevise === true
+        ? { readyToRevise: true }
         : {}),
     };
   }
@@ -350,19 +404,31 @@ export class OnboardingService {
       throw new BadRequestException('Session does not belong to this user');
     }
 
+    // Detect revision mode: a prior Blueprint exists, so the user is asking us
+    // to apply requested changes rather than generate from scratch. Preserves
+    // the prior blueprint on failure (#70) so a transient LLM hiccup never
+    // boots the user back to discovery.
+    const isRevisionMode = session.blueprint !== null;
+    const priorBlueprint = session.blueprint;
+
     this.sessionStore.update(sessionId, { status: 'generating' });
 
     try {
       // Pull historical attachment text + replay representative images to
       // ensure the Blueprint reflects uploaded materials.
       const attachmentBlocks = await this.buildBlueprintAttachmentBlocks(session);
+      const promptText = isRevisionMode
+        ? this.buildRevisionGenerationPrompt(session)
+        : `Generate the Blink Blueprint document based on the following discovery data:\n\n${JSON.stringify(session.discoveryData, null, 2)}\n\nUse the blueprint-template.md instructions to create a comprehensive, tailored content strategy document. Return ONLY valid JSON matching the BlueprintDocumentContract schema.`;
+
       const userBlocks: LlmContentBlock[] = [
-        {
-          type: 'text',
-          text: `Generate the Blink Blueprint document based on the following discovery data:\n\n${JSON.stringify(session.discoveryData, null, 2)}\n\nUse the blueprint-template.md instructions to create a comprehensive, tailored content strategy document. Return ONLY valid JSON matching the BlueprintDocumentContract schema.`,
-        },
+        { type: 'text', text: promptText },
         ...attachmentBlocks,
       ];
+
+      const additionalContext = isRevisionMode
+        ? 'MODE: BLUEPRINT_REVISION\n\nThe user has confirmed a revision plan. Apply ONLY the changes implied by the revision conversation; preserve all unrelated Blueprint sections verbatim. Return a JSON object matching the blueprint schema exactly.'
+        : 'MODE: BLUEPRINT_GENERATION\n\nYou are now in blueprint generation mode. Use the discovery data provided AND any uploaded attachment context to generate a complete Blink Blueprint content strategy document. Return a JSON object matching the blueprint schema exactly.';
 
       const result = await this.skillRunner.run({
         skillId: SKILL_ID,
@@ -372,8 +438,7 @@ export class OnboardingService {
             content: attachmentBlocks.length > 0 ? userBlocks : userBlocks[0].type === 'text' ? userBlocks[0].text : '',
           },
         ],
-        additionalContext:
-          'MODE: BLUEPRINT_GENERATION\n\nYou are now in blueprint generation mode. Use the discovery data provided AND any uploaded attachment context to generate a complete Blink Blueprint content strategy document. Return a JSON object matching the blueprint schema exactly.',
+        additionalContext,
         maxTokens: 8192,
         temperature: 0.5,
       });
@@ -405,9 +470,15 @@ export class OnboardingService {
 
       const markdownDocument = this.renderBlueprintMarkdown(blueprint);
 
+      // Stamp completedAt only on the FIRST successful generation, so the
+      // post-completion "messages added since generation" slice (used by
+      // future revision regenerations) stays anchored to the original
+      // moment the Blueprint was finalised.
+      const completedAt = session.completedAt ?? new Date().toISOString();
       const updatedSession = this.sessionStore.update(sessionId, {
         status: 'complete',
         blueprint,
+        completedAt,
       });
 
       // Save blueprint.md to AFS and persist session (fire-and-forget)
@@ -427,12 +498,69 @@ export class OnboardingService {
 
       return { blueprint, markdownDocument };
     } catch (error) {
-      this.sessionStore.update(sessionId, { status: 'active' });
+      // Preserve the prior Blueprint when a revision regen fails so the user
+      // keeps what they had. Without this, a transient LLM error during a
+      // requested revision would silently destroy the previously-good
+      // document and dump them back into discovery.
+      if (isRevisionMode) {
+        this.sessionStore.update(sessionId, {
+          status: 'complete',
+          blueprint: priorBlueprint,
+        });
+      } else {
+        this.sessionStore.update(sessionId, { status: 'active' });
+      }
       this.logger.error(
         `Blueprint generation failed: ${error instanceof Error ? error.message : String(error)}`,
       );
       throw error;
     }
+  }
+
+  /**
+   * Compose the revision-regeneration LLM prompt: prior Blueprint, the
+   * post-completion conversation slice, and the original discovery data
+   * for grounding. Only invoked when `session.blueprint` is non-null.
+   */
+  private buildRevisionGenerationPrompt(
+    session: OnboardingSessionState,
+  ): string {
+    const priorBlueprintJson = JSON.stringify(session.blueprint, null, 2);
+    const revisionMessages = this.sliceMessagesAfterCompletion(session);
+    const revisionTranscript = revisionMessages.length > 0
+      ? revisionMessages
+          .map((m) => `${m.role.toUpperCase()}: ${m.content}`)
+          .join('\n\n')
+      : '(no post-completion messages — apply minimal edits inferred from context)';
+    return [
+      'Apply the following revision instructions to the existing Blueprint.',
+      '',
+      'EXISTING BLUEPRINT:',
+      priorBlueprintJson,
+      '',
+      'REVISION CONVERSATION SINCE GENERATION:',
+      revisionTranscript,
+      '',
+      'ORIGINAL DISCOVERY DATA (for grounding — do not duplicate or restate):',
+      JSON.stringify(session.discoveryData, null, 2),
+      '',
+      'Return ONLY valid JSON matching the BlueprintDocumentContract schema.',
+      'Preserve all sections that the revision conversation does not touch.',
+    ].join('\n');
+  }
+
+  /**
+   * Return only the messages added after the Blueprint was first generated
+   * — i.e. the revision dialogue. Falls back to the empty array when the
+   * session has no completion timestamp (defensive: should not happen in
+   * the revision path, since `isRevisionMode` requires a stored blueprint).
+   */
+  private sliceMessagesAfterCompletion(
+    session: OnboardingSessionState,
+  ): OnboardingMessageContract[] {
+    const cutoff = session.completedAt;
+    if (!cutoff) return [];
+    return session.messages.filter((m) => m.timestamp > cutoff);
   }
 
   async resumeSession(
@@ -917,6 +1045,19 @@ export class OnboardingService {
     }
 
     return lines.join('\n');
+  }
+
+  /**
+   * Build the additional-context block fed to the LLM in REVISION mode.
+   * Composes the protocol header (plan-then-confirm, rollback handling,
+   * `readyToRevise` signalling) with a JSON dump of the current Blueprint
+   * so the agent can reason precisely about which sections to change.
+   */
+  private buildRevisionStateContext(session: OnboardingSessionState): string {
+    const blueprintJson = session.blueprint
+      ? JSON.stringify(session.blueprint, null, 2)
+      : '{}';
+    return `${REVISION_MODE_CONTEXT_HEADER}\n${REVISION_MODE_INSTRUCTIONS}\n${blueprintJson}`;
   }
 
   private parseTurnResponse(

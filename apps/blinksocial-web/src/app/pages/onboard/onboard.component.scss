@@ -442,6 +442,102 @@
   flex: 1;
   overflow-y: auto;
   margin-top: 16px;
+  min-height: 0;
+}
+
+// ---------------------------------------------------------------------------
+// Post-generation split / tabbed layout (#70)
+//
+// While discovery is in progress (status = 'active' / 'generating'), this
+// container collapses to a plain block — the chat-area is the only direct
+// child and lays out exactly as before. Once status flips to 'complete'
+// the `.is-split` class enables the side-by-side layout (≥ 768px) or tab
+// switching (< 768px).
+// ---------------------------------------------------------------------------
+
+.post-generation-layout {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+
+  &.is-split {
+    @media (min-width: 768px) {
+      flex-direction: row;
+      gap: 16px;
+      align-items: stretch;
+
+      .blueprint-section {
+        flex: 1 1 60%;
+        margin-top: 0;
+        min-height: 400px;
+        overflow-y: auto;
+      }
+
+      .chat-area {
+        flex: 1 1 40%;
+      }
+    }
+
+    // Mobile: stacked, with tab bar above. Inactive panel hidden via
+    // `display: none` so chat scroll position survives switches.
+    @media (max-width: 767px) {
+      &[data-tab='blueprint'] .chat-area {
+        display: none;
+      }
+      &[data-tab='chat'] .blueprint-section {
+        display: none;
+      }
+      .blueprint-section {
+        margin-top: 8px;
+      }
+    }
+  }
+}
+
+.tab-bar {
+  display: flex;
+  gap: 4px;
+  margin: 8px 0 0;
+  padding: 4px;
+  background: var(--blink-surface-container-low);
+  border: 1px solid var(--blink-outline-variant);
+  border-radius: 12px;
+
+  // Hidden on desktop — the split view replaces the need for tabs.
+  @media (min-width: 768px) {
+    display: none;
+  }
+}
+
+.tab {
+  flex: 1;
+  appearance: none;
+  border: none;
+  background: transparent;
+  padding: 10px 16px;
+  border-radius: 8px;
+  font-size: var(--blink-label-large);
+  font-weight: 600;
+  color: var(--blink-on-surface-medium);
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+
+  &:hover:not(.active) {
+    background: var(--blink-surface-hover);
+    color: var(--blink-on-surface-strong);
+  }
+
+  &.active {
+    background: var(--blink-surface);
+    color: var(--blink-brand-primary);
+    box-shadow: var(--blink-shadow-sm);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--blink-brand-primary);
+    outline-offset: 2px;
+  }
 }
 
 .generating-overlay {
