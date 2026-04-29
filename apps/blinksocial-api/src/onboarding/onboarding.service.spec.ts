@@ -462,7 +462,7 @@ describe('OnboardingService', () => {
       const session = seedCompletedSession();
       const valid = buildValidBlueprint();
       valid.strategicSummary =
-        'A brand-new tightened summary that still spans more than one hundred characters to satisfy the validator schema.';
+        'Acme: a brand-new tightened summary that still spans more than one hundred characters to satisfy the validator schema.';
       skillRunner.run.mockResolvedValue({
         content: '',
         parsed: valid as unknown as Record<string, unknown>,
@@ -540,6 +540,149 @@ describe('OnboardingService', () => {
       expect(call.additionalContext).not.toContain('MODE: BLUEPRINT_REVISION');
     });
 
+    // ------------------------------------------------------------------
+    // Ticket #72 — businessName fidelity in Blueprint generation
+    // ------------------------------------------------------------------
+    describe('businessName fidelity (#72)', () => {
+      function blueprintWithBusinessName(name: string): BlueprintDocumentContract {
+        const bp = buildValidBlueprint();
+        // Pretend the LLM correctly references the businessName in the
+        // two prose slots ticket #72 polices.
+        bp.strategicSummary = `${name} is positioned to serve a long-form audience that satisfies the minLength validation guard for testing.`;
+        bp.brandVoice.positioningStatement = `${name} stands for craft and clarity.`;
+        return bp;
+      }
+
+      it('TC-U1: pins clientName to discovery businessName even when LLM returns a different name', async () => {
+        const created = sessionStore.create('user-1');
+        sessionStore.update(created.id, {
+          discoveryData: { business: { businessName: 'Hive Collective' } },
+        });
+
+        // LLM hallucinates a different clientName but mentions the right
+        // name in prose — no retry needed.
+        const drifted = blueprintWithBusinessName('Hive Collective');
+        drifted.clientName = 'Hive Fitness';
+        skillRunner.run.mockResolvedValue({
+          content: '',
+          parsed: drifted as unknown as Record<string, unknown>,
+          usage: { inputTokens: 0, outputTokens: 0 },
+        });
+
+        const res = await service.generateBlueprint(created.id, 'user-1');
+        expect(res.blueprint.clientName).toBe('Hive Collective');
+        expect(skillRunner.run).toHaveBeenCalledTimes(1);
+
+        const after = sessionStore.get(created.id);
+        expect(after?.blueprint?.clientName).toBe('Hive Collective');
+      });
+
+      it('TC-U2: retries once when strategicSummary omits businessName, succeeds on second attempt', async () => {
+        const created = sessionStore.create('user-1');
+        sessionStore.update(created.id, {
+          discoveryData: { business: { businessName: 'Hive Collective' } },
+        });
+
+        const driftedSummary = blueprintWithBusinessName('Hive Collective');
+        // First attempt: strategicSummary references the wrong name.
+        driftedSummary.strategicSummary =
+          'Hive Fitness is the long-form summary that exceeds one hundred characters to satisfy the minLength validation guard.';
+        const cleanRetry = blueprintWithBusinessName('Hive Collective');
+
+        skillRunner.run
+          .mockResolvedValueOnce({
+            content: '',
+            parsed: driftedSummary as unknown as Record<string, unknown>,
+            usage: { inputTokens: 0, outputTokens: 0 },
+          })
+          .mockResolvedValueOnce({
+            content: '',
+            parsed: cleanRetry as unknown as Record<string, unknown>,
+            usage: { inputTokens: 0, outputTokens: 0 },
+          });
+
+        const warnSpy = vi.spyOn(service['logger'], 'warn');
+
+        const res = await service.generateBlueprint(created.id, 'user-1');
+        expect(skillRunner.run).toHaveBeenCalledTimes(2);
+        expect(res.blueprint.strategicSummary).toContain('Hive Collective');
+        expect(res.blueprint.clientName).toBe('Hive Collective');
+        expect(warnSpy).toHaveBeenCalledWith(
+          expect.stringContaining('blueprint-name-drift'),
+        );
+        expect(warnSpy).toHaveBeenCalledWith(
+          expect.stringContaining('/strategicSummary'),
+        );
+
+        const after = sessionStore.get(created.id);
+        expect(after?.status).toBe('complete');
+        expect(after?.blueprint?.strategicSummary).toContain('Hive Collective');
+      });
+
+      it('TC-U3: throws 422 when both attempts drift, names the offending field, and resets session to active', async () => {
+        const created = sessionStore.create('user-1');
+        sessionStore.update(created.id, {
+          discoveryData: { business: { businessName: 'Hive Collective' } },
+        });
+
+        const drift = blueprintWithBusinessName('Hive Collective');
+        // Drift on positioningStatement — a different slot than TC-U2 to
+        // confirm the validator surfaces whichever field fails first.
+        drift.brandVoice.positioningStatement =
+          'Hive Fitness stands for craft and clarity.';
+        skillRunner.run.mockResolvedValue({
+          content: '',
+          parsed: drift as unknown as Record<string, unknown>,
+          usage: { inputTokens: 0, outputTokens: 0 },
+        });
+
+        await expect(
+          service.generateBlueprint(created.id, 'user-1'),
+        ).rejects.toMatchObject({
+          status: HttpStatus.UNPROCESSABLE_ENTITY,
+          response: expect.objectContaining({
+            message: expect.stringMatching(/business-name fidelity/i),
+            errors: expect.arrayContaining([
+              expect.objectContaining({
+                field: '/brandVoice/positioningStatement',
+              }),
+            ]),
+          }),
+        });
+
+        expect(skillRunner.run).toHaveBeenCalledTimes(2);
+
+        const after = sessionStore.get(created.id);
+        expect(after?.status).toBe('active');
+        expect(after?.blueprint).toBeNull();
+      });
+
+      it('TC-U4: skips businessName override and prose check when discovery businessName is empty', async () => {
+        const created = sessionStore.create('user-1');
+        // No businessName — legacy/partial discovery.
+        sessionStore.update(created.id, {
+          discoveryData: { business: {} },
+        });
+
+        const llmBlueprint = buildValidBlueprint();
+        llmBlueprint.clientName = 'Some Name';
+        skillRunner.run.mockResolvedValue({
+          content: '',
+          parsed: llmBlueprint as unknown as Record<string, unknown>,
+          usage: { inputTokens: 0, outputTokens: 0 },
+        });
+
+        const warnSpy = vi.spyOn(service['logger'], 'warn');
+
+        const res = await service.generateBlueprint(created.id, 'user-1');
+        expect(res.blueprint.clientName).toBe('Some Name');
+        expect(skillRunner.run).toHaveBeenCalledTimes(1);
+        expect(warnSpy).toHaveBeenCalledWith(
+          expect.stringContaining('blueprint-name-fallback'),
+        );
+      });
+    });
+
     it('stamps completedAt on first successful generation and preserves it across revisions', async () => {
       const created = sessionStore.create('user-1');
       sessionStore.update(created.id, {
@@ -568,7 +711,7 @@ describe('OnboardingService', () => {
 
       const valid2 = buildValidBlueprint();
       valid2.strategicSummary =
-        'Another summary spanning well past the one-hundred-character minLength enforced by the validator service.';
+        'Acme summary spanning well past the one-hundred-character minLength enforced by the validator service for tests.';
       skillRunner.run.mockResolvedValue({
         content: '',
         parsed: valid2 as unknown as Record<string, unknown>,
@@ -578,6 +721,68 @@ describe('OnboardingService', () => {
 
       const afterSecond = sessionStore.get(created.id);
       expect(afterSecond?.completedAt).toBe(firstCompletedAt);
+    });
+  });
+
+  // ---------------------------------------------------------------------
+  // Ticket #72 — wizard pre-fill sources from discovery, not Blueprint
+  // ---------------------------------------------------------------------
+  describe('createWorkspaceFromBlueprint workspaceName seeding (#72)', () => {
+    let workspaceBuilder: { buildFromBlueprint: ReturnType<typeof vi.fn> };
+
+    beforeEach(() => {
+      // The module-level WorkspaceBuilderService is created with a vi.fn()
+      // — recover it so we can assert call args from these tests.
+      workspaceBuilder = (service as unknown as {
+        workspaceBuilder: typeof workspaceBuilder;
+      }).workspaceBuilder;
+      workspaceBuilder.buildFromBlueprint.mockResolvedValue({
+        workspaceId: 'ws-new',
+        tenantId: 'tnt-new',
+        wizardData: { general: { workspaceName: 'placeholder' } },
+      });
+    });
+
+    it('TC-U5: passes discovery businessName as workspaceName even when blueprint.clientName drifted', async () => {
+      const created = sessionStore.create('user-1');
+      const drifted = buildValidBlueprint();
+      drifted.clientName = 'Drift Name';
+      sessionStore.update(created.id, {
+        discoveryData: { business: { businessName: 'Hive Collective' } },
+        status: 'complete',
+        blueprint: drifted,
+      });
+
+      await service.createWorkspaceFromBlueprint(created.id, 'user-1');
+
+      expect(workspaceBuilder.buildFromBlueprint).toHaveBeenCalledWith(
+        drifted,
+        'Hive Collective',
+        'user-1',
+        created.id,
+        undefined,
+      );
+    });
+
+    it('TC-U6: falls back to blueprint.clientName when discovery businessName is empty', async () => {
+      const created = sessionStore.create('user-1');
+      const bp = buildValidBlueprint();
+      bp.clientName = 'Acme';
+      sessionStore.update(created.id, {
+        discoveryData: { business: {} },
+        status: 'complete',
+        blueprint: bp,
+      });
+
+      await service.createWorkspaceFromBlueprint(created.id, 'user-1');
+
+      expect(workspaceBuilder.buildFromBlueprint).toHaveBeenCalledWith(
+        bp,
+        'Acme',
+        'user-1',
+        created.id,
+        undefined,
+      );
     });
   });
 });

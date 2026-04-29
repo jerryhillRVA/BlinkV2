@@ -19,7 +19,7 @@ export function buildSampleBlueprint(): BlueprintDocumentContract {
     clientName: 'Acme',
     deliveredDate: '2026-04-29',
     strategicSummary:
-      'A long summary that spans more than a hundred characters to satisfy minLength validation guard. Core idea here.',
+      'Acme operates in a long-form summary that spans more than a hundred characters to satisfy the minLength validation guard.',
     strategyInPlainEnglish:
       'Show up where the buyer already is, prove the craft, then convert.',
     strategicDecisions:
@@ -41,7 +41,7 @@ export function buildSampleBlueprint(): BlueprintDocumentContract {
     objectivesShapeContent:
       'Audience Growth funds Engagement Quality: every educational reel routes to a save-driving CTA, while community posts close the conversion loop.',
     brandVoice: {
-      positioningStatement: 'For builders who think out loud.',
+      positioningStatement: 'Acme is for builders who think out loud.',
       contentMission: 'Demystify modern dev workflows.',
       voiceAttributes: [{ attribute: 'Direct', description: 'No fluff.' }],
       doList: ['Be specific'],
