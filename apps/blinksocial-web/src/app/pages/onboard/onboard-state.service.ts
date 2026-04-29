@@ -10,6 +10,15 @@ import type {
   OnboardingSessionStatus,
 } from '@blinksocial/contracts';
 
+/**
+ * Canned assistant message appended client-side every time the Blueprint
+ * finishes generating (initial generation OR post-revision regeneration).
+ * Surfacing this prompt locally keeps it out of the LLM call and guarantees
+ * the user always sees a clear fork-in-the-road after each generation.
+ */
+const POST_GENERATION_PROMPT =
+  'Your Blueprint is ready. Would you like to request revisions, or proceed to Create Workspace?';
+
 @Injectable()
 export class OnboardStateService {
   private readonly api = inject(OnboardApiService);
@@ -27,6 +36,12 @@ export class OnboardStateService {
   readonly error = signal<string | null>(null);
 
   readonly isCreatingWorkspace = signal(false);
+  /**
+   * Increments every time the canned post-generation prompt is appended,
+   * giving the component a one-shot signal to move keyboard focus to the
+   * chat textarea. Components react via `effect()`.
+   */
+  readonly postGenerationPromptCount = signal(0);
 
   readonly completedSections = computed(() =>
     this.sections().filter((s) => s.covered).length,
@@ -122,6 +137,13 @@ export class OnboardStateService {
         this.currentSection.set(res.currentSection);
         this.readyToGenerate.set(res.readyToGenerate);
         this.isLoading.set(false);
+        // Post-generation revision flow: when the agent has just received an
+        // explicit confirmation of a revision plan, it sets `readyToRevise`
+        // in the response. Auto-trigger regeneration to mirror the smooth
+        // "user confirmed → system applies it" UX described in the ticket.
+        if (res.readyToRevise === true && this.status() === 'complete') {
+          this.generateBlueprint();
+        }
       },
       error: (err) => {
         // Roll back the optimistic user message so failed messages don't
@@ -137,6 +159,13 @@ export class OnboardStateService {
     const sid = this.sessionId();
     if (!sid) return;
 
+    // Snapshot whether a Blueprint already exists at the moment of the call.
+    // Used to drive (a) revision-mode error recovery — keep the prior preview
+    // intact on failure, and (b) skipping the canned post-generation prompt
+    // re-injection on revision regenerations vs first-time generations
+    // (we still want it after every regeneration; see `next` below).
+    const isRevision = this.blueprint() !== null;
+
     this.isLoading.set(true);
     this.status.set('generating');
     this.error.set(null);
@@ -147,15 +176,46 @@ export class OnboardStateService {
         this.markdownDocument.set(res.markdownDocument);
         this.status.set('complete');
         this.isLoading.set(false);
+        // Append the canned "what next?" prompt so the user always sees the
+        // same fork after generation, whether it's the first run or a
+        // revision regeneration. Adds a one-shot "focus the chat" signal so
+        // the component can move keyboard focus to the textarea.
+        this.appendPostGenerationPrompt();
       },
       error: (err) => {
         this.error.set(
           err?.error?.message ?? 'Failed to generate blueprint',
         );
-        this.status.set('active');
+        // Revision-regen failure: keep the user on the prior Blueprint
+        // rather than booting them back into discovery. The backend
+        // mirrors this behaviour on the server side.
+        this.status.set(isRevision ? 'complete' : 'active');
         this.isLoading.set(false);
       },
     });
+  }
+
+  /**
+   * Append the canned "Blueprint ready — revise or create workspace?" prompt
+   * and bump `postGenerationPromptCount` so the component knows to focus
+   * the chat input. Idempotent within a single tick (multiple consecutive
+   * `appendPostGenerationPrompt()` calls collapse into one).
+   */
+  private appendPostGenerationPrompt(): void {
+    const last = this.messages().at(-1);
+    if (last?.role === 'assistant' && last.content === POST_GENERATION_PROMPT) {
+      // Already present (e.g. from resume); skip duplicate.
+      return;
+    }
+    this.messages.update((msgs) => [
+      ...msgs,
+      {
+        role: 'assistant',
+        content: POST_GENERATION_PROMPT,
+        timestamp: new Date().toISOString(),
+      },
+    ]);
+    this.postGenerationPromptCount.update((n) => n + 1);
   }
 
   downloadBlueprint(): void {

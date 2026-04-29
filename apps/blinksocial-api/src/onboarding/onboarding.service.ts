@@ -558,8 +558,9 @@ export class OnboardingService {
   private sliceMessagesAfterCompletion(
     session: OnboardingSessionState,
   ): OnboardingMessageContract[] {
-    if (!session.completedAt) return [];
-    return session.messages.filter((m) => m.timestamp > session.completedAt!);
+    const cutoff = session.completedAt;
+    if (!cutoff) return [];
+    return session.messages.filter((m) => m.timestamp > cutoff);
   }
 
   async resumeSession(

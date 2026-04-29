@@ -14,6 +14,12 @@ export class BlueprintPreviewComponent {
   markdownContent = input.required<string>();
   clientName = input<string>('');
   isCreating = input<boolean>(false);
+  /**
+   * Set by the parent while a Blueprint regeneration is in flight (revision
+   * round) so we can disable Create Workspace and avoid a race between the
+   * still-rendering prior blueprint and the in-flight new one.
+   */
+  isGenerating = input<boolean>(false);
   download = output<void>();
   createWorkspace = output<void>();
 
