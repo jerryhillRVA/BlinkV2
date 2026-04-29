@@ -7,8 +7,16 @@
     "tsBuildInfoFile": "dist/tsconfig.lib.tsbuildinfo",
     "emitDeclarationOnly": false,
     "forceConsistentCasingInFileNames": true,
-    "types": ["node"]
+    "types": ["node"],
+    "paths": {
+      "@blinksocial/contracts": ["../blinksocial-contracts/src/index.ts"]
+    }
   },
   "include": ["src/**/*.ts"],
-  "references": []
+  "exclude": ["src/**/*.spec.ts"],
+  "references": [
+    {
+      "path": "../blinksocial-contracts/tsconfig.lib.json"
+    }
+  ]
 }

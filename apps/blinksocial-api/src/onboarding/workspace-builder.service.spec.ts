@@ -3,34 +3,19 @@ import { WorkspaceBuilderService } from './workspace-builder.service';
 import { SkillRunnerService } from '../skills/skill-runner.service';
 import { WorkspacesService } from '../workspaces/workspaces.service';
 import { AgenticFilesystemService } from '../agentic-filesystem/agentic-filesystem.service';
+import { buildSampleBlueprint } from '@blinksocial/core';
 import type {
   BlueprintDocumentContract,
   CreateWorkspaceRequestContract,
 } from '@blinksocial/contracts';
 
+/**
+ * Schema-valid Blueprint fixture sourced from the shared
+ * `@blinksocial/core` builder so this spec stays aligned with the AJV
+ * schema as new fields are added (#71).
+ */
 function buildValidBlueprint(): BlueprintDocumentContract {
-  return {
-    clientName: 'Acme',
-    deliveredDate: '2026-04-28',
-    strategicSummary:
-      'A long summary that spans more than a hundred characters to satisfy minLength validation guards. Core idea is here.',
-    businessObjectives: [],
-    brandVoice: {
-      positioningStatement: 'For builders who think out loud.',
-      contentMission: 'Demystify modern dev workflows.',
-      voiceAttributes: [{ attribute: 'Direct', description: 'No fluff.' }],
-      doList: ['Be specific'],
-      dontList: ['Avoid jargon'],
-    },
-    targetAudience:
-      'Independent builders looking for repeatable systems.',
-    audienceProfiles: [],
-    competitorLandscape: [],
-    contentPillars: [],
-    channelsAndCadence: [],
-    performanceScorecard: [],
-    quickWins: [],
-  };
+  return buildSampleBlueprint();
 }
 
 function buildSkillResponse(

@@ -6,20 +6,29 @@
     "clientName",
     "deliveredDate",
     "strategicSummary",
+    "strategyInPlainEnglish",
+    "strategicDecisions",
     "businessObjectives",
+    "objectivesShapeContent",
     "brandVoice",
     "audienceProfiles",
     "targetAudience",
     "competitorLandscape",
+    "differentiationMatrix",
+    "differentiationSummary",
     "contentPillars",
     "channelsAndCadence",
+    "contentChannelMatrix",
     "performanceScorecard",
+    "reviewCadence",
     "quickWins"
   ],
   "properties": {
     "clientName": { "type": "string" },
     "deliveredDate": { "type": "string" },
     "strategicSummary": { "type": "string", "minLength": 100 },
+    "strategyInPlainEnglish": { "type": "string", "minLength": 30 },
+    "strategicDecisions": { "type": "string", "minLength": 30 },
     "businessObjectives": {
       "type": "array",
       "minItems": 2,
@@ -34,9 +43,17 @@
         }
       }
     },
+    "objectivesShapeContent": { "type": "string", "minLength": 30 },
     "brandVoice": {
       "type": "object",
-      "required": ["positioningStatement", "contentMission", "voiceAttributes", "doList", "dontList"],
+      "required": [
+        "positioningStatement",
+        "contentMission",
+        "voiceAttributes",
+        "doList",
+        "dontList",
+        "voiceInAction"
+      ],
       "properties": {
         "positioningStatement": { "type": "string" },
         "contentMission": { "type": "string" },
@@ -52,7 +69,19 @@
           }
         },
         "doList": { "type": "array", "items": { "type": "string" } },
-        "dontList": { "type": "array", "items": { "type": "string" } }
+        "dontList": { "type": "array", "items": { "type": "string" } },
+        "voiceInAction": {
+          "type": "array",
+          "minItems": 3,
+          "items": {
+            "type": "object",
+            "required": ["context", "sample"],
+            "properties": {
+              "context": { "type": "string" },
+              "sample": { "type": "string" }
+            }
+          }
+        }
       }
     },
     "audienceProfiles": {
@@ -60,13 +89,37 @@
       "minItems": 1,
       "items": {
         "type": "object",
-        "required": ["name", "demographics", "painPoints", "channels", "contentHook"],
+        "required": [
+          "name",
+          "demographics",
+          "painPoints",
+          "channels",
+          "contentHook",
+          "journeyMap"
+        ],
         "properties": {
           "name": { "type": "string" },
           "demographics": { "type": "string" },
           "painPoints": { "type": "array", "items": { "type": "string" } },
           "channels": { "type": "array", "items": { "type": "string" } },
-          "contentHook": { "type": "string" }
+          "contentHook": { "type": "string" },
+          "journeyMap": {
+            "type": "array",
+            "minItems": 4,
+            "maxItems": 4,
+            "items": {
+              "type": "object",
+              "required": ["phase", "goal", "contentMoment"],
+              "properties": {
+                "phase": {
+                  "type": "string",
+                  "enum": ["Discovery", "Consideration", "Conversion", "Advocate"]
+                },
+                "goal": { "type": "string" },
+                "contentMoment": { "type": "string" }
+              }
+            }
+          }
         }
       }
     },
@@ -85,17 +138,53 @@
         }
       }
     },
+    "differentiationMatrix": {
+      "type": "array",
+      "minItems": 3,
+      "items": {
+        "type": "object",
+        "required": ["dimension", "hive", "competitors"],
+        "properties": {
+          "dimension": { "type": "string" },
+          "hive": { "type": "string" },
+          "competitors": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["name", "value"],
+              "properties": {
+                "name": { "type": "string" },
+                "value": { "type": "string" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "differentiationSummary": { "type": "string", "minLength": 30 },
     "contentPillars": {
       "type": "array",
       "minItems": 2,
       "items": {
         "type": "object",
-        "required": ["name", "description", "formats", "sharePercent"],
+        "required": ["name", "description", "formats", "sharePercent", "contentIdeas"],
         "properties": {
           "name": { "type": "string" },
           "description": { "type": "string" },
           "formats": { "type": "array", "items": { "type": "string" } },
-          "sharePercent": { "type": "number", "minimum": 5, "maximum": 60 }
+          "sharePercent": { "type": "number", "minimum": 5, "maximum": 60 },
+          "contentIdeas": {
+            "type": "array",
+            "minItems": 5,
+            "items": {
+              "type": "object",
+              "required": ["title", "angle"],
+              "properties": {
+                "title": { "type": "string" },
+                "angle": { "type": "string" }
+              }
+            }
+          }
         }
       }
     },
@@ -114,20 +203,51 @@
         }
       }
     },
+    "contentChannelMatrix": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["pillar", "placements"],
+        "properties": {
+          "pillar": { "type": "string" },
+          "placements": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "type": "object",
+              "required": ["channel", "role"],
+              "properties": {
+                "channel": { "type": "string" },
+                "role": { "type": "string", "enum": ["primary", "occasional"] }
+              }
+            }
+          }
+        }
+      }
+    },
     "performanceScorecard": {
       "type": "array",
       "minItems": 3,
       "items": {
         "type": "object",
-        "required": ["metric", "baseline", "thirtyDayTarget", "ninetyDayTarget"],
+        "required": [
+          "metric",
+          "baseline",
+          "thirtyDayTarget",
+          "ninetyDayTarget",
+          "definition"
+        ],
         "properties": {
           "metric": { "type": "string" },
           "baseline": { "type": "string" },
           "thirtyDayTarget": { "type": "string" },
-          "ninetyDayTarget": { "type": "string" }
+          "ninetyDayTarget": { "type": "string" },
+          "definition": { "type": "string", "minLength": 10 }
         }
       }
     },
+    "reviewCadence": { "type": "string", "minLength": 30 },
     "quickWins": {
       "type": "array",
       "minItems": 3,

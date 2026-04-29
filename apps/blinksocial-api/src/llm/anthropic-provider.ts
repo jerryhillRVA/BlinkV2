@@ -9,7 +9,15 @@ import type {
 } from './llm-provider.interface';
 
 const DEFAULT_MODEL = 'claude-sonnet-4-6';
-const DEFAULT_MAX_TOKENS = 4096;
+/**
+ * Use the model's maximum supported output (Sonnet 4-class models support
+ * up to 64k output tokens). The Anthropic SDK requires `max_tokens`, so we
+ * cannot omit it — instead we lift it to the ceiling so artifacts are
+ * never truncated for verbose brands. Callers that need a deliberately
+ * smaller cap (e.g. classification prompts) can still pass `maxTokens`
+ * explicitly. Token usage is tracked via the returned `usage` payload.
+ */
+const DEFAULT_MAX_TOKENS = 64000;
 
 export class AnthropicProvider implements LlmProvider {
   readonly providerId = 'anthropic';
@@ -53,7 +61,15 @@ export class AnthropicProvider implements LlmProvider {
         ? systemMessage.content
         : undefined;
 
-    const response = await this.client.messages.create({
+    // Use the streaming API. The non-streaming `messages.create()` call
+    // refuses any request whose `max_tokens` is high enough that output
+    // could plausibly take more than 10 minutes ("Streaming is required
+    // for operations that may take longer than 10 minutes"). Since we
+    // deliberately set `max_tokens` to the model ceiling (#71 — never
+    // truncate artifacts), we must use streaming. We still hand callers
+    // a single assembled `LlmCompletionResult`, so this is invisible to
+    // every consumer.
+    const stream = this.client.messages.stream({
       model: this.model,
       max_tokens: options.maxTokens ?? DEFAULT_MAX_TOKENS,
       temperature: options.temperature,
@@ -68,8 +84,19 @@ export class AnthropicProvider implements LlmProvider {
       })),
     });
 
+    const response = await stream.finalMessage();
+
     const textBlock = response.content.find((block) => block.type === 'text');
     const content = textBlock?.type === 'text' ? textBlock.text : '';
+
+    // Loud warning when the model actually hits the ceiling — we'd rather
+    // know than silently ship a truncated artifact. Downstream validators
+    // will reject incomplete JSON, but a log helps diagnose the cause.
+    if (response.stop_reason === 'max_tokens') {
+      this.logger.warn(
+        `LLM response was truncated by max_tokens cap (${response.usage.output_tokens} output tokens consumed). Consider raising DEFAULT_MAX_TOKENS or chunking the request.`,
+      );
+    }
 
     return {
       content,

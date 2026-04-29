@@ -72,6 +72,66 @@ export interface GenerateBlueprintResponseContract {
   markdownDocument: string;
 }
 
+/**
+ * Stable placeholder string the LLM must emit (and `renderBlueprintMarkdown`
+ * passes through unchanged) whenever a discovery answer was blank but the
+ * Blueprint subsection is still required for structural completeness.
+ *
+ * Length deliberately exceeds the schema's 30-char `minLength` so it can
+ * legally satisfy any required-string field. See ticket #71.
+ */
+export const BLUEPRINT_BLANK_PLACEHOLDER =
+  '*Not provided during discovery — capture in next session*';
+
+export interface BlueprintJourneyStageContract {
+  /** Canonical journey stages — order is preserved in rendered output. */
+  phase: 'Discovery' | 'Consideration' | 'Conversion' | 'Advocate';
+  /** What the audience is trying to do at this phase. */
+  goal: string;
+  /** Which content type / pillar meets them at this moment. */
+  contentMoment: string;
+}
+
+export interface BlueprintVoiceExampleContract {
+  /** Where this sample would appear (e.g. "Caption: workout reel"). */
+  context: string;
+  /** Sample copy in-voice — 1–3 sentences. */
+  sample: string;
+}
+
+export interface BlueprintDifferentiationCellContract {
+  name: string;
+  value: string;
+}
+
+export interface BlueprintDifferentiationRowContract {
+  /** Comparison dimension (e.g. "Audience specificity"). */
+  dimension: string;
+  /** Hive's value on this dimension. */
+  hive: string;
+  /** One cell per competitor compared. */
+  competitors: BlueprintDifferentiationCellContract[];
+}
+
+export interface BlueprintContentIdeaContract {
+  /** Working title or hook line for the post. */
+  title: string;
+  /** One-line angle / framing of the idea. */
+  angle: string;
+}
+
+export interface BlueprintChannelMatrixPlacementContract {
+  channel: string;
+  role: 'primary' | 'occasional';
+}
+
+export interface BlueprintChannelMatrixRowContract {
+  /** Pillar name — must match a `contentPillars[].name`. */
+  pillar: string;
+  /** Channel placements for this pillar. */
+  placements: BlueprintChannelMatrixPlacementContract[];
+}
+
 export interface BlueprintObjectiveContract {
   objective: string;
   category: string;
@@ -85,6 +145,11 @@ export interface BlueprintAudienceContract {
   painPoints: string[];
   channels: string[];
   contentHook: string;
+  /**
+   * Per-segment journey map (Discovery → Consideration → Conversion →
+   * Advocate). Always exactly 4 stages in canonical order.
+   */
+  journeyMap: BlueprintJourneyStageContract[];
 }
 
 export interface BlueprintCompetitorContract {
@@ -100,6 +165,11 @@ export interface BlueprintPillarContract {
   description: string;
   formats: string[];
   sharePercent: number;
+  /**
+   * "Content Ideas Bank" — concrete working post titles/angles for this
+   * pillar. Minimum 5 ideas per pillar; not categories, real ideas.
+   */
+  contentIdeas: BlueprintContentIdeaContract[];
 }
 
 export interface BlueprintChannelContract {
@@ -115,26 +185,54 @@ export interface BlueprintMetricContract {
   baseline: string;
   thirtyDayTarget: string;
   ninetyDayTarget: string;
+  /** Plain-language definition of what this metric measures. */
+  definition: string;
 }
 
 export interface BlueprintDocumentContract {
   clientName: string;
   deliveredDate: string;
   strategicSummary: string;
+  /** "The Strategy in Plain English" subsection — short prose. */
+  strategyInPlainEnglish: string;
+  /** "Strategic Decisions Made in the Discovery Session" subsection. */
+  strategicDecisions: string;
   businessObjectives: BlueprintObjectiveContract[];
+  /** "How These Objectives Shape Content" subsection. */
+  objectivesShapeContent: string;
   brandVoice: {
     positioningStatement: string;
     contentMission: string;
     voiceAttributes: { attribute: string; description: string }[];
     doList: string[];
     dontList: string[];
+    /**
+     * "Voice in Action — Real Copy Examples" subsection. Sample copy that
+     * calibrates briefs/captions/copy reviews. Min 3 examples.
+     */
+    voiceInAction: BlueprintVoiceExampleContract[];
   };
   targetAudience: string;
   audienceProfiles: BlueprintAudienceContract[];
   competitorLandscape: BlueprintCompetitorContract[];
+  /**
+   * "Differentiation Matrix" — grid comparing Hive against named competitors
+   * across competitor-relevant dimensions. Min 3 rows.
+   */
+  differentiationMatrix: BlueprintDifferentiationRowContract[];
+  /** "Differentiation Summary" paragraph following the matrix. */
+  differentiationSummary: string;
   contentPillars: BlueprintPillarContract[];
   channelsAndCadence: BlueprintChannelContract[];
+  /**
+   * "Content-Channel Matrix" — grid showing which pillars go on which
+   * platforms with primary/occasional indicators. Must contain one row
+   * per content pillar (cross-field guard enforced server-side).
+   */
+  contentChannelMatrix: BlueprintChannelMatrixRowContract[];
   performanceScorecard: BlueprintMetricContract[];
+  /** "Review Cadence" — when and how to review the scorecard. */
+  reviewCadence: string;
   quickWins: string[];
 }
 

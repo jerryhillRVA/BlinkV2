@@ -9,6 +9,7 @@ import type {
   BlueprintDocumentContract,
   OnboardingSessionStatus,
 } from '@blinksocial/contracts';
+import { renderBlueprintMarkdown } from '@blinksocial/core';
 
 /**
  * Canned assistant message appended client-side every time the Blueprint
@@ -255,87 +256,6 @@ export class OnboardStateService {
     });
   }
 
-  private renderBlueprintMarkdown(bp: BlueprintDocumentContract): string {
-    const lines: string[] = [];
-    lines.push(`# THE BLINK BLUEPRINT`);
-    lines.push('');
-    lines.push(`**Prepared for:** ${bp.clientName}`);
-    lines.push(`**Delivered:** ${bp.deliveredDate}`);
-    lines.push('');
-    lines.push('---');
-    lines.push('');
-    lines.push('## Strategic Summary');
-    lines.push('');
-    lines.push(bp.strategicSummary);
-    lines.push('');
-    if (bp.businessObjectives?.length) {
-      lines.push('## Business Objectives');
-      lines.push('');
-      for (const obj of bp.businessObjectives) {
-        lines.push(`- **${obj.objective}** (${obj.category}) — ${obj.timeHorizon} — *${obj.metric}*`);
-      }
-      lines.push('');
-    }
-    if (bp.brandVoice) {
-      lines.push('## Brand & Voice');
-      lines.push('');
-      lines.push(`> ${bp.brandVoice.positioningStatement}`);
-      lines.push('');
-      lines.push(`**Content Mission:** ${bp.brandVoice.contentMission}`);
-      lines.push('');
-    }
-    if (bp.targetAudience) {
-      lines.push('## Target Audience');
-      lines.push('');
-      lines.push(bp.targetAudience);
-      lines.push('');
-    }
-    if (bp.audienceProfiles?.length) {
-      lines.push('## Audience Profiles');
-      lines.push('');
-      for (const aud of bp.audienceProfiles) {
-        lines.push(`### ${aud.name}`);
-        lines.push(`${aud.demographics}`);
-        lines.push('');
-      }
-    }
-    if (bp.contentPillars?.length) {
-      lines.push('## Content Pillars');
-      lines.push('');
-      for (const p of bp.contentPillars) {
-        lines.push(`### ${p.name} (${p.sharePercent}%)`);
-        lines.push(p.description);
-        lines.push('');
-      }
-    }
-    if (bp.channelsAndCadence?.length) {
-      lines.push('## Channels & Cadence');
-      lines.push('');
-      for (const ch of bp.channelsAndCadence) {
-        lines.push(`### ${ch.channel} — ${ch.role}`);
-        lines.push(`**Frequency:** ${ch.frequency}`);
-        lines.push('');
-      }
-    }
-    if (bp.performanceScorecard?.length) {
-      lines.push('## Performance Scorecard');
-      lines.push('');
-      lines.push('| Metric | Baseline | 30-Day | 90-Day |');
-      lines.push('|--------|----------|--------|--------|');
-      for (const m of bp.performanceScorecard) {
-        lines.push(`| ${m.metric} | ${m.baseline} | ${m.thirtyDayTarget} | ${m.ninetyDayTarget} |`);
-      }
-      lines.push('');
-    }
-    if (bp.quickWins?.length) {
-      lines.push('## First 30 Days — Quick Wins');
-      lines.push('');
-      bp.quickWins.forEach((win, i) => lines.push(`${i + 1}. ${win}`));
-      lines.push('');
-    }
-    return lines.join('\n');
-  }
-
   resumeSession(tenantId: string): void {
     this.isLoading.set(true);
     this.error.set(null);
@@ -350,8 +270,10 @@ export class OnboardStateService {
         this.readyToGenerate.set(res.readyToGenerate);
         if (res.blueprint) {
           this.blueprint.set(res.blueprint);
-          // Render markdown for the blueprint preview when resuming a completed session
-          this.markdownDocument.set(this.renderBlueprintMarkdown(res.blueprint));
+          // Render via the shared @blinksocial/core serializer so the
+          // resume-from-AFS path emits the exact same markdown structure
+          // as the fresh-generation path on the API side (#71).
+          this.markdownDocument.set(renderBlueprintMarkdown(res.blueprint));
         }
         this.isLoading.set(false);
       },

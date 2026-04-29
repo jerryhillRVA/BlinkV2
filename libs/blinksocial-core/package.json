@@ -16,7 +16,15 @@
     }
   },
   "nx": {
-    "name": "blinksocial-core"
+    "name": "blinksocial-core",
+    "targets": {
+      "test": {
+        "executor": "nx:run-commands",
+        "options": {
+          "command": "vitest run --config libs/blinksocial-core/vitest.config.ts"
+        }
+      }
+    }
   },
   "dependencies": {
     "tslib": "^2.3.0"
