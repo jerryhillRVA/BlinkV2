@@ -9,6 +9,7 @@ import {
   ForbiddenException,
   BadRequestException,
   NotFoundException,
+  Logger,
 } from '@nestjs/common';
 import type {
   UserContract,
@@ -20,14 +21,18 @@ import type {
   WorkspaceRole,
 } from '@blinksocial/contracts';
 import { CurrentUser } from '../auth/decorators';
-import { AuthService } from '../auth/auth.service';
+import { AuthService, BOOTSTRAP_EMAIL } from '../auth/auth.service';
 import { UserService } from '../auth/user.service';
+import { SessionService } from '../auth/session.service';
 
 @Controller('api/account')
 export class AccountController {
+  private readonly logger = new Logger(AccountController.name);
+
   constructor(
     private readonly authService: AuthService,
     private readonly userService: UserService,
+    private readonly sessionService: SessionService,
   ) {}
 
   @Get('me')
@@ -159,6 +164,53 @@ export class AccountController {
     if (!updated) throw new NotFoundException('User not found');
 
     return { message: 'Role updated successfully' };
+  }
+
+  @Post(':workspaceId/users/:userId/password-reset')
+  async resetUserPassword(
+    @CurrentUser() caller: UserContract,
+    @Param('workspaceId') workspaceId: string,
+    @Param('userId') userId: string,
+  ): Promise<CreateUserResponseContract> {
+    this.requireWorkspaceAdmin(caller, workspaceId);
+
+    if (caller.id === userId) {
+      throw new BadRequestException(
+        'Use Profile Settings to change your own password',
+      );
+    }
+
+    const target = await this.userService.findById(userId);
+    if (
+      !target ||
+      !target.workspaces.some((w) => w.workspaceId === workspaceId)
+    ) {
+      throw new NotFoundException('User not found in this workspace');
+    }
+
+    if (target.email.toLowerCase() === BOOTSTRAP_EMAIL.toLowerCase()) {
+      throw new BadRequestException("Cannot reset bootstrap admin's password");
+    }
+
+    const tempPassword = this.authService.generatePassword();
+    const hash = await this.authService.hashPassword(tempPassword);
+    const updated = await this.userService.updatePassword(target.id, hash);
+    if (!updated) {
+      throw new NotFoundException('User not found in this workspace');
+    }
+
+    await this.sessionService.deleteAllForUser(target.id);
+
+    this.logger.log(
+      `Password reset by admin ${caller.email} for user ${target.email} in workspace ${workspaceId}`,
+    );
+
+    const refreshed = (await this.userService.findById(target.id)) ?? target;
+    return {
+      user: this.authService.toAuthUserInfo(refreshed),
+      temporaryPassword: tempPassword,
+      message: 'Password reset',
+    };
   }
 
   @Delete(':workspaceId/users/:userId')

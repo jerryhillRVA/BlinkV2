@@ -68,6 +68,16 @@ export class SessionService {
     return true;
   }
 
+  async deleteAllForUser(userId: string): Promise<number> {
+    const sessions = await this.readSessions();
+    const remaining = sessions.filter((s) => s.userId !== userId);
+    const removed = sessions.length - remaining.length;
+    if (removed > 0) {
+      await this.writeSessions(remaining);
+    }
+    return removed;
+  }
+
   async cleanupExpired(): Promise<number> {
     const sessions = await this.readSessions();
     const now = new Date();
