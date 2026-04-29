@@ -2,6 +2,8 @@ import { TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting, HttpTestingController } from '@angular/common/http/testing';
 import { provideRouter, Router } from '@angular/router';
+import { buildSampleBlueprint } from '@blinksocial/core';
+import { BLUEPRINT_BLANK_PLACEHOLDER } from '@blinksocial/contracts';
 import { OnboardStateService } from './onboard-state.service';
 
 describe('OnboardStateService', () => {
@@ -392,6 +394,64 @@ describe('OnboardStateService', () => {
     expect(targetIdx).toBeGreaterThan(brandIdx);
     expect(audienceIdx).toBeGreaterThan(targetIdx);
     expect(md).toContain('Independent fitness coaches building digital practices');
+  });
+
+  it('renders all #71 subsections when resuming a fully-populated blueprint', () => {
+    service.resumeSession('tenant-full');
+
+    const req = httpMock.expectOne('/api/onboarding/sessions/by-workspace/tenant-full');
+    req.flush({
+      sessionId: 'resumed-full',
+      status: 'complete',
+      messages: [],
+      sections: [],
+      currentSection: 'business',
+      readyToGenerate: true,
+      blueprint: buildSampleBlueprint(),
+    });
+
+    const md = service.markdownDocument() ?? '';
+    // New #71 subsection headings are present.
+    expect(md).toContain('### The Strategy in Plain English');
+    expect(md).toContain('### Strategic Decisions Made in the Discovery Session');
+    expect(md).toContain('### How These Objectives Shape Content');
+    expect(md).toContain('### Voice in Action — Real Copy Examples');
+    expect(md).toContain('#### Journey Map');
+    expect(md).toContain('### Differentiation Matrix');
+    expect(md).toContain('### Differentiation Summary');
+    expect(md).toContain('#### Content Ideas Bank');
+    expect(md).toContain('### Content-Channel Matrix');
+    expect(md).toContain('### Review Cadence');
+    // Performance Scorecard now has the Definition column.
+    expect(md).toContain('| Metric | Definition |');
+  });
+
+  it('passes the canonical blank-placeholder string through the resume serializer unchanged', () => {
+    service.resumeSession('tenant-blanks');
+
+    const bp = buildSampleBlueprint();
+    bp.differentiationSummary = BLUEPRINT_BLANK_PLACEHOLDER;
+    bp.reviewCadence = BLUEPRINT_BLANK_PLACEHOLDER;
+
+    const req = httpMock.expectOne('/api/onboarding/sessions/by-workspace/tenant-blanks');
+    req.flush({
+      sessionId: 'resumed-blanks',
+      status: 'complete',
+      messages: [],
+      sections: [],
+      currentSection: 'business',
+      readyToGenerate: true,
+      blueprint: bp,
+    });
+
+    const md = service.markdownDocument() ?? '';
+    // Placeholder appears under both subsections; nothing silently dropped.
+    expect(md).toContain('### Differentiation Summary');
+    expect(md).toContain('### Review Cadence');
+    const summaryIdx = md.indexOf('### Differentiation Summary');
+    const cadenceIdx = md.indexOf('### Review Cadence');
+    expect(md.slice(summaryIdx)).toContain(BLUEPRINT_BLANK_PLACEHOLDER);
+    expect(md.slice(cadenceIdx)).toContain(BLUEPRINT_BLANK_PLACEHOLDER);
   });
 
   it('omits Target Audience section when resuming a legacy blueprint without that field', () => {

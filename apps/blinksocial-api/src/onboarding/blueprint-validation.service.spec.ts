@@ -1,49 +1,14 @@
 import { BlueprintValidationService } from './blueprint-validation.service';
+import { buildSampleBlueprint } from '@blinksocial/core';
 import type { BlueprintDocumentContract } from '@blinksocial/contracts';
 
+/**
+ * Schema-valid Blueprint sourced from the shared `@blinksocial/core`
+ * fixture — this spec stays aligned automatically as new schema fields
+ * land (#71).
+ */
 function buildValidBlueprint(): BlueprintDocumentContract {
-  return {
-    clientName: 'Acme',
-    deliveredDate: '2026-04-28',
-    strategicSummary:
-      'A long summary that spans more than a hundred characters to satisfy minLength validation guard. Core idea here.',
-    businessObjectives: [
-      { objective: 'Grow audience', category: 'Audience Growth', timeHorizon: '90 days', metric: '10k followers' },
-      { objective: 'Boost engagement', category: 'Engagement Quality', timeHorizon: '30 days', metric: '5% rate' },
-    ],
-    brandVoice: {
-      positioningStatement: 'For builders who think out loud.',
-      contentMission: 'Demystify modern dev workflows.',
-      voiceAttributes: [{ attribute: 'Direct', description: 'No fluff.' }],
-      doList: ['Be specific'],
-      dontList: ['Avoid jargon'],
-    },
-    targetAudience:
-      'Independent fitness coaches building digital practices, looking for repeatable content systems.',
-    audienceProfiles: [
-      {
-        name: 'Solo coach',
-        demographics: '30-45, US, urban',
-        painPoints: ['Time scarcity'],
-        channels: ['Instagram'],
-        contentHook: 'Show, don\'t tell',
-      },
-    ],
-    competitorLandscape: [],
-    contentPillars: [
-      { name: 'Education', description: 'Teach', formats: ['Reels'], sharePercent: 50 },
-      { name: 'Inspiration', description: 'Motivate', formats: ['Stories'], sharePercent: 50 },
-    ],
-    channelsAndCadence: [
-      { channel: 'Instagram', role: 'discovery', frequency: 'daily', bestTimes: '8am', contentTypes: ['Reels'] },
-    ],
-    performanceScorecard: [
-      { metric: 'Followers', baseline: '1k', thirtyDayTarget: '2k', ninetyDayTarget: '5k' },
-      { metric: 'ER', baseline: '1%', thirtyDayTarget: '2%', ninetyDayTarget: '5%' },
-      { metric: 'Reach', baseline: '5k', thirtyDayTarget: '10k', ninetyDayTarget: '25k' },
-    ],
-    quickWins: ['One', 'Two', 'Three'],
-  };
+  return buildSampleBlueprint();
 }
 
 describe('BlueprintValidationService', () => {
@@ -81,6 +46,90 @@ describe('BlueprintValidationService', () => {
       const targetErr = result.errors.find((e) => e.field === '/targetAudience');
       expect(targetErr).toBeDefined();
       expect(targetErr?.message).toMatch(/NOT have fewer than|fewer than 50/i);
+    }
+  });
+
+  it.each([
+    ['/strategyInPlainEnglish', 'strategyInPlainEnglish'] as const,
+    ['/strategicDecisions', 'strategicDecisions'] as const,
+    ['/objectivesShapeContent', 'objectivesShapeContent'] as const,
+    ['/differentiationMatrix', 'differentiationMatrix'] as const,
+    ['/differentiationSummary', 'differentiationSummary'] as const,
+    ['/contentChannelMatrix', 'contentChannelMatrix'] as const,
+    ['/reviewCadence', 'reviewCadence'] as const,
+  ])(
+    'rejects a blueprint missing required #71 subsection field "%s"',
+    (field, key) => {
+      const bp = buildValidBlueprint() as Record<string, unknown>;
+      delete bp[key];
+      const result = service.validate(bp);
+      expect(result.valid).toBe(false);
+      if (!result.valid) {
+        const err = result.errors.find((e) => e.field === field);
+        expect(err, `expected error for ${field}`).toBeDefined();
+      }
+    },
+  );
+
+  it('rejects a blueprint where an audience profile is missing journeyMap', () => {
+    const bp = buildValidBlueprint();
+    bp.audienceProfiles = bp.audienceProfiles.map((a) => {
+      const stripped = { ...a } as Partial<typeof a>;
+      delete stripped.journeyMap;
+      return stripped as typeof a;
+    });
+    const result = service.validate(bp);
+    expect(result.valid).toBe(false);
+    if (!result.valid) {
+      // AJV reports nested missing-property errors with the parent path in
+      // `instancePath` and the missing key in the message, so match on both.
+      expect(
+        result.errors.some(
+          (e) =>
+            e.field.startsWith('/audienceProfiles/') &&
+            /journeyMap/.test(e.message),
+        ),
+      ).toBe(true);
+    }
+  });
+
+  it('rejects a blueprint where a content pillar is missing contentIdeas', () => {
+    const bp = buildValidBlueprint();
+    bp.contentPillars = bp.contentPillars.map((p) => {
+      const stripped = { ...p } as Partial<typeof p>;
+      delete stripped.contentIdeas;
+      return stripped as typeof p;
+    });
+    const result = service.validate(bp);
+    expect(result.valid).toBe(false);
+    if (!result.valid) {
+      expect(
+        result.errors.some(
+          (e) =>
+            e.field.startsWith('/contentPillars/') &&
+            /contentIdeas/.test(e.message),
+        ),
+      ).toBe(true);
+    }
+  });
+
+  it('rejects a blueprint where a metric is missing definition', () => {
+    const bp = buildValidBlueprint();
+    bp.performanceScorecard = bp.performanceScorecard.map((m) => {
+      const stripped = { ...m } as Partial<typeof m>;
+      delete stripped.definition;
+      return stripped as typeof m;
+    });
+    const result = service.validate(bp);
+    expect(result.valid).toBe(false);
+    if (!result.valid) {
+      expect(
+        result.errors.some(
+          (e) =>
+            e.field.startsWith('/performanceScorecard/') &&
+            /definition/.test(e.message),
+        ),
+      ).toBe(true);
     }
   });
 });

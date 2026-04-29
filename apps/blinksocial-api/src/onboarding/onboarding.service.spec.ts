@@ -10,51 +10,17 @@ import { AgenticFilesystemService } from '../agentic-filesystem/agentic-filesyst
 import { WorkspaceBuilderService } from './workspace-builder.service';
 import { AttachmentExtractorService } from './attachment-extractor.service';
 import type { BlueprintDocumentContract } from '@blinksocial/contracts';
+import { buildSampleBlueprint } from '@blinksocial/core';
 import type { LlmContentBlock, LlmMessage } from '../llm/llm-provider.interface';
 
+/**
+ * Returns a structurally-complete `BlueprintDocumentContract` that
+ * satisfies `blueprint.schema.json` end-to-end. Sourced from the shared
+ * `@blinksocial/core` fixture so this spec, the web spec, and the shared
+ * serializer's own tests cannot drift on schema changes.
+ */
 function buildValidBlueprint(): BlueprintDocumentContract {
-  return {
-    clientName: 'Acme',
-    deliveredDate: '2026-04-28',
-    strategicSummary:
-      'A long summary that spans more than a hundred characters to satisfy minLength validation guard. Core idea here.',
-    businessObjectives: [
-      { objective: 'Grow audience', category: 'Audience Growth', timeHorizon: '90 days', metric: '10k followers' },
-      { objective: 'Boost engagement', category: 'Engagement Quality', timeHorizon: '30 days', metric: '5% rate' },
-    ],
-    brandVoice: {
-      positioningStatement: 'For builders who think out loud.',
-      contentMission: 'Demystify modern dev workflows.',
-      voiceAttributes: [{ attribute: 'Direct', description: 'No fluff.' }],
-      doList: ['Be specific'],
-      dontList: ['Avoid jargon'],
-    },
-    targetAudience:
-      'Independent fitness coaches building digital practices and looking for repeatable content systems.',
-    audienceProfiles: [
-      {
-        name: 'Solo coach',
-        demographics: '30-45, US, urban',
-        painPoints: ['Time'],
-        channels: ['Instagram'],
-        contentHook: 'Show, don\'t tell',
-      },
-    ],
-    competitorLandscape: [],
-    contentPillars: [
-      { name: 'Education', description: 'Teach', formats: ['Reels'], sharePercent: 50 },
-      { name: 'Inspiration', description: 'Motivate', formats: ['Stories'], sharePercent: 50 },
-    ],
-    channelsAndCadence: [
-      { channel: 'Instagram', role: 'discovery', frequency: 'daily', bestTimes: '8am', contentTypes: ['Reels'] },
-    ],
-    performanceScorecard: [
-      { metric: 'Followers', baseline: '1k', thirtyDayTarget: '2k', ninetyDayTarget: '5k' },
-      { metric: 'ER', baseline: '1%', thirtyDayTarget: '2%', ninetyDayTarget: '5%' },
-      { metric: 'Reach', baseline: '5k', thirtyDayTarget: '10k', ninetyDayTarget: '25k' },
-    ],
-    quickWins: ['One', 'Two', 'Three'],
-  };
+  return buildSampleBlueprint();
 }
 
 describe('OnboardingService', () => {
@@ -106,34 +72,6 @@ describe('OnboardingService', () => {
     extractor = module.get(AttachmentExtractorService);
   });
 
-  describe('renderBlueprintMarkdown', () => {
-    it('emits Target Audience section between Brand & Voice and Audience Profiles', () => {
-      const bp = buildValidBlueprint();
-      bp.targetAudience = 'Independent fitness coaches building digital practices and seeking repeatable content systems.';
-
-      // renderBlueprintMarkdown is private — invoke via cast
-      const md = (service as unknown as { renderBlueprintMarkdown: (b: BlueprintDocumentContract) => string })
-        .renderBlueprintMarkdown(bp);
-
-      const brandIdx = md.indexOf('## Brand & Voice');
-      const targetIdx = md.indexOf('## Target Audience');
-      const audienceIdx = md.indexOf('## Audience Profiles');
-
-      expect(brandIdx).toBeGreaterThan(-1);
-      expect(targetIdx).toBeGreaterThan(brandIdx);
-      expect(audienceIdx).toBeGreaterThan(targetIdx);
-      expect(md).toContain(bp.targetAudience);
-    });
-
-    it('emits exactly one Target Audience heading', () => {
-      const bp = buildValidBlueprint();
-      const md = (service as unknown as { renderBlueprintMarkdown: (b: BlueprintDocumentContract) => string })
-        .renderBlueprintMarkdown(bp);
-      const matches = md.match(/^## Target Audience$/gm);
-      expect(matches?.length).toBe(1);
-    });
-  });
-
   describe('generateBlueprint validation', () => {
     it('throws HttpException 422 when LLM returns blueprint missing targetAudience', async () => {
       // Seed a session with discoveryData
@@ -163,6 +101,70 @@ describe('OnboardingService', () => {
       expect(after?.blueprint).toBeNull();
     });
 
+    it.each([
+      'strategyInPlainEnglish',
+      'strategicDecisions',
+      'objectivesShapeContent',
+      'differentiationMatrix',
+      'differentiationSummary',
+      'contentChannelMatrix',
+      'reviewCadence',
+    ] as const)(
+      'throws 422 when LLM returns blueprint missing required #71 subsection field "%s"',
+      async (field) => {
+        const created = sessionStore.create('user-1');
+        sessionStore.update(created.id, {
+          discoveryData: { business: { businessName: 'Acme' } },
+        });
+
+        const invalid = buildValidBlueprint() as Record<string, unknown>;
+        delete invalid[field];
+        skillRunner.run.mockResolvedValue({
+          content: '',
+          parsed: invalid as Record<string, unknown>,
+          usage: { inputTokens: 0, outputTokens: 0 },
+        });
+
+        await expect(
+          service.generateBlueprint(created.id, 'user-1'),
+        ).rejects.toMatchObject({
+          status: HttpStatus.UNPROCESSABLE_ENTITY,
+        });
+      },
+    );
+
+    it('throws 422 with cross-field error when contentChannelMatrix omits a pillar', async () => {
+      const created = sessionStore.create('user-1');
+      sessionStore.update(created.id, {
+        discoveryData: { business: { businessName: 'Acme' } },
+      });
+
+      const invalid = buildValidBlueprint();
+      // Drop the row covering "Inspiration" — JSON Schema cannot catch this.
+      invalid.contentChannelMatrix = invalid.contentChannelMatrix.filter(
+        (r) => r.pillar !== 'Inspiration',
+      );
+      skillRunner.run.mockResolvedValue({
+        content: '',
+        parsed: invalid as unknown as Record<string, unknown>,
+        usage: { inputTokens: 0, outputTokens: 0 },
+      });
+
+      await expect(
+        service.generateBlueprint(created.id, 'user-1'),
+      ).rejects.toMatchObject({
+        status: HttpStatus.UNPROCESSABLE_ENTITY,
+        response: expect.objectContaining({
+          message: expect.stringMatching(/cross-field/i),
+          errors: expect.arrayContaining([
+            expect.objectContaining({
+              field: '/contentChannelMatrix',
+            }),
+          ]),
+        }),
+      });
+    });
+
     it('persists blueprint when validation passes', async () => {
       const created = sessionStore.create('user-1');
       sessionStore.update(created.id, {
@@ -179,6 +181,11 @@ describe('OnboardingService', () => {
       const res = await service.generateBlueprint(created.id, 'user-1');
       expect(res.blueprint.targetAudience).toBe(valid.targetAudience);
       expect(res.markdownDocument).toContain('## Target Audience');
+      // New #71 subsection headings flow through the shared serializer.
+      expect(res.markdownDocument).toContain('### The Strategy in Plain English');
+      expect(res.markdownDocument).toContain('### Differentiation Matrix');
+      expect(res.markdownDocument).toContain('#### Journey Map');
+      expect(res.markdownDocument).toContain('#### Content Ideas Bank');
 
       const after = sessionStore.get(created.id) as OnboardingSessionState;
       expect(after.status).toBe('complete');

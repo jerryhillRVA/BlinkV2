@@ -82,7 +82,9 @@
         "coverage": true,
         "coverageReporters": ["text", "lcov"],
         "coverageExclude": [
-          "**/*.html"
+          "**/*.html",
+          "**/libs/**",
+          "libs/**"
         ],
         "coverageThresholds": {
           "statements": 90,
