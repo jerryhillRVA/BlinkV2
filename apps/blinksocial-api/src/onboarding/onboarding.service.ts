@@ -418,73 +418,122 @@ export class OnboardingService {
       // Pull historical attachment text + replay representative images to
       // ensure the Blueprint reflects uploaded materials.
       const attachmentBlocks = await this.buildBlueprintAttachmentBlocks(session);
-      const promptText = isRevisionMode
+      const businessName = this.getDiscoveryBusinessName(session);
+      if (!businessName) {
+        // Legacy/partial sessions: nothing to pin against, fall through to
+        // the LLM-supplied clientName. Surface in logs so we can backfill.
+        this.logger.warn(
+          `blueprint-name-fallback session=${session.id} reason=missing-discovery-businessName`,
+        );
+      }
+      const businessNameDirective = this.buildBusinessNameDirective(businessName);
+      const basePromptText = isRevisionMode
         ? this.buildRevisionGenerationPrompt(session)
         : `Generate the Blink Blueprint document based on the following discovery data:\n\n${JSON.stringify(session.discoveryData, null, 2)}\n\nUse the blueprint-template.md instructions to create a comprehensive, tailored content strategy document. Return ONLY valid JSON matching the BlueprintDocumentContract schema.`;
+      const promptText = businessNameDirective
+        ? `${basePromptText}${businessNameDirective}`
+        : basePromptText;
 
       const userBlocks: LlmContentBlock[] = [
         { type: 'text', text: promptText },
         ...attachmentBlocks,
       ];
 
-      const additionalContext = isRevisionMode
+      const baseAdditionalContext = isRevisionMode
         ? 'MODE: BLUEPRINT_REVISION\n\nThe user has confirmed a revision plan. Apply ONLY the changes implied by the revision conversation; preserve all unrelated Blueprint sections verbatim. Return a JSON object matching the blueprint schema exactly.'
         : 'MODE: BLUEPRINT_GENERATION\n\nYou are now in blueprint generation mode. Use the discovery data provided AND any uploaded attachment context to generate a complete Blink Blueprint content strategy document. Return a JSON object matching the blueprint schema exactly.';
+      const additionalContext = businessNameDirective
+        ? `${baseAdditionalContext}${businessNameDirective}`
+        : baseAdditionalContext;
 
-      const result = await this.skillRunner.run({
-        skillId: SKILL_ID,
-        conversationHistory: [
-          {
-            role: 'user',
-            content: attachmentBlocks.length > 0 ? userBlocks : userBlocks[0].type === 'text' ? userBlocks[0].text : '',
-          },
-        ],
-        additionalContext,
-        // No `maxTokens` cap — Blueprints must never be truncated for
-        // verbose brands (#71). The provider applies the model's true
-        // ceiling; usage is tracked via `result.usage`.
-        temperature: 0.5,
-      });
+      // Run the skill, validate, and on businessName drift retry once. Schema
+      // and cross-field failures still 422 immediately (no retry); the retry
+      // budget is reserved for the prose-fidelity check, which is the only
+      // failure the same prompt can plausibly fix on a second roll.
+      const MAX_ATTEMPTS = businessName ? 2 : 1;
+      let blueprint: BlueprintDocumentContract | undefined;
+      for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
+        const result = await this.skillRunner.run({
+          skillId: SKILL_ID,
+          conversationHistory: [
+            {
+              role: 'user',
+              content: attachmentBlocks.length > 0 ? userBlocks : userBlocks[0].type === 'text' ? userBlocks[0].text : '',
+            },
+          ],
+          additionalContext,
+          // No `maxTokens` cap — Blueprints must never be truncated for
+          // verbose brands (#71). The provider applies the model's true
+          // ceiling; usage is tracked via `result.usage`.
+          temperature: 0.5,
+        });
 
-      const blueprint = result.parsed as unknown as BlueprintDocumentContract;
-      if (!blueprint || !blueprint.strategicSummary) {
+        blueprint = result.parsed as unknown as BlueprintDocumentContract;
+        if (!blueprint || !blueprint.strategicSummary) {
+          throw new Error('Blueprint generation returned invalid data');
+        }
+
+        // Pin clientName to the user-supplied businessName whenever we have
+        // it — the LLM is not permitted to invent a different name. When
+        // discovery is empty, preserve historical fallback (LLM value or
+        // 'Client').
+        if (businessName) {
+          blueprint.clientName = businessName;
+        } else if (!blueprint.clientName) {
+          blueprint.clientName = 'Client';
+        }
+        // Always set deliveredDate to today — LLM may return stale dates
+        blueprint.deliveredDate = new Date().toISOString().slice(0, 10);
+
+        const validation = this.blueprintValidator.validate(blueprint);
+        if (!validation.valid) {
+          throw new HttpException(
+            {
+              message: 'Generated blueprint failed schema validation',
+              errors: validation.errors,
+            },
+            HttpStatus.UNPROCESSABLE_ENTITY,
+          );
+        }
+
+        // Cross-field guard (cannot be expressed in JSON Schema): every
+        // content pillar MUST appear as a row in `contentChannelMatrix`,
+        // and the row count must equal the pillar count. Without this,
+        // the LLM occasionally drops a pillar from the matrix while
+        // leaving the rest of the structure schema-valid (#71).
+        const matrixError = this.validateContentChannelMatrix(blueprint);
+        if (matrixError) {
+          throw new HttpException(
+            {
+              message: 'Generated blueprint failed cross-field validation',
+              errors: [matrixError],
+            },
+            HttpStatus.UNPROCESSABLE_ENTITY,
+          );
+        }
+
+        if (!businessName) break;
+
+        const drift = this.validateBusinessNameInProse(blueprint, businessName);
+        if (!drift) break;
+
+        this.logger.warn(
+          `blueprint-name-drift businessName="${businessName}" field="${drift.field}" attempt=${attempt}`,
+        );
+
+        if (attempt >= MAX_ATTEMPTS) {
+          throw new HttpException(
+            {
+              message: 'Generated blueprint failed business-name fidelity validation',
+              errors: [drift],
+            },
+            HttpStatus.UNPROCESSABLE_ENTITY,
+          );
+        }
+      }
+
+      if (!blueprint) {
         throw new Error('Blueprint generation returned invalid data');
-      }
-
-      // Set defaults if missing
-      if (!blueprint.clientName) {
-        blueprint.clientName =
-          (session.discoveryData['business']?.['businessName'] as string) ||
-          'Client';
-      }
-      // Always set deliveredDate to today — LLM may return stale dates
-      blueprint.deliveredDate = new Date().toISOString().slice(0, 10);
-
-      const validation = this.blueprintValidator.validate(blueprint);
-      if (!validation.valid) {
-        throw new HttpException(
-          {
-            message: 'Generated blueprint failed schema validation',
-            errors: validation.errors,
-          },
-          HttpStatus.UNPROCESSABLE_ENTITY,
-        );
-      }
-
-      // Cross-field guard (cannot be expressed in JSON Schema): every
-      // content pillar MUST appear as a row in `contentChannelMatrix`,
-      // and the row count must equal the pillar count. Without this,
-      // the LLM occasionally drops a pillar from the matrix while
-      // leaving the rest of the structure schema-valid (#71).
-      const matrixError = this.validateContentChannelMatrix(blueprint);
-      if (matrixError) {
-        throw new HttpException(
-          {
-            message: 'Generated blueprint failed cross-field validation',
-            errors: [matrixError],
-          },
-          HttpStatus.UNPROCESSABLE_ENTITY,
-        );
       }
 
       const markdownDocument = renderBlueprintMarkdown(blueprint);
@@ -649,8 +698,14 @@ export class OnboardingService {
       throw new BadRequestException('Session does not have a blueprint yet');
     }
 
+    // Source the workspace name from the user's discovery answer, not from
+    // the post-LLM clientName, so a Blueprint-side rename (e.g. an LLM
+    // substituting "Hive Fitness" for "Hive Collective") cannot leak into
+    // the persisted workspace.
     const workspaceName =
-      session.blueprint.clientName || 'New Workspace';
+      this.getDiscoveryBusinessName(session) ||
+      session.blueprint.clientName ||
+      'New Workspace';
 
     // Pass the existing onboarding tenant ID so the builder reuses it
     // instead of creating a duplicate workspace
@@ -1143,6 +1198,75 @@ export class OnboardingService {
       name: s.name,
       covered: session.sectionsCovered.includes(s.id),
     }));
+  }
+
+  /**
+   * Read the user-supplied business name from discovery state. Returns
+   * `undefined` when the field is missing, non-string, or whitespace-only —
+   * the only signal the LLM-pin / prose-validation path uses to decide
+   * whether to enforce business-name fidelity for this session.
+   */
+  private getDiscoveryBusinessName(
+    session: OnboardingSessionState,
+  ): string | undefined {
+    const raw = session.discoveryData?.['business']?.['businessName'];
+    if (typeof raw !== 'string') return undefined;
+    const trimmed = raw.trim();
+    return trimmed.length > 0 ? trimmed : undefined;
+  }
+
+  /**
+   * Build the verbatim-required businessName instruction appended to both
+   * the user prompt and the additionalContext (system prompt). Empty when
+   * no businessName is present so legacy sessions are unaffected.
+   */
+  private buildBusinessNameDirective(businessName: string | undefined): string {
+    if (!businessName) return '';
+    return [
+      '',
+      '',
+      'BUSINESS NAME PIN (non-negotiable):',
+      `The user-supplied business name is exactly "${businessName}". Use this exact`,
+      'string — including casing, spacing, and punctuation — for `clientName` and',
+      'EVERY prose mention of the company in the Blueprint (Strategic Summary,',
+      'Brand & Voice positioning statement, audience profiles, and any other',
+      'reference). Do NOT paraphrase, abbreviate, translate, summarize, or',
+      'substitute any other name. The Strategic Summary and the Brand & Voice',
+      `positioning statement MUST contain the literal string "${businessName}".`,
+    ].join('\n');
+  }
+
+  /**
+   * Verify that the two prose slots called out by ticket #72 reference the
+   * user-supplied businessName byte-for-byte. Returns the first failing
+   * field as a `{field, message}` pair, or `null` when both slots pass.
+   * Case-sensitive by design: the AC requires byte-for-byte fidelity.
+   */
+  private validateBusinessNameInProse(
+    blueprint: BlueprintDocumentContract,
+    businessName: string,
+  ): { field: string; message: string } | null {
+    const summary =
+      typeof blueprint.strategicSummary === 'string'
+        ? blueprint.strategicSummary
+        : '';
+    if (!summary.includes(businessName)) {
+      return {
+        field: '/strategicSummary',
+        message: `Strategic Summary must reference the business name "${businessName}" verbatim.`,
+      };
+    }
+    const positioning =
+      typeof blueprint.brandVoice?.positioningStatement === 'string'
+        ? blueprint.brandVoice.positioningStatement
+        : '';
+    if (!positioning.includes(businessName)) {
+      return {
+        field: '/brandVoice/positioningStatement',
+        message: `Positioning Statement must reference the business name "${businessName}" verbatim.`,
+      };
+    }
+    return null;
   }
 
   /**
