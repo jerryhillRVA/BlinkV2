@@ -1,7 +1,17 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { LlmService } from '../llm/llm.service';
 import { SkillLoaderService, type SkillDefinition } from './skill-loader.service';
-import type { LlmMessage } from '../llm/llm-provider.interface';
+import type { LlmMessage, LlmTool } from '../llm/llm-provider.interface';
+
+/**
+ * Forces the LLM to call a single tool whose `input_schema` IS the contract
+ * the caller wants honored. The model's `input` to that tool call is
+ * surfaced as `result.parsed`, bypassing text-extraction entirely.
+ */
+export interface SkillRunForcedTool extends LlmTool {
+  /** Default true — set to false to allow the model to decline the tool. */
+  force?: boolean;
+}
 
 export interface SkillRunContext {
   skillId: string;
@@ -9,12 +19,15 @@ export interface SkillRunContext {
   additionalContext?: string;
   maxTokens?: number;
   temperature?: number;
+  tool?: SkillRunForcedTool;
 }
 
 export interface SkillRunResult {
   content: string;
   parsed: Record<string, unknown> | null;
   usage: { inputTokens: number; outputTokens: number };
+  /** Name of the tool the model called, when tool-use was used. */
+  toolName?: string;
 }
 
 @Injectable()
@@ -30,6 +43,9 @@ export class SkillRunnerService {
     const skill = this.skillLoader.loadSkill(context.skillId);
     const messages = this.assembleMessages(skill, context);
 
+    const tool = context.tool;
+    const force = tool ? tool.force !== false : false;
+
     const result = await this.llmService.complete({
       messages,
       // Pass through the caller's `maxTokens` if they specified one; otherwise
@@ -40,7 +56,42 @@ export class SkillRunnerService {
       // via the returned `usage` payload.
       ...(context.maxTokens !== undefined ? { maxTokens: context.maxTokens } : {}),
       temperature: context.temperature ?? 0.7,
+      ...(tool
+        ? {
+            tools: [
+              {
+                name: tool.name,
+                ...(tool.description ? { description: tool.description } : {}),
+                inputSchema: tool.inputSchema,
+              },
+            ],
+            toolChoice: force ? { type: 'tool' as const, name: tool.name } : 'auto',
+          }
+        : {}),
     });
+
+    // When tool-use is in play, the model's `input` IS the parsed object —
+    // no text-extraction heuristic, no markdown-fence fallback, guaranteed
+    // to validate against `inputSchema`. We still surface `content` for
+    // diagnostics if the model emitted any prose alongside the tool call.
+    if (tool && result.toolUse) {
+      return {
+        content: result.content,
+        parsed: result.toolUse.input,
+        usage: result.usage,
+        toolName: result.toolUse.name,
+      };
+    }
+
+    if (tool && force) {
+      // Forced a tool but the provider returned no tool_use block. This
+      // shouldn't happen under Anthropic's tool_choice contract; surface
+      // explicitly rather than silently falling back to text-parse so the
+      // caller's structured-422 path can react.
+      this.logger.warn(
+        `Skill "${context.skillId}" forced tool "${tool.name}" but no tool_use block was returned (stopReason=${result.stopReason}).`,
+      );
+    }
 
     const parsed = this.tryParseJson(result.content);
 

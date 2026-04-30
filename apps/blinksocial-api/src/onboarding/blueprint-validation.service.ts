@@ -11,14 +11,24 @@ const SKILL_ID = 'onboarding-consultant';
 export class BlueprintValidationService {
   private readonly logger = new Logger(BlueprintValidationService.name);
   private readonly validator: ValidateFunction;
+  private readonly schema: Record<string, unknown>;
 
   constructor() {
     const schemaPath = this.resolveSchemaPath();
     const schemaJson = fs.readFileSync(schemaPath, 'utf-8');
-    const schema = JSON.parse(schemaJson);
+    this.schema = JSON.parse(schemaJson);
     const ajv = new Ajv({ allErrors: true, strict: false });
-    this.validator = ajv.compile(schema);
+    this.validator = ajv.compile(this.schema);
     this.logger.log(`Blueprint schema loaded from ${schemaPath}`);
+  }
+
+  /**
+   * Returns the parsed JSON Schema. Callers (e.g. `OnboardingService`) reuse
+   * it as the `input_schema` for an Anthropic tool-use forced tool, which
+   * guarantees the LLM returns a shape the AJV validator below will accept.
+   */
+  getSchema(): Record<string, unknown> {
+    return this.schema;
   }
 
   validate(

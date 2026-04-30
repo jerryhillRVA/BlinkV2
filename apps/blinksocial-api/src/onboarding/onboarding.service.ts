@@ -463,6 +463,22 @@ export class OnboardingService {
       //     revision regens are the worst offenders here.
       // Schema and cross-field failures still 422 immediately (no retry).
       const MAX_ATTEMPTS = isRevisionMode || businessName ? 2 : 1;
+      // Force structured output via Anthropic tool-use (#88 follow-up). The
+      // tool's `inputSchema` IS the Blueprint JSON Schema, so the model's
+      // tool-call `input` is guaranteed-valid against the same shape AJV
+      // checks below. Eliminates the entire parse-failure class (no markdown
+      // fences, no preamble, no stray prose). The retry budget + AJV
+      // validation + cross-field guards stay as defense-in-depth.
+      const blueprintTool = {
+        name: 'submit_blueprint',
+        description:
+          'Submit the completed Blink Blueprint content strategy document. ' +
+          'You MUST call this tool exactly once with the full Blueprint object ' +
+          'as `input`. Every required field must be present. In revision mode, ' +
+          'preserve every section of the prior Blueprint verbatim unless the ' +
+          "user's most recent request explicitly asks to change it.",
+        inputSchema: this.blueprintValidator.getSchema(),
+      };
       let blueprint: BlueprintDocumentContract | undefined;
       for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
         const result = await this.skillRunner.run({
@@ -478,6 +494,7 @@ export class OnboardingService {
           // verbose brands (#71). The provider applies the model's true
           // ceiling; usage is tracked via `result.usage`.
           temperature: 0.5,
+          tool: blueprintTool,
         });
 
         blueprint = result.parsed as unknown as BlueprintDocumentContract;

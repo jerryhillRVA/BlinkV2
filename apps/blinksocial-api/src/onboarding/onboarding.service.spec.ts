@@ -28,6 +28,7 @@ describe('OnboardingService', () => {
   let sessionStore: SessionStore;
   let skillRunner: { run: ReturnType<typeof vi.fn> };
   let extractor: AttachmentExtractorService;
+  let blueprintValidator: BlueprintValidationService;
 
   beforeEach(async () => {
     skillRunner = { run: vi.fn() };
@@ -70,6 +71,7 @@ describe('OnboardingService', () => {
     service = module.get(OnboardingService);
     sessionStore = module.get(SessionStore);
     extractor = module.get(AttachmentExtractorService);
+    blueprintValidator = module.get(BlueprintValidationService);
   });
 
   describe('generateBlueprint validation', () => {
@@ -190,6 +192,34 @@ describe('OnboardingService', () => {
       const after = sessionStore.get(created.id) as OnboardingSessionState;
       expect(after.status).toBe('complete');
       expect(after.blueprint?.targetAudience).toBe(valid.targetAudience);
+    });
+
+    it('forces structured output via the `submit_blueprint` tool whose inputSchema is the Blueprint JSON Schema', async () => {
+      const created = sessionStore.create('user-1');
+      sessionStore.update(created.id, {
+        discoveryData: { business: { businessName: 'Acme' } },
+      });
+
+      const valid = buildValidBlueprint();
+      skillRunner.run.mockResolvedValue({
+        content: '',
+        parsed: valid as unknown as Record<string, unknown>,
+        usage: { inputTokens: 0, outputTokens: 0 },
+      });
+
+      await service.generateBlueprint(created.id, 'user-1');
+
+      const call = skillRunner.run.mock.calls.at(-1)?.[0] as {
+        tool?: { name: string; description?: string; inputSchema: Record<string, unknown> };
+      };
+      expect(call.tool).toBeDefined();
+      expect(call.tool?.name).toBe('submit_blueprint');
+      // Reuses the AJV-compiled schema — same shape the validator below enforces.
+      expect(call.tool?.inputSchema).toBe(blueprintValidator.getSchema());
+      // Sanity-check key required fields are present.
+      expect((call.tool?.inputSchema as { required: string[] }).required).toEqual(
+        expect.arrayContaining(['clientName', 'strategicSummary', 'contentChannelMatrix']),
+      );
     });
   });
 
