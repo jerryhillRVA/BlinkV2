@@ -683,6 +683,216 @@ describe('OnboardingService', () => {
       });
     });
 
+    // ------------------------------------------------------------------
+    // Ticket #88 — parse / shape miss handling
+    //
+    // When the LLM returns un-parseable content (or parsed content missing
+    // the required `strategicSummary`), the service used to throw a bare
+    // `Error` that surfaced to the user as HTTP 500. It now logs a warn
+    // with a truncated raw preview and either retries (revision mode or
+    // first-time-with-businessName) or throws a structured 422 with a
+    // user-facing message and `BLUEPRINT_PARSE_FAILED` error code.
+    // ------------------------------------------------------------------
+    describe('parse-miss handling (#88)', () => {
+      it('TC-U1: revision mode — null parse on attempt 1, valid on attempt 2 → resolves and calls runner twice', async () => {
+        const session = seedCompletedSession();
+        const valid = buildValidBlueprint();
+        valid.strategicSummary =
+          'Acme: a freshly-applied revision summary that exceeds one hundred characters to satisfy the validator schema.';
+        skillRunner.run
+          .mockResolvedValueOnce({
+            content: 'not json',
+            parsed: null,
+            usage: { inputTokens: 0, outputTokens: 0 },
+          })
+          .mockResolvedValueOnce({
+            content: '',
+            parsed: valid as unknown as Record<string, unknown>,
+            usage: { inputTokens: 0, outputTokens: 0 },
+          });
+
+        const res = await service.generateBlueprint(session.id, 'user-1');
+        expect(res.blueprint.strategicSummary).toContain('freshly-applied');
+        expect(skillRunner.run).toHaveBeenCalledTimes(2);
+      });
+
+      it('TC-U2: revision mode — missing strategicSummary on attempt 1, valid on attempt 2 → resolves', async () => {
+        const session = seedCompletedSession();
+        const partial = buildValidBlueprint() as Partial<BlueprintDocumentContract>;
+        delete partial.strategicSummary;
+        const valid = buildValidBlueprint();
+        valid.strategicSummary =
+          'Acme: a freshly-applied revision summary that exceeds one hundred characters to satisfy the validator schema.';
+        skillRunner.run
+          .mockResolvedValueOnce({
+            content: '{"clientName":"Acme"}',
+            parsed: partial as Record<string, unknown>,
+            usage: { inputTokens: 0, outputTokens: 0 },
+          })
+          .mockResolvedValueOnce({
+            content: '',
+            parsed: valid as unknown as Record<string, unknown>,
+            usage: { inputTokens: 0, outputTokens: 0 },
+          });
+
+        const res = await service.generateBlueprint(session.id, 'user-1');
+        expect(res.blueprint.strategicSummary).toContain('freshly-applied');
+        expect(skillRunner.run).toHaveBeenCalledTimes(2);
+      });
+
+      it('TC-U3: revision mode — both attempts return null → 422 with BLUEPRINT_PARSE_FAILED, prior blueprint preserved', async () => {
+        const session = seedCompletedSession();
+        const priorSummary = session.blueprint?.strategicSummary;
+        skillRunner.run.mockResolvedValue({
+          content: 'still not json',
+          parsed: null,
+          usage: { inputTokens: 0, outputTokens: 0 },
+        });
+
+        await expect(
+          service.generateBlueprint(session.id, 'user-1'),
+        ).rejects.toMatchObject({
+          status: HttpStatus.UNPROCESSABLE_ENTITY,
+          response: expect.objectContaining({
+            message: expect.stringMatching(/couldn't apply that revision/i),
+            errors: expect.arrayContaining([
+              expect.objectContaining({
+                code: 'BLUEPRINT_PARSE_FAILED',
+                attempts: 2,
+              }),
+            ]),
+          }),
+        });
+
+        expect(skillRunner.run).toHaveBeenCalledTimes(2);
+
+        const after = sessionStore.get(session.id);
+        expect(after?.status).toBe('complete');
+        expect(after?.blueprint?.strategicSummary).toBe(priorSummary);
+      });
+
+      it('TC-U4: revision mode — both attempts missing strategicSummary → 422, prior blueprint preserved', async () => {
+        const session = seedCompletedSession();
+        const priorSummary = session.blueprint?.strategicSummary;
+        const partial = buildValidBlueprint() as Partial<BlueprintDocumentContract>;
+        delete partial.strategicSummary;
+        skillRunner.run.mockResolvedValue({
+          content: '{"clientName":"Acme"}',
+          parsed: partial as Record<string, unknown>,
+          usage: { inputTokens: 0, outputTokens: 0 },
+        });
+
+        await expect(
+          service.generateBlueprint(session.id, 'user-1'),
+        ).rejects.toMatchObject({
+          status: HttpStatus.UNPROCESSABLE_ENTITY,
+          response: expect.objectContaining({
+            message: expect.stringMatching(/couldn't apply that revision/i),
+            errors: expect.arrayContaining([
+              expect.objectContaining({
+                code: 'BLUEPRINT_PARSE_FAILED',
+                attempts: 2,
+              }),
+            ]),
+          }),
+        });
+
+        const after = sessionStore.get(session.id);
+        expect(after?.status).toBe('complete');
+        expect(after?.blueprint?.strategicSummary).toBe(priorSummary);
+      });
+
+      it('TC-U5: first-time generation with businessName — null parse on attempt 1, valid on attempt 2 → resolves', async () => {
+        const created = sessionStore.create('user-1');
+        sessionStore.update(created.id, {
+          discoveryData: { business: { businessName: 'Acme' } },
+        });
+        const valid = buildValidBlueprint();
+        skillRunner.run
+          .mockResolvedValueOnce({
+            content: 'not json',
+            parsed: null,
+            usage: { inputTokens: 0, outputTokens: 0 },
+          })
+          .mockResolvedValueOnce({
+            content: '',
+            parsed: valid as unknown as Record<string, unknown>,
+            usage: { inputTokens: 0, outputTokens: 0 },
+          });
+
+        const res = await service.generateBlueprint(created.id, 'user-1');
+        expect(res.blueprint).toBeDefined();
+        expect(skillRunner.run).toHaveBeenCalledTimes(2);
+      });
+
+      it('TC-U6: first-time generation without businessName — single attempt, parse miss → immediate 422 with attempts:1', async () => {
+        const created = sessionStore.create('user-1');
+        sessionStore.update(created.id, {
+          discoveryData: { business: {} },
+        });
+        skillRunner.run.mockResolvedValue({
+          content: 'not json',
+          parsed: null,
+          usage: { inputTokens: 0, outputTokens: 0 },
+        });
+
+        await expect(
+          service.generateBlueprint(created.id, 'user-1'),
+        ).rejects.toMatchObject({
+          status: HttpStatus.UNPROCESSABLE_ENTITY,
+          response: expect.objectContaining({
+            message: expect.stringMatching(/couldn't generate the blueprint/i),
+            errors: expect.arrayContaining([
+              expect.objectContaining({
+                code: 'BLUEPRINT_PARSE_FAILED',
+                attempts: 1,
+              }),
+            ]),
+          }),
+        });
+        expect(skillRunner.run).toHaveBeenCalledTimes(1);
+
+        const after = sessionStore.get(created.id);
+        // First-time gen failure — session reverts to 'active', no blueprint.
+        expect(after?.status).toBe('active');
+        expect(after?.blueprint).toBeNull();
+      });
+
+      it('TC-U7: parse miss logs a warn with truncated raw preview', async () => {
+        const session = seedCompletedSession();
+        const valid = buildValidBlueprint();
+        valid.strategicSummary =
+          'Acme: a freshly-applied revision summary that exceeds one hundred characters to satisfy the validator schema.';
+        const longGarbage = 'x'.repeat(2000);
+        skillRunner.run
+          .mockResolvedValueOnce({
+            content: longGarbage,
+            parsed: null,
+            usage: { inputTokens: 0, outputTokens: 0 },
+          })
+          .mockResolvedValueOnce({
+            content: '',
+            parsed: valid as unknown as Record<string, unknown>,
+            usage: { inputTokens: 0, outputTokens: 0 },
+          });
+
+        const warnSpy = vi.spyOn(service['logger'], 'warn');
+        await service.generateBlueprint(session.id, 'user-1');
+
+        expect(warnSpy).toHaveBeenCalledWith(
+          expect.stringContaining('blueprint-parse-miss'),
+        );
+        // Truncation cap is 1000 chars — the warn message should not contain
+        // the full 2000-char garbage string. We assert by checking that the
+        // length is bounded (header + JSON-encoded 1000-char preview).
+        const warnArgs = warnSpy.mock.calls.map((c) => String(c[0]));
+        const found = warnArgs.find((s) => s.includes('blueprint-parse-miss'));
+        expect(found).toBeDefined();
+        expect(found!.length).toBeLessThan(1500);
+        expect(found).toContain('mode=revision');
+      });
+    });
+
     it('stamps completedAt on first successful generation and preserves it across revisions', async () => {
       const created = sessionStore.create('user-1');
       sessionStore.update(created.id, {
