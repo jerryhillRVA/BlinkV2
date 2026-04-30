@@ -46,6 +46,16 @@ const ATTACHMENT_NAMESPACE = 'onboarding-attachments';
 const ATTACHMENT_TEXT_NAMESPACE = 'settings';
 const ATTACHMENT_TEXT_PATH_PREFIX = 'onboarding-attachments-text';
 
+/**
+ * Canned agent reply used by `parseTurnResponse` when the LLM's JSON
+ * envelope is unparseable AND no partial `agentMessage` can be recovered
+ * (ticket #89). Replaces the legacy behaviour of dumping the raw buffer —
+ * including escaped `\n` / `\"` and the leaking `{"agentMessage"` key —
+ * into the user-visible chat bubble.
+ */
+const TURN_PARSE_FALLBACK_MESSAGE =
+  'Sorry — my response was cut off before I could finish. Could you ask me to continue?';
+
 interface AgentTurnResponse {
   agentMessage: string;
   sectionsUpdated?: Record<string, Record<string, unknown>>;
@@ -1198,20 +1208,86 @@ export class OnboardingService {
       }
     }
 
-    // Final fallback: treat the entire response as the agent message
+    // Truncated/garbled stream fallback (ticket #89). Try to recover a partial
+    // `agentMessage` string from a half-emitted JSON envelope; if that fails,
+    // surface a friendly canned message rather than dumping the raw buffer
+    // (the old behaviour leaked `{"agentMessage":"...\\n\\n..."` plus escaped
+    // quotes into the chat bubble).
+    const partial = this.extractPartialAgentMessage(rawContent);
+    if (partial !== null) {
+      this.logger.warn(
+        'LLM response JSON was truncated — recovered partial agentMessage',
+      );
+      return {
+        agentMessage: this.sanitiseAgentMessage(
+          `${partial}\n\n[Response was truncated. Please continue the conversation.]`,
+        ),
+        sectionsUpdated: {},
+        sectionsCovered: [],
+        readyToGenerate: false,
+        currentSection: 'business',
+      };
+    }
+
     this.logger.warn(
-      'LLM response was not valid JSON — using raw content as agent message',
+      'LLM response was not valid JSON and no partial agentMessage could be ' +
+        'recovered — returning canned fallback',
     );
-    const truncated = rawContent.length > 1500
-      ? rawContent.substring(0, 1500) + '\n\n[Response was truncated. Please continue the conversation.]'
-      : rawContent;
     return {
-      agentMessage: truncated,
+      agentMessage: TURN_PARSE_FALLBACK_MESSAGE,
       sectionsUpdated: {},
       sectionsCovered: [],
       readyToGenerate: false,
       currentSection: 'business',
     };
+  }
+
+  /**
+   * Recover a partial `agentMessage` value from a truncated JSON envelope
+   * such as `{"agentMessage": "Hello\\n\\nworld` (no closing quote/brace).
+   *
+   * The regex is anchored to `"agentMessage"` and captures an
+   * escape-aware run of characters up to the next unescaped `"` (or end of
+   * input). The captured slice is round-tripped through `JSON.parse` so
+   * standard JSON escapes (`\n`, `\"`, `\\`, `\uXXXX`) are decoded
+   * correctly. Returns `null` when no `agentMessage` key is found or the
+   * captured slice is unparseable.
+   */
+  private extractPartialAgentMessage(raw: string): string | null {
+    const match = raw.match(/"agentMessage"\s*:\s*"((?:\\.|[^"\\])*)/);
+    if (!match) return null;
+    const captured = match[1];
+    try {
+      // Wrap in quotes and parse so JSON escape rules apply.
+      const decoded = JSON.parse(`"${captured}"`);
+      return typeof decoded === 'string' && decoded.trim().length > 0
+        ? decoded
+        : null;
+    } catch {
+      // Captured slice ended on a half-formed escape (e.g. trailing `\u00`).
+      // Strip any trailing backslash and retry once.
+      const stripped = captured.replace(/\\+$/, '');
+      try {
+        const decoded = JSON.parse(`"${stripped}"`);
+        return typeof decoded === 'string' && decoded.trim().length > 0
+          ? decoded
+          : null;
+      } catch {
+        return null;
+      }
+    }
+  }
+
+  /**
+   * Defensive guard: if the recovered or canned string ever contains a
+   * `{"agentMessage"` substring (e.g. the model nested its envelope inside
+   * its own message), strip everything from that substring to end-of-buffer
+   * so the user never sees the raw key in their chat bubble.
+   */
+  private sanitiseAgentMessage(message: string): string {
+    const idx = message.indexOf('{"agentMessage"');
+    if (idx === -1) return message;
+    return message.substring(0, idx).trimEnd();
   }
 
   private buildSectionsResponse(
