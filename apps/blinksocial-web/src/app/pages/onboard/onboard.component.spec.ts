@@ -298,6 +298,79 @@ describe('OnboardComponent', () => {
     ).toBeFalsy();
   });
 
+  // ---------------------------------------------------------------------
+  // Ticket #88 — inline chat-error after the Blueprint is complete
+  //
+  // The full-width `.error-banner` would cover the Blueprint preview in
+  // the post-generation split layout, so revision-regen failures route
+  // to a scoped `.chat-error` block above the composer instead. The
+  // status guard makes the two render paths mutually exclusive.
+  // ---------------------------------------------------------------------
+  describe('inline chat-error post-completion (#88)', () => {
+    function setupCompleteWithError(
+      message = "We couldn't apply that revision — please try rephrasing or try again.",
+    ) {
+      const fixture = createAndInitComponent();
+      fixture.componentInstance['state'].status.set('complete');
+      fixture.componentInstance['state'].markdownDocument.set(
+        '# Prior Blueprint',
+      );
+      fixture.componentInstance['state'].blueprint.set({
+        clientName: 'Acme',
+        strategicSummary: 'Prior summary',
+      } as any);
+      fixture.componentInstance['state'].error.set(message);
+      fixture.detectChanges();
+      return fixture;
+    }
+
+    it('renders inline chat-error inside the chat panel and not the full-width banner when status is complete', () => {
+      const fixture = setupCompleteWithError();
+      const chatError = fixture.nativeElement.querySelector(
+        '[data-testid="chat-error"]',
+      );
+      const banner = fixture.nativeElement.querySelector('.error-banner');
+      expect(chatError).toBeTruthy();
+      expect(banner).toBeFalsy();
+      expect(chatError.textContent).toContain('please try rephrasing');
+      // Lives inside the chat panel, above the composer.
+      const chatPanel = fixture.nativeElement.querySelector(
+        '[data-testid="chat-panel"]',
+      );
+      expect(chatPanel.contains(chatError)).toBe(true);
+    });
+
+    it('TC-2: dismiss button on chat-error clears state.error and removes the element', () => {
+      const fixture = setupCompleteWithError();
+      const chatError = fixture.nativeElement.querySelector(
+        '[data-testid="chat-error"]',
+      );
+      expect(chatError).toBeTruthy();
+
+      chatError.querySelector('button').click();
+      fixture.detectChanges();
+
+      expect(
+        fixture.nativeElement.querySelector('[data-testid="chat-error"]'),
+      ).toBeFalsy();
+      expect(fixture.componentInstance['state'].error()).toBeNull();
+    });
+
+    it('falls back to the full-width banner when status is not complete (e.g. first-time generation failure)', () => {
+      const fixture = createAndInitComponent();
+      // status remains 'active' — a first-time generation failure.
+      fixture.componentInstance['state'].error.set(
+        "We couldn't generate the blueprint — please try again.",
+      );
+      fixture.detectChanges();
+
+      expect(fixture.nativeElement.querySelector('.error-banner')).toBeTruthy();
+      expect(
+        fixture.nativeElement.querySelector('[data-testid="chat-error"]'),
+      ).toBeFalsy();
+    });
+  });
+
   it('should trigger blueprint generation', () => {
     const fixture = createAndInitComponent();
     fixture.componentInstance['state'].readyToGenerate.set(true);
