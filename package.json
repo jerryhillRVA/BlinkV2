@@ -9,7 +9,7 @@
     "start:web": "nx serve blinksocial-web --port=${WEB_PORT:-4200}",
     "check-ports": "node scripts/check-ports.mjs",
     "predevServer": "if [ \"$BLINK_DEV_SUDO\" = \"1\" ]; then sudo -v; else echo 'devServer is gated behind BLINK_DEV_SUDO=1 — singleton-only (port 80). See docs/worktrees.md.' >&2; exit 1; fi",
-    "devServer": "concurrently \"PORT=${API_PORT:-3000} nx serve blinksocial-api\" \"sudo -E env PATH=$PATH $(command -v node) ./node_modules/.bin/nx serve blinksocial-web --port 80 --host 0.0.0.0 --hmr=false --live-reload=false\"",
+    "devServer": "concurrently \"PORT=${API_PORT:-3000} NX_ISOLATE_PLUGINS=false NX_DAEMON=false NX_CACHE_DIRECTORY=${NX_CACHE_DIRECTORY:-/tmp/nx-cache-blink} nx serve blinksocial-api\" \"sudo -E env PATH=$PATH NX_ISOLATE_PLUGINS=false NX_DAEMON=false NX_CACHE_DIRECTORY=${NX_CACHE_DIRECTORY:-/tmp/nx-cache-blink} TMPDIR=/tmp $(command -v node) ./node_modules/.bin/nx serve blinksocial-web --port 80 --host 0.0.0.0 --hmr=false --live-reload=false\"",
     "build": "nx build blinksocial-web && nx build blinksocial-api",
     "build:api": "nx build blinksocial-api",
     "build:web": "nx build blinksocial-web",
