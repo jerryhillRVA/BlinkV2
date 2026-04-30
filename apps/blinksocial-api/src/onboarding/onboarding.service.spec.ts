@@ -935,6 +935,84 @@ describe('OnboardingService', () => {
   });
 
   // ---------------------------------------------------------------------
+  // Ticket #89 — parseTurnResponse fallback no longer leaks JSON envelopes
+  // ---------------------------------------------------------------------
+  describe('parseTurnResponse fallback (#89)', () => {
+    /** Reach the private method via bracket access. */
+    function callParse(rawContent: string, parsed: Record<string, unknown> | null) {
+      const fn = (
+        service as unknown as {
+          parseTurnResponse: (
+            r: string,
+            p: Record<string, unknown> | null,
+          ) => { agentMessage: string };
+        }
+      ).parseTurnResponse.bind(service);
+      return fn(rawContent, parsed);
+    }
+
+    it('returns the parsed object unchanged when the LLM provided clean JSON (regression)', () => {
+      const result = callParse('', { agentMessage: 'all good', readyToGenerate: false });
+      expect(result.agentMessage).toBe('all good');
+    });
+
+    it('extracts JSON wrapped in a ```json fence', () => {
+      const wrapped = '```json\n{"agentMessage":"hello from a fenced block"}\n```';
+      const result = callParse(wrapped, null);
+      expect(result.agentMessage).toBe('hello from a fenced block');
+    });
+
+    it('recovers a partial agentMessage from a truncated JSON envelope', () => {
+      // Stream cut mid-string: opening brace + key + value with escaped newlines
+      // and an embedded escaped quote, but no closing quote / brace.
+      const truncated =
+        '{"agentMessage": "Hello\\n\\nworld with an \\"escaped\\" quote and more text';
+      const result = callParse(truncated, null);
+
+      expect(result.agentMessage).toContain('Hello');
+      expect(result.agentMessage).toContain('world with an "escaped" quote');
+      // Decoded newlines, not the literal `\n` escape sequence
+      expect(result.agentMessage).toContain('\n\n');
+      expect(result.agentMessage).not.toContain('\\n');
+      // No envelope debris
+      expect(result.agentMessage).not.toContain('{"agentMessage"');
+      // Truncation footer appended
+      expect(result.agentMessage).toContain(
+        '[Response was truncated. Please continue the conversation.]',
+      );
+    });
+
+    it('strips a nested {"agentMessage" substring if the model echoed its own envelope', () => {
+      // Pathological case: model writes its own envelope inside its own message.
+      const nested =
+        '{"agentMessage": "Here is your reply.\\n\\nDebug: {"agentMessage": "ignored';
+      const result = callParse(nested, null);
+      expect(result.agentMessage).toContain('Here is your reply.');
+      expect(result.agentMessage).not.toContain('{"agentMessage"');
+    });
+
+    it('falls back to the canned friendly message when no agentMessage can be recovered', () => {
+      const garbage = '!! garbage stream {{{ no key here at all';
+      const result = callParse(garbage, null);
+      expect(result.agentMessage).toBe(
+        'Sorry — my response was cut off before I could finish. Could you ask me to continue?',
+      );
+      expect(result.agentMessage).not.toContain('{');
+      expect(result.agentMessage).not.toContain('agentMessage');
+    });
+
+    it('falls back to the canned friendly message when only an empty agentMessage was found', () => {
+      const emptyMessage = '{"agentMessage": "';
+      const result = callParse(emptyMessage, null);
+      // Empty / whitespace-only recovery is treated as no-recovery so the user
+      // sees the canned apology rather than just the truncation footer alone.
+      expect(result.agentMessage).toBe(
+        'Sorry — my response was cut off before I could finish. Could you ask me to continue?',
+      );
+    });
+  });
+
+  // ---------------------------------------------------------------------
   // Ticket #72 — wizard pre-fill sources from discovery, not Blueprint
   // ---------------------------------------------------------------------
   describe('createWorkspaceFromBlueprint workspaceName seeding (#72)', () => {
