@@ -446,11 +446,13 @@ export class OnboardingService {
         ? `${baseAdditionalContext}${businessNameDirective}`
         : baseAdditionalContext;
 
-      // Run the skill, validate, and on businessName drift retry once. Schema
-      // and cross-field failures still 422 immediately (no retry); the retry
-      // budget is reserved for the prose-fidelity check, which is the only
-      // failure the same prompt can plausibly fix on a second roll.
-      const MAX_ATTEMPTS = businessName ? 2 : 1;
+      // Run the skill, validate, and retry once on a recoverable miss.
+      // Retry budget covers two distinct same-prompt-fixable failures:
+      //   - prose drift on businessName (#72), and
+      //   - parse / shape miss in the LLM response (#88) — verbose
+      //     revision regens are the worst offenders here.
+      // Schema and cross-field failures still 422 immediately (no retry).
+      const MAX_ATTEMPTS = isRevisionMode || businessName ? 2 : 1;
       let blueprint: BlueprintDocumentContract | undefined;
       for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
         const result = await this.skillRunner.run({
@@ -470,7 +472,28 @@ export class OnboardingService {
 
         blueprint = result.parsed as unknown as BlueprintDocumentContract;
         if (!blueprint || !blueprint.strategicSummary) {
-          throw new Error('Blueprint generation returned invalid data');
+          // Parse / shape miss — log a truncated preview of the raw model
+          // output so we can diagnose post-hoc, then either retry on the
+          // next attempt or throw a structured 422 if the budget is spent.
+          const rawPreview = (result.content ?? '').slice(0, 1000);
+          this.logger.warn(
+            `blueprint-parse-miss session=${sessionId} attempt=${attempt} mode=${
+              isRevisionMode ? 'revision' : 'generation'
+            } rawPreview=${JSON.stringify(rawPreview)}`,
+          );
+          if (attempt < MAX_ATTEMPTS) {
+            blueprint = undefined;
+            continue;
+          }
+          throw new HttpException(
+            {
+              message: isRevisionMode
+                ? "We couldn't apply that revision — please try rephrasing or try again."
+                : "We couldn't generate the blueprint — please try again.",
+              errors: [{ code: 'BLUEPRINT_PARSE_FAILED', attempts: attempt }],
+            },
+            HttpStatus.UNPROCESSABLE_ENTITY,
+          );
         }
 
         // Pin clientName to the user-supplied businessName whenever we have
@@ -533,7 +556,18 @@ export class OnboardingService {
       }
 
       if (!blueprint) {
-        throw new Error('Blueprint generation returned invalid data');
+        // Defensive — every loop exit either sets `blueprint` or throws
+        // an HttpException above. Surface as a structured 422 rather than
+        // a bare Error so a regression here can never become a 500.
+        throw new HttpException(
+          {
+            message: isRevisionMode
+              ? "We couldn't apply that revision — please try rephrasing or try again."
+              : "We couldn't generate the blueprint — please try again.",
+            errors: [{ code: 'BLUEPRINT_PARSE_FAILED', attempts: MAX_ATTEMPTS }],
+          },
+          HttpStatus.UNPROCESSABLE_ENTITY,
+        );
       }
 
       const markdownDocument = renderBlueprintMarkdown(blueprint);

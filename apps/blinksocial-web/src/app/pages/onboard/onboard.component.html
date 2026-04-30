@@ -54,7 +54,7 @@
         [currentSection]="state.currentSection()" />
     }
 
-    @if (state.error()) {
+    @if (state.error() && state.status() !== 'complete') {
       <div class="error-banner">
         <span>{{ state.error() }}</span>
         <button (click)="state.error.set(null)">Dismiss</button>
@@ -158,6 +158,13 @@
             </div>
           }
         </div>
+
+        @if (state.error() && state.status() === 'complete') {
+          <div class="chat-error" data-testid="chat-error" role="alert">
+            <span>{{ state.error() }}</span>
+            <button type="button" (click)="state.error.set(null)">Dismiss</button>
+          </div>
+        }
 
         <div class="input-area">
           @if (state.readyToGenerate() && state.status() === 'active') {

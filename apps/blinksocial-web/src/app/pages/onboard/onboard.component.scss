@@ -222,6 +222,37 @@
   }
 }
 
+// Inline error rendered inside the chat panel when a revision regen fails
+// post-`complete` (#88). The full-width `.error-banner` would crowd the
+// Blueprint preview in the split layout, so post-completion failures
+// surface here instead — scoped to the chat column, dismissible, and
+// styled with the destructive status tokens so it themes for dark mode.
+.chat-error {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 0 16px 12px;
+  padding: 10px 14px;
+  background: var(--blink-status-danger-bg);
+  border: 1px solid var(--blink-status-danger-border);
+  border-left: 4px solid var(--blink-status-danger);
+  border-radius: 8px;
+  color: var(--blink-status-danger-text);
+  font-size: var(--blink-body-medium);
+  line-height: 1.4;
+
+  button {
+    padding: 4px 8px;
+    border: none;
+    background: none;
+    color: var(--blink-status-danger-text);
+    font-weight: 600;
+    cursor: pointer;
+    font-size: var(--blink-label-medium);
+  }
+}
+
 .input-area {
   padding: 16px;
   border-top: 1px solid var(--blink-outline-variant);
