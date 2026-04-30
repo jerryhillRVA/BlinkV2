@@ -9,7 +9,11 @@
   }
   <div class="bubble">
     @if (message().content) {
-      <p class="content">{{ message().content }}</p>
+      @if (message().role === 'assistant') {
+        <div class="content markdown" [innerHTML]="renderedContent()"></div>
+      } @else {
+        <p class="content">{{ message().content }}</p>
+      }
     }
     @if ((message().attachments ?? []).length > 0) {
       <div class="attachments" data-testid="message-attachments">

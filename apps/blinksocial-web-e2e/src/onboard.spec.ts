@@ -142,6 +142,131 @@ test.describe('Onboard Page', () => {
   });
 });
 
+test.describe('Onboard Page - chat rendering (#89)', () => {
+  test.beforeEach(async ({ page }) => {
+    await mockAuthenticatedUser(page);
+    await page.route('**/api/onboarding/sessions', (route) => {
+      if (route.request().method() === 'POST') {
+        route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(mockCreateSessionResponse) });
+      }
+    });
+  });
+
+  /** Local copy of startSession — the parent describe's helper isn't visible here. */
+  async function startSession(page: import('@playwright/test').Page) {
+    await page.goto('/onboard');
+    await page.locator('.name-input-field').fill('E2E Test Corp');
+    await page.locator('.start-session-btn').click();
+    await page.locator('app-chat-message').first().waitFor({ state: 'visible' });
+  }
+
+  /** Section list shared by all #89 mock replies. */
+  const sections = [
+    { id: 'business', name: 'Business Overview', covered: false },
+    { id: 'brand_voice', name: 'Brand & Voice', covered: false },
+    { id: 'audience', name: 'Audience', covered: false },
+    { id: 'competitors', name: 'Competitors', covered: false },
+    { id: 'content', name: 'Content Strategy', covered: false },
+    { id: 'channels', name: 'Channels & Capacity', covered: false },
+    { id: 'expectations', name: 'Expectations & Goals', covered: false },
+  ];
+
+  test('TC-1: renders markdown (bold, italic, lists, code) in agent bubble', async ({ page }) => {
+    await page.route('**/api/onboarding/sessions/e2e-session-1/messages', (route) =>
+      route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          agentMessage:
+            '**On brand voice:** here are *three* points:\n\n1. First\n2. Second\n3. Third\n\n```\nconst x = 1;\n```',
+          sections,
+          currentSection: 'business',
+          readyToGenerate: false,
+        }),
+      }),
+    );
+    await startSession(page);
+    await page.locator('.message-input').fill('Tell me about brand voice');
+    await page.locator('.send-btn').click();
+
+    // Wait for the agent reply to appear (3 bubbles: initial + user + agent reply)
+    await expect(page.locator('app-chat-message')).toHaveCount(3, { timeout: 5000 });
+
+    const lastBubble = page.locator('app-chat-message').last();
+    await expect(lastBubble.locator('.content.markdown')).toBeVisible();
+    await expect(lastBubble.locator('strong')).toContainText('On brand voice:');
+    await expect(lastBubble.locator('em')).toContainText('three');
+    await expect(lastBubble.locator('ol > li')).toHaveCount(3);
+    await expect(lastBubble.locator('pre code')).toContainText('const x = 1;');
+
+    const text = await lastBubble.locator('.content.markdown').textContent();
+    expect(text).not.toContain('**');
+    expect(text).not.toContain('```');
+  });
+
+  test('TC-2: truncated JSON envelope debris never reaches the user', async ({ page }) => {
+    // Represents the post-fix recovered output from `parseTurnResponse` after
+    // a real truncation — partial agentMessage + the truncation footer, with
+    // no envelope debris.
+    await page.route('**/api/onboarding/sessions/e2e-session-1/messages', (route) =>
+      route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          agentMessage:
+            '**On brand voice:** the pre-work covers personality...\n\n[Response was truncated. Please continue the conversation.]',
+          sections,
+          currentSection: 'business',
+          readyToGenerate: false,
+        }),
+      }),
+    );
+    await startSession(page);
+    await page.locator('.message-input').fill('Continue please');
+    await page.locator('.send-btn').click();
+
+    await expect(page.locator('app-chat-message')).toHaveCount(3, { timeout: 5000 });
+
+    const allText = (await page.locator('app-chat-message').allTextContents()).join('\n');
+    expect(allText).not.toContain('{"agentMessage"');
+    expect(allText).not.toContain('\\n');
+    expect(allText).not.toContain('\\"');
+    // The friendly truncation notice IS expected and should appear as plain text.
+    expect(allText).toContain('[Response was truncated. Please continue the conversation.]');
+  });
+
+  test('TC-3: XSS smoke — <script> in agent output does not execute or render', async ({ page }) => {
+    await page.route('**/api/onboarding/sessions/e2e-session-1/messages', (route) =>
+      route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          agentMessage:
+            'Hello <script>window.__pwned = true</script> world',
+          sections,
+          currentSection: 'business',
+          readyToGenerate: false,
+        }),
+      }),
+    );
+    await startSession(page);
+    await page.locator('.message-input').fill('hi');
+    await page.locator('.send-btn').click();
+
+    await expect(page.locator('app-chat-message')).toHaveCount(3, { timeout: 5000 });
+
+    // No <script> element renders into the bubble (Angular sanitiser strips it)
+    expect(await page.locator('app-chat-message script').count()).toBe(0);
+    // The script never executed
+    const pwned = await page.evaluate(() => (window as unknown as { __pwned?: boolean }).__pwned);
+    expect(pwned).toBeUndefined();
+    // Visible text is preserved
+    const lastBubble = page.locator('app-chat-message').last();
+    await expect(lastBubble).toContainText('Hello');
+    await expect(lastBubble).toContainText('world');
+  });
+});
+
 test.describe('Onboard Page - Non-admin user', () => {
   test('should redirect non-admin users away from /onboard', async ({ page }) => {
     await page.route('**/api/auth/status', (route) =>
