@@ -6,6 +6,7 @@ import type {
   LlmCompletionResult,
   LlmMessage,
   LlmContentBlock,
+  LlmToolChoice,
 } from './llm-provider.interface';
 
 const DEFAULT_MODEL = 'claude-sonnet-4-6';
@@ -75,6 +76,19 @@ export class AnthropicProvider implements LlmProvider {
       temperature: options.temperature,
       stop_sequences: options.stopSequences,
       ...(systemText ? { system: systemText } : {}),
+      ...(options.tools && options.tools.length > 0
+        ? {
+            tools: options.tools.map((t) => ({
+              name: t.name,
+              ...(t.description ? { description: t.description } : {}),
+              input_schema:
+                t.inputSchema as unknown as Anthropic.Messages.Tool['input_schema'],
+            })),
+            ...(options.toolChoice
+              ? { tool_choice: this.toAnthropicToolChoice(options.toolChoice) }
+              : {}),
+          }
+        : {}),
       messages: conversationMessages.map((m) => ({
         role: m.role,
         content:
@@ -89,6 +103,10 @@ export class AnthropicProvider implements LlmProvider {
     const textBlock = response.content.find((block) => block.type === 'text');
     const content = textBlock?.type === 'text' ? textBlock.text : '';
 
+    const toolUseBlock = response.content.find(
+      (block): block is Anthropic.Messages.ToolUseBlock => block.type === 'tool_use',
+    );
+
     // Loud warning when the model actually hits the ceiling — we'd rather
     // know than silently ship a truncated artifact. Downstream validators
     // will reject incomplete JSON, but a log helps diagnose the cause.
@@ -100,14 +118,36 @@ export class AnthropicProvider implements LlmProvider {
 
     return {
       content,
-      stopReason: response.stop_reason === 'end_turn' ? 'end_turn'
-        : response.stop_reason === 'max_tokens' ? 'max_tokens'
-        : 'stop_sequence',
+      stopReason:
+        response.stop_reason === 'end_turn'
+          ? 'end_turn'
+          : response.stop_reason === 'max_tokens'
+            ? 'max_tokens'
+            : response.stop_reason === 'tool_use'
+              ? 'tool_use'
+              : 'stop_sequence',
       usage: {
         inputTokens: response.usage.input_tokens,
         outputTokens: response.usage.output_tokens,
       },
+      ...(toolUseBlock
+        ? {
+            toolUse: {
+              name: toolUseBlock.name,
+              input: (toolUseBlock.input ?? {}) as Record<string, unknown>,
+            },
+          }
+        : {}),
     };
+  }
+
+  private toAnthropicToolChoice(
+    choice: LlmToolChoice,
+  ): Anthropic.Messages.ToolChoice {
+    if (choice === 'auto') return { type: 'auto' };
+    if (choice === 'any') return { type: 'any' };
+    if (choice === 'none') return { type: 'none' };
+    return { type: 'tool', name: choice.name };
   }
 
   /**

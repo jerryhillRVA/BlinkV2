@@ -496,17 +496,32 @@
     @media (min-width: 768px) {
       flex-direction: row;
       gap: 16px;
-      align-items: stretch;
+      // Each panel sets its own height so the chat can be slightly taller
+      // than the blueprint without `stretch` equalising them.
+      align-items: flex-start;
 
       .blueprint-section {
         flex: 1 1 60%;
         margin-top: 0;
-        min-height: 400px;
+        // Anchor to viewport so internal `overflow-y: auto` clips and scrolls
+        // instead of pushing the page taller. `min-height` is the floor for
+        // very short viewports. The 1.4 multiplier scales both panels to
+        // ~40% more vertical room on any viewport above the floor.
+        min-height: 560px;
+        height: max(560px, calc(1.4 * (100vh - 360px)));
         overflow-y: auto;
       }
 
       .chat-area {
         flex: 1 1 40%;
+        // Slightly taller than the blueprint for a little extra breathing
+        // room around the message list and composer. Without a definite
+        // height, `.chat-area`'s `overflow: hidden` + the inner
+        // `.message-list { flex:1; overflow-y:auto }` cannot scroll —
+        // the chat-area would otherwise grow to fit its messages and the
+        // page itself would scroll.
+        min-height: 620px;
+        height: max(620px, calc(1.4 * (100vh - 320px)));
       }
     }
 

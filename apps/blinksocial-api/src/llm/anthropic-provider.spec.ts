@@ -82,4 +82,97 @@ describe('AnthropicProvider', () => {
     expect(result.stopReason).toBe('end_turn');
     expect(result.usage).toEqual({ inputTokens: 5, outputTokens: 2 });
   });
+
+  describe('tool-use forced output', () => {
+    it('forwards tools and tool_choice to the SDK in Anthropic-native shape', async () => {
+      const provider = buildProvider(stream);
+      await provider.complete({
+        messages: [{ role: 'user', content: 'go' }],
+        tools: [
+          {
+            name: 'submit_blueprint',
+            description: 'submit it',
+            inputSchema: { type: 'object', required: ['x'], properties: { x: { type: 'string' } } },
+          },
+        ],
+        toolChoice: { type: 'tool', name: 'submit_blueprint' },
+      });
+      const args = stream.mock.calls[0][0];
+      expect(args.tools).toEqual([
+        {
+          name: 'submit_blueprint',
+          description: 'submit it',
+          input_schema: { type: 'object', required: ['x'], properties: { x: { type: 'string' } } },
+        },
+      ]);
+      expect(args.tool_choice).toEqual({ type: 'tool', name: 'submit_blueprint' });
+    });
+
+    it('omits tool_choice when only tools are provided', async () => {
+      const provider = buildProvider(stream);
+      await provider.complete({
+        messages: [{ role: 'user', content: 'go' }],
+        tools: [{ name: 't', inputSchema: { type: 'object' } }],
+      });
+      const args = stream.mock.calls[0][0];
+      expect(args.tools).toBeDefined();
+      expect(args.tool_choice).toBeUndefined();
+    });
+
+    it('does NOT add tool fields when no tools are provided', async () => {
+      const provider = buildProvider(stream);
+      await provider.complete({ messages: [{ role: 'user', content: 'hi' }] });
+      const args = stream.mock.calls[0][0];
+      expect(args.tools).toBeUndefined();
+      expect(args.tool_choice).toBeUndefined();
+    });
+
+    it('surfaces tool_use blocks as a structured `toolUse` field', async () => {
+      const toolStream = vi.fn().mockReturnValue({
+        finalMessage: vi.fn().mockResolvedValue({
+          content: [
+            { type: 'text', text: '' },
+            { type: 'tool_use', id: 't1', name: 'submit_blueprint', input: { clientName: 'Acme' } },
+          ],
+          stop_reason: 'tool_use',
+          usage: { input_tokens: 10, output_tokens: 4 },
+        }),
+      });
+      const provider = buildProvider(toolStream);
+      const result = await provider.complete({
+        messages: [{ role: 'user', content: 'go' }],
+        tools: [{ name: 'submit_blueprint', inputSchema: { type: 'object' } }],
+        toolChoice: { type: 'tool', name: 'submit_blueprint' },
+      });
+      expect(result.stopReason).toBe('tool_use');
+      expect(result.toolUse).toEqual({
+        name: 'submit_blueprint',
+        input: { clientName: 'Acme' },
+      });
+    });
+
+    it('maps the four LlmToolChoice variants to Anthropic shape', async () => {
+      for (const [choice, expected] of [
+        ['auto', { type: 'auto' }],
+        ['any', { type: 'any' }],
+        ['none', { type: 'none' }],
+        [{ type: 'tool', name: 'foo' }, { type: 'tool', name: 'foo' }],
+      ] as const) {
+        const s = vi.fn().mockReturnValue({
+          finalMessage: vi.fn().mockResolvedValue({
+            content: [{ type: 'text', text: '' }],
+            stop_reason: 'end_turn',
+            usage: { input_tokens: 1, output_tokens: 1 },
+          }),
+        });
+        const provider = buildProvider(s);
+        await provider.complete({
+          messages: [{ role: 'user', content: 'go' }],
+          tools: [{ name: 'foo', inputSchema: { type: 'object' } }],
+          toolChoice: choice,
+        });
+        expect(s.mock.calls[0][0].tool_choice).toEqual(expected);
+      }
+    });
+  });
 });
