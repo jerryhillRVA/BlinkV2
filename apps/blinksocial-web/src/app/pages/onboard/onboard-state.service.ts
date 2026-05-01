@@ -16,7 +16,7 @@ import { renderBlueprintMarkdown } from '@blinksocial/core';
  * `/generate`. Filter on this when a successful regen needs to clear
  * stale error bubbles from the local message log (#94).
  */
-const ERROR_MESSAGE_KIND: 'error' = 'error';
+const ERROR_MESSAGE_KIND = 'error' as const;
 
 /**
  * Canned assistant message appended client-side every time the Blueprint

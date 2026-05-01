@@ -122,7 +122,7 @@ describe('SkillRunnerService — tool-use plumbing (#94, AC-C)', () => {
 
     const warnSpy = vi
       .spyOn(Logger.prototype, 'warn')
-      .mockImplementation(() => {});
+      .mockImplementation(() => undefined);
 
     const result = await runner.run({
       skillId: 'test-skill',
@@ -157,7 +157,7 @@ describe('SkillRunnerService — tool-use plumbing (#94, AC-C)', () => {
 
     const warnSpy = vi
       .spyOn(Logger.prototype, 'warn')
-      .mockImplementation(() => {});
+      .mockImplementation(() => undefined);
 
     const result = await runner.run({
       skillId: 'test-skill',

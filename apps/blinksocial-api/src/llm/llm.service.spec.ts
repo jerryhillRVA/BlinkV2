@@ -218,7 +218,7 @@ describe('LlmService — verbose logging (#94)', () => {
       const svc = await buildService(provider);
       const debugSpy = vi
         .spyOn(Logger.prototype, 'debug')
-        .mockImplementation(() => {});
+        .mockImplementation(() => undefined);
 
       await svc.complete({
         messages: [{ role: 'user', content: 'hi' }],
@@ -237,7 +237,7 @@ describe('LlmService — verbose logging (#94)', () => {
       const svc = await buildService(provider);
       const debugSpy = vi
         .spyOn(Logger.prototype, 'debug')
-        .mockImplementation(() => {});
+        .mockImplementation(() => undefined);
 
       await svc.complete({
         messages: [{ role: 'user', content: 'hi' }],
@@ -260,7 +260,7 @@ describe('LlmService — verbose logging (#94)', () => {
       const svc = await buildService(provider);
       const warnSpy = vi
         .spyOn(Logger.prototype, 'warn')
-        .mockImplementation(() => {});
+        .mockImplementation(() => undefined);
 
       await svc.complete({ messages: [{ role: 'user', content: 'hi' }] });
 
@@ -274,7 +274,7 @@ describe('LlmService — verbose logging (#94)', () => {
       const svc = await buildService(provider);
       const debugSpy = vi
         .spyOn(Logger.prototype, 'debug')
-        .mockImplementation(() => {});
+        .mockImplementation(() => undefined);
 
       await svc.complete({
         messages: [
