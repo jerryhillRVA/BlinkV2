@@ -253,6 +253,23 @@ describe('OnboardingService', () => {
       };
     }
 
+    it('forwards `submit_agent_turn` as the forced tool on every discovery turn (#94, AC-D6)', async () => {
+      const created = sessionStore.create('user-1');
+      skillRunner.run.mockResolvedValue(turnReply());
+
+      await service.handleMessage(created.id, 'user-1', 'My business is yoga.', []);
+
+      const call = skillRunner.run.mock.calls.at(-1)?.[0] as {
+        tool?: { name: string; inputSchema: Record<string, unknown> };
+      };
+      expect(call.tool).toBeDefined();
+      expect(call.tool?.name).toBe('submit_agent_turn');
+      expect(call.tool?.inputSchema).toMatchObject({
+        type: 'object',
+        required: ['agentMessage'],
+      });
+    });
+
     it('passes a content-block array containing a text attachment block to the LLM', async () => {
       const created = sessionStore.create('user-1');
       skillRunner.run.mockResolvedValue(turnReply());
@@ -950,6 +967,158 @@ describe('OnboardingService', () => {
         // contentPreview slice cap is 1000 chars — the full 2000-char
         // garbage string MUST NOT appear verbatim.
         expect(found).not.toContain('x'.repeat(1500));
+      });
+    });
+
+    // --------------------------------------------------------------------
+    // Recent-ticket regression coverage (#94, AC-D test plan)
+    //
+    // These tests assert the full-AJV pre-flight rejects every kind of
+    // shape-incomplete Blueprint introduced by recent tickets. Each case
+    // mutates one field on a known-valid baseline so the failing field is
+    // unambiguous, runs both attempts (MAX_ATTEMPTS=2), and asserts the
+    // 422 surfaces the field path in the WARN log.
+    // --------------------------------------------------------------------
+    describe('AJV pre-flight rejects shape-incomplete Blueprints (#52 + #71)', () => {
+      function setupSession() {
+        const created = sessionStore.create('user-1');
+        sessionStore.update(created.id, {
+          discoveryData: { business: { businessName: 'Acme' } },
+        });
+        return created;
+      }
+
+      async function expectParseMissOn(
+        session: OnboardingSessionState,
+        mutated: BlueprintDocumentContract,
+      ) {
+        skillRunner.run.mockResolvedValue({
+          content: '',
+          parsed: mutated as unknown as Record<string, unknown>,
+          stopReason: 'tool_use',
+          toolName: 'submit_blueprint',
+          usage: { inputTokens: 0, outputTokens: 0 },
+        });
+        const warnSpy = vi.spyOn(service['logger'], 'warn');
+        await expect(
+          service.generateBlueprint(session.id, 'user-1'),
+        ).rejects.toMatchObject({
+          status: HttpStatus.UNPROCESSABLE_ENTITY,
+          response: expect.objectContaining({
+            errors: expect.arrayContaining([
+              expect.objectContaining({
+                code: 'BLUEPRINT_PARSE_FAILED',
+                attempts: 2,
+              }),
+            ]),
+          }),
+        });
+        // Both attempts ran — same malformed Blueprint failed twice.
+        expect(skillRunner.run).toHaveBeenCalledTimes(2);
+        // Structured WARN includes the validation errors path.
+        const warnLines = warnSpy.mock.calls.map((c) => String(c[0]));
+        expect(warnLines.some((l) => l.includes('blueprint-parse-miss'))).toBe(true);
+      }
+
+      it('#52 / targetAudience: missing top-level field → AJV rejects', async () => {
+        const bp = buildValidBlueprint();
+        delete (bp as Partial<BlueprintDocumentContract>).targetAudience;
+        await expectParseMissOn(setupSession(), bp);
+      });
+
+      it('#52 / targetAudience minLength: < 50 chars → AJV rejects', async () => {
+        const bp = buildValidBlueprint();
+        bp.targetAudience = 'too short';
+        await expectParseMissOn(setupSession(), bp);
+      });
+
+      it('#71 / journeyMap minItems: 3 entries instead of 4 → AJV rejects', async () => {
+        const bp = buildValidBlueprint();
+        bp.audienceProfiles[0].journeyMap = bp.audienceProfiles[0].journeyMap.slice(0, 3);
+        await expectParseMissOn(setupSession(), bp);
+      });
+
+      it('#71 / journeyMap maxItems: 5 entries instead of 4 → AJV rejects', async () => {
+        const bp = buildValidBlueprint();
+        bp.audienceProfiles[0].journeyMap = [
+          ...bp.audienceProfiles[0].journeyMap,
+          { phase: 'Discovery', goal: 'extra', contentMoment: 'extra' } as never,
+        ];
+        await expectParseMissOn(setupSession(), bp);
+      });
+
+      it('#71 / journeyMap phase enum: out-of-enum value → AJV rejects', async () => {
+        const bp = buildValidBlueprint();
+        (
+          bp.audienceProfiles[0].journeyMap[0] as { phase: string }
+        ).phase = 'NotAPhase';
+        await expectParseMissOn(setupSession(), bp);
+      });
+
+      it('#71 / differentiationMatrix minItems: 2 rows → AJV rejects', async () => {
+        const bp = buildValidBlueprint();
+        bp.differentiationMatrix = bp.differentiationMatrix.slice(0, 2);
+        await expectParseMissOn(setupSession(), bp);
+      });
+
+      it('#71 / contentPillars[].contentIdeas minItems: < 5 ideas in one pillar → AJV rejects', async () => {
+        const bp = buildValidBlueprint();
+        bp.contentPillars[0].contentIdeas = bp.contentPillars[0].contentIdeas.slice(
+          0,
+          4,
+        );
+        await expectParseMissOn(setupSession(), bp);
+      });
+
+      it('#71 / brandVoice.voiceInAction minItems: 2 examples → AJV rejects', async () => {
+        const bp = buildValidBlueprint();
+        bp.brandVoice.voiceInAction = bp.brandVoice.voiceInAction.slice(0, 2);
+        await expectParseMissOn(setupSession(), bp);
+      });
+
+      it('#71 / performanceScorecard minItems: 2 metrics → AJV rejects', async () => {
+        const bp = buildValidBlueprint();
+        bp.performanceScorecard = bp.performanceScorecard.slice(0, 2);
+        await expectParseMissOn(setupSession(), bp);
+      });
+
+      it('#71 / performanceScorecard.definition minLength: < 10 chars → AJV rejects', async () => {
+        const bp = buildValidBlueprint();
+        bp.performanceScorecard[0].definition = 'short';
+        await expectParseMissOn(setupSession(), bp);
+      });
+
+      it('#71 / quickWins minItems: 2 items → AJV rejects', async () => {
+        const bp = buildValidBlueprint();
+        bp.quickWins = bp.quickWins.slice(0, 2);
+        await expectParseMissOn(setupSession(), bp);
+      });
+
+      it('#71 / contentChannelMatrix.placements[].role enum: invalid role → AJV rejects', async () => {
+        const bp = buildValidBlueprint();
+        (
+          bp.contentChannelMatrix[0].placements[0] as { role: string }
+        ).role = 'NotARole';
+        await expectParseMissOn(setupSession(), bp);
+      });
+
+      it('happy path: a fully-populated valid Blueprint passes AJV cleanly on attempt 1 (no retry, no WARN)', async () => {
+        const created = setupSession();
+        const valid = buildValidBlueprint();
+        skillRunner.run.mockResolvedValue({
+          content: '',
+          parsed: valid as unknown as Record<string, unknown>,
+          stopReason: 'tool_use',
+          toolName: 'submit_blueprint',
+          usage: { inputTokens: 0, outputTokens: 0 },
+        });
+        const warnSpy = vi.spyOn(service['logger'], 'warn');
+
+        await service.generateBlueprint(created.id, 'user-1');
+
+        expect(skillRunner.run).toHaveBeenCalledTimes(1);
+        const warnLines = warnSpy.mock.calls.map((c) => String(c[0]));
+        expect(warnLines.some((l) => l.includes('blueprint-parse-miss'))).toBe(false);
       });
     });
 
