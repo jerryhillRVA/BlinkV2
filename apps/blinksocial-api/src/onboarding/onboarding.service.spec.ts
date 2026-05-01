@@ -9,6 +9,7 @@ import { UserService } from '../auth/user.service';
 import { AgenticFilesystemService } from '../agentic-filesystem/agentic-filesystem.service';
 import { WorkspaceBuilderService } from './workspace-builder.service';
 import { AttachmentExtractorService } from './attachment-extractor.service';
+import { BlueprintPromptService } from './prompts/blueprint-prompt.service';
 import type { BlueprintDocumentContract } from '@blinksocial/contracts';
 import { buildSampleBlueprint } from '@blinksocial/core';
 import type { LlmContentBlock, LlmMessage } from '../llm/llm-provider.interface';
@@ -64,6 +65,19 @@ describe('OnboardingService', () => {
         {
           provide: WorkspaceBuilderService,
           useValue: { buildFromBlueprint: vi.fn() },
+        },
+        // BlueprintPromptService doesn't reach the LLM in these tests — every
+        // skillRunner.run is mocked. We stub the renderer so we don't need
+        // to wire SkillLoaderService + filesystem-resident prompt templates
+        // into every test module.
+        {
+          provide: BlueprintPromptService,
+          useValue: {
+            render: vi.fn(
+              (ctx: { mode: 'generation' | 'revision' }) =>
+                `RENDERED_PROMPT[mode=${ctx.mode}]`,
+            ),
+          },
         },
       ],
     }).compile();
@@ -488,7 +502,7 @@ describe('OnboardingService', () => {
       });
     }
 
-    it('uses MODE: BLUEPRINT_REVISION and includes prior blueprint + post-completion messages in the prompt', async () => {
+    it('uses MODE: BLUEPRINT_REVISION and feeds revision context into the BlueprintPromptService renderer (#94)', async () => {
       const session = seedCompletedSession();
       const valid = buildValidBlueprint();
       valid.strategicSummary =
@@ -499,27 +513,35 @@ describe('OnboardingService', () => {
         usage: { inputTokens: 0, outputTokens: 0 },
       });
 
+      const promptService = (
+        service as unknown as {
+          blueprintPrompt: { render: ReturnType<typeof vi.fn> };
+        }
+      ).blueprintPrompt;
+
       const res = await service.generateBlueprint(session.id, 'user-1');
 
+      // System-prompt addendum is now a tiny mode marker — the bulk of the
+      // prompt lives in the skill-owned template.
       const call = skillRunner.run.mock.calls.at(-1)?.[0] as {
         additionalContext: string;
         conversationHistory: LlmMessage[];
       };
       expect(call.additionalContext).toContain('MODE: BLUEPRINT_REVISION');
-      const userBlocks = call.conversationHistory[0].content as
-        | string
-        | LlmContentBlock[];
-      const promptText =
-        typeof userBlocks === 'string'
-          ? userBlocks
-          : (userBlocks.find((b) => b.type === 'text') as { text: string }).text;
-      expect(promptText).toContain('EXISTING BLUEPRINT');
-      expect(promptText).toContain('REVISION CONVERSATION SINCE GENERATION');
-      // Slice should include only post-completion messages.
-      expect(promptText).toContain('tighten the summary');
-      expect(promptText).toContain('yes go ahead');
-      // Prior blueprint embedded.
-      expect(promptText).toContain('"strategicSummary"');
+
+      // The renderer was called with revision-mode context: prior Blueprint
+      // serialized, post-completion transcript present, mode='revision'.
+      expect(promptService.render).toHaveBeenCalled();
+      const renderArg = promptService.render.mock.calls.at(-1)?.[0] as {
+        mode: 'generation' | 'revision';
+        priorBlueprintJson: string | null;
+        revisionTranscript: string | null;
+        discoveryDataJson: string;
+      };
+      expect(renderArg.mode).toBe('revision');
+      expect(renderArg.priorBlueprintJson).toContain('"strategicSummary"');
+      expect(renderArg.revisionTranscript).toContain('tighten the summary');
+      expect(renderArg.revisionTranscript).toContain('yes go ahead');
 
       // Returned blueprint reflects the new generation.
       expect(res.blueprint.strategicSummary).toContain('tightened summary');
@@ -855,7 +877,7 @@ describe('OnboardingService', () => {
         expect(skillRunner.run).toHaveBeenCalledTimes(2);
       });
 
-      it('TC-U6: first-time generation without businessName — single attempt, parse miss → immediate 422 with attempts:1', async () => {
+      it('TC-U6: first-time generation without businessName — uses MAX_ATTEMPTS=2, retries once, then throws 422 with attempts:2 (#94)', async () => {
         const created = sessionStore.create('user-1');
         sessionStore.update(created.id, {
           discoveryData: { business: {} },
@@ -875,12 +897,14 @@ describe('OnboardingService', () => {
             errors: expect.arrayContaining([
               expect.objectContaining({
                 code: 'BLUEPRINT_PARSE_FAILED',
-                attempts: 1,
+                attempts: 2,
               }),
             ]),
           }),
         });
-        expect(skillRunner.run).toHaveBeenCalledTimes(1);
+        // Two attempts now — single hiccup must not be fatal even when
+        // discovery did not capture a businessName (#94, AC-D5).
+        expect(skillRunner.run).toHaveBeenCalledTimes(2);
 
         const after = sessionStore.get(created.id);
         // First-time gen failure — session reverts to 'active', no blueprint.
@@ -888,7 +912,7 @@ describe('OnboardingService', () => {
         expect(after?.blueprint).toBeNull();
       });
 
-      it('TC-U7: parse miss logs a warn with truncated raw preview', async () => {
+      it('TC-U7: parse miss logs a structured warn with stopReason, toolName, validationErrors, parsedPreview, and contentPreview (#94)', async () => {
         const session = seedCompletedSession();
         const valid = buildValidBlueprint();
         valid.strategicSummary =
@@ -898,28 +922,34 @@ describe('OnboardingService', () => {
           .mockResolvedValueOnce({
             content: longGarbage,
             parsed: null,
+            stopReason: 'tool_use',
+            toolName: 'submit_blueprint',
             usage: { inputTokens: 0, outputTokens: 0 },
           })
           .mockResolvedValueOnce({
             content: '',
             parsed: valid as unknown as Record<string, unknown>,
+            stopReason: 'tool_use',
+            toolName: 'submit_blueprint',
             usage: { inputTokens: 0, outputTokens: 0 },
           });
 
         const warnSpy = vi.spyOn(service['logger'], 'warn');
         await service.generateBlueprint(session.id, 'user-1');
 
-        expect(warnSpy).toHaveBeenCalledWith(
-          expect.stringContaining('blueprint-parse-miss'),
-        );
-        // Truncation cap is 1000 chars — the warn message should not contain
-        // the full 2000-char garbage string. We assert by checking that the
-        // length is bounded (header + JSON-encoded 1000-char preview).
         const warnArgs = warnSpy.mock.calls.map((c) => String(c[0]));
         const found = warnArgs.find((s) => s.includes('blueprint-parse-miss'));
         expect(found).toBeDefined();
-        expect(found!.length).toBeLessThan(1500);
+        // New structured shape (#94, AC-B): every diagnostic field present.
         expect(found).toContain('mode=revision');
+        expect(found).toContain('stopReason=tool_use');
+        expect(found).toContain('toolName=submit_blueprint');
+        expect(found).toContain('validationErrors=');
+        expect(found).toContain('parsedPreview=');
+        expect(found).toContain('contentPreview=');
+        // contentPreview slice cap is 1000 chars — the full 2000-char
+        // garbage string MUST NOT appear verbatim.
+        expect(found).not.toContain('x'.repeat(1500));
       });
     });
 

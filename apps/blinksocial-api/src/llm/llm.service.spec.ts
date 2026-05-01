@@ -216,7 +216,7 @@ describe('LlmService — verbose logging (#94)', () => {
         stopReason: 'tool_use',
       });
       const svc = await buildService(provider);
-      const debugSpy = jest
+      const debugSpy = vi
         .spyOn(Logger.prototype, 'debug')
         .mockImplementation(() => {});
 
@@ -235,7 +235,7 @@ describe('LlmService — verbose logging (#94)', () => {
       process.env['LLM_VERBOSE_LOGGING'] = 'false';
       const provider = makeProvider();
       const svc = await buildService(provider);
-      const debugSpy = jest
+      const debugSpy = vi
         .spyOn(Logger.prototype, 'debug')
         .mockImplementation(() => {});
 
@@ -258,7 +258,7 @@ describe('LlmService — verbose logging (#94)', () => {
         usage: { inputTokens: 10, outputTokens: 64000 },
       });
       const svc = await buildService(provider);
-      const warnSpy = jest
+      const warnSpy = vi
         .spyOn(Logger.prototype, 'warn')
         .mockImplementation(() => {});
 
@@ -272,7 +272,7 @@ describe('LlmService — verbose logging (#94)', () => {
       process.env['LLM_VERBOSE_LOGGING'] = 'true';
       const provider = makeProvider({ content: 'oops sk-ant-LEAKED-deadbeef' });
       const svc = await buildService(provider);
-      const debugSpy = jest
+      const debugSpy = vi
         .spyOn(Logger.prototype, 'debug')
         .mockImplementation(() => {});
 
