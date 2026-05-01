@@ -1,8 +1,12 @@
 Generate the Blink Blueprint document.
 
-You MUST call the `submit_blueprint` tool exactly once. The tool's `input`
-field IS the Blueprint document. Do NOT wrap it in code fences. Do NOT emit
-free-form prose alongside the tool call.
+You MUST call the `submit_blueprint` tool exactly once. Pass the Blueprint
+document directly as the tool's arguments — every required field
+(`clientName`, `strategicSummary`, `audienceProfiles`, etc.) MUST appear at
+the TOP LEVEL of the tool arguments. Do NOT wrap the document in any outer
+field (no `{"input": {…}}`, `{"blueprint": {…}}`, or any other wrapper).
+Do NOT include code fences. Do NOT emit free-form prose alongside the
+tool call.
 
 # Mode
 
@@ -40,6 +44,9 @@ a retry. Read this list before composing the tool input.
   use a `placement.role` other than `"primary"` or `"occasional"`.
 - Do NOT wrap the tool input in markdown code fences. The Anthropic tool
   contract takes a JSON object directly.
+- Do NOT nest the Blueprint under any wrapper field. The first key of the
+  tool arguments MUST be a Blueprint field (`clientName`), NOT an outer
+  field like `input`, `blueprint`, or `data`.
 - Do NOT echo the user's prompt or the discovery data back as prose in the
   Blueprint — synthesize, don't quote.
 

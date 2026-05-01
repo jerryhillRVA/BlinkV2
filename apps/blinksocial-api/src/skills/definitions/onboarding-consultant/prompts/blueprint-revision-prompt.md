@@ -1,9 +1,13 @@
 Apply the requested revision to the existing Blueprint and re-emit the
 full document.
 
-You MUST call the `submit_blueprint` tool exactly once. The tool's `input`
-field IS the revised Blueprint document. Do NOT wrap it in code fences. Do
-NOT emit free-form prose alongside the tool call.
+You MUST call the `submit_blueprint` tool exactly once. Pass the revised
+Blueprint document directly as the tool's arguments — every required field
+(`clientName`, `strategicSummary`, `audienceProfiles`, etc.) MUST appear at
+the TOP LEVEL of the tool arguments. Do NOT wrap the document in any outer
+field (no `{"input": {…}}`, `{"blueprint": {…}}`, or any other wrapper).
+Do NOT include code fences. Do NOT emit free-form prose alongside the
+tool call.
 
 # Mode
 
@@ -55,5 +59,8 @@ and forces a retry. Read this list before composing the tool input.
   (Discovery, Consideration, Conversion, Advocate) are fixed.
 - Do NOT use a `placement.role` other than `"primary"` or `"occasional"`.
 - Do NOT wrap the tool input in markdown code fences.
+- Do NOT nest the revised Blueprint under any wrapper field. The first key
+  of the tool arguments MUST be a Blueprint field (`clientName`), NOT an
+  outer field like `input`, `blueprint`, or `data`.
 
 Now compose the revised Blueprint and call `submit_blueprint`.

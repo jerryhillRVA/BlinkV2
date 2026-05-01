@@ -165,4 +165,58 @@ describe('BlueprintPromptService — determinism + guardrails (#94)', () => {
       expect(rendered.toLowerCase()).toContain('row count must equal the pillar count');
     });
   });
+
+  // ---------------------------------------------------------------------------
+  // Run-2 D1 regression: model double-wraps tool input under {"input": {...}}
+  // when the prompt language uses the literal phrase "the tool's input field".
+  // The fix removes that phrasing and replaces it with explicit "top level,
+  // no wrapper" directives. These tests fail if a future prompt edit reverts
+  // the wording or drops the no-wrapper guard.
+  // ---------------------------------------------------------------------------
+
+  describe('no-wrapper directive (#94 D1)', () => {
+    it('generation-mode prompt does NOT contain the literal "tool\'s `input` field" phrasing', async () => {
+      const svc = await buildService();
+      const out = svc.render(buildContext());
+      expect(out).not.toMatch(/tool's\s*`input`\s*field/i);
+      expect(out).not.toMatch(/as\s*`input`/i);
+    });
+
+    it('revision-mode prompt does NOT contain the literal "tool\'s `input` field" phrasing', async () => {
+      const svc = await buildService();
+      const priorBlueprint = JSON.stringify({ clientName: 'Hive Collective' });
+      const out = svc.render(
+        buildContext({
+          mode: 'revision',
+          priorBlueprintJson: priorBlueprint,
+          revisionTranscript: 'USER: tighten the summary\n\nASSISTANT: yes',
+        }),
+      );
+      expect(out).not.toMatch(/tool's\s*`input`\s*field/i);
+      expect(out).not.toMatch(/as\s*`input`/i);
+    });
+
+    it('generation-mode prompt explicitly forbids wrapping the Blueprint under any outer field', async () => {
+      const svc = await buildService();
+      const out = svc.render(buildContext());
+      expect(out).toContain('TOP LEVEL');
+      expect(out).toMatch(/Do NOT (wrap|nest)/);
+      // Specific wrapper names called out in the directive.
+      expect(out).toContain('input');
+      expect(out).toContain('blueprint');
+    });
+
+    it('revision-mode prompt explicitly forbids wrapping the Blueprint under any outer field', async () => {
+      const svc = await buildService();
+      const out = svc.render(
+        buildContext({
+          mode: 'revision',
+          priorBlueprintJson: '{}',
+          revisionTranscript: 'USER: x\n\nASSISTANT: ok',
+        }),
+      );
+      expect(out).toContain('TOP LEVEL');
+      expect(out).toMatch(/Do NOT (wrap|nest)/);
+    });
+  });
 });

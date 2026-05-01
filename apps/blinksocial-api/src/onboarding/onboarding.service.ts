@@ -551,10 +551,13 @@ export class OnboardingService {
         name: 'submit_blueprint',
         description:
           'Submit the completed Blink Blueprint content strategy document. ' +
-          'You MUST call this tool exactly once with the full Blueprint object ' +
-          'as `input`. Every required field must be present. In revision mode, ' +
-          'preserve every section of the prior Blueprint verbatim unless the ' +
-          "user's most recent request explicitly asks to change it.",
+          'Call this tool exactly once. Place every required Blueprint field ' +
+          '(`clientName`, `strategicSummary`, `audienceProfiles`, …) at the ' +
+          'TOP LEVEL of the tool arguments. Do NOT nest the document under ' +
+          'any outer field — there is no `input`, `blueprint`, or any other ' +
+          'wrapper key. In revision mode, preserve every section of the prior ' +
+          "Blueprint verbatim unless the user's most recent request " +
+          'explicitly asks to change it.',
         inputSchema: this.blueprintValidator.getSchema(),
       };
       let blueprint: BlueprintDocumentContract | undefined;
