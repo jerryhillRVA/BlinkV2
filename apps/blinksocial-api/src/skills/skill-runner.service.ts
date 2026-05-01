@@ -28,6 +28,12 @@ export interface SkillRunResult {
   usage: { inputTokens: number; outputTokens: number };
   /** Name of the tool the model called, when tool-use was used. */
   toolName?: string;
+  /**
+   * Why the model stopped — `'tool_use'` when forced tool-choice succeeded,
+   * `'end_turn'` for free-form replies, `'max_tokens'` when the cap fired.
+   * Surfaced so callers' parse-miss WARN logs can record it (#94).
+   */
+  stopReason: 'end_turn' | 'max_tokens' | 'stop_sequence' | 'tool_use';
 }
 
 @Injectable()
@@ -80,6 +86,7 @@ export class SkillRunnerService {
         parsed: result.toolUse.input,
         usage: result.usage,
         toolName: result.toolUse.name,
+        stopReason: result.stopReason,
       };
     }
 
@@ -99,6 +106,7 @@ export class SkillRunnerService {
       content: result.content,
       parsed,
       usage: result.usage,
+      stopReason: result.stopReason,
     };
   }
 

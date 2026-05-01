@@ -20,6 +20,9 @@ output_schema: ./templates/blueprint.schema.json
 templates:
   - ./templates/discovery-questions.md
   - ./templates/blueprint-template.md
+prompts:
+  - ./prompts/blueprint-generation-prompt.md
+  - ./prompts/blueprint-revision-prompt.md
 sections:
   - id: business
     name: Business Overview

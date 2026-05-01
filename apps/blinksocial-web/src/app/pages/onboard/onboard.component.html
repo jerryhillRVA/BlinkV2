@@ -142,7 +142,7 @@
 
         <div class="message-list" #messageList>
           @for (msg of state.messages(); track msg.timestamp) {
-            <app-chat-message [message]="msg" />
+            <app-chat-message [message]="msg" (retry)="onGenerateBlueprint()" />
           }
           @if (state.isLoading()) {
             <div class="typing-indicator">
@@ -233,11 +233,16 @@
     </div>
 
     @if (state.status() === 'generating') {
-      <div class="generating-overlay">
+      <div class="generating-overlay" data-testid="generating-overlay">
         <div class="generating-content">
           <div class="spinner"></div>
-          <h3>Generating Your Blink Blueprint</h3>
-          <p>This may take a moment as we craft your personalized content strategy...</p>
+          @if (state.isRevising()) {
+            <h3>Working on your revision</h3>
+            <p>This can take a few minutes — we're applying your requested changes to the Blueprint.</p>
+          } @else {
+            <h3>Generating your Blueprint</h3>
+            <p>This can take a few minutes as we craft your personalized content strategy.</p>
+          }
         </div>
       </div>
     }

@@ -1,15 +1,37 @@
-<div class="chat-message" [class.user]="message().role === 'user'" [class.assistant]="message().role === 'assistant'">
+<div
+  class="chat-message"
+  [class.user]="message().role === 'user'"
+  [class.assistant]="message().role === 'assistant'"
+  [class.error]="isError()"
+  [attr.data-testid]="isError() ? 'chat-error-message' : null">
   @if (message().role === 'assistant') {
-    <div class="avatar">
-      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/>
-        <path d="M5 3v4"/><path d="M19 17v4"/><path d="M3 5h4"/><path d="M17 19h4"/>
-      </svg>
+    <div class="avatar" [class.error-avatar]="isError()" aria-hidden="true">
+      @if (isError()) {
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="m21.73 18-8-14a2 2 0 0 0-3.46 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/>
+          <line x1="12" x2="12" y1="9" y2="13"/>
+          <line x1="12" x2="12.01" y1="17" y2="17"/>
+        </svg>
+      } @else {
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/>
+          <path d="M5 3v4"/><path d="M19 17v4"/><path d="M3 5h4"/><path d="M17 19h4"/>
+        </svg>
+      }
     </div>
   }
-  <div class="bubble">
+  <div class="bubble" [attr.role]="isError() ? 'alert' : null">
     @if (message().content) {
-      @if (message().role === 'assistant') {
+      @if (isError()) {
+        <p class="content error-content">{{ message().content }}</p>
+        <button
+          type="button"
+          class="retry-btn"
+          data-testid="chat-error-retry"
+          (click)="retry.emit()">
+          Try again
+        </button>
+      } @else if (message().role === 'assistant') {
         <div class="content markdown" [innerHTML]="renderedContent()"></div>
       } @else {
         <p class="content">{{ message().content }}</p>

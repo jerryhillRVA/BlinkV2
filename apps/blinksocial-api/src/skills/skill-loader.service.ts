@@ -11,6 +11,16 @@ export interface SkillDefinition {
   sections?: SkillSection[];
   systemPrompt: string;
   templates: Record<string, string>;
+  /**
+   * Mustache-style prompt fragments referenced by `prompts:` in the skill
+   * frontmatter. Loaded the same way as `templates` but kept SEPARATE so
+   * the skill-runner does not auto-append them to every system prompt.
+   * Callers (e.g. `BlueprintPromptService`) read template strings from
+   * here, hydrate placeholders, and pass the rendered text as a user-turn
+   * content block — keeping mode-specific prompt construction out of
+   * `OnboardingService` and inside the skill where it belongs (#94, AC-D).
+   */
+  prompts: Record<string, string>;
 }
 
 export interface SkillSection {
@@ -27,6 +37,7 @@ interface SkillFrontmatter {
   type?: string;
   sections?: SkillSection[];
   templates?: string[];
+  prompts?: string[];
   output_schema?: string;
 }
 
@@ -104,6 +115,22 @@ export class SkillLoaderService {
       }
     }
 
+    // Prompt fragments — stored separately so they DO NOT auto-append to
+    // the system prompt. Hydrated and used as user-turn text by per-skill
+    // services (see `BlueprintPromptService`).
+    const prompts: Record<string, string> = {};
+    if (frontmatter.prompts) {
+      for (const promptRef of frontmatter.prompts) {
+        const promptPath = path.join(skillDir, promptRef);
+        if (fs.existsSync(promptPath)) {
+          const promptName = path.basename(promptRef, path.extname(promptRef));
+          prompts[promptName] = fs.readFileSync(promptPath, 'utf-8');
+        } else {
+          this.logger.warn(`Prompt template not found: ${promptPath}`);
+        }
+      }
+    }
+
     const skill: SkillDefinition = {
       id: frontmatter.id,
       name: frontmatter.name,
@@ -112,6 +139,7 @@ export class SkillLoaderService {
       sections: frontmatter.sections,
       systemPrompt: body.trim(),
       templates,
+      prompts,
     };
 
     this.cache.set(skillId, skill);

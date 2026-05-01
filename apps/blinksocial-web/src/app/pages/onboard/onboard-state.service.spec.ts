@@ -607,4 +607,150 @@ describe('OnboardStateService', () => {
       expect(service.postGenerationPromptCount()).toBe(1);
     });
   });
+
+  // -------------------------------------------------------------------------
+  // Ticket #94 — error surfacing (kind: 'error' bubbles, error persistence)
+  // -------------------------------------------------------------------------
+
+  describe('error message surfacing (#94)', () => {
+    it('appends a kind: "error" assistant bubble on generateBlueprint 422', () => {
+      service.sessionId.set('sess-1');
+      // Seed: prior blueprint exists (revision-mode error path)
+      service.blueprint.set({ clientName: 'Acme', strategicSummary: 'Old' } as any);
+      service.markdownDocument.set('# Old');
+      service.status.set('complete');
+
+      const beforeCount = service.messages().length;
+      service.generateBlueprint();
+      const req = httpMock.expectOne('/api/onboarding/sessions/sess-1/generate');
+      req.flush(
+        {
+          message:
+            "We couldn't apply that revision — please try rephrasing or try again.",
+          errors: [{ code: 'BLUEPRINT_PARSE_FAILED', attempts: 2 }],
+        },
+        { status: 422, statusText: 'Unprocessable Entity' },
+      );
+
+      const messages = service.messages();
+      expect(messages.length).toBe(beforeCount + 1);
+      const last = messages.at(-1);
+      expect(last?.role).toBe('assistant');
+      expect(last?.kind).toBe('error');
+      expect(last?.content).toContain("couldn't apply that revision");
+      // Legacy error signal stays populated for the existing dismissable banner.
+      expect(service.error()).toContain("couldn't apply that revision");
+      // Status returns to complete so the chat-error banner CAN render too.
+      expect(service.status()).toBe('complete');
+    });
+
+    it('falls back to default message text when 422 body lacks a message', () => {
+      service.sessionId.set('sess-1');
+      service.generateBlueprint();
+      const req = httpMock.expectOne('/api/onboarding/sessions/sess-1/generate');
+      req.flush(
+        // Body without a top-level "message" field
+        { errors: [{ code: 'BLUEPRINT_PARSE_FAILED', attempts: 1 }] },
+        { status: 422, statusText: 'Unprocessable Entity' },
+      );
+
+      const last = service.messages().at(-1);
+      expect(last?.kind).toBe('error');
+      expect(last?.content).toBe('Failed to generate blueprint');
+    });
+
+    it('sendMessage no longer clears the error signal on send (preserves prior failure)', () => {
+      // Seed: prior failed regen left an error in place.
+      service.sessionId.set('sess-1');
+      service.error.set('We could not apply that revision.');
+
+      service.sendMessage('let me try a different revision');
+
+      // The optimistic user message is appended BEFORE the network round-trip.
+      // The error should still be set at this point — sendMessage no longer
+      // clears it.
+      expect(service.error()).toBe('We could not apply that revision.');
+      const req = httpMock.expectOne('/api/onboarding/sessions/sess-1/messages');
+      // Drain the request so afterEach's verify() doesn't complain.
+      req.flush({
+        agentMessage: 'OK, what would you like to change?',
+        sections: [],
+        currentSection: 'business',
+        readyToGenerate: false,
+      });
+
+      // After the round-trip the legacy error signal is also preserved (still
+      // dismissable by the user, but not silently cleared by typing).
+      expect(service.error()).toBe('We could not apply that revision.');
+    });
+
+    it('sendMessage error path no longer wipes prior error bubbles from messages', () => {
+      // Seed: prior failed regen left an inline error bubble.
+      service.sessionId.set('sess-1');
+      service.messages.set([
+        {
+          role: 'assistant',
+          content: 'Prior failure',
+          timestamp: new Date().toISOString(),
+          kind: 'error',
+        },
+      ]);
+
+      service.sendMessage('try again');
+
+      // The optimistic user message is appended; the error bubble is still
+      // present.
+      const beforeFlush = service.messages();
+      expect(beforeFlush.some((m) => m.kind === 'error')).toBe(true);
+
+      const req = httpMock.expectOne('/api/onboarding/sessions/sess-1/messages');
+      req.flush(
+        { message: 'send failed' },
+        { status: 500, statusText: 'Error' },
+      );
+
+      // Even after the rollback in the error branch, the prior error bubble
+      // should remain (sendMessage rolls the optimistic user message back to
+      // `msgsBefore`, which already contained the error bubble).
+      const after = service.messages();
+      expect(after.some((m) => m.kind === 'error' && m.content === 'Prior failure')).toBe(true);
+    });
+
+    it('successful generateBlueprint clears prior kind: "error" messages and the error signal', () => {
+      // Seed: prior failure already left an error bubble + error string.
+      service.sessionId.set('sess-1');
+      service.error.set('Old failure');
+      service.messages.set([
+        {
+          role: 'assistant',
+          content: 'Old failure',
+          timestamp: new Date().toISOString(),
+          kind: 'error',
+        },
+      ]);
+      service.blueprint.set({ clientName: 'Acme', strategicSummary: 'Old' } as any);
+      service.status.set('complete');
+
+      service.generateBlueprint();
+      const req = httpMock.expectOne('/api/onboarding/sessions/sess-1/generate');
+      req.flush({
+        blueprint: { clientName: 'Acme', strategicSummary: 'New tighter summary' },
+        markdownDocument: '# New',
+      });
+
+      // Prior error bubble cleared; legacy error signal cleared.
+      expect(service.messages().some((m) => m.kind === 'error')).toBe(false);
+      expect(service.error()).toBeNull();
+      // Canned post-generation prompt should have been appended.
+      expect(service.messages().at(-1)?.content).toMatch(/Blueprint is ready/i);
+    });
+
+    it('isRevising computes from blueprint() — false when null, true when set', () => {
+      expect(service.isRevising()).toBe(false);
+      service.blueprint.set({ clientName: 'Acme', strategicSummary: 'X' } as any);
+      expect(service.isRevising()).toBe(true);
+      service.blueprint.set(null);
+      expect(service.isRevising()).toBe(false);
+    });
+  });
 });

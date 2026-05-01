@@ -35,4 +35,11 @@ export interface OnboardingMessageContract {
   content: string;
   timestamp: string;
   attachments?: OnboardingAttachmentContract[];
+  /**
+   * Marks a synthetic assistant turn surfaced inline in the chat log to make
+   * a regen failure visible to the user. Client-only (#94): never sent in
+   * API requests, never persisted to AFS server-side. The optional shape
+   * keeps existing AFS sessions deserializing unchanged.
+   */
+  kind?: 'error';
 }

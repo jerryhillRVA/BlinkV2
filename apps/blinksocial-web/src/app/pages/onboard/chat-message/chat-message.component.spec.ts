@@ -181,6 +181,86 @@ describe('ChatMessageComponent', () => {
     });
   });
 
+  // ---------------------------------------------------------------------------
+  // Ticket #94 — assistant-error bubble (kind: 'error')
+  // ---------------------------------------------------------------------------
+
+  describe('error bubble (kind: "error")', () => {
+    async function buildErrorFixture(content: string) {
+      @Component({
+        imports: [ChatMessageComponent],
+        template: `<app-chat-message [message]="message" (retry)="onRetry()" />`,
+      })
+      class ErrorHost {
+        message: OnboardingMessageContract = {
+          role: 'assistant',
+          content,
+          timestamp: new Date().toISOString(),
+          kind: 'error',
+        };
+        retryCount = 0;
+        onRetry() {
+          this.retryCount += 1;
+        }
+      }
+      await TestBed.resetTestingModule()
+        .configureTestingModule({ imports: [ErrorHost] })
+        .compileComponents();
+      return TestBed.createComponent(ErrorHost);
+    }
+
+    it('renders the error bubble with role=alert and a Try again button', async () => {
+      const fixture = await buildErrorFixture(
+        "We couldn't apply that revision — please try rephrasing or try again.",
+      );
+      fixture.detectChanges();
+
+      const wrapper = fixture.nativeElement.querySelector(
+        '[data-testid="chat-error-message"]',
+      );
+      expect(wrapper).toBeTruthy();
+      expect(wrapper.classList.contains('error')).toBe(true);
+
+      const bubble = wrapper.querySelector('.bubble');
+      expect(bubble.getAttribute('role')).toBe('alert');
+
+      const errorContent = wrapper.querySelector('.error-content');
+      expect(errorContent.textContent).toContain("couldn't apply that revision");
+
+      const retryBtn = wrapper.querySelector(
+        '[data-testid="chat-error-retry"]',
+      );
+      expect(retryBtn).toBeTruthy();
+      expect(retryBtn.textContent.trim()).toBe('Try again');
+    });
+
+    it('does not render markdown for error content (kept literal)', async () => {
+      const fixture = await buildErrorFixture('**not bold** error text');
+      fixture.detectChanges();
+      const errorContent = fixture.nativeElement.querySelector('.error-content');
+      expect(errorContent).toBeTruthy();
+      // Asterisks remain literal — no markdown rendering for error bubbles
+      expect(errorContent.textContent).toContain('**not bold**');
+      expect(errorContent.querySelector('strong')).toBeNull();
+    });
+
+    it('emits retry when the Try again button is clicked', async () => {
+      const fixture = await buildErrorFixture('Failed to generate blueprint');
+      fixture.detectChanges();
+
+      const host = fixture.componentInstance as { retryCount: number };
+      expect(host.retryCount).toBe(0);
+
+      const retryBtn = fixture.nativeElement.querySelector(
+        '[data-testid="chat-error-retry"]',
+      ) as HTMLButtonElement;
+      retryBtn.click();
+      fixture.detectChanges();
+
+      expect(host.retryCount).toBe(1);
+    });
+  });
+
   describe('user-role messages stay as plain text', () => {
     it('does not render markdown in user messages', async () => {
       @Component({
