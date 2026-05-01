@@ -31,6 +31,10 @@ import type {
 import type { LlmContentBlock, LlmMessage } from '../llm/llm-provider.interface';
 import { WorkspaceBuilderService } from './workspace-builder.service';
 import { renderBlueprintMarkdown } from '@blinksocial/core';
+import {
+  BlueprintPromptService,
+  type BlueprintPromptContext,
+} from './prompts/blueprint-prompt.service';
 
 const SKILL_ID = 'onboarding-consultant';
 
@@ -69,6 +73,45 @@ interface AgentTurnResponse {
   readyToRevise?: boolean;
   currentSection?: string;
 }
+
+/**
+ * JSON Schema mirror of {@link AgentTurnResponse}. Used as the
+ * `submit_agent_turn` tool's `inputSchema` so discovery and revision
+ * agent turns also flow through forced tool-use (#94, AC-D6) — same
+ * determinism win as the Blueprint generation path. The text-parse
+ * fallback in `parseTurnResponse` stays as a defensive last resort.
+ *
+ * Documentation copy lives at:
+ *   apps/blinksocial-api/src/skills/definitions/onboarding-consultant/templates/agent-turn.schema.json
+ * Keep both in sync when the shape changes.
+ */
+const AGENT_TURN_SCHEMA: Record<string, unknown> = {
+  type: 'object',
+  required: ['agentMessage'],
+  properties: {
+    agentMessage: { type: 'string', minLength: 1 },
+    sectionsUpdated: {
+      type: 'object',
+      additionalProperties: { type: 'object', additionalProperties: true },
+    },
+    sectionsCovered: { type: 'array', items: { type: 'string' } },
+    readyToGenerate: { type: 'boolean' },
+    readyToRevise: { type: 'boolean' },
+    currentSection: {
+      type: 'string',
+      enum: [
+        'business',
+        'brand_voice',
+        'audience',
+        'competitors',
+        'content',
+        'channels',
+        'expectations',
+      ],
+    },
+  },
+  additionalProperties: false,
+};
 
 /**
  * Additional-context block fed to the LLM during post-generation revision
@@ -121,6 +164,7 @@ export class OnboardingService {
     private readonly workspaceBuilder: WorkspaceBuilderService,
     private readonly blueprintValidator: BlueprintValidationService,
     private readonly attachmentExtractor: AttachmentExtractorService,
+    private readonly blueprintPrompt: BlueprintPromptService,
   ) {}
 
   async createSession(
@@ -143,6 +187,19 @@ export class OnboardingService {
         { role: 'user', content: initialUserMessage },
       ],
       additionalContext: context,
+      // Force the agent turn through `submit_agent_turn` (#94, AC-D6) so
+      // we get a guaranteed-shaped object instead of falling back to
+      // regex JSON extraction. The text-parse path in `parseTurnResponse`
+      // stays as defense-in-depth in case the provider ever returns no
+      // tool_use block.
+      tool: {
+        name: 'submit_agent_turn',
+        description:
+          'Submit the agent turn (acknowledgment + next questions + section ' +
+          'tracking). You MUST call this tool exactly once per turn with the ' +
+          "user's reply context already incorporated.",
+        inputSchema: AGENT_TURN_SCHEMA,
+      },
     });
 
     const turnResponse = this.parseTurnResponse(result.content, result.parsed);
@@ -302,6 +359,15 @@ export class OnboardingService {
       skillId: SKILL_ID,
       conversationHistory,
       additionalContext: stateContext,
+      tool: {
+        name: 'submit_agent_turn',
+        description:
+          'Submit the agent turn (acknowledgment + next questions + section ' +
+          'tracking). In revision mode, leave `sectionsUpdated`/`sectionsCovered` ' +
+          'empty and use `readyToRevise` per the protocol described in the ' +
+          'system prompt.',
+        inputSchema: AGENT_TURN_SCHEMA,
+      },
     });
 
     const turnResponse = this.parseTurnResponse(result.content, result.parsed);
@@ -436,33 +502,45 @@ export class OnboardingService {
           `blueprint-name-fallback session=${session.id} reason=missing-discovery-businessName`,
         );
       }
-      const businessNameDirective = this.buildBusinessNameDirective(businessName);
-      const basePromptText = isRevisionMode
-        ? this.buildRevisionGenerationPrompt(session)
-        : `Generate the Blink Blueprint document based on the following discovery data:\n\n${JSON.stringify(session.discoveryData, null, 2)}\n\nUse the blueprint-template.md instructions to create a comprehensive, tailored content strategy document. Return ONLY valid JSON matching the BlueprintDocumentContract schema.`;
-      const promptText = businessNameDirective
-        ? `${basePromptText}${businessNameDirective}`
-        : basePromptText;
+
+      // Build the user-prompt text via the skill-owned templates so two
+      // consecutive generateBlueprint calls produce byte-identical prompts
+      // (#94, AC-D). Inline string-concat lived in this method until #94;
+      // the determinism guard test pins this against any future drift.
+      const promptContext: BlueprintPromptContext = {
+        mode: isRevisionMode ? 'revision' : 'generation',
+        businessName: businessName ?? null,
+        discoveryDataJson: JSON.stringify(session.discoveryData, null, 2),
+        priorBlueprintJson:
+          isRevisionMode && session.blueprint
+            ? JSON.stringify(session.blueprint, null, 2)
+            : null,
+        revisionTranscript: isRevisionMode
+          ? this.buildRevisionTranscript(session)
+          : null,
+      };
+      const promptText = this.blueprintPrompt.render(promptContext);
 
       const userBlocks: LlmContentBlock[] = [
         { type: 'text', text: promptText },
         ...attachmentBlocks,
       ];
 
-      const baseAdditionalContext = isRevisionMode
-        ? 'MODE: BLUEPRINT_REVISION\n\nThe user has confirmed a revision plan. Apply ONLY the changes implied by the revision conversation; preserve all unrelated Blueprint sections verbatim. Return a JSON object matching the blueprint schema exactly.'
-        : 'MODE: BLUEPRINT_GENERATION\n\nYou are now in blueprint generation mode. Use the discovery data provided AND any uploaded attachment context to generate a complete Blink Blueprint content strategy document. Return a JSON object matching the blueprint schema exactly.';
-      const additionalContext = businessNameDirective
-        ? `${baseAdditionalContext}${businessNameDirective}`
-        : baseAdditionalContext;
+      // System-prompt addendum is now a tiny mode marker. The bulk of the
+      // mode-specific instructions lives in the user-turn prompt template
+      // owned by the skill.
+      const additionalContext = isRevisionMode
+        ? 'MODE: BLUEPRINT_REVISION'
+        : 'MODE: BLUEPRINT_GENERATION';
 
-      // Run the skill, validate, and retry once on a recoverable miss.
-      // Retry budget covers two distinct same-prompt-fixable failures:
-      //   - prose drift on businessName (#72), and
-      //   - parse / shape miss in the LLM response (#88) — verbose
-      //     revision regens are the worst offenders here.
-      // Schema and cross-field failures still 422 immediately (no retry).
-      const MAX_ATTEMPTS = isRevisionMode || businessName ? 2 : 1;
+      // Retry budget — `2` unconditionally (#94, AC-D5). The legacy
+      // expression `isRevisionMode || businessName ? 2 : 1` left first-time
+      // generation with no retry buffer when discovery didn't capture a
+      // businessName, which is exactly Repro #2. The marginal latency is
+      // acceptable when the alternative is hard-failing on a single LLM
+      // hiccup; D's prompt determinism + B's logging should drive the
+      // parse-miss rate back near zero so attempt 2 stays rare.
+      const MAX_ATTEMPTS = 2;
       // Force structured output via Anthropic tool-use (#88 follow-up). The
       // tool's `inputSchema` IS the Blueprint JSON Schema, so the model's
       // tool-call `input` is guaranteed-valid against the same shape AJV
@@ -498,16 +576,36 @@ export class OnboardingService {
         });
 
         blueprint = result.parsed as unknown as BlueprintDocumentContract;
-        if (!blueprint || !blueprint.strategicSummary) {
-          // Parse / shape miss — log structured diagnostic data so we can
-          // tell *which field* the model dropped (#94, AC-B). Earlier
-          // versions logged `rawPreview` from `result.content`, which is
-          // empty by design when forced tool-use is on and the model is
-          // talking through `submit_blueprint`. We now log the parsed tool
-          // input directly, plus stopReason + toolName for context.
-          const validation = this.blueprintValidator.validate(
-            (blueprint ?? {}) as BlueprintDocumentContract,
-          );
+
+        // Server-side pins applied BEFORE validation so AJV sees the final
+        // shape we'd persist. clientName + deliveredDate are non-LLM
+        // ground-truth fields; pinning here means a missing/stale value
+        // from the model never trips a `required` failure on its own.
+        if (blueprint) {
+          if (businessName) {
+            blueprint.clientName = businessName;
+          } else if (!blueprint.clientName) {
+            blueprint.clientName = 'Client';
+          }
+          blueprint.deliveredDate = new Date().toISOString().slice(0, 10);
+        }
+
+        // Full AJV pre-flight (#94, AC-D4) — replaces the prior
+        // `!strategicSummary` short-circuit. Catches every recent-ticket
+        // field constraint (#52 targetAudience minLength, #71 journeyMap
+        // 4-row enum, differentiationMatrix ≥3, contentIdeas ≥5,
+        // voiceInAction ≥3, performanceScorecard shape, quickWins ≥3,
+        // etc.) so the model can't "succeed" on a structurally incomplete
+        // Blueprint.
+        const validation = blueprint
+          ? this.blueprintValidator.validate(blueprint)
+          : { valid: false, errors: [{ field: '/', message: 'no parsed payload' }] };
+        if (!validation.valid) {
+          // Structured parse-miss WARN with stopReason, toolName, exactly
+          // which field failed AJV, and a truncated preview of the parsed
+          // tool input (#94, AC-B). Earlier versions logged `rawPreview`
+          // from `result.content`, which is empty by design when forced
+          // tool-use is on.
           this.logger.warn(
             `blueprint-parse-miss session=${sessionId} attempt=${attempt} mode=${
               isRevisionMode ? 'revision' : 'generation'
@@ -531,33 +629,19 @@ export class OnboardingService {
               message: isRevisionMode
                 ? "We couldn't apply that revision — please try rephrasing or try again."
                 : "We couldn't generate the blueprint — please try again.",
-              errors: [{ code: 'BLUEPRINT_PARSE_FAILED', attempts: attempt }],
+              errors: [
+                { code: 'BLUEPRINT_PARSE_FAILED', attempts: attempt },
+                ...(validation.errors ?? []).slice(0, 5),
+              ],
             },
             HttpStatus.UNPROCESSABLE_ENTITY,
           );
         }
-
-        // Pin clientName to the user-supplied businessName whenever we have
-        // it — the LLM is not permitted to invent a different name. When
-        // discovery is empty, preserve historical fallback (LLM value or
-        // 'Client').
-        if (businessName) {
-          blueprint.clientName = businessName;
-        } else if (!blueprint.clientName) {
-          blueprint.clientName = 'Client';
-        }
-        // Always set deliveredDate to today — LLM may return stale dates
-        blueprint.deliveredDate = new Date().toISOString().slice(0, 10);
-
-        const validation = this.blueprintValidator.validate(blueprint);
-        if (!validation.valid) {
-          throw new HttpException(
-            {
-              message: 'Generated blueprint failed schema validation',
-              errors: validation.errors,
-            },
-            HttpStatus.UNPROCESSABLE_ENTITY,
-          );
+        // From here on `blueprint` is schema-valid.
+        if (!blueprint) {
+          // Unreachable in practice — AJV branch above sets `blueprint = undefined`
+          // and `continue`s before falling through. Guard for the type system.
+          continue;
         }
 
         // Cross-field guard (cannot be expressed in JSON Schema): every
@@ -661,35 +745,22 @@ export class OnboardingService {
   }
 
   /**
-   * Compose the revision-regeneration LLM prompt: prior Blueprint, the
-   * post-completion conversation slice, and the original discovery data
-   * for grounding. Only invoked when `session.blueprint` is non-null.
+   * Render the post-completion message slice as a plain transcript for
+   * inclusion in the revision prompt template. Only the conversational
+   * content is needed here — the prior Blueprint and the discovery data
+   * are passed via `BlueprintPromptContext` and hydrated into the
+   * template separately. Returns a fallback marker when there are no
+   * post-completion messages (defensive — `isRevisionMode` requires a
+   * stored blueprint, so completedAt should always be set).
    */
-  private buildRevisionGenerationPrompt(
-    session: OnboardingSessionState,
-  ): string {
-    const priorBlueprintJson = JSON.stringify(session.blueprint, null, 2);
+  private buildRevisionTranscript(session: OnboardingSessionState): string {
     const revisionMessages = this.sliceMessagesAfterCompletion(session);
-    const revisionTranscript = revisionMessages.length > 0
-      ? revisionMessages
-          .map((m) => `${m.role.toUpperCase()}: ${m.content}`)
-          .join('\n\n')
-      : '(no post-completion messages — apply minimal edits inferred from context)';
-    return [
-      'Apply the following revision instructions to the existing Blueprint.',
-      '',
-      'EXISTING BLUEPRINT:',
-      priorBlueprintJson,
-      '',
-      'REVISION CONVERSATION SINCE GENERATION:',
-      revisionTranscript,
-      '',
-      'ORIGINAL DISCOVERY DATA (for grounding — do not duplicate or restate):',
-      JSON.stringify(session.discoveryData, null, 2),
-      '',
-      'Return ONLY valid JSON matching the BlueprintDocumentContract schema.',
-      'Preserve all sections that the revision conversation does not touch.',
-    ].join('\n');
+    if (revisionMessages.length === 0) {
+      return '(no post-completion messages — apply minimal edits inferred from context)';
+    }
+    return revisionMessages
+      .map((m) => `${m.role.toUpperCase()}: ${m.content}`)
+      .join('\n\n');
   }
 
   /**
@@ -1217,7 +1288,10 @@ export class OnboardingService {
       return parsed as unknown as AgentTurnResponse;
     }
 
-    // Try harder: extract JSON from the raw content (may be wrapped in markdown)
+    // Try harder: extract JSON from the raw content (may be wrapped in markdown).
+    // This branch is the legacy text-parse fallback. Now that agent turns are
+    // forced through `submit_agent_turn` (#94, AC-D6), it should never fire
+    // in steady state — log loudly when it does so we can spot a regression.
     const jsonPatterns = [
       /```json\s*\n?([\s\S]*?)\n?```/,
       /```\s*\n?([\s\S]*?)\n?```/,
@@ -1230,7 +1304,10 @@ export class OnboardingService {
         try {
           const extracted = JSON.parse(match[1].trim());
           if (extracted && typeof extracted.agentMessage === 'string') {
-            this.logger.debug('Extracted JSON from raw LLM response via pattern match');
+            this.logger.warn(
+              'agent-turn text-parse fallback fired — forced submit_agent_turn ' +
+                'tool did not produce a tool_use block. Investigate provider behaviour.',
+            );
             return extracted as AgentTurnResponse;
           }
         } catch {
@@ -1354,27 +1431,6 @@ export class OnboardingService {
     if (typeof raw !== 'string') return undefined;
     const trimmed = raw.trim();
     return trimmed.length > 0 ? trimmed : undefined;
-  }
-
-  /**
-   * Build the verbatim-required businessName instruction appended to both
-   * the user prompt and the additionalContext (system prompt). Empty when
-   * no businessName is present so legacy sessions are unaffected.
-   */
-  private buildBusinessNameDirective(businessName: string | undefined): string {
-    if (!businessName) return '';
-    return [
-      '',
-      '',
-      'BUSINESS NAME PIN (non-negotiable):',
-      `The user-supplied business name is exactly "${businessName}". Use this exact`,
-      'string — including casing, spacing, and punctuation — for `clientName` and',
-      'EVERY prose mention of the company in the Blueprint (Strategic Summary,',
-      'Brand & Voice positioning statement, audience profiles, and any other',
-      'reference). Do NOT paraphrase, abbreviate, translate, summarize, or',
-      'substitute any other name. The Strategic Summary and the Brand & Voice',
-      `positioning statement MUST contain the literal string "${businessName}".`,
-    ].join('\n');
   }
 
   /**

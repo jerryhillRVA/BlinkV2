@@ -9,6 +9,7 @@ import { SessionStore } from './session-store';
 import { WorkspaceBuilderService } from './workspace-builder.service';
 import { BlueprintValidationService } from './blueprint-validation.service';
 import { AttachmentExtractorService } from './attachment-extractor.service';
+import { BlueprintPromptService } from './prompts/blueprint-prompt.service';
 
 @Module({
   imports: [SkillsModule, AgenticFilesystemModule, WorkspacesModule, AuthModule],
@@ -19,6 +20,7 @@ import { AttachmentExtractorService } from './attachment-extractor.service';
     WorkspaceBuilderService,
     BlueprintValidationService,
     AttachmentExtractorService,
+    BlueprintPromptService,
   ],
 })
 export class OnboardingModule {}

@@ -1,0 +1,50 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "AgentTurnResponse",
+  "type": "object",
+  "required": ["agentMessage"],
+  "properties": {
+    "agentMessage": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Brief acknowledgment + next questions (under 300 words). Markdown allowed."
+    },
+    "sectionsUpdated": {
+      "type": "object",
+      "description": "Map of section_id → extracted fields from the user's reply. Empty in revision mode.",
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": true
+      }
+    },
+    "sectionsCovered": {
+      "type": "array",
+      "description": "CUMULATIVE list of section IDs with sufficient information. Include every section ever covered, not just the latest turn's update.",
+      "items": {
+        "type": "string"
+      }
+    },
+    "readyToGenerate": {
+      "type": "boolean",
+      "description": "True only when ALL seven discovery sections are covered."
+    },
+    "readyToRevise": {
+      "type": "boolean",
+      "description": "Set to true ONLY when the user has just confirmed a previously-proposed revision plan in post-completion chat. Triggers automatic Blueprint regeneration on the frontend."
+    },
+    "currentSection": {
+      "type": "string",
+      "description": "Section ID currently being explored.",
+      "enum": [
+        "business",
+        "brand_voice",
+        "audience",
+        "competitors",
+        "content",
+        "channels",
+        "expectations"
+      ]
+    }
+  },
+  "additionalProperties": false
+}
