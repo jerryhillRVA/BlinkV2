@@ -12,6 +12,10 @@
   &.assistant {
     margin-right: auto;
   }
+
+  &.error {
+    max-width: 95%;
+  }
 }
 
 .avatar {
@@ -25,6 +29,11 @@
   align-items: center;
   justify-content: center;
   margin-top: 4px;
+
+  &.error-avatar {
+    background: var(--blink-status-danger-bg);
+    color: var(--blink-status-danger);
+  }
 }
 
 .bubble {
@@ -42,6 +51,42 @@
     background: var(--blink-brand-primary-light-bg);
     color: var(--blink-on-surface);
     border-bottom-right-radius: 4px;
+  }
+
+  .error & {
+    background: var(--blink-status-danger-bg);
+    color: var(--blink-status-danger-text);
+    border: 1px solid var(--blink-status-danger-border);
+    border-left: 4px solid var(--blink-status-danger);
+    border-bottom-left-radius: 4px;
+  }
+}
+
+.error-content {
+  font-weight: 500;
+}
+
+.retry-btn {
+  margin-top: 10px;
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 14px;
+  background: var(--blink-status-danger);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: var(--blink-label-large);
+  font-weight: 500;
+  cursor: pointer;
+  transition: filter 120ms ease;
+
+  &:hover {
+    filter: brightness(0.95);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--blink-status-danger);
+    outline-offset: 2px;
   }
 }
 

@@ -1,4 +1,4 @@
-import { Component, computed, input } from '@angular/core';
+import { Component, computed, input, output } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { marked } from 'marked';
 import type { OnboardingMessageContract } from '@blinksocial/contracts';
@@ -12,6 +12,15 @@ import { ComposerAttachmentChipComponent } from '../composer-attachment-chip/com
 })
 export class ChatMessageComponent {
   message = input.required<OnboardingMessageContract>();
+
+  /**
+   * Emitted when the user clicks the Try again button on a synthetic
+   * assistant-error bubble (#94). The parent wires this to a fresh
+   * `generateBlueprint()` call.
+   */
+  retry = output<void>();
+
+  isError = computed(() => this.message().kind === 'error');
 
   /**
    * Markdown-rendered HTML for the assistant role. Bound via `[innerHTML]`

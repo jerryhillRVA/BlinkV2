@@ -12,6 +12,13 @@ import type {
 import { renderBlueprintMarkdown } from '@blinksocial/core';
 
 /**
+ * Synthetic-error marker for a chat bubble appended after a 422 from
+ * `/generate`. Filter on this when a successful regen needs to clear
+ * stale error bubbles from the local message log (#94).
+ */
+const ERROR_MESSAGE_KIND: 'error' = 'error';
+
+/**
  * Canned assistant message appended client-side every time the Blueprint
  * finishes generating (initial generation OR post-revision regeneration).
  * Surfacing this prompt locally keeps it out of the LLM call and guarantees
@@ -48,6 +55,13 @@ export class OnboardStateService {
     this.sections().filter((s) => s.covered).length,
   );
   readonly totalSections = computed(() => this.sections().length);
+
+  /**
+   * True once the first Blueprint has been generated for this session. Drives
+   * mode-specific UI copy (e.g. the in-flight overlay text) so the user sees
+   * "Working on your revision…" vs "Generating your Blueprint…" (#94).
+   */
+  readonly isRevising = computed(() => this.blueprint() !== null);
 
   startSession(workspaceName: string, businessName?: string): void {
     this.isLoading.set(true);
@@ -108,7 +122,9 @@ export class OnboardStateService {
       },
     ]);
     this.isLoading.set(true);
-    this.error.set(null);
+    // Do NOT clear `this.error` here (#94). When a regen has failed, the user
+    // typing a follow-up message must not silently dismiss the prior failure
+    // signal — only an explicit Dismiss click or a successful regen clears it.
 
     this.api.sendMessage(sid, content, files.length > 0 ? files : undefined).subscribe({
       next: (res) => {
@@ -169,7 +185,10 @@ export class OnboardStateService {
 
     this.isLoading.set(true);
     this.status.set('generating');
-    this.error.set(null);
+    // Do NOT clear `this.error` here (#94). The error survives the in-flight
+    // regen and is only cleared by the success branch below or an explicit
+    // Dismiss click. This way a user clicking Try again sees their prior
+    // error replaced (not flicker-cleared) by the next outcome.
 
     this.api.generateBlueprint(sid).subscribe({
       next: (res) => {
@@ -177,6 +196,11 @@ export class OnboardStateService {
         this.markdownDocument.set(res.markdownDocument);
         this.status.set('complete');
         this.isLoading.set(false);
+        // Successful regen: clear any prior synthetic error bubbles AND the
+        // legacy error signal (#94). Success implicitly resolves them — no
+        // user-action needed.
+        this.clearErrorMessages();
+        this.error.set(null);
         // Append the canned "what next?" prompt so the user always sees the
         // same fork after generation, whether it's the first run or a
         // revision regeneration. Adds a one-shot "focus the chat" signal so
@@ -184,9 +208,14 @@ export class OnboardStateService {
         this.appendPostGenerationPrompt();
       },
       error: (err) => {
-        this.error.set(
-          err?.error?.message ?? 'Failed to generate blueprint',
-        );
+        const message =
+          err?.error?.message ?? 'Failed to generate blueprint';
+        this.error.set(message);
+        // Append the failure inline as an assistant-error message so the user
+        // sees it in the conversation (#94). The legacy `error` signal is
+        // retained for the existing dismissable banner and for back-compat
+        // with the discovery-phase error-banner template branch.
+        this.appendErrorMessage(message);
         // Revision-regen failure: keep the user on the prior Blueprint
         // rather than booting them back into discovery. The backend
         // mirrors this behaviour on the server side.
@@ -194,6 +223,32 @@ export class OnboardStateService {
         this.isLoading.set(false);
       },
     });
+  }
+
+  /**
+   * Append a synthetic assistant-error chat bubble carrying a regen failure
+   * message. Surfaces 422s inline in the conversation so a follow-up
+   * `sendMessage` cannot silently dismiss the prior failure (#94).
+   */
+  private appendErrorMessage(message: string): void {
+    this.messages.update((msgs) => [
+      ...msgs,
+      {
+        role: 'assistant',
+        content: message,
+        timestamp: new Date().toISOString(),
+        kind: ERROR_MESSAGE_KIND,
+      },
+    ]);
+  }
+
+  /**
+   * Drop every prior `kind: 'error'` chat bubble from the local messages
+   * signal. Called when a regen succeeds so resolved failures don't linger
+   * in the chat log.
+   */
+  private clearErrorMessages(): void {
+    this.messages.update((msgs) => msgs.filter((m) => m.kind !== ERROR_MESSAGE_KIND));
   }
 
   /**
