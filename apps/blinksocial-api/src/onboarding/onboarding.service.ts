@@ -499,14 +499,28 @@ export class OnboardingService {
 
         blueprint = result.parsed as unknown as BlueprintDocumentContract;
         if (!blueprint || !blueprint.strategicSummary) {
-          // Parse / shape miss — log a truncated preview of the raw model
-          // output so we can diagnose post-hoc, then either retry on the
-          // next attempt or throw a structured 422 if the budget is spent.
-          const rawPreview = (result.content ?? '').slice(0, 1000);
+          // Parse / shape miss — log structured diagnostic data so we can
+          // tell *which field* the model dropped (#94, AC-B). Earlier
+          // versions logged `rawPreview` from `result.content`, which is
+          // empty by design when forced tool-use is on and the model is
+          // talking through `submit_blueprint`. We now log the parsed tool
+          // input directly, plus stopReason + toolName for context.
+          const validation = this.blueprintValidator.validate(
+            (blueprint ?? {}) as BlueprintDocumentContract,
+          );
           this.logger.warn(
             `blueprint-parse-miss session=${sessionId} attempt=${attempt} mode=${
               isRevisionMode ? 'revision' : 'generation'
-            } rawPreview=${JSON.stringify(rawPreview)}`,
+            } stopReason=${result.stopReason} toolName=${result.toolName ?? 'none'} ` +
+              `validationErrors=${JSON.stringify(
+                (validation.errors ?? []).slice(0, 5),
+              )} ` +
+              `parsedPreview=${JSON.stringify(
+                JSON.stringify(result.parsed ?? null).slice(0, 2000),
+              )} ` +
+              `contentPreview=${JSON.stringify(
+                (result.content ?? '').slice(0, 1000),
+              )}`,
           );
           if (attempt < MAX_ATTEMPTS) {
             blueprint = undefined;
