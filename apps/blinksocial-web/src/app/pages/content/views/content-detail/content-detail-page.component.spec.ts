@@ -340,6 +340,10 @@ describe('ContentDetailPageComponent — actions', () => {
     expect(nav[1]).toBe('ws-1');
     expect(nav[2]).toBe('content');
     expect(nav[3]).not.toBe('c-1');
+    // Empty-extras path is intentional: collectCalendarQueryParams() returns {}
+    // when no calendar context is on the URL, and onDuplicate's `extras` ternary
+    // collapses that to `undefined` rather than `{ queryParams: {} }`.
+    expect(spy.mock.calls.at(-1)?.[1]).toBeUndefined();
   });
 
   it('onDuplicate is a no-op when item is missing', () => {
@@ -422,6 +426,9 @@ describe('ContentDetailPageComponent — actions', () => {
     (fixture.componentInstance as unknown as {
       onAdvancedToConcept: (id: string) => void;
     }).onAdvancedToConcept('new-concept-id');
+    // Empty-extras path is intentional: collectCalendarQueryParams() returns {}
+    // when no calendar context is on the URL, and onAdvancedToConcept's `extras`
+    // ternary collapses that to `undefined` rather than `{ queryParams: {} }`.
     expect(spy).toHaveBeenCalledWith(
       ['/workspace', 'ws-1', 'content', 'new-concept-id'],
       undefined,
