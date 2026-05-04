@@ -3,6 +3,7 @@ import { forkJoin, catchError, of } from 'rxjs';
 import { WorkspaceSettingsApiService } from '../workspace-settings/workspace-settings-api.service';
 import { MockDataService } from '../../core/mock-data/mock-data.service';
 import type {
+  AudienceSegmentContract,
   BrandVoiceSettingsContract,
   BusinessObjectiveContract,
   ChannelStrategySettingsContract,
@@ -11,7 +12,7 @@ import type {
   ResearchSourceContract,
   CompetitorInsightContract,
   ContentPillarContract,
-  AudienceSegmentContract,
+  HydratedBrandVoiceContract,
 } from '@blinksocial/contracts';
 import type {
   BrandVoiceData,
@@ -141,7 +142,7 @@ export class StrategyResearchStateService {
         this.markRealIfData('brandVoice', !!bv.missionStatement || bv.voiceAttributes.length > 0);
 
         // Pillars (hydrated in brand-voice response)
-        const bvRecord = data.brandVoice as (BrandVoiceSettingsContract & { contentPillars?: ContentPillarContract[]; audienceSegments?: AudienceSegmentContract[] }) | null;
+        const bvRecord = data.brandVoice as HydratedBrandVoiceContract | null;
         this.rawPillars = bvRecord?.contentPillars ?? [];
         const pillars = mapPillarsFromContract(this.rawPillars);
         this.pillars.set(pillars);
