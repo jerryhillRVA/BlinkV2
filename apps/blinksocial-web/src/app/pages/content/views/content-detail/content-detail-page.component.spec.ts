@@ -131,7 +131,7 @@ function configureTest(
   }).overrideComponent(ContentDetailPageComponent, {
     set: { providers: [{ provide: ContentStateService, useValue: state }] },
   });
-  return { state, paramMap$ };
+  return { state, paramMap$, queryParamMap$ };
 }
 
 describe('ContentDetailPageComponent — route + workspace', () => {
@@ -365,6 +365,20 @@ describe('ContentDetailPageComponent — actions', () => {
     expect(writeText).toHaveBeenCalled();
   });
 
+  it('onCopyLink emits a URL with empty id when item is missing', () => {
+    configureTest({ id: 'ws-1', itemId: 'missing' }, [makeItem()]);
+    const writeText = vi.fn().mockResolvedValue(undefined);
+    Object.defineProperty(navigator, 'clipboard', {
+      value: { writeText },
+      configurable: true,
+    });
+    const fixture = TestBed.createComponent(ContentDetailPageComponent);
+    fixture.detectChanges();
+    (fixture.componentInstance as unknown as { onCopyLink: () => void }).onCopyLink();
+    const url = writeText.mock.calls.at(-1)?.[0] as string;
+    expect(url.endsWith('/content/')).toBe(true);
+  });
+
   it('onMoved(workOnItemId) routes to the given post id', () => {
     configureTest({ id: 'ws-1', itemId: 'c-1' }, [makeItem()]);
     const fixture = TestBed.createComponent(ContentDetailPageComponent);
@@ -497,5 +511,80 @@ describe('ContentDetailPageComponent — actions', () => {
     expect(
       (fixture.componentInstance as unknown as { backLabel: () => string }).backLabel(),
     ).toBe('Back to pipeline');
+  });
+
+  it('clears calendarView/calendarCursor when a later queryParam emission omits them', () => {
+    const { queryParamMap$ } = configureTest(
+      {
+        id: 'ws-1',
+        itemId: 'c-1',
+        queryParams: {
+          from: 'calendar',
+          calendarView: 'week',
+          calendarCursor: '2026-05-15T00:00:00.000Z',
+        },
+      },
+      [makeItem()],
+    );
+    const fixture = TestBed.createComponent(ContentDetailPageComponent);
+    fixture.detectChanges();
+    queryParamMap$.next(convertToParamMap({ from: 'calendar' }));
+    const router = TestBed.inject(Router);
+    const spy = vi.spyOn(router, 'navigate').mockResolvedValue(true);
+    (fixture.componentInstance as unknown as { onDuplicate: () => void }).onDuplicate();
+    expect(spy.mock.calls.at(-1)?.[1]).toEqual({
+      queryParams: { from: 'calendar' },
+    });
+  });
+
+  it('onDuplicate uses the latest queryParamMap, not a stale snapshot', () => {
+    const { queryParamMap$ } = configureTest({ id: 'ws-1', itemId: 'c-1' }, [makeItem()]);
+    const fixture = TestBed.createComponent(ContentDetailPageComponent);
+    fixture.detectChanges();
+    queryParamMap$.next(
+      convertToParamMap({
+        from: 'calendar',
+        calendarView: 'week',
+        calendarCursor: '2026-05-15T00:00:00.000Z',
+      }),
+    );
+    const router = TestBed.inject(Router);
+    const spy = vi.spyOn(router, 'navigate').mockResolvedValue(true);
+    (fixture.componentInstance as unknown as { onDuplicate: () => void }).onDuplicate();
+    expect(spy.mock.calls.at(-1)?.[1]).toEqual({
+      queryParams: {
+        from: 'calendar',
+        calendarView: 'week',
+        calendarCursor: '2026-05-15T00:00:00.000Z',
+      },
+    });
+  });
+
+  it('onAdvancedToConcept uses the latest queryParamMap, not a stale snapshot', () => {
+    const { queryParamMap$ } = configureTest({ id: 'ws-1', itemId: 'c-1' }, [makeItem()]);
+    const fixture = TestBed.createComponent(ContentDetailPageComponent);
+    fixture.detectChanges();
+    queryParamMap$.next(
+      convertToParamMap({
+        from: 'calendar',
+        calendarView: 'month',
+        calendarCursor: '2026-05-01T00:00:00.000Z',
+      }),
+    );
+    const router = TestBed.inject(Router);
+    const spy = vi.spyOn(router, 'navigate').mockResolvedValue(true);
+    (fixture.componentInstance as unknown as {
+      onAdvancedToConcept: (id: string) => void;
+    }).onAdvancedToConcept('new-concept-id');
+    expect(spy).toHaveBeenCalledWith(
+      ['/workspace', 'ws-1', 'content', 'new-concept-id'],
+      {
+        queryParams: {
+          from: 'calendar',
+          calendarView: 'month',
+          calendarCursor: '2026-05-01T00:00:00.000Z',
+        },
+      },
+    );
   });
 });

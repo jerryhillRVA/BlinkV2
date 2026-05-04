@@ -26,6 +26,8 @@ export class ContentDetailPageComponent {
   protected readonly workspaceId = signal('');
   protected readonly itemId = signal<string | null>(null);
   protected readonly from = signal<string | null>(null);
+  protected readonly calendarView = signal<string | null>(null);
+  protected readonly calendarCursor = signal<string | null>(null);
 
   protected readonly item = computed<ContentItem | null>(
     () => this.stateService.items().find((i) => i.id === this.itemId()) ?? null,
@@ -58,15 +60,16 @@ export class ContentDetailPageComponent {
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((qp) => {
         this.from.set(qp.get('from'));
+        this.calendarView.set(qp.get('calendarView'));
+        this.calendarCursor.set(qp.get('calendarCursor'));
       });
   }
 
   private collectCalendarQueryParams(): Record<string, string> {
-    const qp = this.route.snapshot.queryParamMap;
     const out: Record<string, string> = {};
-    const from = qp.get('from');
-    const view = qp.get('calendarView');
-    const cursor = qp.get('calendarCursor');
+    const from = this.from();
+    const view = this.calendarView();
+    const cursor = this.calendarCursor();
     if (from) out['from'] = from;
     if (view) out['calendarView'] = view;
     if (cursor) out['calendarCursor'] = cursor;
