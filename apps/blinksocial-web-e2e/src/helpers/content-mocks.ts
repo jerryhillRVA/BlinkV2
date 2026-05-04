@@ -1,16 +1,12 @@
 import type { Page } from '@playwright/test';
 import type {
   AudienceSegmentContract,
-  BrandVoiceSettingsContract,
   BusinessObjectiveContract,
   ContentItemContract,
   ContentItemsArchiveIndexContract,
   ContentItemsIndexEntryContract,
   ContentPillarContract,
-  ContentTypeContract,
-  PlatformContract,
-  ProductionBriefContract,
-  ProductionContract,
+  HydratedBrandVoiceContract,
 } from '@blinksocial/contracts';
 
 /**
@@ -21,60 +17,6 @@ import type {
  * (commit on this branch). Routes return realistic but minimal payloads so
  * tests don't rely on the dev API serving authenticated requests.
  */
-
-// TODO: widen `ContentItemContract` to accept null for the absent-value fields
-// the real API serializes as null (`platform`, `contentType`, `owner`,
-// `parentIdeaId`, `parentConceptId`, `scheduledDate`). Until then the e2e
-// fixtures match wire shape via this local extension.
-type ContentItemFixtureContract = Omit<
-  ContentItemContract,
-  | 'platform'
-  | 'contentType'
-  | 'owner'
-  | 'parentIdeaId'
-  | 'parentConceptId'
-  | 'scheduledDate'
-  | 'production'
-> & {
-  platform?: PlatformContract | null;
-  contentType?: ContentTypeContract | null;
-  owner?: string | null;
-  parentIdeaId?: string | null;
-  parentConceptId?: string | null;
-  scheduledDate?: string | null;
-  production?: ProductionFixtureContract;
-};
-
-// TODO: widen `ProductionBriefContract` to include `approved`, `canonicalType`,
-// `hasTalent`, `hasMusic`, `needsAccessibility` — fields the real API emits
-// but the contract doesn't yet model.
-type ProductionBriefFixtureContract = ProductionBriefContract & {
-  approved?: boolean;
-  canonicalType?: string;
-  hasTalent?: boolean;
-  hasMusic?: boolean;
-  needsAccessibility?: boolean;
-};
-
-// TODO: widen `ProductionContract` to model `productionStep`, `sources`,
-// `assets`, `tasks`, `versions`. Local extension keeps fixtures aligned
-// with wire shape.
-type ProductionFixtureContract = Omit<ProductionContract, 'brief'> & {
-  brief?: ProductionBriefFixtureContract;
-  productionStep?: string;
-  sources?: unknown[];
-  assets?: unknown[];
-  tasks?: unknown[];
-  versions?: unknown[];
-};
-
-// Mirrors the inline shape used in strategy-research-state.service.ts —
-// the brand-voice settings payload is hydrated with content pillars and
-// audience segments before being returned by the API.
-type HydratedBrandVoiceFixtureContract = BrandVoiceSettingsContract & {
-  contentPillars?: ContentPillarContract[];
-  audienceSegments?: AudienceSegmentContract[];
-};
 
 const PILLARS = [
   {
@@ -159,7 +101,7 @@ const IDEA_DETAIL = {
   ...IDEA_ENTRY,
   description: 'A short yoga flow for the morning.',
   tags: ['yoga', 'morning'],
-} satisfies ContentItemFixtureContract;
+} satisfies ContentItemContract;
 
 const CONCEPT_DETAIL = {
   ...CONCEPT_ENTRY,
@@ -173,7 +115,7 @@ const CONCEPT_DETAIL = {
   ],
   cta: { type: 'follow', text: 'Follow for more breathwork tips' },
   tags: ['breathwork'],
-} satisfies ContentItemFixtureContract;
+} satisfies ContentItemContract;
 
 const POST_DETAIL = {
   ...POST_ENTRY,
@@ -220,9 +162,9 @@ const POST_DETAIL = {
     tasks: [],
     versions: [],
   },
-} satisfies ContentItemFixtureContract;
+} satisfies ContentItemContract;
 
-const BASE_DETAILS: Record<string, ContentItemFixtureContract> = {
+const BASE_DETAILS: Record<string, ContentItemContract> = {
   idea1: IDEA_DETAIL,
   concept1: CONCEPT_DETAIL,
   prod1: POST_DETAIL,
@@ -237,14 +179,14 @@ const ARCHIVE_INDEX_PAYLOAD = {
 const BRAND_VOICE_PAYLOAD = {
   contentPillars: PILLARS,
   audienceSegments: SEGMENTS,
-} satisfies HydratedBrandVoiceFixtureContract;
+} satisfies HydratedBrandVoiceContract;
 
 const OBJECTIVES_PAYLOAD: BusinessObjectiveContract[] = [];
 
 interface MockHiveOptions {
   workspaceId?: string;
   indexItems?: ReadonlyArray<ContentItemsIndexEntryContract>;
-  details?: Record<string, ContentItemFixtureContract>;
+  details?: Record<string, ContentItemContract>;
 }
 
 /**
@@ -262,7 +204,7 @@ export const mockHiveContent = async (
 ) => {
   const ws = options.workspaceId ?? 'hive-collective';
   const indexItems = options.indexItems ?? [IDEA_ENTRY, CONCEPT_ENTRY, POST_ENTRY];
-  const details: Record<string, ContentItemFixtureContract> = {
+  const details: Record<string, ContentItemContract> = {
     ...BASE_DETAILS,
     ...(options.details ?? {}),
   };

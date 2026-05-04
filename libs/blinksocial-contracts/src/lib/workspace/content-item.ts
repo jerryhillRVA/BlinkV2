@@ -126,11 +126,69 @@ export interface ProductionBriefContract {
   platformRules?: ProductionBriefPlatformRulesContract;
   creativePlan?: ProductionBriefCreativePlanContract;
   compliance?: ProductionBriefComplianceContract;
+  approved?: boolean;
+  canonicalType?: string;
+  hasTalent?: boolean;
+  hasMusic?: boolean;
+  needsAccessibility?: boolean;
+}
+
+export type ProductionStepContract =
+  | 'select'
+  | 'brief'
+  | 'draft'
+  | 'blueprint'
+  | 'assets'
+  | 'packaging'
+  | 'qa'
+  | 'handoff';
+
+export type ProductionSourceTypeContract =
+  | 'article'
+  | 'report'
+  | 'social'
+  | 'news'
+  | 'video'
+  | 'docs';
+
+export interface ProductionSourceContract {
+  id: string;
+  url: string;
+  title: string;
+  keyTakeaways?: string;
+  type: ProductionSourceTypeContract;
+}
+
+export interface ProductionAssetContract {
+  id: string;
+  label: string;
+  required: boolean;
+  completed: boolean;
+  assignee?: string;
+  notes?: string;
+}
+
+export interface ProductionTaskContract {
+  id: string;
+  label: string;
+  assignee?: string;
+  completed: boolean;
+  dueDate?: string;
+}
+
+export interface ProductionVersionContract {
+  label: string;
+  savedAt: string;
 }
 
 export interface ProductionContract {
+  productionStep?: ProductionStepContract;
   brief?: ProductionBriefContract;
   outputs?: Record<string, unknown>;
+  sources?: ProductionSourceContract[];
+  assets?: ProductionAssetContract[];
+  tasks?: ProductionTaskContract[];
+  versions?: ProductionVersionContract[];
 }
 
 export interface ContentItemContract {
@@ -146,16 +204,16 @@ export interface ContentItemContract {
   contentCategory?: string;
   hook?: string;
   objective?: ContentObjectiveContract;
-  owner?: string;
-  platform?: PlatformContract;
-  contentType?: ContentTypeContract;
+  owner?: string | null;
+  platform?: PlatformContract | null;
+  contentType?: ContentTypeContract | null;
   keyMessage?: string;
   tonePreset?: TonePresetContract;
   cta?: ContentCtaContract;
   sourceUrl?: string;
   attachments?: ContentAttachmentContract[];
-  parentIdeaId?: string;
-  parentConceptId?: string;
+  parentIdeaId?: string | null;
+  parentConceptId?: string | null;
   targetPlatforms?: TargetPlatformContract[];
   angle?: string;
   formatNotes?: string[];
@@ -163,7 +221,7 @@ export interface ContentItemContract {
   sourceLinks?: string[];
   riskLevel?: RiskLevelContract;
   targetPublishWindow?: TargetPublishWindowContract;
-  scheduledDate?: string;
+  scheduledDate?: string | null;
   scheduledAt?: string;
   production?: ProductionContract;
   archived?: boolean;
