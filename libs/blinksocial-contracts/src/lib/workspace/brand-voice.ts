@@ -1,3 +1,4 @@
+import type { AudienceSegmentContract } from './audience-segment.js';
 import type { ContentPillarContract } from './content-pillar.js';
 
 export interface VoiceAttributeContract {
@@ -30,4 +31,8 @@ export interface BrandVoiceSettingsContract {
   toneByContext?: ToneContextContract[];
   platformToneAdjustments?: { platform: string; adjustment: string }[];
   vocabulary?: { preferred: string[]; avoid: string[] };
+}
+
+export interface HydratedBrandVoiceContract extends BrandVoiceSettingsContract {
+  audienceSegments?: AudienceSegmentContract[];
 }
