@@ -12,6 +12,14 @@ const serverDistFolder = dirname(fileURLToPath(import.meta.url));
 const browserDistFolder = resolve(serverDistFolder, '../browser');
 
 const app = express();
+
+// Cloud Run / nginx / any reverse proxy fronts this server. Trust the
+// X-Forwarded-* headers so Angular's SSR engine reconstructs the request
+// origin from the public hostname rather than the loopback bind address —
+// without this, Angular's SSRF guard rejects `http://localhost:<port>/`
+// requests with "Bad Request" and falls back to the empty CSR shell.
+app.set('trust proxy', true);
+
 const angularApp = new AngularNodeAppEngine();
 
 /**
