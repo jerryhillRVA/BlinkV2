@@ -33,7 +33,11 @@ export class AngularSsrMiddleware implements NestMiddleware {
           'server',
           'server.mjs'
         );
-        const serverBundle = await import(serverBundlePath);
+        // webpackIgnore: webpack would otherwise transform this dynamic
+        // import() into a CommonJS require(), which can't load the ESM
+        // .mjs server bundle and fails at runtime with MODULE_NOT_FOUND.
+        // Leaving the call alone lets Node's native import() handle ESM.
+        const serverBundle = await import(/* webpackIgnore: true */ serverBundlePath);
         // reqHandler is a createNodeRequestHandler-wrapped Express app — use it directly
         this.reqHandler = serverBundle.reqHandler;
       }

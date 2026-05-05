@@ -9,6 +9,7 @@ import { NestFactory } from '@nestjs/core';
 import cookieParser from 'cookie-parser';
 import express from 'express';
 import { AppModule } from './app/app.module';
+import { resolvePort } from './resolve-port';
 
 /**
  * 25 MB combined-body limit. The onboarding chat accepts files up to 10 MB
@@ -22,7 +23,7 @@ async function bootstrap() {
   app.use(express.json({ limit: BODY_LIMIT }));
   app.use(express.urlencoded({ limit: BODY_LIMIT, extended: true }));
   app.use(cookieParser());
-  const port = process.env['PORT'] || 3000;
+  const port = resolvePort();
   await app.listen(port);
   Logger.log(`Application is running on: http://localhost:${port}`);
 }
