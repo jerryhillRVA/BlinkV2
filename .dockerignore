@@ -1,0 +1,36 @@
+# Build artifacts
+node_modules/
+dist/
+apps/*/dist/
+.angular/
+.nx/
+coverage/
+playwright-report/
+test-results/
+
+# Local dev / cache
+.env
+.env.local
+.env.*.local
+out.log
+*.log
+tmp/
+.DS_Store
+
+# VCS / tooling / editor
+.git/
+.gitignore
+.github/
+.husky/
+.vscode/
+.idea/
+
+# Project-specific dev artifacts
+storage_reference/
+.claude/
+docs/claudeAgileTeam/
+
+# Docker / deploy meta (don't recurse into the build context)
+Dockerfile
+.dockerignore
+docker-compose.yml
