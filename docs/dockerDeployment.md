@@ -45,7 +45,11 @@ docker build -t blinksocial:local .
 docker images blinksocial:local --format '{{.Size}}'   # expect < 500 MB
 ```
 
-Smoke test the image locally before pushing. The container reads `PORT` from the environment and listens there; no AFS env var is needed for this step (the API falls back to mock mode and serves canned data).
+Smoke test the image locally before pushing. There are two flavors — pick the one that matches what you want to verify.
+
+### Option A — minimal smoke test (mock AFS, no `.env` needed)
+
+The fastest way to confirm the image starts, binds the port, serves SSR'd HTML, and answers `/api/health`. The API runs in mock mode; AFS-backed endpoints return canned data.
 
 ```bash
 docker run --rm -d --name blink-smoke \
@@ -64,6 +68,41 @@ docker rm -f blink-smoke
 ```
 
 If `grep -c BLINK /tmp/index.html` returns `0`, the SSR bundle did not load — see Troubleshooting below.
+
+### Option B — full smoke test against your local `.env` + a real AFS
+
+Use this when you want the container to talk to a real AFS (e.g. one started by `npx afs start` on the host) and pick up `ANTHROPIC_API_KEY` and any other secrets from your existing `.env` file. There are three gotchas — each has a corresponding override flag below.
+
+| Gotcha | Why it bites | Fix |
+|---|---|---|
+| `.env` has `PORT=3000` (dev convention) | Cloud Run image expects to listen on `8080`; the published port mapping won't match if you take `.env`'s value verbatim. | Override with `-e PORT=8080` **after** `--env-file`. |
+| `.env` has `NODE_ENV=development` | `AngularSsrMiddleware` short-circuits and skips SSR when `NODE_ENV !== 'production'`. You'll get a 200 with an empty `<app-root></app-root>` and miss the regression signal. | Override with `-e NODE_ENV=production` **after** `--env-file`. |
+| `.env` has `AGENTIC_FS_URL=http://localhost:8000` (or similar) | Inside the container, `localhost` is the container itself — AFS isn't there. The service silently falls back to mock mode. | Override with `-e AGENTIC_FS_URL=http://host.docker.internal:8000` (Mac/Windows) and add `--add-host=host.docker.internal:host-gateway` on Linux. |
+
+`docker run` evaluates `--env-file` first and then `-e` flags, so later flags win. That's the lever we use to keep the convenient secrets-from-`.env` flow while patching the three values that matter for production-image parity.
+
+```bash
+docker run --rm -d --name blink-smoke \
+  -p 8080:8080 \
+  --env-file .env \
+  -e PORT=8080 \
+  -e NODE_ENV=production \
+  -e AGENTIC_FS_URL=http://host.docker.internal:8000 \
+  --add-host=host.docker.internal:host-gateway \
+  blinksocial:local
+
+sleep 5
+curl -s -o /tmp/index.html -w '%{http_code}\n' http://localhost:8080/    # expect 200
+grep -c BLINK /tmp/index.html                                            # expect >= 1 (proves SSR ran)
+curl -s http://localhost:8080/api/health                                 # expect {"status":"ok",...}
+docker logs blink-smoke | grep -i 'agenticfilesystem'                    # expect a real AFS URL log line, NOT "mock mode"
+
+docker rm -f blink-smoke
+```
+
+If logs show `AgenticFilesystem mock mode` despite `AGENTIC_FS_URL` being set, AFS is unreachable from the container — verify it's running on the host (`curl http://localhost:8000/health` from your shell, not the container) and that the `--add-host` flag is present on Linux.
+
+The `--add-host=host.docker.internal:host-gateway` flag is a no-op on Mac/Windows (the hostname is already wired up by Docker Desktop) but required on Linux. Including it unconditionally is safe and portable.
 
 ## Push to Artifact Registry
 
