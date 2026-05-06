@@ -1,0 +1,65 @@
+# Cloud Build pipeline — auto-deploys the Cloud Run service `blinksocial`
+# on every push to `main` (trigger `deploy-on-main` in region us-east4).
+#
+# Build identity: the project's default service account.
+# - Projects created post-2024-04 (incl. blink-social-prod): the
+#   Compute Engine default SA `<project-number>-compute@developer.gserviceaccount.com`.
+# - Older projects: the legacy Cloud Build SA `<project-number>@cloudbuild.gserviceaccount.com`.
+# Run `gcloud builds get-default-service-account --region=us-east4` to confirm.
+#
+# Required IAM roles on the build SA (see docs/dockerDeployment.md):
+#   - roles/run.admin                    — deploy new Cloud Run revisions
+#   - roles/iam.serviceAccountUser       — act as the runtime SA on deploy
+#   - roles/artifactregistry.writer      — push images to Artifact Registry
+#
+# DO NOT add any env-var-passing flags to the deploy step (the set/update
+# variants of env-vars and secrets). Cloud Run env vars (NODE_ENV,
+# AGENTIC_FS_URL, ANTHROPIC_API_KEY, NG_ALLOWED_HOSTS) are managed
+# out-of-band via `gcloud run services update` and carry forward from the
+# previous revision when omitted from a deploy. Re-passing them here would
+# clobber existing values and pull secrets into the build context.
+# See docs/dockerDeployment.md → "Continuous deployment" for details.
+
+steps:
+  - id: build
+    name: gcr.io/cloud-builders/docker
+    args:
+      - build
+      - -t
+      - us-east4-docker.pkg.dev/$PROJECT_ID/blinksocial/blinksocial:$SHORT_SHA
+      - -t
+      - us-east4-docker.pkg.dev/$PROJECT_ID/blinksocial/blinksocial:latest
+      - .
+
+  - id: push-sha
+    name: gcr.io/cloud-builders/docker
+    args: [push, us-east4-docker.pkg.dev/$PROJECT_ID/blinksocial/blinksocial:$SHORT_SHA]
+    waitFor: [build]
+
+  - id: push-latest
+    name: gcr.io/cloud-builders/docker
+    args: [push, us-east4-docker.pkg.dev/$PROJECT_ID/blinksocial/blinksocial:latest]
+    waitFor: [build]
+
+  - id: deploy
+    name: gcr.io/google.com/cloudsdktool/cloud-sdk
+    entrypoint: gcloud
+    args:
+      - run
+      - deploy
+      - blinksocial
+      - --image=us-east4-docker.pkg.dev/$PROJECT_ID/blinksocial/blinksocial:$SHORT_SHA
+      - --region=us-east4
+      - --platform=managed
+      - --quiet
+    waitFor: [push-sha]
+
+images:
+  - us-east4-docker.pkg.dev/$PROJECT_ID/blinksocial/blinksocial:$SHORT_SHA
+  - us-east4-docker.pkg.dev/$PROJECT_ID/blinksocial/blinksocial:latest
+
+options:
+  machineType: E2_HIGHCPU_8
+  logging: CLOUD_LOGGING_ONLY
+
+timeout: 1800s
