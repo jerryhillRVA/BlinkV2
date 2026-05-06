@@ -212,9 +212,167 @@ gcloud run deploy blinksocial \
 
 Image artifacts in Artifact Registry are not deleted by a redeploy — older SHAs remain available until you prune them manually.
 
+## Continuous deployment
+
+Once the manual flow above is working, you can hand it off to Cloud Build so every push to `main` rebuilds and redeploys automatically. The pipeline is defined in `cloudbuild.yaml` at the repo root; this section walks through the one-time setup to wire it up.
+
+### Why Cloud Build (not GitHub Actions)
+
+- GCP-native auth — no service account JSON keys, no Workload Identity Federation pool, no GitHub Actions secrets to rotate. The build runs as the project's default service account.
+- More generous free tier (2,500 min/month) and ~50% cheaper per minute than GitHub-hosted runners.
+- Builds run inside GCP, so the push to Artifact Registry is fast.
+- Smaller credential-leak surface than passing keys across cloud boundaries.
+
+### One-time GCP setup
+
+```bash
+PROJECT_ID=blink-social-prod
+REGION=us-east4
+
+# 1. Enable the Cloud Build API
+gcloud services enable cloudbuild.googleapis.com --project=$PROJECT_ID
+```
+
+#### Identify the build service account
+
+The default identity Cloud Build uses depends on when the project was created:
+
+- Projects created **before 2024-04**: the legacy Cloud Build SA `<project-number>@cloudbuild.gserviceaccount.com`.
+- Projects created **after 2024-04** (this includes `blink-social-prod`): the **Compute Engine default SA** `<project-number>-compute@developer.gserviceaccount.com`.
+
+Always confirm with the canonical detection command rather than guessing — Google's behavior here changed in 2024 and bites people who follow older runbooks:
+
+```bash
+BUILD_SA=$(gcloud builds get-default-service-account --region=$REGION --format='value(serviceAccountEmail)' --project=$PROJECT_ID | sed 's|projects/[^/]*/serviceAccounts/||')
+echo "Build SA: $BUILD_SA"
+```
+
+#### Grant the build SA the roles it needs
+
+Three roles, scoped to the project:
+
+```bash
+for ROLE in \
+  roles/run.admin \
+  roles/iam.serviceAccountUser \
+  roles/artifactregistry.writer; do
+  gcloud projects add-iam-policy-binding $PROJECT_ID \
+    --member="serviceAccount:${BUILD_SA}" \
+    --role="$ROLE"
+done
+```
+
+- `roles/run.admin` — deploy new Cloud Run revisions.
+- `roles/iam.serviceAccountUser` — act as the Cloud Run runtime service account during deploy. Cloud Run rejects deploys without this even if the SA has `run.admin`.
+- `roles/artifactregistry.writer` — push images to the `blinksocial` repository.
+
+#### Connect the GitHub repo to Cloud Build
+
+This is the one step that **cannot** be scripted — it's an OAuth flow that needs the GCP Console:
+
+1. Open the GCP Console → **Cloud Build** → **Triggers** → **Manage Repositories** → **Connect Repository**.
+2. Choose **GitHub (Cloud Build GitHub App)** as the source.
+3. Authenticate with GitHub, install the Cloud Build GitHub App on `jerryhillRVA/BlinkV2` (or org-wide).
+4. Pick the repository and click **Connect**.
+
+You only do this once per repo per GCP project.
+
+#### Create the trigger
+
+```bash
+gcloud builds triggers create github \
+  --name=deploy-on-main \
+  --region=$REGION \
+  --repo-name=BlinkV2 \
+  --repo-owner=jerryhillRVA \
+  --branch-pattern='^main$' \
+  --build-config=cloudbuild.yaml \
+  --project=$PROJECT_ID
+```
+
+Verify it stuck:
+
+```bash
+gcloud builds triggers describe deploy-on-main --region=$REGION --project=$PROJECT_ID
+```
+
+You should see `github.push.branch: ^main$` and `filename: cloudbuild.yaml` in the output.
+
+### How the pipeline works
+
+`cloudbuild.yaml` runs four steps on every fire:
+
+1. **build** — `docker build`, tagging the image as both `:$SHORT_SHA` and `:latest`.
+2. **push-sha** — push the SHA-tagged image (parallel with `push-latest`).
+3. **push-latest** — push the `:latest`-tagged image.
+4. **deploy** — `gcloud run deploy blinksocial --image=<sha-tagged-image> --region=us-east4 ...`. Notably **no `--set-env-vars`** — env vars (`NODE_ENV`, `AGENTIC_FS_URL`, `ANTHROPIC_API_KEY`, `NG_ALLOWED_HOSTS`) carry over from the previous revision.
+
+Build options:
+
+- `machineType: E2_HIGHCPU_8` — 8 vCPU, ~$0.018/min, finishes in ~4–6 min.
+- `logging: CLOUD_LOGGING_ONLY` — logs go to Cloud Logging (required when there's no logs bucket configured on the build SA).
+- `timeout: 1800s` — 30-min hard cap; current builds run ~5 min so we have 6× headroom.
+
+### Verifying the trigger
+
+Run it manually without pushing a commit:
+
+```bash
+gcloud builds triggers run deploy-on-main \
+  --branch=main \
+  --region=$REGION \
+  --project=$PROJECT_ID
+```
+
+Watch it:
+
+```bash
+# Most recent build
+gcloud builds list --region=$REGION --project=$PROJECT_ID --limit=5
+
+# Stream logs for a specific build
+gcloud builds log <BUILD_ID> --region=$REGION --project=$PROJECT_ID --stream
+```
+
+Once the build hits `SUCCESS`, verify the new revision is live:
+
+```bash
+SERVICE_URL=$(gcloud run services describe blinksocial --region=$REGION --format='value(status.url)')
+curl -s "$SERVICE_URL/api/health"                              # expect {"status":"ok",...}
+curl -s -o /tmp/index.html "$SERVICE_URL/" && grep -c 'Welcome to Blink Social' /tmp/index.html
+```
+
+### Don't pass env vars from the build
+
+`cloudbuild.yaml` deliberately omits `--set-env-vars` and `--update-env-vars` on the deploy step. **Never add them.** If you pass either:
+
+- The build context now needs the secret values (`ANTHROPIC_API_KEY` etc.) at build time. That re-introduces the leak risk we eliminated by managing them out-of-band.
+- Re-passing partial env-var sets via `--set-env-vars` **replaces the entire env-var map** — anything not in the flag gets cleared. Easy way to nuke `NG_ALLOWED_HOSTS` and silently break SSR.
+
+When you genuinely need to add or update an env var, do it via a one-shot:
+
+```bash
+gcloud run services update blinksocial \
+  --region=$REGION \
+  --update-env-vars=NEW_VAR=value
+```
+
+The next pipeline-driven deploy will then carry the new var forward automatically.
+
+### Pipeline troubleshooting
+
+| Symptom | Diagnostic | Fix |
+|---|---|---|
+| `gcloud builds triggers create` fails with `PERMISSION_DENIED` | `gcloud services list --enabled --filter=name:cloudbuild.googleapis.com` | API not enabled. Run `gcloud services enable cloudbuild.googleapis.com`. |
+| Build fails immediately with `permission denied` on `docker build` | Build log shows the SA name | Wrong SA was granted roles. Re-run `gcloud builds get-default-service-account` to confirm, then grant the three roles to the correct SA. Common pitfall: granting to legacy `cloudbuild.gserviceaccount.com` on a post-2024-04 project that actually uses the Compute Engine default SA. |
+| Build succeeds but `deploy` step gets 403 from Cloud Run | Build log: `Permission 'iam.serviceaccounts.actAs' denied` | Build SA missing `roles/iam.serviceAccountUser`. Add it. |
+| `git push` to `main` doesn't trigger a build | `gcloud builds list --region=$REGION --limit=3` shows no recent activity | GitHub App not authorized on the repo. Re-do the Console connection step. Or trigger's `branch-pattern` doesn't match — check `gcloud builds triggers describe deploy-on-main`. |
+| New revision missing env vars (e.g. SSR broken because `NG_ALLOWED_HOSTS` is empty) | `gcloud run services describe blinksocial --region=$REGION --format='value(spec.template.spec.containers[0].env[].name)'` | Someone passed `--set-env-vars=` (with empty value) somewhere — possibly a manual `gcloud run deploy` or an edit to `cloudbuild.yaml`. Re-set the vars via `gcloud run services update --update-env-vars=...`. |
+| Build hits 30-min timeout | Build log ends with `TIMEOUT` | Either the Angular build regressed, or a heavy dep was added. Check `du -sh node_modules/` locally, profile the slow step in build logs. Bump `timeout: 1800s` only as a temporary mitigation — the underlying regression should be fixed. |
+| `--quiet` deploy succeeds but service URL still 403s | `gcloud run services get-iam-policy blinksocial --region=$REGION` | The `allUsers` invoker binding was lost (e.g. by a manual policy update). Re-add: `gcloud run services add-iam-policy-binding blinksocial --region=$REGION --member=allUsers --role=roles/run.invoker`. |
+
 ## What's next (out of scope for this doc)
 
-- GitHub Actions / Cloud Build pipeline that builds, pushes, and deploys on merge to `main`.
 - Migration of `ANTHROPIC_API_KEY` (and any future secrets) to Google Secret Manager via `--set-secrets`.
 - Custom domain mapping, Cloud CDN, Cloud Armor, IAM-restricted invocation.
 - Serverless VPC Access connector (only needed if AFS moves to a private network).
