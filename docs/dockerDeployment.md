@@ -140,7 +140,7 @@ gcloud run deploy blinksocial \
   --min-instances=0 \
   --max-instances=3 \
   --cpu-boost \
-  --set-env-vars=NODE_ENV=production,NG_ALLOWED_HOSTS=<service-hostname>,AGENTIC_FS_URL=<afs-url>,ANTHROPIC_API_KEY=<anthropic-key>
+  --set-env-vars=NODE_ENV=production,NG_ALLOWED_HOSTS=*.run.app,AGENTIC_FS_URL=http://136.107.202.13,ANTHROPIC_API_KEY=<anthropic-key>
 ```
 
 `<service-hostname>` is the bare hostname (no scheme) that Cloud Run assigns or that you've mapped to the service — e.g. `blinksocial-abc123-uc.a.run.app` or your custom domain like `app.example.com`. Comma-separate if you serve under multiple. Without this, Angular SSR's SSRF guard rejects every request and the page falls back to an empty CSR shell.
