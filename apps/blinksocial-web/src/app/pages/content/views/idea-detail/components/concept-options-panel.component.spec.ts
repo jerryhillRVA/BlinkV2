@@ -52,20 +52,138 @@ function setup(): {
   return { fixture, store };
 }
 
+function clickGenerate(fixture: ComponentFixture<ConceptOptionsPanelComponent>): void {
+  const btn = fixture.nativeElement.querySelector(
+    '.btn-generate button',
+  ) as HTMLButtonElement;
+  btn.click();
+}
+
 describe('ConceptOptionsPanelComponent', () => {
   it('renders the Generate empty state by default', () => {
     const { fixture } = setup();
-    const btn: HTMLButtonElement = fixture.nativeElement.querySelector('.btn-generate');
-    expect(btn).not.toBeNull();
-    expect(btn.textContent).toContain('Generate Concept Options');
+    const host = fixture.nativeElement.querySelector('.btn-generate');
+    expect(host).not.toBeNull();
+    expect(host.textContent).toContain('Generate Concept Options');
+  });
+
+  it('header renders the uppercase panel-label with a leading sparkle icon and no subhead', () => {
+    const { fixture } = setup();
+    const label = fixture.nativeElement.querySelector(
+      '.options-panel-header .panel-label',
+    ) as HTMLElement;
+    expect(label).not.toBeNull();
+    expect(label.textContent?.trim()).toContain('Concept Options');
+    const svg = label.querySelector('svg');
+    expect(svg).not.toBeNull();
+    expect(svg?.getAttribute('width')).toBe('12');
+    expect(svg?.getAttribute('height')).toBe('12');
+    // Must be the Lucide `sparkles` (plural) icon from the prototype:
+    // 1 main star path + 4 small twinkle paths = 5 paths total.
+    const paths = svg?.querySelectorAll('path') ?? [];
+    expect(paths.length).toBe(5);
+    const ds = Array.from(paths).map((p) => p.getAttribute('d'));
+    expect(ds).toContain('M22 5h-4');
+    expect(ds).toContain('M5 18H3');
+    expect(
+      fixture.nativeElement.querySelector('.options-panel-subtitle'),
+    ).toBeNull();
+    expect(
+      fixture.nativeElement.querySelector('.options-panel-title'),
+    ).toBeNull();
+    document.body.appendChild(fixture.nativeElement);
+    try {
+      const labelStyle = getComputedStyle(label);
+      expect(labelStyle.textTransform).toBe('uppercase');
+      expect(labelStyle.letterSpacing).not.toBe('normal');
+      expect(labelStyle.fontWeight).toBe('700');
+    } finally {
+      document.body.removeChild(fixture.nativeElement);
+    }
+  });
+
+  it('empty state renders an outline button host with a 14×14 leading sparkle', () => {
+    const { fixture } = setup();
+    const host = fixture.nativeElement.querySelector(
+      'app-outline-button.btn-generate',
+    ) as HTMLElement;
+    expect(host).not.toBeNull();
+    const innerBtn = host.querySelector('button.outline-btn') as HTMLButtonElement;
+    expect(innerBtn).not.toBeNull();
+    expect(innerBtn.textContent).toContain('Generate Concept Options');
+    const svg = host.querySelector('svg');
+    expect(svg).not.toBeNull();
+    expect(svg?.getAttribute('width')).toBe('14');
+    expect(svg?.getAttribute('height')).toBe('14');
+    // Same Lucide `sparkles` (plural) icon as the panel header.
+    const paths = svg?.querySelectorAll('path') ?? [];
+    expect(paths.length).toBe(5);
+    const ds = Array.from(paths).map((p) => p.getAttribute('d'));
+    expect(ds).toContain('M22 5h-4');
+    expect(ds).toContain('M5 18H3');
+  });
+
+  it('empty-state helper text matches the prototype copy exactly', () => {
+    const { fixture } = setup();
+    const hint = fixture.nativeElement.querySelector(
+      '.options-empty-hint',
+    ) as HTMLParagraphElement;
+    expect(hint).not.toBeNull();
+    expect(hint.textContent?.trim()).toBe(
+      'AI will suggest 6 strategic directions for this idea.',
+    );
+  });
+
+  it('.options-empty wrapper has padding-top: 0', () => {
+    const { fixture } = setup();
+    document.body.appendChild(fixture.nativeElement);
+    try {
+      const empty = fixture.nativeElement.querySelector('.options-empty') as HTMLElement;
+      expect(empty).not.toBeNull();
+      expect(getComputedStyle(empty).paddingTop).toBe('0px');
+    } finally {
+      document.body.removeChild(fixture.nativeElement);
+    }
+  });
+
+  it('Generate Concept Options button has padding-top: 0', () => {
+    const { fixture } = setup();
+    document.body.appendChild(fixture.nativeElement);
+    try {
+      const innerBtn = fixture.nativeElement.querySelector(
+        '.btn-generate button.outline-btn',
+      ) as HTMLButtonElement;
+      expect(innerBtn).not.toBeNull();
+      expect(getComputedStyle(innerBtn).paddingTop).toBe('0px');
+    } finally {
+      document.body.removeChild(fixture.nativeElement);
+    }
+  });
+
+  it('empty container and helper text are left-aligned, not centered', () => {
+    const { fixture } = setup();
+    const container = fixture.nativeElement.querySelector(
+      '.options-empty',
+    ) as HTMLElement;
+    const hint = fixture.nativeElement.querySelector(
+      '.options-empty-hint',
+    ) as HTMLElement;
+    document.body.appendChild(fixture.nativeElement);
+    try {
+      const containerStyle = getComputedStyle(container);
+      const hintStyle = getComputedStyle(hint);
+      expect(containerStyle.alignItems).not.toBe('center');
+      expect(hintStyle.textAlign).not.toBe('center');
+    } finally {
+      document.body.removeChild(fixture.nativeElement);
+    }
   });
 
   it('clicking Generate transitions to loading state with skeleton grid', () => {
     vi.useFakeTimers();
     try {
       const { fixture } = setup();
-      const btn: HTMLButtonElement = fixture.nativeElement.querySelector('.btn-generate');
-      btn.click();
+      clickGenerate(fixture);
       fixture.detectChanges();
       expect(fixture.nativeElement.querySelectorAll('.options-skeleton').length).toBe(6);
       expect(fixture.nativeElement.querySelector('.options-loading-label')).not.toBeNull();
@@ -78,7 +196,7 @@ describe('ConceptOptionsPanelComponent', () => {
     vi.useFakeTimers();
     try {
       const { fixture } = setup();
-      (fixture.nativeElement.querySelector('.btn-generate') as HTMLButtonElement).click();
+      clickGenerate(fixture);
       fixture.detectChanges();
       const skeletons = fixture.nativeElement.querySelectorAll('.options-skeleton') as NodeListOf<HTMLElement>;
       skeletons.forEach((el) => {
@@ -93,7 +211,7 @@ describe('ConceptOptionsPanelComponent', () => {
     vi.useFakeTimers();
     try {
       const { fixture } = setup();
-      (fixture.nativeElement.querySelector('.btn-generate') as HTMLButtonElement).click();
+      clickGenerate(fixture);
       fixture.detectChanges();
       const first = fixture.nativeElement.querySelector('.options-skeleton') as HTMLElement;
       expect(first.querySelector('.skeleton-check')).toBeNull();
@@ -110,7 +228,7 @@ describe('ConceptOptionsPanelComponent', () => {
     vi.useFakeTimers();
     try {
       const { fixture } = setup();
-      (fixture.nativeElement.querySelector('.btn-generate') as HTMLButtonElement).click();
+      clickGenerate(fixture);
       fixture.detectChanges();
       vi.advanceTimersByTime(AI_SIMULATION_DELAY_MS);
       fixture.detectChanges();
@@ -125,7 +243,7 @@ describe('ConceptOptionsPanelComponent', () => {
     vi.useFakeTimers();
     try {
       const { fixture } = setup();
-      (fixture.nativeElement.querySelector('.btn-generate') as HTMLButtonElement).click();
+      clickGenerate(fixture);
       vi.advanceTimersByTime(AI_SIMULATION_DELAY_MS);
       fixture.detectChanges();
       const regenerate: HTMLButtonElement = fixture.nativeElement.querySelector('.options-panel-regenerate');
@@ -144,7 +262,7 @@ describe('ConceptOptionsPanelComponent', () => {
     vi.useFakeTimers();
     try {
       const { fixture, store } = setup();
-      (fixture.nativeElement.querySelector('.btn-generate') as HTMLButtonElement).click();
+      clickGenerate(fixture);
       vi.advanceTimersByTime(AI_SIMULATION_DELAY_MS);
       fixture.detectChanges();
       const firstCard: HTMLButtonElement = fixture.nativeElement.querySelector(

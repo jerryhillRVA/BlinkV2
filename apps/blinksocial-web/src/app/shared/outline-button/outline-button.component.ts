@@ -7,6 +7,7 @@ import { Component, input, output } from '@angular/core';
 })
 export class OutlineButtonComponent {
   disabled = input(false);
+  compact = input(false);
   clicked = output<void>();
 
   onClick(): void {

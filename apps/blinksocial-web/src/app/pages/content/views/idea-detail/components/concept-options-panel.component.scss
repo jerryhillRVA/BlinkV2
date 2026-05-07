@@ -14,22 +14,29 @@
 
 .options-panel-header {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   justify-content: space-between;
   gap: 12px;
+
+  .panel-label svg {
+    color: var(--blink-brand-primary);
+  }
 }
 
-.options-panel-title {
-  margin: 0 0 2px;
-  font-size: var(--blink-title-small);
-  font-weight: 700;
-  color: var(--blink-on-surface-strong);
-}
-
-.options-panel-subtitle {
+// View encapsulation prevents the parent idea-detail.component.scss
+// .panel-label rule from applying to this child component's DOM, so the
+// rule is duplicated here. Sibling detail components (brief-step,
+// concept-detail) follow the same pattern.
+.panel-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
   margin: 0;
-  font-size: var(--blink-body-small);
+  font-size: var(--blink-label-small);
+  font-weight: 700;
+  letter-spacing: 0.08em;
   color: var(--blink-on-surface-muted);
+  text-transform: uppercase;
 }
 
 .options-panel-regenerate {
@@ -54,35 +61,14 @@
 .options-empty {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  gap: 8px;
-  padding: 24px 16px;
-}
-
-.btn-generate {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 10px 18px;
-  border: none;
-  border-radius: 8px;
-  background: var(--blink-brand-primary);
-  color: var(--blink-on-brand, #fff);
-  font-size: var(--blink-body-medium);
-  font-weight: 600;
-  cursor: pointer;
-  transition: background 0.15s;
-
-  &:hover {
-    background: var(--blink-brand-primary-active, #c4452d);
-  }
+  gap: 6px;
+  padding: 0 0 4px;
 }
 
 .options-empty-hint {
   margin: 0;
   font-size: var(--blink-body-small);
   color: var(--blink-on-surface-muted);
-  text-align: center;
 }
 
 .options-grid {

@@ -1,10 +1,11 @@
 import { Component, inject } from '@angular/core';
 import { IdeaDetailStore } from '../idea-detail.store';
 import { ConceptOptionCardComponent } from './concept-option-card.component';
+import { OutlineButtonComponent } from '../../../../../shared/outline-button/outline-button.component';
 
 @Component({
   selector: 'app-concept-options-panel',
-  imports: [ConceptOptionCardComponent],
+  imports: [ConceptOptionCardComponent, OutlineButtonComponent],
   templateUrl: './concept-options-panel.component.html',
   styleUrl: './concept-options-panel.component.scss',
 })
