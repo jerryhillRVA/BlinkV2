@@ -12,22 +12,22 @@ import {
   inject,
 } from '@angular/core';
 import { DOCUMENT } from '@angular/common';
-import { ContentCreateFormComponent } from './content-create-form.component';
+import { ContentCreateFormComponent } from '../content-create-form.component';
 import type {
   AudienceSegment,
   ContentCreatePayload,
   ContentItemType,
   ContentPillar,
   IdeaPayload,
-} from '../../content.types';
+} from '../../../content.types';
 
 @Component({
-  selector: 'app-content-create-modal',
+  selector: 'app-content-create-drawer',
   imports: [ContentCreateFormComponent],
-  templateUrl: './content-create-modal.component.html',
-  styleUrl: './content-create-modal.component.scss',
+  templateUrl: './content-create-drawer.component.html',
+  styleUrl: './content-create-drawer.component.scss',
 })
-export class ContentCreateModalComponent implements AfterViewInit {
+export class ContentCreateDrawerComponent implements AfterViewInit {
   private readonly doc = inject(DOCUMENT);
   private readonly vcr = inject(ViewContainerRef);
   private readonly destroyRef = inject(DestroyRef);
@@ -43,37 +43,35 @@ export class ContentCreateModalComponent implements AfterViewInit {
   @Output() createConcept = new EventEmitter<IdeaPayload>();
   @Output() cancelCreate = new EventEmitter<void>();
 
-  @ViewChild('modalTpl', { static: true }) modalTpl!: TemplateRef<unknown>;
-  private modalView: EmbeddedViewRef<unknown> | null = null;
+  @ViewChild('drawerTpl', { static: true }) drawerTpl!: TemplateRef<unknown>;
+  private drawerView!: EmbeddedViewRef<unknown>;
+  private rootEl!: HTMLElement;
+  private previouslyFocused!: HTMLElement;
 
   ngAfterViewInit(): void {
-    this.modalView = this.vcr.createEmbeddedView(this.modalTpl);
-    this.modalView.detectChanges();
+    this.previouslyFocused = this.doc.activeElement as HTMLElement;
+    this.drawerView = this.vcr.createEmbeddedView(this.drawerTpl);
+    this.drawerView.detectChanges();
     const body = this.doc.body;
-    for (const node of this.modalView.rootNodes as Node[]) {
-      if (node.nodeType === 1) body.appendChild(node);
-    }
+    this.rootEl = this.drawerView.rootNodes[0] as HTMLElement;
+    body.appendChild(this.rootEl);
     body.style.overflow = 'hidden';
-    this.destroyRef.onDestroy(() => {
-      if (this.modalView) {
-        this.modalView.destroy();
-        this.modalView = null;
-      }
-      if (this.doc.body) this.doc.body.style.overflow = '';
+    // Add the .open class on the next frame so the slide-up transition runs
+    // from translateY(100%) → translateY(0).
+    requestAnimationFrame(() => {
+      this.rootEl.classList.add('open');
+      this.rootEl
+        .querySelector<HTMLElement>('input, textarea, select, button')
+        ?.focus();
     });
-  }
-
-  protected onBackdropClick(event: MouseEvent): void {
-    if (event.target === event.currentTarget) {
-      this.cancelCreate.emit();
-    }
+    this.destroyRef.onDestroy(() => {
+      this.drawerView.destroy();
+      body.style.overflow = '';
+      this.previouslyFocused.focus();
+    });
   }
 
   protected onEscape(): void {
     this.cancelCreate.emit();
-  }
-
-  protected stopEvent(event: Event): void {
-    event.stopPropagation();
   }
 }

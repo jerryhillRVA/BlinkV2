@@ -6,7 +6,7 @@ import { StrategyStubComponent } from './views/strategy-stub/strategy-stub.compo
 import { ProductionStubComponent } from './views/production-stub/production-stub.component';
 import { ReviewStubComponent } from './views/review-stub/review-stub.component';
 import { PerformanceStubComponent } from './views/performance-stub/performance-stub.component';
-import { ContentCreateModalComponent } from './views/content-create/content-create-modal.component';
+import { ContentCreateDrawerComponent } from './views/content-create/content-create-drawer/content-create-drawer.component';
 import type { ContentView, ContentCreatePayload, IdeaPayload, ContentItemType } from './content.types';
 import { ContentStateService } from './content-state.service';
 import { buildContentItem } from './content.utils';
@@ -19,7 +19,7 @@ import { buildContentItem } from './content.utils';
     ProductionStubComponent,
     ReviewStubComponent,
     PerformanceStubComponent,
-    ContentCreateModalComponent,
+    ContentCreateDrawerComponent,
   ],
   providers: [ContentStateService],
   templateUrl: './content.component.html',

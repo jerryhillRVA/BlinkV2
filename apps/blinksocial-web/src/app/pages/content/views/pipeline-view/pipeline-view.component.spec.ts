@@ -399,12 +399,32 @@ describe('PipelineViewComponent', () => {
     expect(btn.textContent).toContain('New Content');
   });
 
-  it('should emit createItem on "New Content" click', () => {
-    const spy = vi.fn();
-    component.createItem.subscribe(spy);
+  it('should toggle the type picker open on "New Content" click', () => {
+    expect(component.pickerOpen()).toBe(false);
     const btn = fixture.nativeElement.querySelector('.btn-new-content') as HTMLButtonElement;
     btn.click();
-    expect(spy).toHaveBeenCalled();
+    fixture.detectChanges();
+    expect(component.pickerOpen()).toBe(true);
+    expect(fixture.nativeElement.querySelector('app-content-type-picker .picker')).not.toBeNull();
+  });
+
+  it('selecting a type from the picker closes it and emits createItemAs with that type', () => {
+    component.togglePicker();
+    fixture.detectChanges();
+    const emitted: string[] = [];
+    component.createItemAs.subscribe((t) => emitted.push(t));
+    component.onPickerSelected('idea');
+    fixture.detectChanges();
+    expect(emitted).toEqual(['idea']);
+    expect(component.pickerOpen()).toBe(false);
+  });
+
+  it('renames the in-production column to "Post Builder"', () => {
+    const titles = Array.from(
+      fixture.nativeElement.querySelectorAll('.column-title') as NodeListOf<HTMLElement>,
+    ).map((el) => el.textContent ?? '');
+    expect(titles.some((t) => t.includes('Post Builder'))).toBe(true);
+    expect(titles.every((t) => !t.includes('Posts in Production'))).toBe(true);
   });
 
   it('should toggle filter panel visibility', () => {
