@@ -84,6 +84,15 @@ describe('ConceptOptionsPanelComponent', () => {
     expect(
       fixture.nativeElement.querySelector('.options-panel-title'),
     ).toBeNull();
+    document.body.appendChild(fixture.nativeElement);
+    try {
+      const labelStyle = getComputedStyle(label);
+      expect(labelStyle.textTransform).toBe('uppercase');
+      expect(labelStyle.letterSpacing).not.toBe('normal');
+      expect(labelStyle.fontWeight).toBe('700');
+    } finally {
+      document.body.removeChild(fixture.nativeElement);
+    }
   });
 
   it('empty state renders an outline button host with a 14×14 leading sparkle', () => {

@@ -18,11 +18,25 @@
   justify-content: space-between;
   gap: 12px;
 
-  // .panel-label is defined in idea-detail.component.scss; the leading sparkle
-  // SVG inherits its muted color, so override to brand coral here.
   .panel-label svg {
     color: var(--blink-brand-primary);
   }
+}
+
+// View encapsulation prevents the parent idea-detail.component.scss
+// .panel-label rule from applying to this child component's DOM, so the
+// rule is duplicated here. Sibling detail components (brief-step,
+// concept-detail) follow the same pattern.
+.panel-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+  font-size: var(--blink-label-small);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: var(--blink-on-surface-muted);
+  text-transform: uppercase;
 }
 
 .options-panel-regenerate {
