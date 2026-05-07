@@ -26,4 +26,8 @@
     opacity: 0.5;
     cursor: not-allowed;
   }
+
+  &.outline-btn--compact {
+    padding-top: 0;
+  }
 }

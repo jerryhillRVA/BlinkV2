@@ -1,5 +1,6 @@
 <button
   class="outline-btn"
+  [class.outline-btn--compact]="compact()"
   type="button"
   [disabled]="disabled()"
   (click)="onClick()"

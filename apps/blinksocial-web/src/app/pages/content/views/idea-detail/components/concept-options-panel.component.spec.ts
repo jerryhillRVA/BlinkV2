@@ -78,6 +78,13 @@ describe('ConceptOptionsPanelComponent', () => {
     expect(svg).not.toBeNull();
     expect(svg?.getAttribute('width')).toBe('12');
     expect(svg?.getAttribute('height')).toBe('12');
+    // Must be the Lucide `sparkles` (plural) icon from the prototype:
+    // 1 main star path + 4 small twinkle paths = 5 paths total.
+    const paths = svg?.querySelectorAll('path') ?? [];
+    expect(paths.length).toBe(5);
+    const ds = Array.from(paths).map((p) => p.getAttribute('d'));
+    expect(ds).toContain('M22 5h-4');
+    expect(ds).toContain('M5 18H3');
     expect(
       fixture.nativeElement.querySelector('.options-panel-subtitle'),
     ).toBeNull();
@@ -108,6 +115,12 @@ describe('ConceptOptionsPanelComponent', () => {
     expect(svg).not.toBeNull();
     expect(svg?.getAttribute('width')).toBe('14');
     expect(svg?.getAttribute('height')).toBe('14');
+    // Same Lucide `sparkles` (plural) icon as the panel header.
+    const paths = svg?.querySelectorAll('path') ?? [];
+    expect(paths.length).toBe(5);
+    const ds = Array.from(paths).map((p) => p.getAttribute('d'));
+    expect(ds).toContain('M22 5h-4');
+    expect(ds).toContain('M5 18H3');
   });
 
   it('empty-state helper text matches the prototype copy exactly', () => {
@@ -119,6 +132,32 @@ describe('ConceptOptionsPanelComponent', () => {
     expect(hint.textContent?.trim()).toBe(
       'AI will suggest 6 strategic directions for this idea.',
     );
+  });
+
+  it('.options-empty wrapper has padding-top: 0', () => {
+    const { fixture } = setup();
+    document.body.appendChild(fixture.nativeElement);
+    try {
+      const empty = fixture.nativeElement.querySelector('.options-empty') as HTMLElement;
+      expect(empty).not.toBeNull();
+      expect(getComputedStyle(empty).paddingTop).toBe('0px');
+    } finally {
+      document.body.removeChild(fixture.nativeElement);
+    }
+  });
+
+  it('Generate Concept Options button has padding-top: 0', () => {
+    const { fixture } = setup();
+    document.body.appendChild(fixture.nativeElement);
+    try {
+      const innerBtn = fixture.nativeElement.querySelector(
+        '.btn-generate button.outline-btn',
+      ) as HTMLButtonElement;
+      expect(innerBtn).not.toBeNull();
+      expect(getComputedStyle(innerBtn).paddingTop).toBe('0px');
+    } finally {
+      document.body.removeChild(fixture.nativeElement);
+    }
   });
 
   it('empty container and helper text are left-aligned, not centered', () => {
