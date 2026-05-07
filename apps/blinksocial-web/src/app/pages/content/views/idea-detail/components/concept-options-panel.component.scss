@@ -14,22 +14,15 @@
 
 .options-panel-header {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   justify-content: space-between;
   gap: 12px;
-}
 
-.options-panel-title {
-  margin: 0 0 2px;
-  font-size: var(--blink-title-small);
-  font-weight: 700;
-  color: var(--blink-on-surface-strong);
-}
-
-.options-panel-subtitle {
-  margin: 0;
-  font-size: var(--blink-body-small);
-  color: var(--blink-on-surface-muted);
+  // .panel-label is defined in idea-detail.component.scss; the leading sparkle
+  // SVG inherits its muted color, so override to brand coral here.
+  .panel-label svg {
+    color: var(--blink-brand-primary);
+  }
 }
 
 .options-panel-regenerate {
@@ -54,35 +47,14 @@
 .options-empty {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  gap: 8px;
-  padding: 24px 16px;
-}
-
-.btn-generate {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 10px 18px;
-  border: none;
-  border-radius: 8px;
-  background: var(--blink-brand-primary);
-  color: var(--blink-on-brand, #fff);
-  font-size: var(--blink-body-medium);
-  font-weight: 600;
-  cursor: pointer;
-  transition: background 0.15s;
-
-  &:hover {
-    background: var(--blink-brand-primary-active, #c4452d);
-  }
+  gap: 6px;
+  padding: 8px 0 4px;
 }
 
 .options-empty-hint {
   margin: 0;
   font-size: var(--blink-body-small);
   color: var(--blink-on-surface-muted);
-  text-align: center;
 }
 
 .options-grid {

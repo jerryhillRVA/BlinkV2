@@ -44,7 +44,7 @@ test.describe('Idea detail page', () => {
   test('Generate Concept Options reveals 6 option cards after loading', async ({ page }) => {
     await page.locator('.kanban-column').first().locator('.content-card').first().click();
     await expect(page.locator('app-concept-options-panel')).toBeVisible();
-    await page.locator('app-concept-options-panel .btn-generate').click();
+    await page.locator('app-concept-options-panel .btn-generate button').click();
     await expect(page.locator('app-concept-options-panel .options-skeleton')).toHaveCount(6);
     await expect(page.locator('app-concept-option-card')).toHaveCount(6, { timeout: 10_000 });
   });
