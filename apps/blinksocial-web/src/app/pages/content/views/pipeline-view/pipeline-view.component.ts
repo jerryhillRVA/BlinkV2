@@ -4,6 +4,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { PlatformIconComponent } from '../../../../shared/platform-icon/platform-icon.component';
 import { expandPanel } from '../../../../core/animations/expand-panel.animation';
 import { ContentStateService } from '../../content-state.service';
+import { ContentTypePickerComponent } from '../content-create/content-type-picker/content-type-picker.component';
 import type { ContentItem, ContentPillar, ContentView, ViewMode, SortField, SortOrder, PipelineColumn, ContentItemType } from '../../content.types';
 import { PIPELINE_COLUMNS, STAGE_CONFIG, STATUS_CONFIG } from '../../content.constants';
 
@@ -27,7 +28,7 @@ function matchesColumn(item: ContentItem, col: PipelineColumn): boolean {
 
 @Component({
   selector: 'app-pipeline-view',
-  imports: [CommonModule, PlatformIconComponent],
+  imports: [CommonModule, PlatformIconComponent, ContentTypePickerComponent],
   animations: [expandPanel],
   templateUrl: './pipeline-view.component.html',
   styleUrl: './pipeline-view.component.scss',
@@ -55,6 +56,21 @@ export class PipelineViewComponent {
   @Output() navigateToStep = new EventEmitter<ContentView>();
   @Output() createItem = new EventEmitter<void>();
   @Output() createItemAs = new EventEmitter<ContentItemType>();
+
+  readonly pickerOpen = signal(false);
+
+  togglePicker(): void {
+    this.pickerOpen.update((v) => !v);
+  }
+
+  closePicker(): void {
+    this.pickerOpen.set(false);
+  }
+
+  onPickerSelected(type: ContentItemType): void {
+    this.pickerOpen.set(false);
+    this.createItemAs.emit(type);
+  }
 
   readonly viewMode = signal<ViewMode>(this.loadViewMode());
   readonly searchQuery = signal('');

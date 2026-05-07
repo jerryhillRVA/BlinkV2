@@ -1,0 +1,36 @@
+@if (open()) {
+  <div class="picker" role="menu" aria-label="What are you creating?">
+    <p class="picker-heading">What are you creating?</p>
+    @for (option of options; track option.type) {
+      <button
+        type="button"
+        role="menuitem"
+        class="picker-item"
+        [attr.data-type]="option.type"
+        (click)="onSelect(option.type)"
+      >
+        <span class="picker-icon">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="none"
+            [attr.stroke]="option.iconColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            @for (d of option.iconPaths; track d) {
+              <path [attr.d]="d" />
+            }
+          </svg>
+        </span>
+        <span class="picker-text">
+          <span class="picker-label">{{ option.label }}</span>
+          <span class="picker-description">{{ option.description }}</span>
+        </span>
+      </button>
+    }
+  </div>
+}

@@ -305,10 +305,10 @@ describe('ContentComponent', () => {
       expect(component.activeView()).toBe('production');
     });
 
-    it('renders the modal when showCreate is true', () => {
+    it('renders the drawer when showCreate is true', () => {
       component.openCreate();
       fixture.detectChanges();
-      expect(fixture.nativeElement.querySelector('app-content-create-modal')).toBeTruthy();
+      expect(fixture.nativeElement.querySelector('app-content-create-drawer')).toBeTruthy();
     });
 
     it('onMoveToProduction keeps modal open (does not call closeCreate)', () => {
