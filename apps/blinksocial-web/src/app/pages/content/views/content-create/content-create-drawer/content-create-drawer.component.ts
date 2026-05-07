@@ -45,7 +45,8 @@ export class ContentCreateDrawerComponent implements AfterViewInit {
 
   @ViewChild('drawerTpl', { static: true }) drawerTpl!: TemplateRef<unknown>;
   private drawerView!: EmbeddedViewRef<unknown>;
-  private rootEl!: HTMLElement;
+  private backdropEl!: HTMLElement;
+  private drawerEl!: HTMLElement;
   private previouslyFocused!: HTMLElement;
 
   ngAfterViewInit(): void {
@@ -53,25 +54,38 @@ export class ContentCreateDrawerComponent implements AfterViewInit {
     this.drawerView = this.vcr.createEmbeddedView(this.drawerTpl);
     this.drawerView.detectChanges();
     const body = this.doc.body;
-    this.rootEl = this.drawerView.rootNodes[0] as HTMLElement;
-    body.appendChild(this.rootEl);
+    // The template has two root nodes: the backdrop and the drawer (in that
+    // order). Append both to <body> so each has its own viewport-anchored
+    // positioning context regardless of any ancestor transforms.
+    const [backdrop, drawer] = this.drawerView.rootNodes as HTMLElement[];
+    this.backdropEl = backdrop;
+    this.drawerEl = drawer;
+    body.appendChild(this.backdropEl);
+    body.appendChild(this.drawerEl);
     body.style.overflow = 'hidden';
-    // Add the .open class on the next frame so the slide-up transition runs
-    // from translateY(100%) → translateY(0).
+    // Add the .open class on the next frame so the backdrop fade-in and the
+    // drawer slide-up (translateY(100%) → translateY(0)) both run.
     requestAnimationFrame(() => {
-      this.rootEl.classList.add('open');
-      this.rootEl
+      this.backdropEl.classList.add('open');
+      this.drawerEl.classList.add('open');
+      this.drawerEl
         .querySelector<HTMLElement>('input, textarea, select, button')
         ?.focus();
     });
     this.destroyRef.onDestroy(() => {
       this.drawerView.destroy();
+      this.backdropEl.remove();
+      this.drawerEl.remove();
       body.style.overflow = '';
       this.previouslyFocused.focus();
     });
   }
 
   protected onEscape(): void {
+    this.cancelCreate.emit();
+  }
+
+  protected onBackdropClick(): void {
     this.cancelCreate.emit();
   }
 }

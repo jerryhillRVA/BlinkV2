@@ -43,12 +43,121 @@ describe('ContentCreateDrawerComponent', () => {
     expect(document.body.style.overflow).toBe('');
   });
 
-  it('renders no backdrop / modal-overlay element', () => {
+  it('renders a backdrop alongside the drawer in document.body', () => {
+    const fixture = make();
+    const backdrop = document.body.querySelector(
+      '[data-testid="content-create-drawer-backdrop"]',
+    );
+    expect(backdrop).not.toBeNull();
+    // The backdrop must be a sibling at the body level, not nested inside
+    // the drawer (so its z-index sits between the page and the drawer).
+    expect(backdrop?.parentElement).toBe(document.body);
+    fixture.destroy();
+  });
+
+  it('marks the backdrop aria-hidden so it is invisible to assistive tech', () => {
+    const fixture = make();
+    const backdrop = document.body.querySelector(
+      '[data-testid="content-create-drawer-backdrop"]',
+    );
+    expect(backdrop?.getAttribute('aria-hidden')).toBe('true');
+    fixture.destroy();
+  });
+
+  it('emits cancelCreate when the backdrop is clicked', () => {
+    const fixture = make();
+    let cancelled = 0;
+    fixture.componentInstance.cancelCreate.subscribe(() => cancelled++);
+    const backdrop = document.body.querySelector(
+      '[data-testid="content-create-drawer-backdrop"]',
+    ) as HTMLElement;
+    backdrop.click();
+    expect(cancelled).toBe(1);
+    fixture.destroy();
+  });
+
+  it('adds the .open class to the backdrop on the next animation frame', async () => {
+    const fixture = make();
+    const backdrop = document.body.querySelector(
+      '[data-testid="content-create-drawer-backdrop"]',
+    ) as HTMLElement;
+    expect(backdrop.classList.contains('open')).toBe(false);
+    await new Promise<void>((resolve) =>
+      requestAnimationFrame(() => resolve()),
+    );
+    expect(backdrop.classList.contains('open')).toBe(true);
+    fixture.destroy();
+  });
+
+  it('renders square top corners (no border-radius) so the drawer sits flush against the header', () => {
+    const fixture = make();
+    const drawer = document.body.querySelector(
+      '[data-testid="content-create-drawer"]',
+    ) as HTMLElement;
+    const styles = getComputedStyle(drawer);
+    expect(parseFloat(styles.borderTopLeftRadius)).toBe(0);
+    expect(parseFloat(styles.borderTopRightRadius)).toBe(0);
+    fixture.destroy();
+  });
+
+  it('insets the drawer content with at least 2rem of horizontal padding', () => {
+    const fixture = make();
+    const drawer = document.body.querySelector(
+      '[data-testid="content-create-drawer"]',
+    ) as HTMLElement;
+    // jsdom's default root font-size is 16px, so 2rem === 32px.
+    expect(parseFloat(getComputedStyle(drawer).paddingLeft)).toBeGreaterThanOrEqual(32);
+    expect(parseFloat(getComputedStyle(drawer).paddingRight)).toBeGreaterThanOrEqual(32);
+    fixture.destroy();
+  });
+
+  it('caps the form content at 1280px max-width and centers it horizontally', () => {
+    const fixture = make();
+    const form = document.body.querySelector(
+      'app-content-create-form',
+    ) as HTMLElement;
+    const styles = getComputedStyle(form);
+    expect(styles.maxWidth).toBe('1280px');
+    expect(styles.marginLeft).toBe('auto');
+    expect(styles.marginRight).toBe('auto');
+    fixture.destroy();
+  });
+
+  it('renders the shared dashboard-bg image inside the drawer (decorative)', () => {
+    const fixture = make();
+    const drawer = document.body.querySelector(
+      '[data-testid="content-create-drawer"]',
+    ) as HTMLElement;
+    const img = drawer.querySelector('img[src*="dashboard-bg"]');
+    expect(img).not.toBeNull();
+    // Decorative: must not be announced by assistive tech.
+    const wrapper = img?.closest('[aria-hidden="true"]');
+    expect(wrapper).not.toBeNull();
+    fixture.destroy();
+  });
+
+  it('positions the backdrop below the 64px app header (does not cover it)', () => {
+    const fixture = make();
+    const backdrop = document.body.querySelector(
+      '[data-testid="content-create-drawer-backdrop"]',
+    ) as HTMLElement;
+    expect(getComputedStyle(backdrop).top).toBe('64px');
+    fixture.destroy();
+  });
+
+  it('removes the backdrop from the DOM when destroyed', () => {
     const fixture = make();
     expect(
-      document.body.querySelector('.modal-overlay, .drawer-backdrop'),
-    ).toBeNull();
+      document.body.querySelector(
+        '[data-testid="content-create-drawer-backdrop"]',
+      ),
+    ).not.toBeNull();
     fixture.destroy();
+    expect(
+      document.body.querySelector(
+        '[data-testid="content-create-drawer-backdrop"]',
+      ),
+    ).toBeNull();
   });
 
   it('renders the inner ContentCreateFormComponent and forwards initialType', () => {

@@ -1,5 +1,11 @@
 <ng-template #drawerTpl>
   <div
+    class="content-create-drawer-backdrop"
+    data-testid="content-create-drawer-backdrop"
+    aria-hidden="true"
+    (click)="onBackdropClick()"
+  ></div>
+  <div
     class="content-create-drawer"
     role="dialog"
     aria-labelledby="content-create-title"
@@ -8,6 +14,9 @@
     data-testid="content-create-drawer"
     (keyup.escape)="onEscape()"
   >
+    <div class="content-create-drawer-bg" aria-hidden="true">
+      <img src="dashboard-bg.jpg" alt="" />
+    </div>
     <button
       type="button"
       class="drawer-close"
