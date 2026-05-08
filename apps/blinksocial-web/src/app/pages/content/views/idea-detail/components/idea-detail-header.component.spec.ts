@@ -37,6 +37,34 @@ describe('IdeaDetailHeaderComponent', () => {
     expect(fixture.nativeElement.querySelector('.detail-back')).toBeNull();
   });
 
+  it('title (.inline-edit-display.detail-title) renders bold like the prototype', () => {
+    const fixture = setup();
+    document.body.appendChild(fixture.nativeElement);
+    try {
+      const titleBtn = fixture.nativeElement.querySelector(
+        '.inline-edit-display.detail-title',
+      ) as HTMLButtonElement;
+      expect(titleBtn).not.toBeNull();
+      expect(getComputedStyle(titleBtn).fontWeight).toBe('700');
+    } finally {
+      document.body.removeChild(fixture.nativeElement);
+    }
+  });
+
+  // Title font-size (20px) is verified end-to-end via Playwright, not here.
+  // jsdom doesn't honor the cross-stylesheet cascade we depend on:
+  // the consumer's `:host ::ng-deep .inline-edit-display.detail-title`
+  // rule (specificity 0,3,0, with !important) does not override
+  // inline-edit's `.inline-edit-display { font-size: inherit }` rule
+  // (0,2,0) because jsdom's CSSOM picks up source order over specificity
+  // and ignores !important across emulated-encapsulation <style> tags.
+  // Real Chromium handles the cascade correctly.
+  // See apps/blinksocial-web-e2e/src/idea-detail.spec.ts →
+  //   "Idea detail header typography › title ... renders at 20px and weight 700".
+  it.skip('title (.inline-edit-display.detail-title) renders at 20px (E2E)', () => {
+    /* covered by Playwright E2E — see comment above */
+  });
+
   it('stage badge switches with the item stage', () => {
     const fixture = setup(makeItem({ stage: 'concept' }));
     const badge = fixture.nativeElement.querySelector('.stage-badge') as HTMLElement;

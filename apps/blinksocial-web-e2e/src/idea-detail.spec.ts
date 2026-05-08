@@ -14,6 +14,25 @@ async function openFirstIdea(page: Page): Promise<void> {
   await expect(page.locator('app-idea-detail')).toBeVisible();
 }
 
+// WebKit and Chromium round CSS color values differently when computing
+// from hex/oklch sources — channels can differ by ±1. Use a tolerance
+// when asserting exact rgb() strings.
+function expectRgbNear(actual: string, expected: [number, number, number], tol = 2): void {
+  const m = actual.match(/^rgba?\((\d+),\s*(\d+),\s*(\d+)/);
+  expect(m, `expected rgb()-like string, got: ${actual}`).not.toBeNull();
+  const [r, g, b] = [Number(m![1]), Number(m![2]), Number(m![3])];
+  for (const [name, got, want] of [
+    ['r', r, expected[0]],
+    ['g', g, expected[1]],
+    ['b', b, expected[2]],
+  ] as const) {
+    expect(
+      Math.abs(got - want),
+      `${name} channel: got ${got}, want ~${want} (±${tol})`,
+    ).toBeLessThanOrEqual(tol);
+  }
+}
+
 test.describe('Idea detail page', () => {
   test.beforeEach(async ({ page }) => {
     await mockAuthenticatedUser(page);
@@ -75,6 +94,155 @@ test.describe('Idea detail page', () => {
     // URL changed to a different content item under the same workspace
     await expect(page).toHaveURL(/\/workspace\/[^/]+\/content\/[^/]+$/);
     expect(page.url()).not.toBe(ideaUrl);
+  });
+});
+
+// Idea detail header — title typography (real-browser verification).
+//
+// The font-size assertion lives here rather than in
+// idea-detail-header.component.spec.ts because jsdom doesn't honor the
+// cross-component cascade we depend on (consumer's
+// `:host ::ng-deep .inline-edit-display.detail-title { font-size: 20px }`
+// vs inline-edit's `.inline-edit-display { font-size: inherit }`). Real
+// Chromium honors specificity and !important correctly.
+test.describe('Idea detail header typography', () => {
+  test.beforeEach(async ({ page }) => {
+    await mockAuthenticatedUser(page);
+    await mockHiveContent(page);
+    await page.goto('/workspace/hive-collective/content');
+    await openFirstIdea(page);
+  });
+
+  test('title (.inline-edit-display.detail-title) renders at 20px and weight 700', async ({ page }) => {
+    const titleBtn = page.locator('app-idea-detail-header .inline-edit-display.detail-title').first();
+    await expect(titleBtn).toBeVisible();
+    const computed = await titleBtn.evaluate((el) => ({
+      fontSize: getComputedStyle(el).fontSize,
+      fontWeight: getComputedStyle(el).fontWeight,
+    }));
+    expect(computed.fontSize).toBe('20px');
+    expect(computed.fontWeight).toBe('700');
+  });
+
+  test('description textarea matches prototype: permanent (always visible), borderless, gray focus ring, 88px min, 14px / 1.625, prototype placeholder', async ({ page }) => {
+    // The description is a permanent textarea (matching the prototype's
+    // always-on Textarea), NOT a click-to-edit display→textarea swap.
+    const textarea = page.locator(
+      'app-idea-detail textarea.detail-description-input',
+    ).first();
+    await expect(textarea).toBeVisible();
+    // No `.inline-edit-display.detail-description` button should exist —
+    // there's no display state to swap to.
+    await expect(
+      page.locator('app-idea-detail .inline-edit-display.detail-description'),
+    ).toHaveCount(0);
+
+    // Default (unfocused) state must already show the gray box —
+    // background = --blink-input-bg-dark = #f3f4f6 = rgb(243, 244, 246).
+    // WebKit rounds RGB channels by ±1 vs Chromium, so use a tolerance.
+    const bgUnfocused = await textarea.evaluate((el) => getComputedStyle(el).backgroundColor);
+    expectRgbNear(bgUnfocused, [243, 244, 246]);
+
+    // Re-focus explicitly — Playwright's `.click()` on the wrapper button
+    // can leave focus unsettled by the time evaluate() runs.
+    await textarea.focus();
+    await page.waitForTimeout(100);
+    const computed = await textarea.evaluate((el) => {
+      const cs = getComputedStyle(el);
+      return {
+        resize: cs.resize,
+        borderTopWidth: cs.borderTopWidth,
+        borderRightWidth: cs.borderRightWidth,
+        borderBottomWidth: cs.borderBottomWidth,
+        borderLeftWidth: cs.borderLeftWidth,
+        borderRadius: cs.borderRadius,
+        padding: cs.padding,
+        minHeight: cs.minHeight,
+        fontSize: cs.fontSize,
+        lineHeight: cs.lineHeight,
+        backgroundColor: cs.backgroundColor,
+        boxShadow: cs.boxShadow,
+        placeholder: (el as HTMLTextAreaElement).placeholder,
+      };
+    });
+
+    // Non-resizable
+    expect(computed.resize).toBe('none');
+
+    // Borderless on all four sides
+    expect(computed.borderTopWidth).toBe('0px');
+    expect(computed.borderRightWidth).toBe('0px');
+    expect(computed.borderBottomWidth).toBe('0px');
+    expect(computed.borderLeftWidth).toBe('0px');
+
+    // 8px radius and 8px 12px padding match the prototype shadcn Textarea.
+    expect(computed.borderRadius).toBe('8px');
+    expect(computed.padding).toBe('8px 12px');
+
+    // 88px min-height (prototype `min-h-[88px]`)
+    expect(computed.minHeight).toBe('88px');
+
+    // 14px (prototype `text-sm` ≡ --blink-body-medium)
+    expect(computed.fontSize).toBe('14px');
+
+    // 1.625 line-height (prototype `leading-relaxed`) — Chromium reports as
+    // px after multiplying by font-size: 14 × 1.625 = 22.75 → '22.75px'.
+    // Allow a tiny tolerance and reject 'normal'.
+    expect(computed.lineHeight).not.toBe('normal');
+    const lh = parseFloat(computed.lineHeight);
+    expect(lh).toBeGreaterThan(22);
+    expect(lh).toBeLessThan(24);
+
+    // Focused background (autofocused on click).
+    // --blink-input-bg-focus = #edeff2 = rgb(237, 239, 242)
+    // WebKit rounds RGB channels by ±1 vs Chromium, so use a tolerance.
+    expectRgbNear(computed.backgroundColor, [237, 239, 242]);
+
+    // Focus ring should be a thin neutral gray, NOT the prior coral glow.
+    // --blink-outline = rgba(0, 0, 0, 0.1) on a near-white surface →
+    // visually equivalent to the prototype's ring-gray-200.
+    // Tolerance: the page-enter animation can cause sub-pixel rendering
+    // during this assertion, slightly perturbing alpha and spread.
+    const shadowMatch = computed.boxShadow.match(
+      /rgba\((\d+),\s*(\d+),\s*(\d+),\s*([\d.]+)\)\s*[\d.]+px\s*[\d.]+px\s*[\d.]+px\s*([\d.]+)px/,
+    );
+    expect(shadowMatch).not.toBeNull();
+    const [, r, g, b, alpha, spread] = shadowMatch!;
+    expect(`${r},${g},${b}`).toBe('0,0,0');
+    const a = parseFloat(alpha);
+    expect(a).toBeGreaterThan(0.05);
+    expect(a).toBeLessThanOrEqual(0.1);
+    const sp = parseFloat(spread);
+    expect(sp).toBeGreaterThan(0.5);
+    expect(sp).toBeLessThanOrEqual(1.0);
+
+    // Placeholder copy matches prototype.
+    expect(computed.placeholder).toBe('Add a description to get sharper concept options…');
+
+    // Verify default-state background rule presence (the textarea is
+    // permanent now but we still want to confirm the rule exists in case
+    // future refactors break the `:focus` cascade).
+    const ruleHasDefaultBg = await page.evaluate(() => {
+      const styles = Array.from(document.styleSheets);
+      for (const ss of styles) {
+        try {
+          for (const rule of Array.from(ss.cssRules) as CSSRule[]) {
+            if (
+              rule instanceof CSSStyleRule &&
+              rule.selectorText.includes('.detail-description-input') &&
+              !rule.selectorText.includes(':focus') &&
+              rule.style.background.includes('--blink-input-bg-dark')
+            ) {
+              return true;
+            }
+          }
+        } catch {
+          /* ignore cross-origin stylesheets */
+        }
+      }
+      return false;
+    });
+    expect(ruleHasDefaultBg).toBe(true);
   });
 });
 

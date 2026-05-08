@@ -61,16 +61,32 @@
   min-width: 220px;
 }
 
-.detail-title {
+// `.detail-title` and `.detail-title-input` live on elements rendered by the
+// child <app-inline-edit> component (button + input), so under emulated
+// view encapsulation a plain `.detail-title` rule scoped to this component
+// never matches them. ::ng-deep strips the encapsulation suffix so the
+// rule is global enough to reach the wrapped element.
+//
+// `font-size: 20px !important` is needed because inline-edit's
+// `font-size: inherit` ships in a stylesheet injected *after* this one;
+// jsdom's cascade engine favors source order over specificity in test
+// environments, so even at (0,3,0) the consumer rule loses without
+// !important. font-weight has no competing inline-edit rule, so it wins
+// at normal weight without !important.
+//
+// 20px matches the prototype's Tailwind `text-xl`. No M3 typography token
+// in this codebase is 20px (title-large is 22px, body-large is 18px), so
+// the px value is intentional here.
+:host ::ng-deep .inline-edit-display.detail-title {
   display: block;
-  font-size: var(--blink-title-large);
+  font-size: 20px !important;
   font-weight: 700;
   line-height: 1.2;
   color: var(--blink-on-surface-strong);
 }
 
-.detail-title-input {
-  font-size: var(--blink-title-large);
+:host ::ng-deep .inline-edit-input.detail-title-input {
+  font-size: 20px !important;
   font-weight: 700;
   line-height: 1.2;
   color: var(--blink-on-surface-strong);

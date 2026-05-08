@@ -122,11 +122,39 @@
   line-height: 1.45;
 }
 
-.detail-description,
+// Description textarea — permanent (no click-to-edit), matching the
+// prototype's always-on shadcn <Textarea> with fieldStyles
+// (`bg-[#f3f4f6] border-none focus-visible:ring-1 ring-gray-200
+// focus-visible:bg-[#edeff2]`) plus `min-h-[88px] resize-none text-sm
+// leading-relaxed`.
+//
+// Now a raw <textarea> in the component template (not wrapped in
+// app-inline-edit), so the rule is plain-component-scoped — no
+// :host ::ng-deep, no !important needed.
+//
+// The 88px min-height and 1.625 line-height match the prototype directly;
+// no token resolves to those exact values, so they're hardcoded with this
+// comment as the rationale.
 .detail-description-input {
-  font-size: var(--blink-body-medium);
+  display: block;
+  width: 100%;
+  resize: none;
+  border: none;
+  border-radius: 8px;
+  padding: 8px 12px;
+  background: var(--blink-input-bg-dark);
   color: var(--blink-on-surface);
-  line-height: 1.55;
+  min-height: 88px;
+  font-family: inherit;
+  font-size: var(--blink-body-medium);
+  line-height: 1.625;
+  outline: none;
+  transition: background-color 0.15s, box-shadow 0.15s;
+
+  &:focus {
+    background: var(--blink-input-bg-focus);
+    box-shadow: 0 0 0 1px var(--blink-outline);
+  }
 }
 
 .chip-grid {

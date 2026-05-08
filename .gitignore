@@ -56,6 +56,7 @@ Thumbs.db
 __screenshots__/
 
 test-output
+test-results
 
 figma/package-lock.json
 playwright-report/

@@ -40,15 +40,13 @@
 
         <section class="panel">
           <h3 class="panel-label">Description</h3>
-          <app-inline-edit
+          <textarea
+            class="detail-description-input"
+            placeholder="Add a description to get sharper concept options…"
+            aria-label="Edit description"
             [value]="item.description"
-            [multiline]="true"
-            [placeholder]="'Add a description…'"
-            displayClass="detail-description"
-            inputClass="detail-description-input"
-            ariaLabel="Edit description"
-            (valueChange)="onDescriptionChange($event)"
-          />
+            (change)="onDescriptionChange($any($event.target).value)"
+          ></textarea>
         </section>
 
         <app-concept-options-panel />
