@@ -34,11 +34,4 @@ export class ContentJourneyComponent {
       state: i < idx ? 'past' : i === idx ? 'current' : 'future',
     }));
   });
-
-  protected readonly progressPercent = computed(() => {
-    const idx = JOURNEY_ORDER.findIndex((s) => s.stage === this.stage());
-    if (idx < 0) return 0;
-    // 0 → 0%, 1 → 50%, 2 → 100%
-    return (idx / (JOURNEY_ORDER.length - 1)) * 100;
-  });
 }

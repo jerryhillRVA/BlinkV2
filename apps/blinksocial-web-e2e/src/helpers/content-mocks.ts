@@ -187,6 +187,7 @@ interface MockHiveOptions {
   workspaceId?: string;
   indexItems?: ReadonlyArray<ContentItemsIndexEntryContract>;
   details?: Record<string, ContentItemContract>;
+  objectives?: ReadonlyArray<BusinessObjectiveContract>;
 }
 
 /**
@@ -208,6 +209,7 @@ export const mockHiveContent = async (
     ...BASE_DETAILS,
     ...(options.details ?? {}),
   };
+  const objectives = options.objectives ?? OBJECTIVES_PAYLOAD;
 
   // Catch-all detail route (registered first → invoked LAST as fallback).
   // Echoes back the PUT/POST body so the frontend's optimistic state
@@ -233,6 +235,10 @@ export const mockHiveContent = async (
             // ignore parse errors, fall through with stored detail
           }
         }
+        // Persist the merged object so subsequent GETs (e.g. after reload)
+        // reflect the change. Echo-only previously left GETs returning stale
+        // data after a write.
+        details[itemId] = merged as ContentItemContract;
         return route.fulfill({
           status: 200,
           contentType: 'application/json',
@@ -296,7 +302,7 @@ export const mockHiveContent = async (
       route.fulfill({
         status: 200,
         contentType: 'application/json',
-        body: JSON.stringify(OBJECTIVES_PAYLOAD),
+        body: JSON.stringify(objectives),
       }),
   );
 };

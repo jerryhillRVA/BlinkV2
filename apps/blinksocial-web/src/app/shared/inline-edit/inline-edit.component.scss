@@ -12,7 +12,12 @@
   border-radius: 6px;
   background: transparent;
   color: inherit;
-  font: inherit;
+  // Explicit longhand instead of `font: inherit` — the shorthand resets
+  // font-weight, which clobbers consumer classes like `.detail-title`
+  // (font-weight: 700) when this button is wrapped by app-inline-edit.
+  font-family: inherit;
+  font-size: inherit;
+  line-height: inherit;
   text-align: inherit;
   cursor: text;
   transition: background 0.15s, border-color 0.15s;
@@ -47,7 +52,10 @@
   border-radius: 6px;
   background: var(--blink-surface);
   color: var(--blink-on-surface);
-  font: inherit;
+  // Explicit longhand instead of `font: inherit` — see .inline-edit-display.
+  font-family: inherit;
+  font-size: inherit;
+  line-height: inherit;
   outline: none;
   box-sizing: content-box;
   resize: vertical;

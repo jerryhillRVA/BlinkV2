@@ -8,6 +8,7 @@ import { ConceptOptionsPanelComponent } from './components/concept-options-panel
 import { ContentJourneyComponent } from './components/content-journey.component';
 import { DetailBackButtonComponent } from '../_shared/detail-back-button/detail-back-button.component';
 import { StatusStepperComponent } from '../../components/status-stepper/status-stepper.component';
+import { TooltipComponent } from '../../../../shared/tooltip/tooltip.component';
 import { MAX_PILLARS_PER_ITEM } from '../../content.constants';
 import type { ContentStatus } from '../../content.types';
 
@@ -21,6 +22,7 @@ import type { ContentStatus } from '../../content.types';
     ContentJourneyComponent,
     DetailBackButtonComponent,
     StatusStepperComponent,
+    TooltipComponent,
   ],
   providers: [IdeaDetailStore],
   templateUrl: './idea-detail.component.html',
@@ -50,17 +52,27 @@ export class IdeaDetailComponent {
     () => (this.store.item()?.pillarIds.length ?? 0) >= this.maxPillars,
   );
 
+  // Mirrors the prototype: hide objectives whose statement is empty/whitespace.
+  protected readonly validObjectives = computed(() =>
+    this.store
+      .businessObjectives()
+      .filter((o) => o.statement.trim().length > 0),
+  );
+
   protected formatDate(iso: string | undefined): string {
     if (!iso) return '';
     const d = new Date(iso);
     if (isNaN(d.getTime())) return '';
-    return d.toLocaleString(undefined, {
+    return d.toLocaleDateString(undefined, {
+      weekday: 'short',
       month: 'short',
       day: 'numeric',
       year: 'numeric',
-      hour: 'numeric',
-      minute: '2-digit',
     });
+  }
+
+  protected truncateStatement(s: string): string {
+    return s.length > 50 ? s.slice(0, 50) + '…' : s;
   }
 
   protected isPillarSelected(id: string): boolean {
@@ -114,16 +126,6 @@ export class IdeaDetailComponent {
 
   protected onHookChange(v: string): void {
     this.store.updateHook(v);
-  }
-
-  protected tagsDisplay(): string {
-    return (this.store.item()?.tags ?? []).join(', ');
-  }
-
-  protected onTagsChange(evt: Event): void {
-    const raw = (evt.target as HTMLInputElement | null)?.value ?? '';
-    const tags = raw.split(',');
-    this.store.setTags(tags);
   }
 
   protected onObjectiveClick(id: string): void {

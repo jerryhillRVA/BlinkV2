@@ -146,7 +146,7 @@ describe('ConceptOptionsPanelComponent', () => {
     }
   });
 
-  it('Generate Concept Options button has padding-top: 0', () => {
+  it('Generate Concept Options button keeps the shared outline-btn vertical padding (centered text)', () => {
     const { fixture } = setup();
     document.body.appendChild(fixture.nativeElement);
     try {
@@ -154,7 +154,9 @@ describe('ConceptOptionsPanelComponent', () => {
         '.btn-generate button.outline-btn',
       ) as HTMLButtonElement;
       expect(innerBtn).not.toBeNull();
-      expect(getComputedStyle(innerBtn).paddingTop).toBe('0px');
+      // The compact override was removed; the button now uses the shared
+      // outline-btn 6px top/bottom padding so the label is vertically centered.
+      expect(getComputedStyle(innerBtn).paddingTop).toBe('6px');
     } finally {
       document.body.removeChild(fixture.nativeElement);
     }
