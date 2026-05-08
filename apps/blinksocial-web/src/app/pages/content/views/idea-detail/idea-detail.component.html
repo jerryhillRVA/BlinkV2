@@ -113,16 +113,18 @@
             @if (store.pillars().length === 0) {
               <p class="panel-empty">No pillars defined yet.</p>
             } @else {
-              <div class="chip-grid">
+              <div class="chip-grid chip-grid--pillar">
                 @for (p of store.pillars(); track p.id) {
                   <button
                     type="button"
                     class="chip"
                     [class.is-active]="isPillarSelected(p.id)"
                     [disabled]="!isPillarSelected(p.id) && pillarsAtLimit()"
+                    [style.background-color]="pillarBg(p)"
+                    [style.border-color]="pillarBorder(p)"
+                    [style.color]="pillarText(p)"
                     (click)="togglePillar(p.id)"
                   >
-                    <span class="chip-dot" [style.background-color]="p.color"></span>
                     {{ p.name }}
                   </button>
                 }
@@ -149,7 +151,7 @@
             @if (store.segments().length === 0) {
               <p class="panel-empty">No audience segments defined yet.</p>
             } @else {
-              <div class="chip-grid">
+              <div class="chip-grid chip-grid--segment">
                 @for (s of store.segments(); track s.id) {
                   <button
                     type="button"

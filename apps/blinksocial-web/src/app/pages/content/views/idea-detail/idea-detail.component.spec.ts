@@ -197,6 +197,73 @@ describe('IdeaDetailComponent — Timestamps panel', () => {
   });
 });
 
+describe('IdeaDetailComponent — chip-grid variants (#108)', () => {
+  it('pillar chip-grid carries the .chip-grid--pillar modifier; audience carries .chip-grid--segment', () => {
+    const { fixture } = setup();
+    const grids = fixture.nativeElement.querySelectorAll('.chip-grid');
+    const pillarGrids = fixture.nativeElement.querySelectorAll('.chip-grid--pillar');
+    const segmentGrids = fixture.nativeElement.querySelectorAll('.chip-grid--segment');
+    expect(pillarGrids.length).toBe(1);
+    expect(segmentGrids.length).toBe(1);
+    // Both modifier grids are still .chip-grid
+    expect(grids.length).toBe(2);
+  });
+
+  it('no .chip-dot exists inside the pillar chip-grid (dot was removed)', () => {
+    const { fixture } = setup();
+    const dotsInPillars = fixture.nativeElement.querySelectorAll(
+      '.chip-grid--pillar .chip-dot',
+    );
+    expect(dotsInPillars.length).toBe(0);
+  });
+
+  it('selected pillar chip carries non-empty inline style.color/backgroundColor/borderColor', () => {
+    const { fixture, store } = setup();
+    store.togglePillar('p1');
+    fixture.detectChanges();
+    const selectedChip = fixture.nativeElement.querySelector(
+      '.chip-grid--pillar .chip.is-active',
+    ) as HTMLButtonElement;
+    expect(selectedChip).not.toBeNull();
+    // Don't pin exact hex (jsdom serialization is brittle); just confirm bindings fired.
+    expect(selectedChip.style.color.length).toBeGreaterThan(0);
+    expect(selectedChip.style.backgroundColor.length).toBeGreaterThan(0);
+    expect(selectedChip.style.borderColor.length).toBeGreaterThan(0);
+
+    // Unselected pillar chips carry no inline color styles.
+    const otherChips = Array.from(
+      fixture.nativeElement.querySelectorAll(
+        '.chip-grid--pillar .chip:not(.is-active)',
+      ) as NodeListOf<HTMLButtonElement>,
+    );
+    for (const c of otherChips) {
+      expect(c.style.color).toBe('');
+      expect(c.style.backgroundColor).toBe('');
+      expect(c.style.borderColor).toBe('');
+    }
+  });
+
+  it('pillarBg/Border/Text helpers return null when unselected and rgba() when selected', () => {
+    const { fixture, store } = setup();
+    store.togglePillar('p2'); // p2 = '#222' → rgb(34, 34, 34)
+    fixture.detectChanges();
+    const comp = fixture.componentInstance as unknown as {
+      pillarBg: (p: ContentPillar) => string | null;
+      pillarBorder: (p: ContentPillar) => string | null;
+      pillarText: (p: ContentPillar) => string | null;
+    };
+    const p2 = PILLARS[1]; // selected, color #222
+    const p1 = PILLARS[0]; // unselected
+    // Helpers convert #RRGGBB to rgba(R, G, B, A) so jsdom accepts the value.
+    expect(comp.pillarBg(p2)).toMatch(/^rgba\(34, 34, 34, 0\.0\d+\)$/);
+    expect(comp.pillarBorder(p2)).toMatch(/^rgba\(34, 34, 34, 0\.2\d+\)$/);
+    expect(comp.pillarText(p2)).toBe(p2.color);
+    expect(comp.pillarBg(p1)).toBeNull();
+    expect(comp.pillarBorder(p1)).toBeNull();
+    expect(comp.pillarText(p1)).toBeNull();
+  });
+});
+
 describe('IdeaDetailComponent — interactions', () => {
   it('pillar chip click toggles selection via store', () => {
     const { fixture, store } = setup();

@@ -501,4 +501,202 @@ test.describe('Idea detail right column (#106)', () => {
 
     await page.screenshot({ path: `${SHOTS_DIR}/tc-10-dark-theme.png`, fullPage: true });
   });
+
+  // ──────────────────────────────────────────────────────────────────
+  // #108 polish — section icons gray, stage badge rounded-rect, pillar
+  // data-driven tint, audience blue, tooltips flush.
+  // ──────────────────────────────────────────────────────────────────
+
+  test('TC-11: section header icons render in muted gray, not coral', async ({ page }) => {
+    await mockHiveContent(page);
+    await page.goto('/workspace/hive-collective/content');
+    await openFirstIdea(page);
+
+    const svgs = page.locator('app-idea-detail .strategy-section .panel-label > svg');
+    await expect(svgs).toHaveCount(3);
+    for (let i = 0; i < 3; i++) {
+      const c = await svgs.nth(i).evaluate((el) => getComputedStyle(el).color);
+      // Coral is rgb(217, 78, 51). Anything in that family means we regressed.
+      const m = c.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)/);
+      expect(m, `expected rgb()-like color, got: ${c}`).not.toBeNull();
+      const [r, g, b] = [Number(m![1]), Number(m![2]), Number(m![3])];
+      const isCoral = Math.abs(r - 217) < 30 && Math.abs(g - 78) < 30 && Math.abs(b - 51) < 30;
+      expect(isCoral, `icon ${i} computed color is coral-ish: ${c}`).toBe(false);
+    }
+  });
+
+  test('TC-12: stage badge is rounded-rect with no uppercase transform', async ({ page }) => {
+    await mockHiveContent(page);
+    await page.goto('/workspace/hive-collective/content');
+    await openFirstIdea(page);
+
+    const badge = page.locator('app-idea-detail-header .stage-badge').first();
+    await expect(badge).toBeVisible();
+    const computed = await badge.evaluate((el) => ({
+      borderRadius: getComputedStyle(el).borderRadius,
+      textTransform: getComputedStyle(el).textTransform,
+      text: el.textContent?.trim() ?? '',
+    }));
+    expect(computed.borderRadius).toBe('6px');
+    expect(computed.textTransform).toBe('none');
+    expect(computed.text).toContain('Idea');
+    expect(computed.text).not.toContain('IDEA');
+  });
+
+  test('TC-13: pillar chips drop the dot and use pillar.color tint when selected', async ({ page, browserName }) => {
+    // Cross-browser computed-style serialization for alpha-tinted colors
+    // varies (Firefox returns the alpha-blended visual color, WebKit
+    // sometimes does the same). The CSS/HTML wiring is browser-agnostic;
+    // verify the visible color contract in Chromium and rely on the
+    // unit spec for the inline-style binding fact across all browsers.
+    test.skip(browserName !== 'chromium', 'computed-color serialization differs cross-browser');
+    await mockHiveContent(page);
+    await page.goto('/workspace/hive-collective/content');
+    await openFirstIdea(page);
+
+    const pillarGrid = page.locator('app-idea-detail .chip-grid--pillar');
+    await expect(pillarGrid).toBeVisible();
+    // Dot is gone.
+    await expect(pillarGrid.locator('.chip-dot')).toHaveCount(0);
+
+    // The fixture's idea1 starts with p1 (#d94e33) selected, but to keep the
+    // assertion deterministic, deselect any pre-existing selection then click p1.
+    const allChips = pillarGrid.locator('.chip');
+    const count = await allChips.count();
+    for (let i = 0; i < count; i++) {
+      const chip = allChips.nth(i);
+      if ((await chip.getAttribute('class'))?.includes('is-active')) {
+        await chip.click(); // toggle off
+      }
+    }
+    // Click the Yoga & Movement chip (p1, #d94e33) which is the first pillar.
+    await allChips.nth(0).click();
+    await expect(allChips.nth(0)).toHaveClass(/is-active/);
+    // Move cursor off the chip — :hover state would otherwise mask the
+    // tinted border color in Firefox/WebKit.
+    await page.mouse.move(0, 0);
+
+    const styles = await allChips.nth(0).evaluate((el) => {
+      const cs = getComputedStyle(el);
+      return {
+        color: cs.color,
+        backgroundColor: cs.backgroundColor,
+        borderColor: cs.borderTopColor,
+      };
+    });
+    // Pillar color #d94e33 = rgb(217, 78, 51). Text is fully opaque, so
+    // tolerance can be tight. WebKit/Firefox blend alpha-tinted background
+    // and border slightly differently than Chromium, so widen the tolerance
+    // for those channels (±20 covers all three engines empirically).
+    expectRgbNear(styles.color, [217, 78, 51]);
+    expectRgbNear(styles.backgroundColor, [217, 78, 51], 20);
+    expectRgbNear(styles.borderColor, [217, 78, 51], 20);
+
+    // Click again to deselect; class must come off (inline-style emptiness
+    // is exercised by the unit spec; here we only verify the state toggle).
+    await allChips.nth(0).click();
+    await expect(allChips.nth(0)).not.toHaveClass(/is-active/);
+  });
+
+  test('TC-14: audience chips use --blink-segment-* tokens when selected', async ({ page, browserName }) => {
+    test.skip(browserName !== 'chromium', 'computed-color serialization differs cross-browser');
+    await mockHiveContent(page);
+    await page.goto('/workspace/hive-collective/content');
+    await openFirstIdea(page);
+
+    const segGrid = page.locator('app-idea-detail .chip-grid--segment');
+    await expect(segGrid).toBeVisible();
+    const segChips = segGrid.locator('.chip');
+
+    // Deselect any pre-selected chips, then click the first.
+    const segCount = await segChips.count();
+    for (let i = 0; i < segCount; i++) {
+      const chip = segChips.nth(i);
+      if ((await chip.getAttribute('class'))?.includes('is-active')) {
+        await chip.click();
+      }
+    }
+    await segChips.nth(0).click();
+    await expect(segChips.nth(0)).toHaveClass(/is-active/);
+    await page.mouse.move(0, 0); // clear hover
+
+    const styles = await segChips.nth(0).evaluate((el) => {
+      const cs = getComputedStyle(el);
+      return {
+        color: cs.color,
+        backgroundColor: cs.backgroundColor,
+        borderColor: cs.borderTopColor,
+      };
+    });
+    // Tokens: --blink-segment-text (#2563eb), --blink-segment-bg (#eff6ff),
+    // --blink-segment-border (#bfdbfe). WebKit/Firefox vary by ±8 channels
+    // vs Chromium due to different color rendering pipelines, so widen the
+    // tolerance for the lighter (bg/border) shades.
+    expectRgbNear(styles.color, [37, 99, 235]);
+    expectRgbNear(styles.backgroundColor, [239, 246, 255], 15);
+    expectRgbNear(styles.borderColor, [191, 219, 254], 15);
+  });
+
+  test('TC-15: tooltip sits flush right of the section label, not floated to the panel edge', async ({ page }) => {
+    await mockHiveContent(page);
+    await page.goto('/workspace/hive-collective/content');
+    await openFirstIdea(page);
+
+    const rows = page.locator('app-idea-detail .strategy-section .panel-label-row');
+    await expect(rows).toHaveCount(3);
+
+    for (let i = 0; i < 3; i++) {
+      const gap = await rows.nth(i).evaluate((row) => {
+        const label = row.querySelector('h3.panel-label') as HTMLElement | null;
+        const tooltip = row.querySelector('app-tooltip') as HTMLElement | null;
+        if (!label || !tooltip) return -1;
+        const lr = label.getBoundingClientRect().right;
+        const tl = tooltip.getBoundingClientRect().left;
+        return tl - lr;
+      });
+      // Existing flex gap is 8px. Allow a generous 24px ceiling for sub-pixel
+      // rounding + padding. The bug today gives 100s of pixels.
+      expect(gap, `row ${i}: tooltip is ${gap}px from label end`).toBeGreaterThanOrEqual(0);
+      expect(gap).toBeLessThanOrEqual(24);
+    }
+  });
+
+  test('TC-16: dark theme parity — section icons stay muted, segment chip uses dark blue tokens', async ({ page, browserName }) => {
+    test.skip(browserName !== 'chromium', 'computed-color serialization differs cross-browser');
+    await mockHiveContent(page);
+    await page.goto('/workspace/hive-collective/content');
+    await openFirstIdea(page);
+    await page.evaluate(() => {
+      document.documentElement.setAttribute('data-theme', 'dark');
+    });
+
+    // Section icons remain readable, non-coral.
+    const iconColor = await page
+      .locator('app-idea-detail .strategy-section .panel-label > svg')
+      .first()
+      .evaluate((el) => getComputedStyle(el).color);
+    const m = iconColor.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)/);
+    expect(m).not.toBeNull();
+    const [r, g, b] = [Number(m![1]), Number(m![2]), Number(m![3])];
+    expect(Math.abs(r - 217) < 30 && Math.abs(g - 78) < 30 && Math.abs(b - 51) < 30).toBe(false);
+
+    // Segment chip selected uses dark-mode segment tokens (also blue, slightly different rgba).
+    const segChip = page.locator('app-idea-detail .chip-grid--segment .chip').first();
+    if (!(await segChip.evaluate((el) => el.classList.contains('is-active')))) {
+      await segChip.click();
+    }
+    const styles = await segChip.evaluate((el) => {
+      const cs = getComputedStyle(el);
+      return { color: cs.color, backgroundColor: cs.backgroundColor };
+    });
+    // Dark --blink-segment-text = #3b82f6 = rgb(59, 130, 246)
+    expectRgbNear(styles.color, [59, 130, 246]);
+    // Dark --blink-segment-bg = rgba(37, 99, 235, 0.12) → blends with whatever
+    // surface; we verify the rgb channel family is in the blue family rather
+    // than pinning the exact alpha-blended value.
+    const bgM = styles.backgroundColor.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)/);
+    expect(bgM).not.toBeNull();
+    const isBlueFamily = Number(bgM![3]) > Number(bgM![1]); // B > R
+    expect(isBlueFamily).toBe(true);
+  });
 });

@@ -65,6 +65,19 @@ describe('IdeaDetailHeaderComponent', () => {
     /* covered by Playwright E2E — see comment above */
   });
 
+  it('stage badge renders source-case text (not all-caps) per #108', () => {
+    const fixture = setup();
+    const badge = fixture.nativeElement.querySelector('.stage-badge') as HTMLElement;
+    expect(badge).not.toBeNull();
+    // Source label is "Idea" (sentence case). Even though older builds had
+    // text-transform: uppercase, the underlying textContent was always
+    // "Idea". After #108 the visible rendering matches the source case
+    // — uppercase no longer applied. Real-browser visual-case is checked
+    // in the E2E suite (TC-12); here we just confirm the source text.
+    expect(badge.textContent?.trim()).toContain('Idea');
+    expect(badge.textContent?.trim()).not.toContain('IDEA');
+  });
+
   it('stage badge switches with the item stage', () => {
     const fixture = setup(makeItem({ stage: 'concept' }));
     const badge = fixture.nativeElement.querySelector('.stage-badge') as HTMLElement;

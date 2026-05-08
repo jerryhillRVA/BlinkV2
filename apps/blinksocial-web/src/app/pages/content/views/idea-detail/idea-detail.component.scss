@@ -201,6 +201,30 @@
   flex-shrink: 0;
 }
 
+// Pillar variant — selected state is driven by inline [style] bindings on
+// the button, derived from pillar.color (data, not theme). Suppress the
+// default coral .is-active background/border/text so the inline tint wins
+// cleanly, and override the .chip:hover border so coral doesn't fight the
+// pillar tint on hover.
+.chip-grid--pillar .chip {
+  &.is-active {
+    background: transparent;
+    border-color: transparent;
+    color: inherit;
+  }
+
+  &:hover:not(:disabled) {
+    border-color: inherit;
+  }
+}
+
+// Audience/segment variant — blue selected-state via the new --blink-segment-* tokens.
+.chip-grid--segment .chip.is-active {
+  background: var(--blink-segment-bg);
+  border-color: var(--blink-segment-border);
+  color: var(--blink-segment-text);
+}
+
 .objective-chips {
   display: flex;
   flex-wrap: wrap;
@@ -230,13 +254,16 @@
 }
 
 .panel-label-row .panel-label {
-  flex: 1 1 auto;
+  // No flex-grow — keeps the label intrinsic-width so the <app-tooltip>
+  // sibling lands flush to its right with the existing 8px gap, instead
+  // of being pushed to the panel's right edge.
   min-width: 0;
 }
 
-// Coral-tinted icon inside the strategy section labels (matches prototype).
+// Muted-gray icon inside the strategy section labels (matches the
+// prototype's text-muted-foreground for these section icons).
 .strategy-section .panel-label > svg {
-  color: var(--blink-brand-primary);
+  color: var(--blink-on-surface-muted);
   flex-shrink: 0;
 }
 
