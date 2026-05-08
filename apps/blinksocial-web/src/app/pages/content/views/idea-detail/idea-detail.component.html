@@ -55,95 +55,116 @@
       </main>
 
       <aside class="detail-sidebar">
-        <section class="panel">
-          <h3 class="panel-label">
-            Content Pillars
-            <span class="panel-hint">(max {{ maxPillars }})</span>
-          </h3>
-          @if (store.pillars().length === 0) {
-            <p class="panel-empty">No pillars defined yet.</p>
-          } @else {
-            <div class="chip-grid">
-              @for (p of store.pillars(); track p.id) {
-                <button
-                  type="button"
-                  class="chip"
-                  [class.is-active]="isPillarSelected(p.id)"
-                  [disabled]="!isPillarSelected(p.id) && pillarsAtLimit()"
-                  (click)="togglePillar(p.id)"
-                >
-                  <span class="chip-dot" [style.background-color]="p.color"></span>
-                  {{ p.name }}
-                </button>
-              }
+        <section class="panel strategy-panel">
+          <div class="strategy-section">
+            <div class="panel-label-row">
+              <h3 class="panel-label">
+                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/>
+                </svg>
+                Business Objective
+                <span class="panel-required" aria-label="required">*</span>
+              </h3>
+              <app-tooltip
+                type="help"
+                text="Links this idea to a measurable business goal. Every idea should serve a real objective — not just fill a content calendar."
+              />
             </div>
-          }
-        </section>
+            @if (validObjectives().length === 0) {
+              <div class="panel-warning">
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/>
+                  <path d="M12 9v4"/>
+                  <path d="M12 17h.01"/>
+                </svg>
+                <span>No business objectives have been set up. Add them in Strategy &amp; Research first.</span>
+              </div>
+            } @else {
+              <div class="objective-chips">
+                @for (o of validObjectives(); track o.id) {
+                  <button
+                    type="button"
+                    class="chip"
+                    [class.is-active]="item.objectiveId === o.id"
+                    (click)="onObjectiveClick(o.id)"
+                  >
+                    {{ truncateStatement(o.statement) }}
+                  </button>
+                }
+              </div>
+            }
+          </div>
 
-        <section class="panel">
-          <h3 class="panel-label">Audience Segments</h3>
-          @if (store.segments().length === 0) {
-            <p class="panel-empty">No audience segments defined yet.</p>
-          } @else {
-            <div class="chip-grid">
-              @for (s of store.segments(); track s.id) {
-                <button
-                  type="button"
-                  class="chip"
-                  [class.is-active]="isSegmentSelected(s.id)"
-                  (click)="store.toggleSegment(s.id)"
-                >
-                  {{ s.name }}
-                </button>
-              }
+          <div class="strategy-section">
+            <div class="panel-label-row">
+              <h3 class="panel-label">
+                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <path d="m12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z"/>
+                  <path d="m22 17.65-9.17 4.16a2 2 0 0 1-1.66 0L2 17.65"/>
+                  <path d="m22 12.65-9.17 4.16a2 2 0 0 1-1.66 0L2 12.65"/>
+                </svg>
+                Pillars
+                <span class="panel-required" aria-label="required">*</span>
+                <span class="panel-hint">(max {{ maxPillars }})</span>
+              </h3>
+              <app-tooltip
+                type="help"
+                text="The content pillars this idea belongs to — select 1 to 3. Pillars keep your content mix intentional and on-strategy."
+              />
             </div>
-          }
-        </section>
+            @if (store.pillars().length === 0) {
+              <p class="panel-empty">No pillars defined yet.</p>
+            } @else {
+              <div class="chip-grid">
+                @for (p of store.pillars(); track p.id) {
+                  <button
+                    type="button"
+                    class="chip"
+                    [class.is-active]="isPillarSelected(p.id)"
+                    [disabled]="!isPillarSelected(p.id) && pillarsAtLimit()"
+                    (click)="togglePillar(p.id)"
+                  >
+                    <span class="chip-dot" [style.background-color]="p.color"></span>
+                    {{ p.name }}
+                  </button>
+                }
+              </div>
+            }
+          </div>
 
-        <section class="panel">
-          <h3 class="panel-label">Business Objective</h3>
-          @if (store.businessObjectives().length === 0) {
-            <div class="panel-warning">
-              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/>
-                <path d="M12 9v4"/>
-                <path d="M12 17h.01"/>
-              </svg>
-              <span>No business objectives have been set up. Visit Strategy → Objectives.</span>
+          <div class="strategy-section">
+            <div class="panel-label-row">
+              <h3 class="panel-label">
+                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>
+                  <circle cx="9" cy="7" r="4"/>
+                  <path d="M22 21v-2a4 4 0 0 0-3-3.87"/>
+                  <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+                </svg>
+                Audience
+              </h3>
+              <app-tooltip
+                type="help"
+                text="The audience segment this idea is built for. A more specific audience makes the eventual content more relevant and more effective."
+              />
             </div>
-          } @else {
-            <div class="objective-chips">
-              @for (o of store.businessObjectives(); track o.id) {
-                <button
-                  type="button"
-                  class="chip"
-                  [class.is-active]="item.objectiveId === o.id"
-                  (click)="onObjectiveClick(o.id)"
-                >
-                  {{ o.statement }}
-                </button>
-              }
-            </div>
-          }
-        </section>
-
-        <section class="panel">
-          <h3 class="panel-label">Tags</h3>
-          <input
-            type="text"
-            class="tags-input"
-            placeholder="Comma-separated tags (e.g. launch, Q2)"
-            [value]="tagsDisplay()"
-            (change)="onTagsChange($event)"
-            aria-label="Edit tags"
-          />
-          @if ((item.tags ?? []).length > 0) {
-            <div class="tag-chips">
-              @for (t of item.tags; track t) {
-                <span class="chip is-static">{{ t }}</span>
-              }
-            </div>
-          }
+            @if (store.segments().length === 0) {
+              <p class="panel-empty">No audience segments defined yet.</p>
+            } @else {
+              <div class="chip-grid">
+                @for (s of store.segments(); track s.id) {
+                  <button
+                    type="button"
+                    class="chip"
+                    [class.is-active]="isSegmentSelected(s.id)"
+                    (click)="store.toggleSegment(s.id)"
+                  >
+                    {{ s.name }}
+                  </button>
+                }
+              </div>
+            }
+          </div>
         </section>
 
         <section class="panel panel-journey">
@@ -151,12 +172,25 @@
           <app-content-journey [stage]="item.stage" />
         </section>
 
-        <section class="panel">
-          <h3 class="panel-label">Timestamps</h3>
-          <dl class="detail-timestamps">
-            <div><dt>Created</dt><dd>{{ formatDate(item.createdAt) }}</dd></div>
-            <div><dt>Last updated</dt><dd>{{ formatDate(item.updatedAt) }}</dd></div>
-          </dl>
+        <section class="panel timestamps-panel">
+          <div class="timestamp-row">
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+            </svg>
+            <div class="timestamp-content">
+              <span class="timestamp-label">Created</span>
+              <span class="timestamp-value">{{ formatDate(item.createdAt) }}</span>
+            </div>
+          </div>
+          <div class="timestamp-row">
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+            </svg>
+            <div class="timestamp-content">
+              <span class="timestamp-label">Last Updated</span>
+              <span class="timestamp-value">{{ formatDate(item.updatedAt) }}</span>
+            </div>
+          </div>
         </section>
       </aside>
     </div>

@@ -56,23 +56,82 @@ function setup(item: ContentItem = makeItem()): {
 }
 
 describe('IdeaDetailComponent — composition', () => {
-  it('renders the header, main description panel, options panel, and sidebar panels', () => {
+  it('renders the header, main description panel, options panel, and the new sidebar layout', () => {
     const { fixture } = setup();
     expect(fixture.nativeElement.querySelector('app-idea-detail-header')).not.toBeNull();
     expect(fixture.nativeElement.querySelector('app-concept-options-panel')).not.toBeNull();
     expect(fixture.nativeElement.querySelector('app-content-journey')).not.toBeNull();
+
+    // Right column DOM order: Business Objective → Pillars → Audience → Content Journey.
+    const sidebarLabels = Array.from(
+      fixture.nativeElement.querySelectorAll(
+        '.detail-sidebar .panel-label',
+      ) as NodeListOf<HTMLElement>,
+    ).map((el) => el.textContent?.replace(/\s+/g, ' ').trim() ?? '');
+    expect(sidebarLabels[0]).toContain('Business Objective');
+    expect(sidebarLabels[1]).toContain('Pillars');
+    expect(sidebarLabels[1]).not.toContain('Content Pillars');
+    expect(sidebarLabels[2]).toContain('Audience');
+    expect(sidebarLabels[2]).not.toContain('Audience Segments');
+    expect(sidebarLabels[3]).toContain('Content Journey');
+
+    // Tags and the standalone Timestamps header are gone.
+    expect(sidebarLabels.some((t) => t.includes('Tags'))).toBe(false);
+    expect(sidebarLabels.some((t) => t.includes('Timestamps'))).toBe(false);
+
+    // Description panel still in main column.
+    const mainLabels = Array.from(
+      fixture.nativeElement.querySelectorAll(
+        '.detail-main .panel-label',
+      ) as NodeListOf<HTMLElement>,
+    ).map((el) => el.textContent ?? '');
+    expect(mainLabels.some((t) => t.includes('Description'))).toBe(true);
+  });
+
+  it('groups Business Objective, Pillars, and Audience inside a single .strategy-panel card', () => {
+    const { fixture } = setup();
+    const cards = fixture.nativeElement.querySelectorAll('.strategy-panel');
+    expect(cards.length).toBe(1);
+    const sections = cards[0].querySelectorAll('.strategy-section');
+    expect(sections.length).toBe(3);
+    expect(sections[0].textContent).toContain('Business Objective');
+    expect(sections[1].textContent).toContain('Pillars');
+    expect(sections[2].textContent).toContain('Audience');
+  });
+
+  it('every strategy section pairs its panel-label with an app-tooltip help sibling', () => {
+    const { fixture } = setup();
+    const rows = fixture.nativeElement.querySelectorAll(
+      '.strategy-panel .panel-label-row',
+    ) as NodeListOf<HTMLElement>;
+    expect(rows.length).toBe(3);
+    rows.forEach((row) => {
+      expect(row.querySelector('h3.panel-label')).not.toBeNull();
+      expect(row.querySelector('app-tooltip')).not.toBeNull();
+    });
+  });
+
+  it('Business Objective and Pillars sections show a required asterisk; Audience does not', () => {
+    const { fixture } = setup();
+    const sections = fixture.nativeElement.querySelectorAll(
+      '.strategy-panel .strategy-section',
+    ) as NodeListOf<HTMLElement>;
+    expect(sections[0].querySelector('.panel-required')).not.toBeNull();
+    expect(sections[1].querySelector('.panel-required')).not.toBeNull();
+    expect(sections[2].querySelector('.panel-required')).toBeNull();
+  });
+
+  it('does not render Tags input, tag-chips, or a Tags label anywhere', () => {
+    const { fixture } = setup(makeItem({ tags: ['launch', 'Q2'] }));
+    expect(fixture.nativeElement.querySelector('.tags-input')).toBeNull();
+    expect(fixture.nativeElement.querySelector('.tag-chips')).toBeNull();
     const labels = Array.from(
       fixture.nativeElement.querySelectorAll('.panel-label') as NodeListOf<HTMLElement>,
     ).map((el) => el.textContent ?? '');
-    expect(labels.some((t) => t.includes('Description'))).toBe(true);
-    expect(labels.some((t) => t.includes('Content Pillars'))).toBe(true);
-    expect(labels.some((t) => t.includes('Audience Segments'))).toBe(true);
-    expect(labels.some((t) => t.includes('Business Objective'))).toBe(true);
-    expect(labels.some((t) => t.includes('Content Journey'))).toBe(true);
-    expect(labels.some((t) => t.includes('Timestamps'))).toBe(true);
+    expect(labels.some((t) => t.toLowerCase().includes('tags'))).toBe(false);
   });
 
-  it('does not render Source, Attachments, or Publish Date panels on Idea detail (those belong to Concept / In Production)', () => {
+  it('does not render Source, Attachments, or Publish Date panels on Idea detail', () => {
     const { fixture } = setup(
       makeItem({
         sourceUrl: 'https://example.com',
@@ -105,19 +164,45 @@ describe('IdeaDetailComponent — composition', () => {
     expect((fixture.nativeElement.textContent as string)).toContain('A punchy hook');
   });
 
-  it('Business Objective panel shows the empty-state warning', () => {
+  it('Business Objective shows the prototype warning when no objectives are configured', () => {
     const { fixture } = setup();
-    const warning: HTMLElement = fixture.nativeElement.querySelector('.panel-warning');
+    const warning: HTMLElement = fixture.nativeElement.querySelector(
+      '.strategy-panel .panel-warning',
+    );
     expect(warning).not.toBeNull();
-    expect(warning.textContent).toContain('No business objectives');
+    expect(warning.textContent).toContain(
+      'No business objectives have been set up. Add them in Strategy & Research first.',
+    );
+  });
+});
+
+describe('IdeaDetailComponent — Timestamps panel', () => {
+  it('renders a header-less timestamps card with two clock-icon rows', () => {
+    const { fixture } = setup();
+    const ts = fixture.nativeElement.querySelector('.timestamps-panel');
+    expect(ts).not.toBeNull();
+    expect(ts.querySelector('.panel-label')).toBeNull();
+    const rows = ts.querySelectorAll('.timestamp-row');
+    expect(rows.length).toBe(2);
+    rows.forEach((row: Element) => {
+      expect(row.querySelector('svg')).not.toBeNull();
+      expect(row.querySelector('.timestamp-label')).not.toBeNull();
+      expect(row.querySelector('.timestamp-value')).not.toBeNull();
+    });
+    const labels = Array.from(
+      ts.querySelectorAll('.timestamp-label') as NodeListOf<HTMLElement>,
+    ).map((el) => el.textContent?.trim());
+    expect(labels[0]).toBe('Created');
+    expect(labels[1]).toBe('Last Updated');
   });
 });
 
 describe('IdeaDetailComponent — interactions', () => {
   it('pillar chip click toggles selection via store', () => {
     const { fixture, store } = setup();
-    const chips = fixture.nativeElement.querySelectorAll('.chip') as NodeListOf<HTMLButtonElement>;
-    // first four chips are pillars (4 pillars), then segment chips
+    const chips = fixture.nativeElement.querySelectorAll(
+      '.chip-grid .chip',
+    ) as NodeListOf<HTMLButtonElement>;
     chips[0].click();
     fixture.detectChanges();
     expect(store.item()?.pillarIds).toEqual(['p1']);
@@ -129,22 +214,24 @@ describe('IdeaDetailComponent — interactions', () => {
     store.togglePillar('p2');
     store.togglePillar('p3');
     fixture.detectChanges();
-    const chips = fixture.nativeElement.querySelectorAll('.chip') as NodeListOf<HTMLButtonElement>;
+    const chips = fixture.nativeElement.querySelectorAll(
+      '.chip-grid .chip',
+    ) as NodeListOf<HTMLButtonElement>;
     expect(chips[3].disabled).toBe(true);
   });
 
   it('segment chip click toggles selection', () => {
     const { fixture, store } = setup();
-    // Find the segment chip by the segment label "Seg One"
     const chips = Array.from(
-      fixture.nativeElement.querySelectorAll('.chip') as NodeListOf<HTMLButtonElement>,
+      fixture.nativeElement.querySelectorAll(
+        '.chip-grid .chip',
+      ) as NodeListOf<HTMLButtonElement>,
     );
     const segChip = chips.find((c) => c.textContent?.includes('Seg One')) as HTMLButtonElement;
     segChip.click();
     fixture.detectChanges();
     expect(store.item()?.segmentIds).toEqual(['s1']);
   });
-
 });
 
 describe('IdeaDetailComponent — event forwarding', () => {
@@ -253,18 +340,7 @@ describe('IdeaDetailComponent — empty item', () => {
   });
 });
 
-describe('IdeaDetailComponent — tags + business-objective + status handlers', () => {
-  it('onTagsChange splits comma-separated input and persists', () => {
-    const { fixture, store } = setup();
-    const comp = fixture.componentInstance as unknown as {
-      onTagsChange: (e: Event) => void;
-      tagsDisplay: () => string;
-    };
-    comp.onTagsChange({ target: { value: 'a, b, c' } } as unknown as Event);
-    expect(store.item()?.tags).toEqual(['a', 'b', 'c']);
-    expect(comp.tagsDisplay()).toBe('a, b, c');
-  });
-
+describe('IdeaDetailComponent — business-objective + status handlers', () => {
   it('onObjectiveClick toggles objectiveId', () => {
     const { fixture, store } = setup();
     const comp = fixture.componentInstance as unknown as {
@@ -322,20 +398,6 @@ describe('IdeaDetailComponent — tags + business-objective + status handlers', 
     expect(fixture.nativeElement.querySelector('.panel-warning')).toBeNull();
   });
 
-  it('tagsDisplay handles items with no tags by returning empty string', () => {
-    const { fixture } = setup(makeItem({ tags: undefined }));
-    const comp = fixture.componentInstance as unknown as {
-      tagsDisplay: () => string;
-    };
-    expect(comp.tagsDisplay()).toBe('');
-  });
-
-  it('renders tag-chips when tags are present on the item', () => {
-    const { fixture } = setup(makeItem({ tags: ['launch', 'Q2'] }));
-    const chips = fixture.nativeElement.querySelectorAll('.tag-chips .chip');
-    expect(chips.length).toBe(2);
-  });
-
   it('renders the selected-objective chip with is-active when objectiveId matches', () => {
     TestBed.configureTestingModule({
       imports: [IdeaDetailComponent],
@@ -358,5 +420,52 @@ describe('IdeaDetailComponent — tags + business-objective + status handlers', 
     expect(chips.length).toBe(2);
     expect(chips[0].classList.contains('is-active')).toBe(true);
     expect(chips[1].classList.contains('is-active')).toBe(false);
+  });
+
+  it('validObjectives() filters out objectives with empty / whitespace statements', () => {
+    TestBed.configureTestingModule({
+      imports: [IdeaDetailComponent],
+      providers: [...provideContentItemsApiStubs(), ContentStateService],
+    });
+    const state = TestBed.inject(ContentStateService);
+    state.setItems([makeItem()]);
+    state.pillars.set(PILLARS);
+    state.segments.set(SEGMENTS);
+    state.businessObjectives.set([
+      { id: 'obj-good', category: 'growth', statement: 'Real goal', target: 1, unit: '', timeframe: '' },
+      { id: 'obj-empty', category: 'growth', statement: '', target: 1, unit: '', timeframe: '' },
+      { id: 'obj-blank', category: 'growth', statement: '   ', target: 1, unit: '', timeframe: '' },
+    ]);
+    const fixture = TestBed.createComponent(IdeaDetailComponent);
+    fixture.componentRef.setInput('itemId', 'c-1');
+    fixture.detectChanges();
+    const chips = fixture.nativeElement.querySelectorAll('.objective-chips .chip');
+    expect(chips.length).toBe(1);
+    expect((chips[0] as HTMLElement).textContent?.trim()).toBe('Real goal');
+  });
+
+  it('truncateStatement returns the original under 50 chars; truncates long with ellipsis to 51 chars total', () => {
+    const { fixture } = setup();
+    const comp = fixture.componentInstance as unknown as {
+      truncateStatement: (s: string) => string;
+    };
+    expect(comp.truncateStatement('short')).toBe('short');
+    const long = 'a'.repeat(60);
+    const out = comp.truncateStatement(long);
+    expect(out.endsWith('…')).toBe(true);
+    expect(out.length).toBe(51);
+  });
+
+  it('formatDate returns prototype-style "Wed, May 7, 2026" with no time-of-day', () => {
+    const { fixture } = setup();
+    const comp = fixture.componentInstance as unknown as {
+      formatDate: (iso: string | undefined) => string;
+    };
+    const out = comp.formatDate('2026-05-07T18:42:00Z');
+    expect(out).toContain('May');
+    expect(out).toContain('2026');
+    expect(out).toContain('7');
+    expect(out).not.toMatch(/\bAM\b|\bPM\b/i);
+    expect(out).not.toMatch(/:\d{2}/); // no HH:MM pattern
   });
 });
