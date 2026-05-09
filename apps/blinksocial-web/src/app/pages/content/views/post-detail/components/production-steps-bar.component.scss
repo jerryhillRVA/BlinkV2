@@ -4,7 +4,38 @@
 
 .steps-bar {
   display: flex;
-  gap: 4px;
+  flex-direction: column;
+  gap: 6px;
+}
+
+// Mobile-only "Step N of 5: <label>" hint above the bar.
+.steps-mobile-label {
+  margin: 0 4px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--blink-on-surface-muted);
+
+  @media (min-width: 640px) {
+    display: none;
+  }
+}
+
+.steps-mobile-current {
+  color: var(--blink-brand-primary);
+  letter-spacing: 0;
+  text-transform: none;
+  font-size: 12px;
+}
+
+.steps-row {
+  display: flex;
+  align-items: center;
+  gap: 2px;
   padding: 4px;
   border: 1px solid var(--blink-outline-variant);
   border-radius: 12px;
@@ -17,32 +48,48 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
+  gap: 6px;
   flex: 1;
-  min-width: 0;
-  padding: 10px 14px;
+  min-height: 36px;
+  padding: 6px 10px;
   border: none;
   border-radius: 8px;
   background: transparent;
   color: var(--blink-on-surface-muted);
-  font-size: var(--blink-label-large);
+  font-size: 10px;
   font-weight: 700;
   cursor: pointer;
-  transition: background 0.15s, color 0.15s;
   white-space: nowrap;
+  transition: background 0.15s, color 0.15s;
 
-  &:hover:not(.is-active) {
+  &:hover:not(:disabled):not(.is-active):not(.is-past) {
     background: var(--blink-surface-hover);
+    color: var(--blink-on-surface);
   }
 
   &.is-active {
     background: linear-gradient(to right, var(--blink-brand-primary), #f26b4d);
-    color: var(--blink-on-brand, #fff);
+    color: #fff;
+    box-shadow: var(--blink-shadow-sm);
   }
 
-  &.is-approved:not(.is-active) {
+  &.is-past {
     color: #16a34a;
     background: rgba(22, 163, 74, 0.08);
+  }
+
+  &.is-disabled,
+  &:disabled {
+    color: var(--blink-on-surface-faint);
+    cursor: not-allowed;
+  }
+
+  .steps-label {
+    display: none;
+
+    @media (min-width: 640px) {
+      display: inline;
+    }
   }
 }
 
@@ -50,27 +97,26 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 20px;
-  height: 20px;
-  border-radius: 999px;
-  background: var(--blink-surface-container);
-  color: var(--blink-on-surface-muted);
-  font-size: var(--blink-label-small);
-  font-weight: 700;
   flex-shrink: 0;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--blink-surface-container-low);
+  color: inherit;
+  font-size: 9px;
+  font-weight: 700;
 
-  .steps-btn.is-active & {
-    background: rgba(255, 255, 255, 0.25);
-    color: var(--blink-on-brand, #fff);
+  .is-active & {
+    background: rgba(255, 255, 255, 0.22);
+    color: #fff;
   }
 
-  .steps-btn.is-approved:not(.is-active) & {
-    background: rgba(22, 163, 74, 0.15);
+  .is-past & {
+    background: rgba(22, 163, 74, 0.18);
     color: #16a34a;
   }
 }
 
-.steps-label {
-  overflow: hidden;
-  text-overflow: ellipsis;
+.steps-icon {
+  flex-shrink: 0;
 }
