@@ -41,13 +41,19 @@ describe('ProductionTargetsPickerComponent', () => {
     expect(reel.querySelector('.target-option-check svg')).not.toBeNull();
   });
 
-  it('.target-option vertically centers the checkbox + label (align-items: center, not flex-start)', () => {
+  it('.target-option vertically centers the checkbox + label with line-height matching the check square', () => {
     const fixture = setup();
     document.body.appendChild(fixture.nativeElement);
     try {
       const opt = fixture.nativeElement.querySelector('.target-option') as HTMLElement;
       expect(opt).not.toBeNull();
       expect(getComputedStyle(opt).alignItems).toBe('center');
+      expect(getComputedStyle(opt).minHeight).toBe('32px');
+      const label = opt.querySelector('.target-option-label') as HTMLElement;
+      // Line-height pinned to the 14px check square so single-line labels'
+      // line-box centre coincides with the checkbox centre — the glyphs sit
+      // visually centred regardless of cap/descender asymmetry.
+      expect(getComputedStyle(label).lineHeight).toBe('14px');
     } finally {
       document.body.removeChild(fixture.nativeElement);
     }
