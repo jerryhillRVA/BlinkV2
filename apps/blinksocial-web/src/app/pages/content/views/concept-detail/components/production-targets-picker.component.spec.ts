@@ -22,18 +22,29 @@ describe('ProductionTargetsPickerComponent', () => {
     expect(groups.length).toBe(5);
   });
 
-  it('renders content-type chips under each platform', () => {
+  it('renders content-type options under each platform', () => {
     const fixture = setup();
     // Instagram has 6 formats (reel, carousel, feed-post, story, guide, live)
     const firstGroup = fixture.nativeElement.querySelector('.target-group');
-    const chips = firstGroup.querySelectorAll('.target-chip');
-    expect(chips.length).toBe(6);
+    const options = firstGroup.querySelectorAll('.target-option');
+    expect(options.length).toBe(6);
+  });
+
+  it('each option contains a .target-option-check (rounded-rect with checkbox inside, prototype parity)', () => {
+    const fixture = setup([{ platform: 'instagram', contentType: 'reel', postId: null }]);
+    const options = fixture.nativeElement.querySelectorAll('.target-option') as NodeListOf<HTMLButtonElement>;
+    expect(options.length).toBeGreaterThan(0);
+    for (const opt of Array.from(options)) {
+      expect(opt.querySelector('.target-option-check')).not.toBeNull();
+    }
+    const reel = Array.from(options).find((b) => b.textContent?.trim().includes('Reel')) as HTMLButtonElement;
+    expect(reel.querySelector('.target-option-check svg')).not.toBeNull();
   });
 
   it('selected targets receive the is-selected class + aria-pressed=true', () => {
     const fixture = setup([{ platform: 'instagram', contentType: 'reel', postId: null }]);
     const selectedChip = Array.from(
-      fixture.nativeElement.querySelectorAll('.target-chip') as NodeListOf<HTMLButtonElement>,
+      fixture.nativeElement.querySelectorAll('.target-option') as NodeListOf<HTMLButtonElement>,
     ).find((b) => b.textContent?.trim() === 'Reel') as HTMLButtonElement;
     expect(selectedChip.classList.contains('is-selected')).toBe(true);
     expect(selectedChip.getAttribute('aria-pressed')).toBe('true');
@@ -44,7 +55,7 @@ describe('ProductionTargetsPickerComponent', () => {
     const emitted: TargetPlatform[] = [];
     fixture.componentInstance.toggleTarget.subscribe((t) => emitted.push(t));
     const chip = Array.from(
-      fixture.nativeElement.querySelectorAll('.target-chip') as NodeListOf<HTMLButtonElement>,
+      fixture.nativeElement.querySelectorAll('.target-option') as NodeListOf<HTMLButtonElement>,
     ).find((b) => b.textContent?.trim() === 'Reel') as HTMLButtonElement;
     chip.click();
     expect(emitted).toEqual([{ platform: 'instagram', contentType: 'reel', postId: null }]);
@@ -57,11 +68,12 @@ describe('ProductionTargetsPickerComponent', () => {
     const emitted: TargetPlatform[] = [];
     fixture.componentInstance.toggleTarget.subscribe((t) => emitted.push(t));
     const chip = Array.from(
-      fixture.nativeElement.querySelectorAll('.target-chip') as NodeListOf<HTMLButtonElement>,
+      fixture.nativeElement.querySelectorAll('.target-option') as NodeListOf<HTMLButtonElement>,
     ).find((b) => b.textContent?.includes('Reel')) as HTMLButtonElement;
     expect(chip.classList.contains('is-in-production')).toBe(true);
     expect(chip.disabled).toBe(true);
-    expect(chip.querySelector('.target-chip-badge')).not.toBeNull();
+    expect(chip.querySelector('.target-option-badge')).not.toBeNull();
+    expect(chip.querySelector('.target-option-check')).not.toBeNull();
     chip.click();
     expect(emitted).toEqual([]);
   });

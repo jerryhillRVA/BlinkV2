@@ -1,7 +1,5 @@
 import { Component, EventEmitter, Input, Output, computed, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { InlineEditComponent } from '../../../../shared/inline-edit/inline-edit.component';
-import { DropdownComponent, DropdownOption } from '../../../../shared/dropdown/dropdown.component';
 import { TooltipComponent } from '../../../../shared/tooltip/tooltip.component';
 import { ConceptDetailStore } from './concept-detail.store';
 import { ConceptDetailHeaderComponent } from './components/concept-detail-header.component';
@@ -18,7 +16,6 @@ import {
 import type { ContentPillar, ContentStatus } from '../../content.types';
 import {
   CTA_TEXT_MAX_CHARS,
-  CTA_TYPES,
   DESCRIPTION_MAX_CHARS,
   DESCRIPTION_MIN_CHARS,
   HOOK_MAX_CHARS,
@@ -36,8 +33,6 @@ import type { RiskLevelContract } from '@blinksocial/contracts';
   selector: 'app-concept-detail',
   imports: [
     FormsModule,
-    InlineEditComponent,
-    DropdownComponent,
     TooltipComponent,
     ConceptDetailHeaderComponent,
     ProductionTargetsPickerComponent,
@@ -59,11 +54,6 @@ export class ConceptDetailComponent {
   protected readonly ctaTextMax = CTA_TEXT_MAX_CHARS;
 
   protected readonly objectiveOptions = OBJECTIVE_OPTIONS;
-
-  protected readonly ctaDropdown: DropdownOption[] = [
-    { value: '', label: 'None' },
-    ...CTA_TYPES.map((o) => ({ value: o.value, label: o.label })),
-  ];
 
   @Input({ required: true }) set itemId(value: string | null) {
     this.store.setItemId(value);
