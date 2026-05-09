@@ -541,6 +541,8 @@ test.describe('Idea detail right column (#106)', () => {
     expect(computed.textTransform).toBe('none');
     expect(computed.text).toContain('Idea');
     expect(computed.text).not.toContain('IDEA');
+
+    await page.screenshot({ path: `${SHOTS_DIR}/tc-12-stage-badge.png`, fullPage: true });
   });
 
   test('TC-13: pillar chips drop the dot and use pillar.color tint when selected', async ({ page, browserName }) => {
@@ -592,6 +594,8 @@ test.describe('Idea detail right column (#106)', () => {
     expectRgbNear(styles.backgroundColor, [217, 78, 51], 20);
     expectRgbNear(styles.borderColor, [217, 78, 51], 20);
 
+    await page.screenshot({ path: `${SHOTS_DIR}/tc-13-pillar-tint.png`, fullPage: true });
+
     // Click again to deselect; class must come off (inline-style emptiness
     // is exercised by the unit spec; here we only verify the state toggle).
     await allChips.nth(0).click();
@@ -619,6 +623,8 @@ test.describe('Idea detail right column (#106)', () => {
     await segChips.nth(0).click();
     await expect(segChips.nth(0)).toHaveClass(/is-active/);
     await page.mouse.move(0, 0); // clear hover
+    // .chip has transition: border-color 0.15s; wait past it before reading.
+    await page.waitForTimeout(250);
 
     const styles = await segChips.nth(0).evaluate((el) => {
       const cs = getComputedStyle(el);
@@ -635,6 +641,8 @@ test.describe('Idea detail right column (#106)', () => {
     expectRgbNear(styles.color, [37, 99, 235]);
     expectRgbNear(styles.backgroundColor, [239, 246, 255], 15);
     expectRgbNear(styles.borderColor, [191, 219, 254], 15);
+
+    await page.screenshot({ path: `${SHOTS_DIR}/tc-14-segment-blue.png`, fullPage: true });
   });
 
   test('TC-15: tooltip sits flush right of the section label, not floated to the panel edge', async ({ page }) => {
@@ -698,5 +706,87 @@ test.describe('Idea detail right column (#106)', () => {
     expect(bgM).not.toBeNull();
     const isBlueFamily = Number(bgM![3]) > Number(bgM![1]); // B > R
     expect(isBlueFamily).toBe(true);
+  });
+
+  // ──────────────────────────────────────────────────────────────────
+  // Post-design polish (commits after the design plan landed)
+  // ──────────────────────────────────────────────────────────────────
+
+  test('TC-17: no "(max N)" hint, no upper-bound cap on pillar selection', async ({ page }) => {
+    await mockHiveContent(page);
+    await page.goto('/workspace/hive-collective/content');
+    await openFirstIdea(page);
+
+    // The "(max 3)" hint is gone from the Pillars label.
+    const pillarsLabel = page.locator('app-idea-detail .strategy-section').nth(1).locator('h3.panel-label');
+    await expect(pillarsLabel).toBeVisible();
+    const labelText = (await pillarsLabel.innerText()).toUpperCase();
+    expect(labelText).toContain('PILLARS');
+    expect(labelText).not.toMatch(/MAX\s*\d+/);
+
+    // No chip is disabled and no cap blocks adding a 3rd / 4th pillar
+    // (with 2 fixture pillars — assert both can be selected and none are
+    // disabled).
+    const chips = page.locator('app-idea-detail .chip-grid--pillar .chip');
+    const count = await chips.count();
+    for (let i = 0; i < count; i++) {
+      await expect(chips.nth(i)).not.toBeDisabled();
+    }
+    // Click both pillar chips → both selected, neither disabled.
+    for (let i = 0; i < count; i++) {
+      const chip = chips.nth(i);
+      if (!(await chip.evaluate((el) => el.classList.contains('is-active')))) {
+        await chip.click();
+      }
+    }
+    for (let i = 0; i < count; i++) {
+      await expect(chips.nth(i)).toHaveClass(/is-active/);
+      await expect(chips.nth(i)).not.toBeDisabled();
+    }
+  });
+
+  test('TC-18: hover border = pillar.color on pillars; segment-text on audience', async ({ page, browserName }) => {
+    test.skip(browserName !== 'chromium', 'computed-color serialization differs cross-browser');
+    await mockHiveContent(page);
+    await page.goto('/workspace/hive-collective/content');
+    await openFirstIdea(page);
+
+    // Pillar p1 in the fixture is `#d94e33` (Yoga & Movement). The chip's
+    // [style.--chip-hover-color] should be set to that value.
+    const firstPillar = page.locator('app-idea-detail .chip-grid--pillar .chip').first();
+    const hoverVar = await firstPillar.evaluate(
+      (el) => el.style.getPropertyValue('--chip-hover-color').trim(),
+    );
+    expect(hoverVar).toBe('#d94e33');
+
+    // Hover the chip and confirm the border picks up that color.
+    // Deselect first so we read the hover state cleanly (selected chips
+    // have an inline border-color from pillarBorder() that wins over hover).
+    if (await firstPillar.evaluate((el) => el.classList.contains('is-active'))) {
+      await firstPillar.click();
+      await page.mouse.move(0, 0);
+    }
+    await firstPillar.hover();
+    await page.waitForTimeout(250); // past the 150ms border-color transition
+    const pillarHoverColor = await firstPillar.evaluate(
+      (el) => getComputedStyle(el).borderTopColor,
+    );
+    // #d94e33 = rgb(217, 78, 51); allow ±15 for color-rendering pipeline differences.
+    expectRgbNear(pillarHoverColor, [217, 78, 51], 15);
+
+    // Move cursor off and onto an audience chip; border should resolve to
+    // --blink-segment-text (#2563eb = rgb(37, 99, 235)).
+    await page.mouse.move(0, 0);
+    const firstSeg = page.locator('app-idea-detail .chip-grid--segment .chip').first();
+    if (await firstSeg.evaluate((el) => el.classList.contains('is-active'))) {
+      await firstSeg.click();
+      await page.mouse.move(0, 0);
+    }
+    await firstSeg.hover();
+    await page.waitForTimeout(250); // past the 150ms border-color transition
+    const segHoverColor = await firstSeg.evaluate(
+      (el) => getComputedStyle(el).borderTopColor,
+    );
+    expectRgbNear(segHoverColor, [37, 99, 235], 15);
   });
 });
