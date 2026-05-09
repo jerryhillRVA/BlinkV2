@@ -26,19 +26,32 @@
 
     <div class="detail-grid">
       <main class="detail-main">
-        <section class="panel">
-          <h3 class="panel-label">
-            Description ({{ descriptionMin }}\u2013{{ descriptionMax }} characters)
-            <span class="panel-required" aria-label="required">*</span>
-          </h3>
-          <textarea
-            class="detail-description-input"
-            [placeholder]="descriptionMin + '\u2013' + descriptionMax + ' characters required'"
-            aria-label="Edit description"
-            [value]="item.description"
-            (change)="onDescriptionChange($any($event.target).value)"
-          ></textarea>
-          <div class="panel-inline-row">
+        <section class="panel detail-fields-panel">
+          <div class="field-section">
+            <div class="panel-label-row">
+              <h3 class="panel-label">
+                Description ({{ descriptionMin }}\u2013{{ descriptionMax }} characters)
+                <span class="panel-required" aria-label="required">*</span>
+              </h3>
+              <button type="button" class="assist-btn" [disabled]="store.isAssistingDescription()" (click)="onAssistDescription()">
+                @if (store.isAssistingDescription()) {
+                  <span class="spinner spinner--sm" aria-hidden="true"></span>
+                  <span>Drafting\u2026</span>
+                } @else {
+                  <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <path d="m12 3-1.9 5.8a2 2 0 0 1-1.3 1.3L3 12l5.8 1.9a2 2 0 0 1 1.3 1.3L12 21l1.9-5.8a2 2 0 0 1 1.3-1.3L21 12l-5.8-1.9a2 2 0 0 1-1.3-1.3Z"/>
+                  </svg>
+                  <span>AI Assist</span>
+                }
+              </button>
+            </div>
+            <textarea
+              class="detail-description-input"
+              [placeholder]="descriptionMin + '\u2013' + descriptionMax + ' characters required'"
+              aria-label="Edit description"
+              [value]="item.description"
+              (change)="onDescriptionChange($any($event.target).value)"
+            ></textarea>
             <p
               class="char-counter"
               [class.is-invalid]="descriptionInvalid()"
@@ -46,60 +59,51 @@
             >
               {{ descriptionCount() }}/{{ descriptionMax }} characters (min {{ descriptionMin }})
             </p>
-            <button type="button" class="assist-btn" [disabled]="store.isAssistingDescription()" (click)="onAssistDescription()">
-              @if (store.isAssistingDescription()) {
-                <span class="spinner spinner--sm" aria-hidden="true"></span>
-              } @else {
-                <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                  <path d="m12 3-1.9 5.8a2 2 0 0 1-1.3 1.3L3 12l5.8 1.9a2 2 0 0 1 1.3 1.3L12 21l1.9-5.8a2 2 0 0 1 1.3-1.3L21 12l-5.8-1.9a2 2 0 0 1-1.3-1.3Z"/>
-                </svg>
-              }
-              AI Assist
-            </button>
           </div>
-        </section>
 
-        <section class="panel">
-          <h3 class="panel-label">Hook Angle (max {{ hookMax }} characters)</h3>
-          <textarea
-            class="detail-hook-input"
-            placeholder="Enter a compelling hook\u2026"
-            aria-label="Edit hook"
-            [value]="item.hook ?? ''"
-            (change)="onHookChange($any($event.target).value)"
-          ></textarea>
-          <div class="panel-inline-row">
+          <div class="field-section">
+            <div class="panel-label-row">
+              <h3 class="panel-label">Hook Angle (max {{ hookMax }} characters)</h3>
+              <button type="button" class="assist-btn" [disabled]="store.isAssistingHook()" (click)="onAssistHook()">
+                @if (store.isAssistingHook()) {
+                  <span class="spinner spinner--sm" aria-hidden="true"></span>
+                  <span>Drafting\u2026</span>
+                } @else {
+                  <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <path d="m12 3-1.9 5.8a2 2 0 0 1-1.3 1.3L3 12l5.8 1.9a2 2 0 0 1 1.3 1.3L12 21l1.9-5.8a2 2 0 0 1 1.3-1.3L21 12l-5.8-1.9a2 2 0 0 1-1.3-1.3Z"/>
+                  </svg>
+                  <span>AI Assist</span>
+                }
+              </button>
+            </div>
+            <textarea
+              class="detail-hook-input"
+              placeholder="Enter a compelling hook\u2026"
+              aria-label="Edit hook"
+              [value]="item.hook ?? ''"
+              (change)="onHookChange($any($event.target).value)"
+            ></textarea>
             <p class="char-counter" [class.is-warn]="hookCount() >= 100">
               {{ hookCount() }}/{{ hookMax }} characters
             </p>
-            <button type="button" class="assist-btn" [disabled]="store.isAssistingHook()" (click)="onAssistHook()">
-              @if (store.isAssistingHook()) {
-                <span class="spinner spinner--sm" aria-hidden="true"></span>
-              } @else {
-                <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                  <path d="m12 3-1.9 5.8a2 2 0 0 1-1.3 1.3L3 12l5.8 1.9a2 2 0 0 1 1.3 1.3L12 21l1.9-5.8a2 2 0 0 1 1.3-1.3L21 12l-5.8-1.9a2 2 0 0 1-1.3-1.3Z"/>
-                </svg>
-              }
-              AI Assist
-            </button>
           </div>
-        </section>
 
-        <section class="panel">
-          <h3 class="panel-label">
-            Content Goal <span class="panel-required">*</span>
-          </h3>
-          <div class="objective-grid">
-            @for (opt of objectiveOptions; track opt.value) {
-              <button
-                type="button"
-                class="objective-btn"
-                [class.is-active]="isObjective(opt.value)"
-                (click)="setObjective(opt.value)"
-              >
-                {{ opt.label }}
-              </button>
-            }
+          <div class="field-section">
+            <h3 class="panel-label">
+              Content Goal <span class="panel-required">*</span>
+            </h3>
+            <div class="objective-grid">
+              @for (opt of objectiveOptions; track opt.value) {
+                <button
+                  type="button"
+                  class="objective-btn"
+                  [class.is-active]="isObjective(opt.value)"
+                  (click)="setObjective(opt.value)"
+                >
+                  {{ opt.label }}
+                </button>
+              }
+            </div>
           </div>
         </section>
 

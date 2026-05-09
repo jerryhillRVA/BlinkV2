@@ -78,6 +78,33 @@ describe('ConceptDetailComponent — composition', () => {
     expect(fixture.nativeElement.querySelector('.timestamps-panel')).not.toBeNull();
   });
 
+  it('groups Description, Hook Angle, and Content Goal into a single .detail-fields-panel (prototype parity)', () => {
+    const { fixture } = setup();
+    const fieldsPanel = fixture.nativeElement.querySelector('.detail-fields-panel') as HTMLElement;
+    expect(fieldsPanel).not.toBeNull();
+    const labels = Array.from(
+      fieldsPanel.querySelectorAll('.panel-label') as NodeListOf<HTMLElement>,
+    ).map((el) => el.textContent ?? '');
+    expect(labels.some((t) => t.includes('Description'))).toBe(true);
+    expect(labels.some((t) => t.includes('Hook Angle'))).toBe(true);
+    expect(labels.some((t) => t.includes('Content Goal'))).toBe(true);
+  });
+
+  it('Description and Hook Angle AI Assist buttons sit in their .panel-label-row (top-right, next to label)', () => {
+    const { fixture } = setup();
+    const labelRows = Array.from(
+      fixture.nativeElement.querySelectorAll(
+        '.detail-fields-panel .panel-label-row',
+      ) as NodeListOf<HTMLElement>,
+    );
+    const descRow = labelRows.find((r) => r.textContent?.includes('Description'));
+    const hookRow = labelRows.find((r) => r.textContent?.includes('Hook Angle'));
+    expect(descRow).toBeDefined();
+    expect(hookRow).toBeDefined();
+    expect(descRow!.querySelector('.assist-btn')).not.toBeNull();
+    expect(hookRow!.querySelector('.assist-btn')).not.toBeNull();
+  });
+
   it('renders nothing when item is null', () => {
     TestBed.configureTestingModule({
       imports: [ConceptDetailComponent],

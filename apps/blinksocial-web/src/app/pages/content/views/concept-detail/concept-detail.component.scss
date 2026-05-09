@@ -215,21 +215,30 @@
   }
 }
 
+// AI Assist button — matches the prototype's <AIButton>: white bg,
+// purple-300 border, purple-500 Sparkles icon, gray-900 semibold 10px text.
+// Sits in .panel-label-row and pushes itself to the right with margin-left: auto.
 .assist-btn {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
-  padding: 2px 8px;
-  border: none;
-  background: none;
-  color: var(--blink-brand-primary);
-  font-size: var(--blink-label-small);
+  gap: 6px;
+  margin-left: auto;
+  padding: 4px 10px;
+  border: 1px solid #d8b4fe; // Tailwind purple-300
+  border-radius: 8px;
+  background: var(--blink-surface);
+  color: var(--blink-on-surface-strong);
+  font-size: 10px;
   font-weight: 600;
   cursor: pointer;
-  border-radius: 4px;
+  transition: background 0.15s, border-color 0.15s;
+
+  svg {
+    color: #a855f7; // Tailwind purple-500
+  }
 
   &:hover:not(:disabled) {
-    background: var(--blink-brand-primary-lightest-bg, rgba(217, 78, 51, 0.08));
+    background: rgba(168, 85, 247, 0.06);
   }
 
   &:disabled {
@@ -299,32 +308,37 @@
 .objective-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 8px;
+  gap: 6px;
 
   @media (min-width: 480px) {
     grid-template-columns: repeat(3, 1fr);
   }
 }
 
+// Smaller, bolder objective pills — prototype <SelectGrid>:
+// `px-2 py-1.5 rounded-lg border text-[10px] font-bold`.
+// Selected uses 5% coral tint with coral text/border (subtler than the
+// previous solid coral background).
 .objective-btn {
-  height: 32px;
-  border-radius: 6px;
+  padding: 6px 8px;
+  border-radius: 8px;
   border: 1px solid var(--blink-outline-variant);
   background: var(--blink-surface);
-  color: var(--blink-on-surface);
-  font-size: var(--blink-label-large);
+  color: var(--blink-on-surface-secondary);
+  font-size: 10px;
+  font-weight: 700;
+  text-align: center;
   cursor: pointer;
   transition: border-color 0.15s, background 0.15s, color 0.15s;
 
   &:hover {
-    border-color: var(--blink-brand-primary);
+    border-color: var(--blink-outline);
   }
 
   &.is-active {
-    background: var(--blink-brand-primary);
-    color: var(--blink-on-brand, #fff);
+    background: var(--blink-brand-primary-lightest-bg, rgba(217, 78, 51, 0.05));
+    color: var(--blink-brand-primary);
     border-color: var(--blink-brand-primary);
-    font-weight: 600;
   }
 }
 
@@ -392,6 +406,23 @@
   .chip:hover:not(:disabled) {
     border-color: var(--blink-segment-text);
   }
+}
+
+// One outer card grouping Description, Hook Angle, Content Goal.
+// Matches the prototype's single <Card> wrapping all three fields.
+.detail-fields-panel {
+  gap: 16px;
+}
+
+.field-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.field-section + .field-section {
+  border-top: 1px solid var(--blink-outline-variant);
+  padding-top: 16px;
 }
 
 // One outer card grouping Business Objective, Pillars, Audience.
