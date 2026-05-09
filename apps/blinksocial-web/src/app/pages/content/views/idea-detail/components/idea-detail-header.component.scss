@@ -22,9 +22,11 @@
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  padding: 4px 10px;
+  padding: 2px 10px;
   border-radius: 6px;
-  font-size: var(--blink-label-small);
+  // Prototype uses Tailwind text-[10px] for the badge — sits between
+  // label-small (11px) and the chip-grid 10px convention.
+  font-size: 10px;
   font-weight: 700;
   letter-spacing: 0.02em;
   border: 1px solid transparent;
