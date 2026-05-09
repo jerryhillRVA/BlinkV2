@@ -344,4 +344,226 @@ describe('PostDetailStore — menu actions', () => {
     store.setStatus('published');
     expect(store.item()?.status).toBe('published');
   });
+
+  describe('brief sub-field setters (#112)', () => {
+    it('setReferenceLinks / addReferenceLink / removeReferenceLink round-trip', () => {
+      const { store } = setup();
+      store.setReferenceLinks(['https://a.com']);
+      expect(store.referenceLinks()).toEqual(['https://a.com']);
+      store.addReferenceLink('https://b.com');
+      store.addReferenceLink('   '); // whitespace ignored
+      expect(store.referenceLinks()).toEqual(['https://a.com', 'https://b.com']);
+      store.removeReferenceLink(0);
+      expect(store.referenceLinks()).toEqual(['https://b.com']);
+    });
+
+    it('setDueDate stores ISO date and clears via empty string; pastDueDate flips', () => {
+      const { store } = setup();
+      store.setDueDate('2020-01-01');
+      expect(store.dueDate()).toBe('2020-01-01');
+      expect(store.pastDueDate()).toBe(true);
+      store.setDueDate('');
+      expect(store.dueDate()).toBeUndefined();
+      expect(store.pastDueDate()).toBe(false);
+      store.setDueDate('not-a-date');
+      // pastDueDate guards against bad input
+      expect(store.pastDueDate()).toBe(false);
+    });
+
+    it('setCampaignName stores and clears', () => {
+      const { store } = setup();
+      store.setCampaignName('Instagram_reel_2026-05-09');
+      expect(store.campaignName()).toBe('Instagram_reel_2026-05-09');
+      store.setCampaignName('');
+      expect(store.campaignName()).toBeUndefined();
+    });
+
+    it('setPublishingMode toggles paidBoosted', () => {
+      const { store } = setup();
+      expect(store.paidBoosted()).toBe(false);
+      store.setPublishingMode('PAID_BOOSTED');
+      expect(store.publishingMode()).toBe('PAID_BOOSTED');
+      expect(store.paidBoosted()).toBe(true);
+      store.setPublishingMode(undefined);
+      expect(store.publishingMode()).toBeUndefined();
+    });
+
+    it('togglePrimaryCta sets, then clears when called again with the same value', () => {
+      const { store } = setup();
+      store.togglePrimaryCta('shop-now');
+      expect(store.primaryCta()).toBe('shop-now');
+      store.togglePrimaryCta('shop-now');
+      expect(store.primaryCta()).toBeUndefined();
+      store.togglePrimaryCta('learn-more');
+      expect(store.primaryCta()).toBe('learn-more');
+    });
+
+    it('setApprovalNote stores non-empty values; empty clears', () => {
+      const { store } = setup();
+      store.setApprovalNote('Looks good.');
+      expect(store.approvalNote()).toBe('Looks good.');
+      store.setApprovalNote('');
+      expect(store.approvalNote()).toBe('');
+    });
+
+    it('all brief sub-field setters respect the briefApproved write-lock', () => {
+      const { store } = setup(makeItem({ briefApproved: true }));
+      store.setReferenceLinks(['https://x.com']);
+      store.setDueDate('2030-01-01');
+      store.setCampaignName('blocked');
+      store.setPublishingMode('PAID_BOOSTED');
+      store.togglePrimaryCta('sign-up');
+      store.setApprovalNote('blocked');
+      expect(store.referenceLinks()).toEqual([]);
+      expect(store.dueDate()).toBeUndefined();
+      expect(store.campaignName()).toBeUndefined();
+      expect(store.publishingMode()).toBeUndefined();
+      expect(store.primaryCta()).toBeUndefined();
+      expect(store.approvalNote()).toBe('');
+    });
+
+    it('unlockBrief writes unlockedAt onto production.brief (no prior production)', () => {
+      const { store } = setup(makeItem({ briefApproved: true }));
+      store.unlockBrief();
+      expect(store.item()?.briefApproved).toBe(false);
+      expect(store.brief()?.unlockedAt).toBeDefined();
+      expect(typeof store.brief()?.unlockedAt).toBe('string');
+    });
+
+    it('unlockBrief preserves existing brief data and adds unlockedAt', () => {
+      const seeded = makeItem({
+        briefApproved: true,
+        production: {
+          brief: {
+            referenceLinks: ['https://keep.com'],
+            campaignName: 'Keep',
+          },
+        },
+      });
+      const { store } = setup(seeded);
+      store.unlockBrief();
+      expect(store.brief()?.referenceLinks).toEqual(['https://keep.com']);
+      expect(store.brief()?.campaignName).toBe('Keep');
+      expect(store.brief()?.unlockedAt).toBeDefined();
+    });
+
+    it('unlockBrief is a no-op when item is missing', () => {
+      const { store } = setup();
+      store.setItemId('missing');
+      store.unlockBrief();
+      expect(store.item()).toBeNull();
+    });
+
+    it('approveBrief is a no-op when item is missing', () => {
+      const { store } = setup();
+      store.setItemId('missing');
+      store.approveBrief('Tester');
+      expect(store.item()).toBeNull();
+    });
+
+    it('approveBrief writes timestamps and approver', () => {
+      const { store } = setup();
+      store.approveBrief('Tester');
+      const item = store.item();
+      expect(item?.briefApproved).toBe(true);
+      expect(item?.briefApprovedBy).toBe('Tester');
+      expect(item?.briefApprovedAt).toBeDefined();
+    });
+
+    it('persistBrief is a no-op when item is missing', () => {
+      const { store } = setup();
+      store.setItemId('missing');
+      store.setDueDate('2030-01-01');
+      expect(store.item()).toBeNull();
+    });
+
+    it('addReferenceLink is a no-op when item is missing', () => {
+      const { store } = setup();
+      store.setItemId('missing');
+      store.addReferenceLink('https://x.com');
+      expect(store.item()).toBeNull();
+    });
+
+    it('errors enumerate every missing required field', () => {
+      const { store } = setup(
+        makeItem({
+          title: '',
+          description: '',
+          platform: undefined,
+          contentType: undefined,
+          objective: undefined,
+          keyMessage: '',
+          pillarIds: [],
+          segmentIds: [],
+          cta: { type: 'learn-more', text: '' },
+        }),
+      );
+      const fields = store.errors().map((e) => e.field);
+      expect(fields).toContain('title');
+      expect(fields).toContain('description');
+      expect(fields).toContain('platform');
+      expect(fields).toContain('contentType');
+      expect(fields).toContain('objective');
+      expect(fields).toContain('keyMessage');
+      expect(fields).toContain('pillars');
+      expect(fields).toContain('segments');
+      expect(fields).toContain('cta');
+      expect(store.canApprove()).toBe(false);
+    });
+
+    it('warnings include "Key message near max length" once the message length crosses the threshold', () => {
+      // KEY_MESSAGE_MAX_CHARS is 140; threshold fires at >= 120 chars.
+      const { store } = setup(makeItem({ keyMessage: 'x'.repeat(125) }));
+      const warningLabels = store.warnings().map((w) => w.label);
+      expect(warningLabels.some((l) => l.includes('near the max length'))).toBe(true);
+    });
+
+    it('warnings include "Pillar limit reached" when the cap is hit', () => {
+      const { store } = setup(makeItem({ pillarIds: ['p1', 'p2', 'p3'] }));
+      const warningLabels = store.warnings().map((w) => w.label);
+      expect(warningLabels.some((l) => l.includes('Pillar limit reached'))).toBe(true);
+    });
+
+    it('togglePillar early-returns when the cap is reached and the pillar is new', () => {
+      const { store } = setup(makeItem({ pillarIds: ['p1', 'p2', 'p3'] }));
+      store.togglePillar('p4');
+      expect(store.item()?.pillarIds).toEqual(['p1', 'p2', 'p3']);
+      // Removing one is still allowed
+      store.togglePillar('p1');
+      expect(store.item()?.pillarIds).toEqual(['p2', 'p3']);
+    });
+
+    it('reads existing production.brief sub-fields without overwriting them on the first patch', () => {
+      const seeded = makeItem({
+        production: {
+          brief: {
+            referenceLinks: ['https://seed.com'],
+            dueDate: '2026-12-01',
+            campaignName: 'Seed_campaign',
+            publishingMode: 'PAID_BOOSTED',
+            primaryCta: 'sign-up',
+            approvalNote: 'seed note',
+          },
+        },
+      });
+      const { store } = setup(seeded);
+      // Computeds reflect the seed
+      expect(store.referenceLinks()).toEqual(['https://seed.com']);
+      expect(store.dueDate()).toBe('2026-12-01');
+      expect(store.campaignName()).toBe('Seed_campaign');
+      expect(store.publishingMode()).toBe('PAID_BOOSTED');
+      expect(store.primaryCta()).toBe('sign-up');
+      expect(store.approvalNote()).toBe('seed note');
+      expect(store.paidBoosted()).toBe(true);
+
+      // Patching a single field preserves the rest
+      store.addReferenceLink('https://added.com');
+      expect(store.referenceLinks()).toEqual([
+        'https://seed.com',
+        'https://added.com',
+      ]);
+      expect(store.dueDate()).toBe('2026-12-01');
+      expect(store.campaignName()).toBe('Seed_campaign');
+    });
+  });
 });

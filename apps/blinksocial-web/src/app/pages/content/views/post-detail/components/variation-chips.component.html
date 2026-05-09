@@ -1,0 +1,24 @@
+@if (hasSiblings()) {
+  <div class="variations-bar" role="tablist" aria-label="Variations">
+    <span class="variations-label">Variations</span>
+    <span class="variations-sep" aria-hidden="true"></span>
+    @for (chip of chips(); track chip.id) {
+      <button
+        type="button"
+        role="tab"
+        class="variation-chip"
+        [class.is-active]="chip.active"
+        [attr.aria-selected]="chip.active"
+        [disabled]="chip.active"
+        (click)="onOpen(chip.id)"
+      >
+        @if (chip.platform !== 'tbd') {
+          <app-platform-icon [platform]="chip.platform" [size]="12" />
+        }
+        <span class="variation-chip-label">{{ chip.platformLabel }}</span>
+        <span class="variation-chip-sep" aria-hidden="true">·</span>
+        <span class="variation-chip-type">{{ chip.contentTypeLabel }}</span>
+      </button>
+    }
+  </div>
+}

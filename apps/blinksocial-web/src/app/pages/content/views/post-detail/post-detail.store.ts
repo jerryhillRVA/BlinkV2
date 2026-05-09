@@ -14,6 +14,11 @@ import type {
   CtaType,
   TonePreset,
 } from '../../content.types';
+import type {
+  PrimaryCtaContract,
+  ProductionBriefContract,
+  PublishingModeContract,
+} from '@blinksocial/contracts';
 import { generateId, toggleArrayItem } from '../../content.utils';
 import type {
   BriefValidationIssue,
@@ -106,6 +111,81 @@ export class PostDetailStore {
     this.persist({ cta: { type: item.cta.type, text: trimmed } });
   }
 
+  // ── brief sub-field setters (production.brief) ─────────────────────
+  readonly brief = computed<ProductionBriefContract | undefined>(
+    () => this.item()?.production?.brief,
+  );
+
+  readonly referenceLinks = computed<string[]>(
+    () => this.brief()?.referenceLinks ?? [],
+  );
+  readonly dueDate = computed<string | undefined>(() => this.brief()?.dueDate);
+  readonly campaignName = computed<string | undefined>(
+    () => this.brief()?.campaignName,
+  );
+  readonly publishingMode = computed<PublishingModeContract | undefined>(
+    () => this.brief()?.publishingMode,
+  );
+  readonly primaryCta = computed<PrimaryCtaContract | undefined>(
+    () => this.brief()?.primaryCta,
+  );
+  readonly approvalNote = computed<string>(
+    () => this.brief()?.approvalNote ?? '',
+  );
+
+  readonly paidBoosted = computed(
+    () => this.publishingMode() === 'PAID_BOOSTED',
+  );
+
+  readonly pastDueDate = computed(() => {
+    const d = this.dueDate();
+    if (!d) return false;
+    const date = new Date(d);
+    if (isNaN(date.getTime())) return false;
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    return date.getTime() < today.getTime();
+  });
+
+  setReferenceLinks(links: string[]): void {
+    this.persistBrief({ referenceLinks: links });
+  }
+
+  addReferenceLink(url: string): void {
+    const trimmed = url.trim();
+    if (!trimmed) return;
+    this.persistBrief({ referenceLinks: [...this.referenceLinks(), trimmed] });
+  }
+
+  removeReferenceLink(index: number): void {
+    const next = this.referenceLinks().filter((_, i) => i !== index);
+    this.persistBrief({ referenceLinks: next });
+  }
+
+  setDueDate(v: string): void {
+    this.persistBrief({ dueDate: v.trim() || undefined });
+  }
+
+  setCampaignName(v: string): void {
+    this.persistBrief({ campaignName: v.trim() || undefined });
+  }
+
+  setPublishingMode(v: PublishingModeContract | undefined): void {
+    this.persistBrief({ publishingMode: v });
+  }
+
+  setPrimaryCta(v: PrimaryCtaContract | undefined): void {
+    this.persistBrief({ primaryCta: v });
+  }
+
+  togglePrimaryCta(v: PrimaryCtaContract): void {
+    this.setPrimaryCta(this.primaryCta() === v ? undefined : v);
+  }
+
+  setApprovalNote(v: string): void {
+    this.persistBrief({ approvalNote: v.length > 0 ? v : undefined });
+  }
+
   // ── brief approval lifecycle ────────────────────────────────────────
   approveBrief(approvedBy = 'You'): void {
     const item = this.item();
@@ -122,12 +202,17 @@ export class PostDetailStore {
   unlockBrief(): void {
     const item = this.item();
     if (!item) return;
+    const now = new Date().toISOString();
     this.state.saveItem({
       ...item,
       briefApproved: false,
       briefApprovedAt: undefined,
       briefApprovedBy: undefined,
-      updatedAt: new Date().toISOString(),
+      production: {
+        ...item.production,
+        brief: { ...(item.production?.brief ?? {}), unlockedAt: now },
+      },
+      updatedAt: now,
     });
   }
 
@@ -289,6 +374,23 @@ export class PostDetailStore {
     const next: ContentItem = {
       ...item,
       ...patch,
+      updatedAt: new Date().toISOString(),
+    };
+    this.state.saveItem(next);
+  }
+
+  // Patch a sub-key on production.brief, gated by the same write-lock.
+  private persistBrief(patch: Partial<ProductionBriefContract>): void {
+    const item = this.item();
+    if (!item) return;
+    if (item.briefApproved) return;
+    const nextBrief: ProductionBriefContract = {
+      ...(item.production?.brief ?? {}),
+      ...patch,
+    };
+    const next: ContentItem = {
+      ...item,
+      production: { ...item.production, brief: nextBrief },
       updatedAt: new Date().toISOString(),
     };
     this.state.saveItem(next);
