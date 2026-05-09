@@ -9,8 +9,28 @@ import { ContentJourneyComponent } from './components/content-journey.component'
 import { DetailBackButtonComponent } from '../_shared/detail-back-button/detail-back-button.component';
 import { StatusStepperComponent } from '../../components/status-stepper/status-stepper.component';
 import { TooltipComponent } from '../../../../shared/tooltip/tooltip.component';
-import { MAX_PILLARS_PER_ITEM } from '../../content.constants';
-import type { ContentStatus } from '../../content.types';
+import type { ContentPillar, ContentStatus } from '../../content.types';
+
+// Convert '#RGB' or '#RRGGBB' + alpha → 'rgba(R, G, B, A)'.
+// Falls back to the original string when the input isn't a recognizable
+// 3- or 6-digit hex (so a malformed pillar.color doesn't break rendering).
+function hexToRgba(hex: string, alpha: number): string {
+  const m6 = /^#([0-9a-fA-F]{6})$/.exec(hex);
+  const m3 = /^#([0-9a-fA-F]{3})$/.exec(hex);
+  let r: number, g: number, b: number;
+  if (m6) {
+    r = parseInt(m6[1].slice(0, 2), 16);
+    g = parseInt(m6[1].slice(2, 4), 16);
+    b = parseInt(m6[1].slice(4, 6), 16);
+  } else if (m3) {
+    r = parseInt(m3[1][0] + m3[1][0], 16);
+    g = parseInt(m3[1][1] + m3[1][1], 16);
+    b = parseInt(m3[1][2] + m3[1][2], 16);
+  } else {
+    return hex;
+  }
+  return `rgba(${r}, ${g}, ${b}, ${alpha.toFixed(3)})`;
+}
 
 @Component({
   selector: 'app-idea-detail',
@@ -38,8 +58,6 @@ export class IdeaDetailComponent {
 
   @Input() backLabel = 'Back to pipeline';
 
-  protected readonly maxPillars = MAX_PILLARS_PER_ITEM;
-
   @Output() back = new EventEmitter<void>();
   /** Emits the newly-created concept's id once the idea→concept advance completes. */
   @Output() advance = new EventEmitter<string>();
@@ -47,10 +65,6 @@ export class IdeaDetailComponent {
   @Output() unarchive = new EventEmitter<void>();
   @Output() duplicate = new EventEmitter<void>();
   @Output() copyLink = new EventEmitter<void>();
-
-  protected readonly pillarsAtLimit = computed(
-    () => (this.store.item()?.pillarIds.length ?? 0) >= this.maxPillars,
-  );
 
   // Mirrors the prototype: hide objectives whose statement is empty/whitespace.
   protected readonly validObjectives = computed(() =>
@@ -75,12 +89,28 @@ export class IdeaDetailComponent {
     return s.length > 50 ? s.slice(0, 50) + '…' : s;
   }
 
+  // Pillar selected-state styling — driven by pillar.color (data, not theme).
+  // Mirrors the prototype's `pillar.color + '40'` / `+ '18'` 8-char-hex
+  // pattern, but emits rgba() instead so older CSS parsers (notably jsdom
+  // in our unit-test environment) accept the value. Real browsers handle
+  // either form identically. Returns `null` when unselected so Angular
+  // doesn't emit the inline style attribute. Assumes ContentPillar.color
+  // is a 7-char hex string (#RRGGBB).
+  protected pillarBg(p: ContentPillar): string | null {
+    return this.isPillarSelected(p.id) ? hexToRgba(p.color, 24 / 255) : null; // ≈ 0.09 (matches prototype's 0x18)
+  }
+  protected pillarBorder(p: ContentPillar): string | null {
+    return this.isPillarSelected(p.id) ? hexToRgba(p.color, 64 / 255) : null; // ≈ 0.25 (matches prototype's 0x40)
+  }
+  protected pillarText(p: ContentPillar): string | null {
+    return this.isPillarSelected(p.id) ? p.color : null;
+  }
+
   protected isPillarSelected(id: string): boolean {
     return this.store.item()?.pillarIds.includes(id) ?? false;
   }
 
   protected togglePillar(id: string): void {
-    if (!this.isPillarSelected(id) && this.pillarsAtLimit()) return;
     this.store.togglePillar(id);
   }
 

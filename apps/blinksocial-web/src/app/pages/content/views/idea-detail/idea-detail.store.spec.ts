@@ -100,17 +100,17 @@ describe('IdeaDetailStore — field mutations', () => {
     expect(store.item()?.hook).toBe('Catchy');
   });
 
-  it('togglePillar adds, removes, and enforces MAX_PILLARS_PER_ITEM', () => {
+  it('togglePillar adds and removes without an upper-bound cap', () => {
     const { store } = setup(makeItem());
     store.togglePillar('p1');
     store.togglePillar('p2');
     store.togglePillar('p3');
-    store.togglePillar('p4'); // at limit — blocked
-    expect(store.item()?.pillarIds).toEqual(['p1', 'p2', 'p3']);
-    store.togglePillar('p2'); // remove → opens slot
-    expect(store.item()?.pillarIds).toEqual(['p1', 'p3']);
-    store.togglePillar('p4');
-    expect(store.item()?.pillarIds).toEqual(['p1', 'p3', 'p4']);
+    store.togglePillar('p4'); // no cap — accepted
+    store.togglePillar('p5'); // and a 5th
+    expect(store.item()?.pillarIds).toEqual(['p1', 'p2', 'p3', 'p4', 'p5']);
+    // Toggling an existing one removes it (unchanged behavior).
+    store.togglePillar('p2');
+    expect(store.item()?.pillarIds).toEqual(['p1', 'p3', 'p4', 'p5']);
   });
 
   it('toggleSegment toggles', () => {
@@ -242,7 +242,7 @@ describe('IdeaDetailStore — advanceToConcept', () => {
     }
   });
 
-  it('merging pillars respects MAX_PILLARS_PER_ITEM', () => {
+  it('advancing to concept merges idea + option pillars without an upper-bound cap', () => {
     const { store } = setup(makeItem({ pillarIds: ['p1', 'p2', 'p3'] }));
     store.generateOptions();
     vi.advanceTimersByTime(AI_SIMULATION_DELAY_MS);
@@ -250,7 +250,9 @@ describe('IdeaDetailStore — advanceToConcept', () => {
     store.selectOption(opt.id);
     let concept!: ContentItem;
     store.advanceToConcept()!.subscribe((saved) => (concept = saved));
-    expect(concept.pillarIds.length).toBeLessThanOrEqual(3);
+    // Union of idea pillars and option pillars (deduped, no slice).
+    const union = Array.from(new Set([...['p1', 'p2', 'p3'], ...opt.pillarIds]));
+    expect(concept.pillarIds).toEqual(union);
   });
 
   it('returns the server-assigned id (not the optimistic client id) to callers', () => {

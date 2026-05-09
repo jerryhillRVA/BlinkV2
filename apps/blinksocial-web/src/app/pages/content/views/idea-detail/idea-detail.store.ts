@@ -1,10 +1,7 @@
 import { DestroyRef, Injectable, computed, inject, signal } from '@angular/core';
 import type { Observable } from 'rxjs';
 import { ContentStateService } from '../../content-state.service';
-import {
-  AI_SIMULATION_DELAY_MS,
-  MAX_PILLARS_PER_ITEM,
-} from '../../content.constants';
+import { AI_SIMULATION_DELAY_MS } from '../../content.constants';
 import type { ContentItem, ContentObjective, ContentStatus } from '../../content.types';
 import { generateId, safeTimeout, toggleArrayItem } from '../../content.utils';
 import { generateConceptOptions } from './idea-detail.ai';
@@ -66,10 +63,7 @@ export class IdeaDetailStore {
   togglePillar(id: string): void {
     const item = this.item();
     if (!item) return;
-    const current = item.pillarIds;
-    const already = current.includes(id);
-    if (!already && current.length >= MAX_PILLARS_PER_ITEM) return;
-    this.persist({ pillarIds: toggleArrayItem(current, id) });
+    this.persist({ pillarIds: toggleArrayItem(item.pillarIds, id) });
   }
 
   toggleSegment(id: string): void {
@@ -152,7 +146,7 @@ export class IdeaDetailStore {
       title: item.title,
       description: selected?.description ?? item.description,
       pillarIds: selected
-        ? mergeBounded(item.pillarIds, selected.pillarIds, MAX_PILLARS_PER_ITEM)
+        ? mergeUnique(item.pillarIds, selected.pillarIds)
         : [...item.pillarIds],
       segmentIds: selected
         ? mergeUnique(item.segmentIds, selected.segmentIds)
@@ -218,11 +212,6 @@ function mergeUnique<T>(a: readonly T[], b: readonly T[]): T[] {
   const set = new Set<T>(a);
   for (const x of b) set.add(x);
   return Array.from(set);
-}
-
-function mergeBounded<T>(a: readonly T[], b: readonly T[], limit: number): T[] {
-  const merged = mergeUnique(a, b);
-  return merged.slice(0, limit);
 }
 
 // The `ContentObjective` union is only used for narrowing the patch type on

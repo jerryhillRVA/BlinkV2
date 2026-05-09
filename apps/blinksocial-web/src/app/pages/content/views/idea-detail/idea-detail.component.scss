@@ -157,24 +157,29 @@
   }
 }
 
+// Match prototype's `flex flex-wrap gap-1.5` — pills shrink to fit their
+// text instead of being stretched to two equal columns.
 .chip-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
+  display: flex;
+  flex-wrap: wrap;
   gap: 6px;
 }
 
+// Pill sizing/typography from prototype: px-2.5 py-1 + text-[10px] font-bold.
+// Centered text + tight padding makes the pill compact.
 .chip {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  padding: 6px 10px;
+  justify-content: center;
+  padding: 4px 10px;
   border-radius: 999px;
   border: 1px solid var(--blink-outline-variant);
   background: var(--blink-surface);
   color: var(--blink-on-surface);
-  font-size: var(--blink-label-large);
+  font-size: 10px;
+  font-weight: 700;
   cursor: pointer;
-  text-align: left;
+  text-align: center;
   transition: border-color 0.15s, background 0.15s;
 
   &:hover:not(:disabled) {
@@ -199,6 +204,40 @@
   height: 8px;
   border-radius: 50%;
   flex-shrink: 0;
+}
+
+// Pillar variant — selected state is driven by inline [style] bindings on
+// the button, derived from pillar.color (data, not theme). Suppress the
+// default coral .is-active background/border/text so the inline tint wins
+// cleanly, and override the .chip:hover border so coral doesn't fight the
+// pillar tint on hover.
+.chip-grid--pillar .chip {
+  &.is-active {
+    background: transparent;
+    border-color: transparent;
+    color: inherit;
+  }
+
+  // Hover border = the pillar's own color, picked up from the inline
+  // [style.--chip-hover-color] binding driven by pillar.color (data).
+  &:hover:not(:disabled) {
+    border-color: var(--chip-hover-color, var(--blink-outline-variant));
+  }
+}
+
+// Audience/segment variant — blue selected-state via the new --blink-segment-* tokens.
+.chip-grid--segment {
+  .chip.is-active {
+    background: var(--blink-segment-bg);
+    border-color: var(--blink-segment-border);
+    color: var(--blink-segment-text);
+  }
+
+  // Hover border = the segment blue (matches the prototype's audience
+  // selection family) instead of the default coral brand-primary.
+  .chip:hover:not(:disabled) {
+    border-color: var(--blink-segment-text);
+  }
 }
 
 .objective-chips {
@@ -230,13 +269,16 @@
 }
 
 .panel-label-row .panel-label {
-  flex: 1 1 auto;
+  // No flex-grow — keeps the label intrinsic-width so the <app-tooltip>
+  // sibling lands flush to its right with the existing 8px gap, instead
+  // of being pushed to the panel's right edge.
   min-width: 0;
 }
 
-// Coral-tinted icon inside the strategy section labels (matches prototype).
+// Muted-gray icon inside the strategy section labels (matches the
+// prototype's text-muted-foreground for these section icons).
 .strategy-section .panel-label > svg {
-  color: var(--blink-brand-primary);
+  color: var(--blink-on-surface-muted);
   flex-shrink: 0;
 }
 

@@ -108,6 +108,13 @@
   --blink-icon-orange-bg: #fff7ed;
   --blink-icon-orange: #ea580c;
 
+  // Audience-segment chip selected-state palette (idea-detail right column).
+  // Distinct from coral so audience selections read as different from
+  // pillar/objective selections. Tailwind blue-50/200/600 equivalents.
+  --blink-segment-bg: #eff6ff;
+  --blink-segment-border: #bfdbfe;
+  --blink-segment-text: #2563eb;
+
   // Platform brand colors
   --blink-platform-instagram: #db2777;
   --blink-platform-tiktok: #111;
@@ -293,6 +300,11 @@
   --blink-icon-blue: #3b82f6;
   --blink-icon-orange-bg: rgba(234, 88, 12, 0.15);
   --blink-icon-orange: #f97316;
+
+  // Audience-segment chip selected-state palette (dark variant).
+  --blink-segment-bg: rgba(37, 99, 235, 0.12);
+  --blink-segment-border: rgba(59, 130, 246, 0.35);
+  --blink-segment-text: #3b82f6;
 
   // Platform brand colors (slightly brightened for dark backgrounds)
   --blink-platform-instagram: #ec4899;
