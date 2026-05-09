@@ -2,13 +2,14 @@
   <ng-content></ng-content>
 
   <div class="detail-header-row">
-    <span class="stage-badge" [ngClass]="stageBadge().toneClass">
-      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-        @for (p of stageBadge().iconPaths; track p) {
-          <path [attr.d]="p"/>
-        }
+    <span class="stage-badge stage-production">
+      <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M20.2 6 3 11l-.9-2.4c-.3-1.1.3-2.2 1.3-2.5l13.5-4c1.1-.3 2.2.3 2.5 1.3Z"/>
+        <path d="m6.2 5.3 3.1 3.9"/>
+        <path d="m12.4 3.4 3.1 4"/>
+        <path d="M3 11h18v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-8Z"/>
       </svg>
-      {{ stageBadge().label }}
+      Production
     </span>
 
     <div class="detail-title-wrap">
@@ -23,29 +24,9 @@
       />
     </div>
 
-    @if (item.platform) {
-      <div class="detail-platform">
-        <app-platform-icon [platform]="item.platform" [size]="14" />
-        <span>{{ platformLabel() }}</span>
-        @if (contentTypeLabel()) {
-          <span class="detail-platform-sep">·</span>
-          <span>{{ contentTypeLabel() }}</span>
-        }
-      </div>
-    }
-
     <span class="detail-saved" aria-live="polite">Saved</span>
 
     <div class="detail-actions">
-      @if (item.conceptId) {
-        <button type="button" class="btn-back-to-concept" (click)="onBackToConcept()">
-          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-            <polyline points="15 18 9 12 15 6"/>
-          </svg>
-          Back to Concept
-        </button>
-      }
-
       <div class="detail-menu">
         <button
           type="button"
@@ -62,6 +43,15 @@
         </button>
         @if (menuOpen()) {
           <div class="detail-menu-panel" role="menu">
+            @if (item.conceptId) {
+              <button type="button" role="menuitem" class="detail-menu-item" (click)="onBackToConcept()">
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <path d="M9 14 4 9l5-5"/>
+                  <path d="M4 9h10.5a5.5 5.5 0 0 1 5.5 5.5v0a5.5 5.5 0 0 1-5.5 5.5H11"/>
+                </svg>
+                Send back to Concept
+              </button>
+            }
             @if (item.archived) {
               <button type="button" role="menuitem" class="detail-menu-item" (click)="onUnarchive()">
                 <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">

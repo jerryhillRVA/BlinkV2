@@ -22,31 +22,23 @@
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  padding: 4px 10px;
-  border-radius: 999px;
-  font-size: var(--blink-label-small);
+  padding: 2px 10px;
+  border-radius: 6px;
+  // Prototype uses Tailwind text-[10px] for the badge — sits between
+  // label-small (11px) and the chip-grid 10px convention. Mirrors the
+  // post-#110 concept badge sizing.
+  font-size: 10px;
   font-weight: 700;
   letter-spacing: 0.02em;
   border: 1px solid transparent;
   white-space: nowrap;
-  text-transform: uppercase;
 
-  &.stage-idea {
-    background: rgba(59, 130, 246, 0.12);
-    color: #1d4ed8;
-    border-color: rgba(59, 130, 246, 0.35);
-  }
-
-  &.stage-concept {
-    background: rgba(168, 85, 247, 0.12);
-    color: #7e22ce;
-    border-color: rgba(168, 85, 247, 0.35);
-  }
-
-  &.stage-post {
-    background: rgba(16, 185, 129, 0.12);
-    color: #047857;
-    border-color: rgba(16, 185, 129, 0.35);
+  &.stage-production {
+    // Tailwind orange-50 / orange-200 / orange-700 reproduced via rgba so
+    // the dark theme blends instead of showing a near-white chunk.
+    background: rgba(249, 115, 22, 0.06);
+    color: #c2410c;
+    border-color: rgba(249, 115, 22, 0.35);
   }
 }
 
@@ -55,28 +47,24 @@
   min-width: 220px;
 }
 
-.detail-title,
-.detail-title-input {
-  font-size: var(--blink-title-large);
+// `.detail-title` and `.detail-title-input` live on elements rendered by the
+// child <app-inline-edit> component, so under emulated view encapsulation a
+// plain `.detail-title` rule scoped to this component never reaches them.
+// ::ng-deep + 20px !important mirror the same fix on idea-detail-header
+// and concept-detail-header — see those files for the full reasoning.
+:host ::ng-deep .inline-edit-display.detail-title {
+  display: block;
+  font-size: 20px !important;
   font-weight: 700;
   line-height: 1.2;
   color: var(--blink-on-surface-strong);
 }
 
-.detail-platform {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 4px 10px;
-  border-radius: 999px;
-  background: var(--blink-surface-container-low);
-  color: var(--blink-on-surface-muted);
-  font-size: var(--blink-label-large);
-  text-transform: capitalize;
-}
-
-.detail-platform-sep {
-  color: var(--blink-on-surface-faint);
+:host ::ng-deep .inline-edit-input.detail-title-input {
+  font-size: 20px !important;
+  font-weight: 700;
+  line-height: 1.2;
+  color: var(--blink-on-surface-strong);
 }
 
 .detail-saved {
@@ -92,26 +80,6 @@
   align-items: center;
   gap: 8px;
   margin-left: auto;
-}
-
-.btn-back-to-concept {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  height: 32px;
-  padding: 0 10px;
-  border: 1px solid var(--blink-outline-variant);
-  border-radius: 8px;
-  background: var(--blink-surface);
-  color: var(--blink-on-surface-muted);
-  font-size: var(--blink-body-small);
-  font-weight: 600;
-  cursor: pointer;
-
-  &:hover {
-    background: var(--blink-surface-hover);
-    color: var(--blink-on-surface);
-  }
 }
 
 .detail-menu {
