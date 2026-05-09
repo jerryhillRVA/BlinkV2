@@ -118,7 +118,6 @@
                     type="button"
                     class="chip"
                     [class.is-active]="isPillarSelected(p.id)"
-                    [disabled]="!isPillarSelected(p.id) && pillarsAtLimit()"
                     [style.background-color]="pillarBg(p)"
                     [style.border-color]="pillarBorder(p)"
                     [style.color]="pillarText(p)"

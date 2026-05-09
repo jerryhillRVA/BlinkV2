@@ -9,7 +9,6 @@ import { ContentJourneyComponent } from './components/content-journey.component'
 import { DetailBackButtonComponent } from '../_shared/detail-back-button/detail-back-button.component';
 import { StatusStepperComponent } from '../../components/status-stepper/status-stepper.component';
 import { TooltipComponent } from '../../../../shared/tooltip/tooltip.component';
-import { MAX_PILLARS_PER_ITEM } from '../../content.constants';
 import type { ContentPillar, ContentStatus } from '../../content.types';
 
 // Convert '#RGB' or '#RRGGBB' + alpha → 'rgba(R, G, B, A)'.
@@ -59,8 +58,6 @@ export class IdeaDetailComponent {
 
   @Input() backLabel = 'Back to pipeline';
 
-  protected readonly maxPillars = MAX_PILLARS_PER_ITEM;
-
   @Output() back = new EventEmitter<void>();
   /** Emits the newly-created concept's id once the idea→concept advance completes. */
   @Output() advance = new EventEmitter<string>();
@@ -68,10 +65,6 @@ export class IdeaDetailComponent {
   @Output() unarchive = new EventEmitter<void>();
   @Output() duplicate = new EventEmitter<void>();
   @Output() copyLink = new EventEmitter<void>();
-
-  protected readonly pillarsAtLimit = computed(
-    () => (this.store.item()?.pillarIds.length ?? 0) >= this.maxPillars,
-  );
 
   // Mirrors the prototype: hide objectives whose statement is empty/whitespace.
   protected readonly validObjectives = computed(() =>
@@ -118,7 +111,6 @@ export class IdeaDetailComponent {
   }
 
   protected togglePillar(id: string): void {
-    if (!this.isPillarSelected(id) && this.pillarsAtLimit()) return;
     this.store.togglePillar(id);
   }
 

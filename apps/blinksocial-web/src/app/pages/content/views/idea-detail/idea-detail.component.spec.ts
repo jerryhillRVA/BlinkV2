@@ -275,7 +275,7 @@ describe('IdeaDetailComponent — interactions', () => {
     expect(store.item()?.pillarIds).toEqual(['p1']);
   });
 
-  it('enforces pillar max — 4th chip is disabled once three are selected', () => {
+  it('does not cap pillar selection — every chip stays enabled even after several selections', () => {
     const { fixture, store } = setup();
     store.togglePillar('p1');
     store.togglePillar('p2');
@@ -284,7 +284,11 @@ describe('IdeaDetailComponent — interactions', () => {
     const chips = fixture.nativeElement.querySelectorAll(
       '.chip-grid .chip',
     ) as NodeListOf<HTMLButtonElement>;
-    expect(chips[3].disabled).toBe(true);
+    // No upper-bound cap — the 4th chip is still selectable.
+    expect(chips[3].disabled).toBe(false);
+    chips[3].click();
+    fixture.detectChanges();
+    expect(store.item()?.pillarIds).toEqual(['p1', 'p2', 'p3', 'p4']);
   });
 
   it('segment chip click toggles selection', () => {
@@ -396,12 +400,10 @@ describe('IdeaDetailComponent — empty item', () => {
     const comp = fixture.componentInstance as unknown as {
       isPillarSelected: (id: string) => boolean;
       isSegmentSelected: (id: string) => boolean;
-      pillarsAtLimit: () => boolean;
       formatDate: (iso: string | undefined) => string;
     };
     expect(comp.isPillarSelected('p1')).toBe(false);
     expect(comp.isSegmentSelected('s1')).toBe(false);
-    expect(comp.pillarsAtLimit()).toBe(false);
     expect(comp.formatDate(undefined)).toBe('');
     expect(comp.formatDate('not-a-date')).toBe('');
   });
