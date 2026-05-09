@@ -121,6 +121,15 @@ export interface ProductionBriefCreativePlanContract {
 
 export type ProductionBriefComplianceContract = Record<string, unknown>;
 
+export type PublishingModeContract = 'ORGANIC' | 'PAID_BOOSTED';
+
+export type PrimaryCtaContract =
+  | 'sign-up'
+  | 'shop-now'
+  | 'learn-more'
+  | 'book-now'
+  | 'download';
+
 export interface ProductionBriefContract {
   strategy?: ProductionBriefStrategyContract;
   platformRules?: ProductionBriefPlatformRulesContract;
@@ -131,6 +140,13 @@ export interface ProductionBriefContract {
   hasTalent?: boolean;
   hasMusic?: boolean;
   needsAccessibility?: boolean;
+  referenceLinks?: string[];
+  dueDate?: string;
+  campaignName?: string;
+  publishingMode?: PublishingModeContract;
+  primaryCta?: PrimaryCtaContract;
+  approvalNote?: string;
+  unlockedAt?: string;
 }
 
 export type ProductionStepContract =
