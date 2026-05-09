@@ -47,9 +47,21 @@
   min-width: 220px;
 }
 
-.detail-title,
-.detail-title-input {
-  font-size: var(--blink-title-large);
+// `.detail-title` and `.detail-title-input` live on elements rendered by the
+// child <app-inline-edit> component, so under emulated view encapsulation a
+// plain `.detail-title` rule scoped to this component never reaches them.
+// ::ng-deep + 20px !important mirror what idea-detail-header does — see the
+// matching block in idea-detail-header.component.scss for the full reasoning.
+:host ::ng-deep .inline-edit-display.detail-title {
+  display: block;
+  font-size: 20px !important;
+  font-weight: 700;
+  line-height: 1.2;
+  color: var(--blink-on-surface-strong);
+}
+
+:host ::ng-deep .inline-edit-input.detail-title-input {
+  font-size: 20px !important;
   font-weight: 700;
   line-height: 1.2;
   color: var(--blink-on-surface-strong);

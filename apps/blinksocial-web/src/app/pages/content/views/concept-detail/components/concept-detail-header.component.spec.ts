@@ -44,6 +44,20 @@ describe('ConceptDetailHeaderComponent', () => {
     expect(fixture.nativeElement.querySelector('.detail-back')).toBeNull();
   });
 
+  it('title (.inline-edit-display.detail-title) renders bold like the Idea page', () => {
+    const fixture = setup();
+    document.body.appendChild(fixture.nativeElement);
+    try {
+      const titleBtn = fixture.nativeElement.querySelector(
+        '.inline-edit-display.detail-title',
+      ) as HTMLButtonElement;
+      expect(titleBtn).not.toBeNull();
+      expect(getComputedStyle(titleBtn).fontWeight).toBe('700');
+    } finally {
+      document.body.removeChild(fixture.nativeElement);
+    }
+  });
+
   it('Concept badge renders the Lucide Layers icon at 12x12 (prototype parity)', () => {
     const fixture = setup();
     const svg = fixture.nativeElement.querySelector('.stage-badge svg') as SVGElement;
