@@ -209,6 +209,19 @@ describe('IdeaDetailComponent — chip-grid variants (#108)', () => {
     expect(grids.length).toBe(2);
   });
 
+  it('every pillar chip carries --chip-hover-color = pillar.color (drives hover border)', () => {
+    const { fixture } = setup();
+    const chips = Array.from(
+      fixture.nativeElement.querySelectorAll(
+        '.chip-grid--pillar .chip',
+      ) as NodeListOf<HTMLButtonElement>,
+    );
+    expect(chips.length).toBe(PILLARS.length);
+    chips.forEach((chip, i) => {
+      expect(chip.style.getPropertyValue('--chip-hover-color')).toBe(PILLARS[i].color);
+    });
+  });
+
   it('no .chip-dot exists inside the pillar chip-grid (dot was removed)', () => {
     const { fixture } = setup();
     const dotsInPillars = fixture.nativeElement.querySelectorAll(

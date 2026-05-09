@@ -121,6 +121,7 @@
                     [style.background-color]="pillarBg(p)"
                     [style.border-color]="pillarBorder(p)"
                     [style.color]="pillarText(p)"
+                    [style.--chip-hover-color]="p.color"
                     (click)="togglePillar(p.id)"
                   >
                     {{ p.name }}

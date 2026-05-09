@@ -218,16 +218,26 @@
     color: inherit;
   }
 
+  // Hover border = the pillar's own color, picked up from the inline
+  // [style.--chip-hover-color] binding driven by pillar.color (data).
   &:hover:not(:disabled) {
-    border-color: inherit;
+    border-color: var(--chip-hover-color, var(--blink-outline-variant));
   }
 }
 
 // Audience/segment variant — blue selected-state via the new --blink-segment-* tokens.
-.chip-grid--segment .chip.is-active {
-  background: var(--blink-segment-bg);
-  border-color: var(--blink-segment-border);
-  color: var(--blink-segment-text);
+.chip-grid--segment {
+  .chip.is-active {
+    background: var(--blink-segment-bg);
+    border-color: var(--blink-segment-border);
+    color: var(--blink-segment-text);
+  }
+
+  // Hover border = the segment blue (matches the prototype's audience
+  // selection family) instead of the default coral brand-primary.
+  .chip:hover:not(:disabled) {
+    border-color: var(--blink-segment-text);
+  }
 }
 
 .objective-chips {
