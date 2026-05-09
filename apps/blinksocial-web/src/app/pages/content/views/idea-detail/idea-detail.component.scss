@@ -157,24 +157,29 @@
   }
 }
 
+// Match prototype's `flex flex-wrap gap-1.5` — pills shrink to fit their
+// text instead of being stretched to two equal columns.
 .chip-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
+  display: flex;
+  flex-wrap: wrap;
   gap: 6px;
 }
 
+// Pill sizing/typography from prototype: px-2.5 py-1 + text-[10px] font-bold.
+// Centered text + tight padding makes the pill compact.
 .chip {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  padding: 6px 10px;
+  justify-content: center;
+  padding: 4px 10px;
   border-radius: 999px;
   border: 1px solid var(--blink-outline-variant);
   background: var(--blink-surface);
   color: var(--blink-on-surface);
-  font-size: var(--blink-label-large);
+  font-size: 10px;
+  font-weight: 700;
   cursor: pointer;
-  text-align: left;
+  text-align: center;
   transition: border-color 0.15s, background 0.15s;
 
   &:hover:not(:disabled) {
