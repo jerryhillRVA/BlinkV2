@@ -44,6 +44,37 @@ describe('ConceptDetailHeaderComponent', () => {
     expect(fixture.nativeElement.querySelector('.detail-back')).toBeNull();
   });
 
+  it('title (.inline-edit-display.detail-title) renders bold like the Idea page', () => {
+    const fixture = setup();
+    document.body.appendChild(fixture.nativeElement);
+    try {
+      const titleBtn = fixture.nativeElement.querySelector(
+        '.inline-edit-display.detail-title',
+      ) as HTMLButtonElement;
+      expect(titleBtn).not.toBeNull();
+      expect(getComputedStyle(titleBtn).fontWeight).toBe('700');
+    } finally {
+      document.body.removeChild(fixture.nativeElement);
+    }
+  });
+
+  it('Concept badge renders the Lucide Layers icon at 12x12 (prototype parity)', () => {
+    const fixture = setup();
+    const svg = fixture.nativeElement.querySelector('.stage-badge svg') as SVGElement;
+    expect(svg).not.toBeNull();
+    expect(svg.getAttribute('width')).toBe('12');
+    expect(svg.getAttribute('height')).toBe('12');
+    const paths = Array.from(svg.querySelectorAll('path')).map(
+      (p) => p.getAttribute('d') ?? '',
+    );
+    // Layers has three trapezoid-like layered paths; PenTool has only two
+    // distinct stroke segments and a circle. Assert the layered signature.
+    expect(paths.length).toBe(3);
+    expect(paths[0]).toContain('2.6 6.08');
+    expect(paths[1]).toContain('17.65');
+    expect(paths[2]).toContain('12.65');
+  });
+
   it('primary CTA is disabled when canMoveToProduction is false', () => {
     const fixture = setup(false);
     const cta = fixture.nativeElement.querySelector('.btn-advance') as HTMLButtonElement;

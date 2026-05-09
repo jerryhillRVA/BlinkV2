@@ -6,7 +6,6 @@ import {
   DESCRIPTION_MAX_CHARS,
   DESCRIPTION_MIN_CHARS,
   HOOK_MAX_CHARS,
-  MAX_PILLARS_PER_ITEM,
 } from '../../content.constants';
 import type {
   ContentItem,
@@ -74,10 +73,7 @@ export class ConceptDetailStore {
   togglePillar(id: string): void {
     const item = this.item();
     if (!item) return;
-    const current = item.pillarIds;
-    const already = current.includes(id);
-    if (!already && current.length >= MAX_PILLARS_PER_ITEM) return;
-    this.persist({ pillarIds: toggleArrayItem(current, id) });
+    this.persist({ pillarIds: toggleArrayItem(item.pillarIds, id) });
   }
 
   toggleSegment(id: string): void {
@@ -215,7 +211,7 @@ export class ConceptDetailStore {
 
   readonly pillarsInRange = computed(() => {
     const n = this.item()?.pillarIds?.length ?? 0;
-    return n >= 1 && n <= MAX_PILLARS_PER_ITEM;
+    return n >= 1;
   });
 
   readonly hasObjective = computed(() => !!this.item()?.objective);

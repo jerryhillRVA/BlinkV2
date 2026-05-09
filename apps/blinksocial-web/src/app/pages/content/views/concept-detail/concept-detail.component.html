@@ -16,7 +16,7 @@
       <app-detail-back-button [ariaLabel]="backLabel" (back)="onBack()" />
     </app-concept-detail-header>
 
-    <div class="status-stepper-wrap">
+    <div class="status-stepper-wrap status-stepper-wrap--compact">
       <app-status-stepper
         [value]="item.status"
         [stage]="item.stage"
@@ -26,18 +26,40 @@
 
     <div class="detail-grid">
       <main class="detail-main">
-        <section class="panel">
-          <h3 class="panel-label">Description</h3>
-          <app-inline-edit
-            [value]="item.description"
-            [multiline]="true"
-            [placeholder]="descriptionMin + '\u2013' + descriptionMax + ' characters required'"
-            displayClass="detail-description"
-            inputClass="detail-description-input"
-            ariaLabel="Edit description"
-            (valueChange)="onDescriptionChange($event)"
-          />
-          <div class="panel-inline-row">
+        <section class="panel detail-fields-panel">
+          <div class="field-section">
+            <div class="panel-label-row">
+              <h3 class="panel-label">
+                Description ({{ descriptionMin }}–{{ descriptionMax }} characters)
+                <span class="panel-required" aria-label="required">*</span>
+              </h3>
+              <app-tooltip
+                type="help"
+                text="A detailed description of what this content will be about. This helps guide the production process."
+              />
+              <button type="button" class="assist-btn" [disabled]="store.isAssistingDescription()" (click)="onAssistDescription()">
+                @if (store.isAssistingDescription()) {
+                  <span class="spinner spinner--sm" aria-hidden="true"></span>
+                  <span>Drafting…</span>
+                } @else {
+                  <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <path d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"/>
+                    <path d="M20 3v4"/>
+                    <path d="M22 5h-4"/>
+                    <path d="M4 17v2"/>
+                    <path d="M5 18H3"/>
+                  </svg>
+                  <span>AI Assist</span>
+                }
+              </button>
+            </div>
+            <textarea
+              class="detail-description-input"
+              [placeholder]="descriptionMin + '–' + descriptionMax + ' characters required'"
+              aria-label="Edit description"
+              [value]="item.description"
+              (change)="onDescriptionChange($any($event.target).value)"
+            ></textarea>
             <p
               class="char-counter"
               [class.is-invalid]="descriptionInvalid()"
@@ -45,268 +67,198 @@
             >
               {{ descriptionCount() }}/{{ descriptionMax }} characters (min {{ descriptionMin }})
             </p>
-            <button type="button" class="assist-btn" [disabled]="store.isAssistingDescription()" (click)="onAssistDescription()">
-              @if (store.isAssistingDescription()) {
-                <span class="spinner spinner--sm" aria-hidden="true"></span>
-              } @else {
-                <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                  <path d="m12 3-1.9 5.8a2 2 0 0 1-1.3 1.3L3 12l5.8 1.9a2 2 0 0 1 1.3 1.3L12 21l1.9-5.8a2 2 0 0 1 1.3-1.3L21 12l-5.8-1.9a2 2 0 0 1-1.3-1.3Z"/>
-                </svg>
-              }
-              AI Assist
-            </button>
           </div>
-        </section>
 
-        <section class="panel">
-          <h3 class="panel-label">Hook</h3>
-          <app-inline-edit
-            [value]="item.hook ?? ''"
-            [placeholder]="'Enter a compelling hook\u2026'"
-            displayClass="detail-hook-text"
-            inputClass="detail-hook-input"
-            ariaLabel="Edit hook"
-            (valueChange)="onHookChange($event)"
-          />
-          <div class="panel-inline-row">
+          <div class="field-section">
+            <div class="panel-label-row">
+              <h3 class="panel-label">Hook Angle (max {{ hookMax }} characters)</h3>
+              <app-tooltip
+                type="help"
+                text="The opening line or attention-grabber that will make people stop scrolling."
+              />
+              <button type="button" class="assist-btn" [disabled]="store.isAssistingHook()" (click)="onAssistHook()">
+                @if (store.isAssistingHook()) {
+                  <span class="spinner spinner--sm" aria-hidden="true"></span>
+                  <span>Drafting…</span>
+                } @else {
+                  <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <path d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"/>
+                    <path d="M20 3v4"/>
+                    <path d="M22 5h-4"/>
+                    <path d="M4 17v2"/>
+                    <path d="M5 18H3"/>
+                  </svg>
+                  <span>AI Assist</span>
+                }
+              </button>
+            </div>
+            <textarea
+              class="detail-hook-input"
+              placeholder="Enter a compelling hook…"
+              aria-label="Edit hook"
+              [value]="item.hook ?? ''"
+              (change)="onHookChange($any($event.target).value)"
+            ></textarea>
             <p class="char-counter" [class.is-warn]="hookCount() >= 100">
               {{ hookCount() }}/{{ hookMax }} characters
             </p>
-            <button type="button" class="assist-btn" [disabled]="store.isAssistingHook()" (click)="onAssistHook()">
-              @if (store.isAssistingHook()) {
-                <span class="spinner spinner--sm" aria-hidden="true"></span>
-              } @else {
-                <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                  <path d="m12 3-1.9 5.8a2 2 0 0 1-1.3 1.3L3 12l5.8 1.9a2 2 0 0 1 1.3 1.3L12 21l1.9-5.8a2 2 0 0 1 1.3-1.3L21 12l-5.8-1.9a2 2 0 0 1-1.3-1.3Z"/>
-                </svg>
+          </div>
+
+          <div class="field-section">
+            <div class="panel-label-row">
+              <h3 class="panel-label">
+                Content Goal <span class="panel-required">*</span>
+              </h3>
+              <app-tooltip
+                type="help"
+                text="The primary goal of this content. This guides the creative direction and measures success."
+              />
+            </div>
+            <div class="objective-grid">
+              @for (opt of objectiveOptions; track opt.value) {
+                <button
+                  type="button"
+                  class="objective-btn"
+                  [class.is-active]="isObjective(opt.value)"
+                  (click)="setObjective(opt.value)"
+                >
+                  {{ opt.label }}
+                </button>
               }
-              AI Assist
-            </button>
+            </div>
           </div>
         </section>
 
         <section class="panel">
-          <h3 class="panel-label">
-            Content Goal <span class="panel-required">*</span>
-          </h3>
-          <div class="objective-grid">
-            @for (opt of objectiveOptions; track opt.value) {
-              <button
-                type="button"
-                class="objective-btn"
-                [class.is-active]="isObjective(opt.value)"
-                (click)="setObjective(opt.value)"
-              >
-                {{ opt.label }}
-              </button>
-            }
+          <div class="panel-label-row">
+            <h3 class="panel-label">
+              Production Targets <span class="panel-required">*</span>
+            </h3>
+            <app-tooltip
+              type="help"
+              text="Select the platforms and variations you want to produce. You can select multiple."
+            />
           </div>
-        </section>
-
-        <section class="panel">
-          <h3 class="panel-label">
-            Production Targets <span class="panel-required">*</span>
-            <span class="panel-hint">(pick one or more)</span>
-          </h3>
           <app-production-targets-picker
             [selected]="item.targetPlatforms ?? []"
             [isInProduction]="isInProductionFn"
             (toggleTarget)="onToggleTarget($event)"
           />
         </section>
-
-        <section class="panel">
-          <h3 class="panel-label">Key Message</h3>
-          <app-inline-edit
-            [value]="item.keyMessage ?? ''"
-            [multiline]="true"
-            [placeholder]="'What\u2019s the single message this concept must land?'"
-            displayClass="detail-description"
-            inputClass="detail-description-input"
-            ariaLabel="Edit key message"
-            (valueChange)="onKeyMessageChange($event)"
-          />
-        </section>
-
-        <section class="panel">
-          <h3 class="panel-label">Angle</h3>
-          <app-inline-edit
-            [value]="item.angle ?? ''"
-            [placeholder]="'Unique angle or POV'"
-            displayClass="detail-hook-text"
-            inputClass="detail-hook-input"
-            ariaLabel="Edit angle"
-            (valueChange)="onAngleChange($event)"
-          />
-        </section>
-
-        <section class="panel">
-          <h3 class="panel-label">Format Notes</h3>
-          <input
-            type="text"
-            class="tags-input"
-            placeholder="Comma-separated (e.g. b-roll, talking-head)"
-            [value]="formatNotesDisplay()"
-            (change)="onFormatNotesChange($event)"
-            aria-label="Edit format notes"
-          />
-        </section>
-
-        <section class="panel">
-          <h3 class="panel-label">Claims &amp; Risk</h3>
-          <label class="claims-toggle">
-            <input
-              type="checkbox"
-              [checked]="!!item.claimsFlag"
-              (change)="onClaimsFlagChange($event)"
-            />
-            <span>Contains factual or health claims that need review</span>
-          </label>
-          <div class="risk-row">
-            <span class="panel-hint">Risk Level</span>
-            <div class="risk-buttons">
-              @for (lvl of riskLevels; track lvl) {
-                <button
-                  type="button"
-                  class="risk-btn"
-                  [class.is-active]="item.riskLevel === lvl"
-                  (click)="onRiskLevelChange(lvl)"
-                >
-                  {{ lvl }}
-                </button>
-              }
-            </div>
-          </div>
-        </section>
-
-        <section class="panel">
-          <h3 class="panel-label">Source Links</h3>
-          <textarea
-            class="tags-input"
-            rows="3"
-            placeholder="One URL per line"
-            [value]="sourceLinksDisplay()"
-            (change)="onSourceLinksChange($event)"
-            aria-label="Edit source links"
-          ></textarea>
-        </section>
-
-        <section class="panel">
-          <h3 class="panel-label">Target Publish Window</h3>
-          <div class="publish-window">
-            <label>
-              <span>Start</span>
-              <input
-                type="date"
-                [value]="item.targetPublishWindow?.start ?? ''"
-                (change)="onPublishStartChange($event)"
-              />
-            </label>
-            <label>
-              <span>End</span>
-              <input
-                type="date"
-                [value]="item.targetPublishWindow?.end ?? ''"
-                (change)="onPublishEndChange($event)"
-              />
-            </label>
-          </div>
-        </section>
-
-        <section class="panel">
-          <h3 class="panel-label">Call-to-Action</h3>
-          <app-dropdown
-            [options]="ctaDropdown"
-            [value]="item.cta?.type ?? ''"
-            [fullWidth]="true"
-            placeholder="Select CTA type (optional)"
-            (valueChange)="onSetCtaType($event)"
-          />
-          @if (item.cta) {
-            <app-inline-edit
-              [value]="item.cta.text"
-              [placeholder]="'Enter CTA text\u2026'"
-              displayClass="detail-cta-text"
-              inputClass="detail-cta-input"
-              ariaLabel="Edit CTA text"
-              (valueChange)="onCtaTextChange($event)"
-            />
-            <p class="char-counter">{{ ctaTextCount() }}/{{ ctaTextMax }} characters</p>
-          }
-        </section>
       </main>
 
       <aside class="detail-sidebar">
-        <section class="panel">
-          <h3 class="panel-label">
-            Content Pillars <span class="panel-required">*</span>
-            <span class="panel-hint">(1\u2013{{ maxPillars }})</span>
-          </h3>
-          @if (store.pillars().length === 0) {
-            <p class="panel-empty">No pillars defined yet.</p>
-          } @else {
-            <div class="chip-grid">
-              @for (p of store.pillars(); track p.id) {
-                <button
-                  type="button"
-                  class="chip"
-                  [class.is-active]="isPillarSelected(p.id)"
-                  [disabled]="!isPillarSelected(p.id) && pillarsAtLimit()"
-                  (click)="togglePillar(p.id)"
-                >
-                  <span class="chip-dot" [style.background-color]="p.color"></span>
-                  {{ p.name }}
-                </button>
-              }
+        <section class="panel strategy-panel">
+          <div class="strategy-section">
+            <div class="panel-label-row">
+              <h3 class="panel-label">
+                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/>
+                </svg>
+                Business Objective
+                <span class="panel-required" aria-label="required">*</span>
+              </h3>
+              <app-tooltip
+                type="help"
+                text="Links this idea to a measurable business goal. Every idea should serve a real objective — not just fill a content calendar."
+              />
             </div>
-          }
-        </section>
+            @if (validObjectives().length === 0) {
+              <div class="panel-warning">
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/>
+                  <path d="M12 9v4"/>
+                  <path d="M12 17h.01"/>
+                </svg>
+                <span>No business objectives have been set up. Add them in Strategy &amp; Research first.</span>
+              </div>
+            } @else {
+              <div class="objective-chips">
+                @for (o of validObjectives(); track o.id) {
+                  <button
+                    type="button"
+                    class="chip"
+                    [class.is-active]="item.objectiveId === o.id"
+                    (click)="onObjectiveClick(o.id)"
+                  >
+                    {{ truncateStatement(o.statement) }}
+                  </button>
+                }
+              </div>
+            }
+          </div>
 
-        <section class="panel">
-          <h3 class="panel-label">Audience Segments</h3>
-          @if (store.segments().length === 0) {
-            <p class="panel-empty">No audience segments defined yet.</p>
-          } @else {
-            <div class="chip-grid">
-              @for (s of store.segments(); track s.id) {
-                <button
-                  type="button"
-                  class="chip"
-                  [class.is-active]="isSegmentSelected(s.id)"
-                  (click)="store.toggleSegment(s.id)"
-                >
-                  {{ s.name }}
-                </button>
-              }
+          <div class="strategy-section">
+            <div class="panel-label-row">
+              <h3 class="panel-label">
+                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <path d="m12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z"/>
+                  <path d="m22 17.65-9.17 4.16a2 2 0 0 1-1.66 0L2 17.65"/>
+                  <path d="m22 12.65-9.17 4.16a2 2 0 0 1-1.66 0L2 12.65"/>
+                </svg>
+                Pillars
+                <span class="panel-required" aria-label="required">*</span>
+              </h3>
+              <app-tooltip
+                type="help"
+                text="The content pillars this idea belongs to — select 1 to 3. Pillars keep your content mix intentional and on-strategy."
+              />
             </div>
-          }
-        </section>
+            @if (store.pillars().length === 0) {
+              <p class="panel-empty">No pillars defined yet.</p>
+            } @else {
+              <div class="chip-grid chip-grid--pillar">
+                @for (p of store.pillars(); track p.id) {
+                  <button
+                    type="button"
+                    class="chip"
+                    [class.is-active]="isPillarSelected(p.id)"
+                    [style.background-color]="pillarBg(p)"
+                    [style.border-color]="pillarBorder(p)"
+                    [style.color]="pillarText(p)"
+                    [style.--chip-hover-color]="p.color"
+                    (click)="togglePillar(p.id)"
+                  >
+                    {{ p.name }}
+                  </button>
+                }
+              </div>
+            }
+          </div>
 
-        <section class="panel">
-          <h3 class="panel-label">Business Objective</h3>
-          @if (store.businessObjectives().length === 0) {
-            <div class="panel-warning">
-              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/>
-                <path d="M12 9v4"/>
-                <path d="M12 17h.01"/>
-              </svg>
-              <span>No business objectives have been set up. Visit Strategy → Objectives.</span>
+          <div class="strategy-section">
+            <div class="panel-label-row">
+              <h3 class="panel-label">
+                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>
+                  <circle cx="9" cy="7" r="4"/>
+                  <path d="M22 21v-2a4 4 0 0 0-3-3.87"/>
+                  <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+                </svg>
+                Audience
+              </h3>
+              <app-tooltip
+                type="help"
+                text="The audience segment this idea is built for. A more specific audience makes the eventual content more relevant and more effective."
+              />
             </div>
-          } @else {
-            <div class="objective-chips">
-              @for (o of store.businessObjectives(); track o.id) {
-                <button
-                  type="button"
-                  class="chip"
-                  [class.is-active]="item.objectiveId === o.id"
-                  (click)="onObjectiveClick(o.id)"
-                >
-                  {{ o.statement }}
-                </button>
-              }
-            </div>
-          }
+            @if (store.segments().length === 0) {
+              <p class="panel-empty">No audience segments defined yet.</p>
+            } @else {
+              <div class="chip-grid chip-grid--segment">
+                @for (s of store.segments(); track s.id) {
+                  <button
+                    type="button"
+                    class="chip"
+                    [class.is-active]="isSegmentSelected(s.id)"
+                    (click)="store.toggleSegment(s.id)"
+                  >
+                    {{ s.name }}
+                  </button>
+                }
+              </div>
+            }
+          </div>
         </section>
 
         <section class="panel panel-journey">
@@ -314,12 +266,25 @@
           <app-content-journey [stage]="item.stage" />
         </section>
 
-        <section class="panel">
-          <h3 class="panel-label">Timestamps</h3>
-          <dl class="detail-timestamps">
-            <div><dt>Created</dt><dd>{{ item.createdAt | date: 'mediumDate' }}</dd></div>
-            <div><dt>Last updated</dt><dd>{{ item.updatedAt | date: 'medium' }}</dd></div>
-          </dl>
+        <section class="panel timestamps-panel">
+          <div class="timestamp-row">
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+            </svg>
+            <div class="timestamp-content">
+              <span class="timestamp-label">Created</span>
+              <span class="timestamp-value">{{ formatDate(item.createdAt) }}</span>
+            </div>
+          </div>
+          <div class="timestamp-row">
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+            </svg>
+            <div class="timestamp-content">
+              <span class="timestamp-label">Last Updated</span>
+              <span class="timestamp-value">{{ formatDate(item.updatedAt) }}</span>
+            </div>
+          </div>
         </section>
       </aside>
     </div>

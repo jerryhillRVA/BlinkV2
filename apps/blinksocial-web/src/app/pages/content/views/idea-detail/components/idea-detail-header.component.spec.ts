@@ -37,6 +37,14 @@ describe('IdeaDetailHeaderComponent', () => {
     expect(fixture.nativeElement.querySelector('.detail-back')).toBeNull();
   });
 
+  it('Idea badge SVG icon is 12x12 (visual parity with Concept badge / prototype)', () => {
+    const fixture = setup();
+    const svg = fixture.nativeElement.querySelector('.stage-badge svg') as SVGElement;
+    expect(svg).not.toBeNull();
+    expect(svg.getAttribute('width')).toBe('12');
+    expect(svg.getAttribute('height')).toBe('12');
+  });
+
   it('title (.inline-edit-display.detail-title) renders bold like the prototype', () => {
     const fixture = setup();
     document.body.appendChild(fixture.nativeElement);

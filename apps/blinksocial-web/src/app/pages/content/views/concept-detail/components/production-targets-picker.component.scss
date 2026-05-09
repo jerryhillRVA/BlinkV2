@@ -5,13 +5,19 @@
 .targets-picker {
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 12px;
 }
 
+// Per-platform sub-card — light gray-bordered tile with subtle bg, matching
+// the prototype's `border-gray-100 rounded-lg p-2.5 bg-gray-50/30`.
 .target-group {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 8px;
+  padding: 10px;
+  border: 1px solid var(--blink-outline-variant);
+  border-radius: 8px;
+  background: var(--blink-surface-container-low);
 }
 
 .target-group-header {
@@ -19,50 +25,54 @@
   align-items: center;
   gap: 6px;
   color: var(--blink-on-surface-secondary);
-  font-size: var(--blink-label-small);
+  font-size: var(--blink-label-medium);
   font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
 }
 
 .target-group-label {
   color: inherit;
 }
 
-.target-empty {
-  margin: 0;
-  font-size: var(--blink-body-small);
-  color: var(--blink-on-surface-faint);
-  font-style: italic;
+.target-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+
+  @media (min-width: 480px) {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
 }
 
-.target-chips {
+// Rounded-rect option — checkbox-like square on the left, label on the
+// right. Mirrors the prototype's
+// `px-2 py-2 rounded-lg border text-[10px] font-medium … flex items-start gap-2`.
+.target-option {
   display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-}
-
-.target-chip {
-  display: inline-flex;
   align-items: center;
-  gap: 6px;
-  padding: 6px 12px;
-  border-radius: 999px;
+  gap: 8px;
+  padding: 8px;
+  // 32px ≈ 14 (check square) + 16 (8px top + 8px bottom padding) + 2 (border).
+  // Pinning min-height keeps every option in a row the same size even when
+  // a sibling's label wraps, so single-line labels stay visually centred.
+  min-height: 32px;
+  text-align: left;
   border: 1px solid var(--blink-outline-variant);
+  border-radius: 8px;
   background: var(--blink-surface);
-  color: var(--blink-on-surface);
-  font-size: var(--blink-label-large);
+  color: var(--blink-on-surface-secondary);
+  font-size: 10px;
+  font-weight: 500;
   cursor: pointer;
-  transition: border-color 0.15s, background 0.15s;
+  transition: border-color 0.15s, background 0.15s, color 0.15s;
 
   &:hover:not(:disabled) {
-    border-color: var(--blink-brand-primary);
+    border-color: var(--blink-outline);
   }
 
   &.is-selected {
-    background: var(--blink-brand-primary);
     border-color: var(--blink-brand-primary);
-    color: var(--blink-on-brand, #fff);
+    background: var(--blink-brand-primary-lightest-bg, rgba(217, 78, 51, 0.05));
+    color: var(--blink-brand-primary);
   }
 
   &.is-in-production,
@@ -72,12 +82,41 @@
   }
 }
 
-.target-chip-badge {
+.target-option-check {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 14px;
+  height: 14px;
+  border-radius: 3px;
+  border: 1px solid var(--blink-outline);
+  background: var(--blink-surface);
+  color: #fff;
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.target-option.is-selected .target-option-check {
+  border-color: var(--blink-brand-primary);
+  background: var(--blink-brand-primary);
+}
+
+.target-option-label {
+  // Line-height pinned to the 14px check square so the single-line label's
+  // line-box centre coincides with the checkbox centre. Without this, the
+  // 12.5px (line-height: 1.25 * 10px) line-box was slightly shorter than
+  // the checkbox and the glyphs read as sitting just above centre.
+  line-height: 14px;
+  flex: 1;
+  min-width: 0;
+}
+
+.target-option-badge {
   display: inline-block;
   padding: 1px 6px;
   border-radius: 999px;
-  font-size: var(--blink-label-small);
-  font-weight: 600;
+  font-size: 9px;
+  font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.03em;
   background: var(--blink-surface-container-low);

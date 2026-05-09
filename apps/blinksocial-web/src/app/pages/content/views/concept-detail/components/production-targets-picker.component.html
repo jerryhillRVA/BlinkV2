@@ -5,20 +5,27 @@
         <app-platform-icon [platform]="group.platform" [size]="14" />
         <span class="target-group-label">{{ group.platformLabel }}</span>
       </div>
-      <div class="target-chips">
+      <div class="target-grid">
         @for (opt of group.options; track opt.contentType) {
           <button
             type="button"
-            class="target-chip"
+            class="target-option"
             [class.is-selected]="opt.selected"
             [class.is-in-production]="opt.inProduction"
             [disabled]="opt.inProduction"
             [attr.aria-pressed]="opt.selected"
             (click)="onToggle(group.platform, opt.contentType, opt.inProduction)"
           >
-            {{ opt.label }}
+            <span class="target-option-check" aria-hidden="true">
+              @if (opt.selected) {
+                <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M20 6 9 17l-5-5"/>
+                </svg>
+              }
+            </span>
+            <span class="target-option-label">{{ opt.label }}</span>
             @if (opt.inProduction) {
-              <span class="target-chip-badge">In Production</span>
+              <span class="target-option-badge">In Production</span>
             }
           </button>
         }

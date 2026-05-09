@@ -69,12 +69,120 @@ describe('ConceptDetailComponent — composition', () => {
     expect(labels.some((t) => t.includes('Hook'))).toBe(true);
     expect(labels.some((t) => t.includes('Content Goal'))).toBe(true);
     expect(labels.some((t) => t.includes('Production Targets'))).toBe(true);
-    expect(labels.some((t) => t.includes('Call-to-Action'))).toBe(true);
-    expect(labels.some((t) => t.includes('Content Pillars'))).toBe(true);
-    expect(labels.some((t) => t.includes('Audience Segments'))).toBe(true);
+    expect(labels.some((t) => t.includes('Pillars'))).toBe(true);
+    expect(labels.some((t) => t.includes('Audience'))).toBe(true);
     expect(labels.some((t) => t.includes('Business Objective'))).toBe(true);
     expect(labels.some((t) => t.includes('Content Journey'))).toBe(true);
-    expect(labels.some((t) => t.includes('Timestamps'))).toBe(true);
+    // Timestamps panel is now header-less; assert by structure instead.
+    expect(fixture.nativeElement.querySelector('.timestamps-panel')).not.toBeNull();
+  });
+
+  it('groups Description, Hook Angle, and Content Goal into a single .detail-fields-panel (prototype parity)', () => {
+    const { fixture } = setup();
+    const fieldsPanel = fixture.nativeElement.querySelector('.detail-fields-panel') as HTMLElement;
+    expect(fieldsPanel).not.toBeNull();
+    const labels = Array.from(
+      fieldsPanel.querySelectorAll('.panel-label') as NodeListOf<HTMLElement>,
+    ).map((el) => el.textContent ?? '');
+    expect(labels.some((t) => t.includes('Description'))).toBe(true);
+    expect(labels.some((t) => t.includes('Hook Angle'))).toBe(true);
+    expect(labels.some((t) => t.includes('Content Goal'))).toBe(true);
+  });
+
+  it('AI Assist buttons render the 5-path Lucide Sparkles icon (not the legacy single-path)', () => {
+    const { fixture } = setup();
+    const buttons = Array.from(
+      fixture.nativeElement.querySelectorAll(
+        '.detail-fields-panel .assist-btn',
+      ) as NodeListOf<HTMLButtonElement>,
+    );
+    expect(buttons.length).toBeGreaterThanOrEqual(2);
+    for (const btn of buttons) {
+      const svg = btn.querySelector('svg');
+      expect(svg).not.toBeNull();
+      expect(svg!.querySelectorAll('path').length).toBe(5);
+    }
+  });
+
+  it('renders real en-dash and ellipsis characters in label/placeholder text (no literal \\u escapes)', () => {
+    const { fixture } = setup();
+    const html = fixture.nativeElement.innerHTML as string;
+    expect(html).not.toContain('\\u2013');
+    expect(html).not.toContain('\\u2026');
+    const descLabel = Array.from(
+      fixture.nativeElement.querySelectorAll(
+        '.detail-fields-panel .panel-label',
+      ) as NodeListOf<HTMLElement>,
+    ).find((el) => el.textContent?.includes('Description'));
+    expect(descLabel?.textContent).toContain('–');
+  });
+
+  it('Description and Hook Angle AI Assist buttons sit in their .panel-label-row (top-right, next to label)', () => {
+    const { fixture } = setup();
+    const labelRows = Array.from(
+      fixture.nativeElement.querySelectorAll(
+        '.detail-fields-panel .panel-label-row',
+      ) as NodeListOf<HTMLElement>,
+    );
+    const descRow = labelRows.find((r) => r.textContent?.includes('Description'));
+    const hookRow = labelRows.find((r) => r.textContent?.includes('Hook Angle'));
+    expect(descRow).toBeDefined();
+    expect(hookRow).toBeDefined();
+    expect(descRow!.querySelector('.assist-btn')).not.toBeNull();
+    expect(hookRow!.querySelector('.assist-btn')).not.toBeNull();
+  });
+
+  it('Description / Hook Angle / Content Goal / Production Targets each have a help tooltip and render label text in source case (no uppercase)', () => {
+    const { fixture } = setup();
+    document.body.appendChild(fixture.nativeElement);
+    try {
+      const main = fixture.nativeElement.querySelector('.detail-main') as HTMLElement;
+      const labelRows = Array.from(
+        main.querySelectorAll('.panel-label-row') as NodeListOf<HTMLElement>,
+      );
+      const expected = ['Description', 'Hook Angle', 'Content Goal', 'Production Targets'];
+      for (const label of expected) {
+        const row = labelRows.find((r) => r.textContent?.includes(label));
+        expect(row, `panel-label-row for ${label}`).toBeDefined();
+        expect(row!.querySelector('app-tooltip[type="help"]')).not.toBeNull();
+      }
+      const labels = Array.from(
+        main.querySelectorAll('.panel-label') as NodeListOf<HTMLElement>,
+      );
+      for (const lbl of labels) {
+        expect(getComputedStyle(lbl).textTransform).toBe('none');
+      }
+    } finally {
+      document.body.removeChild(fixture.nativeElement);
+    }
+  });
+
+  it('main column has exactly two panels: .detail-fields-panel and Production Targets, in that order', () => {
+    const { fixture } = setup();
+    const panels = Array.from(
+      fixture.nativeElement.querySelectorAll('.detail-main > .panel') as NodeListOf<HTMLElement>,
+    );
+    expect(panels.length).toBe(2);
+    expect(panels[0].classList.contains('detail-fields-panel')).toBe(true);
+    expect(panels[1].textContent).toContain('Production Targets');
+  });
+
+  it('main column no longer renders Key Message, Angle, Format Notes, Claims & Risk, Source Links, Target Publish Window, or Call-to-Action sections', () => {
+    const { fixture } = setup();
+    const main = fixture.nativeElement.querySelector('.detail-main') as HTMLElement;
+    const text = main.textContent ?? '';
+    for (const removed of [
+      'Key Message',
+      'Format Notes',
+      'Claims & Risk',
+      'Source Links',
+      'Target Publish Window',
+      'Call-to-Action',
+    ]) {
+      expect(text).not.toContain(removed);
+    }
+    // "Angle" is also gone as a standalone label, but "Hook Angle" stays.
+    expect(main.querySelector('h3.panel-label[data-field="angle"]')).toBeNull();
   });
 
   it('renders nothing when item is null', () => {
@@ -323,7 +431,6 @@ describe('ConceptDetailComponent — formatters and helpers', () => {
     const comp = fixture.componentInstance as unknown as {
       isPillarSelected: (id: string) => boolean;
       isSegmentSelected: (id: string) => boolean;
-      pillarsAtLimit: () => boolean;
       togglePillar: (id: string) => void;
       descriptionCount: () => number;
       hookCount: () => number;
@@ -331,19 +438,17 @@ describe('ConceptDetailComponent — formatters and helpers', () => {
     };
     expect(comp.isPillarSelected('p1')).toBe(false);
     expect(comp.isSegmentSelected('s1')).toBe(false);
-    expect(comp.pillarsAtLimit()).toBe(false);
     comp.togglePillar('p1');
     expect(comp.descriptionCount()).toBe(0);
     expect(comp.hookCount()).toBe(0);
     expect(comp.ctaTextCount()).toBe(0);
   });
 
-  it('togglePillar short-circuits when pillarsAtLimit and pillar not already selected', () => {
+  it('togglePillar accepts unlimited pillars (no upper-bound cap)', () => {
     const { fixture } = setup(makeItem({ pillarIds: ['p1', 'p2', 'p3'] }));
     const store = (fixture.componentInstance as unknown as { store: ConceptDetailStore }).store;
-    const before = store.item()?.pillarIds?.slice();
     (fixture.componentInstance as unknown as { togglePillar: (id: string) => void }).togglePillar('p4');
-    expect(store.item()?.pillarIds).toEqual(before);
+    expect(store.item()?.pillarIds).toEqual(['p1', 'p2', 'p3', 'p4']);
   });
 
   it('dialog handlers are noops when moveToProduction returns []', () => {
@@ -514,18 +619,7 @@ describe('ConceptDetailComponent — new strategy + status handlers', () => {
     confirmSpy.mockRestore();
   });
 
-  it('risk buttons highlight the selected level', () => {
-    const { fixture } = setup(makeItem({ riskLevel: 'medium' }));
-    const buttons = Array.from(
-      fixture.nativeElement.querySelectorAll('.risk-btn') as NodeListOf<HTMLButtonElement>,
-    );
-    expect(buttons.length).toBe(3);
-    expect(buttons[0].classList.contains('is-active')).toBe(false);
-    expect(buttons[1].classList.contains('is-active')).toBe(true);
-    expect(buttons[2].classList.contains('is-active')).toBe(false);
-  });
-
-  it('format-notes and source-links inputs display current values', () => {
+  it('format-notes and source-links display getters still work (handlers retained even though UI is removed)', () => {
     const { fixture } = setup(makeItem({
       formatNotes: ['b-roll', 'music'],
       sourceLinks: ['https://a.com', 'https://b.com'],
@@ -538,14 +632,23 @@ describe('ConceptDetailComponent — new strategy + status handlers', () => {
     expect(comp.sourceLinksDisplay()).toBe('https://a.com\nhttps://b.com');
   });
 
-  it('publish window inputs bind to item.targetPublishWindow', () => {
-    const { fixture } = setup(makeItem({
-      targetPublishWindow: { start: '2026-06-01', end: '2026-06-30' },
-    }));
-    const dateInputs = fixture.nativeElement.querySelectorAll('.publish-window input[type="date"]');
-    expect(dateInputs.length).toBe(2);
-    expect((dateInputs[0] as HTMLInputElement).value).toBe('2026-06-01');
-    expect((dateInputs[1] as HTMLInputElement).value).toBe('2026-06-30');
+  // Publish-window UI removed; setter handlers still covered above
+  // (onPublishStartChange / onPublishEndChange).
+
+  it('formatDate handles empty, invalid, and valid ISO strings', () => {
+    const { fixture } = setup();
+    const comp = fixture.componentInstance as unknown as {
+      formatDate: (iso: string | undefined) => string;
+      truncateStatement: (s: string) => string;
+    };
+    expect(comp.formatDate(undefined)).toBe('');
+    expect(comp.formatDate('')).toBe('');
+    expect(comp.formatDate('not-a-date')).toBe('');
+    expect(comp.formatDate('2026-01-15T00:00:00Z').length).toBeGreaterThan(0);
+    expect(comp.truncateStatement('short')).toBe('short');
+    const long = 'a'.repeat(60);
+    expect(comp.truncateStatement(long).endsWith('…')).toBe(true);
+    expect(comp.truncateStatement(long).length).toBe(51);
   });
 
   it('handlers tolerate events with null target', () => {
