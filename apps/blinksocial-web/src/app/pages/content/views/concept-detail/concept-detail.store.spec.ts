@@ -105,15 +105,16 @@ describe('ConceptDetailStore — field mutations', () => {
     expect(store.item()?.hook).toBe('Catchy');
   });
 
-  it('togglePillar enforces MAX_PILLARS_PER_ITEM', () => {
+  it('togglePillar adds and removes without an upper-bound cap', () => {
     const { store } = setup(makeItem({ pillarIds: [] }));
     store.togglePillar('p1');
     store.togglePillar('p2');
     store.togglePillar('p3');
-    store.togglePillar('p4'); // blocked
-    expect(store.item()?.pillarIds).toEqual(['p1', 'p2', 'p3']);
-    store.togglePillar('p2'); // removes → opens slot
-    expect(store.item()?.pillarIds).toEqual(['p1', 'p3']);
+    store.togglePillar('p4'); // no cap — accepted
+    store.togglePillar('p5');
+    expect(store.item()?.pillarIds).toEqual(['p1', 'p2', 'p3', 'p4', 'p5']);
+    store.togglePillar('p2'); // removes
+    expect(store.item()?.pillarIds).toEqual(['p1', 'p3', 'p4', 'p5']);
   });
 
   it('toggleSegment toggles correctly', () => {

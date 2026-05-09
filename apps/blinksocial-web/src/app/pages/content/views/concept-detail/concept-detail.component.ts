@@ -1,8 +1,8 @@
 import { Component, EventEmitter, Input, Output, computed, inject } from '@angular/core';
-import { DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { InlineEditComponent } from '../../../../shared/inline-edit/inline-edit.component';
 import { DropdownComponent, DropdownOption } from '../../../../shared/dropdown/dropdown.component';
+import { TooltipComponent } from '../../../../shared/tooltip/tooltip.component';
 import { ConceptDetailStore } from './concept-detail.store';
 import { ConceptDetailHeaderComponent } from './components/concept-detail-header.component';
 import { ProductionTargetsPickerComponent } from './components/production-targets-picker.component';
@@ -10,14 +10,18 @@ import { MoveToProductionDialogComponent } from './components/move-to-production
 import { ContentJourneyComponent } from '../idea-detail/components/content-journey.component';
 import { DetailBackButtonComponent } from '../_shared/detail-back-button/detail-back-button.component';
 import { StatusStepperComponent } from '../../components/status-stepper/status-stepper.component';
-import type { ContentStatus } from '../../content.types';
+import {
+  pillarBg as sharedPillarBg,
+  pillarBorder as sharedPillarBorder,
+  pillarText as sharedPillarText,
+} from '../_shared/pillar-style.utils';
+import type { ContentPillar, ContentStatus } from '../../content.types';
 import {
   CTA_TEXT_MAX_CHARS,
   CTA_TYPES,
   DESCRIPTION_MAX_CHARS,
   DESCRIPTION_MIN_CHARS,
   HOOK_MAX_CHARS,
-  MAX_PILLARS_PER_ITEM,
   OBJECTIVE_OPTIONS,
 } from '../../content.constants';
 import type {
@@ -31,10 +35,10 @@ import type { RiskLevelContract } from '@blinksocial/contracts';
 @Component({
   selector: 'app-concept-detail',
   imports: [
-    DatePipe,
     FormsModule,
     InlineEditComponent,
     DropdownComponent,
+    TooltipComponent,
     ConceptDetailHeaderComponent,
     ProductionTargetsPickerComponent,
     MoveToProductionDialogComponent,
@@ -49,7 +53,6 @@ import type { RiskLevelContract } from '@blinksocial/contracts';
 export class ConceptDetailComponent {
   protected readonly store = inject(ConceptDetailStore);
 
-  protected readonly maxPillars = MAX_PILLARS_PER_ITEM;
   protected readonly descriptionMin = DESCRIPTION_MIN_CHARS;
   protected readonly descriptionMax = DESCRIPTION_MAX_CHARS;
   protected readonly hookMax = HOOK_MAX_CHARS;
@@ -99,16 +102,46 @@ export class ConceptDetailComponent {
     return len > 0 && len < this.descriptionMin;
   });
 
-  protected readonly pillarsAtLimit = computed(
-    () => (this.store.item()?.pillarIds.length ?? 0) >= this.maxPillars,
+  // Mirrors the prototype: hide objectives whose statement is empty/whitespace.
+  protected readonly validObjectives = computed(() =>
+    this.store
+      .businessObjectives()
+      .filter((o) => o.statement.trim().length > 0),
   );
+
+  protected truncateStatement(s: string): string {
+    return s.length > 50 ? s.slice(0, 50) + '…' : s;
+  }
+
+  protected formatDate(iso: string | undefined): string {
+    if (!iso) return '';
+    const d = new Date(iso);
+    if (isNaN(d.getTime())) return '';
+    return d.toLocaleDateString(undefined, {
+      weekday: 'short',
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+    });
+  }
+
+  // Pillar selected-state styling — delegates to the shared util so
+  // idea-detail and concept-detail share the same logic.
+  protected pillarBg(p: ContentPillar): string | null {
+    return sharedPillarBg(p, this.isPillarSelected(p.id));
+  }
+  protected pillarBorder(p: ContentPillar): string | null {
+    return sharedPillarBorder(p, this.isPillarSelected(p.id));
+  }
+  protected pillarText(p: ContentPillar): string | null {
+    return sharedPillarText(p, this.isPillarSelected(p.id));
+  }
 
   protected isPillarSelected(id: string): boolean {
     return this.store.item()?.pillarIds.includes(id) ?? false;
   }
 
   protected togglePillar(id: string): void {
-    if (!this.isPillarSelected(id) && this.pillarsAtLimit()) return;
     this.store.togglePillar(id);
   }
 

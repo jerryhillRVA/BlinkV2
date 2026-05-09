@@ -70,11 +70,12 @@ describe('ConceptDetailComponent — composition', () => {
     expect(labels.some((t) => t.includes('Content Goal'))).toBe(true);
     expect(labels.some((t) => t.includes('Production Targets'))).toBe(true);
     expect(labels.some((t) => t.includes('Call-to-Action'))).toBe(true);
-    expect(labels.some((t) => t.includes('Content Pillars'))).toBe(true);
-    expect(labels.some((t) => t.includes('Audience Segments'))).toBe(true);
+    expect(labels.some((t) => t.includes('Pillars'))).toBe(true);
+    expect(labels.some((t) => t.includes('Audience'))).toBe(true);
     expect(labels.some((t) => t.includes('Business Objective'))).toBe(true);
     expect(labels.some((t) => t.includes('Content Journey'))).toBe(true);
-    expect(labels.some((t) => t.includes('Timestamps'))).toBe(true);
+    // Timestamps panel is now header-less; assert by structure instead.
+    expect(fixture.nativeElement.querySelector('.timestamps-panel')).not.toBeNull();
   });
 
   it('renders nothing when item is null', () => {
@@ -323,7 +324,6 @@ describe('ConceptDetailComponent — formatters and helpers', () => {
     const comp = fixture.componentInstance as unknown as {
       isPillarSelected: (id: string) => boolean;
       isSegmentSelected: (id: string) => boolean;
-      pillarsAtLimit: () => boolean;
       togglePillar: (id: string) => void;
       descriptionCount: () => number;
       hookCount: () => number;
@@ -331,19 +331,17 @@ describe('ConceptDetailComponent — formatters and helpers', () => {
     };
     expect(comp.isPillarSelected('p1')).toBe(false);
     expect(comp.isSegmentSelected('s1')).toBe(false);
-    expect(comp.pillarsAtLimit()).toBe(false);
     comp.togglePillar('p1');
     expect(comp.descriptionCount()).toBe(0);
     expect(comp.hookCount()).toBe(0);
     expect(comp.ctaTextCount()).toBe(0);
   });
 
-  it('togglePillar short-circuits when pillarsAtLimit and pillar not already selected', () => {
+  it('togglePillar accepts unlimited pillars (no upper-bound cap)', () => {
     const { fixture } = setup(makeItem({ pillarIds: ['p1', 'p2', 'p3'] }));
     const store = (fixture.componentInstance as unknown as { store: ConceptDetailStore }).store;
-    const before = store.item()?.pillarIds?.slice();
     (fixture.componentInstance as unknown as { togglePillar: (id: string) => void }).togglePillar('p4');
-    expect(store.item()?.pillarIds).toEqual(before);
+    expect(store.item()?.pillarIds).toEqual(['p1', 'p2', 'p3', 'p4']);
   });
 
   it('dialog handlers are noops when moveToProduction returns []', () => {

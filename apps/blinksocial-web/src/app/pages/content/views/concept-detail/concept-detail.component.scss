@@ -257,19 +257,37 @@
   to { transform: rotate(360deg); }
 }
 
-.detail-description,
-.detail-description-input {
-  font-size: var(--blink-body-medium);
+// Permanent textareas — match idea-detail's post-#106 styling.
+// Pillar colors are user data, not theme tokens — no encapsulation crossing
+// here since the textareas are component children directly.
+.detail-description-input,
+.detail-hook-input {
+  display: block;
+  width: 100%;
+  resize: none;
+  border: none;
+  border-radius: 8px;
+  padding: 8px 12px;
+  background: var(--blink-input-bg-dark);
   color: var(--blink-on-surface);
-  line-height: 1.55;
+  font-family: inherit;
+  font-size: var(--blink-body-medium);
+  line-height: 1.625;
+  outline: none;
+  transition: background-color 0.15s, box-shadow 0.15s;
+
+  &:focus {
+    background: var(--blink-input-bg-focus);
+    box-shadow: 0 0 0 1px var(--blink-outline);
+  }
 }
 
-.detail-hook-text,
+.detail-description-input {
+  min-height: 88px;
+}
+
 .detail-hook-input {
-  font-size: var(--blink-body-medium);
-  color: var(--blink-on-surface);
-  font-style: italic;
-  line-height: 1.45;
+  min-height: 60px;
 }
 
 .detail-cta-text,
@@ -310,24 +328,26 @@
   }
 }
 
+// Pills + chip-grid — flex-wrap, compact sizing matching the prototype.
 .chip-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
+  display: flex;
+  flex-wrap: wrap;
   gap: 6px;
 }
 
 .chip {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  padding: 6px 10px;
+  justify-content: center;
+  padding: 4px 10px;
   border-radius: 999px;
   border: 1px solid var(--blink-outline-variant);
   background: var(--blink-surface);
   color: var(--blink-on-surface);
-  font-size: var(--blink-label-large);
+  font-size: 10px;
+  font-weight: 700;
   cursor: pointer;
-  text-align: left;
+  text-align: center;
   transition: border-color 0.15s, background 0.15s;
 
   &:hover:not(:disabled) {
@@ -346,35 +366,106 @@
   }
 }
 
-.chip-dot {
-  display: inline-block;
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
+// Pillar variant — selected state driven by inline [style] bindings on
+// the button (data, not theme); hover border picks up --chip-hover-color
+// from the same inline binding.
+.chip-grid--pillar .chip {
+  &.is-active {
+    background: transparent;
+    border-color: transparent;
+    color: inherit;
+  }
+
+  &:hover:not(:disabled) {
+    border-color: var(--chip-hover-color, var(--blink-outline-variant));
+  }
+}
+
+// Audience/segment variant — blue selected-state and blue hover.
+.chip-grid--segment {
+  .chip.is-active {
+    background: var(--blink-segment-bg);
+    border-color: var(--blink-segment-border);
+    color: var(--blink-segment-text);
+  }
+
+  .chip:hover:not(:disabled) {
+    border-color: var(--blink-segment-text);
+  }
+}
+
+// One outer card grouping Business Objective, Pillars, Audience.
+.strategy-panel {
+  gap: 16px;
+}
+
+.strategy-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.strategy-section + .strategy-section {
+  border-top: 1px solid var(--blink-outline-variant);
+  padding-top: 16px;
+}
+
+.panel-label-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.panel-label-row .panel-label {
+  // Intrinsic-width so <app-tooltip> lands flush right with the 8px gap.
+  min-width: 0;
+}
+
+.strategy-section .panel-label > svg {
+  color: var(--blink-on-surface-muted);
   flex-shrink: 0;
 }
 
-.detail-timestamps {
-  margin: 0;
+// Header-less timestamps card with clock-icon rows.
+.timestamps-panel {
+  gap: 12px;
+}
+
+.timestamp-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.timestamp-row svg {
+  color: var(--blink-on-surface-muted);
+  flex-shrink: 0;
+}
+
+.timestamp-content {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 2px;
+  min-width: 0;
+}
 
-  div {
-    display: flex;
-    justify-content: space-between;
-    align-items: baseline;
-    gap: 8px;
-    font-size: var(--blink-body-small);
-  }
+.timestamp-label {
+  font-size: var(--blink-label-small);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--blink-on-surface-muted);
+}
 
-  dt {
-    margin: 0;
-    color: var(--blink-on-surface-muted);
-  }
+.timestamp-value {
+  font-size: var(--blink-body-small);
+  color: var(--blink-on-surface);
+}
 
-  dd {
-    margin: 0;
-    color: var(--blink-on-surface);
-  }
+// Stepper visual de-emphasis on concept-detail (prototype omits it
+// entirely; we keep the affordance but reduce visual weight).
+.status-stepper-wrap--compact {
+  opacity: 0.7;
+  transform: scale(0.92);
+  transform-origin: left center;
 }

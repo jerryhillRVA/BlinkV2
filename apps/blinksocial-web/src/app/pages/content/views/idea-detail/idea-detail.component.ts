@@ -9,28 +9,12 @@ import { ContentJourneyComponent } from './components/content-journey.component'
 import { DetailBackButtonComponent } from '../_shared/detail-back-button/detail-back-button.component';
 import { StatusStepperComponent } from '../../components/status-stepper/status-stepper.component';
 import { TooltipComponent } from '../../../../shared/tooltip/tooltip.component';
+import {
+  pillarBg as sharedPillarBg,
+  pillarBorder as sharedPillarBorder,
+  pillarText as sharedPillarText,
+} from '../_shared/pillar-style.utils';
 import type { ContentPillar, ContentStatus } from '../../content.types';
-
-// Convert '#RGB' or '#RRGGBB' + alpha → 'rgba(R, G, B, A)'.
-// Falls back to the original string when the input isn't a recognizable
-// 3- or 6-digit hex (so a malformed pillar.color doesn't break rendering).
-function hexToRgba(hex: string, alpha: number): string {
-  const m6 = /^#([0-9a-fA-F]{6})$/.exec(hex);
-  const m3 = /^#([0-9a-fA-F]{3})$/.exec(hex);
-  let r: number, g: number, b: number;
-  if (m6) {
-    r = parseInt(m6[1].slice(0, 2), 16);
-    g = parseInt(m6[1].slice(2, 4), 16);
-    b = parseInt(m6[1].slice(4, 6), 16);
-  } else if (m3) {
-    r = parseInt(m3[1][0] + m3[1][0], 16);
-    g = parseInt(m3[1][1] + m3[1][1], 16);
-    b = parseInt(m3[1][2] + m3[1][2], 16);
-  } else {
-    return hex;
-  }
-  return `rgba(${r}, ${g}, ${b}, ${alpha.toFixed(3)})`;
-}
 
 @Component({
   selector: 'app-idea-detail',
@@ -89,21 +73,16 @@ export class IdeaDetailComponent {
     return s.length > 50 ? s.slice(0, 50) + '…' : s;
   }
 
-  // Pillar selected-state styling — driven by pillar.color (data, not theme).
-  // Mirrors the prototype's `pillar.color + '40'` / `+ '18'` 8-char-hex
-  // pattern, but emits rgba() instead so older CSS parsers (notably jsdom
-  // in our unit-test environment) accept the value. Real browsers handle
-  // either form identically. Returns `null` when unselected so Angular
-  // doesn't emit the inline style attribute. Assumes ContentPillar.color
-  // is a 7-char hex string (#RRGGBB).
+  // Pillar selected-state styling — delegates to the shared util so
+  // concept-detail and post-detail can reuse the same logic.
   protected pillarBg(p: ContentPillar): string | null {
-    return this.isPillarSelected(p.id) ? hexToRgba(p.color, 24 / 255) : null; // ≈ 0.09 (matches prototype's 0x18)
+    return sharedPillarBg(p, this.isPillarSelected(p.id));
   }
   protected pillarBorder(p: ContentPillar): string | null {
-    return this.isPillarSelected(p.id) ? hexToRgba(p.color, 64 / 255) : null; // ≈ 0.25 (matches prototype's 0x40)
+    return sharedPillarBorder(p, this.isPillarSelected(p.id));
   }
   protected pillarText(p: ContentPillar): string | null {
-    return this.isPillarSelected(p.id) ? p.color : null;
+    return sharedPillarText(p, this.isPillarSelected(p.id));
   }
 
   protected isPillarSelected(id: string): boolean {
