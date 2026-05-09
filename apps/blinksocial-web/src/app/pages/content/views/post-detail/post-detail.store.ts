@@ -67,6 +67,10 @@ export class PostDetailStore {
     this.persist({ status });
   }
 
+  setOwner(ownerId: string): void {
+    this.persist({ owner: ownerId.trim() || null });
+  }
+
   setObjective(v: ContentObjective | ''): void {
     this.persist({ objective: v === '' ? undefined : v });
   }

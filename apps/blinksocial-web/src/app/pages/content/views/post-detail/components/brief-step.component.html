@@ -1,202 +1,328 @@
 @if (store.item(); as item) {
   <div class="brief-step" [class.is-locked]="locked()">
-    <section class="panel">
-      <h3 class="panel-label">
-        Title <span class="panel-required">*</span>
-      </h3>
-      <app-inline-edit
-        [value]="item.title"
-        [placeholder]="'Untitled post'"
-        [readOnly]="locked()"
-        displayClass="brief-title"
-        inputClass="brief-title-input"
-        ariaLabel="Edit title"
-        (valueChange)="onTitleChange($event)"
-      />
-    </section>
 
-    <section class="panel">
-      <h3 class="panel-label">
-        Description <span class="panel-required">*</span>
-      </h3>
-      <app-inline-edit
-        [value]="item.description"
-        [multiline]="true"
-        [placeholder]="descriptionMin + '\u2013' + descriptionMax + ' characters required'"
-        [readOnly]="locked()"
-        displayClass="brief-description"
-        inputClass="brief-description-input"
-        ariaLabel="Edit description"
-        (valueChange)="onDescriptionChange($event)"
-      />
-      <p class="char-counter" [class.is-invalid]="descriptionInvalid()">
-        {{ descriptionCount() }}/{{ descriptionMax }} characters (min {{ descriptionMin }})
-      </p>
-    </section>
+    <!-- Card 1 — Goal & Message -->
+    <section class="panel goal-message-card">
+      <h3 class="panel-section-title">Goal &amp; Message</h3>
 
-    <section class="panel panel-format">
-      <header class="panel-format-header">
-        <h3 class="panel-label">Format</h3>
-        <span class="panel-format-lock">
-          <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-            <rect width="18" height="11" x="3" y="11" rx="2" ry="2"/>
-            <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
-          </svg>
-          Locked
-        </span>
-      </header>
-      <div class="format-grid">
-        <div class="format-cell">
-          <span class="format-cell-label">Platform</span>
-          <div class="format-cell-value">
-            @if (item.platform) {
-              <app-platform-icon [platform]="item.platform" [size]="14" />
-              <span>{{ platformLabel() ?? item.platform }}</span>
-            } @else {
-              <span class="format-cell-empty">Not set</span>
-            }
-          </div>
-        </div>
-        <div class="format-cell">
-          <span class="format-cell-label">Content Type</span>
-          <div class="format-cell-value">
-            @if (item.contentType) {
-              <span>{{ contentTypeLabel() ?? item.contentType }}</span>
-            } @else {
-              <span class="format-cell-empty">Not set</span>
-            }
-          </div>
-        </div>
-      </div>
-      <p class="panel-hint-muted">
-        Platform and content type are locked from the concept stage and cannot be changed during production.
-      </p>
-    </section>
-
-    <section class="panel">
-      <h3 class="panel-label">
-        Content Pillars <span class="panel-required">*</span>
-        <span class="panel-hint">(1&ndash;{{ maxPillars }} required)</span>
-      </h3>
-      @if (store.pillars().length === 0) {
-        <p class="panel-empty">No pillars defined yet.</p>
-      } @else {
-        <div class="chip-grid">
-          @for (p of store.pillars(); track p.id) {
-            <button
-              type="button"
-              class="chip pillar-chip"
-              [class.is-active]="isPillarSelected(p.id)"
-              [disabled]="locked() || (!isPillarSelected(p.id) && pillarsAtLimit())"
-              (click)="togglePillar(p.id)"
-            >
-              <span class="chip-dot" [style.background-color]="p.color"></span>
-              {{ p.name }}
-            </button>
-          }
-        </div>
-      }
-    </section>
-
-    <section class="panel">
-      <h3 class="panel-label">
-        Audience Segments <span class="panel-required">*</span>
-      </h3>
-      @if (store.segments().length === 0) {
-        <p class="panel-empty">No audience segments defined yet.</p>
-      } @else {
-        <div class="chip-grid">
-          @for (s of store.segments(); track s.id) {
-            <button
-              type="button"
-              class="chip"
-              [class.is-active]="isSegmentSelected(s.id)"
-              [disabled]="locked()"
-              (click)="store.toggleSegment(s.id)"
-            >
-              {{ s.name }}
-            </button>
-          }
-        </div>
-      }
-    </section>
-
-    <section class="panel">
-      <h3 class="panel-label">
-        Content Goal <span class="panel-required">*</span>
-      </h3>
-      <div class="objective-grid">
-        @for (opt of objectiveOptions; track opt.value) {
+      <div class="field-block">
+        <div class="panel-label-row">
+          <h3 class="panel-label">
+            Key Message <span class="panel-required">*</span>
+          </h3>
           <button
             type="button"
-            class="objective-btn"
-            [class.is-active]="isObjective(opt.value)"
+            class="assist-btn"
             [disabled]="locked()"
-            (click)="setObjective(opt.value)"
+            (click)="onKeyMessageAssist()"
           >
-            {{ opt.label }}
+            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"/>
+              <path d="M20 3v4"/><path d="M22 5h-4"/><path d="M4 17v2"/><path d="M5 18H3"/>
+            </svg>
+            <span>AI Assist</span>
           </button>
-        }
-      </div>
-    </section>
-
-    <section class="panel">
-      <h3 class="panel-label">Tone Preset</h3>
-      <app-dropdown
-        [options]="toneDropdown"
-        [value]="item.tonePreset ?? ''"
-        [fullWidth]="true"
-        placeholder="Select tone (optional)"
-        (valueChange)="onTonePresetChange($event)"
-      />
-    </section>
-
-    <section class="panel">
-      <h3 class="panel-label">
-        Key Message <span class="panel-required">*</span>
-      </h3>
-      <app-inline-edit
-        [value]="item.keyMessage ?? ''"
-        [placeholder]="'The one thing the audience should remember\u2026'"
-        [readOnly]="locked()"
-        displayClass="brief-key-message"
-        inputClass="brief-key-message-input"
-        ariaLabel="Edit key message"
-        (valueChange)="onKeyMessageChange($event)"
-      />
-      <div class="panel-inline-row">
-        <p class="char-counter" [class.is-warn]="keyMessageCount() >= keyMessageMax - 20">
-          {{ keyMessageCount() }}/{{ keyMessageMax }} characters
-        </p>
-        <button type="button" class="assist-btn" [disabled]="locked()" (click)="onKeyMessageAssist()">
-          <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-            <path d="m12 3-1.9 5.8a2 2 0 0 1-1.3 1.3L3 12l5.8 1.9a2 2 0 0 1 1.3 1.3L12 21l1.9-5.8a2 2 0 0 1 1.3-1.3L21 12l-5.8-1.9a2 2 0 0 1-1.3-1.3Z"/>
-          </svg>
-          AI Assist
-        </button>
-      </div>
-    </section>
-
-    <section class="panel">
-      <h3 class="panel-label">Call-to-Action</h3>
-      <app-dropdown
-        [options]="ctaDropdown"
-        [value]="item.cta?.type ?? ''"
-        [fullWidth]="true"
-        placeholder="Select CTA type (optional)"
-        (valueChange)="onSetCtaType($event)"
-      />
-      @if (item.cta) {
-        <app-inline-edit
-          [value]="item.cta.text"
-          [placeholder]="'Enter CTA text\u2026'"
+        </div>
+        <textarea
+          class="brief-textarea"
+          rows="3"
           [readOnly]="locked()"
-          displayClass="brief-cta-text"
-          inputClass="brief-cta-input"
-          ariaLabel="Edit CTA text"
-          (valueChange)="onCtaTextChange($event)"
-        />
-        <p class="char-counter">{{ ctaTextCount() }}/{{ ctaTextMax }} characters</p>
+          placeholder="The one thing the audience should remember."
+          [value]="item.keyMessage ?? ''"
+          (input)="onKeyMessageInput($event)"
+          aria-label="Edit key message"
+        ></textarea>
+        <div class="char-row">
+          @if (keyMessageTooShort()) {
+            <span class="char-warn">Too short — aim for at least 10 characters</span>
+          } @else {
+            <span></span>
+          }
+          <span
+            class="char-counter"
+            [class.is-invalid]="keyMessageOverMax()"
+            [class.is-warn]="keyMessageTooShort()"
+          >
+            {{ keyMessageCount() }}/{{ keyMessageMax }}
+          </span>
+        </div>
+      </div>
+
+      @if (showPrimaryCta()) {
+        <div class="field-block primary-cta-block">
+          <h3 class="panel-label">
+            Primary CTA <span class="panel-required">*</span>
+          </h3>
+          <div class="primary-cta-pills">
+            @for (opt of primaryCtaOptions; track opt.value) {
+              <button
+                type="button"
+                class="pill-cta"
+                [class.is-active]="isPrimaryCta(opt.value)"
+                [disabled]="locked()"
+                (click)="onPrimaryCta(opt.value)"
+              >
+                {{ opt.label }}
+              </button>
+            }
+          </div>
+        </div>
+      }
+    </section>
+
+    <!-- Card 2 — Reference Links -->
+    <section class="panel reference-links-card">
+      <header class="panel-icon-header">
+        <svg class="panel-icon-coral" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/>
+          <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>
+        </svg>
+        <span class="panel-section-title">Reference Links</span>
+      </header>
+      <div class="field-block">
+        <div class="panel-label-row">
+          <h3 class="panel-label">Reference / Inspiration Links</h3>
+          <app-tooltip
+            type="help"
+            text="Links to competitor content, example posts, or reference videos that should inform this piece. These don't publish — they're context for the creator and help the AI generate more on-target output."
+          />
+        </div>
+        @for (url of store.referenceLinks(); track $index) {
+          <div class="reference-link-row">
+            <input
+              class="brief-input"
+              type="text"
+              [value]="url"
+              [readOnly]="locked()"
+              placeholder="https://…"
+              (change)="onEditRefLink($index, $event)"
+            />
+            <button
+              type="button"
+              class="link-row-remove"
+              [disabled]="locked()"
+              aria-label="Remove link"
+              (click)="onRemoveRefLink($index)"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+                <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
+              </svg>
+            </button>
+          </div>
+        }
+        <div class="reference-link-row">
+          <input
+            class="brief-input"
+            type="text"
+            [value]="newRefLink()"
+            [readOnly]="locked()"
+            placeholder="Paste URL + Enter to add…"
+            (input)="onRefLinkInput($event)"
+            (keydown)="onRefLinkKeydown($event)"
+          />
+          <button
+            type="button"
+            class="link-row-add"
+            [disabled]="locked()"
+            aria-label="Add link"
+            (click)="onAddRefLink()"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M5 12h14"/><path d="M12 5v14"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Card 3 — Ownership & Timeline -->
+    <section class="panel ownership-timeline-card">
+      <h3 class="panel-section-title">Ownership &amp; Timeline</h3>
+      <div class="ownership-grid">
+        <div class="field-block">
+          <h3 class="panel-label">
+            Owner <span class="panel-required">*</span>
+          </h3>
+          <select
+            class="brief-select"
+            [value]="item.owner ?? ''"
+            [disabled]="locked()"
+            (change)="onOwnerChange($event)"
+            aria-label="Owner"
+          >
+            <option value="">Select owner…</option>
+            @for (m of teamMembers; track m.id) {
+              <option [value]="m.id">{{ m.name }} — {{ m.role }}</option>
+            }
+          </select>
+        </div>
+
+        <div class="field-block">
+          <div class="panel-label-row">
+            <h3 class="panel-label">Due Date</h3>
+            <svg class="panel-label-icon" xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <rect width="18" height="18" x="3" y="4" rx="2"/>
+              <path d="M16 2v4"/><path d="M8 2v4"/><path d="M3 10h18"/>
+            </svg>
+          </div>
+          <input
+            class="brief-input"
+            type="date"
+            [value]="store.dueDate() ?? ''"
+            [readOnly]="locked()"
+            (change)="onDueDateChange($event)"
+            aria-label="Due date"
+          />
+          @if (store.pastDueDate()) {
+            <p class="due-date-warning">
+              <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/>
+                <path d="M12 9v4"/><path d="M12 17h.01"/>
+              </svg>
+              Due date is in the past
+            </p>
+          }
+        </div>
+      </div>
+
+      <div class="field-block">
+        <label class="publishing-toggle">
+          <input
+            type="checkbox"
+            [checked]="store.paidBoosted()"
+            [disabled]="locked()"
+            (change)="onPublishingModeChange($event)"
+          />
+          <span>Paid &amp; Boosted (campaign)</span>
+        </label>
+      </div>
+
+      @if (showCampaignName()) {
+        <div class="field-block">
+          <h3 class="panel-label">
+            Campaign Name <span class="panel-required">*</span>
+          </h3>
+          <input
+            class="brief-input"
+            type="text"
+            [value]="store.campaignName() ?? ''"
+            [readOnly]="locked()"
+            [placeholder]="campaignNamePlaceholder()"
+            (change)="onCampaignNameChange($event)"
+            aria-label="Campaign name"
+          />
+          <p class="panel-hint-muted">Auto-suggested from platform + type + date — editable.</p>
+        </div>
+      }
+    </section>
+
+    <!-- Card 4 — Call to Action -->
+    <section class="panel cta-card">
+      <h3 class="panel-section-title">Call to Action</h3>
+      <div class="field-block">
+        <h3 class="panel-label">
+          CTA Type <span class="panel-required">*</span>
+        </h3>
+        <div class="cta-grid">
+          @for (opt of ctaOptions; track opt.value) {
+            <button
+              type="button"
+              class="pill-cta"
+              [class.is-active]="isCtaType(opt.value)"
+              [disabled]="locked()"
+              (click)="onCtaType(opt.value)"
+            >
+              {{ opt.label }}
+            </button>
+          }
+        </div>
+      </div>
+    </section>
+
+    <!-- Card 5 — Brief Status -->
+    <section
+      class="panel brief-status-card"
+      [class.is-approved]="!!item.briefApproved"
+    >
+      <header class="status-header">
+        <span class="panel-section-title">Brief Status</span>
+        @if (item.briefApproved) {
+          <span class="status-approved-badge">
+            <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M20 6 9 17l-5-5"/>
+            </svg>
+            Approved
+          </span>
+        }
+      </header>
+
+      @if (item.briefApproved) {
+        <div class="status-approved-body">
+          <svg class="status-approved-icon" xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/>
+          </svg>
+          <p class="status-approved-title">Brief Approved</p>
+          @if (item.briefApprovedAt) {
+            <p class="status-approved-meta">
+              {{ item.briefApprovedAt | date: 'mediumDate' }} · {{ item.briefApprovedBy ?? 'You' }}
+            </p>
+          }
+          <button type="button" class="unlock-btn" (click)="onUnlock()">
+            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <rect width="18" height="11" x="3" y="11" rx="2" ry="2"/>
+              <path d="M7 11V7a5 5 0 0 1 9.9-1"/>
+            </svg>
+            Unlock Brief
+          </button>
+          <p class="unlock-hint">Unlocking resets the workflow.</p>
+        </div>
+      } @else {
+        @if (store.brief()?.unlockedAt) {
+          <div class="status-unlocked-banner">
+            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/>
+              <path d="M3 3v5h5"/>
+            </svg>
+            <span>Brief unlocked — changes require re-approval.</span>
+          </div>
+        }
+        @if (store.warnings().length > 0) {
+          <ul class="status-warnings">
+            @for (w of store.warnings(); track w.field) {
+              <li>
+                <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/>
+                  <path d="M12 9v4"/><path d="M12 17h.01"/>
+                </svg>
+                {{ w.label }}
+              </li>
+            }
+          </ul>
+        }
+        <div class="approve-row">
+          <label class="approve-label">
+            <span>Approve Brief</span>
+            <input
+              type="checkbox"
+              class="approve-toggle"
+              [checked]="!!item.briefApproved"
+              [disabled]="!canApprove"
+              (change)="onApproveToggle($event)"
+            />
+          </label>
+          @if (!canApprove) {
+            <p class="panel-hint-muted">Complete all required fields to enable.</p>
+          }
+        </div>
+        <textarea
+          class="approval-note"
+          rows="2"
+          placeholder="Approval note (optional)…"
+          [value]="store.approvalNote()"
+          (input)="onApprovalNoteInput($event)"
+          aria-label="Approval note"
+        ></textarea>
       }
     </section>
   </div>

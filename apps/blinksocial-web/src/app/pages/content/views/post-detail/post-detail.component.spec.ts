@@ -74,12 +74,17 @@ function setup(
 }
 
 describe('PostDetailComponent — composition', () => {
-  it('renders header + stepper + brief step + sidebar when Brief is active', () => {
+  it('renders header + variation chips + steps bar + brief step + content-concept sidebar when Brief is active', () => {
     const { fixture } = setup();
     expect(fixture.nativeElement.querySelector('app-post-detail-header')).not.toBeNull();
+    expect(fixture.nativeElement.querySelector('app-variation-chips')).not.toBeNull();
     expect(fixture.nativeElement.querySelector('app-production-steps-bar')).not.toBeNull();
     expect(fixture.nativeElement.querySelector('app-brief-step')).not.toBeNull();
-    expect(fixture.nativeElement.querySelector('app-brief-status-sidebar')).not.toBeNull();
+    expect(fixture.nativeElement.querySelector('app-brief-content-concept')).not.toBeNull();
+    // brief-status-sidebar is gone — its content moved into Brief Status card.
+    expect(fixture.nativeElement.querySelector('app-brief-status-sidebar')).toBeNull();
+    // status-stepper is gone — production-steps-bar is the only stepper here.
+    expect(fixture.nativeElement.querySelector('app-status-stepper')).toBeNull();
     expect(fixture.nativeElement.querySelector('app-step-placeholder')).toBeNull();
   });
 
@@ -243,35 +248,39 @@ describe('PostDetailComponent — actions', () => {
     confirmSpy.mockRestore();
   });
 
-  it('onApprove flips briefApproved on the item', () => {
+  it('onOpenSibling navigates to /workspace/<id>/content/<siblingId>', () => {
     const { fixture } = setup();
-    const store = (fixture.componentInstance as unknown as { store: PostDetailStore }).store;
-    (fixture.componentInstance as unknown as { onApprove: () => void }).onApprove();
-    expect(store.item()?.briefApproved).toBe(true);
+    const router = TestBed.inject(Router);
+    const spy = vi.spyOn(router, 'navigate').mockResolvedValue(true);
+    (fixture.componentInstance as unknown as { onOpenSibling: (id: string) => void }).onOpenSibling('sib-9');
+    expect(spy).toHaveBeenCalledWith(['/workspace', 'ws-1', 'content', 'sib-9']);
   });
 
-  it('onUnlock clears briefApproved on the item', () => {
-    const { fixture } = setup();
-    const store = (fixture.componentInstance as unknown as { store: PostDetailStore }).store;
-    store.approveBrief();
-    (fixture.componentInstance as unknown as { onUnlock: () => void }).onUnlock();
-    expect(store.item()?.briefApproved).toBe(false);
-  });
-
-  it('onContinueToBuilder advances the active step', () => {
-    const { fixture } = setup();
-    const store = (fixture.componentInstance as unknown as { store: PostDetailStore }).store;
-    (fixture.componentInstance as unknown as { onContinueToBuilder: () => void }).onContinueToBuilder();
-    expect(store.activeStep()).toBe('builder');
-  });
-
-  it('onStatusChange persists new status through the store', () => {
-    const { fixture } = setup();
-    const store = (fixture.componentInstance as unknown as { store: PostDetailStore }).store;
-    (fixture.componentInstance as unknown as {
-      onStatusChange: (s: 'review') => void;
-    }).onStatusChange('review');
-    expect(store.item()?.status).toBe('review');
+  it('siblings() returns posts that share conceptId; parentConcept() resolves the linked concept', () => {
+    const { fixture, state } = setup();
+    const now = new Date().toISOString();
+    state.setItems([
+      makeItem({ id: 'post-1' }),
+      makeItem({ id: 'post-2', platform: 'youtube', contentType: 'long-form' }),
+      {
+        id: 'concept-1',
+        stage: 'concept',
+        status: 'draft',
+        title: 'parent',
+        description: '',
+        pillarIds: [],
+        segmentIds: [],
+        createdAt: now,
+        updatedAt: now,
+      },
+    ]);
+    fixture.detectChanges();
+    const comp = fixture.componentInstance as unknown as {
+      siblings: () => ContentItem[];
+      parentConcept: () => ContentItem | null;
+    };
+    expect(comp.siblings().map((i) => i.id).sort()).toEqual(['post-1', 'post-2']);
+    expect(comp.parentConcept()?.id).toBe('concept-1');
   });
 
   it('onDelete is a no-op when user cancels the confirm', () => {

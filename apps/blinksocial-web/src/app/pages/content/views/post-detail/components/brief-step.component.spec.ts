@@ -12,8 +12,6 @@ import type {
 const PILLARS: ContentPillar[] = [
   { id: 'p1', name: 'Alpha', description: '', color: '#111' },
   { id: 'p2', name: 'Beta', description: '', color: '#222' },
-  { id: 'p3', name: 'Gamma', description: '', color: '#333' },
-  { id: 'p4', name: 'Delta', description: '', color: '#444' },
 ];
 const SEGMENTS: AudienceSegment[] = [
   { id: 's1', name: 'Seg 1', description: '' },
@@ -60,185 +58,177 @@ function setup(item: ContentItem = makeItem()): {
 }
 
 describe('BriefStepComponent — composition', () => {
-  it('renders all 10 panels', () => {
+  it('renders the 5-card layout: Goal & Message, Reference Links, Ownership & Timeline, Call to Action, Brief Status', () => {
+    const { fixture } = setup();
+    const titles = Array.from(
+      fixture.nativeElement.querySelectorAll('.panel-section-title') as NodeListOf<HTMLElement>,
+    ).map((el) => el.textContent?.trim() ?? '');
+    expect(titles).toEqual([
+      'Goal & Message',
+      'Reference Links',
+      'Ownership & Timeline',
+      'Call to Action',
+      'Brief Status',
+    ]);
+    expect(fixture.nativeElement.querySelector('.goal-message-card')).not.toBeNull();
+    expect(fixture.nativeElement.querySelector('.reference-links-card')).not.toBeNull();
+    expect(fixture.nativeElement.querySelector('.ownership-timeline-card')).not.toBeNull();
+    expect(fixture.nativeElement.querySelector('.cta-card')).not.toBeNull();
+    expect(fixture.nativeElement.querySelector('.brief-status-card')).not.toBeNull();
+  });
+
+  it('removed sections are no longer rendered (Title, Description, Format, Pillars, Segments, Content Goal, Tone Preset)', () => {
     const { fixture } = setup();
     const labels = Array.from(
       fixture.nativeElement.querySelectorAll('.panel-label') as NodeListOf<HTMLElement>,
     ).map((el) => el.textContent ?? '');
-    ['Title', 'Description', 'Format', 'Content Pillars', 'Audience Segments', 'Content Goal', 'Tone Preset', 'Key Message', 'Call-to-Action'].forEach((name) => {
-      expect(labels.some((t) => t.includes(name))).toBe(true);
-    });
+    for (const removed of ['Title', 'Format', 'Content Pillars', 'Audience Segments', 'Content Goal', 'Tone Preset']) {
+      expect(labels.some((t) => t.trim().startsWith(removed))).toBe(false);
+    }
+    // The standalone "Description" panel-label is gone (concept owns description now).
+    expect(fixture.nativeElement.querySelector('.brief-description')).toBeNull();
+    expect(fixture.nativeElement.querySelector('.panel-format')).toBeNull();
+    expect(fixture.nativeElement.querySelector('.pillar-chip')).toBeNull();
+    expect(fixture.nativeElement.querySelector('.objective-btn')).toBeNull();
   });
 
-  it('renders the Format panel as locked (shows Platform + Content Type read-only)', () => {
+  it('Goal & Message has Key Message label, AI Assist sibling, and a textarea', () => {
     const { fixture } = setup();
-    const panel = fixture.nativeElement.querySelector('.panel-format') as HTMLElement;
-    expect(panel).not.toBeNull();
-    const cells = panel.querySelectorAll('.format-cell-value');
-    expect(cells.length).toBe(2);
-    expect(cells[0].textContent).toContain('Instagram');
-    expect(cells[1].textContent).toContain('Reel');
-  });
-
-  it('Format panel shows "Not set" when platform/contentType are missing', () => {
-    const { fixture } = setup(makeItem({ platform: undefined, contentType: undefined }));
-    const cells = fixture.nativeElement.querySelectorAll(
-      '.format-cell-value',
-    ) as NodeListOf<HTMLElement>;
-    expect(cells[0].textContent).toContain('Not set');
-    expect(cells[1].textContent).toContain('Not set');
-  });
-
-  it('hides CTA text panel until a CTA type is chosen', () => {
-    const { fixture, store } = setup();
-    expect(fixture.nativeElement.querySelector('.brief-cta-text')).toBeNull();
-    store.setCtaType('buy');
-    fixture.detectChanges();
-    expect(fixture.nativeElement.querySelector('.brief-cta-text')).not.toBeNull();
-  });
-
-  it('renders an empty-state when no pillars configured', () => {
-    const { fixture, state } = setup();
-    state.pillars.set([]);
-    fixture.detectChanges();
-    const pillarsPanel = Array.from(
-      fixture.nativeElement.querySelectorAll('.panel') as NodeListOf<HTMLElement>,
-    ).find((el) => el.textContent?.includes('Content Pillars'));
-    expect(pillarsPanel?.querySelector('.panel-empty')).not.toBeNull();
-  });
-
-  it('renders an empty-state when no segments configured', () => {
-    const { fixture, state } = setup();
-    state.segments.set([]);
-    fixture.detectChanges();
-    const segPanel = Array.from(
-      fixture.nativeElement.querySelectorAll('.panel') as NodeListOf<HTMLElement>,
-    ).find((el) => el.textContent?.includes('Audience Segments'));
-    expect(segPanel?.querySelector('.panel-empty')).not.toBeNull();
+    const card = fixture.nativeElement.querySelector('.goal-message-card') as HTMLElement;
+    expect(card.querySelector('h3.panel-label')?.textContent?.trim()).toContain('Key Message');
+    expect(card.querySelector('.assist-btn')).not.toBeNull();
+    expect(card.querySelector('.brief-textarea')).not.toBeNull();
   });
 });
 
-describe('BriefStepComponent — interactions', () => {
-  it('pillar chip toggles selection via store', () => {
-    const { fixture, store } = setup(makeItem({ pillarIds: [] }));
-    const chips = fixture.nativeElement.querySelectorAll(
-      '.pillar-chip',
+describe('BriefStepComponent — Primary CTA conditional', () => {
+  it('hides Primary CTA pills when objective is awareness/non-traffic', () => {
+    const { fixture } = setup(makeItem({ objective: 'awareness' }));
+    expect(fixture.nativeElement.querySelector('.primary-cta-pills')).toBeNull();
+  });
+
+  it('shows Primary CTA pills when objective is traffic/leads/sales', () => {
+    const { fixture } = setup(makeItem({ objective: 'traffic' }));
+    expect(fixture.nativeElement.querySelector('.primary-cta-pills')).not.toBeNull();
+    const pills = fixture.nativeElement.querySelectorAll(
+      '.primary-cta-pills .pill-cta',
     ) as NodeListOf<HTMLButtonElement>;
-    chips[0].click();
-    fixture.detectChanges();
-    expect(store.item()?.pillarIds).toEqual(['p1']);
+    expect(pills.length).toBe(5);
   });
 
-  it('pillar chip is disabled once the pillar limit is reached', () => {
-    const { fixture } = setup(makeItem({ pillarIds: ['p1', 'p2', 'p3'] }));
-    const chips = fixture.nativeElement.querySelectorAll(
-      '.pillar-chip',
+  it('clicking a Primary CTA pill toggles via store', () => {
+    const { fixture, store } = setup(makeItem({ objective: 'leads' }));
+    const pills = Array.from(
+      fixture.nativeElement.querySelectorAll('.primary-cta-pills .pill-cta') as NodeListOf<HTMLButtonElement>,
+    );
+    pills.find((b) => b.textContent?.includes('Shop Now'))!.click();
+    expect(store.primaryCta()).toBe('shop-now');
+    pills.find((b) => b.textContent?.includes('Shop Now'))!.click();
+    expect(store.primaryCta()).toBeUndefined();
+  });
+});
+
+describe('BriefStepComponent — Reference Links', () => {
+  it('renders one row per saved link plus the bottom add row', () => {
+    const seeded = makeItem({
+      production: { brief: { referenceLinks: ['https://a.com', 'https://b.com'] } },
+    });
+    const { fixture } = setup(seeded);
+    const rows = fixture.nativeElement.querySelectorAll('.reference-link-row');
+    expect(rows.length).toBe(3); // 2 saved + 1 add row
+  });
+
+  it('Enter on the add input pushes a new link via the store', () => {
+    const { fixture, store } = setup();
+    const addInput = fixture.nativeElement.querySelectorAll('.reference-link-row input')[0] as HTMLInputElement;
+    addInput.value = 'https://example.com/a';
+    addInput.dispatchEvent(new Event('input'));
+    addInput.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter' }));
+    expect(store.referenceLinks()).toEqual(['https://example.com/a']);
+  });
+
+  it('clicking the × removes the link at that index', () => {
+    const seeded = makeItem({
+      production: { brief: { referenceLinks: ['https://a.com', 'https://b.com'] } },
+    });
+    const { fixture, store } = setup(seeded);
+    const removes = fixture.nativeElement.querySelectorAll(
+      '.link-row-remove',
     ) as NodeListOf<HTMLButtonElement>;
-    expect(chips[3].disabled).toBe(true);
+    removes[0].click();
+    expect(store.referenceLinks()).toEqual(['https://b.com']);
   });
+});
 
-  it('Content Goal button sets objective on the store', () => {
+describe('BriefStepComponent — Ownership & Timeline', () => {
+  it('Owner select binds to ContentItem.owner', () => {
     const { fixture, store } = setup();
-    const btn = Array.from(
-      fixture.nativeElement.querySelectorAll('.objective-btn') as NodeListOf<HTMLButtonElement>,
-    ).find((b) => b.textContent?.includes('Leads')) as HTMLButtonElement;
-    btn.click();
-    fixture.detectChanges();
-    expect(store.item()?.objective).toBe('leads');
+    const select = fixture.nativeElement.querySelector('.brief-select') as HTMLSelectElement;
+    select.value = 'tm-amelia';
+    select.dispatchEvent(new Event('change'));
+    expect(store.item()?.owner).toBe('tm-amelia');
   });
 
-  it('AI Assist fills the key message with the placeholder sentence', () => {
-    const { fixture, store } = setup(makeItem({ keyMessage: '' }));
-    const comp = fixture.componentInstance as unknown as {
-      onKeyMessageAssist: () => void;
-    };
-    comp.onKeyMessageAssist();
-    fixture.detectChanges();
-    expect(store.item()?.keyMessage?.length).toBeGreaterThan(20);
+  it('past Due Date triggers the warning copy', () => {
+    const seeded = makeItem({
+      production: { brief: { dueDate: '2020-01-01' } },
+    });
+    const { fixture } = setup(seeded);
+    expect(fixture.nativeElement.querySelector('.due-date-warning')).not.toBeNull();
   });
 
-  it('AI Assist is a no-op when the brief is approved', () => {
+  it('Campaign Name field hides until publishingMode flips to PAID_BOOSTED', () => {
     const { fixture, store } = setup();
-    store.approveBrief();
+    expect(fixture.nativeElement.textContent).not.toContain('Campaign Name');
+    store.setPublishingMode('PAID_BOOSTED');
     fixture.detectChanges();
-    const msgBefore = store.item()?.keyMessage;
-    const comp = fixture.componentInstance as unknown as {
-      onKeyMessageAssist: () => void;
-    };
-    comp.onKeyMessageAssist();
-    expect(store.item()?.keyMessage).toBe(msgBefore);
+    expect(fixture.nativeElement.textContent).toContain('Campaign Name');
   });
+});
 
-  it('all edit controls become disabled when the brief is approved', () => {
+describe('BriefStepComponent — CTA Type', () => {
+  it('clicking a CTA pill sets the type; clicking the same one again clears it', () => {
     const { fixture, store } = setup();
-    store.approveBrief();
-    fixture.detectChanges();
-    const pillar = fixture.nativeElement.querySelector(
-      '.pillar-chip',
-    ) as HTMLButtonElement;
-    const objective = fixture.nativeElement.querySelector(
-      '.objective-btn',
-    ) as HTMLButtonElement;
-    const assist = fixture.nativeElement.querySelector(
-      '.assist-btn',
-    ) as HTMLButtonElement;
-    expect(pillar.disabled).toBe(true);
-    expect(objective.disabled).toBe(true);
-    expect(assist.disabled).toBe(true);
-  });
-
-  it('field-change handlers route to the store', () => {
-    const { fixture, store } = setup();
-    const comp = fixture.componentInstance as unknown as {
-      onTitleChange: (v: string) => void;
-      onDescriptionChange: (v: string) => void;
-      onKeyMessageChange: (v: string) => void;
-      onTonePresetChange: (v: string) => void;
-      onSetCtaType: (v: string) => void;
-      onCtaTextChange: (v: string) => void;
-    };
-    comp.onTitleChange('Renamed');
-    comp.onDescriptionChange('A new description');
-    comp.onKeyMessageChange('A new key message');
-    comp.onTonePresetChange('friendly');
-    comp.onSetCtaType('buy');
-    comp.onCtaTextChange('Read more');
-    expect(store.item()?.title).toBe('Renamed');
-    expect(store.item()?.description).toBe('A new description');
-    expect(store.item()?.keyMessage).toBe('A new key message');
-    expect(store.item()?.tonePreset).toBe('friendly');
-    expect(store.item()?.cta?.type).toBe('buy');
-    expect(store.item()?.cta?.text).toBe('Read more');
-    comp.onSetCtaType('');
+    const pills = Array.from(
+      fixture.nativeElement.querySelectorAll('.cta-grid .pill-cta') as NodeListOf<HTMLButtonElement>,
+    );
+    pills[0].click();
+    expect(store.item()?.cta?.type).toBeDefined();
+    pills[0].click();
     expect(store.item()?.cta).toBeUndefined();
-    comp.onTonePresetChange('');
-    expect(store.item()?.tonePreset).toBeUndefined();
   });
 });
 
-describe('BriefStepComponent — formatters', () => {
-  it('descriptionInvalid is true when description is short', () => {
-    const { fixture } = setup(makeItem({ description: 'too short' }));
-    const comp = fixture.componentInstance as unknown as {
-      descriptionInvalid: () => boolean;
-    };
-    expect(comp.descriptionInvalid()).toBe(true);
+describe('BriefStepComponent — Brief Status', () => {
+  it('toggling Approve writes briefApproved, briefApprovedAt, briefApprovedBy', () => {
+    const { fixture, store } = setup();
+    const toggle = fixture.nativeElement.querySelector(
+      '.approve-toggle',
+    ) as HTMLInputElement;
+    toggle.checked = true;
+    toggle.dispatchEvent(new Event('change'));
+    expect(store.item()?.briefApproved).toBe(true);
+    expect(store.item()?.briefApprovedAt).toBeDefined();
+    expect(store.item()?.briefApprovedBy).toBe('You');
   });
 
-  it('descriptionInvalid is false when description is empty', () => {
-    const { fixture } = setup(makeItem({ description: '' }));
-    const comp = fixture.componentInstance as unknown as {
-      descriptionInvalid: () => boolean;
-    };
-    expect(comp.descriptionInvalid()).toBe(false);
+  it('Unlock Brief clears approval and writes unlockedAt', () => {
+    const { fixture, store } = setup();
+    store.approveBrief();
+    fixture.detectChanges();
+    const unlock = fixture.nativeElement.querySelector('.unlock-btn') as HTMLButtonElement;
+    expect(unlock).not.toBeNull();
+    unlock.click();
+    expect(store.item()?.briefApproved).toBe(false);
+    expect(store.brief()?.unlockedAt).toBeDefined();
   });
 
-  it('contentTypeLabel returns null when platform missing', () => {
-    const { fixture } = setup(makeItem({ platform: undefined }));
-    const comp = fixture.componentInstance as unknown as {
-      contentTypeLabel: () => string | null;
-    };
-    expect(comp.contentTypeLabel()).toBeNull();
+  it('approve-toggle is disabled when canApprove is false', () => {
+    const { fixture } = setup(
+      makeItem({ title: '', description: '' }), // forces validators to fail
+    );
+    const toggle = fixture.nativeElement.querySelector('.approve-toggle') as HTMLInputElement;
+    expect(toggle.disabled).toBe(true);
   });
 });
 
@@ -251,30 +241,5 @@ describe('BriefStepComponent — empty item', () => {
     const fixture = TestBed.createComponent(BriefStepComponent);
     fixture.detectChanges();
     expect(fixture.nativeElement.querySelector('.brief-step')).toBeNull();
-  });
-
-  it('defensive helpers return false/0 when store item is null', () => {
-    TestBed.configureTestingModule({
-      imports: [BriefStepComponent],
-      providers: [...provideContentItemsApiStubs(), ContentStateService, PostDetailStore],
-    });
-    const fixture = TestBed.createComponent(BriefStepComponent);
-    fixture.detectChanges();
-    const comp = fixture.componentInstance as unknown as {
-      isPillarSelected: (id: string) => boolean;
-      isSegmentSelected: (id: string) => boolean;
-      pillarsAtLimit: () => boolean;
-      descriptionCount: () => number;
-      keyMessageCount: () => number;
-      ctaTextCount: () => number;
-      togglePillar: (id: string) => void;
-    };
-    expect(comp.isPillarSelected('p1')).toBe(false);
-    expect(comp.isSegmentSelected('s1')).toBe(false);
-    expect(comp.pillarsAtLimit()).toBe(false);
-    expect(comp.descriptionCount()).toBe(0);
-    expect(comp.keyMessageCount()).toBe(0);
-    expect(comp.ctaTextCount()).toBe(0);
-    comp.togglePillar('p1');
   });
 });

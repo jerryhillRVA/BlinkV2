@@ -3,18 +3,20 @@ import {
   EventEmitter,
   Input,
   Output,
+  computed,
   inject,
 } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
+import { ContentStateService } from '../../content-state.service';
 import { PostDetailStore } from './post-detail.store';
 import { PostDetailHeaderComponent } from './components/post-detail-header.component';
 import { ProductionStepsBarComponent } from './components/production-steps-bar.component';
 import { BriefStepComponent } from './components/brief-step.component';
-import { BriefStatusSidebarComponent } from './components/brief-status-sidebar.component';
+import { BriefContentConceptComponent } from './components/brief-content-concept.component';
+import { VariationChipsComponent } from './components/variation-chips.component';
 import { StepPlaceholderComponent } from './components/step-placeholder.component';
 import { DetailBackButtonComponent } from '../_shared/detail-back-button/detail-back-button.component';
-import { StatusStepperComponent } from '../../components/status-stepper/status-stepper.component';
-import type { ContentStatus } from '../../content.types';
+import type { ContentItem } from '../../content.types';
 
 @Component({
   selector: 'app-post-detail',
@@ -22,10 +24,10 @@ import type { ContentStatus } from '../../content.types';
     PostDetailHeaderComponent,
     ProductionStepsBarComponent,
     BriefStepComponent,
-    BriefStatusSidebarComponent,
+    BriefContentConceptComponent,
+    VariationChipsComponent,
     StepPlaceholderComponent,
     DetailBackButtonComponent,
-    StatusStepperComponent,
   ],
   providers: [PostDetailStore],
   templateUrl: './post-detail.component.html',
@@ -33,6 +35,7 @@ import type { ContentStatus } from '../../content.types';
 })
 export class PostDetailComponent {
   protected readonly store = inject(PostDetailStore);
+  private readonly state = inject(ContentStateService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
 
@@ -45,6 +48,22 @@ export class PostDetailComponent {
   @Output() back = new EventEmitter<void>();
   @Output() deleted = new EventEmitter<void>();
 
+  // ── Computeds ───────────────────────────────────────────────────────
+  protected readonly siblings = computed<ContentItem[]>(() => {
+    const item = this.store.item();
+    if (!item?.conceptId) return [];
+    return this.state
+      .items()
+      .filter((i) => i.conceptId === item.conceptId && i.stage === 'post');
+  });
+
+  protected readonly parentConcept = computed<ContentItem | null>(() => {
+    const conceptId = this.store.item()?.conceptId;
+    if (!conceptId) return null;
+    return this.state.items().find((i) => i.id === conceptId) ?? null;
+  });
+
+  // ── Handlers ────────────────────────────────────────────────────────
   protected onBack(): void {
     this.back.emit();
   }
@@ -58,6 +77,11 @@ export class PostDetailComponent {
     if (!conceptId) return;
     const workspaceId = this.route.snapshot.paramMap.get('id') ?? '';
     this.router.navigate(['/workspace', workspaceId, 'content', conceptId]);
+  }
+
+  protected onOpenSibling(id: string): void {
+    const workspaceId = this.route.snapshot.paramMap.get('id') ?? '';
+    this.router.navigate(['/workspace', workspaceId, 'content', id]);
   }
 
   protected onArchive(): void {
@@ -82,21 +106,5 @@ export class PostDetailComponent {
     if (!window.confirm(`Delete ${label}? This cannot be undone.`)) return;
     this.store.deleteSelf();
     this.deleted.emit();
-  }
-
-  protected onApprove(): void {
-    this.store.approveBrief();
-  }
-
-  protected onUnlock(): void {
-    this.store.unlockBrief();
-  }
-
-  protected onContinueToBuilder(): void {
-    this.store.setActiveStep('builder');
-  }
-
-  protected onStatusChange(status: ContentStatus): void {
-    this.store.setStatus(status);
   }
 }

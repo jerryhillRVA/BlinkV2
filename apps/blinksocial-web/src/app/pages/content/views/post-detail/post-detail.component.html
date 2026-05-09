@@ -13,13 +13,11 @@
       <app-detail-back-button [ariaLabel]="backLabel" (back)="onBack()" />
     </app-post-detail-header>
 
-    <div class="status-stepper-wrap">
-      <app-status-stepper
-        [value]="item.status"
-        [stage]="item.stage"
-        (statusChange)="onStatusChange($event)"
-      />
-    </div>
+    <app-variation-chips
+      [items]="siblings()"
+      [activeId]="item.id"
+      (open)="onOpenSibling($event)"
+    />
 
     <app-production-steps-bar
       [activeStep]="store.activeStep()"
@@ -35,18 +33,11 @@
               <app-brief-step />
             </div>
             <aside class="brief-side">
-              <app-brief-status-sidebar
-                [approved]="!!item.briefApproved"
-                [approvedAt]="item.briefApprovedAt"
-                [approvedBy]="item.briefApprovedBy"
-                [requiredDone]="store.requiredFieldsDone()"
-                [requiredTotal]="store.requiredFieldsTotal"
-                [errors]="store.errors()"
-                [warnings]="store.warnings()"
-                [canApprove]="store.canApprove()"
-                (approve)="onApprove()"
-                (unlock)="onUnlock()"
-                (continueToBuilder)="onContinueToBuilder()"
+              <app-brief-content-concept
+                [concept]="parentConcept()"
+                [pillars]="store.pillars()"
+                [segments]="store.segments()"
+                (editConcept)="onBackToConcept()"
               />
             </aside>
           </div>
@@ -59,6 +50,9 @@
         }
         @case ('qa') {
           <app-step-placeholder label="QA" />
+        }
+        @case ('handoff') {
+          <app-step-placeholder label="Handoff" />
         }
       }
     </div>
