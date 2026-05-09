@@ -90,6 +90,34 @@ describe('ConceptDetailComponent — composition', () => {
     expect(labels.some((t) => t.includes('Content Goal'))).toBe(true);
   });
 
+  it('AI Assist buttons render the 5-path Lucide Sparkles icon (not the legacy single-path)', () => {
+    const { fixture } = setup();
+    const buttons = Array.from(
+      fixture.nativeElement.querySelectorAll(
+        '.detail-fields-panel .assist-btn',
+      ) as NodeListOf<HTMLButtonElement>,
+    );
+    expect(buttons.length).toBeGreaterThanOrEqual(2);
+    for (const btn of buttons) {
+      const svg = btn.querySelector('svg');
+      expect(svg).not.toBeNull();
+      expect(svg!.querySelectorAll('path').length).toBe(5);
+    }
+  });
+
+  it('renders real en-dash and ellipsis characters in label/placeholder text (no literal \\u escapes)', () => {
+    const { fixture } = setup();
+    const html = fixture.nativeElement.innerHTML as string;
+    expect(html).not.toContain('\\u2013');
+    expect(html).not.toContain('\\u2026');
+    const descLabel = Array.from(
+      fixture.nativeElement.querySelectorAll(
+        '.detail-fields-panel .panel-label',
+      ) as NodeListOf<HTMLElement>,
+    ).find((el) => el.textContent?.includes('Description'));
+    expect(descLabel?.textContent).toContain('–');
+  });
+
   it('Description and Hook Angle AI Assist buttons sit in their .panel-label-row (top-right, next to label)', () => {
     const { fixture } = setup();
     const labelRows = Array.from(
