@@ -37,9 +37,10 @@
   }
 
   &.stage-concept {
-    background: rgba(168, 85, 247, 0.12);
+    // Prototype uses Tailwind purple-50 / purple-200 / purple-700.
+    background: rgba(168, 85, 247, 0.06);
     color: #7e22ce;
-    border-color: rgba(168, 85, 247, 0.35);
+    border-color: rgba(168, 85, 247, 0.25);
   }
 
   &.stage-post {
