@@ -33,6 +33,10 @@
                 Description ({{ descriptionMin }}–{{ descriptionMax }} characters)
                 <span class="panel-required" aria-label="required">*</span>
               </h3>
+              <app-tooltip
+                type="help"
+                text="A detailed description of what this content will be about. This helps guide the production process."
+              />
               <button type="button" class="assist-btn" [disabled]="store.isAssistingDescription()" (click)="onAssistDescription()">
                 @if (store.isAssistingDescription()) {
                   <span class="spinner spinner--sm" aria-hidden="true"></span>
@@ -68,6 +72,10 @@
           <div class="field-section">
             <div class="panel-label-row">
               <h3 class="panel-label">Hook Angle (max {{ hookMax }} characters)</h3>
+              <app-tooltip
+                type="help"
+                text="The opening line or attention-grabber that will make people stop scrolling."
+              />
               <button type="button" class="assist-btn" [disabled]="store.isAssistingHook()" (click)="onAssistHook()">
                 @if (store.isAssistingHook()) {
                   <span class="spinner spinner--sm" aria-hidden="true"></span>
@@ -97,9 +105,15 @@
           </div>
 
           <div class="field-section">
-            <h3 class="panel-label">
-              Content Goal <span class="panel-required">*</span>
-            </h3>
+            <div class="panel-label-row">
+              <h3 class="panel-label">
+                Content Goal <span class="panel-required">*</span>
+              </h3>
+              <app-tooltip
+                type="help"
+                text="The primary goal of this content. This guides the creative direction and measures success."
+              />
+            </div>
             <div class="objective-grid">
               @for (opt of objectiveOptions; track opt.value) {
                 <button
@@ -116,10 +130,15 @@
         </section>
 
         <section class="panel">
-          <h3 class="panel-label">
-            Production Targets <span class="panel-required">*</span>
-            <span class="panel-hint">(pick one or more)</span>
-          </h3>
+          <div class="panel-label-row">
+            <h3 class="panel-label">
+              Production Targets <span class="panel-required">*</span>
+            </h3>
+            <app-tooltip
+              type="help"
+              text="Select the platforms and variations you want to produce. You can select multiple."
+            />
+          </div>
           <app-production-targets-picker
             [selected]="item.targetPlatforms ?? []"
             [isInProduction]="isInProductionFn"

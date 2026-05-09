@@ -41,6 +41,18 @@ describe('ProductionTargetsPickerComponent', () => {
     expect(reel.querySelector('.target-option-check svg')).not.toBeNull();
   });
 
+  it('.target-option vertically centers the checkbox + label (align-items: center, not flex-start)', () => {
+    const fixture = setup();
+    document.body.appendChild(fixture.nativeElement);
+    try {
+      const opt = fixture.nativeElement.querySelector('.target-option') as HTMLElement;
+      expect(opt).not.toBeNull();
+      expect(getComputedStyle(opt).alignItems).toBe('center');
+    } finally {
+      document.body.removeChild(fixture.nativeElement);
+    }
+  });
+
   it('selected targets receive the is-selected class + aria-pressed=true', () => {
     const fixture = setup([{ platform: 'instagram', contentType: 'reel', postId: null }]);
     const selectedChip = Array.from(

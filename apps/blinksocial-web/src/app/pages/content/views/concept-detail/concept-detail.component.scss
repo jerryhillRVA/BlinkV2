@@ -414,6 +414,17 @@
   gap: 16px;
 }
 
+// Main-column field labels render in source case with the prototype's
+// `text-[10px] font-bold text-muted-foreground` (no uppercase, no extra
+// tracking). The right-column / strategy panels keep the uppercase
+// header look defined on the base .panel-label rule above.
+.detail-main .panel-label {
+  text-transform: none;
+  letter-spacing: normal;
+  font-size: 10px;
+  color: var(--blink-on-surface-muted);
+}
+
 .field-section {
   display: flex;
   flex-direction: column;

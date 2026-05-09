@@ -132,6 +132,31 @@ describe('ConceptDetailComponent — composition', () => {
     expect(hookRow!.querySelector('.assist-btn')).not.toBeNull();
   });
 
+  it('Description / Hook Angle / Content Goal / Production Targets each have a help tooltip and render label text in source case (no uppercase)', () => {
+    const { fixture } = setup();
+    document.body.appendChild(fixture.nativeElement);
+    try {
+      const main = fixture.nativeElement.querySelector('.detail-main') as HTMLElement;
+      const labelRows = Array.from(
+        main.querySelectorAll('.panel-label-row') as NodeListOf<HTMLElement>,
+      );
+      const expected = ['Description', 'Hook Angle', 'Content Goal', 'Production Targets'];
+      for (const label of expected) {
+        const row = labelRows.find((r) => r.textContent?.includes(label));
+        expect(row, `panel-label-row for ${label}`).toBeDefined();
+        expect(row!.querySelector('app-tooltip[type="help"]')).not.toBeNull();
+      }
+      const labels = Array.from(
+        main.querySelectorAll('.panel-label') as NodeListOf<HTMLElement>,
+      );
+      for (const lbl of labels) {
+        expect(getComputedStyle(lbl).textTransform).toBe('none');
+      }
+    } finally {
+      document.body.removeChild(fixture.nativeElement);
+    }
+  });
+
   it('main column has exactly two panels: .detail-fields-panel and Production Targets, in that order', () => {
     const { fixture } = setup();
     const panels = Array.from(
