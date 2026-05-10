@@ -102,33 +102,10 @@ describe('DraftStepComponent — shell + factory routing', () => {
     },
   );
 
-  it('Continue button is disabled when there are draft errors', () => {
-    const { fixture } = setup();
-    const btn = fixture.nativeElement.querySelector(
-      '.continue-btn',
-    ) as HTMLButtonElement;
-    expect(btn.disabled).toBe(true);
-    expect(btn.getAttribute('aria-disabled')).toBe('true');
-    expect(btn.getAttribute('aria-describedby')).toBe('draft-status-summary');
-  });
+  // The Continue-to-Packaging button moved to <app-step-action-bar>.
+  // See step-action-bar.component.spec.ts for gating + advance tests.
 
-  it('Continue button advances to Packaging when all required fields present', () => {
-    const { fixture, store } = setup();
-    store.setVideoHook('h');
-    store.setVideoShotList([
-      { id: 's1', type: 'Shot', description: 'd', duration: '5s' },
-    ]);
-    fixture.detectChanges();
-    const btn = fixture.nativeElement.querySelector(
-      '.continue-btn',
-    ) as HTMLButtonElement;
-    expect(btn.disabled).toBe(false);
-    btn.click();
-    fixture.detectChanges();
-    expect(store.activeStep()).toBe('packaging');
-  });
-
-  it('Unsupported branch shows "isn\'t ready yet" status and a disabled CTA', () => {
+  it('Unsupported branch shows "isn\'t ready yet" status', () => {
     const { fixture } = setup(
       makeApprovedItem({ platform: 'instagram', contentType: 'story' }),
     );
@@ -136,11 +113,6 @@ describe('DraftStepComponent — shell + factory routing', () => {
       '.status-summary--unsupported',
     );
     expect(status).toBeTruthy();
-    const btn = fixture.nativeElement.querySelector(
-      '.continue-btn',
-    ) as HTMLButtonElement;
-    expect(btn.disabled).toBe(true);
-    expect(btn.getAttribute('aria-disabled')).toBe('true');
   });
 
   it('persists the canonical mode to draft.mode on init via effect', () => {

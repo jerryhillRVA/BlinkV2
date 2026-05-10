@@ -96,6 +96,14 @@ export const ICONS = {
       { kind: 'path', d: 'm12 5 7 7-7 7' },
     ],
   },
+  // 'arrow-left' — used on the back-button in the step-action-bar
+  'arrow-left': {
+    viewBox: '0 0 24 24',
+    primitives: [
+      { kind: 'path', d: 'm12 19-7-7 7-7' },
+      { kind: 'path', d: 'M19 12H5' },
+    ],
+  },
   // 'alert-triangle' — required-field warnings + amber state
   'alert-triangle': {
     viewBox: '0 0 24 24',

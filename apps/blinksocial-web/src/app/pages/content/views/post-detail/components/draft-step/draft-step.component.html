@@ -69,33 +69,4 @@
       </p>
     }
   </div>
-
-  <div class="draft-cta-row">
-    <button
-      type="button"
-      class="continue-btn"
-      [class.continue-btn--ready]="canContinue() && supported()"
-      [disabled]="!canContinue() || !supported()"
-      [attr.aria-disabled]="!canContinue() || !supported() ? 'true' : null"
-      aria-describedby="draft-status-summary"
-      (click)="onContinueToPackaging()"
-    >
-      Continue to Packaging
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        width="16"
-        height="16"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        stroke-width="2"
-        stroke-linecap="round"
-        stroke-linejoin="round"
-        aria-hidden="true"
-      >
-        <path d="M5 12h14" />
-        <path d="m12 5 7 7-7 7" />
-      </svg>
-    </button>
-  </div>
 </div>

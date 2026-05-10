@@ -257,7 +257,7 @@ test.describe('Production Draft (#114)', () => {
     // Fill the required fields, then click Continue to Packaging.
     await page.locator('app-video-builder textarea[aria-label="Hook"]').fill('A hook');
     await page.locator('app-shot-list .asset-slot .ghost-btn').click();
-    await page.locator('app-draft-step .continue-btn').click();
+    await page.locator('app-step-action-bar .continue-btn').click();
     await expect(page.locator('app-step-placeholder')).toBeVisible();
     // Reload — should land on Packaging directly (productionStep persisted).
     await page.reload();
@@ -283,7 +283,7 @@ test.describe('Production Draft (#114)', () => {
       platform: 'instagram',
       contentType: 'reel',
     });
-    const continueBtn = page.locator('app-draft-step .continue-btn');
+    const continueBtn = page.locator('app-step-action-bar .continue-btn');
     await expect(continueBtn).toBeDisabled();
     // Type a hook
     await page
@@ -307,7 +307,7 @@ test.describe('Production Draft (#114)', () => {
       contentType: 'long-form',
     });
     await expect(page.locator('app-video-long-builder')).toBeVisible();
-    const continueBtn = page.locator('app-draft-step .continue-btn');
+    const continueBtn = page.locator('app-step-action-bar .continue-btn');
     await expect(continueBtn).toBeDisabled();
     await page.locator('app-video-long-builder .add-btn').click();
     // Block exists but has empty description — should still be disabled
@@ -325,7 +325,7 @@ test.describe('Production Draft (#114)', () => {
       contentType: 'feed-post',
     });
     await expect(page.locator('app-image-single-builder')).toBeVisible();
-    const continueBtn = page.locator('app-draft-step .continue-btn');
+    const continueBtn = page.locator('app-step-action-bar .continue-btn');
     await expect(continueBtn).toBeDisabled();
     await page
       .locator('app-image-single-builder textarea[aria-label="Hook"]')
@@ -345,7 +345,7 @@ test.describe('Production Draft (#114)', () => {
       contentType: 'carousel',
     });
     await expect(page.locator('app-carousel-builder')).toBeVisible();
-    const continueBtn = page.locator('app-draft-step .continue-btn');
+    const continueBtn = page.locator('app-step-action-bar .continue-btn');
     await page
       .locator('app-carousel-builder textarea[aria-label="Hook"]')
       .fill('A hook');
@@ -378,7 +378,7 @@ test.describe('Production Draft (#114)', () => {
       contentType: 'ln-text-post',
     });
     await expect(page.locator('app-text-builder')).toBeVisible();
-    const continueBtn = page.locator('app-draft-step .continue-btn');
+    const continueBtn = page.locator('app-step-action-bar .continue-btn');
     await expect(continueBtn).toBeDisabled();
     await page
       .locator('app-text-builder textarea[aria-label="Caption"]')
@@ -396,10 +396,9 @@ test.describe('Production Draft (#114)', () => {
     await expect(
       page.locator('app-draft-step .placeholder-title'),
     ).toContainText('Story coming soon');
-    const btn = page.locator('app-draft-step .continue-btn');
+    const btn = page.locator('app-step-action-bar .continue-btn');
     await expect(btn).toBeDisabled();
     await expect(btn).toHaveAttribute('aria-disabled', 'true');
-    await expect(btn).toHaveAttribute('aria-describedby', 'draft-status-summary');
   });
 
   test('TC-8: VIDEO persistence round-trip survives reload', async ({ page }) => {
@@ -444,7 +443,7 @@ test.describe('Production Draft (#114)', () => {
     await page.keyboard.press('Enter');
     await expect(page.locator('app-shot-list li.shot-row')).toHaveCount(1);
     // Activate Continue via keyboard
-    const continueBtn = page.locator('app-draft-step .continue-btn');
+    const continueBtn = page.locator('app-step-action-bar .continue-btn');
     await expect(continueBtn).toBeEnabled();
     await continueBtn.focus();
     await page.keyboard.press('Enter');

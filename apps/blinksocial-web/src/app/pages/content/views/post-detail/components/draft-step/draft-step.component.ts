@@ -66,8 +66,4 @@ export class DraftStepComponent {
     });
   }
 
-  protected onContinueToPackaging(): void {
-    if (!this.canContinue()) return;
-    this.store.advanceProductionStep('packaging');
-  }
 }
