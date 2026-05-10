@@ -9,24 +9,42 @@
 // through the body. Once the user scrolls past the entire post-detail
 // (into the page footer below), the bar reaches its natural position and
 // stops covering the footer — pure CSS, no JS observers needed.
+//
+// Full-bleed: the host breaks out of its parent's max-width container so
+// the bar's background + border + shadow extend edge-to-edge across the
+// viewport. The inner .step-action-bar keeps its content centered within
+// the .content-page max-width so the buttons stay aligned with the rest
+// of the page. The negative-margin trick uses `calc(50% - 50vw)` to
+// pull the host's left/right edges to the viewport edges; this works
+// because the host's `50%` resolves against its parent's content width,
+// which is centered at the viewport center.
 :host {
   display: block;
   position: sticky;
   bottom: 0;
   z-index: 5;
   margin-top: 16px;
-}
 
-.step-action-bar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  padding: 12px 24px;
+  width: 100vw;
+  margin-left: calc(50% - 50vw);
+  margin-right: calc(50% - 50vw);
 
   background: var(--blink-surface);
   border-top: 1px solid var(--blink-outline-variant);
   box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.04);
+}
+
+.step-action-bar {
+  // Inner content stays within the same max-width as the rest of the
+  // post-detail page so the buttons align with the content above.
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 12px 40px;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
 }
 
 .back-btn {
