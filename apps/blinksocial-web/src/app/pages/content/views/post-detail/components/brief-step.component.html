@@ -170,7 +170,7 @@
             </svg>
           </div>
           <input
-            class="brief-input"
+            class="brief-input brief-date-input"
             type="date"
             [value]="store.dueDate() ?? ''"
             [readOnly]="locked()"
@@ -288,8 +288,22 @@
               (change)="onApproveToggle($event)"
             />
           </label>
-          @if (!canApprove) {
-            <p class="panel-hint-muted">Complete all required fields to enable.</p>
+          @if (!canApprove && store.errors().length > 0) {
+            <div class="approve-required" role="alert">
+              <p class="approve-required-title">Required to approve:</p>
+              <ul class="approve-required-list">
+                @for (e of store.errors(); track e.field) {
+                  <li>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                      <circle cx="12" cy="12" r="10"/>
+                      <path d="M12 8v4"/>
+                      <path d="M12 16h.01"/>
+                    </svg>
+                    {{ e.label }}
+                  </li>
+                }
+              </ul>
+            </div>
           }
         </div>
         <textarea

@@ -127,8 +127,25 @@
   }
 }
 
+// Custom chevron — native <select> default leaves no breathing room on the
+// right. Hide the platform chevron and inline a 12px caret SVG so the icon
+// has the same right-edge inset as the text on the left.
 .brief-select {
-  appearance: auto;
+  appearance: none;
+  -webkit-appearance: none;
+  padding-right: 32px;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='m6 9 6 6 6-6'/></svg>");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  background-size: 12px 12px;
+  background-color: var(--blink-input-bg-dark);
+}
+
+// Date input: clamp width so the native picker indicator sits next to the
+// date text instead of being pushed to the right wall of a stretched field.
+.brief-date-input {
+  width: max-content;
+  min-width: 160px;
 }
 
 // ── AI Assist (mirror of post-#110 concept-detail) ─────────────────
@@ -412,9 +429,44 @@
 .approve-row {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 8px;
   padding-top: 8px;
   border-top: 1px solid var(--blink-outline-variant);
+}
+
+// Required-fields summary that appears below the toggle when canApprove
+// is false. Lists each missing required field by label, in red.
+.approve-required {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.approve-required-title {
+  margin: 0;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #b91c1c;
+}
+
+.approve-required-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+
+  li {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11px;
+    font-weight: 500;
+    color: #dc2626;
+  }
 }
 
 .approve-label {
