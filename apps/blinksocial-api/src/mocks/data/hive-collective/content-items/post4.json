@@ -66,12 +66,12 @@
         "bRollNotes": "Capture from waist up at the desk; cut to feet for ankle circles. Avoid showing the screen.",
         "voiceoverNotes": "Conversational, like coaching a friend through it. Pause after each cue.",
         "shotList": [
-          { "id": "sl-1", "type": "Shot", "description": "Hook delivered to camera, stood at the desk", "duration": "0:00–0:05" },
-          { "id": "sl-2", "type": "Shot", "description": "Neck rolls — three slow each direction", "duration": "0:05–0:20" },
-          { "id": "sl-3", "type": "Shot", "description": "Shoulder shrugs into thoracic openers", "duration": "0:20–0:35" },
-          { "id": "sl-4", "type": "Shot", "description": "Standing forward fold with bent knees", "duration": "0:35–0:45" },
-          { "id": "sl-5", "type": "Shot", "description": "Ankle circles, each direction", "duration": "0:45–0:55" },
-          { "id": "sl-6", "type": "CTA", "description": "Hold final pose, deliver follow CTA", "duration": "0:55–1:00" }
+          { "id": "sl-1", "type": "Shot", "description": "Hook delivered to camera, stood at the desk", "duration": "5s" },
+          { "id": "sl-2", "type": "Shot", "description": "Neck rolls — three slow each direction", "duration": "15s" },
+          { "id": "sl-3", "type": "Shot", "description": "Shoulder shrugs into thoracic openers", "duration": "15s" },
+          { "id": "sl-4", "type": "Shot", "description": "Standing forward fold with bent knees", "duration": "10s" },
+          { "id": "sl-5", "type": "Shot", "description": "Ankle circles, each direction", "duration": "10s" },
+          { "id": "sl-6", "type": "CTA", "description": "Hold final pose, deliver follow CTA", "duration": "5s" }
         ]
       }
     },

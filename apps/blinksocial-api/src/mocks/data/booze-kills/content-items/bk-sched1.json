@@ -81,13 +81,13 @@
         "bRollNotes": "Quick cuts on each pour. Tight on faces during first sip. On-screen ranking jumps on every cut. End on a tight close-up of the #1 can.",
         "voiceoverNotes": "Playful, fast-paced. Mara hosts. Jordan reacts off-camera. No script reads — let the reactions carry it.",
         "shotList": [
-          { "id": "sl-1", "type": "Shot", "description": "Hook shot — 20 cans lined up on bar, camera dolly past", "duration": "0:00–0:05" },
-          { "id": "sl-2", "type": "B-Roll", "description": "Pour + first sip + reaction for #5", "duration": "0:05–0:18" },
-          { "id": "sl-3", "type": "B-Roll", "description": "Pour + sip + reaction for #4", "duration": "0:18–0:28" },
-          { "id": "sl-4", "type": "B-Roll", "description": "Pour + sip + reaction for #3", "duration": "0:28–0:38" },
-          { "id": "sl-5", "type": "B-Roll", "description": "Pour + sip + reaction for #2", "duration": "0:38–0:48" },
-          { "id": "sl-6", "type": "Shot", "description": "Reveal #1, cans clinking, all three on camera", "duration": "0:48–0:55" },
-          { "id": "sl-7", "type": "CTA", "description": "Mara delivers follow CTA, hold on logo", "duration": "0:55–1:00" }
+          { "id": "sl-1", "type": "Shot", "description": "Hook shot — 20 cans lined up on bar, camera dolly past", "duration": "5s" },
+          { "id": "sl-2", "type": "B-Roll", "description": "Pour + first sip + reaction for #5", "duration": "13s" },
+          { "id": "sl-3", "type": "B-Roll", "description": "Pour + sip + reaction for #4", "duration": "10s" },
+          { "id": "sl-4", "type": "B-Roll", "description": "Pour + sip + reaction for #3", "duration": "10s" },
+          { "id": "sl-5", "type": "B-Roll", "description": "Pour + sip + reaction for #2", "duration": "10s" },
+          { "id": "sl-6", "type": "Shot", "description": "Reveal #1, cans clinking, all three on camera", "duration": "7s" },
+          { "id": "sl-7", "type": "CTA", "description": "Mara delivers follow CTA, hold on logo", "duration": "5s" }
         ]
       }
     }

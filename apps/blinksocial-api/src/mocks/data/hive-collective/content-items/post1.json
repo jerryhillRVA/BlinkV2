@@ -129,12 +129,12 @@
         "bRollNotes": "B-roll: feet planted, slow zoom on hip rotation. Window light, no harsh shadows.",
         "voiceoverNotes": "Soft, warm tone. Pause after each cue so viewers can match form.",
         "shotList": [
-          { "id": "sl-1", "type": "Shot", "description": "Hook on camera, eye-level", "duration": "0:00–0:03" },
-          { "id": "sl-2", "type": "Shot", "description": "Cat-Cow stretch — three reps", "duration": "0:03–0:15" },
-          { "id": "sl-3", "type": "Shot", "description": "Thoracic rotation, each side", "duration": "0:15–0:30" },
-          { "id": "sl-4", "type": "Shot", "description": "Hip circles, each direction", "duration": "0:30–0:45" },
-          { "id": "sl-5", "type": "Shot", "description": "Standing reach + fold", "duration": "0:45–0:55" },
-          { "id": "sl-6", "type": "CTA", "description": "Hold final pose, deliver CTA", "duration": "0:55–1:00" }
+          { "id": "sl-1", "type": "Shot", "description": "Hook on camera, eye-level", "duration": "3s" },
+          { "id": "sl-2", "type": "Shot", "description": "Cat-Cow stretch — three reps", "duration": "12s" },
+          { "id": "sl-3", "type": "Shot", "description": "Thoracic rotation, each side", "duration": "15s" },
+          { "id": "sl-4", "type": "Shot", "description": "Hip circles, each direction", "duration": "15s" },
+          { "id": "sl-5", "type": "Shot", "description": "Standing reach + fold", "duration": "10s" },
+          { "id": "sl-6", "type": "CTA", "description": "Hold final pose, deliver CTA", "duration": "5s" }
         ]
       }
     },
