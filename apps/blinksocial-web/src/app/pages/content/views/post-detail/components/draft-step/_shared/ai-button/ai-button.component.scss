@@ -5,22 +5,31 @@
 .ai-btn {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
+  gap: 5px;
   padding: 4px 10px;
   background: #fff;
-  color: #7c3aed; // purple-600 — the prototype's accent
+  // Label inherits the surface text color (matches the prototype's
+  // dark label + purple icon convention).
+  color: var(--blink-on-surface-strong);
   border: 1px solid #ddd6fe; // purple-200
   border-radius: 999px;
   font-size: var(--blink-label-tiny);
   font-weight: 600;
   letter-spacing: 0.02em;
   cursor: pointer;
-  transition: background-color 120ms ease, border-color 120ms ease, color 120ms ease;
+  transition: background-color 120ms ease, border-color 120ms ease;
   line-height: 1;
   white-space: nowrap;
 
+  // The icon stays purple — child <app-icon> picks up this currentColor.
   .icon {
+    display: inline-flex;
+    color: #a855f7; // purple-500
     flex-shrink: 0;
+  }
+
+  .label {
+    line-height: 1;
   }
 
   &:hover:not(:disabled) {
@@ -50,11 +59,6 @@
     padding: 2px 8px;
     font-size: 9px;
     gap: 3px;
-
-    .icon {
-      width: 10px;
-      height: 10px;
-    }
   }
 }
 

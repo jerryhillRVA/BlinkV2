@@ -7,24 +7,6 @@
   [attr.aria-busy]="loading ? 'true' : null"
   (click)="onClick()"
 >
-  <svg
-    xmlns="http://www.w3.org/2000/svg"
-    width="12"
-    height="12"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    stroke-width="2"
-    stroke-linecap="round"
-    stroke-linejoin="round"
-    class="icon"
-    aria-hidden="true"
-  >
-    <path d="m12 3-1.9 5.7L4.4 9.6 9 13.2l-1.5 5.6L12 15l4.5 3.8L15 13.2l4.6-3.6-5.7-.9z" />
-    <path d="M5 3v4" />
-    <path d="M19 17v4" />
-    <path d="M3 5h4" />
-    <path d="M17 19h4" />
-  </svg>
-  <span>{{ displayLabel }}</span>
+  <span class="icon"><app-icon name="sparkles" [size]="variant === 'compact' ? 10 : 12" /></span>
+  <span class="label">{{ displayLabel }}</span>
 </button>
