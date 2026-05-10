@@ -58,7 +58,7 @@
   font-weight: 600;
   letter-spacing: 0.04em;
   text-transform: uppercase;
-  color: var(--blink-on-surface-faint, #9aa1a8);
+  color: var(--blink-on-surface-faint, #6b7280);
   margin: 0;
 
   span {
@@ -115,7 +115,7 @@
 .bank-hide {
   background: transparent;
   border: none;
-  color: var(--blink-on-surface-faint, #9aa1a8);
+  color: var(--blink-on-surface-faint, #6b7280);
   font-size: var(--blink-label-tiny);
   text-transform: uppercase;
   letter-spacing: 0.04em;
@@ -190,7 +190,7 @@
 .duration-shot-count {
   margin-left: auto;
   font-size: var(--blink-label-tiny);
-  color: var(--blink-on-surface-faint, #9aa1a8);
+  color: var(--blink-on-surface-faint, #6b7280);
 }
 
 // ── Shot list + assets section ───────────────────────────────────────────────
@@ -237,7 +237,7 @@
 .caret-wrap {
   display: inline-flex;
   align-items: center;
-  color: var(--blink-on-surface-faint, #9aa1a8);
+  color: var(--blink-on-surface-faint, #6b7280);
 }
 
 .caret {

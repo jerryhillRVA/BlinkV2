@@ -63,7 +63,7 @@
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  color: var(--blink-on-surface-faint, #9aa1a8);
+  color: var(--blink-on-surface-faint, #6b7280);
 }
 
 .flags-subtitle {
@@ -116,7 +116,7 @@
 .flag-hint {
   margin: 0;
   font-size: var(--blink-label-tiny);
-  color: var(--blink-on-surface-faint, #9aa1a8);
+  color: var(--blink-on-surface-faint, #6b7280);
   line-height: 1.4;
 }
 

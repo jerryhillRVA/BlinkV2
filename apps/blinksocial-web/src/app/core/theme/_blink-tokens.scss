@@ -33,7 +33,13 @@
   --blink-on-surface-label: #1f2937;
   --blink-on-surface-secondary: #374151;
   --blink-on-surface-tertiary: #9ca3af;
-  --blink-on-surface-faint: #bbb;
+  // Used for subtle/secondary copy AND iconography that still needs to
+  // be readable on white. `#bbb` was 2.4:1 against white — below WCAG
+  // AA's 4.5:1 floor for normal text. `#6b7280` is 4.83:1 — passes AA
+  // for normal text and AAA for large text. If you need a genuinely
+  // decorative non-content color (placeholder, divider), use
+  // --blink-on-surface-tertiary instead.
+  --blink-on-surface-faint: #6b7280;
 
   // Typography scale (M3-aligned)
   --blink-display-large: 57px;
@@ -244,7 +250,11 @@
   --blink-on-surface-label: #e0e0e0;
   --blink-on-surface-secondary: #ccc;
   --blink-on-surface-tertiary: #777;
-  --blink-on-surface-faint: #555;
+  // Dark-theme companion: needs to be LIGHTER on a dark background to
+  // hit the same contrast ratio. `#555` against dark = ~1.4:1, way
+  // below floor. `#9ca3af` against the dark surface (#1a1a1a-ish) is
+  // ~6.0:1 — passes AA + AAA.
+  --blink-on-surface-faint: #9ca3af;
 
   // Borders / Outlines
   --blink-outline: rgba(255, 255, 255, 0.1);
