@@ -596,6 +596,115 @@ describe('PostDetailStore — menu actions', () => {
   });
 });
 
+describe('PostDetailStore — landing step (derived from item state)', () => {
+  function makeApprovedItem(partial: Partial<ContentItem> = {}): ContentItem {
+    return makeItem({ briefApproved: true, ...partial });
+  }
+
+  it('briefApproved=false lands on Brief regardless of any persisted step', () => {
+    const item = makeItem({
+      briefApproved: false,
+      production: { productionStep: 'packaging' },
+    });
+    const { store } = setup(item);
+    expect(store.activeStep()).toBe('brief');
+  });
+
+  it('briefApproved=true with no persisted step lands on Draft', () => {
+    const { store } = setup(makeApprovedItem());
+    expect(store.activeStep()).toBe('draft');
+  });
+
+  it('briefApproved=true with persisted productionStep="packaging" lands on Packaging', () => {
+    const item = makeApprovedItem({
+      production: { productionStep: 'packaging' },
+    });
+    const { store } = setup(item);
+    expect(store.activeStep()).toBe('packaging');
+  });
+
+  it('briefApproved=true with persisted productionStep="qa" lands on QA', () => {
+    const item = makeApprovedItem({
+      production: { productionStep: 'qa' },
+    });
+    const { store } = setup(item);
+    expect(store.activeStep()).toBe('qa');
+  });
+
+  it('ignores legacy productionStep values not in the UI set and falls back to draft', () => {
+    const item = makeApprovedItem({
+      production: { productionStep: 'select' as never },
+    });
+    const { store } = setup(item);
+    expect(store.activeStep()).toBe('draft');
+  });
+
+  it('user-driven setActiveStep is preserved after the initial landing resolves', () => {
+    const { store } = setup(makeApprovedItem());
+    expect(store.activeStep()).toBe('draft');
+    store.setActiveStep('brief');
+    expect(store.activeStep()).toBe('brief');
+    // No re-trigger of the landing effect because the item-id hasn't changed.
+  });
+
+  it('switching to a different itemId re-resolves the landing step', () => {
+    const a = makeApprovedItem({ id: 'a' });
+    const b = makeItem({ id: 'b', briefApproved: false });
+    const { store, state } = setup(a);
+    state.setItems([a, b]);
+    expect(store.activeStep()).toBe('draft');
+    store.setItemId('b');
+    expect(store.activeStep()).toBe('brief');
+  });
+});
+
+describe('PostDetailStore — advanceProductionStep + approveBrief persistence', () => {
+  function makeApprovedItem(partial: Partial<ContentItem> = {}): ContentItem {
+    return makeItem({ briefApproved: true, ...partial });
+  }
+
+  it('advanceProductionStep sets activeStep AND persists production.productionStep', () => {
+    const { store } = setup(makeApprovedItem());
+    store.advanceProductionStep('packaging');
+    expect(store.activeStep()).toBe('packaging');
+    expect(store.item()?.production?.productionStep).toBe('packaging');
+  });
+
+  it('advanceProductionStep is a no-op when there is no item', () => {
+    const { store } = setup();
+    store.setItemId('missing');
+    store.advanceProductionStep('draft');
+    expect(store.activeStep()).toBe('draft'); // signal still updates
+    expect(store.item()).toBeNull();
+  });
+
+  it('approveBrief persists productionStep="draft" alongside the approval flags', () => {
+    const item = makeItem({ briefApproved: false });
+    const { store } = setup(item);
+    store.approveBrief('user-sarah');
+    const after = store.item();
+    expect(after?.briefApproved).toBe(true);
+    expect(after?.briefApprovedBy).toBe('user-sarah');
+    expect(after?.production?.productionStep).toBe('draft');
+  });
+
+  it('approveBrief preserves other production fields (brief, draft)', () => {
+    const item = makeItem({
+      briefApproved: false,
+      production: {
+        brief: { canonicalType: 'VIDEO_SHORT_VERTICAL' },
+        draft: { mode: 'VIDEO', video: { hook: 'kept' } },
+      },
+    });
+    const { store } = setup(item);
+    store.approveBrief();
+    const after = store.item();
+    expect(after?.production?.brief?.canonicalType).toBe('VIDEO_SHORT_VERTICAL');
+    expect(after?.production?.draft?.video?.hook).toBe('kept');
+    expect(after?.production?.productionStep).toBe('draft');
+  });
+});
+
 describe('PostDetailStore — production.draft (#114)', () => {
   function makeApprovedItem(partial: Partial<ContentItem> = {}): ContentItem {
     return makeItem({ briefApproved: true, ...partial });

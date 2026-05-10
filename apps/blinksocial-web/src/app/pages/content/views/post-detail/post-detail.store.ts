@@ -1,4 +1,4 @@
-import { Injectable, computed, inject, signal } from '@angular/core';
+import { Injectable, computed, effect, inject, signal } from '@angular/core';
 import { ContentStateService } from '../../content-state.service';
 import {
   CTA_TEXT_MAX_CHARS,
@@ -52,13 +52,109 @@ export class PostDetailStore {
 
   readonly activeStep = signal<ProductionStep>('brief');
 
-  setItemId(id: string | null): void {
-    this._itemId.set(id);
-    this.activeStep.set('brief');
+  /**
+   * Tracks whether we've resolved the landing step for the currently-set
+   * itemId. The full item arrives asynchronously (loadFullItem fetches it
+   * after the route fires), so we can't derive the landing step inside
+   * setItemId synchronously. The constructor effect below watches for the
+   * item to resolve and sets activeStep ONCE per item-id transition;
+   * subsequent navigation (user-driven setActiveStep) is preserved.
+   */
+  private lastLandingResolvedFor: string | null = null;
+
+  constructor() {
+    effect(() => {
+      const id = this._itemId();
+      const item = this.item();
+      if (
+        id &&
+        item?.id === id &&
+        this.isFullyLoaded(item) &&
+        this.lastLandingResolvedFor !== id
+      ) {
+        this.lastLandingResolvedFor = id;
+        this.activeStep.set(this.deriveInitialStep(item));
+      }
+    });
   }
 
+  setItemId(id: string | null): void {
+    this._itemId.set(id);
+    this.lastLandingResolvedFor = null;
+    // Synchronous resolution path: if the FULL item (not just a lite index
+    // projection) is already in state at call-time, resolve the landing
+    // step now. Otherwise set a tentative 'brief' and let the constructor
+    // effect fire once loadFullItem completes and `isFullyLoaded` flips
+    // true. Lite entries from the pipeline-view index lack briefApproved
+    // and production, so resolving against them would incorrectly lock in
+    // 'brief' before the full data arrives.
+    const item = id
+      ? this.state.items().find((i) => i.id === id) ?? null
+      : null;
+    if (item && this.isFullyLoaded(item)) {
+      this.lastLandingResolvedFor = id;
+      this.activeStep.set(this.deriveInitialStep(item));
+    } else {
+      this.activeStep.set('brief');
+    }
+  }
+
+  /**
+   * Heuristic: a "full" item has either an explicit briefApproved flag or
+   * a production block. Lite entries from the content index have neither.
+   * Brand-new posts that genuinely lack both fall through to the tentative
+   * 'brief' default — which is the right landing anyway.
+   */
+  private isFullyLoaded(item: ContentItem): boolean {
+    return item.briefApproved !== undefined || !!item.production;
+  }
+
+  /** Pure UI navigation between steps — does not persist productionStep. */
   setActiveStep(step: ProductionStep): void {
     this.activeStep.set(step);
+  }
+
+  /**
+   * Advance the post forward to a new step AND persist `production.productionStep`.
+   * Use this from Continue buttons (Brief → Draft, Draft → Packaging, etc.) so
+   * the next visit lands the user on the latest step. Persistence flows through
+   * the existing opaque-JSON path that AgenticFilesystem will service in
+   * production — no contract changes needed at swap-time.
+   */
+  advanceProductionStep(step: ProductionStep): void {
+    this.activeStep.set(step);
+    const item = this.item();
+    if (!item) return;
+    const next: ContentItem = {
+      ...item,
+      production: { ...item.production, productionStep: step },
+      updatedAt: new Date().toISOString(),
+    };
+    this.state.saveItem(next);
+  }
+
+  /**
+   * Resolve the right landing step for a post.
+   *
+   * Order of preference:
+   *   1. If the brief is NOT yet approved, always land on Brief.
+   *   2. Otherwise, if `production.productionStep` was previously persisted
+   *      and matches one of our four UI steps, use that.
+   *   3. Otherwise (brief approved but no explicit step persisted yet),
+   *      land on Draft — the brief is done, so Draft is the next-up work.
+   */
+  private deriveInitialStep(item: ContentItem): ProductionStep {
+    if (!item.briefApproved) return 'brief';
+    const persisted = item.production?.productionStep;
+    if (
+      persisted === 'brief' ||
+      persisted === 'draft' ||
+      persisted === 'packaging' ||
+      persisted === 'qa'
+    ) {
+      return persisted;
+    }
+    return 'draft';
   }
 
   // ── field mutations ─────────────────────────────────────────────────
@@ -207,11 +303,19 @@ export class PostDetailStore {
   approveBrief(approvedBy = 'You'): void {
     const item = this.item();
     if (!item) return;
+    // Auto-advance the persisted productionStep to 'draft' on approval so
+    // the next visit lands the user on the next step. Doesn't change the
+    // current activeStep — the user explicitly clicks "Continue to Draft"
+    // to navigate; this only changes WHERE THE NEXT VISIT lands.
     this.state.saveItem({
       ...item,
       briefApproved: true,
       briefApprovedAt: new Date().toISOString(),
       briefApprovedBy: approvedBy,
+      production: {
+        ...item.production,
+        productionStep: 'draft',
+      },
       updatedAt: new Date().toISOString(),
     });
   }

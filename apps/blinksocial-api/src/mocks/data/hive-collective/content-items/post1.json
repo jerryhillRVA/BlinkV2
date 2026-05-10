@@ -67,7 +67,7 @@
     "user-brett"
   ],
   "production": {
-    "productionStep": "packaging",
+    "productionStep": "draft",
     "brief": {
       "strategy": {
         "objective": "engagement",

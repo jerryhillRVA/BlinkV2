@@ -24,7 +24,7 @@ export class BriefStepComponent {
 
   protected onContinueToDraft(): void {
     if (!this.store.item()?.briefApproved) return;
-    this.store.setActiveStep('draft');
+    this.store.advanceProductionStep('draft');
   }
 
   protected readonly keyMessageMax = KEY_MESSAGE_MAX_CHARS;

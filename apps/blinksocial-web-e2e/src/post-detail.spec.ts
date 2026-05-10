@@ -190,7 +190,10 @@ test.describe('Production Draft (#114)', () => {
     });
     await page.goto(`/workspace/hive-collective/content/${options.id}`);
     await expect(page.locator('app-post-detail')).toBeVisible();
-    // Brief is the default active step; advance to Draft via the steps bar.
+    // Brief-approved posts with production.productionStep="draft" should
+    // land directly on the Draft step. We still defensively click "Draft"
+    // in case a future fixture is at brief — click of the active step is
+    // a harmless no-op.
     await page
       .locator('app-production-steps-bar .steps-btn', { hasText: 'Draft' })
       .first()
@@ -200,6 +203,67 @@ test.describe('Production Draft (#114)', () => {
 
   test.beforeEach(async ({ page }) => {
     await mockAuthenticatedUser(page);
+  });
+
+  test('TC-11: landing step is derived from production.productionStep — approved + draft persisted lands directly on Draft (no manual click)', async ({ page }) => {
+    const entry = approvedPostEntry({
+      id: 'landing-draft',
+      title: 'Landing test',
+      platform: 'instagram',
+      contentType: 'reel',
+    });
+    const detail = approvedPostDetail({
+      id: 'landing-draft',
+      title: 'Landing test',
+      platform: 'instagram',
+      contentType: 'reel',
+    });
+    await mockHiveContent(page, {
+      indexItems: [entry],
+      details: { 'landing-draft': detail },
+    });
+    await page.goto(`/workspace/hive-collective/content/landing-draft`);
+    await expect(page.locator('app-post-detail')).toBeVisible();
+    // The page should be on Draft without us clicking anything.
+    await expect(page.locator('app-draft-step')).toBeVisible();
+    await expect(page.locator('app-brief-step')).toHaveCount(0);
+    // The Draft step in the steps-bar is the active one.
+    const draftBtn = page.locator(
+      'app-production-steps-bar .steps-btn',
+      { hasText: 'Draft' },
+    );
+    await expect(draftBtn).toHaveAttribute('aria-current', 'step');
+  });
+
+  test('TC-12: Continue from Draft persists productionStep="packaging" so reload lands on Packaging', async ({ page }) => {
+    const entry = approvedPostEntry({
+      id: 'landing-advance',
+      title: 'Advance test',
+      platform: 'instagram',
+      contentType: 'reel',
+    });
+    const detail = approvedPostDetail({
+      id: 'landing-advance',
+      title: 'Advance test',
+      platform: 'instagram',
+      contentType: 'reel',
+    });
+    await mockHiveContent(page, {
+      indexItems: [entry],
+      details: { 'landing-advance': detail },
+    });
+    await page.goto(`/workspace/hive-collective/content/landing-advance`);
+    await expect(page.locator('app-draft-step')).toBeVisible();
+    // Fill the required fields, then click Continue to Packaging.
+    await page.locator('app-video-builder textarea[aria-label="Hook"]').fill('A hook');
+    await page.locator('app-shot-list .asset-slot .ghost-btn').click();
+    await page.locator('app-draft-step .continue-btn').click();
+    await expect(page.locator('app-step-placeholder')).toBeVisible();
+    // Reload — should land on Packaging directly (productionStep persisted).
+    await page.reload();
+    await expect(page.locator('app-post-detail')).toBeVisible();
+    await expect(page.locator('app-step-placeholder')).toBeVisible();
+    await expect(page.locator('app-draft-step')).toHaveCount(0);
   });
 
   test('TC-1: factory routes (instagram,reel)→VIDEO, (youtube,long-form)→VIDEO_LONG, (instagram,feed-post)→IMAGE_SINGLE', async ({ page }) => {
