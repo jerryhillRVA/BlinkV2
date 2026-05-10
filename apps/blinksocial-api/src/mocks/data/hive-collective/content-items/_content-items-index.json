@@ -7,8 +7,14 @@
       "title": "Chair Yoga Series for Office Workers",
       "platform": null,
       "contentType": null,
-      "pillarIds": ["p1", "p2"],
-      "segmentIds": ["s1", "s2"],
+      "pillarIds": [
+        "p1",
+        "p2"
+      ],
+      "segmentIds": [
+        "s1",
+        "s2"
+      ],
       "owner": null,
       "parentIdeaId": null,
       "parentConceptId": null,
@@ -24,8 +30,13 @@
       "title": "5 Anti-Inflammatory Breakfast Ideas for Hormonal Balance",
       "platform": null,
       "contentType": null,
-      "pillarIds": ["p4"],
-      "segmentIds": ["s1", "s5"],
+      "pillarIds": [
+        "p4"
+      ],
+      "segmentIds": [
+        "s1",
+        "s5"
+      ],
       "owner": "user-sarah",
       "parentIdeaId": "idea1",
       "parentConceptId": null,
@@ -41,8 +52,12 @@
       "title": "60-Second Morning Mobility Flow",
       "platform": "instagram",
       "contentType": "reel",
-      "pillarIds": ["p1"],
-      "segmentIds": ["s4"],
+      "pillarIds": [
+        "p1"
+      ],
+      "segmentIds": [
+        "s4"
+      ],
       "owner": "user-brett",
       "parentIdeaId": null,
       "parentConceptId": "concept1",
@@ -58,11 +73,16 @@
       "title": "Anti-Inflammatory Breakfast Bowl Walkthrough",
       "platform": "instagram",
       "contentType": "carousel",
-      "pillarIds": ["p4"],
-      "segmentIds": ["s1", "s5"],
+      "pillarIds": [
+        "p4"
+      ],
+      "segmentIds": [
+        "s1",
+        "s5"
+      ],
       "owner": "user-sarah",
       "parentIdeaId": null,
-      "parentConceptId": null,
+      "parentConceptId": "concept1",
       "scheduledDate": "2026-05-04",
       "archived": false,
       "createdAt": "2026-04-12T09:00:00Z",
@@ -75,11 +95,16 @@
       "title": "Why Your Sleep Is Out of Sync (And the Fix)",
       "platform": "youtube",
       "contentType": "long-form",
-      "pillarIds": ["p1", "p4"],
-      "segmentIds": ["s5"],
+      "pillarIds": [
+        "p1",
+        "p4"
+      ],
+      "segmentIds": [
+        "s5"
+      ],
       "owner": "user-sarah",
       "parentIdeaId": null,
-      "parentConceptId": null,
+      "parentConceptId": "concept1",
       "scheduledDate": "2026-05-19",
       "archived": false,
       "createdAt": "2026-04-05T10:00:00Z",
@@ -92,11 +117,15 @@
       "title": "5-Minute Desk Stretch Routine",
       "platform": "tiktok",
       "contentType": "short-video",
-      "pillarIds": ["p1"],
-      "segmentIds": ["s2"],
+      "pillarIds": [
+        "p1"
+      ],
+      "segmentIds": [
+        "s2"
+      ],
       "owner": "user-brett",
       "parentIdeaId": null,
-      "parentConceptId": null,
+      "parentConceptId": "concept1",
       "scheduledDate": "2026-04-29",
       "archived": false,
       "createdAt": "2026-04-01T08:00:00Z",
@@ -109,11 +138,15 @@
       "title": "Walking Meditations: A 7-Day Reset",
       "platform": "instagram",
       "contentType": "story",
-      "pillarIds": ["p2"],
-      "segmentIds": ["s4"],
+      "pillarIds": [
+        "p2"
+      ],
+      "segmentIds": [
+        "s4"
+      ],
       "owner": "user-sarah",
       "parentIdeaId": null,
-      "parentConceptId": null,
+      "parentConceptId": "concept1",
       "scheduledDate": "2026-04-22",
       "archived": false,
       "createdAt": "2026-03-25T11:00:00Z",
@@ -126,11 +159,15 @@
       "title": "Member Spotlight: Three Months In",
       "platform": "instagram",
       "contentType": "feed-post",
-      "pillarIds": ["p3"],
-      "segmentIds": ["s4"],
+      "pillarIds": [
+        "p3"
+      ],
+      "segmentIds": [
+        "s4"
+      ],
       "owner": "user-brett",
       "parentIdeaId": null,
-      "parentConceptId": null,
+      "parentConceptId": "concept1",
       "scheduledDate": "2026-05-12",
       "archived": false,
       "createdAt": "2026-04-18T10:00:00Z",

@@ -109,16 +109,31 @@ test.describe('Production Brief (#112)', () => {
     await expect(card.getByText('Campaign Name')).toHaveCount(0);
   });
 
-  test('TC-6: CTA SelectGrid renders 8 pills; clicking one toggles selection', async ({ page }) => {
+  test('TC-6: CTA SelectGrid renders 8 pills; selection moves between pills', async ({ page }) => {
     const grid = page.locator('app-brief-step .cta-card .cta-grid');
     await expect(grid).toBeVisible();
     const pills = grid.locator('.pill-cta');
     await expect(pills).toHaveCount(8);
-    const first = pills.first();
-    await first.click();
-    await expect(first).toHaveClass(/is-active/);
-    await first.click();
-    await expect(first).not.toHaveClass(/is-active/);
+    const enabled = await pills.evaluateAll((els) => els.filter((b) => !(b as HTMLButtonElement).disabled).length);
+    if (enabled < 2) {
+      test.skip();
+      return;
+    }
+    // Click the first inactive pill — assert it picks up is-active.
+    const inactiveIdxA = await pills.evaluateAll((els) =>
+      els.findIndex((b) => !b.classList.contains('is-active') && !(b as HTMLButtonElement).disabled),
+    );
+    const a = pills.nth(inactiveIdxA);
+    await a.click();
+    await expect(a).toHaveClass(/is-active/);
+    // Click another inactive pill — it picks up is-active, prior pill drops it.
+    const inactiveIdxB = await pills.evaluateAll((els, skip) =>
+      els.findIndex((b, i) => i !== skip && !b.classList.contains('is-active') && !(b as HTMLButtonElement).disabled),
+    inactiveIdxA);
+    const b = pills.nth(inactiveIdxB);
+    await b.click();
+    await expect(b).toHaveClass(/is-active/);
+    await expect(a).not.toHaveClass(/is-active/);
   });
 
   test('TC-7: Brief Status approve toggle (skips when canApprove is false on the seeded fixture)', async ({ page }) => {

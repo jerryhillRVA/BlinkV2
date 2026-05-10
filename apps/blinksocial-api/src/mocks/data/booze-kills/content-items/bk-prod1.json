@@ -3,10 +3,19 @@
   "stage": "post",
   "status": "in-progress",
   "title": "How Alcohol Affects Your Gut Microbiome",
-  "description": "Long-form YouTube explainer (8–10 min) on the relationship between alcohol consumption and gut health: dysbiosis, intestinal permeability, downstream inflammation. Animated diagrams over a host narration.",
-  "pillarIds": ["bk-p1"],
-  "segmentIds": ["bk-s3"],
-  "tags": ["gut-health", "microbiome", "long-form", "youtube"],
+  "description": "Long-form YouTube explainer (8\u201310 min) on the relationship between alcohol consumption and gut health: dysbiosis, intestinal permeability, downstream inflammation. Animated diagrams over a host narration.",
+  "pillarIds": [
+    "bk-p1"
+  ],
+  "segmentIds": [
+    "bk-s3"
+  ],
+  "tags": [
+    "gut-health",
+    "microbiome",
+    "long-form",
+    "youtube"
+  ],
   "owner": "user-mara",
   "hook": "Your gut bacteria are begging you to read this.",
   "objective": "education",
@@ -27,8 +36,12 @@
     "brief": {
       "strategy": {
         "objective": "education",
-        "audienceSegmentIds": ["bk-s3"],
-        "pillarIds": ["bk-p1"],
+        "audienceSegmentIds": [
+          "bk-s3"
+        ],
+        "pillarIds": [
+          "bk-p1"
+        ],
         "keyMessage": "Even moderate drinking measurably shifts your gut microbiome.",
         "ctaType": "subscribe",
         "ctaText": "Subscribe for the rest of the gut-health series.",
@@ -68,5 +81,7 @@
       ],
       "ctaLine": "Subscribe for the rest of the gut-health series."
     }
-  }
+  },
+  "conceptId": "bk-concept1",
+  "parentConceptId": "bk-concept1"
 }
