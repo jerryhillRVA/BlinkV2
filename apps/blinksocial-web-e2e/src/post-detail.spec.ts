@@ -66,10 +66,10 @@ test.describe('Production Brief (#112)', () => {
     await expect(page.locator('app-post-detail app-status-stepper')).toHaveCount(0);
   });
 
-  test('TC-2: production-steps bar has 5 steps (Brief / Builder / Packaging / QA / Handoff)', async ({ page }) => {
+  test('TC-2: production-steps bar has 4 steps (Brief / Draft / Packaging / QA)', async ({ page }) => {
     const labels = await page.locator('app-production-steps-bar .steps-label').allTextContents();
-    expect(labels.map((l) => l.trim())).toEqual(['Brief', 'Builder', 'Packaging', 'QA', 'Handoff']);
-    await expect(page.locator('app-production-steps-bar .steps-btn')).toHaveCount(5);
+    expect(labels.map((l) => l.trim())).toEqual(['Brief', 'Draft', 'Packaging', 'QA']);
+    await expect(page.locator('app-production-steps-bar .steps-btn')).toHaveCount(4);
   });
 
   test('TC-3: Goal & Message card has Key Message label, AI Assist sibling, and a textarea', async ({ page }) => {

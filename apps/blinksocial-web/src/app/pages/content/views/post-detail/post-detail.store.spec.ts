@@ -83,8 +83,8 @@ describe('PostDetailStore — item resolution + active step', () => {
 
   it('setActiveStep updates signal', () => {
     const { store } = setup();
-    store.setActiveStep('builder');
-    expect(store.activeStep()).toBe('builder');
+    store.setActiveStep('draft');
+    expect(store.activeStep()).toBe('draft');
   });
 });
 

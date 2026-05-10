@@ -14,7 +14,6 @@ import { PostDetailHeaderComponent } from './components/post-detail-header.compo
 import { ProductionStepsBarComponent } from './components/production-steps-bar.component';
 import { BriefStepComponent } from './components/brief-step.component';
 import { BriefContentConceptComponent } from './components/brief-content-concept.component';
-import { VariationChipsComponent } from './components/variation-chips.component';
 import { StepPlaceholderComponent } from './components/step-placeholder.component';
 import { DetailBackButtonComponent } from '../_shared/detail-back-button/detail-back-button.component';
 import { ContentJourneyComponent } from '../idea-detail/components/content-journey.component';
@@ -28,7 +27,6 @@ import type { ContentItem } from '../../content.types';
     BriefStepComponent,
     BriefContentConceptComponent,
     ContentJourneyComponent,
-    VariationChipsComponent,
     StepPlaceholderComponent,
     DetailBackButtonComponent,
   ],
@@ -54,14 +52,6 @@ export class PostDetailComponent {
   @Output() deleted = new EventEmitter<void>();
 
   // ── Computeds ───────────────────────────────────────────────────────
-  protected readonly siblings = computed<ContentItem[]>(() => {
-    const item = this.store.item();
-    if (!item?.conceptId) return [];
-    return this.state
-      .items()
-      .filter((i) => i.conceptId === item.conceptId && i.stage === 'post');
-  });
-
   protected readonly parentConcept = computed<ContentItem | null>(() => {
     const conceptId = this.store.item()?.conceptId;
     if (!conceptId) return null;
@@ -94,11 +84,6 @@ export class PostDetailComponent {
     if (!conceptId) return;
     const workspaceId = this.route.snapshot.paramMap.get('id') ?? '';
     this.router.navigate(['/workspace', workspaceId, 'content', conceptId]);
-  }
-
-  protected onOpenSibling(id: string): void {
-    const workspaceId = this.route.snapshot.paramMap.get('id') ?? '';
-    this.router.navigate(['/workspace', workspaceId, 'content', id]);
   }
 
   protected onArchive(): void {

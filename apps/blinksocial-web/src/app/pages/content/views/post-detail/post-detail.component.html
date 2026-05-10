@@ -13,12 +13,6 @@
       <app-detail-back-button [ariaLabel]="backLabel" (back)="onBack()" />
     </app-post-detail-header>
 
-    <app-variation-chips
-      [items]="siblings()"
-      [activeId]="item.id"
-      (open)="onOpenSibling($event)"
-    />
-
     <app-production-steps-bar
       [activeStep]="store.activeStep()"
       [briefApproved]="!!item.briefApproved"
@@ -71,17 +65,14 @@
             </aside>
           </div>
         }
-        @case ('builder') {
-          <app-step-placeholder label="Builder" />
+        @case ('draft') {
+          <app-step-placeholder label="Draft" />
         }
         @case ('packaging') {
           <app-step-placeholder label="Packaging" />
         }
         @case ('qa') {
           <app-step-placeholder label="QA" />
-        }
-        @case ('handoff') {
-          <app-step-placeholder label="Handoff" />
         }
       }
     </div>

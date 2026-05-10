@@ -74,10 +74,9 @@ function setup(
 }
 
 describe('PostDetailComponent — composition', () => {
-  it('renders header + variation chips + steps bar + brief step + sidebar (concept / journey / timestamps) when Brief is active', () => {
+  it('renders header + steps bar + brief step + sidebar (concept / journey / timestamps) when Brief is active', () => {
     const { fixture } = setup();
     expect(fixture.nativeElement.querySelector('app-post-detail-header')).not.toBeNull();
-    expect(fixture.nativeElement.querySelector('app-variation-chips')).not.toBeNull();
     expect(fixture.nativeElement.querySelector('app-production-steps-bar')).not.toBeNull();
     expect(fixture.nativeElement.querySelector('app-brief-step')).not.toBeNull();
     expect(fixture.nativeElement.querySelector('app-brief-content-concept')).not.toBeNull();
@@ -85,9 +84,9 @@ describe('PostDetailComponent — composition', () => {
     expect(fixture.nativeElement.querySelector('.brief-side app-content-journey')).not.toBeNull();
     expect(fixture.nativeElement.querySelector('.brief-side .timestamps-panel')).not.toBeNull();
     expect(fixture.nativeElement.querySelector('.brief-side .panel-journey')).not.toBeNull();
-    // brief-status-sidebar is gone — its content moved into Brief Status card.
+    // Variation chips, brief-status-sidebar, status-stepper are all gone.
+    expect(fixture.nativeElement.querySelector('app-variation-chips')).toBeNull();
     expect(fixture.nativeElement.querySelector('app-brief-status-sidebar')).toBeNull();
-    // status-stepper is gone — production-steps-bar is the only stepper here.
     expect(fixture.nativeElement.querySelector('app-status-stepper')).toBeNull();
     expect(fixture.nativeElement.querySelector('app-step-placeholder')).toBeNull();
   });
@@ -124,10 +123,10 @@ describe('PostDetailComponent — composition', () => {
     expect(fixture.nativeElement.querySelector('.post-detail')).toBeNull();
   });
 
-  it('renders Builder placeholder when stepper sets activeStep=builder', () => {
+  it('renders Draft placeholder when stepper sets activeStep=draft', () => {
     const { fixture } = setup();
     const store = (fixture.componentInstance as unknown as { store: PostDetailStore }).store;
-    store.setActiveStep('builder');
+    store.setActiveStep('draft');
     fixture.detectChanges();
     expect(fixture.nativeElement.querySelector('app-brief-step')).toBeNull();
     expect(fixture.nativeElement.querySelector('app-step-placeholder')).not.toBeNull();
@@ -263,20 +262,11 @@ describe('PostDetailComponent — actions', () => {
     confirmSpy.mockRestore();
   });
 
-  it('onOpenSibling navigates to /workspace/<id>/content/<siblingId>', () => {
-    const { fixture } = setup();
-    const router = TestBed.inject(Router);
-    const spy = vi.spyOn(router, 'navigate').mockResolvedValue(true);
-    (fixture.componentInstance as unknown as { onOpenSibling: (id: string) => void }).onOpenSibling('sib-9');
-    expect(spy).toHaveBeenCalledWith(['/workspace', 'ws-1', 'content', 'sib-9']);
-  });
-
-  it('siblings() returns posts that share conceptId; parentConcept() resolves the linked concept', () => {
+  it('parentConcept() resolves the linked concept by conceptId', () => {
     const { fixture, state } = setup();
     const now = new Date().toISOString();
     state.setItems([
       makeItem({ id: 'post-1' }),
-      makeItem({ id: 'post-2', platform: 'youtube', contentType: 'long-form' }),
       {
         id: 'concept-1',
         stage: 'concept',
@@ -291,10 +281,8 @@ describe('PostDetailComponent — actions', () => {
     ]);
     fixture.detectChanges();
     const comp = fixture.componentInstance as unknown as {
-      siblings: () => ContentItem[];
       parentConcept: () => ContentItem | null;
     };
-    expect(comp.siblings().map((i) => i.id).sort()).toEqual(['post-1', 'post-2']);
     expect(comp.parentConcept()?.id).toBe('concept-1');
   });
 

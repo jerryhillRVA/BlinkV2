@@ -15,14 +15,13 @@ function setup(
 }
 
 describe('ProductionStepsBarComponent', () => {
-  it('renders five steps in order (Brief / Builder / Packaging / QA / Handoff)', () => {
+  it('renders four steps in order (Brief / Draft / Packaging / QA)', () => {
     const fixture = setup('brief');
     const labels = Array.from(
       fixture.nativeElement.querySelectorAll('.steps-label') as NodeListOf<HTMLElement>,
     ).map((el) => el.textContent?.trim());
-    expect(labels).toEqual(['Brief', 'Builder', 'Packaging', 'QA', 'Handoff']);
-    const buttons = fixture.nativeElement.querySelectorAll('.steps-btn');
-    expect(buttons.length).toBe(5);
+    expect(labels).toEqual(['Brief', 'Draft', 'Packaging', 'QA']);
+    expect(fixture.nativeElement.querySelectorAll('.steps-btn').length).toBe(4);
   });
 
   it('does not render per-step Lucide icons next to the labels (prototype parity — number circle + label only)', () => {
@@ -38,16 +37,16 @@ describe('ProductionStepsBarComponent', () => {
     expect(buttons[2].getAttribute('aria-current')).toBe('step');
   });
 
-  it('renders numeric badges by default (1..5)', () => {
-    const fixture = setup('builder');
+  it('renders numeric badges by default (1..4)', () => {
+    const fixture = setup('draft');
     const nums = Array.from(
       fixture.nativeElement.querySelectorAll('.steps-num') as NodeListOf<HTMLElement>,
     ).map((el) => el.textContent?.trim());
-    expect(nums).toEqual(['1', '2', '3', '4', '5']);
+    expect(nums).toEqual(['1', '2', '3', '4']);
   });
 
   it('Brief shows a check (is-past) once briefApproved=true and the active step has moved past it', () => {
-    const fixture = setup('builder', true);
+    const fixture = setup('draft', true);
     const briefBtn = fixture.nativeElement.querySelector('.steps-btn') as HTMLElement;
     expect(briefBtn.classList.contains('is-past')).toBe(true);
     expect(briefBtn.querySelector('.steps-num svg')).not.toBeNull();
@@ -62,7 +61,6 @@ describe('ProductionStepsBarComponent', () => {
     expect(buttons[1].classList.contains('is-past')).toBe(true);
     expect(buttons[2].classList.contains('is-past')).toBe(true);
     expect(buttons[3].classList.contains('is-active')).toBe(true);
-    expect(buttons[4].classList.contains('is-past')).toBe(false);
   });
 
   it('disables future steps beyond active+1 when brief is not approved', () => {
@@ -74,20 +72,17 @@ describe('ProductionStepsBarComponent', () => {
     expect(buttons[1].disabled).toBe(false);
     expect(buttons[2].disabled).toBe(true);
     expect(buttons[3].disabled).toBe(true);
-    expect(buttons[4].disabled).toBe(true);
   });
 
-  it('mobile-only "Step N of 5" hint shows the active label', () => {
+  it('mobile-only "Step N of 4" hint shows the active label', () => {
     const fixture = setup('packaging');
     const hint = fixture.nativeElement.querySelector('.steps-mobile-label') as HTMLElement;
     expect(hint).not.toBeNull();
-    expect(hint.textContent).toContain('3 of 5');
+    expect(hint.textContent).toContain('3 of 4');
     expect(hint.textContent).toContain('Packaging');
   });
 
   it('Brief stays not-past when briefApproved is false even if active is later (defensive)', () => {
-    // Caller could set activeStep to packaging without approving brief.
-    // The bar should still show Brief as not-past in that case.
     const fixture = setup('packaging', false);
     const briefBtn = fixture.nativeElement.querySelector('.steps-btn') as HTMLElement;
     expect(briefBtn.classList.contains('is-past')).toBe(false);
@@ -98,7 +93,7 @@ describe('ProductionStepsBarComponent', () => {
     fixture.componentRef.setInput('activeStep', 'unknown' as never);
     fixture.detectChanges();
     const hint = fixture.nativeElement.querySelector('.steps-mobile-label') as HTMLElement;
-    expect(hint.textContent).toContain('1 of 5');
+    expect(hint.textContent).toContain('1 of 4');
     expect(hint.textContent).toContain('Brief');
   });
 
@@ -112,7 +107,6 @@ describe('ProductionStepsBarComponent', () => {
     buttons[1].click();
     buttons[2].click();
     buttons[3].click();
-    buttons[4].click();
-    expect(emitted).toEqual(['builder', 'packaging', 'qa', 'handoff']);
+    expect(emitted).toEqual(['draft', 'packaging', 'qa']);
   });
 });

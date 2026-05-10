@@ -105,6 +105,12 @@ const IDEA_DETAIL = {
 
 const CONCEPT_DETAIL = {
   ...CONCEPT_ENTRY,
+  // The lite CONCEPT_ENTRY has platform/contentType: null. The post-detail's
+  // sidebar Content Concept card renders the Locked badge inside a
+  // `.platform-row` that only appears when platform is set, so the e2e
+  // fixture needs them populated for TC-8 to render the badge at all.
+  platform: 'instagram',
+  contentType: 'carousel',
   description:
     'Three breathing techniques for stress relief that anyone can practise at their desk in under five minutes — paced inhale, box breathing, and 4-7-8 exhale.',
   hook: 'Two minutes. One technique. Zero excuses.',
