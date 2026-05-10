@@ -105,14 +105,13 @@ describe('DraftStepComponent — shell + factory routing', () => {
   // The Continue-to-Packaging button moved to <app-step-action-bar>.
   // See step-action-bar.component.spec.ts for gating + advance tests.
 
-  it('Unsupported branch shows "isn\'t ready yet" status', () => {
+  it('Unsupported branch renders the builder-placeholder', () => {
     const { fixture } = setup(
       makeApprovedItem({ platform: 'instagram', contentType: 'story' }),
     );
-    const status = fixture.nativeElement.querySelector(
-      '.status-summary--unsupported',
-    );
-    expect(status).toBeTruthy();
+    const placeholder = fixture.nativeElement.querySelector('app-builder-placeholder');
+    expect(placeholder).toBeTruthy();
+    expect(placeholder.querySelector('.placeholder-title').textContent).toContain('Story');
   });
 
   it('persists the canonical mode to draft.mode on init via effect', () => {
@@ -120,12 +119,9 @@ describe('DraftStepComponent — shell + factory routing', () => {
     expect(store.draft()?.mode).toBe('VIDEO');
   });
 
-  it('error summary renders aria-live region with field count', () => {
-    const { fixture } = setup();
-    const liveRegion = fixture.nativeElement.querySelector('.draft-status');
-    expect(liveRegion).toBeTruthy();
-    expect(liveRegion.getAttribute('role')).toBe('status');
-    expect(liveRegion.getAttribute('aria-live')).toBe('polite');
-    expect(liveRegion.textContent).toContain('2 fields remaining.');
-  });
+  // The field-count summary block ("Ready to continue." / "N fields
+  // remaining.") was removed — the disabled state of the Continue button
+  // in the action bar plus the inline "1 shot required" badge convey
+  // the same gating info. Per-field error semantics still live in
+  // store.draftErrors() if other components need them.
 });

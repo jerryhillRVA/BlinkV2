@@ -450,23 +450,25 @@ test.describe('Production Draft (#114)', () => {
     await expect(page.locator('app-step-placeholder')).toBeVisible();
   });
 
-  test('TC-10: Error summary live region announces field count; aria-describedby points to it', async ({ page }) => {
+  test('TC-10: Continue button gating reflects required-field state in real-time', async ({ page }) => {
     await openApprovedPostInDraft(page, {
       id: 'draft-err',
       platform: 'instagram',
       contentType: 'reel',
     });
-    const status = page.locator('app-draft-step .draft-status');
-    await expect(status).toHaveAttribute('role', 'status');
-    await expect(status).toHaveAttribute('aria-live', 'polite');
-    await expect(status).toContainText('2 fields remaining.');
-    // Fill hook → count drops to 1
+    // Continue is disabled while VIDEO mode required fields are missing
+    // (hook + ≥1 shot). The bar's gating + the inline "1 shot required"
+    // badge in the section-label are the surfaces that convey this now —
+    // the standalone field-count summary panel was removed.
+    const continueBtn = page.locator('app-step-action-bar .continue-btn');
+    await expect(continueBtn).toBeDisabled();
+    // Fill hook → still disabled (no shots yet)
     await page
       .locator('app-video-builder textarea[aria-label="Hook"]')
       .fill('A hook');
-    await expect(status).toContainText('1 field remaining.');
-    // Add shot → count drops to 0 and message becomes "Ready to continue."
+    await expect(continueBtn).toBeDisabled();
+    // Add shot → all required fields satisfied, button enables
     await page.locator('app-shot-list .asset-slot .ghost-btn').click();
-    await expect(status).toContainText('Ready to continue.');
+    await expect(continueBtn).toBeEnabled();
   });
 });

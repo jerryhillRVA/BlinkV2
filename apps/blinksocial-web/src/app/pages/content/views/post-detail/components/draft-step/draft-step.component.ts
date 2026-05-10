@@ -1,10 +1,6 @@
 import { Component, computed, effect, inject } from '@angular/core';
 import { PostDetailStore } from '../../post-detail.store';
-import {
-  draftModeLabel,
-  getDraftMode,
-  isDraftModeSupported,
-} from './draft-canonical.utils';
+import { getDraftMode } from './draft-canonical.utils';
 import { BuilderPlaceholderComponent } from './builder-placeholder/builder-placeholder.component';
 import { VideoBuilderComponent } from './video-builder/video-builder.component';
 import { VideoLongBuilderComponent } from './video-long-builder/video-long-builder.component';
@@ -33,24 +29,6 @@ export class DraftStepComponent {
   protected readonly mode = computed(() => {
     const item = this.store.item();
     return getDraftMode(item?.platform ?? null, item?.contentType ?? null);
-  });
-
-  protected readonly modeLabel = computed(() => draftModeLabel(this.mode()));
-
-  protected readonly supported = computed(() =>
-    isDraftModeSupported(this.mode()),
-  );
-
-  protected readonly draftErrors = computed(() => this.store.draftErrors());
-  protected readonly canContinue = computed(() =>
-    this.store.canContinueFromDraft(),
-  );
-
-  protected readonly errorSummary = computed(() => {
-    const n = this.draftErrors().length;
-    if (n === 0) return 'Ready to continue.';
-    if (n === 1) return '1 field remaining.';
-    return `${n} fields remaining.`;
   });
 
   constructor() {
