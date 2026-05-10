@@ -146,14 +146,15 @@
           </h3>
           <select
             class="brief-select"
-            [value]="item.owner ?? ''"
             [disabled]="locked()"
             (change)="onOwnerChange($event)"
             aria-label="Owner"
           >
-            <option value="">Select owner…</option>
+            <option value="" [selected]="!item.owner">Select owner…</option>
             @for (m of teamMembers; track m.id) {
-              <option [value]="m.id">{{ m.name }} — {{ m.role }}</option>
+              <option [value]="m.id" [selected]="m.id === item.owner">
+                {{ m.name }} — {{ m.role }}
+              </option>
             }
           </select>
         </div>

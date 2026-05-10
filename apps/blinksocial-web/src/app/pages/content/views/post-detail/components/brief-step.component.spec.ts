@@ -169,6 +169,22 @@ describe('BriefStepComponent — Ownership & Timeline', () => {
     expect(store.item()?.owner).toBe('user-sarah');
   });
 
+  it('Owner select renders the matching option as selected on first load (regression: [value] on <select> raced @for-rendered options)', () => {
+    const { fixture } = setup(makeItem({ owner: 'user-brett' }));
+    const select = fixture.nativeElement.querySelector('.brief-select') as HTMLSelectElement;
+    expect(select.value).toBe('user-brett');
+    const sel = Array.from(
+      fixture.nativeElement.querySelectorAll('.brief-select option') as NodeListOf<HTMLOptionElement>,
+    ).find((o) => o.selected);
+    expect(sel?.value).toBe('user-brett');
+  });
+
+  it('Owner select falls back to "Select owner…" when owner is null', () => {
+    const { fixture } = setup(makeItem({ owner: null }));
+    const select = fixture.nativeElement.querySelector('.brief-select') as HTMLSelectElement;
+    expect(select.value).toBe('');
+  });
+
   it('past Due Date triggers the warning copy', () => {
     const seeded = makeItem({
       production: { brief: { dueDate: '2020-01-01' } },
