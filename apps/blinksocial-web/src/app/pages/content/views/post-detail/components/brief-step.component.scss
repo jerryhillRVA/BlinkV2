@@ -363,17 +363,34 @@
   color: #16a34a;
 }
 
+// Wrapper around the Unlock Brief button + hint. Adds a green-tinted
+// hairline divider between the approved-status block above and the
+// unlock affordance below — matches the prototype's `pt-2 border-t
+// border-green-100`.
+.unlock-row {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  width: 100%;
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px solid rgba(22, 163, 74, 0.18);
+}
+
 .unlock-btn {
-  display: inline-flex;
+  // Full-width button with content centered (matches the prototype's
+  // w-full Tailwind variant) so it spans the card minus its 16px padding.
+  display: flex;
   align-items: center;
+  justify-content: center;
   gap: 6px;
-  padding: 6px 12px;
-  margin-top: 8px;
+  width: 100%;
+  padding: 8px 12px;
   border: 1px solid rgba(245, 158, 11, 0.4);
   border-radius: 6px;
   background: var(--blink-surface);
   color: #b45309;
-  font-size: 10px;
+  font-size: 11px;
   font-weight: 700;
   cursor: pointer;
   transition: background 0.15s;
@@ -384,9 +401,10 @@
 }
 
 .unlock-hint {
-  margin: 4px 0 0;
+  margin: 6px 0 0;
   font-size: 9px;
   color: #b5651d;
+  text-align: center;
 }
 
 .status-unlocked-banner {
@@ -517,16 +535,17 @@
   padding: 8px 14px;
   border: none;
   border-radius: 8px;
-  background: linear-gradient(to right, var(--blink-brand-primary), #f26b4d);
+  // Solid coral — matches the prototype's `bg-[#d94e33]` (no gradient).
+  background: var(--blink-brand-primary);
   color: #fff;
   font-size: 12px;
   font-weight: 700;
   cursor: pointer;
   box-shadow: var(--blink-shadow-sm);
-  transition: filter 0.15s, opacity 0.15s, transform 0.05s;
+  transition: background 0.15s, opacity 0.15s, transform 0.05s;
 
   &:hover:not(:disabled) {
-    filter: brightness(0.95);
+    background: #c4452d;
   }
 
   &:active:not(:disabled) {
