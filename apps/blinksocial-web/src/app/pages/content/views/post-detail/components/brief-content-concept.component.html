@@ -2,13 +2,6 @@
   <section class="panel brief-content-concept-card">
     <header class="card-header">
       <span class="card-title">Content Concept</span>
-      <span class="card-locked" aria-label="Locked">
-        <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-          <rect width="18" height="11" x="3" y="11" rx="2" ry="2"/>
-          <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
-        </svg>
-        Locked
-      </span>
       <button type="button" class="card-edit" (click)="onEdit()">
         Edit Concept
         <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -17,91 +10,114 @@
       </button>
     </header>
 
+    @if (platformLabel(); as platLabel) {
+      <div class="platform-row">
+        @if (c.platform) {
+          <app-platform-icon [platform]="c.platform" [size]="14" />
+        }
+        <span class="platform-label">{{ platLabel }}</span>
+        @if (contentTypeLabel(); as ctLabel) {
+          <span class="platform-sep" aria-hidden="true">·</span>
+          <span class="content-type-label">{{ ctLabel }}</span>
+        }
+        <span class="card-locked" aria-label="Locked">
+          <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <rect width="18" height="11" x="3" y="11" rx="2" ry="2"/>
+            <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+          </svg>
+          Locked
+        </span>
+      </div>
+    }
+
     @if (c.description) {
-      <p class="card-description">{{ c.description }}</p>
+      <div class="concept-block">
+        <span class="concept-block-label">Description</span>
+        <p class="card-description">{{ c.description }}</p>
+      </div>
     }
 
     @if (c.hook) {
-      <div class="concept-row concept-row--hook">
-        <span class="concept-row-label">Hook</span>
+      <div class="concept-block">
+        <span class="concept-block-label">Hook Angle</span>
         <p class="concept-hook">"{{ c.hook }}"</p>
       </div>
     }
 
-    @if (businessObjectiveStatement(); as objText) {
-      <div class="concept-row">
-        <span class="concept-row-icon" aria-hidden="true">
-          <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/>
-          </svg>
-        </span>
-        <div class="concept-row-content">
-          <span class="concept-row-label">Business Objective</span>
-          <span class="concept-row-value">{{ objText }}</span>
-        </div>
-      </div>
-    }
-
-    @if (selectedPillars().length > 0) {
-      <div class="concept-row">
-        <span class="concept-row-icon" aria-hidden="true">
-          <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="m12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z"/>
-            <path d="m22 17.65-9.17 4.16a2 2 0 0 1-1.66 0L2 17.65"/>
-            <path d="m22 12.65-9.17 4.16a2 2 0 0 1-1.66 0L2 12.65"/>
-          </svg>
-        </span>
-        <div class="concept-row-content">
-          <span class="concept-row-label">Pillars</span>
-          <div class="chip-grid chip-grid--pillar">
-            @for (p of selectedPillars(); track p.id) {
-              <span
-                class="chip is-active"
-                [style.background-color]="pillarBg(p)"
-                [style.border-color]="pillarBorder(p)"
-                [style.color]="pillarText(p)"
-              >
-                {{ p.name }}
-              </span>
-            }
-          </div>
-        </div>
-      </div>
-    }
-
-    @if (selectedSegments().length > 0) {
-      <div class="concept-row">
-        <span class="concept-row-icon" aria-hidden="true">
-          <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>
-            <circle cx="9" cy="7" r="4"/>
-            <path d="M22 21v-2a4 4 0 0 0-3-3.87"/>
-            <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
-          </svg>
-        </span>
-        <div class="concept-row-content">
-          <span class="concept-row-label">Audience</span>
-          <div class="chip-grid chip-grid--segment">
-            @for (s of selectedSegments(); track s.id) {
-              <span class="chip is-active">{{ s.name }}</span>
-            }
-          </div>
-        </div>
-      </div>
-    }
-
     @if (objectiveLabel(); as goalLabel) {
-      <div class="concept-row">
-        <span class="concept-row-icon" aria-hidden="true">
-          <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/>
-            <path d="M15 2H9a1 1 0 0 0-1 1v2a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V3a1 1 0 0 0-1-1z"/>
-          </svg>
-        </span>
-        <div class="concept-row-content">
-          <span class="concept-row-label">Goal</span>
-          <span class="concept-row-value">{{ goalLabel }}</span>
+      <div class="concept-block">
+        <span class="concept-block-label">Goal</span>
+        <div class="chip-grid">
+          <span class="chip chip--coral">{{ goalLabel }}</span>
         </div>
+      </div>
+    }
+
+    @if (hasStrategy()) {
+      <div class="strategy-section">
+        <p class="strategy-title">Strategy</p>
+
+        @if (businessObjectiveStatement(); as objText) {
+          <div class="concept-row">
+            <span class="concept-row-icon" aria-hidden="true">
+              <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/>
+              </svg>
+            </span>
+            <div class="concept-row-content">
+              <span class="concept-row-label">Objective</span>
+              <span class="chip chip--coral">{{ objText }}</span>
+            </div>
+          </div>
+        }
+
+        @if (selectedPillars().length > 0) {
+          <div class="concept-row">
+            <span class="concept-row-icon" aria-hidden="true">
+              <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="m12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z"/>
+                <path d="m22 17.65-9.17 4.16a2 2 0 0 1-1.66 0L2 17.65"/>
+                <path d="m22 12.65-9.17 4.16a2 2 0 0 1-1.66 0L2 12.65"/>
+              </svg>
+            </span>
+            <div class="concept-row-content">
+              <span class="concept-row-label">Pillars</span>
+              <div class="chip-grid chip-grid--pillar">
+                @for (p of selectedPillars(); track p.id) {
+                  <span
+                    class="chip is-active"
+                    [style.background-color]="pillarBg(p)"
+                    [style.border-color]="pillarBorder(p)"
+                    [style.color]="pillarText(p)"
+                  >
+                    {{ p.name }}
+                  </span>
+                }
+              </div>
+            </div>
+          </div>
+        }
+
+        @if (selectedSegments().length > 0) {
+          <div class="concept-row">
+            <span class="concept-row-icon" aria-hidden="true">
+              <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>
+                <circle cx="9" cy="7" r="4"/>
+                <path d="M22 21v-2a4 4 0 0 0-3-3.87"/>
+                <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+              </svg>
+            </span>
+            <div class="concept-row-content">
+              <span class="concept-row-label">Audience Target</span>
+              <div class="chip-grid chip-grid--segment">
+                @for (s of selectedSegments(); track s.id) {
+                  <span class="chip is-active">{{ s.name }}</span>
+                }
+              </div>
+            </div>
+          </div>
+        }
       </div>
     }
   </section>

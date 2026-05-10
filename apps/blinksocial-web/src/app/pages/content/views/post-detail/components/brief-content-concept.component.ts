@@ -1,10 +1,15 @@
 import { Component, EventEmitter, Output, computed, input } from '@angular/core';
+import { PlatformIconComponent } from '../../../../../shared/platform-icon/platform-icon.component';
 import {
   pillarBg as sharedPillarBg,
   pillarBorder as sharedPillarBorder,
   pillarText as sharedPillarText,
 } from '../../_shared/pillar-style.utils';
-import { OBJECTIVE_OPTIONS } from '../../../content.constants';
+import {
+  OBJECTIVE_OPTIONS,
+  PLATFORM_CONTENT_TYPES,
+  PLATFORM_OPTIONS,
+} from '../../../content.constants';
 import type {
   AudienceSegment,
   ContentItem,
@@ -14,6 +19,7 @@ import type { BusinessObjectiveContract } from '@blinksocial/contracts';
 
 @Component({
   selector: 'app-brief-content-concept',
+  imports: [PlatformIconComponent],
   templateUrl: './brief-content-concept.component.html',
   styleUrl: './brief-content-concept.component.scss',
 })
@@ -24,6 +30,28 @@ export class BriefContentConceptComponent {
   readonly objectives = input<BusinessObjectiveContract[]>([]);
 
   @Output() editConcept = new EventEmitter<void>();
+
+  protected readonly platformLabel = computed<string | null>(() => {
+    const p = this.concept()?.platform;
+    if (!p) return null;
+    return PLATFORM_OPTIONS.find((o) => o.value === p)?.label ?? p;
+  });
+
+  protected readonly contentTypeLabel = computed<string | null>(() => {
+    const c = this.concept();
+    const p = c?.platform;
+    const ct = c?.contentType;
+    if (!p || !ct) return null;
+    return PLATFORM_CONTENT_TYPES[p]?.find((o) => o.value === ct)?.label ?? ct;
+  });
+
+  protected readonly hasStrategy = computed(() => {
+    return (
+      !!this.businessObjectiveStatement() ||
+      this.selectedPillars().length > 0 ||
+      this.selectedSegments().length > 0
+    );
+  });
 
   protected readonly selectedPillars = computed<ContentPillar[]>(() => {
     const ids = this.concept()?.pillarIds ?? [];

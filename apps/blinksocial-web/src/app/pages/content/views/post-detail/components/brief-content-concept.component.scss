@@ -5,7 +5,7 @@
 .brief-content-concept-card {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 14px;
   padding: 14px 16px;
   border: 1px solid var(--blink-outline-variant);
   border-radius: 12px;
@@ -31,6 +31,7 @@
   align-items: center;
   gap: 4px;
   padding: 1px 6px;
+  margin-left: auto;
   border-radius: 999px;
   background: var(--blink-surface-container-low);
   color: var(--blink-on-surface-faint);
@@ -60,6 +61,39 @@
   }
 }
 
+// Platform + Content Type strip below the header
+.platform-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--blink-on-surface);
+}
+
+.platform-label,
+.content-type-label {
+  line-height: 1;
+}
+
+.platform-sep {
+  color: var(--blink-on-surface-faint);
+}
+
+.concept-block {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.concept-block-label {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--blink-on-surface-muted);
+}
+
 .card-description {
   margin: 0;
   font-size: var(--blink-body-small);
@@ -71,19 +105,37 @@
   overflow: hidden;
 }
 
+.concept-hook {
+  margin: 0;
+  padding-left: 10px;
+  border-left: 2px solid var(--blink-brand-primary);
+  font-size: var(--blink-body-small);
+  font-style: italic;
+  color: var(--blink-on-surface);
+  line-height: 1.4;
+}
+
+// Strategy section — divider + sub-heading + 3 rows (objective / pillars / segments)
+.strategy-section {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding-top: 12px;
+  border-top: 1px solid var(--blink-outline-variant);
+}
+
+.strategy-title {
+  margin: 0;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--blink-on-surface-muted);
+}
+
 .concept-row {
   display: flex;
   gap: 10px;
-
-  &.concept-row--hook .concept-hook {
-    margin: 0;
-    padding-left: 10px;
-    border-left: 2px solid var(--blink-brand-primary);
-    font-size: var(--blink-body-small);
-    font-style: italic;
-    color: var(--blink-on-surface);
-    line-height: 1.4;
-  }
 }
 
 .concept-row-icon {
@@ -102,16 +154,11 @@
 }
 
 .concept-row-label {
-  font-size: 10px;
+  font-size: 9px;
   font-weight: 700;
   letter-spacing: 0.06em;
   text-transform: uppercase;
   color: var(--blink-on-surface-muted);
-}
-
-.concept-row-value {
-  font-size: var(--blink-body-small);
-  color: var(--blink-on-surface);
 }
 
 .chip-grid {
@@ -131,6 +178,12 @@
   font-size: 10px;
   font-weight: 700;
   line-height: 1;
+}
+
+.chip--coral {
+  background: var(--blink-brand-primary-lightest-bg, rgba(217, 78, 51, 0.06));
+  border-color: rgba(217, 78, 51, 0.3);
+  color: var(--blink-brand-primary);
 }
 
 .chip-grid--segment .chip.is-active {

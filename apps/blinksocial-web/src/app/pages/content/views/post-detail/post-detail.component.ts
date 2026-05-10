@@ -4,6 +4,7 @@ import {
   Input,
   Output,
   computed,
+  effect,
   inject,
 } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -41,6 +42,8 @@ export class PostDetailComponent {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
 
+  protected readonly businessObjectives = this.state.businessObjectives;
+
   @Input({ required: false }) set itemId(value: string | null | undefined) {
     if (value !== undefined) this.store.setItemId(value);
   }
@@ -64,6 +67,18 @@ export class PostDetailComponent {
     if (!conceptId) return null;
     return this.state.items().find((i) => i.id === conceptId) ?? null;
   });
+
+  constructor() {
+    // Hydrate the parent concept's full detail whenever it changes, so the
+    // sidebar Content Concept card sees description / hook / objective /
+    // platform / contentType (the index entry is too lite for those fields).
+    effect(() => {
+      const concept = this.parentConcept();
+      if (concept?.id) {
+        this.state.loadFullItem(concept.id);
+      }
+    });
+  }
 
   // ── Handlers ────────────────────────────────────────────────────────
   protected onBack(): void {

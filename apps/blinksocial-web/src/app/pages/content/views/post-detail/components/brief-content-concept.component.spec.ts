@@ -59,14 +59,32 @@ describe('BriefContentConceptComponent', () => {
     expect(fixture.nativeElement.querySelector('.brief-content-concept-card')).toBeNull();
   });
 
-  it('renders the locked badge + Edit Concept link in the header', () => {
+  it('renders the Edit Concept link in the header', () => {
     const fixture = setup(makeConcept());
-    expect(
-      (fixture.nativeElement.querySelector('.card-locked') as HTMLElement).textContent,
-    ).toContain('Locked');
     expect(
       (fixture.nativeElement.querySelector('.card-edit') as HTMLElement).textContent,
     ).toContain('Edit Concept');
+  });
+
+  it('renders Platform + Content Type strip with locked badge when both are set', () => {
+    const fixture = setup(makeConcept({ platform: 'instagram', contentType: 'carousel' }));
+    const row = fixture.nativeElement.querySelector('.platform-row') as HTMLElement;
+    expect(row).not.toBeNull();
+    expect(row.textContent).toContain('Instagram');
+    expect(row.textContent).toContain('Carousel');
+    expect(row.querySelector('.card-locked')?.textContent).toContain('Locked');
+  });
+
+  it('hides the platform strip when platform is unset', () => {
+    const fixture = setup(makeConcept({ platform: undefined, contentType: undefined }));
+    expect(fixture.nativeElement.querySelector('.platform-row')).toBeNull();
+  });
+
+  it('renders Strategy heading + Objective row when objectives are provided', () => {
+    const fixture = setup(makeConcept({ objectiveId: 'obj-1' }));
+    expect(fixture.nativeElement.querySelector('.strategy-section')).not.toBeNull();
+    expect(fixture.nativeElement.querySelector('.strategy-title')?.textContent?.trim()).toBe('Strategy');
+    expect(fixture.nativeElement.textContent).toContain('Q3 awareness lift');
   });
 
   it('renders description excerpt, hook, business objective, pillars, segments, and goal', () => {
