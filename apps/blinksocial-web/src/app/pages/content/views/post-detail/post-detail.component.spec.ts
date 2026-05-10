@@ -123,13 +123,16 @@ describe('PostDetailComponent — composition', () => {
     expect(fixture.nativeElement.querySelector('.post-detail')).toBeNull();
   });
 
-  it('renders Draft placeholder when stepper sets activeStep=draft', () => {
+  it('renders Draft step when stepper sets activeStep=draft', () => {
     const { fixture } = setup();
     const store = (fixture.componentInstance as unknown as { store: PostDetailStore }).store;
     store.setActiveStep('draft');
     fixture.detectChanges();
     expect(fixture.nativeElement.querySelector('app-brief-step')).toBeNull();
-    expect(fixture.nativeElement.querySelector('app-step-placeholder')).not.toBeNull();
+    expect(fixture.nativeElement.querySelector('app-draft-step')).not.toBeNull();
+    // Draft uses the same sidebar layout as Brief.
+    expect(fixture.nativeElement.querySelector('.brief-side app-brief-content-concept')).not.toBeNull();
+    expect(fixture.nativeElement.querySelector('.brief-side app-content-journey')).not.toBeNull();
   });
 
   it('renders Packaging placeholder when active', () => {

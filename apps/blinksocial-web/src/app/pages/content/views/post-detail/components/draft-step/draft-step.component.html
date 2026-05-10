@@ -1,0 +1,101 @@
+<div class="draft-step" role="region" aria-label="Draft builder">
+  <div class="draft-body">
+    @switch (mode()) {
+      @case ('VIDEO') {
+        <app-builder-placeholder mode="VIDEO" />
+      }
+      @case ('VIDEO_LONG') {
+        <app-builder-placeholder mode="VIDEO_LONG" />
+      }
+      @case ('IMAGE_SINGLE') {
+        <app-builder-placeholder mode="IMAGE_SINGLE" />
+      }
+      @case ('CAROUSEL') {
+        <app-builder-placeholder mode="CAROUSEL" />
+      }
+      @case ('TEXT') {
+        <app-builder-placeholder mode="TEXT" />
+      }
+      @default {
+        <app-builder-placeholder [mode]="mode()" />
+      }
+    }
+  </div>
+
+  <div
+    class="draft-status"
+    role="status"
+    aria-live="polite"
+  >
+    @if (supported()) {
+      <p
+        class="status-summary"
+        [class.status-summary--ready]="canContinue()"
+        id="draft-status-summary"
+      >
+        {{ errorSummary() }}
+      </p>
+      @if (draftErrors().length > 0) {
+        <ul class="error-list">
+          @for (err of draftErrors(); track err.field) {
+            <li class="error-row">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="14"
+                height="14"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                aria-hidden="true"
+              >
+                <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z" />
+                <path d="M12 9v4" />
+                <path d="M12 17h.01" />
+              </svg>
+              <span>{{ err.label }}</span>
+            </li>
+          }
+        </ul>
+      }
+    } @else {
+      <p
+        class="status-summary status-summary--unsupported"
+        id="draft-status-summary"
+      >
+        This builder isn't ready yet.
+      </p>
+    }
+  </div>
+
+  <div class="draft-cta-row">
+    <button
+      type="button"
+      class="continue-btn"
+      [class.continue-btn--ready]="canContinue() && supported()"
+      [disabled]="!canContinue() || !supported()"
+      [attr.aria-disabled]="!canContinue() || !supported() ? 'true' : null"
+      aria-describedby="draft-status-summary"
+      (click)="onContinueToPackaging()"
+    >
+      Continue to Packaging
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        width="16"
+        height="16"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        aria-hidden="true"
+      >
+        <path d="M5 12h14" />
+        <path d="m12 5 7 7-7 7" />
+      </svg>
+    </button>
+  </div>
+</div>
