@@ -308,14 +308,6 @@
   color: #b5651d;
 }
 
-// Inline required-field error message — red, sits directly under the field.
-.field-error {
-  margin: 0;
-  font-size: 10px;
-  font-weight: 600;
-  color: #dc2626;
-}
-
 // ── Brief Status ─────────────────────────────────────────────────────
 .brief-status-card {
   &.is-approved {

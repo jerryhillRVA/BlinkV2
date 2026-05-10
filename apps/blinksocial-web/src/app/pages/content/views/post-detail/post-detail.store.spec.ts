@@ -232,7 +232,22 @@ describe('PostDetailStore — validation', () => {
     expect(store.errors()).toEqual([]);
   });
 
-  it('collects errors for missing required fields', () => {
+  it('collects errors only for the post-detail brief fields (Key Message / Owner / CTA Type)', () => {
+    const { store } = setup(
+      makeItem({
+        // Concept-stage fields stay populated — they're locked here.
+        keyMessage: undefined,
+        owner: null,
+        cta: undefined,
+      }),
+    );
+    const fields = store.errors().map((e) => e.field);
+    expect(fields).toEqual(['keyMessage', 'owner', 'ctaType']);
+    expect(store.canApprove()).toBe(false);
+  });
+
+  it('legacy "concept-stage" missing-field check (kept for backwards refactor coverage)', () => {
+    // The post-detail brief errors() no longer surface concept-stage fields.
     const { store } = setup(
       makeItem({
         title: '',
@@ -246,20 +261,21 @@ describe('PostDetailStore — validation', () => {
       }),
     );
     const fields = store.errors().map((e) => e.field);
-    expect(fields).toContain('title');
-    expect(fields).toContain('description');
-    expect(fields).toContain('platform');
-    expect(fields).toContain('contentType');
-    expect(fields).toContain('objective');
+    // None of the concept-stage fields surface here — they're locked from the brief.
+    expect(fields).not.toContain('title');
+    expect(fields).not.toContain('description');
+    expect(fields).not.toContain('platform');
+    expect(fields).not.toContain('contentType');
+    expect(fields).not.toContain('objective');
+    expect(fields).not.toContain('pillars');
+    expect(fields).not.toContain('segments');
+    // Only keyMessage (which the brief edits) shows up.
     expect(fields).toContain('keyMessage');
-    expect(fields).toContain('pillars');
-    expect(fields).toContain('segments');
-    expect(store.canApprove()).toBe(false);
   });
 
-  it('cta error when type set but text empty', () => {
+  it('cta-text-empty no longer produces an error (CTA text field was removed in #112)', () => {
     const { store } = setup(makeItem({ cta: { type: 'buy', text: '' } }));
-    expect(store.errors().some((e) => e.field === 'cta')).toBe(true);
+    expect(store.errors().some((e) => e.field === 'cta')).toBe(false);
   });
 
   it('requiredFieldsDone reflects valid count', () => {
@@ -486,30 +502,27 @@ describe('PostDetailStore — menu actions', () => {
       expect(store.item()).toBeNull();
     });
 
-    it('errors enumerate every missing required field', () => {
+    it('errors lists only the post-detail brief required fields (Key message / Owner / CTA type)', () => {
       const { store } = setup(
         makeItem({
+          // Strip every field the brief actually owns; concept-stage fields
+          // (title, description, etc.) should NOT contribute even when blank.
+          keyMessage: undefined,
+          owner: null,
+          cta: undefined,
+          // These would have failed the old combined validator but aren't
+          // editable from the brief, so they must NOT appear in errors().
           title: '',
           description: '',
           platform: undefined,
           contentType: undefined,
           objective: undefined,
-          keyMessage: '',
           pillarIds: [],
           segmentIds: [],
-          cta: { type: 'learn-more', text: '' },
         }),
       );
       const fields = store.errors().map((e) => e.field);
-      expect(fields).toContain('title');
-      expect(fields).toContain('description');
-      expect(fields).toContain('platform');
-      expect(fields).toContain('contentType');
-      expect(fields).toContain('objective');
-      expect(fields).toContain('keyMessage');
-      expect(fields).toContain('pillars');
-      expect(fields).toContain('segments');
-      expect(fields).toContain('cta');
+      expect(fields).toEqual(['keyMessage', 'owner', 'ctaType']);
       expect(store.canApprove()).toBe(false);
     });
 

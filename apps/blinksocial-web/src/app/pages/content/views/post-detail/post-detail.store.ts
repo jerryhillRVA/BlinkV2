@@ -313,35 +313,19 @@ export class PostDetailStore {
     return !!owner && owner.trim().length > 0;
   });
 
+  // Brief approval list — only the fields the post-detail brief actually
+  // edits. Title / Description / Platform / Content Type / Content Goal /
+  // Pillars / Audience are all set during the concept stage and locked here,
+  // so they don't belong in the brief's Required-to-approve list. Mirrors
+  // the prototype's BriefBuilder errors at lines 453-458.
   readonly errors = computed<BriefValidationIssue[]>(() => {
     const out: BriefValidationIssue[] = [];
-    if (!this.titleValid()) out.push({ field: 'title', label: 'Title is required' });
-    if (!this.descriptionInRange())
-      out.push({
-        field: 'description',
-        label: `Description must be ${DESCRIPTION_MIN_CHARS}–${DESCRIPTION_MAX_CHARS} characters`,
-      });
-    if (!this.platformValid())
-      out.push({ field: 'platform', label: 'Platform is required' });
-    if (!this.contentTypeValid())
-      out.push({ field: 'contentType', label: 'Content type is required' });
-    if (!this.objectiveValid())
-      out.push({ field: 'objective', label: 'Content goal is required' });
     if (!this.keyMessageValid())
       out.push({ field: 'keyMessage', label: 'Key message is required' });
-    if (!this.pillarsValid())
-      out.push({
-        field: 'pillars',
-        label: `Pick 1–${MAX_PILLARS_PER_ITEM} content pillars`,
-      });
-    if (!this.segmentsValid())
-      out.push({ field: 'segments', label: 'Pick at least one audience segment' });
-    if (!this.ctaValid())
-      out.push({ field: 'cta', label: 'CTA type has no text' });
-    if (!this.ctaTypeValid())
-      out.push({ field: 'ctaType', label: 'CTA type is required' });
     if (!this.ownerValid())
       out.push({ field: 'owner', label: 'Owner is required' });
+    if (!this.ctaTypeValid())
+      out.push({ field: 'ctaType', label: 'CTA type is required' });
     return out;
   });
 

@@ -184,22 +184,23 @@ describe('BriefStepComponent — Ownership & Timeline', () => {
     expect(fixture.nativeElement.querySelector('.publishing-toggle')).toBeNull();
   });
 
-  it('Owner-required error appears when no owner is selected', () => {
-    const { fixture } = setup(makeItem({ owner: null as never }));
-    expect(
-      Array.from(
-        fixture.nativeElement.querySelectorAll('.field-error') as NodeListOf<HTMLElement>,
-      ).some((el) => el.textContent?.includes('Owner is required')),
-    ).toBe(true);
+  it('Required-to-approve list under the toggle includes Owner / CTA type / Key message when missing', () => {
+    const { fixture } = setup(
+      makeItem({ owner: null as never, keyMessage: undefined }),
+    );
+    const required = fixture.nativeElement.querySelector('.approve-required') as HTMLElement;
+    expect(required).not.toBeNull();
+    const items = Array.from(
+      required.querySelectorAll('.approve-required-list li') as NodeListOf<HTMLElement>,
+    ).map((el) => el.textContent?.trim() ?? '');
+    expect(items.some((t) => t.includes('Owner is required'))).toBe(true);
+    expect(items.some((t) => t.includes('CTA type is required'))).toBe(true);
+    expect(items.some((t) => t.includes('Key message is required'))).toBe(true);
   });
 
-  it('CTA-type-required error appears when no CTA pill is selected', () => {
-    const { fixture } = setup();
-    expect(
-      Array.from(
-        fixture.nativeElement.querySelectorAll('.field-error') as NodeListOf<HTMLElement>,
-      ).some((el) => el.textContent?.includes('CTA type is required')),
-    ).toBe(true);
+  it('does not render inline .field-error messages — the summary list is the single source of truth', () => {
+    const { fixture } = setup(makeItem({ owner: null as never }));
+    expect(fixture.nativeElement.querySelector('.field-error')).toBeNull();
   });
 });
 
