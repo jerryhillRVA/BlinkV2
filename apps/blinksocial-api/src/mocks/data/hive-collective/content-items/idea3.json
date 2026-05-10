@@ -1,0 +1,12 @@
+{
+  "id": "idea3",
+  "stage": "idea",
+  "status": "posting",
+  "title": "Sleep Reset for Hormonal Balance",
+  "description": "Educational series for women 40+ on how sleep cycles, hormones, and habits intersect — what's actually broken at this stage of life and how to repair it without medication.",
+  "pillarIds": ["p1", "p4"],
+  "segmentIds": ["s5", "s1"],
+  "tags": ["sleep", "hormones", "wellness"],
+  "createdAt": "2026-03-20T10:00:00Z",
+  "updatedAt": "2026-03-20T10:00:00Z"
+}

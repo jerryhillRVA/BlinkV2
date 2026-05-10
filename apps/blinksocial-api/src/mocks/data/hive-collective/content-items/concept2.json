@@ -1,0 +1,29 @@
+{
+  "id": "concept2",
+  "stage": "concept",
+  "status": "posting",
+  "parentIdeaId": "idea2",
+  "title": "60-Second Morning Mobility Flow",
+  "description": "A daily-mobility flow short enough to fit before coffee but specific enough to address the joints women in their 40s feel first thing in the morning. Hook leads with the surprise — your body shouldn't feel 80 when you're 40.",
+  "pillarIds": ["p1"],
+  "segmentIds": ["s4"],
+  "tags": ["mobility", "morning-routine", "beginner"],
+  "owner": "user-brett",
+  "createdAt": "2026-02-18T08:00:00Z",
+  "updatedAt": "2026-02-19T14:00:00Z",
+  "targetPlatforms": [
+    { "platform": "instagram", "contentType": "reel", "postId": null },
+    { "platform": "tiktok", "contentType": "short-video", "postId": null }
+  ],
+  "hook": "Your body shouldn't feel 80 when you're 40.",
+  "objective": "engagement",
+  "cta": { "type": "follow", "text": "Follow for daily flows" },
+  "keyMessage": "A 60-second flow can transform your mornings",
+  "angle": "Demystify mobility — make it tiny enough to actually do",
+  "formatNotes": ["b-roll", "captions-required"],
+  "claimsFlag": false,
+  "riskLevel": "low",
+  "platform": "instagram",
+  "contentType": "reel",
+  "objectiveId": "obj-1"
+}

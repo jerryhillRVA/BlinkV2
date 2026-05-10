@@ -1,0 +1,12 @@
+{
+  "id": "idea2",
+  "stage": "idea",
+  "status": "posting",
+  "title": "Movement Snacks for Active 40s",
+  "description": "Short, repeatable mobility flows under 60 seconds that women in their 40s can do anywhere — desk, kitchen, hotel room. Builds the daily-mobility habit without gym friction.",
+  "pillarIds": ["p1"],
+  "segmentIds": ["s4", "s2"],
+  "tags": ["mobility", "habit-stacking", "no-equipment"],
+  "createdAt": "2026-02-15T09:00:00Z",
+  "updatedAt": "2026-02-15T09:00:00Z"
+}

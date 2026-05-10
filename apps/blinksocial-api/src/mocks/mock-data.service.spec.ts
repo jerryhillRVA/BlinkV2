@@ -123,8 +123,8 @@ describe('MockDataService', () => {
         'content-items',
         '_content-items-index.json',
       ) as { items: { id: string; pillarIds: string[] }[]; totalCount: number };
-      expect(result.totalCount).toBe(10);
-      expect(result.items).toHaveLength(10);
+      expect(result.totalCount).toBe(16);
+      expect(result.items).toHaveLength(16);
       // Every item's pillarIds should resolve against the brand-voice pillar IDs
       const brandVoice = await service.getSettings('booze-kills', 'brand-voice') as {
         contentPillars: { id: string }[];
@@ -172,7 +172,7 @@ describe('MockDataService', () => {
         'content-items',
         '_content-items-index.json',
       ) as { items: { id: string }[] };
-      expect(index.items).toHaveLength(10);
+      expect(index.items).toHaveLength(16);
       for (const entry of index.items) {
         const item = await service.getItemFile('booze-kills', entry.id) as
           | { id: string; pillarIds: string[]; stage: string; title: string }

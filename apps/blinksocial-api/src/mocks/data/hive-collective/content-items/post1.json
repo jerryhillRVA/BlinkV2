@@ -2,7 +2,10 @@
   "id": "post1",
   "stage": "post",
   "status": "scheduled",
-  "parentConceptId": "concept1",
+  "parentConceptId": "concept2",
+  "briefApproved": true,
+  "briefApprovedAt": "2026-02-22T10:00:00Z",
+  "briefApprovedBy": "user-brett",
   "title": "60-Second Morning Mobility Flow",
   "description": "Quick morning mobility routine targeting stiff joints. Designed for beginners who want a fast, equipment-free flow.",
   "pillarIds": [

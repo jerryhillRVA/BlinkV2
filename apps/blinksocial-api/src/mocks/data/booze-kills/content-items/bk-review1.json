@@ -24,27 +24,88 @@
   "tonePreset": "casual",
   "claimsFlag": false,
   "riskLevel": "medium",
+  "cta": { "type": "comment", "text": "What surprised you about getting sober? Tell us below." },
   "scheduledDate": "2026-05-08",
   "scheduledAt": "2026-05-08T16:00:00Z",
+  "briefApproved": true,
+  "briefApprovedAt": "2026-02-20T11:00:00Z",
+  "briefApprovedBy": "user-mara",
   "createdAt": "2026-02-10T12:00:00Z",
   "updatedAt": "2026-02-28T14:00:00Z",
   "production": {
+    "productionStep": "draft",
     "brief": {
       "strategy": {
         "objective": "community",
-        "audienceSegmentIds": [
-          "bk-s2"
-        ],
-        "pillarIds": [
-          "bk-p3"
-        ],
+        "audienceSegmentIds": ["bk-s2"],
+        "pillarIds": ["bk-p3"],
         "keyMessage": "Sobriety is mostly mundane \u2014 and that's the point.",
         "ctaType": "comment",
         "ctaText": "What surprised you about getting sober? Tell us below.",
         "tonePreset": "casual"
+      },
+      "creativePlan": {
+        "hook": "Nobody talks about the boring parts of getting sober.",
+        "storyArc": "first-person-anecdote-per-slide",
+        "musicNotes": "n/a \u2014 carousel"
+      },
+      "compliance": { "containsClaims": false, "disclosureNeeded": false },
+      "approved": true,
+      "canonicalType": "IMAGE_CAROUSEL",
+      "hasTalent": true,
+      "hasMusic": false,
+      "needsAccessibility": true
+    },
+    "draft": {
+      "mode": "CAROUSEL",
+      "carousel": {
+        "hook": "Nobody talks about the boring parts of getting sober.",
+        "slides": [
+          {
+            "id": "cs-1",
+            "headline": "The first month was loud",
+            "body": "I thought I'd feel free. I felt furious. About everything. Traffic, my job, my family, the way the dog chewed his food. Turns out alcohol had been muting all of that for years.",
+            "imageRef": "jess-month1.jpg",
+            "altText": "A woman in her 30s sitting on a kitchen floor, knees pulled up, holding a coffee mug."
+          },
+          {
+            "id": "cs-2",
+            "headline": "Months 2\u20134 were quiet",
+            "body": "Same job. Same family. Same chewing dog. Nothing changed except I stopped being surprised by my own anger.",
+            "imageRef": "jess-month3.jpg",
+            "altText": "Same woman walking a dog on a dirt path, mid-stride, looking down."
+          },
+          {
+            "id": "cs-3",
+            "headline": "Month 6 was the surprise",
+            "body": "I was at a wedding. Drank seltzer. Was bored for three full hours. Drove home. Realised I hadn't been bored at a wedding since I was 22. I'd been a little buzzed at every single one.",
+            "imageRef": "jess-wedding.jpg",
+            "altText": "A wedding reception in soft golden hour light, the woman sitting at a table with a glass of seltzer."
+          },
+          {
+            "id": "cs-4",
+            "headline": "The rest was just\u2026 my life",
+            "body": "365 days in. I'm not transformed. I'm not a 'sobriety person.' I'm just a person who isn't drinking. The boring parts are kind of the whole point.",
+            "imageRef": "jess-year1.jpg",
+            "altText": "Close-up of the woman laughing at something off-frame, in natural light."
+          },
+          {
+            "id": "cs-5",
+            "headline": "Your turn",
+            "body": "Drop a moment in the comments \u2014 what surprised you about getting sober? The boring stuff counts.",
+            "imageRef": "jess-cta.jpg",
+            "altText": "A handwritten note that reads 'tell me a boring sober moment' on a wood table."
+          }
+        ],
+        "hashtags": ["#soberstories", "#dryishlife", "#oneyearsober", "#realsober", "#boozekills"]
       }
-    }
+    },
+    "sources": [],
+    "outputs": {},
+    "assets": [],
+    "tasks": [],
+    "versions": []
   },
-  "conceptId": "bk-concept2",
-  "parentConceptId": "bk-concept2"
+  "conceptId": "bk-concept4",
+  "parentConceptId": "bk-concept4"
 }

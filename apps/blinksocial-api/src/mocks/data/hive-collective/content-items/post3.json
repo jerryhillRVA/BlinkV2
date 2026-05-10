@@ -4,30 +4,102 @@
   "status": "in-progress",
   "title": "Why Your Sleep Is Out of Sync (And the Fix)",
   "description": "Long-form YouTube explainer connecting circadian disruption with hormonal imbalance, with three practical resets.",
-  "pillarIds": [
-    "p1",
-    "p4"
-  ],
-  "segmentIds": [
-    "s5"
-  ],
-  "tags": [
-    "sleep",
-    "circadian",
-    "hormones"
-  ],
+  "pillarIds": ["p1", "p4"],
+  "segmentIds": ["s5"],
+  "tags": ["sleep", "circadian", "hormones"],
   "owner": "user-sarah",
+  "hook": "Your sleep didn't break — your hormones did.",
   "objective": "education",
   "platform": "youtube",
   "contentType": "long-form",
+  "cta": { "type": "subscribe", "text": "Subscribe for the rest of the sleep series" },
   "keyMessage": "Most sleep problems are circadian, not behavioral.",
   "tonePreset": "authoritative",
   "claimsFlag": true,
   "riskLevel": "medium",
   "scheduledDate": "2026-05-19",
   "scheduledAt": "2026-05-19T15:00:00Z",
+  "briefApproved": true,
+  "briefApprovedAt": "2026-04-12T09:00:00Z",
+  "briefApprovedBy": "user-sarah",
   "createdAt": "2026-04-05T10:00:00Z",
   "updatedAt": "2026-04-21T14:00:00Z",
-  "conceptId": "concept1",
-  "parentConceptId": "concept1"
+  "conceptId": "concept3",
+  "parentConceptId": "concept3",
+  "production": {
+    "productionStep": "draft",
+    "brief": {
+      "strategy": {
+        "objective": "education",
+        "audienceSegmentIds": ["s5"],
+        "pillarIds": ["p1", "p4"],
+        "keyMessage": "Most sleep problems are circadian, not behavioral.",
+        "ctaType": "subscribe",
+        "ctaText": "Subscribe for the rest of the sleep series",
+        "tonePreset": "authoritative"
+      },
+      "creativePlan": {
+        "hook": "Your sleep didn't break — your hormones did.",
+        "storyArc": "hook-mechanism-three-fixes-cta",
+        "musicNotes": "Sparse synth bed under voiceover; silence under research overlays"
+      },
+      "compliance": { "containsClaims": true, "disclosureNeeded": true },
+      "approved": true,
+      "canonicalType": "VIDEO_LONG_HORIZONTAL",
+      "hasTalent": true,
+      "hasMusic": true,
+      "needsAccessibility": true
+    },
+    "draft": {
+      "mode": "VIDEO_LONG",
+      "videoLong": {
+        "hook": "If you keep waking up at 3 a.m. and you're over 40, your sleep didn't break — your hormones did. In the next 12 minutes I'll show you why, and the three changes that actually move the needle.",
+        "sequenceBlocks": [
+          {
+            "id": "sb-1",
+            "type": "Hook",
+            "description": "Cold open: 3 a.m. clock shot, voiceover establishes the universal experience. Promise the payoff (3 fixes in 12 minutes).",
+            "duration": "0:00–0:45"
+          },
+          {
+            "id": "sb-2",
+            "type": "Section",
+            "description": "Section 1: The mechanism. Cortisol and progesterone curves; what perimenopause does to them. On-screen graph + lower-third citations.",
+            "duration": "0:45–4:00"
+          },
+          {
+            "id": "sb-3",
+            "type": "Section",
+            "description": "Section 2: Fix #1 — light hygiene. Morning sunlight protocol with timing specifics. B-roll of subject going outside; overlay the protocol as a checklist.",
+            "duration": "4:00–7:00"
+          },
+          {
+            "id": "sb-4",
+            "type": "Section",
+            "description": "Section 3: Fix #2 — temperature gradient. Bedroom temperature, hot showers before bed. Show a thermometer beat, then narrate.",
+            "duration": "7:00–9:30"
+          },
+          {
+            "id": "sb-5",
+            "type": "Section",
+            "description": "Section 4: Fix #3 — magnesium glycinate timing. Specific protocol; what to look for on a label. Hold up a real bottle.",
+            "duration": "9:30–11:30"
+          },
+          {
+            "id": "sb-6",
+            "type": "CTA",
+            "description": "Recap the three fixes as bullet text. Subscribe pitch tied to the next episode (cortisol-aware morning routine).",
+            "duration": "11:30–12:30"
+          }
+        ],
+        "targetDuration": "15m",
+        "voiceoverNotes": "Calm, slow, lower register on the mechanism section. Step UP energy in the fixes section to keep it actionable. Avoid jargon — define every clinical term on first use."
+      }
+    },
+    "sources": [],
+    "outputs": {},
+    "assets": [],
+    "tasks": [],
+    "versions": []
+  }
 }
