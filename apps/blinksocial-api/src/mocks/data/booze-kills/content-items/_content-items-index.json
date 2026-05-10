@@ -7,8 +7,13 @@
       "title": "What Happens to Your Body After 30 Days Sober",
       "platform": null,
       "contentType": null,
-      "pillarIds": ["bk-p1"],
-      "segmentIds": ["bk-s1", "bk-s3"],
+      "pillarIds": [
+        "bk-p1"
+      ],
+      "segmentIds": [
+        "bk-s1",
+        "bk-s3"
+      ],
       "owner": null,
       "parentIdeaId": null,
       "parentConceptId": null,
@@ -24,8 +29,12 @@
       "title": "5 Social Situations Without Alcohol",
       "platform": null,
       "contentType": null,
-      "pillarIds": ["bk-p2"],
-      "segmentIds": ["bk-s1"],
+      "pillarIds": [
+        "bk-p2"
+      ],
+      "segmentIds": [
+        "bk-s1"
+      ],
       "owner": null,
       "parentIdeaId": null,
       "parentConceptId": null,
@@ -41,8 +50,13 @@
       "title": "The Hidden Calories in Your Drinks",
       "platform": null,
       "contentType": null,
-      "pillarIds": ["bk-p1", "bk-p4"],
-      "segmentIds": ["bk-s3"],
+      "pillarIds": [
+        "bk-p1",
+        "bk-p4"
+      ],
+      "segmentIds": [
+        "bk-s3"
+      ],
       "owner": null,
       "parentIdeaId": null,
       "parentConceptId": null,
@@ -58,8 +72,13 @@
       "title": "Alcohol & Sleep: The Myth of the Nightcap",
       "platform": null,
       "contentType": null,
-      "pillarIds": ["bk-p1"],
-      "segmentIds": ["bk-s1", "bk-s3"],
+      "pillarIds": [
+        "bk-p1"
+      ],
+      "segmentIds": [
+        "bk-s1",
+        "bk-s3"
+      ],
       "owner": null,
       "parentIdeaId": null,
       "parentConceptId": null,
@@ -75,8 +94,12 @@
       "title": "Weekend Mocktail Series: Spring Edition",
       "platform": null,
       "contentType": null,
-      "pillarIds": ["bk-p4"],
-      "segmentIds": ["bk-s1"],
+      "pillarIds": [
+        "bk-p4"
+      ],
+      "segmentIds": [
+        "bk-s1"
+      ],
       "owner": null,
       "parentIdeaId": null,
       "parentConceptId": null,
@@ -92,11 +115,15 @@
       "title": "How Alcohol Affects Your Gut Microbiome",
       "platform": "youtube",
       "contentType": "long-form",
-      "pillarIds": ["bk-p1"],
-      "segmentIds": ["bk-s3"],
+      "pillarIds": [
+        "bk-p1"
+      ],
+      "segmentIds": [
+        "bk-s3"
+      ],
       "owner": null,
       "parentIdeaId": null,
-      "parentConceptId": null,
+      "parentConceptId": "bk-concept1",
       "scheduledDate": "2026-05-15",
       "archived": false,
       "createdAt": "2026-02-15T09:00:00Z",
@@ -109,11 +136,15 @@
       "title": "My First Year Sober: Real Talk",
       "platform": "instagram",
       "contentType": "carousel",
-      "pillarIds": ["bk-p3"],
-      "segmentIds": ["bk-s2"],
+      "pillarIds": [
+        "bk-p3"
+      ],
+      "segmentIds": [
+        "bk-s2"
+      ],
       "owner": null,
       "parentIdeaId": null,
-      "parentConceptId": null,
+      "parentConceptId": "bk-concept2",
       "scheduledDate": "2026-05-08",
       "archived": false,
       "createdAt": "2026-02-10T12:00:00Z",
@@ -126,11 +157,15 @@
       "title": "NA Beer Taste Test: Top 5 Picks",
       "platform": "tiktok",
       "contentType": "short-video",
-      "pillarIds": ["bk-p4"],
-      "segmentIds": ["bk-s1"],
+      "pillarIds": [
+        "bk-p4"
+      ],
+      "segmentIds": [
+        "bk-s1"
+      ],
       "owner": null,
       "parentIdeaId": null,
-      "parentConceptId": null,
+      "parentConceptId": "bk-concept2",
       "scheduledDate": "2026-04-30",
       "archived": false,
       "createdAt": "2026-02-05T10:00:00Z",
@@ -143,11 +178,17 @@
       "title": "Dry January Results: What We Learned",
       "platform": "instagram",
       "contentType": "reel",
-      "pillarIds": ["bk-p2", "bk-p1"],
-      "segmentIds": ["bk-s1", "bk-s3"],
+      "pillarIds": [
+        "bk-p2",
+        "bk-p1"
+      ],
+      "segmentIds": [
+        "bk-s1",
+        "bk-s3"
+      ],
       "owner": null,
       "parentIdeaId": null,
-      "parentConceptId": null,
+      "parentConceptId": "bk-concept2",
       "scheduledDate": "2026-02-15",
       "archived": false,
       "createdAt": "2026-02-01T08:00:00Z",
@@ -160,11 +201,16 @@
       "title": "The Science Behind Alcohol Cravings",
       "platform": "youtube",
       "contentType": "long-form",
-      "pillarIds": ["bk-p1"],
-      "segmentIds": ["bk-s2", "bk-s3"],
+      "pillarIds": [
+        "bk-p1"
+      ],
+      "segmentIds": [
+        "bk-s2",
+        "bk-s3"
+      ],
       "owner": null,
       "parentIdeaId": null,
-      "parentConceptId": null,
+      "parentConceptId": "bk-concept1",
       "scheduledDate": "2026-02-10",
       "archived": false,
       "createdAt": "2026-01-20T09:00:00Z",

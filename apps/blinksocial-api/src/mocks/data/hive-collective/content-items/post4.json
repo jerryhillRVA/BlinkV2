@@ -4,9 +4,17 @@
   "status": "review",
   "title": "5-Minute Desk Stretch Routine",
   "description": "Reel format reset routine for office workers, demonstrated standing at a desk.",
-  "pillarIds": ["p1"],
-  "segmentIds": ["s2"],
-  "tags": ["mobility", "office", "reel"],
+  "pillarIds": [
+    "p1"
+  ],
+  "segmentIds": [
+    "s2"
+  ],
+  "tags": [
+    "mobility",
+    "office",
+    "reel"
+  ],
   "owner": "user-brett",
   "objective": "engagement",
   "platform": "tiktok",
@@ -18,5 +26,7 @@
   "scheduledDate": "2026-04-29",
   "scheduledAt": "2026-04-29T17:00:00Z",
   "createdAt": "2026-04-01T08:00:00Z",
-  "updatedAt": "2026-04-20T09:00:00Z"
+  "updatedAt": "2026-04-20T09:00:00Z",
+  "conceptId": "concept1",
+  "parentConceptId": "concept1"
 }

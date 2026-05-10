@@ -74,13 +74,32 @@ function setup(
 }
 
 describe('PostDetailComponent — composition', () => {
-  it('renders header + stepper + brief step + sidebar when Brief is active', () => {
+  it('renders header + steps bar + brief step + sidebar (concept / journey / timestamps) when Brief is active', () => {
     const { fixture } = setup();
     expect(fixture.nativeElement.querySelector('app-post-detail-header')).not.toBeNull();
     expect(fixture.nativeElement.querySelector('app-production-steps-bar')).not.toBeNull();
     expect(fixture.nativeElement.querySelector('app-brief-step')).not.toBeNull();
-    expect(fixture.nativeElement.querySelector('app-brief-status-sidebar')).not.toBeNull();
+    expect(fixture.nativeElement.querySelector('app-brief-content-concept')).not.toBeNull();
+    // Sidebar additions: Content Journey + Timestamps
+    expect(fixture.nativeElement.querySelector('.brief-side app-content-journey')).not.toBeNull();
+    expect(fixture.nativeElement.querySelector('.brief-side .timestamps-panel')).not.toBeNull();
+    expect(fixture.nativeElement.querySelector('.brief-side .panel-journey')).not.toBeNull();
+    // Variation chips, brief-status-sidebar, status-stepper are all gone.
+    expect(fixture.nativeElement.querySelector('app-variation-chips')).toBeNull();
+    expect(fixture.nativeElement.querySelector('app-brief-status-sidebar')).toBeNull();
+    expect(fixture.nativeElement.querySelector('app-status-stepper')).toBeNull();
     expect(fixture.nativeElement.querySelector('app-step-placeholder')).toBeNull();
+  });
+
+  it('formatDate returns the prototype-style date for valid input and empty string for missing/invalid', () => {
+    const { fixture } = setup();
+    const comp = fixture.componentInstance as unknown as {
+      formatDate: (iso: string | undefined) => string;
+    };
+    expect(comp.formatDate(undefined)).toBe('');
+    expect(comp.formatDate('')).toBe('');
+    expect(comp.formatDate('not-a-date')).toBe('');
+    expect(comp.formatDate('2026-05-09T00:00:00Z').length).toBeGreaterThan(0);
   });
 
   it('renders nothing when the store has no item', () => {
@@ -104,10 +123,10 @@ describe('PostDetailComponent — composition', () => {
     expect(fixture.nativeElement.querySelector('.post-detail')).toBeNull();
   });
 
-  it('renders Builder placeholder when stepper sets activeStep=builder', () => {
+  it('renders Draft placeholder when stepper sets activeStep=draft', () => {
     const { fixture } = setup();
     const store = (fixture.componentInstance as unknown as { store: PostDetailStore }).store;
-    store.setActiveStep('builder');
+    store.setActiveStep('draft');
     fixture.detectChanges();
     expect(fixture.nativeElement.querySelector('app-brief-step')).toBeNull();
     expect(fixture.nativeElement.querySelector('app-step-placeholder')).not.toBeNull();
@@ -243,35 +262,28 @@ describe('PostDetailComponent — actions', () => {
     confirmSpy.mockRestore();
   });
 
-  it('onApprove flips briefApproved on the item', () => {
-    const { fixture } = setup();
-    const store = (fixture.componentInstance as unknown as { store: PostDetailStore }).store;
-    (fixture.componentInstance as unknown as { onApprove: () => void }).onApprove();
-    expect(store.item()?.briefApproved).toBe(true);
-  });
-
-  it('onUnlock clears briefApproved on the item', () => {
-    const { fixture } = setup();
-    const store = (fixture.componentInstance as unknown as { store: PostDetailStore }).store;
-    store.approveBrief();
-    (fixture.componentInstance as unknown as { onUnlock: () => void }).onUnlock();
-    expect(store.item()?.briefApproved).toBe(false);
-  });
-
-  it('onContinueToBuilder advances the active step', () => {
-    const { fixture } = setup();
-    const store = (fixture.componentInstance as unknown as { store: PostDetailStore }).store;
-    (fixture.componentInstance as unknown as { onContinueToBuilder: () => void }).onContinueToBuilder();
-    expect(store.activeStep()).toBe('builder');
-  });
-
-  it('onStatusChange persists new status through the store', () => {
-    const { fixture } = setup();
-    const store = (fixture.componentInstance as unknown as { store: PostDetailStore }).store;
-    (fixture.componentInstance as unknown as {
-      onStatusChange: (s: 'review') => void;
-    }).onStatusChange('review');
-    expect(store.item()?.status).toBe('review');
+  it('parentConcept() resolves the linked concept by conceptId', () => {
+    const { fixture, state } = setup();
+    const now = new Date().toISOString();
+    state.setItems([
+      makeItem({ id: 'post-1' }),
+      {
+        id: 'concept-1',
+        stage: 'concept',
+        status: 'draft',
+        title: 'parent',
+        description: '',
+        pillarIds: [],
+        segmentIds: [],
+        createdAt: now,
+        updatedAt: now,
+      },
+    ]);
+    fixture.detectChanges();
+    const comp = fixture.componentInstance as unknown as {
+      parentConcept: () => ContentItem | null;
+    };
+    expect(comp.parentConcept()?.id).toBe('concept-1');
   });
 
   it('onDelete is a no-op when user cancels the confirm', () => {

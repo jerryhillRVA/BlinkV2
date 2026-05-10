@@ -5,7 +5,7 @@
 .post-detail {
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 12px;
 }
 
 .post-body {
@@ -31,4 +31,75 @@
   display: flex;
   flex-direction: column;
   gap: 16px;
+}
+
+// Sidebar cards (Journey, Timestamps) — match the post-#110
+// concept-detail right column conventions.
+.side-card {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 14px 16px;
+  border: 1px solid var(--blink-outline-variant);
+  border-radius: 12px;
+  background: var(--blink-surface);
+}
+
+.side-card-title {
+  margin: 0;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--blink-on-surface-muted);
+}
+
+.panel-journey {
+  position: relative;
+  overflow: hidden;
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(to right, var(--blink-brand-primary), #f26b4d);
+  }
+}
+
+.timestamps-panel {
+  gap: 12px;
+}
+
+.timestamp-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+
+  svg {
+    color: var(--blink-on-surface-muted);
+    flex-shrink: 0;
+  }
+}
+
+.timestamp-content {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.timestamp-label {
+  font-size: var(--blink-label-small);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--blink-on-surface-muted);
+}
+
+.timestamp-value {
+  font-size: var(--blink-body-small);
+  color: var(--blink-on-surface);
 }

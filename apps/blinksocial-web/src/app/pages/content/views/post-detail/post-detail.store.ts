@@ -14,6 +14,11 @@ import type {
   CtaType,
   TonePreset,
 } from '../../content.types';
+import type {
+  PrimaryCtaContract,
+  ProductionBriefContract,
+  PublishingModeContract,
+} from '@blinksocial/contracts';
 import { generateId, toggleArrayItem } from '../../content.utils';
 import type {
   BriefValidationIssue,
@@ -62,6 +67,10 @@ export class PostDetailStore {
     this.persist({ status });
   }
 
+  setOwner(ownerId: string): void {
+    this.persist({ owner: ownerId.trim() || null });
+  }
+
   setObjective(v: ContentObjective | ''): void {
     this.persist({ objective: v === '' ? undefined : v });
   }
@@ -71,8 +80,12 @@ export class PostDetailStore {
   }
 
   setKeyMessage(v: string): void {
-    const trimmed = v.slice(0, KEY_MESSAGE_MAX_CHARS);
-    this.persist({ keyMessage: trimmed.length > 0 ? trimmed : undefined });
+    // Cap to max but DO persist an empty string when the user clears the
+    // field — `keyMessage: undefined` would be dropped by JSON.stringify
+    // on the PUT body and the mock API would merge the old value back in,
+    // making the field's text "reappear" after a delete + space + delete.
+    const capped = v.slice(0, KEY_MESSAGE_MAX_CHARS);
+    this.persist({ keyMessage: capped });
   }
 
   togglePillar(id: string): void {
@@ -106,6 +119,81 @@ export class PostDetailStore {
     this.persist({ cta: { type: item.cta.type, text: trimmed } });
   }
 
+  // ── brief sub-field setters (production.brief) ─────────────────────
+  readonly brief = computed<ProductionBriefContract | undefined>(
+    () => this.item()?.production?.brief,
+  );
+
+  readonly referenceLinks = computed<string[]>(
+    () => this.brief()?.referenceLinks ?? [],
+  );
+  readonly dueDate = computed<string | undefined>(() => this.brief()?.dueDate);
+  readonly campaignName = computed<string | undefined>(
+    () => this.brief()?.campaignName,
+  );
+  readonly publishingMode = computed<PublishingModeContract | undefined>(
+    () => this.brief()?.publishingMode,
+  );
+  readonly primaryCta = computed<PrimaryCtaContract | undefined>(
+    () => this.brief()?.primaryCta,
+  );
+  readonly approvalNote = computed<string>(
+    () => this.brief()?.approvalNote ?? '',
+  );
+
+  readonly paidBoosted = computed(
+    () => this.publishingMode() === 'PAID_BOOSTED',
+  );
+
+  readonly pastDueDate = computed(() => {
+    const d = this.dueDate();
+    if (!d) return false;
+    const date = new Date(d);
+    if (isNaN(date.getTime())) return false;
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    return date.getTime() < today.getTime();
+  });
+
+  setReferenceLinks(links: string[]): void {
+    this.persistBrief({ referenceLinks: links });
+  }
+
+  addReferenceLink(url: string): void {
+    const trimmed = url.trim();
+    if (!trimmed) return;
+    this.persistBrief({ referenceLinks: [...this.referenceLinks(), trimmed] });
+  }
+
+  removeReferenceLink(index: number): void {
+    const next = this.referenceLinks().filter((_, i) => i !== index);
+    this.persistBrief({ referenceLinks: next });
+  }
+
+  setDueDate(v: string): void {
+    this.persistBrief({ dueDate: v.trim() || undefined });
+  }
+
+  setCampaignName(v: string): void {
+    this.persistBrief({ campaignName: v.trim() || undefined });
+  }
+
+  setPublishingMode(v: PublishingModeContract | undefined): void {
+    this.persistBrief({ publishingMode: v });
+  }
+
+  setPrimaryCta(v: PrimaryCtaContract | undefined): void {
+    this.persistBrief({ primaryCta: v });
+  }
+
+  togglePrimaryCta(v: PrimaryCtaContract): void {
+    this.setPrimaryCta(this.primaryCta() === v ? undefined : v);
+  }
+
+  setApprovalNote(v: string): void {
+    this.persistBrief({ approvalNote: v.length > 0 ? v : undefined });
+  }
+
   // ── brief approval lifecycle ────────────────────────────────────────
   approveBrief(approvedBy = 'You'): void {
     const item = this.item();
@@ -122,12 +210,17 @@ export class PostDetailStore {
   unlockBrief(): void {
     const item = this.item();
     if (!item) return;
+    const now = new Date().toISOString();
     this.state.saveItem({
       ...item,
       briefApproved: false,
       briefApprovedAt: undefined,
       briefApprovedBy: undefined,
-      updatedAt: new Date().toISOString(),
+      production: {
+        ...item.production,
+        brief: { ...(item.production?.brief ?? {}), unlockedAt: now },
+      },
+      updatedAt: now,
     });
   }
 
@@ -217,31 +310,26 @@ export class PostDetailStore {
     return text.length > 0 && text.length <= CTA_TEXT_MAX_CHARS;
   });
 
+  readonly ctaTypeValid = computed(() => !!this.item()?.cta?.type);
+
+  readonly ownerValid = computed(() => {
+    const owner = this.item()?.owner;
+    return !!owner && owner.trim().length > 0;
+  });
+
+  // Brief approval list — only the fields the post-detail brief actually
+  // edits. Title / Description / Platform / Content Type / Content Goal /
+  // Pillars / Audience are all set during the concept stage and locked here,
+  // so they don't belong in the brief's Required-to-approve list. Mirrors
+  // the prototype's BriefBuilder errors at lines 453-458.
   readonly errors = computed<BriefValidationIssue[]>(() => {
     const out: BriefValidationIssue[] = [];
-    if (!this.titleValid()) out.push({ field: 'title', label: 'Title is required' });
-    if (!this.descriptionInRange())
-      out.push({
-        field: 'description',
-        label: `Description must be ${DESCRIPTION_MIN_CHARS}–${DESCRIPTION_MAX_CHARS} characters`,
-      });
-    if (!this.platformValid())
-      out.push({ field: 'platform', label: 'Platform is required' });
-    if (!this.contentTypeValid())
-      out.push({ field: 'contentType', label: 'Content type is required' });
-    if (!this.objectiveValid())
-      out.push({ field: 'objective', label: 'Content goal is required' });
     if (!this.keyMessageValid())
       out.push({ field: 'keyMessage', label: 'Key message is required' });
-    if (!this.pillarsValid())
-      out.push({
-        field: 'pillars',
-        label: `Pick 1–${MAX_PILLARS_PER_ITEM} content pillars`,
-      });
-    if (!this.segmentsValid())
-      out.push({ field: 'segments', label: 'Pick at least one audience segment' });
-    if (!this.ctaValid())
-      out.push({ field: 'cta', label: 'CTA type has no text' });
+    if (!this.ownerValid())
+      out.push({ field: 'owner', label: 'Owner is required' });
+    if (!this.ctaTypeValid())
+      out.push({ field: 'ctaType', label: 'CTA type is required' });
     return out;
   });
 
@@ -289,6 +377,23 @@ export class PostDetailStore {
     const next: ContentItem = {
       ...item,
       ...patch,
+      updatedAt: new Date().toISOString(),
+    };
+    this.state.saveItem(next);
+  }
+
+  // Patch a sub-key on production.brief, gated by the same write-lock.
+  private persistBrief(patch: Partial<ProductionBriefContract>): void {
+    const item = this.item();
+    if (!item) return;
+    if (item.briefApproved) return;
+    const nextBrief: ProductionBriefContract = {
+      ...(item.production?.brief ?? {}),
+      ...patch,
+    };
+    const next: ContentItem = {
+      ...item,
+      production: { ...item.production, brief: nextBrief },
       updatedAt: new Date().toISOString(),
     };
     this.state.saveItem(next);

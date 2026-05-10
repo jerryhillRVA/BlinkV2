@@ -1,0 +1,202 @@
+:host {
+  display: block;
+}
+
+.brief-content-concept-card {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 14px 16px;
+  border: 1px solid var(--blink-outline-variant);
+  border-radius: 12px;
+  background: var(--blink-surface);
+}
+
+.card-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.card-title {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--blink-on-surface-muted);
+}
+
+// Prototype: bg-gray-100 / border-gray-200 / text-gray-400 (`text-[9px] px-1.5 py-0`).
+// We bump each shade up a step (gray-200 / gray-300 / gray-500) so the badge
+// reads as a proper Locked indicator instead of fading into the card surface.
+.card-locked {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 6px;
+  margin-left: auto;
+  border-radius: 999px;
+  border: 1px solid #d1d5db;
+  background: #e5e7eb;
+  color: #4b5563;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+
+  svg {
+    color: #4b5563;
+    flex-shrink: 0;
+  }
+}
+
+.card-edit {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  border: none;
+  background: none;
+  color: var(--blink-brand-primary);
+  font-size: 10px;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 2px 4px;
+  border-radius: 4px;
+  transition: background 0.15s;
+
+  &:hover {
+    background: var(--blink-brand-primary-lightest-bg, rgba(217, 78, 51, 0.08));
+  }
+}
+
+// Platform + Content Type strip below the header
+.platform-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--blink-on-surface);
+}
+
+.platform-label,
+.content-type-label {
+  line-height: 1;
+}
+
+.platform-sep {
+  color: var(--blink-on-surface-faint);
+}
+
+.concept-block {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.concept-block-label {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--blink-on-surface-muted);
+}
+
+.card-description {
+  margin: 0;
+  font-size: var(--blink-body-small);
+  color: var(--blink-on-surface);
+  line-height: 1.45;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.concept-hook {
+  margin: 0;
+  padding-left: 10px;
+  border-left: 2px solid var(--blink-brand-primary);
+  font-size: var(--blink-body-small);
+  font-style: italic;
+  color: var(--blink-on-surface);
+  line-height: 1.4;
+}
+
+// Strategy section — divider + sub-heading + 3 rows (objective / pillars / segments)
+.strategy-section {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding-top: 12px;
+  border-top: 1px solid var(--blink-outline-variant);
+}
+
+.strategy-title {
+  margin: 0;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--blink-on-surface-muted);
+}
+
+.concept-row {
+  display: flex;
+  gap: 10px;
+}
+
+.concept-row-icon {
+  display: inline-flex;
+  align-items: flex-start;
+  flex-shrink: 0;
+  margin-top: 2px;
+  color: var(--blink-on-surface-muted);
+}
+
+.concept-row-content {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.concept-row-label {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--blink-on-surface-muted);
+}
+
+.chip-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 8px;
+  border-radius: 999px;
+  border: 1px solid var(--blink-outline-variant);
+  background: var(--blink-surface);
+  color: var(--blink-on-surface);
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.chip--coral {
+  background: var(--blink-brand-primary-lightest-bg, rgba(217, 78, 51, 0.06));
+  border-color: rgba(217, 78, 51, 0.3);
+  color: var(--blink-brand-primary);
+}
+
+.chip-grid--segment .chip.is-active {
+  background: var(--blink-segment-bg, rgba(37, 99, 235, 0.08));
+  border-color: var(--blink-segment-border, rgba(37, 99, 235, 0.35));
+  color: var(--blink-segment-text, #2563eb);
+}

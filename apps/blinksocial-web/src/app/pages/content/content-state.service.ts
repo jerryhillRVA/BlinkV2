@@ -42,6 +42,11 @@ function indexEntryToItem(entry: ContentItemsIndexEntryContract): ContentItem {
     owner: entry.owner ?? undefined,
     parentIdeaId: entry.parentIdeaId ?? undefined,
     parentConceptId: entry.parentConceptId ?? undefined,
+    // Project parentConceptId → conceptId so the post-detail siblings()
+    // and parentConcept() computeds resolve before the full detail loads.
+    // The two fields are kept in sync; conceptId is the field consuming
+    // components read.
+    conceptId: entry.parentConceptId ?? undefined,
     scheduledDate: entry.scheduledDate ?? undefined,
     archived: entry.archived ?? false,
     createdAt: entry.createdAt,

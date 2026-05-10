@@ -13,14 +13,6 @@
       <app-detail-back-button [ariaLabel]="backLabel" (back)="onBack()" />
     </app-post-detail-header>
 
-    <div class="status-stepper-wrap">
-      <app-status-stepper
-        [value]="item.status"
-        [stage]="item.stage"
-        (statusChange)="onStatusChange($event)"
-      />
-    </div>
-
     <app-production-steps-bar
       [activeStep]="store.activeStep()"
       [briefApproved]="!!item.briefApproved"
@@ -35,30 +27,52 @@
               <app-brief-step />
             </div>
             <aside class="brief-side">
-              <app-brief-status-sidebar
-                [approved]="!!item.briefApproved"
-                [approvedAt]="item.briefApprovedAt"
-                [approvedBy]="item.briefApprovedBy"
-                [requiredDone]="store.requiredFieldsDone()"
-                [requiredTotal]="store.requiredFieldsTotal"
-                [errors]="store.errors()"
-                [warnings]="store.warnings()"
-                [canApprove]="store.canApprove()"
-                (approve)="onApprove()"
-                (unlock)="onUnlock()"
-                (continueToBuilder)="onContinueToBuilder()"
+              <app-brief-content-concept
+                [concept]="parentConcept()"
+                [pillars]="store.pillars()"
+                [segments]="store.segments()"
+                [objectives]="businessObjectives()"
+                (editConcept)="onBackToConcept()"
               />
+
+              <section class="panel panel-journey side-card">
+                <h3 class="side-card-title">Content Journey</h3>
+                <app-content-journey [stage]="item.stage" />
+              </section>
+
+              <section class="panel timestamps-panel side-card">
+                <div class="timestamp-row">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <circle cx="12" cy="12" r="10"/>
+                    <polyline points="12 6 12 12 16 14"/>
+                  </svg>
+                  <div class="timestamp-content">
+                    <span class="timestamp-label">Created</span>
+                    <span class="timestamp-value">{{ formatDate(item.createdAt) }}</span>
+                  </div>
+                </div>
+                <div class="timestamp-row">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <circle cx="12" cy="12" r="10"/>
+                    <polyline points="12 6 12 12 16 14"/>
+                  </svg>
+                  <div class="timestamp-content">
+                    <span class="timestamp-label">Last Updated</span>
+                    <span class="timestamp-value">{{ formatDate(item.updatedAt) }}</span>
+                  </div>
+                </div>
+              </section>
             </aside>
           </div>
         }
-        @case ('builder') {
-          <app-step-placeholder label="Builder" />
+        @case ('draft') {
+          <app-step-placeholder label="Draft" />
         }
         @case ('packaging') {
           <app-step-placeholder label="Packaging" />
         }
         @case ('qa') {
-          <app-step-placeholder label="QA" />
+          <app-step-placeholder label="Approve & Schedule" />
         }
       }
     </div>

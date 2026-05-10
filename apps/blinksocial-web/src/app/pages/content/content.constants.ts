@@ -1,3 +1,4 @@
+import type { PrimaryCtaContract } from '@blinksocial/contracts';
 import type {
   SidebarStep,
   PipelineColumn,
@@ -133,6 +134,20 @@ export const CTA_TYPES: { value: CtaType; label: string }[] = [
   { value: 'book-call', label: 'Book a Call' },
   { value: 'other', label: 'Other' },
 ];
+
+// Primary CTA pill options for the production-brief Goal & Message card.
+// Distinct from CTA_TYPES — these are the prototype's BriefBuilder
+// PRIMARY_CTA_OPTIONS (lines 154–157) and only show when the parent
+// concept's objective is in {traffic, leads, sales}.
+export const PRIMARY_CTA_OPTIONS: { value: PrimaryCtaContract; label: string }[] = [
+  { value: 'sign-up', label: 'Sign Up' },
+  { value: 'shop-now', label: 'Shop Now' },
+  { value: 'learn-more', label: 'Learn More' },
+  { value: 'book-now', label: 'Book Now' },
+  { value: 'download', label: 'Download' },
+];
+
+export const TRAFFIC_OBJECTIVES: ContentObjective[] = ['traffic', 'leads', 'sales'];
 
 export const TONE_PRESETS: { value: TonePreset; label: string }[] = [
   { value: 'professional', label: 'Professional' },

@@ -4,9 +4,19 @@
   "status": "published",
   "title": "The Science Behind Alcohol Cravings",
   "description": "Long-form YouTube explainer on the neuroscience of alcohol cravings: dopamine, conditioned cues, and evidence-based strategies (urge surfing, HALT, NAC, naltrexone) to manage them. No moralising.",
-  "pillarIds": ["bk-p1"],
-  "segmentIds": ["bk-s2", "bk-s3"],
-  "tags": ["neuroscience", "cravings", "long-form", "youtube"],
+  "pillarIds": [
+    "bk-p1"
+  ],
+  "segmentIds": [
+    "bk-s2",
+    "bk-s3"
+  ],
+  "tags": [
+    "neuroscience",
+    "cravings",
+    "long-form",
+    "youtube"
+  ],
   "owner": "user-mara",
   "hook": "Your brain isn't broken. Here's what's actually happening.",
   "objective": "education",
@@ -28,8 +38,13 @@
     "brief": {
       "strategy": {
         "objective": "education",
-        "audienceSegmentIds": ["bk-s2", "bk-s3"],
-        "pillarIds": ["bk-p1"],
+        "audienceSegmentIds": [
+          "bk-s2",
+          "bk-s3"
+        ],
+        "pillarIds": [
+          "bk-p1"
+        ],
         "keyMessage": "Cravings are predictable neurochemistry, not personal failure.",
         "ctaType": "subscribe",
         "ctaText": "Subscribe for the rest of the neuroscience series.",
@@ -41,5 +56,7 @@
         "disclosureCopy": "Educational content. Not medical advice. Talk to a clinician about pharmacotherapy."
       }
     }
-  }
+  },
+  "conceptId": "bk-concept1",
+  "parentConceptId": "bk-concept1"
 }

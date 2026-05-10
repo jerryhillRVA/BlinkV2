@@ -70,4 +70,45 @@ const TEST_NAMESPACE = '__test_ns__';
     const tenants = await service.listTenants();
     expect(Array.isArray(tenants)).toBe(true);
   }, 15_000);
+
+  it('should round-trip a content item with the new ProductionBriefContract fields (#112)', async () => {
+    const filename = `test-brief-roundtrip-${Date.now()}.json`;
+    const item = {
+      id: 'integration-post-1',
+      stage: 'post',
+      status: 'in-progress',
+      title: 'Integration test post',
+      description: 'a'.repeat(80),
+      pillarIds: ['p1'],
+      segmentIds: ['s1'],
+      production: {
+        productionStep: 'brief',
+        brief: {
+          // The seven new fields from #112
+          referenceLinks: ['https://a.com', 'https://b.com'],
+          dueDate: '2026-12-01',
+          campaignName: 'Instagram_reel_2026-12-01',
+          publishingMode: 'PAID_BOOSTED',
+          primaryCta: 'shop-now',
+          approvalNote: 'Looks good — locked for Q4 push.',
+          unlockedAt: '2026-11-28T08:30:00.000Z',
+        },
+      },
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+
+    const uploaded = await service.uploadJsonFile(TEST_TENANT, TEST_NAMESPACE, filename, item);
+    const retrieved = await service.batchRetrieve(TEST_TENANT, [uploaded.file_id]);
+    expect(retrieved).toHaveLength(1);
+    expect(retrieved[0].content_type).toBe('json');
+    expect(retrieved[0].content).toEqual(item);
+    // Spot-check the brief sub-object survived intact.
+    const brief = (retrieved[0].content as { production: { brief: Record<string, unknown> } })
+      .production.brief;
+    expect(brief.referenceLinks).toEqual(['https://a.com', 'https://b.com']);
+    expect(brief.publishingMode).toBe('PAID_BOOSTED');
+    expect(brief.primaryCta).toBe('shop-now');
+    expect(brief.unlockedAt).toBe('2026-11-28T08:30:00.000Z');
+  }, 15_000);
 });

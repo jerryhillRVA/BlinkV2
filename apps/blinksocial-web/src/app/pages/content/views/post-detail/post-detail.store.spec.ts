@@ -35,6 +35,8 @@ function makeItem(partial: Partial<ContentItem> = {}): ContentItem {
     platform: 'instagram',
     contentType: 'reel',
     keyMessage: 'The one thing the audience should remember.',
+    owner: 'user-sarah',
+    cta: { type: 'learn-more', text: 'Read more' },
     createdAt: now,
     updatedAt: now,
     ...partial,
@@ -83,8 +85,8 @@ describe('PostDetailStore — item resolution + active step', () => {
 
   it('setActiveStep updates signal', () => {
     const { store } = setup();
-    store.setActiveStep('builder');
-    expect(store.activeStep()).toBe('builder');
+    store.setActiveStep('draft');
+    expect(store.activeStep()).toBe('draft');
   });
 });
 
@@ -119,12 +121,14 @@ describe('PostDetailStore — field mutations (unapproved brief)', () => {
     expect(store.item()?.tonePreset).toBeUndefined();
   });
 
-  it('setKeyMessage caps at max and clears when empty', () => {
+  it('setKeyMessage caps at max and persists "" on clear (not undefined)', () => {
     const { store } = setup();
     store.setKeyMessage('x'.repeat(200));
     expect(store.item()?.keyMessage?.length).toBeLessThanOrEqual(140);
     store.setKeyMessage('');
-    expect(store.item()?.keyMessage).toBeUndefined();
+    // Explicit '' so JSON.stringify keeps the key on the wire and the
+    // mock-API merge actually clears the value. See #112 follow-up.
+    expect(store.item()?.keyMessage).toBe('');
   });
 
   it('togglePillar enforces MAX_PILLARS_PER_ITEM', () => {
@@ -147,7 +151,7 @@ describe('PostDetailStore — field mutations (unapproved brief)', () => {
   });
 
   it('setCtaType inits cta with empty text; setCtaText caps length; empty clears', () => {
-    const { store } = setup();
+    const { store } = setup(makeItem({ cta: undefined }));
     store.setCtaType('buy');
     expect(store.item()?.cta).toEqual({ type: 'buy', text: '' });
     store.setCtaText('x'.repeat(200));
@@ -157,7 +161,7 @@ describe('PostDetailStore — field mutations (unapproved brief)', () => {
   });
 
   it('setCtaText is a no-op without a cta type', () => {
-    const { store } = setup();
+    const { store } = setup(makeItem({ cta: undefined }));
     store.setCtaText('hi');
     expect(store.item()?.cta).toBeUndefined();
   });
@@ -230,7 +234,22 @@ describe('PostDetailStore — validation', () => {
     expect(store.errors()).toEqual([]);
   });
 
-  it('collects errors for missing required fields', () => {
+  it('collects errors only for the post-detail brief fields (Key Message / Owner / CTA Type)', () => {
+    const { store } = setup(
+      makeItem({
+        // Concept-stage fields stay populated — they're locked here.
+        keyMessage: undefined,
+        owner: null,
+        cta: undefined,
+      }),
+    );
+    const fields = store.errors().map((e) => e.field);
+    expect(fields).toEqual(['keyMessage', 'owner', 'ctaType']);
+    expect(store.canApprove()).toBe(false);
+  });
+
+  it('legacy "concept-stage" missing-field check (kept for backwards refactor coverage)', () => {
+    // The post-detail brief errors() no longer surface concept-stage fields.
     const { store } = setup(
       makeItem({
         title: '',
@@ -244,20 +263,32 @@ describe('PostDetailStore — validation', () => {
       }),
     );
     const fields = store.errors().map((e) => e.field);
-    expect(fields).toContain('title');
-    expect(fields).toContain('description');
-    expect(fields).toContain('platform');
-    expect(fields).toContain('contentType');
-    expect(fields).toContain('objective');
+    // None of the concept-stage fields surface here — they're locked from the brief.
+    expect(fields).not.toContain('title');
+    expect(fields).not.toContain('description');
+    expect(fields).not.toContain('platform');
+    expect(fields).not.toContain('contentType');
+    expect(fields).not.toContain('objective');
+    expect(fields).not.toContain('pillars');
+    expect(fields).not.toContain('segments');
+    // Only keyMessage (which the brief edits) shows up.
     expect(fields).toContain('keyMessage');
-    expect(fields).toContain('pillars');
-    expect(fields).toContain('segments');
-    expect(store.canApprove()).toBe(false);
   });
 
-  it('cta error when type set but text empty', () => {
+  it('cta-text-empty no longer produces an error (CTA text field was removed in #112)', () => {
     const { store } = setup(makeItem({ cta: { type: 'buy', text: '' } }));
-    expect(store.errors().some((e) => e.field === 'cta')).toBe(true);
+    expect(store.errors().some((e) => e.field === 'cta')).toBe(false);
+  });
+
+  it('setKeyMessage("") persists an empty string (not undefined) so a delete actually clears the field', () => {
+    const { store } = setup(
+      makeItem({ keyMessage: 'The audience should remember this.' }),
+    );
+    store.setKeyMessage('');
+    expect(store.item()?.keyMessage).toBe('');
+    expect(store.keyMessageValid()).toBe(false);
+    // And errors() now includes keyMessage
+    expect(store.errors().map((e) => e.field)).toContain('keyMessage');
   });
 
   it('requiredFieldsDone reflects valid count', () => {
@@ -343,5 +374,224 @@ describe('PostDetailStore — menu actions', () => {
     expect(store.item()?.status).toBe('scheduled');
     store.setStatus('published');
     expect(store.item()?.status).toBe('published');
+  });
+
+  describe('brief sub-field setters (#112)', () => {
+    it('setReferenceLinks / addReferenceLink / removeReferenceLink round-trip', () => {
+      const { store } = setup();
+      store.setReferenceLinks(['https://a.com']);
+      expect(store.referenceLinks()).toEqual(['https://a.com']);
+      store.addReferenceLink('https://b.com');
+      store.addReferenceLink('   '); // whitespace ignored
+      expect(store.referenceLinks()).toEqual(['https://a.com', 'https://b.com']);
+      store.removeReferenceLink(0);
+      expect(store.referenceLinks()).toEqual(['https://b.com']);
+    });
+
+    it('setDueDate stores ISO date and clears via empty string; pastDueDate flips', () => {
+      const { store } = setup();
+      store.setDueDate('2020-01-01');
+      expect(store.dueDate()).toBe('2020-01-01');
+      expect(store.pastDueDate()).toBe(true);
+      store.setDueDate('');
+      expect(store.dueDate()).toBeUndefined();
+      expect(store.pastDueDate()).toBe(false);
+      store.setDueDate('not-a-date');
+      // pastDueDate guards against bad input
+      expect(store.pastDueDate()).toBe(false);
+    });
+
+    it('setCampaignName stores and clears', () => {
+      const { store } = setup();
+      store.setCampaignName('Instagram_reel_2026-05-09');
+      expect(store.campaignName()).toBe('Instagram_reel_2026-05-09');
+      store.setCampaignName('');
+      expect(store.campaignName()).toBeUndefined();
+    });
+
+    it('setPublishingMode toggles paidBoosted', () => {
+      const { store } = setup();
+      expect(store.paidBoosted()).toBe(false);
+      store.setPublishingMode('PAID_BOOSTED');
+      expect(store.publishingMode()).toBe('PAID_BOOSTED');
+      expect(store.paidBoosted()).toBe(true);
+      store.setPublishingMode(undefined);
+      expect(store.publishingMode()).toBeUndefined();
+    });
+
+    it('togglePrimaryCta sets, then clears when called again with the same value', () => {
+      const { store } = setup();
+      store.togglePrimaryCta('shop-now');
+      expect(store.primaryCta()).toBe('shop-now');
+      store.togglePrimaryCta('shop-now');
+      expect(store.primaryCta()).toBeUndefined();
+      store.togglePrimaryCta('learn-more');
+      expect(store.primaryCta()).toBe('learn-more');
+    });
+
+    it('setApprovalNote stores non-empty values; empty clears', () => {
+      const { store } = setup();
+      store.setApprovalNote('Looks good.');
+      expect(store.approvalNote()).toBe('Looks good.');
+      store.setApprovalNote('');
+      expect(store.approvalNote()).toBe('');
+    });
+
+    it('all brief sub-field setters respect the briefApproved write-lock', () => {
+      const { store } = setup(makeItem({ briefApproved: true }));
+      store.setReferenceLinks(['https://x.com']);
+      store.setDueDate('2030-01-01');
+      store.setCampaignName('blocked');
+      store.setPublishingMode('PAID_BOOSTED');
+      store.togglePrimaryCta('sign-up');
+      store.setApprovalNote('blocked');
+      expect(store.referenceLinks()).toEqual([]);
+      expect(store.dueDate()).toBeUndefined();
+      expect(store.campaignName()).toBeUndefined();
+      expect(store.publishingMode()).toBeUndefined();
+      expect(store.primaryCta()).toBeUndefined();
+      expect(store.approvalNote()).toBe('');
+    });
+
+    it('unlockBrief writes unlockedAt onto production.brief (no prior production)', () => {
+      const { store } = setup(makeItem({ briefApproved: true }));
+      store.unlockBrief();
+      expect(store.item()?.briefApproved).toBe(false);
+      expect(store.brief()?.unlockedAt).toBeDefined();
+      expect(typeof store.brief()?.unlockedAt).toBe('string');
+    });
+
+    it('unlockBrief preserves existing brief data and adds unlockedAt', () => {
+      const seeded = makeItem({
+        briefApproved: true,
+        production: {
+          brief: {
+            referenceLinks: ['https://keep.com'],
+            campaignName: 'Keep',
+          },
+        },
+      });
+      const { store } = setup(seeded);
+      store.unlockBrief();
+      expect(store.brief()?.referenceLinks).toEqual(['https://keep.com']);
+      expect(store.brief()?.campaignName).toBe('Keep');
+      expect(store.brief()?.unlockedAt).toBeDefined();
+    });
+
+    it('unlockBrief is a no-op when item is missing', () => {
+      const { store } = setup();
+      store.setItemId('missing');
+      store.unlockBrief();
+      expect(store.item()).toBeNull();
+    });
+
+    it('approveBrief is a no-op when item is missing', () => {
+      const { store } = setup();
+      store.setItemId('missing');
+      store.approveBrief('Tester');
+      expect(store.item()).toBeNull();
+    });
+
+    it('approveBrief writes timestamps and approver', () => {
+      const { store } = setup();
+      store.approveBrief('Tester');
+      const item = store.item();
+      expect(item?.briefApproved).toBe(true);
+      expect(item?.briefApprovedBy).toBe('Tester');
+      expect(item?.briefApprovedAt).toBeDefined();
+    });
+
+    it('persistBrief is a no-op when item is missing', () => {
+      const { store } = setup();
+      store.setItemId('missing');
+      store.setDueDate('2030-01-01');
+      expect(store.item()).toBeNull();
+    });
+
+    it('addReferenceLink is a no-op when item is missing', () => {
+      const { store } = setup();
+      store.setItemId('missing');
+      store.addReferenceLink('https://x.com');
+      expect(store.item()).toBeNull();
+    });
+
+    it('errors lists only the post-detail brief required fields (Key message / Owner / CTA type)', () => {
+      const { store } = setup(
+        makeItem({
+          // Strip every field the brief actually owns; concept-stage fields
+          // (title, description, etc.) should NOT contribute even when blank.
+          keyMessage: undefined,
+          owner: null,
+          cta: undefined,
+          // These would have failed the old combined validator but aren't
+          // editable from the brief, so they must NOT appear in errors().
+          title: '',
+          description: '',
+          platform: undefined,
+          contentType: undefined,
+          objective: undefined,
+          pillarIds: [],
+          segmentIds: [],
+        }),
+      );
+      const fields = store.errors().map((e) => e.field);
+      expect(fields).toEqual(['keyMessage', 'owner', 'ctaType']);
+      expect(store.canApprove()).toBe(false);
+    });
+
+    it('warnings include "Key message near max length" once the message length crosses the threshold', () => {
+      // KEY_MESSAGE_MAX_CHARS is 140; threshold fires at >= 120 chars.
+      const { store } = setup(makeItem({ keyMessage: 'x'.repeat(125) }));
+      const warningLabels = store.warnings().map((w) => w.label);
+      expect(warningLabels.some((l) => l.includes('near the max length'))).toBe(true);
+    });
+
+    it('warnings include "Pillar limit reached" when the cap is hit', () => {
+      const { store } = setup(makeItem({ pillarIds: ['p1', 'p2', 'p3'] }));
+      const warningLabels = store.warnings().map((w) => w.label);
+      expect(warningLabels.some((l) => l.includes('Pillar limit reached'))).toBe(true);
+    });
+
+    it('togglePillar early-returns when the cap is reached and the pillar is new', () => {
+      const { store } = setup(makeItem({ pillarIds: ['p1', 'p2', 'p3'] }));
+      store.togglePillar('p4');
+      expect(store.item()?.pillarIds).toEqual(['p1', 'p2', 'p3']);
+      // Removing one is still allowed
+      store.togglePillar('p1');
+      expect(store.item()?.pillarIds).toEqual(['p2', 'p3']);
+    });
+
+    it('reads existing production.brief sub-fields without overwriting them on the first patch', () => {
+      const seeded = makeItem({
+        production: {
+          brief: {
+            referenceLinks: ['https://seed.com'],
+            dueDate: '2026-12-01',
+            campaignName: 'Seed_campaign',
+            publishingMode: 'PAID_BOOSTED',
+            primaryCta: 'sign-up',
+            approvalNote: 'seed note',
+          },
+        },
+      });
+      const { store } = setup(seeded);
+      // Computeds reflect the seed
+      expect(store.referenceLinks()).toEqual(['https://seed.com']);
+      expect(store.dueDate()).toBe('2026-12-01');
+      expect(store.campaignName()).toBe('Seed_campaign');
+      expect(store.publishingMode()).toBe('PAID_BOOSTED');
+      expect(store.primaryCta()).toBe('sign-up');
+      expect(store.approvalNote()).toBe('seed note');
+      expect(store.paidBoosted()).toBe(true);
+
+      // Patching a single field preserves the rest
+      store.addReferenceLink('https://added.com');
+      expect(store.referenceLinks()).toEqual([
+        'https://seed.com',
+        'https://added.com',
+      ]);
+      expect(store.dueDate()).toBe('2026-12-01');
+      expect(store.campaignName()).toBe('Seed_campaign');
+    });
   });
 });

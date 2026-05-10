@@ -4,9 +4,17 @@
   "status": "published",
   "title": "Walking Meditations: A 7-Day Reset",
   "description": "Story frame set of seven prompts, one per day, framed for evening cooldowns.",
-  "pillarIds": ["p2"],
-  "segmentIds": ["s4"],
-  "tags": ["meditation", "story", "evening"],
+  "pillarIds": [
+    "p2"
+  ],
+  "segmentIds": [
+    "s4"
+  ],
+  "tags": [
+    "meditation",
+    "story",
+    "evening"
+  ],
   "owner": "user-sarah",
   "objective": "community",
   "platform": "instagram",
@@ -18,5 +26,7 @@
   "scheduledDate": "2026-04-22",
   "scheduledAt": "2026-04-22T19:00:00Z",
   "createdAt": "2026-03-25T11:00:00Z",
-  "updatedAt": "2026-04-22T19:30:00Z"
+  "updatedAt": "2026-04-22T19:30:00Z",
+  "conceptId": "concept1",
+  "parentConceptId": "concept1"
 }

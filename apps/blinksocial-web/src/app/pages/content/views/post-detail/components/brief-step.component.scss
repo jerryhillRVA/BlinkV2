@@ -5,11 +5,14 @@
 .brief-step {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 12px;
 
   &.is-locked {
-    .panel:not(.panel-format) {
-      opacity: 0.75;
+    .brief-textarea,
+    .brief-input,
+    .brief-select,
+    .approval-note {
+      opacity: 0.7;
     }
   }
 }
@@ -17,37 +20,42 @@
 .panel {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  padding: 14px 16px;
+  gap: 12px;
+  padding: 16px;
   border: 1px solid var(--blink-outline-variant);
   border-radius: 12px;
   background: var(--blink-surface);
 }
 
-.panel-label {
+.panel-section-title {
+  margin: 0;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--blink-on-surface-muted);
+}
+
+.panel-icon-header {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
+}
+
+.panel-icon-coral {
+  color: var(--blink-brand-primary);
+  flex-shrink: 0;
+}
+
+.panel-label {
   margin: 0;
-  font-size: var(--blink-label-small);
+  font-size: 10px;
   font-weight: 700;
-  letter-spacing: 0.08em;
   color: var(--blink-on-surface-secondary);
-  text-transform: uppercase;
 }
 
-.panel-hint {
-  font-size: var(--blink-label-small);
-  font-weight: 500;
-  letter-spacing: 0;
-  text-transform: none;
-  color: var(--blink-on-surface-faint);
-}
-
-.panel-hint-muted {
-  margin: 6px 0 0 0;
-  font-size: var(--blink-label-small);
-  color: var(--blink-on-surface-faint);
+.panel-label-icon {
+  color: var(--blink-on-surface-muted);
 }
 
 .panel-required {
@@ -55,66 +63,182 @@
   font-weight: 700;
 }
 
-.panel-empty {
-  margin: 0;
-  font-size: var(--blink-body-small);
-  color: var(--blink-on-surface-faint);
-  font-style: italic;
-}
-
-.panel-inline-row {
+.panel-label-row {
   display: flex;
-  justify-content: space-between;
   align-items: center;
   gap: 8px;
 }
 
-.brief-title,
-.brief-title-input {
-  font-size: var(--blink-title-medium);
-  font-weight: 700;
-  color: var(--blink-on-surface);
-}
-
-.brief-description,
-.brief-description-input {
-  font-size: var(--blink-body-medium);
-  color: var(--blink-on-surface);
-  line-height: 1.55;
-}
-
-.brief-key-message,
-.brief-key-message-input,
-.brief-cta-text,
-.brief-cta-input {
-  font-size: var(--blink-body-medium);
-  color: var(--blink-on-surface);
-}
-
-.char-counter {
+.panel-hint-muted {
   margin: 0;
-  font-size: var(--blink-label-small);
+  font-size: 9px;
   color: var(--blink-on-surface-faint);
-
-  &.is-invalid { color: #b91c1c; }
-  &.is-warn { color: #b45309; }
 }
 
+.field-block {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+// ── Inputs / textarea / select ──────────────────────────────────────
+// Filled-input pattern: --blink-input-bg-dark surface (gray-100 in light,
+// gray-800 in dark), no visible border, focus deepens the bg + adds a
+// subtle 1px ring. Mirrors the post-#106 idea-detail textarea treatment.
+.brief-textarea {
+  display: block;
+  width: 100%;
+  resize: none;
+  border: none;
+  border-radius: 8px;
+  padding: 8px 12px;
+  background: var(--blink-input-bg-dark);
+  color: var(--blink-on-surface);
+  font-family: inherit;
+  font-size: 12px;
+  line-height: 1.45;
+  outline: none;
+  min-height: 64px;
+  transition: background-color 0.15s, box-shadow 0.15s;
+
+  &:focus:not(:read-only) {
+    background: var(--blink-input-bg-focus);
+    box-shadow: 0 0 0 1px var(--blink-outline);
+  }
+}
+
+.brief-input,
+.brief-select {
+  width: 100%;
+  height: 32px;
+  padding: 0 10px;
+  border: none;
+  border-radius: 6px;
+  background: var(--blink-input-bg-dark);
+  color: var(--blink-on-surface);
+  font-family: inherit;
+  font-size: 12px;
+  outline: none;
+  transition: background-color 0.15s, box-shadow 0.15s;
+
+  &:focus:not(:read-only):not(:disabled) {
+    background: var(--blink-input-bg-focus);
+    box-shadow: 0 0 0 1px var(--blink-outline);
+  }
+}
+
+// Custom chevron — native <select> default leaves no breathing room on the
+// right. Hide the platform chevron and inline a 12px caret SVG so the icon
+// has the same right-edge inset as the text on the left.
+.brief-select {
+  appearance: none;
+  -webkit-appearance: none;
+  padding-right: 32px;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='m6 9 6 6 6-6'/></svg>");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  background-size: 12px 12px;
+  background-color: var(--blink-input-bg-dark);
+}
+
+// Date input: clamp width so the native picker indicator sits next to the
+// date text instead of being pushed to the right wall of a stretched field.
+.brief-date-input {
+  width: max-content;
+  min-width: 160px;
+}
+
+// ── AI Assist (mirror of post-#110 concept-detail) ─────────────────
 .assist-btn {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
-  padding: 4px 8px;
-  border: 1px solid var(--blink-outline-variant);
-  border-radius: 6px;
-  background: transparent;
-  color: var(--blink-brand-primary);
-  font-size: var(--blink-label-small);
+  gap: 6px;
+  margin-left: auto;
+  padding: 4px 10px;
+  border: 1px solid #d8b4fe;
+  border-radius: 8px;
+  background: var(--blink-surface);
+  color: var(--blink-on-surface-strong);
+  font-size: 10px;
   font-weight: 600;
   cursor: pointer;
+  transition: background 0.15s;
+
+  svg {
+    color: #a855f7;
+  }
 
   &:hover:not(:disabled) {
-    background: var(--blink-brand-primary-lightest-bg, rgba(217, 78, 51, 0.08));
+    background: rgba(168, 85, 247, 0.06);
+  }
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+}
+
+// ── Char counter ─────────────────────────────────────────────────────
+.char-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.char-counter {
+  font-size: 9px;
+  color: var(--blink-on-surface-faint);
+
+  &.is-invalid { color: #dc2626; }
+  &.is-warn { color: #b5651d; }
+}
+
+.char-warn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 9px;
+  color: #b5651d;
+}
+
+// ── Pills (Primary CTA + CTA Type) ──────────────────────────────────
+.primary-cta-pills,
+.cta-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.cta-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+
+  @media (min-width: 480px) {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+.pill-cta {
+  padding: 6px 10px;
+  border-radius: 999px;
+  border: 1px solid var(--blink-outline-variant);
+  background: var(--blink-surface);
+  color: var(--blink-on-surface-secondary);
+  font-size: 10px;
+  font-weight: 700;
+  text-align: center;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s, color 0.15s;
+
+  &:hover:not(:disabled) {
+    border-color: var(--blink-outline);
+  }
+
+  &.is-active {
+    background: var(--blink-brand-primary-lightest-bg, rgba(217, 78, 51, 0.05));
+    color: var(--blink-brand-primary);
+    border-color: var(--blink-brand-primary);
   }
 
   &:disabled {
@@ -123,140 +247,336 @@
   }
 }
 
-/* ── Format (locked) ────────────────────────────────────────────────── */
-.panel-format {
-  background: var(--blink-surface-container-low);
-  border-color: var(--blink-outline-variant);
+.cta-grid .pill-cta {
+  border-radius: 8px;
 }
 
-.panel-format-header {
+// ── Reference Links ──────────────────────────────────────────────────
+.reference-link-row {
   display: flex;
-  justify-content: space-between;
   align-items: center;
+  gap: 6px;
 }
 
-.panel-format-lock {
+.link-row-remove,
+.link-row-add {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  border: none;
+  background: transparent;
+  color: var(--blink-on-surface-muted);
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+
+  &:hover:not(:disabled) {
+    background: var(--blink-surface-hover);
+    color: var(--blink-on-surface);
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+}
+
+.link-row-remove:hover:not(:disabled) {
+  color: #dc2626;
+}
+
+// ── Ownership grid ───────────────────────────────────────────────────
+.ownership-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+
+  @media (min-width: 480px) {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.due-date-warning {
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  padding: 2px 8px;
+  margin: 0;
+  font-size: 9px;
+  color: #b5651d;
+}
+
+// ── Brief Status ─────────────────────────────────────────────────────
+.brief-status-card {
+  &.is-approved {
+    border-color: rgba(22, 163, 74, 0.4);
+    background: rgba(22, 163, 74, 0.04);
+  }
+}
+
+.status-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.status-approved-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 1px 8px;
   border-radius: 999px;
-  background: var(--blink-surface-container);
-  color: var(--blink-on-surface-muted);
-  font-size: var(--blink-label-small);
+  background: rgba(22, 163, 74, 0.15);
+  color: #15803d;
+  border: 1px solid rgba(22, 163, 74, 0.4);
+  font-size: 9px;
   font-weight: 700;
-  letter-spacing: 0.04em;
   text-transform: uppercase;
+  letter-spacing: 0.04em;
 }
 
-.format-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 10px;
+.status-approved-body {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 4px;
 }
 
-.format-cell {
+.status-approved-icon {
+  color: #16a34a;
+  margin: 0 auto;
+}
+
+.status-approved-title {
+  margin: 0;
+  font-size: 12px;
+  font-weight: 700;
+  color: #15803d;
+}
+
+.status-approved-meta {
+  margin: 0;
+  font-size: 10px;
+  color: #16a34a;
+}
+
+// Wrapper around the Unlock Brief button + hint. Adds a green-tinted
+// hairline divider between the approved-status block above and the
+// unlock affordance below — matches the prototype's `pt-2 border-t
+// border-green-100`.
+.unlock-row {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  width: 100%;
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px solid rgba(22, 163, 74, 0.18);
+}
+
+.unlock-btn {
+  // Full-width button with content centered (matches the prototype's
+  // w-full Tailwind variant) so it spans the card minus its 16px padding.
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid rgba(245, 158, 11, 0.4);
+  border-radius: 6px;
+  background: var(--blink-surface);
+  color: #b45309;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.15s;
+
+  &:hover {
+    background: rgba(245, 158, 11, 0.08);
+  }
+}
+
+.unlock-hint {
+  margin: 6px 0 0;
+  font-size: 9px;
+  color: #b5651d;
+  text-align: center;
+}
+
+.status-unlocked-banner {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 8px 10px;
+  border: 1px solid rgba(245, 158, 11, 0.4);
+  border-radius: 8px;
+  background: rgba(245, 158, 11, 0.06);
+  color: #b45309;
+  font-size: 10px;
+}
+
+.status-warnings {
+  margin: 0;
+  padding: 0 0 0 6px;
+  list-style: none;
   display: flex;
   flex-direction: column;
   gap: 4px;
+
+  li {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 9px;
+    color: #b5651d;
+  }
 }
 
-.format-cell-label {
-  font-size: var(--blink-label-small);
-  font-weight: 700;
-  color: var(--blink-on-surface-faint);
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
-
-.format-cell-value {
-  display: inline-flex;
-  align-items: center;
+.approve-row {
+  display: flex;
+  flex-direction: column;
   gap: 8px;
-  height: 36px;
-  padding: 0 10px;
-  border: 1px solid var(--blink-outline-variant);
-  border-radius: 8px;
-  background: var(--blink-surface-container);
-  color: var(--blink-on-surface);
-  font-size: var(--blink-body-small);
+  padding-top: 8px;
+  border-top: 1px solid var(--blink-outline-variant);
 }
 
-.format-cell-empty {
-  color: var(--blink-on-surface-faint);
-  font-style: italic;
+// Required-fields summary that appears below the toggle when canApprove
+// is false. Lists each missing required field by label with a Lucide
+// AlertTriangle icon, in red. No header — matches the prototype.
+.approve-required {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+
+  li {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11px;
+    font-weight: 500;
+    color: #dc2626;
+  }
 }
 
-/* ── Chips + objective grid (shared with other detail screens) ─────── */
-.chip-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 6px;
+.approve-label {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--blink-on-surface-secondary);
 }
 
-.chip {
+// Slide-toggle styled checkbox — prototype uses a Switch; we keep the
+// native <input type="checkbox"> for keyboard / form semantics and skin it.
+.approve-toggle {
+  appearance: none;
+  -webkit-appearance: none;
+  position: relative;
+  flex-shrink: 0;
+  width: 32px;
+  height: 18px;
+  border-radius: 999px;
+  // Slightly darker than --blink-outline-variant so the off-state track
+  // reads clearly against the brief-status card surface.
+  background: #cbd5e1;
+  border: none;
+  cursor: pointer;
+  transition: background 0.15s;
+  margin: 0;
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: #fff;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.18);
+    transition: transform 0.15s;
+  }
+
+  &:checked {
+    background: #16a34a;
+  }
+
+  &:checked::before {
+    transform: translateX(14px);
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+}
+
+// Inline "Continue to Draft" CTA at the end of the brief. Right-aligned;
+// disabled (locked) until briefApproved flips. Replaces the prototype's
+// fixed-bottom bar — same intent without the footer overlap issue.
+.brief-continue-row {
+  display: flex;
+  justify-content: flex-end;
+  padding-top: 4px;
+}
+
+.btn-continue-draft {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 6px 10px;
-  border-radius: 999px;
-  border: 1px solid var(--blink-outline-variant);
-  background: var(--blink-surface);
-  color: var(--blink-on-surface);
-  font-size: var(--blink-label-large);
-  cursor: pointer;
-  text-align: left;
-  transition: border-color 0.15s, background 0.15s;
-
-  &:hover:not(:disabled) { border-color: var(--blink-brand-primary); }
-
-  &.is-active {
-    background: var(--blink-brand-primary-lightest-bg, rgba(217, 78, 51, 0.08));
-    border-color: var(--blink-brand-primary);
-    color: var(--blink-brand-primary);
-  }
-
-  &:disabled {
-    opacity: 0.4;
-    cursor: not-allowed;
-  }
-}
-
-.chip-dot {
-  display: inline-block;
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  flex-shrink: 0;
-}
-
-.objective-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
-  gap: 6px;
-}
-
-.objective-btn {
-  padding: 8px 10px;
-  border: 1px solid var(--blink-outline-variant);
+  padding: 8px 14px;
+  border: none;
   border-radius: 8px;
-  background: var(--blink-surface);
-  color: var(--blink-on-surface);
-  font-size: var(--blink-label-large);
-  font-weight: 600;
+  // Solid coral — matches the prototype's `bg-[#d94e33]` (no gradient).
+  background: var(--blink-brand-primary);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 700;
   cursor: pointer;
-  transition: background 0.15s, border-color 0.15s, color 0.15s;
+  box-shadow: var(--blink-shadow-sm);
+  transition: background 0.15s, opacity 0.15s, transform 0.05s;
 
-  &:hover:not(:disabled) { border-color: var(--blink-brand-primary); }
+  &:hover:not(:disabled) {
+    background: #c4452d;
+  }
 
-  &.is-active {
-    background: var(--blink-brand-primary);
-    border-color: var(--blink-brand-primary);
-    color: var(--blink-on-brand, #fff);
+  &:active:not(:disabled) {
+    transform: translateY(1px);
   }
 
   &:disabled {
-    opacity: 0.4;
+    background: var(--blink-outline-variant);
+    color: var(--blink-on-surface-muted);
+    box-shadow: none;
     cursor: not-allowed;
+  }
+}
+
+.approval-note {
+  width: 100%;
+  resize: none;
+  min-height: 64px;
+  padding: 10px 12px;
+  border: none;
+  border-radius: 6px;
+  background: var(--blink-input-bg-dark);
+  color: var(--blink-on-surface);
+  font-family: inherit;
+  font-size: 14px;
+  line-height: 1.45;
+  outline: none;
+  transition: background-color 0.15s, box-shadow 0.15s;
+
+  &:focus {
+    background: var(--blink-input-bg-focus);
+    box-shadow: 0 0 0 1px var(--blink-outline);
   }
 }
