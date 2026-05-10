@@ -82,25 +82,28 @@
 }
 
 // ── Inputs / textarea / select ──────────────────────────────────────
+// Filled-input pattern: --blink-input-bg-dark surface (gray-100 in light,
+// gray-800 in dark), no visible border, focus deepens the bg + adds a
+// subtle 1px ring. Mirrors the post-#106 idea-detail textarea treatment.
 .brief-textarea {
   display: block;
   width: 100%;
   resize: none;
-  border: 1px solid var(--blink-outline-variant);
+  border: none;
   border-radius: 8px;
-  padding: 8px 10px;
-  background: var(--blink-surface);
+  padding: 8px 12px;
+  background: var(--blink-input-bg-dark);
   color: var(--blink-on-surface);
   font-family: inherit;
   font-size: 12px;
   line-height: 1.45;
   outline: none;
   min-height: 64px;
-  transition: border-color 0.15s, box-shadow 0.15s;
+  transition: background-color 0.15s, box-shadow 0.15s;
 
   &:focus:not(:read-only) {
-    border-color: var(--blink-brand-primary);
-    box-shadow: 0 0 0 1px var(--blink-brand-primary);
+    background: var(--blink-input-bg-focus);
+    box-shadow: 0 0 0 1px var(--blink-outline);
   }
 }
 
@@ -109,18 +112,18 @@
   width: 100%;
   height: 32px;
   padding: 0 10px;
-  border: 1px solid var(--blink-outline-variant);
+  border: none;
   border-radius: 6px;
-  background: var(--blink-surface);
+  background: var(--blink-input-bg-dark);
   color: var(--blink-on-surface);
   font-family: inherit;
   font-size: 12px;
   outline: none;
-  transition: border-color 0.15s;
+  transition: background-color 0.15s, box-shadow 0.15s;
 
   &:focus:not(:read-only):not(:disabled) {
-    border-color: var(--blink-brand-primary);
-    box-shadow: 0 0 0 1px var(--blink-brand-primary);
+    background: var(--blink-input-bg-focus);
+    box-shadow: 0 0 0 1px var(--blink-outline);
   }
 }
 
@@ -424,26 +427,66 @@
   color: var(--blink-on-surface-secondary);
 }
 
+// Slide-toggle styled checkbox — prototype uses a Switch; we keep the
+// native <input type="checkbox"> for keyboard / form semantics and skin it.
 .approve-toggle {
-  width: 36px;
+  appearance: none;
+  -webkit-appearance: none;
+  position: relative;
+  flex-shrink: 0;
+  width: 32px;
   height: 18px;
+  border-radius: 999px;
+  background: var(--blink-outline-variant);
+  border: none;
   cursor: pointer;
+  transition: background 0.15s;
+  margin: 0;
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: #fff;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.18);
+    transition: transform 0.15s;
+  }
+
+  &:checked {
+    background: #16a34a;
+  }
+
+  &:checked::before {
+    transform: translateX(14px);
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
 }
 
 .approval-note {
   width: 100%;
-  resize: vertical;
-  min-height: 48px;
-  padding: 8px;
-  border: 1px solid var(--blink-outline-variant);
+  resize: none;
+  min-height: 56px;
+  padding: 8px 10px;
+  border: none;
   border-radius: 6px;
-  background: var(--blink-surface);
+  background: var(--blink-input-bg-dark);
   color: var(--blink-on-surface);
   font-family: inherit;
   font-size: 10px;
+  line-height: 1.45;
   outline: none;
+  transition: background-color 0.15s, box-shadow 0.15s;
 
   &:focus {
-    border-color: var(--blink-brand-primary);
+    background: var(--blink-input-bg-focus);
+    box-shadow: 0 0 0 1px var(--blink-outline);
   }
 }

@@ -25,17 +25,9 @@ describe('ProductionStepsBarComponent', () => {
     expect(buttons.length).toBe(5);
   });
 
-  it('each step renders a 12×12 icon SVG with at least one path', () => {
+  it('does not render per-step Lucide icons next to the labels (prototype parity — number circle + label only)', () => {
     const fixture = setup('brief');
-    const svgs = Array.from(
-      fixture.nativeElement.querySelectorAll('.steps-btn .steps-icon') as NodeListOf<SVGElement>,
-    );
-    expect(svgs.length).toBe(5);
-    for (const svg of svgs) {
-      expect(svg.getAttribute('width')).toBe('12');
-      expect(svg.getAttribute('height')).toBe('12');
-      expect(svg.querySelectorAll('path').length).toBeGreaterThan(0);
-    }
+    expect(fixture.nativeElement.querySelectorAll('.steps-btn .steps-icon').length).toBe(0);
   });
 
   it('marks the active step with is-active and aria-current="step"', () => {
