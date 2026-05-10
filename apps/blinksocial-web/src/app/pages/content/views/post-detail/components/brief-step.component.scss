@@ -501,6 +501,46 @@
   }
 }
 
+// Inline "Continue to Draft" CTA at the end of the brief. Right-aligned;
+// disabled (locked) until briefApproved flips. Replaces the prototype's
+// fixed-bottom bar — same intent without the footer overlap issue.
+.brief-continue-row {
+  display: flex;
+  justify-content: flex-end;
+  padding-top: 4px;
+}
+
+.btn-continue-draft {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  border: none;
+  border-radius: 8px;
+  background: linear-gradient(to right, var(--blink-brand-primary), #f26b4d);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: var(--blink-shadow-sm);
+  transition: filter 0.15s, opacity 0.15s, transform 0.05s;
+
+  &:hover:not(:disabled) {
+    filter: brightness(0.95);
+  }
+
+  &:active:not(:disabled) {
+    transform: translateY(1px);
+  }
+
+  &:disabled {
+    background: var(--blink-outline-variant);
+    color: var(--blink-on-surface-muted);
+    box-shadow: none;
+    cursor: not-allowed;
+  }
+}
+
 .approval-note {
   width: 100%;
   resize: none;

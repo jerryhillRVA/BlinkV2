@@ -271,6 +271,39 @@ describe('BriefStepComponent — Brief Status', () => {
   });
 });
 
+describe('BriefStepComponent — Continue to Draft', () => {
+  it('button is disabled when brief is not approved', () => {
+    const { fixture } = setup();
+    const btn = fixture.nativeElement.querySelector(
+      '.btn-continue-draft',
+    ) as HTMLButtonElement;
+    expect(btn).not.toBeNull();
+    expect(btn.disabled).toBe(true);
+  });
+
+  it('button is enabled and advances activeStep to draft once briefApproved is true', () => {
+    const { fixture, store } = setup();
+    store.approveBrief();
+    fixture.detectChanges();
+    const btn = fixture.nativeElement.querySelector(
+      '.btn-continue-draft',
+    ) as HTMLButtonElement;
+    expect(btn.disabled).toBe(false);
+    btn.click();
+    expect(store.activeStep()).toBe('draft');
+  });
+
+  it('clicking the button is a no-op when brief is not approved (defensive)', () => {
+    const { fixture, store } = setup();
+    expect(store.activeStep()).toBe('brief');
+    const comp = fixture.componentInstance as unknown as {
+      onContinueToDraft: () => void;
+    };
+    comp.onContinueToDraft();
+    expect(store.activeStep()).toBe('brief');
+  });
+});
+
 describe('BriefStepComponent — empty item', () => {
   it('renders nothing when the store has no item', () => {
     TestBed.configureTestingModule({

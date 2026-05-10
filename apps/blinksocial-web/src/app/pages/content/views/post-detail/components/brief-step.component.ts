@@ -22,6 +22,11 @@ import type { PrimaryCtaContract } from '@blinksocial/contracts';
 export class BriefStepComponent {
   protected readonly store = inject(PostDetailStore);
 
+  protected onContinueToDraft(): void {
+    if (!this.store.item()?.briefApproved) return;
+    this.store.setActiveStep('draft');
+  }
+
   protected readonly keyMessageMax = KEY_MESSAGE_MAX_CHARS;
   protected readonly ctaOptions = CTA_TYPES;
   protected readonly primaryCtaOptions = PRIMARY_CTA_OPTIONS;
