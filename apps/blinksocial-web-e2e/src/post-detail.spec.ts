@@ -66,9 +66,9 @@ test.describe('Production Brief (#112)', () => {
     await expect(page.locator('app-post-detail app-status-stepper')).toHaveCount(0);
   });
 
-  test('TC-2: production-steps bar has 4 steps (Brief / Draft / Packaging / QA)', async ({ page }) => {
+  test('TC-2: production-steps bar has 4 steps (Brief / Draft / Packaging / Approve & Schedule)', async ({ page }) => {
     const labels = await page.locator('app-production-steps-bar .steps-label').allTextContents();
-    expect(labels.map((l) => l.trim())).toEqual(['Brief', 'Draft', 'Packaging', 'QA']);
+    expect(labels.map((l) => l.trim())).toEqual(['Brief', 'Draft', 'Packaging', 'Approve & Schedule']);
     await expect(page.locator('app-production-steps-bar .steps-btn')).toHaveCount(4);
   });
 
@@ -98,15 +98,17 @@ test.describe('Production Brief (#112)', () => {
     await expect(card.locator('.reference-link-row input')).toHaveCount(initialCount + 1);
   });
 
-  test('TC-5: Campaign Name field appears only when the Paid & Boosted toggle is on', async ({ page }) => {
+  test('TC-5: Ownership & Timeline shows Owner + Due Date — no Paid & Boosted toggle, no Campaign Name field (post-prototype trim)', async ({ page }) => {
     const card = page.locator('app-brief-step .ownership-timeline-card').first();
     await expect(card).toBeVisible();
-    await expect(card.getByText('Campaign Name')).toHaveCount(0);
-    const checkbox = card.locator('.publishing-toggle input[type="checkbox"]');
-    await checkbox.check();
-    await expect(card.getByText('Campaign Name')).toBeVisible();
-    await checkbox.uncheck();
-    await expect(card.getByText('Campaign Name')).toHaveCount(0);
+    // Owner select + Due Date date input are present
+    await expect(card.locator('select.brief-select')).toBeVisible();
+    await expect(card.locator('input[type="date"].brief-date-input')).toBeVisible();
+    // Paid & Boosted toggle and Campaign Name field were removed during the
+    // in-session prototype-alignment iteration — neither should render.
+    expect(await card.getByText('Campaign Name').count()).toBe(0);
+    expect(await card.getByText(/paid\s*&\s*boosted/i).count()).toBe(0);
+    expect(await card.locator('.publishing-toggle').count()).toBe(0);
   });
 
   test('TC-6: CTA SelectGrid renders 8 pills; selection moves between pills', async ({ page }) => {
