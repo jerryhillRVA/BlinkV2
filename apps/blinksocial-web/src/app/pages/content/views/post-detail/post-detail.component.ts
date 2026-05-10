@@ -16,6 +16,7 @@ import { BriefContentConceptComponent } from './components/brief-content-concept
 import { VariationChipsComponent } from './components/variation-chips.component';
 import { StepPlaceholderComponent } from './components/step-placeholder.component';
 import { DetailBackButtonComponent } from '../_shared/detail-back-button/detail-back-button.component';
+import { ContentJourneyComponent } from '../idea-detail/components/content-journey.component';
 import type { ContentItem } from '../../content.types';
 
 @Component({
@@ -25,6 +26,7 @@ import type { ContentItem } from '../../content.types';
     ProductionStepsBarComponent,
     BriefStepComponent,
     BriefContentConceptComponent,
+    ContentJourneyComponent,
     VariationChipsComponent,
     StepPlaceholderComponent,
     DetailBackButtonComponent,
@@ -106,5 +108,17 @@ export class PostDetailComponent {
     if (!window.confirm(`Delete ${label}? This cannot be undone.`)) return;
     this.store.deleteSelf();
     this.deleted.emit();
+  }
+
+  protected formatDate(iso: string | undefined): string {
+    if (!iso) return '';
+    const d = new Date(iso);
+    if (isNaN(d.getTime())) return '';
+    return d.toLocaleDateString(undefined, {
+      weekday: 'short',
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+    });
   }
 }

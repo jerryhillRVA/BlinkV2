@@ -74,18 +74,33 @@ function setup(
 }
 
 describe('PostDetailComponent — composition', () => {
-  it('renders header + variation chips + steps bar + brief step + content-concept sidebar when Brief is active', () => {
+  it('renders header + variation chips + steps bar + brief step + sidebar (concept / journey / timestamps) when Brief is active', () => {
     const { fixture } = setup();
     expect(fixture.nativeElement.querySelector('app-post-detail-header')).not.toBeNull();
     expect(fixture.nativeElement.querySelector('app-variation-chips')).not.toBeNull();
     expect(fixture.nativeElement.querySelector('app-production-steps-bar')).not.toBeNull();
     expect(fixture.nativeElement.querySelector('app-brief-step')).not.toBeNull();
     expect(fixture.nativeElement.querySelector('app-brief-content-concept')).not.toBeNull();
+    // Sidebar additions: Content Journey + Timestamps
+    expect(fixture.nativeElement.querySelector('.brief-side app-content-journey')).not.toBeNull();
+    expect(fixture.nativeElement.querySelector('.brief-side .timestamps-panel')).not.toBeNull();
+    expect(fixture.nativeElement.querySelector('.brief-side .panel-journey')).not.toBeNull();
     // brief-status-sidebar is gone — its content moved into Brief Status card.
     expect(fixture.nativeElement.querySelector('app-brief-status-sidebar')).toBeNull();
     // status-stepper is gone — production-steps-bar is the only stepper here.
     expect(fixture.nativeElement.querySelector('app-status-stepper')).toBeNull();
     expect(fixture.nativeElement.querySelector('app-step-placeholder')).toBeNull();
+  });
+
+  it('formatDate returns the prototype-style date for valid input and empty string for missing/invalid', () => {
+    const { fixture } = setup();
+    const comp = fixture.componentInstance as unknown as {
+      formatDate: (iso: string | undefined) => string;
+    };
+    expect(comp.formatDate(undefined)).toBe('');
+    expect(comp.formatDate('')).toBe('');
+    expect(comp.formatDate('not-a-date')).toBe('');
+    expect(comp.formatDate('2026-05-09T00:00:00Z').length).toBeGreaterThan(0);
   });
 
   it('renders nothing when the store has no item', () => {
