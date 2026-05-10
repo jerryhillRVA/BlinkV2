@@ -159,6 +159,43 @@ export const ICONS = {
       { kind: 'polyline', points: '14 2 14 8 20 8' },
     ],
   },
+  // 'shield' — compliance flag
+  shield: {
+    viewBox: '0 0 24 24',
+    primitives: [
+      {
+        kind: 'path',
+        d: 'M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z',
+      },
+    ],
+  },
+  // 'users' — talent flag
+  users: {
+    viewBox: '0 0 24 24',
+    primitives: [
+      { kind: 'path', d: 'M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2' },
+      { kind: 'circle', cx: '9', cy: '7', r: '4' },
+      { kind: 'path', d: 'M22 21v-2a4 4 0 0 0-3-3.87' },
+      { kind: 'path', d: 'M16 3.13a4 4 0 0 1 0 7.75' },
+    ],
+  },
+  // 'music' — licensed-music flag
+  music: {
+    viewBox: '0 0 24 24',
+    primitives: [
+      { kind: 'path', d: 'M9 18V5l12-2v13' },
+      { kind: 'circle', cx: '6', cy: '18', r: '3' },
+      { kind: 'circle', cx: '18', cy: '16', r: '3' },
+    ],
+  },
+  // 'check-circle' — accessibility flag
+  'check-circle': {
+    viewBox: '0 0 24 24',
+    primitives: [
+      { kind: 'path', d: 'M22 11.08V12a10 10 0 1 1-5.93-9.14' },
+      { kind: 'polyline', points: '22 4 12 14.01 9 11.01' },
+    ],
+  },
   // 'layout-grid' — primitive placeholder/empty-state square grid
   'layout-grid': {
     viewBox: '0 0 24 24',

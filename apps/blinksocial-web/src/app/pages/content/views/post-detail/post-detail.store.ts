@@ -299,6 +299,47 @@ export class PostDetailStore {
     this.persistBrief({ approvalNote: v.length > 0 ? v : undefined });
   }
 
+  // ── brief flags (compliance / talent / music / accessibility) ──────
+  // These are surfaced via the Flags card on the Draft step and stay
+  // editable POST brief-approval (compliance reality can change during
+  // production — a script edit introduces a claim, talent gets added,
+  // licensed music gets swapped in, etc). So they bypass the
+  // briefApproved write-lock that gates the rest of brief fields.
+
+  readonly hasClaims = computed<boolean>(
+    () => !!(this.brief()?.compliance as { containsClaims?: boolean } | undefined)
+      ?.containsClaims,
+  );
+  readonly hasTalent = computed<boolean>(() => !!this.brief()?.hasTalent);
+  readonly hasMusic = computed<boolean>(() => !!this.brief()?.hasMusic);
+  // Accessibility defaults to TRUE: omitted ≠ "not needed", it means
+  // "needed by default." Only an explicit `false` disables.
+  readonly needsAccessibility = computed<boolean>(
+    () => this.brief()?.needsAccessibility !== false,
+  );
+
+  readonly activeFlagCount = computed<number>(() => {
+    let n = 0;
+    if (this.hasClaims()) n++;
+    if (this.hasTalent()) n++;
+    if (this.hasMusic()) n++;
+    if (this.needsAccessibility()) n++;
+    return n;
+  });
+
+  setHasClaims(v: boolean): void {
+    this.persistBriefFlag('hasClaims', v);
+  }
+  setHasTalent(v: boolean): void {
+    this.persistBriefFlag('hasTalent', v);
+  }
+  setHasMusic(v: boolean): void {
+    this.persistBriefFlag('hasMusic', v);
+  }
+  setNeedsAccessibility(v: boolean): void {
+    this.persistBriefFlag('needsAccessibility', v);
+  }
+
   // ── brief approval lifecycle ────────────────────────────────────────
   approveBrief(approvedBy = 'You'): void {
     const item = this.item();
@@ -685,6 +726,38 @@ export class PostDetailStore {
       ...(item.production?.brief ?? {}),
       ...patch,
     };
+    const next: ContentItem = {
+      ...item,
+      production: { ...item.production, brief: nextBrief },
+      updatedAt: new Date().toISOString(),
+    };
+    this.state.saveItem(next);
+  }
+
+  // Toggle a single compliance flag on production.brief. NOT gated by
+  // briefApproved — see the comment block above the public setters for
+  // why. `hasClaims` lives nested under brief.compliance.containsClaims;
+  // the other three are top-level brief booleans.
+  private persistBriefFlag(
+    flag: 'hasClaims' | 'hasTalent' | 'hasMusic' | 'needsAccessibility',
+    value: boolean,
+  ): void {
+    const item = this.item();
+    if (!item) return;
+    const currentBrief: ProductionBriefContract = item.production?.brief ?? {};
+    let nextBrief: ProductionBriefContract;
+    if (flag === 'hasClaims') {
+      const currentCompliance = (currentBrief.compliance ?? {}) as Record<
+        string,
+        unknown
+      >;
+      nextBrief = {
+        ...currentBrief,
+        compliance: { ...currentCompliance, containsClaims: value },
+      };
+    } else {
+      nextBrief = { ...currentBrief, [flag]: value };
+    }
     const next: ContentItem = {
       ...item,
       production: { ...item.production, brief: nextBrief },

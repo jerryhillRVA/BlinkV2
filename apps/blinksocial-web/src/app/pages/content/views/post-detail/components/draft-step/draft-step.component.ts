@@ -2,6 +2,7 @@ import { Component, computed, effect, inject } from '@angular/core';
 import { PostDetailStore } from '../../post-detail.store';
 import { getDraftMode } from './draft-canonical.utils';
 import { BuilderPlaceholderComponent } from './builder-placeholder/builder-placeholder.component';
+import { FlagsCardComponent } from './flags-card/flags-card.component';
 import { VideoBuilderComponent } from './video-builder/video-builder.component';
 import { VideoLongBuilderComponent } from './video-long-builder/video-long-builder.component';
 import { ImageSingleBuilderComponent } from './image-single-builder/image-single-builder.component';
@@ -17,6 +18,7 @@ import { TextBuilderComponent } from './text-builder/text-builder.component';
     ImageSingleBuilderComponent,
     CarouselBuilderComponent,
     TextBuilderComponent,
+    FlagsCardComponent,
   ],
   templateUrl: './draft-step.component.html',
   styleUrl: './draft-step.component.scss',
