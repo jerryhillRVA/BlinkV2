@@ -75,30 +75,40 @@ describe('VideoBuilderComponent', () => {
     expect(store.videoDraft().cta).toBe('C');
   });
 
-  it('AI assist fills Hook / Body / CTA with stub copy', () => {
-    const { fixture, store } = setup();
-    fixture.componentInstance['onHookAssist']();
+  it('Body assist eventually fills the body', () => {
+    vi.useFakeTimers();
+    const { store, fixture } = setup();
     fixture.componentInstance['onBodyAssist']();
-    fixture.componentInstance['onCtaAssist']();
-    expect(store.videoDraft().hook?.length).toBeGreaterThan(0);
-    expect(store.videoDraft().body?.length).toBeGreaterThan(0);
-    expect(store.videoDraft().cta?.length).toBeGreaterThan(0);
+    vi.advanceTimersByTime(700);
+    expect(store.videoDraft().body?.length ?? 0).toBeGreaterThan(0);
+    vi.useRealTimers();
   });
 
-  it('Generate alternates fills the hookBank and opens the panel', () => {
+  it('CTA assist eventually fills the cta', () => {
+    vi.useFakeTimers();
+    const { store, fixture } = setup();
+    fixture.componentInstance['onCtaAssist']();
+    vi.advanceTimersByTime(700);
+    expect(store.videoDraft().cta?.length ?? 0).toBeGreaterThan(0);
+    vi.useRealTimers();
+  });
+
+  it('Hook bank fills the hookBank and opens the panel', () => {
+    vi.useFakeTimers();
     const { fixture, store } = setup();
-    const ai = fixture.nativeElement.querySelector(
-      '.ai-btn--secondary',
-    ) as HTMLButtonElement;
-    ai.click();
+    fixture.componentInstance['onHookBank']();
+    vi.advanceTimersByTime(700);
     fixture.detectChanges();
-    expect(store.videoDraft().hookBank?.length).toBeGreaterThan(0);
-    expect(fixture.nativeElement.querySelector('#hook-bank-panel')).toBeTruthy();
+    expect(store.videoDraft().hookBank?.length ?? 0).toBeGreaterThan(0);
+    expect(fixture.nativeElement.querySelector('.hook-bank')).toBeTruthy();
+    vi.useRealTimers();
   });
 
   it('Apply hook from bank routes to setVideoHook', () => {
+    vi.useFakeTimers();
     const { fixture, store } = setup();
-    (fixture.nativeElement.querySelector('.ai-btn--secondary') as HTMLButtonElement).click();
+    fixture.componentInstance['onHookBank']();
+    vi.advanceTimersByTime(700);
     fixture.detectChanges();
     const pick = fixture.nativeElement.querySelector(
       '.bank-pick',
@@ -106,14 +116,24 @@ describe('VideoBuilderComponent', () => {
     const text = pick.textContent?.trim() ?? '';
     pick.click();
     expect(store.videoDraft().hook).toBe(text);
+    vi.useRealTimers();
   });
 
-  it('Target duration select uses per-option [selected]', () => {
+  it('Target duration renders as a radio-group of pills with the default 30s active', () => {
     const { fixture } = setup();
-    const select = fixture.nativeElement.querySelector(
-      'select[aria-label="Target duration"]',
-    ) as HTMLSelectElement;
-    expect(select.value).toBe('60s');
+    const group = fixture.nativeElement.querySelector(
+      '[role="radiogroup"][aria-label="Target duration"]',
+    );
+    expect(group).toBeTruthy();
+    const active = group.querySelector('button[aria-checked="true"]');
+    expect(active).toBeTruthy();
+    expect(active.textContent?.trim()).toBe('30s');
+  });
+
+  it('clicking a pill routes to setVideoTargetDuration', () => {
+    const { fixture, store } = setup();
+    fixture.componentInstance['onDurationChange']('90s');
+    expect(store.videoDraft().targetDuration).toBe('90s');
   });
 
   it('B-roll / Voiceover panels toggle aria-expanded', () => {

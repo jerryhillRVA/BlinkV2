@@ -8,23 +8,111 @@
   gap: 12px;
 }
 
-.shot-list-header {
+// ── Top-level asset slot ─────────────────────────────────────────────────────
+
+.asset-slot {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 12px;
+  background: #fff;
+  border: 1px solid var(--blink-outline-variant);
+  border-radius: 8px;
+}
+
+.asset-slot-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
 }
 
-.shot-list-title {
-  font-size: var(--blink-title-small);
-  font-weight: 600;
-  color: var(--blink-on-surface-strong);
+.asset-slot-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.asset-empty {
   margin: 0;
+  font-size: var(--blink-body-small);
+  font-style: italic;
+  color: var(--blink-on-surface-faint, #9aa1a8);
 }
 
-.shot-count {
-  font-size: var(--blink-body-small);
-  color: var(--blink-on-surface-muted);
+// ── Add shot / utility ghost button ──────────────────────────────────────────
+
+.ghost-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  background: #fff;
+  border: 1px solid var(--blink-outline-variant);
+  border-radius: 8px;
+  font-size: var(--blink-label-small);
+  font-weight: 600;
+  color: var(--blink-on-surface-medium);
+  cursor: pointer;
+  transition: background-color 120ms ease, border-color 120ms ease;
+  line-height: 1.2;
+
+  &:hover:not(:disabled) {
+    background: #f9fafb;
+    border-color: #d4d4d8;
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--blink-brand-primary);
+    outline-offset: 2px;
+  }
+
+  &:disabled {
+    cursor: not-allowed;
+    opacity: 0.6;
+  }
 }
+
+// ── Empty state ──────────────────────────────────────────────────────────────
+
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 28px 16px;
+  background: #f9fafb;
+  border: 1px dashed var(--blink-outline-dashed);
+  border-radius: 8px;
+  text-align: center;
+  color: var(--blink-on-surface-faint, #9aa1a8);
+
+  svg {
+    color: var(--blink-on-surface-faint, #9aa1a8);
+  }
+
+  .empty-title {
+    margin: 0;
+    font-size: var(--blink-body-small);
+    font-weight: 600;
+    color: #b45309; // amber-700
+  }
+
+  .empty-hint {
+    margin: 0;
+    font-size: var(--blink-label-tiny);
+    color: var(--blink-on-surface-faint, #9aa1a8);
+
+    span {
+      font-weight: 600;
+      color: var(--blink-on-surface-medium);
+    }
+  }
+}
+
+// ── Shot rows ────────────────────────────────────────────────────────────────
 
 .shot-rows {
   display: flex;
@@ -36,64 +124,114 @@
 }
 
 .shot-row {
-  display: grid;
-  grid-template-columns: 24px 110px 1fr 80px auto;
+  display: flex;
+  flex-direction: column;
   gap: 8px;
-  align-items: center;
-  padding: 8px;
-  background: var(--blink-surface);
+  padding: 10px 12px;
+  background: #f9fafb;
   border: 1px solid var(--blink-outline-variant);
   border-radius: 8px;
 }
 
-.shot-index {
-  font-size: var(--blink-body-small);
-  color: var(--blink-on-surface-muted);
-  text-align: center;
-  font-weight: 500;
+.shot-row-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
-.shot-type,
-.shot-description,
-.shot-duration {
-  padding: 6px 8px;
-  background: var(--blink-surface-container-low);
-  border: 1px solid var(--blink-outline-variant);
+.shot-index {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: #e4e7eb;
+  color: var(--blink-on-surface-medium);
+  font-size: 9px;
+  font-weight: 700;
+}
+
+.shot-type {
+  height: 24px;
+  width: 110px;
+  padding: 0 8px;
+  background: #f3f4f6;
+  border: none;
   border-radius: 6px;
-  font-size: var(--blink-body-small);
+  font-size: var(--blink-label-tiny);
+  font-weight: 600;
   color: var(--blink-on-surface-strong);
+  cursor: pointer;
+  transition: background-color 120ms ease;
+
+  &:hover:not(:disabled) {
+    background: #edeff2;
+  }
 
   &:focus-visible {
     outline: 2px solid var(--blink-brand-primary);
     outline-offset: 1px;
   }
 
-  &[disabled] {
+  &:disabled {
     cursor: not-allowed;
     opacity: 0.6;
   }
 }
 
-.shot-actions {
-  display: flex;
+.shot-duration {
+  height: 24px;
+  width: 56px;
+  padding: 0 8px;
+  text-align: center;
+  background: #f3f4f6;
+  border: none;
+  border-radius: 6px;
+  font-size: var(--blink-label-tiny);
+  font-weight: 500;
+  color: var(--blink-on-surface-strong);
+  transition: background-color 120ms ease;
+
+  &::placeholder {
+    color: var(--blink-on-surface-faint, #9aa1a8);
+  }
+
+  &:focus-visible {
+    background: #edeff2;
+    outline: none;
+    box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.05);
+  }
+
+  &:disabled {
+    cursor: not-allowed;
+    opacity: 0.6;
+  }
+}
+
+.shot-row-actions {
+  display: inline-flex;
   align-items: center;
   gap: 2px;
+  margin-left: auto;
 }
 
 .action-btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 28px;
-  height: 28px;
+  width: 24px;
+  height: 24px;
   background: transparent;
-  border: 1px solid transparent;
-  border-radius: 6px;
-  color: var(--blink-on-surface-muted);
+  border: none;
+  border-radius: 4px;
+  color: var(--blink-on-surface-faint, #9aa1a8);
   cursor: pointer;
+  transition: background-color 120ms ease, color 120ms ease;
 
-  &:hover:not([disabled]) {
-    background: var(--blink-surface-hover);
+  &:hover:not(:disabled) {
+    background: #fff;
     color: var(--blink-on-surface-strong);
   }
 
@@ -102,43 +240,52 @@
     outline-offset: 2px;
   }
 
-  &[disabled] {
+  &:disabled {
     cursor: not-allowed;
     opacity: 0.4;
   }
 
-  &--remove:hover:not([disabled]) {
-    color: var(--blink-icon-orange);
+  &--remove:hover:not(:disabled) {
+    color: #ef4444; // red-500
   }
 }
 
-.add-shot-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 8px 12px;
-  background: transparent;
-  border: 1px dashed var(--blink-outline-dashed);
-  border-radius: 8px;
-  font-size: var(--blink-body-medium);
-  font-weight: 500;
-  color: var(--blink-on-surface-medium);
-  cursor: pointer;
-  align-self: flex-start;
+.shot-description {
+  width: 100%;
+  min-height: 52px;
+  padding: 8px 10px;
+  background: #f3f4f6;
+  border: none;
+  border-radius: 6px;
+  font: inherit;
+  font-size: var(--blink-body-small);
+  line-height: 1.55;
+  color: var(--blink-on-surface-strong);
+  resize: vertical;
+  transition: background-color 120ms ease;
 
-  &:hover {
-    background: var(--blink-brand-primary-lightest-bg);
-    border-color: var(--blink-brand-primary);
-    color: var(--blink-brand-primary);
+  &::placeholder {
+    color: var(--blink-on-surface-faint, #9aa1a8);
   }
 
   &:focus-visible {
-    outline: 2px solid var(--blink-brand-primary);
-    outline-offset: 2px;
+    background: #edeff2;
+    outline: none;
+    box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.05);
   }
 
-  &[disabled] {
+  &:disabled {
     cursor: not-allowed;
     opacity: 0.6;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ghost-btn,
+  .shot-type,
+  .shot-duration,
+  .shot-description,
+  .action-btn {
+    transition: none;
   }
 }

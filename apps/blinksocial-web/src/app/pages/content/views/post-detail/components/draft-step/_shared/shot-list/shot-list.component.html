@@ -1,145 +1,118 @@
 <div class="shot-list">
-  <div class="shot-list-header">
-    <h4 class="shot-list-title">Shot list</h4>
-    <span
-      class="shot-count"
-      role="status"
-      aria-live="polite"
-      [attr.data-count]="shots.length"
-    >{{ countLabel }}</span>
+  <!-- Top-level asset slot. The prototype keeps this slot visible regardless
+       of whether shots exist, as the primary point-of-attack for "I want to
+       attach a single asset" or "let me build a shot list." -->
+  <div class="asset-slot" [class.is-empty]="shots.length === 0">
+    <div class="asset-slot-row">
+      <app-section-label label="Asset" />
+      <div class="asset-slot-actions">
+        <button
+          type="button"
+          class="ghost-btn"
+          [disabled]="disabled"
+          (click)="onAddShot()"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M12 5v14"/><path d="M5 12h14"/>
+          </svg>
+          <span>Add shot</span>
+        </button>
+        <app-ai-button
+          label="AI Generate Shot List"
+          loadingLabel="Generating…"
+          [loading]="aiLoading()"
+          [disabled]="disabled"
+          (activate)="onAiGenerate()"
+        />
+      </div>
+    </div>
+    @if (shots.length === 0) {
+      <p class="asset-empty">No asset attached yet</p>
+    }
   </div>
 
-  <ul class="shot-rows" role="list">
-    @for (shot of shots; track shot.id; let i = $index) {
-      <li class="shot-row">
-        <span class="shot-index" aria-hidden="true">{{ i + 1 }}</span>
-
-        <select
-          class="shot-type"
-          [disabled]="disabled"
-          [attr.aria-label]="'Shot ' + (i + 1) + ' type'"
-          (change)="onTypeChange(shot.id, $event)"
-        >
-          @for (t of shotTypes; track t) {
-            <option [value]="t" [selected]="t === shot.type">{{ t }}</option>
-          }
-        </select>
-
-        <input
-          type="text"
-          class="shot-description"
-          placeholder="Describe the shot…"
-          [disabled]="disabled"
-          [attr.aria-label]="'Shot ' + (i + 1) + ' description'"
-          [value]="shot.description"
-          (input)="onDescriptionChange(shot.id, $event)"
-        />
-
-        <input
-          type="text"
-          class="shot-duration"
-          placeholder="Duration"
-          [disabled]="disabled"
-          [attr.aria-label]="'Shot ' + (i + 1) + ' duration'"
-          [value]="shot.duration"
-          (input)="onDurationChange(shot.id, $event)"
-        />
-
-        <div class="shot-actions">
-          <button
-            type="button"
-            class="action-btn"
-            [disabled]="disabled || i === 0"
-            [attr.aria-label]="'Move shot ' + (i + 1) + ' up'"
-            (click)="onMoveUp(i)"
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="14"
-              height="14"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              aria-hidden="true"
+  @if (shots.length === 0) {
+    <div class="empty-state" role="status" aria-live="polite">
+      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <rect x="3" y="3" width="18" height="18" rx="2"/>
+        <path d="M3 9h18"/>
+        <path d="M9 3v18"/>
+      </svg>
+      <p class="empty-title">At least 1 shot is required to continue to Packaging.</p>
+      <p class="empty-hint">Use <span>Add shot</span> or <span>AI Generate Shot List</span> to get started.</p>
+    </div>
+  } @else {
+    <ul class="shot-rows" role="list" [attr.aria-label]="'Shot list: ' + shots.length + ' ' + (shots.length === 1 ? 'shot' : 'shots')">
+      @for (shot of shots; track shot.id; let i = $index) {
+        <li class="shot-row">
+          <!-- Header: index + type + duration + delete -->
+          <div class="shot-row-header">
+            <span class="shot-index" aria-hidden="true">{{ i + 1 }}</span>
+            <select
+              class="shot-type"
+              [disabled]="disabled"
+              [attr.aria-label]="'Shot ' + (i + 1) + ' type'"
+              (change)="onTypeChange(shot.id, $event)"
             >
-              <path d="m18 15-6-6-6 6" />
-            </svg>
-          </button>
-          <button
-            type="button"
-            class="action-btn"
-            [disabled]="disabled || i === shots.length - 1"
-            [attr.aria-label]="'Move shot ' + (i + 1) + ' down'"
-            (click)="onMoveDown(i)"
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="14"
-              height="14"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              aria-hidden="true"
-            >
-              <path d="m6 9 6 6 6-6" />
-            </svg>
-          </button>
-          <button
-            type="button"
-            class="action-btn action-btn--remove"
+              @for (t of shotTypes; track t) {
+                <option [value]="t" [selected]="t === shot.type">{{ t }}</option>
+              }
+            </select>
+            <input
+              type="text"
+              class="shot-duration"
+              placeholder="5s"
+              [disabled]="disabled"
+              [attr.aria-label]="'Shot ' + (i + 1) + ' duration'"
+              [value]="shot.duration"
+              (input)="onDurationChange(shot.id, $event)"
+            />
+            <div class="shot-row-actions">
+              <button
+                type="button"
+                class="action-btn"
+                [disabled]="disabled || i === 0"
+                [attr.aria-label]="'Move shot ' + (i + 1) + ' up'"
+                (click)="onMoveUp(i)"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m18 15-6-6-6 6"/></svg>
+              </button>
+              <button
+                type="button"
+                class="action-btn"
+                [disabled]="disabled || i === shots.length - 1"
+                [attr.aria-label]="'Move shot ' + (i + 1) + ' down'"
+                (click)="onMoveDown(i)"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
+              </button>
+              <button
+                type="button"
+                class="action-btn action-btn--remove"
+                [disabled]="disabled"
+                [attr.aria-label]="'Remove shot ' + (i + 1)"
+                (click)="onRemove(shot.id)"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <path d="M3 6h18"/>
+                  <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/>
+                </svg>
+              </button>
+            </div>
+          </div>
+
+          <!-- Description -->
+          <textarea
+            class="shot-description"
+            rows="2"
+            [placeholder]="'Describe this ' + shot.type.toLowerCase() + '…'"
             [disabled]="disabled"
-            [attr.aria-label]="'Remove shot ' + (i + 1)"
-            (click)="onRemove(shot.id)"
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="14"
-              height="14"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              aria-hidden="true"
-            >
-              <path d="M3 6h18" />
-              <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6" />
-              <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
-            </svg>
-          </button>
-        </div>
-      </li>
-    }
-  </ul>
-
-  <button
-    type="button"
-    class="add-shot-btn"
-    [disabled]="disabled"
-    (click)="onAddShot()"
-  >
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      width="14"
-      height="14"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      stroke-width="2"
-      stroke-linecap="round"
-      stroke-linejoin="round"
-      aria-hidden="true"
-    >
-      <path d="M12 5v14" />
-      <path d="M5 12h14" />
-    </svg>
-    <span>Add shot</span>
-  </button>
+            [attr.aria-label]="'Shot ' + (i + 1) + ' description'"
+            [value]="shot.description"
+            (input)="onDescriptionChange(shot.id, $event)"
+          ></textarea>
+        </li>
+      }
+    </ul>
+  }
 </div>

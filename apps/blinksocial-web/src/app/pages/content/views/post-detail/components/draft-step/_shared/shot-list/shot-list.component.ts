@@ -1,9 +1,11 @@
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { Component, EventEmitter, Input, Output, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import type {
   DraftShotItemContract,
   DraftShotItemTypeContract,
 } from '@blinksocial/contracts';
+import { SectionLabelComponent } from '../section-label/section-label.component';
+import { AiButtonComponent } from '../ai-button/ai-button.component';
 
 const SHOT_TYPES: DraftShotItemTypeContract[] = [
   'Shot',
@@ -18,9 +20,17 @@ function newId(): string {
   return `sl-${Date.now().toString(36)}-${nextId++}`;
 }
 
+const AI_GENERATED_SHOTS: ReadonlyArray<Pick<DraftShotItemContract, 'type' | 'description' | 'duration'>> = [
+  { type: 'Shot', description: 'Hook delivered to camera, eye-level', duration: '5s' },
+  { type: 'B-Roll', description: 'Cutaway: hands demonstrating the technique', duration: '8s' },
+  { type: 'Shot', description: 'Pivot moment — the surprise insight', duration: '10s' },
+  { type: 'B-Roll', description: 'Supporting visual that reinforces the body', duration: '7s' },
+  { type: 'CTA', description: 'CTA delivered with eye contact', duration: '5s' },
+];
+
 @Component({
   selector: 'app-shot-list',
-  imports: [FormsModule],
+  imports: [FormsModule, SectionLabelComponent, AiButtonComponent],
   templateUrl: './shot-list.component.html',
   styleUrl: './shot-list.component.scss',
 })
@@ -31,6 +41,7 @@ export class ShotListComponent {
   @Output() shotsChange = new EventEmitter<DraftShotItemContract[]>();
 
   protected readonly shotTypes = SHOT_TYPES;
+  protected readonly aiLoading = signal(false);
 
   protected get countLabel(): string {
     const n = this.shots.length;
@@ -49,6 +60,20 @@ export class ShotListComponent {
       },
     ];
     this.shotsChange.emit(next);
+  }
+
+  protected onAiGenerate(): void {
+    if (this.disabled) return;
+    this.aiLoading.set(true);
+    // Mock-AI delay so the loading state is visible.
+    setTimeout(() => {
+      const generated = AI_GENERATED_SHOTS.map((s) => ({
+        ...s,
+        id: newId(),
+      }));
+      this.shotsChange.emit([...this.shots, ...generated]);
+      this.aiLoading.set(false);
+    }, 800);
   }
 
   protected onRemove(id: string): void {
@@ -81,7 +106,7 @@ export class ShotListComponent {
 
   protected onDescriptionChange(id: string, e: Event): void {
     if (this.disabled) return;
-    const v = (e.target as HTMLInputElement | null)?.value ?? '';
+    const v = (e.target as HTMLTextAreaElement | null)?.value ?? '';
     this.patch(id, { description: v });
   }
 

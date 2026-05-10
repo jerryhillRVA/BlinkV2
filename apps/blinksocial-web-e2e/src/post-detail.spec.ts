@@ -227,7 +227,7 @@ test.describe('Production Draft (#114)', () => {
       .fill('Open with smile');
     await expect(continueBtn).toBeDisabled(); // shotList still empty
     // Add a shot via app-shot-list
-    await page.locator('app-shot-list .add-shot-btn').click();
+    await page.locator('app-shot-list .asset-slot .ghost-btn').click();
     await expect(continueBtn).toBeEnabled();
     await continueBtn.click();
     // After advance, shell renders the Packaging placeholder (existing
@@ -347,7 +347,7 @@ test.describe('Production Draft (#114)', () => {
     await page
       .locator('app-video-builder textarea[aria-label="Hook"]')
       .fill('Persistence hook');
-    await page.locator('app-shot-list .add-shot-btn').click();
+    await page.locator('app-shot-list .asset-slot .ghost-btn').click();
     // Reload — the mock-merge middleware persists writes between fetches.
     await page.reload();
     await expect(page.locator('app-post-detail')).toBeVisible();
@@ -375,7 +375,7 @@ test.describe('Production Draft (#114)', () => {
     await hook.focus();
     await hook.fill('Keyboard hook');
     // Add a shot via the Add-shot button — via keyboard
-    const addShot = page.locator('app-shot-list .add-shot-btn');
+    const addShot = page.locator('app-shot-list .asset-slot .ghost-btn');
     await addShot.focus();
     await page.keyboard.press('Enter');
     await expect(page.locator('app-shot-list li.shot-row')).toHaveCount(1);
@@ -403,7 +403,7 @@ test.describe('Production Draft (#114)', () => {
       .fill('A hook');
     await expect(status).toContainText('1 field remaining.');
     // Add shot → count drops to 0 and message becomes "Ready to continue."
-    await page.locator('app-shot-list .add-shot-btn').click();
+    await page.locator('app-shot-list .asset-slot .ghost-btn').click();
     await expect(status).toContainText('Ready to continue.');
   });
 });

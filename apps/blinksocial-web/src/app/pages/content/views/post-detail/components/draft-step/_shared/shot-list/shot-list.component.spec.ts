@@ -25,19 +25,16 @@ describe('ShotListComponent', () => {
     expect(rows.length).toBe(2);
   });
 
-  it('emits a count announcement via aria-live', () => {
+  it('list has aria-label including count', () => {
     const fixture = setup({ shots: SHOTS });
-    const status = fixture.nativeElement.querySelector(
-      '.shot-count[role="status"][aria-live="polite"]',
-    );
-    expect(status).toBeTruthy();
-    expect(status.textContent).toContain('2 shots');
+    const list = fixture.nativeElement.querySelector('ul.shot-rows');
+    expect(list.getAttribute('aria-label')).toBe('Shot list: 2 shots');
   });
 
   it('singular form when only 1 shot', () => {
     const fixture = setup({ shots: [SHOTS[0]] });
-    const status = fixture.nativeElement.querySelector('.shot-count');
-    expect(status.textContent).toContain('1 shot');
+    const list = fixture.nativeElement.querySelector('ul.shot-rows');
+    expect(list.getAttribute('aria-label')).toBe('Shot list: 1 shot');
   });
 
   it('Up / Down / Remove buttons each have descriptive aria-labels', () => {
@@ -48,12 +45,13 @@ describe('ShotListComponent', () => {
     expect(btns[2].getAttribute('aria-label')).toBe('Remove shot 1');
   });
 
-  it('Add shot appends a new empty row', () => {
+  it('Add shot button (in the asset slot) appends a new empty row', () => {
     const fixture = setup({ shots: [] });
     const events: DraftShotItemContract[][] = [];
     fixture.componentInstance.shotsChange.subscribe((v) => events.push(v));
+    // The Add shot button is the .ghost-btn inside the asset slot
     const btn = fixture.nativeElement.querySelector(
-      '.add-shot-btn',
+      '.asset-slot .ghost-btn',
     ) as HTMLButtonElement;
     btn.click();
     expect(events).toHaveLength(1);
@@ -62,6 +60,24 @@ describe('ShotListComponent', () => {
       description: '',
       duration: '',
     });
+  });
+
+  it('Empty state shows the "1 shot required" amber copy', () => {
+    const fixture = setup({ shots: [] });
+    const empty = fixture.nativeElement.querySelector('.empty-state');
+    expect(empty).toBeTruthy();
+    expect(empty.textContent).toContain('At least 1 shot is required');
+  });
+
+  it('Asset slot shows "No asset attached yet" only when shots are empty', () => {
+    const empty = setup({ shots: [] });
+    expect(
+      empty.nativeElement.querySelector('.asset-empty'),
+    ).toBeTruthy();
+    const populated = setup({ shots: SHOTS });
+    expect(
+      populated.nativeElement.querySelector('.asset-empty'),
+    ).toBeNull();
   });
 
   it('Remove emits the array minus that shot', () => {

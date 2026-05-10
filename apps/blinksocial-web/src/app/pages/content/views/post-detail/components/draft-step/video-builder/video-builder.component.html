@@ -1,35 +1,153 @@
 <div class="video-builder">
-  <section class="card" aria-labelledby="hook-card-title">
-    <header class="card-header">
-      <h3 class="card-title" id="hook-card-title">Hook</h3>
-      <button
-        type="button"
-        class="ai-btn"
+  <!-- Single card containing Script + Target Duration + Shot List + Assets -->
+  <section class="card script-card" aria-labelledby="script-heading">
+    <h3 id="script-heading" class="visually-hidden">Script</h3>
+
+    <!-- ── SCRIPT (Hook + Body + CTA) ── -->
+    <div class="card-section script-section">
+      <app-section-label label="Script" info="The full filming script — what you'll say and do on camera. Hook, Body, and CTA each play a distinct role. Write the Hook first — it determines whether the rest gets watched." />
+
+      <!-- HOOK -->
+      <div class="field-group">
+        <div class="field-header">
+          <app-section-label label="Hook" info="The first line that stops the scroll. Write it like the viewer is mid-swipe — make them freeze. Pattern interrupts and bold claims outperform vague teasers." />
+          <app-ai-button
+            label="Hook Bank"
+            loadingLabel="Generating…"
+            [loading]="hookBankLoading()"
+            [disabled]="disabled()"
+            (activate)="onHookBank()"
+          />
+        </div>
+        <textarea
+          class="field"
+          rows="2"
+          placeholder="Write the opening hook — grab attention in the first 2 seconds…"
+          aria-label="Hook"
+          [disabled]="disabled()"
+          [value]="draft().hook ?? ''"
+          (input)="onHookInput($event)"
+        ></textarea>
+        @if (hookBankOpen() && (draft().hookBank ?? []).length > 0) {
+          <div class="hook-bank">
+            <div class="hook-bank-header">
+              <app-section-label label="Suggestions" />
+              <button
+                type="button"
+                class="bank-hide"
+                [disabled]="disabled()"
+                (click)="onHideBank()"
+              >Hide</button>
+            </div>
+            <ul class="hook-bank-list" role="list">
+              @for (h of (draft().hookBank ?? []); track h) {
+                <li>
+                  <button
+                    type="button"
+                    class="bank-pick"
+                    [disabled]="disabled()"
+                    (click)="onApplyHookFromBank(h)"
+                  >{{ h }}</button>
+                </li>
+              }
+            </ul>
+          </div>
+        }
+      </div>
+
+      <!-- BODY -->
+      <div class="field-group">
+        <div class="field-header">
+          <app-section-label label="Body" info="Deliver the value you promised in the hook. Keep sentences short — one idea per line. Pace it to your target duration." />
+          <app-ai-button
+            label="AI Assist"
+            loadingLabel="Writing…"
+            [loading]="bodyAiLoading()"
+            [disabled]="disabled()"
+            (activate)="onBodyAssist()"
+          />
+        </div>
+        <textarea
+          class="field"
+          rows="4"
+          placeholder="Write the main content…"
+          aria-label="Body"
+          [disabled]="disabled()"
+          [value]="draft().body ?? ''"
+          (input)="onBodyInput($event)"
+        ></textarea>
+      </div>
+
+      <!-- CTA -->
+      <div class="field-group">
+        <div class="field-header">
+          <app-section-label label="CTA" info="What you want the viewer to do after watching. Match the CTA type set in the brief — a Follow CTA sounds different from a Buy Now or Comment Below." />
+          <app-ai-button
+            label="AI Assist"
+            loadingLabel="Writing…"
+            [loading]="ctaAiLoading()"
+            [disabled]="disabled()"
+            (activate)="onCtaAssist()"
+          />
+        </div>
+        @if (ctaTypeLabel()) {
+          <p class="cta-type">CTA type: <span>{{ ctaTypeLabel() }}</span></p>
+        }
+        <textarea
+          class="field"
+          rows="2"
+          placeholder="Write the call to action…"
+          aria-label="CTA"
+          [disabled]="disabled()"
+          [value]="draft().cta ?? ''"
+          (input)="onCtaInput($event)"
+        ></textarea>
+      </div>
+    </div>
+
+    <!-- ── TARGET DURATION ── -->
+    <div class="card-section duration-section">
+      <app-section-label label="Target Duration" info="How long this video should run. Set this before scripting — it defines the pacing constraint." />
+      <app-pill-group
+        ariaLabel="Target duration"
+        [options]="durationOptions"
+        [value]="duration()"
         [disabled]="disabled()"
-        (click)="onHookAssist()"
-      >
-        <span aria-hidden="true">✨</span>
-        AI assist
-      </button>
-    </header>
-    <textarea
-      class="field"
-      rows="2"
-      placeholder="Open with a tension or surprise…"
-      aria-label="Hook"
-      [disabled]="disabled()"
-      [value]="draft().hook ?? ''"
-      (input)="onHookInput($event)"
-    ></textarea>
-    <div class="hook-bank-row">
-      <button
-        type="button"
-        class="bank-toggle"
-        [attr.aria-expanded]="hookBankOpen()"
-        aria-controls="hook-bank-panel"
+        (valueChange)="onDurationChange($event)"
+      />
+      @if (shotCount() > 0) {
+        <span class="duration-shot-count">{{ shotCount() }} shot{{ shotCount() === 1 ? '' : 's' }}</span>
+      }
+    </div>
+
+    <!-- ── SHOT LIST + ASSETS ── -->
+    <div class="card-section shot-list-section">
+      <div class="shot-header">
+        <app-section-label
+          label="Shot list + Assets"
+          info="The visual execution plan for the video — each shot is a discrete, filmable unit. At least one is required."
+          [required]="true"
+          [badge]="shotsRequired() ? '1 shot required' : null"
+        />
+      </div>
+      <app-shot-list
+        [shots]="draft().shotList ?? []"
         [disabled]="disabled()"
-        (click)="toggleHookBank()"
-      >
+        (shotsChange)="onShotsChange($event)"
+      />
+    </div>
+  </section>
+
+  <!-- ── B-ROLL NOTES (collapsible card) ── -->
+  <section class="card collapsible">
+    <button
+      type="button"
+      class="collapse-toggle"
+      [attr.aria-expanded]="bRollOpen()"
+      aria-controls="b-roll-panel"
+      (click)="toggleBRoll()"
+    >
+      <span class="caret-wrap" aria-hidden="true">
         <svg
           xmlns="http://www.w3.org/2000/svg"
           width="14"
@@ -40,141 +158,34 @@
           stroke-width="2"
           stroke-linecap="round"
           stroke-linejoin="round"
-          aria-hidden="true"
+          class="caret"
+          [class.caret--open]="bRollOpen()"
         >
-          <path d="m6 9 6 6 6-6" />
+          <polyline points="9 18 15 12 9 6" />
         </svg>
-        Hook bank
-      </button>
-      <button
-        type="button"
-        class="ai-btn ai-btn--secondary"
-        [disabled]="disabled()"
-        (click)="onGenerateHookBank()"
-      >
-        Generate alternates
-      </button>
-    </div>
-    @if (hookBankOpen()) {
-      <ul id="hook-bank-panel" class="hook-bank-list" role="list">
-        @for (h of (draft().hookBank ?? []); track h) {
-          <li class="hook-bank-row-item">
-            <button
-              type="button"
-              class="bank-pick"
-              [disabled]="disabled()"
-              (click)="onApplyHookFromBank(h)"
-            >{{ h }}</button>
-          </li>
-        }
-      </ul>
-    }
-  </section>
-
-  <section class="card" aria-labelledby="body-card-title">
-    <header class="card-header">
-      <h3 class="card-title" id="body-card-title">Body</h3>
-      <button
-        type="button"
-        class="ai-btn"
-        [disabled]="disabled()"
-        (click)="onBodyAssist()"
-      >
-        <span aria-hidden="true">✨</span>
-        AI assist
-      </button>
-    </header>
-    <textarea
-      class="field"
-      rows="4"
-      placeholder="Deliver the value. Keep it concrete and specific."
-      aria-label="Body"
-      [disabled]="disabled()"
-      [value]="draft().body ?? ''"
-      (input)="onBodyInput($event)"
-    ></textarea>
-  </section>
-
-  <section class="card" aria-labelledby="cta-card-title">
-    <header class="card-header">
-      <h3 class="card-title" id="cta-card-title">CTA</h3>
-      <button
-        type="button"
-        class="ai-btn"
-        [disabled]="disabled()"
-        (click)="onCtaAssist()"
-      >
-        <span aria-hidden="true">✨</span>
-        AI assist
-      </button>
-    </header>
-    <textarea
-      class="field"
-      rows="2"
-      placeholder="What should the viewer do next?"
-      aria-label="CTA"
-      [disabled]="disabled()"
-      [value]="draft().cta ?? ''"
-      (input)="onCtaInput($event)"
-    ></textarea>
-  </section>
-
-  <section class="card" aria-labelledby="duration-card-title">
-    <header class="card-header">
-      <h3 class="card-title" id="duration-card-title">Target duration</h3>
-    </header>
-    <select
-      class="field field--select"
-      aria-label="Target duration"
-      [disabled]="disabled()"
-      (change)="onDurationChange($event)"
-    >
-      @for (d of durations; track d) {
-        <option [value]="d" [selected]="d === duration">{{ d }}</option>
-      }
-    </select>
-  </section>
-
-  <section class="card collapsible">
-    <button
-      type="button"
-      class="collapse-toggle"
-      [attr.aria-expanded]="bRollOpen()"
-      aria-controls="b-roll-panel"
-      (click)="toggleBRoll()"
-    >
-      <span>B-roll notes</span>
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        width="14"
-        height="14"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        stroke-width="2"
-        stroke-linecap="round"
-        stroke-linejoin="round"
-        class="caret"
-        [class.caret--open]="bRollOpen()"
-        aria-hidden="true"
-      >
-        <polyline points="6 9 12 15 18 9" />
-      </svg>
+      </span>
+      <app-section-label
+        label="B-roll notes"
+        suffix="— optional"
+        info="Supporting footage that plays over your voiceover or between talking-head shots. Note the specific visuals that would reinforce each beat of the script."
+      />
     </button>
     @if (bRollOpen()) {
-      <textarea
-        id="b-roll-panel"
-        class="field"
-        rows="3"
-        placeholder="Coverage, environment, props…"
-        aria-label="B-roll notes"
-        [disabled]="disabled()"
-        [value]="draft().bRollNotes ?? ''"
-        (input)="onBRollInput($event)"
-      ></textarea>
+      <div id="b-roll-panel" class="collapse-panel">
+        <textarea
+          class="field"
+          rows="3"
+          aria-label="B-roll notes"
+          placeholder="Note any b-roll footage ideas, stock footage needs, or visual references…"
+          [disabled]="disabled()"
+          [value]="draft().bRollNotes ?? ''"
+          (input)="onBRollInput($event)"
+        ></textarea>
+      </div>
     }
   </section>
 
+  <!-- ── VOICEOVER NOTES (collapsible card) ── -->
   <section class="card collapsible">
     <button
       type="button"
@@ -183,43 +194,41 @@
       aria-controls="voiceover-panel"
       (click)="toggleVoiceover()"
     >
-      <span>Voiceover notes</span>
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        width="14"
-        height="14"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        stroke-width="2"
-        stroke-linecap="round"
-        stroke-linejoin="round"
-        class="caret"
-        [class.caret--open]="voiceoverOpen()"
-        aria-hidden="true"
-      >
-        <polyline points="6 9 12 15 18 9" />
-      </svg>
+      <span class="caret-wrap" aria-hidden="true">
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          width="14"
+          height="14"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          class="caret"
+          [class.caret--open]="voiceoverOpen()"
+        >
+          <polyline points="9 18 15 12 9 6" />
+        </svg>
+      </span>
+      <app-section-label
+        label="Voiceover notes"
+        suffix="— optional"
+        info="Instructions for talent — tone, pace, emphasis, energy level. Especially useful when the person filming isn't the person who wrote the script."
+      />
     </button>
     @if (voiceoverOpen()) {
-      <textarea
-        id="voiceover-panel"
-        class="field"
-        rows="3"
-        placeholder="Tone, pacing, emphasis…"
-        aria-label="Voiceover notes"
-        [disabled]="disabled()"
-        [value]="draft().voiceoverNotes ?? ''"
-        (input)="onVoiceoverInput($event)"
-      ></textarea>
+      <div id="voiceover-panel" class="collapse-panel">
+        <textarea
+          class="field"
+          rows="3"
+          aria-label="Voiceover notes"
+          placeholder="Note voiceover style, tone, speaker, or script delivery notes…"
+          [disabled]="disabled()"
+          [value]="draft().voiceoverNotes ?? ''"
+          (input)="onVoiceoverInput($event)"
+        ></textarea>
+      </div>
     }
-  </section>
-
-  <section class="card">
-    <app-shot-list
-      [shots]="draft().shotList ?? []"
-      [disabled]="disabled()"
-      (shotsChange)="onShotsChange($event)"
-    />
   </section>
 </div>
