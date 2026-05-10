@@ -59,16 +59,30 @@ describe('DraftStepComponent — shell + factory routing', () => {
   });
 
   it.each([
-    ['instagram', 'reel', 'VIDEO'],
-    ['youtube', 'long-form', 'VIDEO_LONG'],
-    ['instagram', 'feed-post', 'IMAGE_SINGLE'],
-    ['instagram', 'carousel', 'CAROUSEL'],
-    ['linkedin', 'ln-text-post', 'TEXT'],
-    ['instagram', 'story', 'STORY'],
-    ['facebook', 'fb-link-post', 'TEXT'],
-    ['linkedin', 'ln-document', 'CAROUSEL'],
+    ['instagram', 'reel', 'app-video-builder'],
+    ['youtube', 'long-form', 'app-video-long-builder'],
+    ['instagram', 'feed-post', 'app-image-single-builder'],
+    ['instagram', 'carousel', 'app-carousel-builder'],
+    ['linkedin', 'ln-text-post', 'app-text-builder'],
   ] as const)(
-    '(%s, %s) routes to mode %s',
+    '(%s, %s) routes to %s',
+    (platform, contentType, selector) => {
+      const { fixture } = setup(
+        makeApprovedItem({
+          platform: platform as ContentItem['platform'],
+          contentType: contentType as ContentItem['contentType'],
+        }),
+      );
+      expect(fixture.nativeElement.querySelector(selector)).toBeTruthy();
+    },
+  );
+
+  it.each([
+    ['instagram', 'story', 'STORY'],
+    ['facebook', 'fb-story', 'STORY'],
+    ['instagram', 'live', 'LIVE'],
+  ] as const)(
+    '(%s, %s) routes to placeholder for unsupported mode %s',
     (platform, contentType, mode) => {
       const { fixture } = setup(
         makeApprovedItem({
@@ -76,27 +90,15 @@ describe('DraftStepComponent — shell + factory routing', () => {
           contentType: contentType as ContentItem['contentType'],
         }),
       );
-      // Verify the mounted placeholder reflects the right mode by reading
-      // its host attribute (the <app-builder-placeholder mode="X" /> binding
-      // shows up on the host element).
       const placeholder = fixture.nativeElement.querySelector(
         'app-builder-placeholder',
       );
       expect(placeholder).toBeTruthy();
-      // The factory dispatches the right mode either via static @case
-      // bindings (supported modes) or the @default arm (unsupported).
-      // Either way, we should be able to verify by checking the rendered
-      // title text against the expected label.
-      const title = placeholder.querySelector('.placeholder-title');
       const labels: Record<string, string> = {
-        VIDEO: 'Short video',
-        VIDEO_LONG: 'Long-form video',
-        IMAGE_SINGLE: 'Image post',
-        CAROUSEL: 'Carousel',
-        TEXT: 'Text post',
         STORY: 'Story',
+        LIVE: 'Live broadcast',
       };
-      expect(title.textContent).toContain(labels[mode]);
+      expect(placeholder.querySelector('.placeholder-title').textContent).toContain(labels[mode]);
     },
   );
 
@@ -148,10 +150,10 @@ describe('DraftStepComponent — shell + factory routing', () => {
 
   it('error summary renders aria-live region with field count', () => {
     const { fixture } = setup();
-    const liveRegion = fixture.nativeElement.querySelector(
-      '[role="status"][aria-live="polite"]',
-    );
+    const liveRegion = fixture.nativeElement.querySelector('.draft-status');
     expect(liveRegion).toBeTruthy();
+    expect(liveRegion.getAttribute('role')).toBe('status');
+    expect(liveRegion.getAttribute('aria-live')).toBe('polite');
     expect(liveRegion.textContent).toContain('2 fields remaining.');
   });
 });

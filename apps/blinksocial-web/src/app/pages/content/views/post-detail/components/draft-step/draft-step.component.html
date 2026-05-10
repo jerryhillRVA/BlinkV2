@@ -2,19 +2,19 @@
   <div class="draft-body">
     @switch (mode()) {
       @case ('VIDEO') {
-        <app-builder-placeholder mode="VIDEO" />
+        <app-video-builder />
       }
       @case ('VIDEO_LONG') {
-        <app-builder-placeholder mode="VIDEO_LONG" />
+        <app-video-long-builder />
       }
       @case ('IMAGE_SINGLE') {
-        <app-builder-placeholder mode="IMAGE_SINGLE" />
+        <app-image-single-builder />
       }
       @case ('CAROUSEL') {
-        <app-builder-placeholder mode="CAROUSEL" />
+        <app-carousel-builder />
       }
       @case ('TEXT') {
-        <app-builder-placeholder mode="TEXT" />
+        <app-text-builder />
       }
       @default {
         <app-builder-placeholder [mode]="mode()" />

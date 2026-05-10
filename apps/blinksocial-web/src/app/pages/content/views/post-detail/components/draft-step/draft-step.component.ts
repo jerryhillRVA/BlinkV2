@@ -6,10 +6,22 @@ import {
   isDraftModeSupported,
 } from './draft-canonical.utils';
 import { BuilderPlaceholderComponent } from './builder-placeholder/builder-placeholder.component';
+import { VideoBuilderComponent } from './video-builder/video-builder.component';
+import { VideoLongBuilderComponent } from './video-long-builder/video-long-builder.component';
+import { ImageSingleBuilderComponent } from './image-single-builder/image-single-builder.component';
+import { CarouselBuilderComponent } from './carousel-builder/carousel-builder.component';
+import { TextBuilderComponent } from './text-builder/text-builder.component';
 
 @Component({
   selector: 'app-draft-step',
-  imports: [BuilderPlaceholderComponent],
+  imports: [
+    BuilderPlaceholderComponent,
+    VideoBuilderComponent,
+    VideoLongBuilderComponent,
+    ImageSingleBuilderComponent,
+    CarouselBuilderComponent,
+    TextBuilderComponent,
+  ],
   templateUrl: './draft-step.component.html',
   styleUrl: './draft-step.component.scss',
 })

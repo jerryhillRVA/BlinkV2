@@ -1,0 +1,225 @@
+<div class="video-builder">
+  <section class="card" aria-labelledby="hook-card-title">
+    <header class="card-header">
+      <h3 class="card-title" id="hook-card-title">Hook</h3>
+      <button
+        type="button"
+        class="ai-btn"
+        [disabled]="disabled()"
+        (click)="onHookAssist()"
+      >
+        <span aria-hidden="true">✨</span>
+        AI assist
+      </button>
+    </header>
+    <textarea
+      class="field"
+      rows="2"
+      placeholder="Open with a tension or surprise…"
+      aria-label="Hook"
+      [disabled]="disabled()"
+      [value]="draft().hook ?? ''"
+      (input)="onHookInput($event)"
+    ></textarea>
+    <div class="hook-bank-row">
+      <button
+        type="button"
+        class="bank-toggle"
+        [attr.aria-expanded]="hookBankOpen()"
+        aria-controls="hook-bank-panel"
+        [disabled]="disabled()"
+        (click)="toggleHookBank()"
+      >
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          width="14"
+          height="14"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          aria-hidden="true"
+        >
+          <path d="m6 9 6 6 6-6" />
+        </svg>
+        Hook bank
+      </button>
+      <button
+        type="button"
+        class="ai-btn ai-btn--secondary"
+        [disabled]="disabled()"
+        (click)="onGenerateHookBank()"
+      >
+        Generate alternates
+      </button>
+    </div>
+    @if (hookBankOpen()) {
+      <ul id="hook-bank-panel" class="hook-bank-list" role="list">
+        @for (h of (draft().hookBank ?? []); track h) {
+          <li class="hook-bank-row-item">
+            <button
+              type="button"
+              class="bank-pick"
+              [disabled]="disabled()"
+              (click)="onApplyHookFromBank(h)"
+            >{{ h }}</button>
+          </li>
+        }
+      </ul>
+    }
+  </section>
+
+  <section class="card" aria-labelledby="body-card-title">
+    <header class="card-header">
+      <h3 class="card-title" id="body-card-title">Body</h3>
+      <button
+        type="button"
+        class="ai-btn"
+        [disabled]="disabled()"
+        (click)="onBodyAssist()"
+      >
+        <span aria-hidden="true">✨</span>
+        AI assist
+      </button>
+    </header>
+    <textarea
+      class="field"
+      rows="4"
+      placeholder="Deliver the value. Keep it concrete and specific."
+      aria-label="Body"
+      [disabled]="disabled()"
+      [value]="draft().body ?? ''"
+      (input)="onBodyInput($event)"
+    ></textarea>
+  </section>
+
+  <section class="card" aria-labelledby="cta-card-title">
+    <header class="card-header">
+      <h3 class="card-title" id="cta-card-title">CTA</h3>
+      <button
+        type="button"
+        class="ai-btn"
+        [disabled]="disabled()"
+        (click)="onCtaAssist()"
+      >
+        <span aria-hidden="true">✨</span>
+        AI assist
+      </button>
+    </header>
+    <textarea
+      class="field"
+      rows="2"
+      placeholder="What should the viewer do next?"
+      aria-label="CTA"
+      [disabled]="disabled()"
+      [value]="draft().cta ?? ''"
+      (input)="onCtaInput($event)"
+    ></textarea>
+  </section>
+
+  <section class="card" aria-labelledby="duration-card-title">
+    <header class="card-header">
+      <h3 class="card-title" id="duration-card-title">Target duration</h3>
+    </header>
+    <select
+      class="field field--select"
+      aria-label="Target duration"
+      [disabled]="disabled()"
+      (change)="onDurationChange($event)"
+    >
+      @for (d of durations; track d) {
+        <option [value]="d" [selected]="d === duration">{{ d }}</option>
+      }
+    </select>
+  </section>
+
+  <section class="card collapsible">
+    <button
+      type="button"
+      class="collapse-toggle"
+      [attr.aria-expanded]="bRollOpen()"
+      aria-controls="b-roll-panel"
+      (click)="toggleBRoll()"
+    >
+      <span>B-roll notes</span>
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        width="14"
+        height="14"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        class="caret"
+        [class.caret--open]="bRollOpen()"
+        aria-hidden="true"
+      >
+        <polyline points="6 9 12 15 18 9" />
+      </svg>
+    </button>
+    @if (bRollOpen()) {
+      <textarea
+        id="b-roll-panel"
+        class="field"
+        rows="3"
+        placeholder="Coverage, environment, props…"
+        aria-label="B-roll notes"
+        [disabled]="disabled()"
+        [value]="draft().bRollNotes ?? ''"
+        (input)="onBRollInput($event)"
+      ></textarea>
+    }
+  </section>
+
+  <section class="card collapsible">
+    <button
+      type="button"
+      class="collapse-toggle"
+      [attr.aria-expanded]="voiceoverOpen()"
+      aria-controls="voiceover-panel"
+      (click)="toggleVoiceover()"
+    >
+      <span>Voiceover notes</span>
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        width="14"
+        height="14"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        class="caret"
+        [class.caret--open]="voiceoverOpen()"
+        aria-hidden="true"
+      >
+        <polyline points="6 9 12 15 18 9" />
+      </svg>
+    </button>
+    @if (voiceoverOpen()) {
+      <textarea
+        id="voiceover-panel"
+        class="field"
+        rows="3"
+        placeholder="Tone, pacing, emphasis…"
+        aria-label="Voiceover notes"
+        [disabled]="disabled()"
+        [value]="draft().voiceoverNotes ?? ''"
+        (input)="onVoiceoverInput($event)"
+      ></textarea>
+    }
+  </section>
+
+  <section class="card">
+    <app-shot-list
+      [shots]="draft().shotList ?? []"
+      [disabled]="disabled()"
+      (shotsChange)="onShotsChange($event)"
+    />
+  </section>
+</div>
