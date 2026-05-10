@@ -306,6 +306,13 @@ export class PostDetailStore {
     return text.length > 0 && text.length <= CTA_TEXT_MAX_CHARS;
   });
 
+  readonly ctaTypeValid = computed(() => !!this.item()?.cta?.type);
+
+  readonly ownerValid = computed(() => {
+    const owner = this.item()?.owner;
+    return !!owner && owner.trim().length > 0;
+  });
+
   readonly errors = computed<BriefValidationIssue[]>(() => {
     const out: BriefValidationIssue[] = [];
     if (!this.titleValid()) out.push({ field: 'title', label: 'Title is required' });
@@ -331,6 +338,10 @@ export class PostDetailStore {
       out.push({ field: 'segments', label: 'Pick at least one audience segment' });
     if (!this.ctaValid())
       out.push({ field: 'cta', label: 'CTA type has no text' });
+    if (!this.ctaTypeValid())
+      out.push({ field: 'ctaType', label: 'CTA type is required' });
+    if (!this.ownerValid())
+      out.push({ field: 'owner', label: 'Owner is required' });
     return out;
   });
 

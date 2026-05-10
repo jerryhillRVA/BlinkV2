@@ -15,12 +15,12 @@ function setup(
 }
 
 describe('ProductionStepsBarComponent', () => {
-  it('renders four steps in order (Brief / Draft / Packaging / QA)', () => {
+  it('renders four steps in order (Brief / Draft / Packaging / Approve & Schedule)', () => {
     const fixture = setup('brief');
     const labels = Array.from(
       fixture.nativeElement.querySelectorAll('.steps-label') as NodeListOf<HTMLElement>,
     ).map((el) => el.textContent?.trim());
-    expect(labels).toEqual(['Brief', 'Draft', 'Packaging', 'QA']);
+    expect(labels).toEqual(['Brief', 'Draft', 'Packaging', 'Approve & Schedule']);
     expect(fixture.nativeElement.querySelectorAll('.steps-btn').length).toBe(4);
   });
 

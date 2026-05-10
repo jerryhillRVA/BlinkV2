@@ -11,7 +11,7 @@ import {
 } from '../../../content.constants';
 import { TEAM_MEMBERS_STUB, type TeamMemberStub } from '../../../team-members.stub';
 import type { CtaType } from '../../../content.types';
-import type { PrimaryCtaContract, PublishingModeContract } from '@blinksocial/contracts';
+import type { PrimaryCtaContract } from '@blinksocial/contracts';
 
 @Component({
   selector: 'app-brief-step',
@@ -48,16 +48,6 @@ export class BriefStepComponent {
     const obj = this.store.item()?.objective;
     return !!obj && TRAFFIC_OBJECTIVES.includes(obj);
   });
-
-  protected readonly showCampaignName = computed(() => this.store.paidBoosted());
-
-  protected campaignNamePlaceholder(): string {
-    const item = this.store.item();
-    const platform = item?.platform ?? 'platform';
-    const ct = item?.contentType ?? 'content';
-    const today = new Date().toISOString().slice(0, 10);
-    return `${platform}_${ct}_${today}`;
-  }
 
   protected onKeyMessageInput(e: Event): void {
     const v = (e.target as HTMLTextAreaElement | null)?.value ?? '';
@@ -114,16 +104,6 @@ export class BriefStepComponent {
     this.store.setDueDate(v);
   }
 
-  protected onCampaignNameChange(e: Event): void {
-    const v = (e.target as HTMLInputElement | null)?.value ?? '';
-    this.store.setCampaignName(v);
-  }
-
-  protected onPublishingModeChange(e: Event): void {
-    const checked = (e.target as HTMLInputElement | null)?.checked ?? false;
-    this.store.setPublishingMode(checked ? 'PAID_BOOSTED' : 'ORGANIC');
-  }
-
   // ── Primary CTA + CTA Type ──────────────────────────────────────────
   protected onPrimaryCta(v: PrimaryCtaContract): void {
     if (this.locked()) return;
@@ -172,7 +152,4 @@ export class BriefStepComponent {
     this.store.unlockBrief();
   }
 
-  protected isPublishingMode(mode: PublishingModeContract): boolean {
-    return this.store.publishingMode() === mode;
-  }
 }

@@ -291,13 +291,12 @@
   color: #b5651d;
 }
 
-.publishing-toggle {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 12px;
-  color: var(--blink-on-surface);
-  cursor: pointer;
+// Inline required-field error message — red, sits directly under the field.
+.field-error {
+  margin: 0;
+  font-size: 10px;
+  font-weight: 600;
+  color: #dc2626;
 }
 
 // ── Brief Status ─────────────────────────────────────────────────────
@@ -437,7 +436,9 @@
   width: 32px;
   height: 18px;
   border-radius: 999px;
-  background: var(--blink-outline-variant);
+  // Slightly darker than --blink-outline-variant so the off-state track
+  // reads clearly against the brief-status card surface.
+  background: #cbd5e1;
   border: none;
   cursor: pointer;
   transition: background 0.15s;
@@ -473,14 +474,14 @@
 .approval-note {
   width: 100%;
   resize: none;
-  min-height: 56px;
-  padding: 8px 10px;
+  min-height: 64px;
+  padding: 10px 12px;
   border: none;
   border-radius: 6px;
   background: var(--blink-input-bg-dark);
   color: var(--blink-on-surface);
   font-family: inherit;
-  font-size: 10px;
+  font-size: 14px;
   line-height: 1.45;
   outline: none;
   transition: background-color 0.15s, box-shadow 0.15s;

@@ -5,10 +5,9 @@
 .detail-header {
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  padding: 16px 0 12px;
+  gap: 8px;
+  padding: 12px 0 8px;
   border-bottom: 1px solid var(--blink-outline-variant);
-  margin-bottom: 20px;
 }
 
 .detail-header-row {

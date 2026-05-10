@@ -177,12 +177,29 @@ describe('BriefStepComponent — Ownership & Timeline', () => {
     expect(fixture.nativeElement.querySelector('.due-date-warning')).not.toBeNull();
   });
 
-  it('Campaign Name field hides until publishingMode flips to PAID_BOOSTED', () => {
-    const { fixture, store } = setup();
+  it('Paid & Boosted toggle and Campaign Name field are removed (no longer in the prototype)', () => {
+    const { fixture } = setup();
+    expect(fixture.nativeElement.textContent).not.toContain('Paid & Boosted');
     expect(fixture.nativeElement.textContent).not.toContain('Campaign Name');
-    store.setPublishingMode('PAID_BOOSTED');
-    fixture.detectChanges();
-    expect(fixture.nativeElement.textContent).toContain('Campaign Name');
+    expect(fixture.nativeElement.querySelector('.publishing-toggle')).toBeNull();
+  });
+
+  it('Owner-required error appears when no owner is selected', () => {
+    const { fixture } = setup(makeItem({ owner: null as never }));
+    expect(
+      Array.from(
+        fixture.nativeElement.querySelectorAll('.field-error') as NodeListOf<HTMLElement>,
+      ).some((el) => el.textContent?.includes('Owner is required')),
+    ).toBe(true);
+  });
+
+  it('CTA-type-required error appears when no CTA pill is selected', () => {
+    const { fixture } = setup();
+    expect(
+      Array.from(
+        fixture.nativeElement.querySelectorAll('.field-error') as NodeListOf<HTMLElement>,
+      ).some((el) => el.textContent?.includes('CTA type is required')),
+    ).toBe(true);
   });
 });
 
@@ -200,8 +217,11 @@ describe('BriefStepComponent — CTA Type', () => {
 });
 
 describe('BriefStepComponent — Brief Status', () => {
-  it('toggling Approve writes briefApproved, briefApprovedAt, briefApprovedBy', () => {
-    const { fixture, store } = setup();
+  it('toggling Approve writes briefApproved, briefApprovedAt, briefApprovedBy when canApprove is true', () => {
+    const { fixture, store } = setup(
+      makeItem({ owner: 'tm-amelia', cta: { type: 'learn-more', text: 'Read more' } }),
+    );
+    fixture.detectChanges();
     const toggle = fixture.nativeElement.querySelector(
       '.approve-toggle',
     ) as HTMLInputElement;

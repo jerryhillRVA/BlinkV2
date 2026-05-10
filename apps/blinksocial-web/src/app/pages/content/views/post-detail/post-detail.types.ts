@@ -19,5 +19,5 @@ export const PRODUCTION_STEPS: ProductionStepDef[] = [
   { id: 'brief', label: 'Brief', number: 1 },
   { id: 'draft', label: 'Draft', number: 2 },
   { id: 'packaging', label: 'Packaging', number: 3 },
-  { id: 'qa', label: 'QA', number: 4 },
+  { id: 'qa', label: 'Approve & Schedule', number: 4 },
 ];

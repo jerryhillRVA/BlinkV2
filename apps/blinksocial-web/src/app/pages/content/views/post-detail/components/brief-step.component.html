@@ -156,6 +156,9 @@
               <option [value]="m.id">{{ m.name }} — {{ m.role }}</option>
             }
           </select>
+          @if (!store.ownerValid()) {
+            <p class="field-error" role="alert">Owner is required</p>
+          }
         </div>
 
         <div class="field-block">
@@ -186,35 +189,6 @@
         </div>
       </div>
 
-      <div class="field-block">
-        <label class="publishing-toggle">
-          <input
-            type="checkbox"
-            [checked]="store.paidBoosted()"
-            [disabled]="locked()"
-            (change)="onPublishingModeChange($event)"
-          />
-          <span>Paid &amp; Boosted (campaign)</span>
-        </label>
-      </div>
-
-      @if (showCampaignName()) {
-        <div class="field-block">
-          <h3 class="panel-label">
-            Campaign Name <span class="panel-required">*</span>
-          </h3>
-          <input
-            class="brief-input"
-            type="text"
-            [value]="store.campaignName() ?? ''"
-            [readOnly]="locked()"
-            [placeholder]="campaignNamePlaceholder()"
-            (change)="onCampaignNameChange($event)"
-            aria-label="Campaign name"
-          />
-          <p class="panel-hint-muted">Auto-suggested from platform + type + date — editable.</p>
-        </div>
-      }
     </section>
 
     <!-- Card 4 — Call to Action -->
@@ -237,6 +211,9 @@
             </button>
           }
         </div>
+        @if (!store.ctaTypeValid()) {
+          <p class="field-error" role="alert">CTA type is required</p>
+        }
       </div>
     </section>
 

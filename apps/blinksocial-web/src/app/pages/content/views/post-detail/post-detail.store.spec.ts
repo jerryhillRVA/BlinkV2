@@ -35,6 +35,8 @@ function makeItem(partial: Partial<ContentItem> = {}): ContentItem {
     platform: 'instagram',
     contentType: 'reel',
     keyMessage: 'The one thing the audience should remember.',
+    owner: 'tm-amelia',
+    cta: { type: 'learn-more', text: 'Read more' },
     createdAt: now,
     updatedAt: now,
     ...partial,
@@ -147,7 +149,7 @@ describe('PostDetailStore — field mutations (unapproved brief)', () => {
   });
 
   it('setCtaType inits cta with empty text; setCtaText caps length; empty clears', () => {
-    const { store } = setup();
+    const { store } = setup(makeItem({ cta: undefined }));
     store.setCtaType('buy');
     expect(store.item()?.cta).toEqual({ type: 'buy', text: '' });
     store.setCtaText('x'.repeat(200));
@@ -157,7 +159,7 @@ describe('PostDetailStore — field mutations (unapproved brief)', () => {
   });
 
   it('setCtaText is a no-op without a cta type', () => {
-    const { store } = setup();
+    const { store } = setup(makeItem({ cta: undefined }));
     store.setCtaText('hi');
     expect(store.item()?.cta).toBeUndefined();
   });
