@@ -1,0 +1,111 @@
+<div class="asset-uploader" [class.has-file]="!!filename">
+  @if (!filename) {
+    <label
+      class="upload-zone"
+      [class.upload-zone--disabled]="disabled"
+      tabindex="0"
+      role="button"
+      [attr.aria-label]="label"
+      (keydown.enter)="$any($event).preventDefault()"
+    >
+      <input
+        type="file"
+        [accept]="accept"
+        [disabled]="disabled"
+        class="visually-hidden"
+        (change)="onFileChange($event)"
+      />
+      <div class="upload-icon" aria-hidden="true">
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          width="20"
+          height="20"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+          <polyline points="17 8 12 3 7 8" />
+          <line x1="12" x2="12" y1="3" y2="15" />
+        </svg>
+      </div>
+      <span class="upload-text">{{ label }}</span>
+      <span class="upload-hint">Drag and drop or click to browse</span>
+    </label>
+    <button
+      type="button"
+      class="ai-generate-btn"
+      [disabled]="disabled"
+      (click)="onAiGenerate()"
+    >
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        width="14"
+        height="14"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        aria-hidden="true"
+      >
+        <path d="M12 3v3" />
+        <path d="M12 18v3" />
+        <path d="M3 12h3" />
+        <path d="M18 12h3" />
+        <path d="M5.6 5.6l2.1 2.1" />
+        <path d="M16.3 16.3l2.1 2.1" />
+        <path d="M18.4 5.6l-2.1 2.1" />
+        <path d="M7.7 16.3l-2.1 2.1" />
+      </svg>
+      <span>Generate with AI</span>
+    </button>
+  } @else {
+    <div class="file-row" role="status" aria-live="polite">
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        width="16"
+        height="16"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        class="file-icon"
+        aria-hidden="true"
+      >
+        <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z" />
+        <polyline points="14 2 14 8 20 8" />
+      </svg>
+      <span class="file-name">{{ filename }}</span>
+      <button
+        type="button"
+        class="remove-btn"
+        [disabled]="disabled"
+        aria-label="Remove uploaded image"
+        (click)="onRemove()"
+      >
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          width="14"
+          height="14"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          aria-hidden="true"
+        >
+          <path d="M18 6 6 18" />
+          <path d="m6 6 12 12" />
+        </svg>
+      </button>
+    </div>
+  }
+</div>

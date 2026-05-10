@@ -1,0 +1,144 @@
+:host {
+  display: block;
+}
+
+.shot-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.shot-list-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.shot-list-title {
+  font-size: var(--blink-title-small);
+  font-weight: 600;
+  color: var(--blink-on-surface-strong);
+  margin: 0;
+}
+
+.shot-count {
+  font-size: var(--blink-body-small);
+  color: var(--blink-on-surface-muted);
+}
+
+.shot-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.shot-row {
+  display: grid;
+  grid-template-columns: 24px 110px 1fr 80px auto;
+  gap: 8px;
+  align-items: center;
+  padding: 8px;
+  background: var(--blink-surface);
+  border: 1px solid var(--blink-outline-variant);
+  border-radius: 8px;
+}
+
+.shot-index {
+  font-size: var(--blink-body-small);
+  color: var(--blink-on-surface-muted);
+  text-align: center;
+  font-weight: 500;
+}
+
+.shot-type,
+.shot-description,
+.shot-duration {
+  padding: 6px 8px;
+  background: var(--blink-surface-container-low);
+  border: 1px solid var(--blink-outline-variant);
+  border-radius: 6px;
+  font-size: var(--blink-body-small);
+  color: var(--blink-on-surface-strong);
+
+  &:focus-visible {
+    outline: 2px solid var(--blink-brand-primary);
+    outline-offset: 1px;
+  }
+
+  &[disabled] {
+    cursor: not-allowed;
+    opacity: 0.6;
+  }
+}
+
+.shot-actions {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.action-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  color: var(--blink-on-surface-muted);
+  cursor: pointer;
+
+  &:hover:not([disabled]) {
+    background: var(--blink-surface-hover);
+    color: var(--blink-on-surface-strong);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--blink-brand-primary);
+    outline-offset: 2px;
+  }
+
+  &[disabled] {
+    cursor: not-allowed;
+    opacity: 0.4;
+  }
+
+  &--remove:hover:not([disabled]) {
+    color: var(--blink-icon-orange);
+  }
+}
+
+.add-shot-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  background: transparent;
+  border: 1px dashed var(--blink-outline-dashed);
+  border-radius: 8px;
+  font-size: var(--blink-body-medium);
+  font-weight: 500;
+  color: var(--blink-on-surface-medium);
+  cursor: pointer;
+  align-self: flex-start;
+
+  &:hover {
+    background: var(--blink-brand-primary-lightest-bg);
+    border-color: var(--blink-brand-primary);
+    color: var(--blink-brand-primary);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--blink-brand-primary);
+    outline-offset: 2px;
+  }
+
+  &[disabled] {
+    cursor: not-allowed;
+    opacity: 0.6;
+  }
+}

@@ -1,0 +1,131 @@
+import { TestBed } from '@angular/core/testing';
+import type { DraftShotItemContract } from '@blinksocial/contracts';
+import { ShotListComponent } from './shot-list.component';
+
+function setup(initial: Partial<ShotListComponent> = {}) {
+  TestBed.resetTestingModule();
+  TestBed.configureTestingModule({ imports: [ShotListComponent] });
+  const fixture = TestBed.createComponent(ShotListComponent);
+  Object.assign(fixture.componentInstance, initial);
+  fixture.detectChanges();
+  return fixture;
+}
+
+const SHOTS: DraftShotItemContract[] = [
+  { id: 's1', type: 'Shot', description: 'first', duration: '5s' },
+  { id: 's2', type: 'CTA', description: 'second', duration: '10s' },
+];
+
+describe('ShotListComponent', () => {
+  it('renders shots inside <ul role="list">', () => {
+    const fixture = setup({ shots: SHOTS });
+    const list = fixture.nativeElement.querySelector('ul.shot-rows');
+    expect(list.getAttribute('role')).toBe('list');
+    const rows = list.querySelectorAll('li.shot-row');
+    expect(rows.length).toBe(2);
+  });
+
+  it('emits a count announcement via aria-live', () => {
+    const fixture = setup({ shots: SHOTS });
+    const status = fixture.nativeElement.querySelector(
+      '.shot-count[role="status"][aria-live="polite"]',
+    );
+    expect(status).toBeTruthy();
+    expect(status.textContent).toContain('2 shots');
+  });
+
+  it('singular form when only 1 shot', () => {
+    const fixture = setup({ shots: [SHOTS[0]] });
+    const status = fixture.nativeElement.querySelector('.shot-count');
+    expect(status.textContent).toContain('1 shot');
+  });
+
+  it('Up / Down / Remove buttons each have descriptive aria-labels', () => {
+    const fixture = setup({ shots: SHOTS });
+    const btns = fixture.nativeElement.querySelectorAll('.action-btn');
+    expect(btns[0].getAttribute('aria-label')).toBe('Move shot 1 up');
+    expect(btns[1].getAttribute('aria-label')).toBe('Move shot 1 down');
+    expect(btns[2].getAttribute('aria-label')).toBe('Remove shot 1');
+  });
+
+  it('Add shot appends a new empty row', () => {
+    const fixture = setup({ shots: [] });
+    const events: DraftShotItemContract[][] = [];
+    fixture.componentInstance.shotsChange.subscribe((v) => events.push(v));
+    const btn = fixture.nativeElement.querySelector(
+      '.add-shot-btn',
+    ) as HTMLButtonElement;
+    btn.click();
+    expect(events).toHaveLength(1);
+    expect(events[0][0]).toMatchObject({
+      type: 'Shot',
+      description: '',
+      duration: '',
+    });
+  });
+
+  it('Remove emits the array minus that shot', () => {
+    const fixture = setup({ shots: SHOTS });
+    const events: DraftShotItemContract[][] = [];
+    fixture.componentInstance.shotsChange.subscribe((v) => events.push(v));
+    fixture.componentInstance['onRemove']('s1');
+    expect(events[0]).toEqual([SHOTS[1]]);
+  });
+
+  it('Move up swaps the previous-sibling order', () => {
+    const fixture = setup({ shots: SHOTS });
+    const events: DraftShotItemContract[][] = [];
+    fixture.componentInstance.shotsChange.subscribe((v) => events.push(v));
+    fixture.componentInstance['onMoveUp'](1);
+    expect(events[0].map((s) => s.id)).toEqual(['s2', 's1']);
+  });
+
+  it('Move up at index 0 is a no-op', () => {
+    const fixture = setup({ shots: SHOTS });
+    const events: DraftShotItemContract[][] = [];
+    fixture.componentInstance.shotsChange.subscribe((v) => events.push(v));
+    fixture.componentInstance['onMoveUp'](0);
+    expect(events).toEqual([]);
+  });
+
+  it('Move down swaps the next-sibling order', () => {
+    const fixture = setup({ shots: SHOTS });
+    const events: DraftShotItemContract[][] = [];
+    fixture.componentInstance.shotsChange.subscribe((v) => events.push(v));
+    fixture.componentInstance['onMoveDown'](0);
+    expect(events[0].map((s) => s.id)).toEqual(['s2', 's1']);
+  });
+
+  it('Move down at last index is a no-op', () => {
+    const fixture = setup({ shots: SHOTS });
+    const events: DraftShotItemContract[][] = [];
+    fixture.componentInstance.shotsChange.subscribe((v) => events.push(v));
+    fixture.componentInstance['onMoveDown'](1);
+    expect(events).toEqual([]);
+  });
+
+  it('Editing description / duration / type emits updated array', () => {
+    const fixture = setup({ shots: SHOTS });
+    const events: DraftShotItemContract[][] = [];
+    fixture.componentInstance.shotsChange.subscribe((v) => events.push(v));
+    const fakeEvent = (value: string) =>
+      ({ target: { value } } as unknown as Event);
+    fixture.componentInstance['onDescriptionChange']('s1', fakeEvent('new desc'));
+    fixture.componentInstance['onDurationChange']('s1', fakeEvent('20s'));
+    fixture.componentInstance['onTypeChange']('s1', fakeEvent('B-Roll'));
+    expect(events[0][0].description).toBe('new desc');
+    expect(events[1][0].duration).toBe('20s');
+    expect(events[2][0].type).toBe('B-Roll');
+  });
+
+  it('all writes are no-ops when disabled', () => {
+    const fixture = setup({ shots: SHOTS, disabled: true });
+    const events: DraftShotItemContract[][] = [];
+    fixture.componentInstance.shotsChange.subscribe((v) => events.push(v));
+    fixture.componentInstance['onAddShot']();
+    fixture.componentInstance['onRemove']('s1');
+    fixture.componentInstance['onMoveUp'](1);
+    fixture.componentInstance['onMoveDown'](0);
+    expect(events).toEqual([]);
+  });
+});
