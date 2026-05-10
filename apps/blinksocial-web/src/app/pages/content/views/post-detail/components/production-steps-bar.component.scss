@@ -93,6 +93,10 @@
   }
 }
 
+// Unselected default: gray-200 / gray-700 — the prototype uses gray-100
+// over white, but our white surface needs a step darker for the circle to
+// actually read as a circle. Active gets the white-on-coral overlay; past
+// gets green-50 / green-700.
 .steps-num {
   display: inline-flex;
   align-items: center;
@@ -101,8 +105,8 @@
   width: 18px;
   height: 18px;
   border-radius: 50%;
-  background: var(--blink-surface-container-low);
-  color: inherit;
+  background: #e5e7eb;
+  color: #374151;
   font-size: 9px;
   font-weight: 700;
 
