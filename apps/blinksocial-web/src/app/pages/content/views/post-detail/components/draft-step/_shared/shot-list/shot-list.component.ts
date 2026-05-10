@@ -36,12 +36,15 @@ const AI_GENERATED_SHOTS: ReadonlyArray<Pick<DraftShotItemContract, 'type' | 'de
 })
 export class ShotListComponent {
   @Input() shots: DraftShotItemContract[] = [];
+  @Input() coverAssetRef: string | undefined = undefined;
   @Input() disabled = false;
 
   @Output() shotsChange = new EventEmitter<DraftShotItemContract[]>();
+  @Output() coverAssetRefChange = new EventEmitter<string | undefined>();
 
   protected readonly shotTypes = SHOT_TYPES;
   protected readonly aiLoading = signal(false);
+  protected readonly shotAiLoading = signal<Record<string, boolean>>({});
 
   protected get countLabel(): string {
     const n = this.shots.length;
@@ -120,5 +123,46 @@ export class ShotListComponent {
     this.shotsChange.emit(
       this.shots.map((s) => (s.id === id ? { ...s, ...patch } : s)),
     );
+  }
+
+  // ── Top-level cover-asset attach/clear ────────────────────────────
+
+  protected onCoverFile(e: Event): void {
+    if (this.disabled) return;
+    const file = (e.target as HTMLInputElement).files?.[0];
+    if (!file) return;
+    this.coverAssetRefChange.emit(file.name);
+  }
+
+  protected onCoverClear(): void {
+    if (this.disabled) return;
+    this.coverAssetRefChange.emit(undefined);
+  }
+
+  // ── Per-shot asset attach/AI-create/clear ─────────────────────────
+
+  protected onShotFile(id: string, e: Event): void {
+    if (this.disabled) return;
+    const file = (e.target as HTMLInputElement).files?.[0];
+    if (!file) return;
+    this.patch(id, { assetRef: file.name });
+  }
+
+  protected onShotAiCreate(id: string): void {
+    if (this.disabled) return;
+    this.shotAiLoading.update((m) => ({ ...m, [id]: true }));
+    setTimeout(() => {
+      this.patch(id, { assetRef: `ai-generated-${id}.png` });
+      this.shotAiLoading.update((m) => ({ ...m, [id]: false }));
+    }, 600);
+  }
+
+  protected onShotAssetClear(id: string): void {
+    if (this.disabled) return;
+    this.patch(id, { assetRef: undefined });
+  }
+
+  protected isShotAiLoading(id: string): boolean {
+    return !!this.shotAiLoading()[id];
   }
 }

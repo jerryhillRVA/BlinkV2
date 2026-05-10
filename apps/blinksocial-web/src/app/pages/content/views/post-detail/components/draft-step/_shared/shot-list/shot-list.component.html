@@ -1,34 +1,72 @@
 <div class="shot-list">
-  <!-- Top-level asset slot. The prototype keeps this slot visible regardless
-       of whether shots exist, as the primary point-of-attack for "I want to
-       attach a single asset" or "let me build a shot list." -->
-  <div class="asset-slot" [class.is-empty]="shots.length === 0">
+  <!-- Top-level Asset slot. When empty: "Attach file" + "AI Generate
+       Shot List" buttons + "No asset attached yet" placeholder. When
+       attached: filename chip + remove button. The cover asset is
+       independent from each shot's per-shot assetRef. -->
+  <div class="asset-slot">
     <div class="asset-slot-row">
       <app-section-label label="Asset" />
-      <div class="asset-slot-actions">
-        <button
-          type="button"
-          class="ghost-btn"
-          [disabled]="disabled"
-          (click)="onAddShot()"
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-            <path d="M12 5v14"/><path d="M5 12h14"/>
+      @if (!coverAssetRef) {
+        <div class="asset-slot-actions">
+          <label class="ghost-btn" [class.is-disabled]="disabled">
+            <input
+              type="file"
+              class="visually-hidden"
+              [disabled]="disabled"
+              (change)="onCoverFile($event)"
+            />
+            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l8.57-8.57A4 4 0 1 1 17.99 8.8L9.41 17.37a2 2 0 0 1-2.83-2.83l8.49-8.48"/>
+            </svg>
+            <span>Attach file</span>
+          </label>
+          <app-ai-button
+            label="AI Generate Shot List"
+            loadingLabel="Generating…"
+            [loading]="aiLoading()"
+            [disabled]="disabled"
+            (activate)="onAiGenerate()"
+          />
+        </div>
+      } @else {
+        <div class="asset-chip">
+          <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l8.57-8.57A4 4 0 1 1 17.99 8.8L9.41 17.37a2 2 0 0 1-2.83-2.83l8.49-8.48"/>
           </svg>
-          <span>Add shot</span>
-        </button>
-        <app-ai-button
-          label="AI Generate Shot List"
-          loadingLabel="Generating…"
-          [loading]="aiLoading()"
-          [disabled]="disabled"
-          (activate)="onAiGenerate()"
-        />
-      </div>
+          <span class="asset-chip-name">{{ coverAssetRef }}</span>
+          <button
+            type="button"
+            class="asset-chip-remove"
+            [disabled]="disabled"
+            aria-label="Remove attached asset"
+            (click)="onCoverClear()"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M18 6 6 18"/>
+              <path d="m6 6 12 12"/>
+            </svg>
+          </button>
+        </div>
+      }
     </div>
-    @if (shots.length === 0) {
+    @if (!coverAssetRef) {
       <p class="asset-empty">No asset attached yet</p>
     }
+  </div>
+
+  <!-- Add Shot button lives BETWEEN the asset slot and the shot rows. -->
+  <div class="add-shot-row">
+    <button
+      type="button"
+      class="ghost-btn"
+      [disabled]="disabled"
+      (click)="onAddShot()"
+    >
+      <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M12 5v14"/><path d="M5 12h14"/>
+      </svg>
+      <span>Add shot</span>
+    </button>
   </div>
 
   @if (shots.length === 0) {
@@ -111,6 +149,51 @@
             [value]="shot.description"
             (input)="onDescriptionChange(shot.id, $event)"
           ></textarea>
+
+          <!-- Per-shot asset sub-row -->
+          <div class="shot-asset-row">
+            @if (!shot.assetRef) {
+              <label class="ghost-btn ghost-btn--sm" [class.is-disabled]="disabled">
+                <input
+                  type="file"
+                  class="visually-hidden"
+                  [disabled]="disabled"
+                  (change)="onShotFile(shot.id, $event)"
+                />
+                <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l8.57-8.57A4 4 0 1 1 17.99 8.8L9.41 17.37a2 2 0 0 1-2.83-2.83l8.49-8.48"/>
+                </svg>
+                <span>Attach file</span>
+              </label>
+              <app-ai-button
+                label="AI Create Asset"
+                loadingLabel="Creating…"
+                variant="compact"
+                [loading]="isShotAiLoading(shot.id)"
+                [disabled]="disabled"
+                (activate)="onShotAiCreate(shot.id)"
+              />
+            } @else {
+              <div class="asset-chip asset-chip--sm">
+                <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l8.57-8.57A4 4 0 1 1 17.99 8.8L9.41 17.37a2 2 0 0 1-2.83-2.83l8.49-8.48"/>
+                </svg>
+                <span class="asset-chip-name">{{ shot.assetRef }}</span>
+                <button
+                  type="button"
+                  class="asset-chip-remove"
+                  [disabled]="disabled"
+                  [attr.aria-label]="'Remove asset from shot ' + (i + 1)"
+                  (click)="onShotAssetClear(shot.id)"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <path d="M18 6 6 18"/>
+                    <path d="m6 6 12 12"/>
+                  </svg>
+                </button>
+              </div>
+            }
+          </div>
         </li>
       }
     </ul>

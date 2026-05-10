@@ -45,13 +45,14 @@ describe('ShotListComponent', () => {
     expect(btns[2].getAttribute('aria-label')).toBe('Remove shot 1');
   });
 
-  it('Add shot button (in the asset slot) appends a new empty row', () => {
+  it('Add shot button (between asset slot and shot list) appends a new empty row', () => {
     const fixture = setup({ shots: [] });
     const events: DraftShotItemContract[][] = [];
     fixture.componentInstance.shotsChange.subscribe((v) => events.push(v));
-    // The Add shot button is the .ghost-btn inside the asset slot
+    // The Add shot button lives in .add-shot-row, between the asset
+    // slot and the shot rows.
     const btn = fixture.nativeElement.querySelector(
-      '.asset-slot .ghost-btn',
+      '.add-shot-row .ghost-btn',
     ) as HTMLButtonElement;
     btn.click();
     expect(events).toHaveLength(1);
@@ -69,15 +70,71 @@ describe('ShotListComponent', () => {
     expect(empty.textContent).toContain('At least 1 shot is required');
   });
 
-  it('Asset slot shows "No asset attached yet" only when shots are empty', () => {
-    const empty = setup({ shots: [] });
+  it('Asset slot shows "No asset attached yet" only when coverAssetRef is empty', () => {
+    const empty = setup({ shots: [], coverAssetRef: undefined });
     expect(
       empty.nativeElement.querySelector('.asset-empty'),
     ).toBeTruthy();
-    const populated = setup({ shots: SHOTS });
     expect(
-      populated.nativeElement.querySelector('.asset-empty'),
+      empty.nativeElement.querySelector('.asset-slot .asset-chip'),
     ).toBeNull();
+    const attached = setup({ shots: [], coverAssetRef: 'cover.png' });
+    expect(
+      attached.nativeElement.querySelector('.asset-empty'),
+    ).toBeNull();
+    const chip = attached.nativeElement.querySelector('.asset-slot .asset-chip');
+    expect(chip).toBeTruthy();
+    expect(chip.textContent).toContain('cover.png');
+  });
+
+  it('Top-level Attach file input emits coverAssetRefChange with the filename', () => {
+    const fixture = setup({ shots: [], coverAssetRef: undefined });
+    const events: (string | undefined)[] = [];
+    fixture.componentInstance.coverAssetRefChange.subscribe((v) => events.push(v));
+    const file = new File(['x'], 'cover.png', { type: 'image/png' });
+    const input = fixture.nativeElement.querySelector(
+      '.asset-slot input[type="file"]',
+    ) as HTMLInputElement;
+    Object.defineProperty(input, 'files', { value: [file] });
+    input.dispatchEvent(new Event('change'));
+    expect(events).toEqual(['cover.png']);
+  });
+
+  it('Top-level chip Remove emits coverAssetRefChange(undefined)', () => {
+    const fixture = setup({ shots: [], coverAssetRef: 'cover.png' });
+    const events: (string | undefined)[] = [];
+    fixture.componentInstance.coverAssetRefChange.subscribe((v) => events.push(v));
+    const btn = fixture.nativeElement.querySelector(
+      '.asset-slot .asset-chip-remove',
+    ) as HTMLButtonElement;
+    btn.click();
+    expect(events).toEqual([undefined]);
+  });
+
+  it('Per-shot Attach file emits shotsChange with assetRef set', () => {
+    const fixture = setup({ shots: SHOTS });
+    const events: DraftShotItemContract[][] = [];
+    fixture.componentInstance.shotsChange.subscribe((v) => events.push(v));
+    const file = new File(['x'], 'first-shot.mp4', { type: 'video/mp4' });
+    const input = fixture.nativeElement.querySelector(
+      '.shot-row .shot-asset-row input[type="file"]',
+    ) as HTMLInputElement;
+    Object.defineProperty(input, 'files', { value: [file] });
+    input.dispatchEvent(new Event('change'));
+    expect(events).toHaveLength(1);
+    expect(events[0][0].assetRef).toBe('first-shot.mp4');
+  });
+
+  it('Per-shot AI Create Asset eventually sets assetRef to a stub filename', () => {
+    vi.useFakeTimers();
+    const fixture = setup({ shots: SHOTS });
+    const events: DraftShotItemContract[][] = [];
+    fixture.componentInstance.shotsChange.subscribe((v) => events.push(v));
+    fixture.componentInstance['onShotAiCreate']('s1');
+    vi.advanceTimersByTime(700);
+    expect(events).toHaveLength(1);
+    expect(events[0][0].assetRef).toContain('ai-generated');
+    vi.useRealTimers();
   });
 
   it('Remove emits the array minus that shot', () => {

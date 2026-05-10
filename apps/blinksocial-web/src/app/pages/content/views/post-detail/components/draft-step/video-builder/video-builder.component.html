@@ -132,8 +132,10 @@
       </div>
       <app-shot-list
         [shots]="draft().shotList ?? []"
+        [coverAssetRef]="draft().coverAssetRef"
         [disabled]="disabled()"
         (shotsChange)="onShotsChange($event)"
+        (coverAssetRefChange)="onCoverAssetRefChange($event)"
       />
     </div>
   </section>

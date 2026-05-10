@@ -423,6 +423,9 @@ export class PostDetailStore {
   setVideoShotList(v: DraftShotItemContract[]): void {
     this.persistVideoDraft({ shotList: v });
   }
+  setVideoCoverAssetRef(v: string | undefined): void {
+    this.persistVideoDraft({ coverAssetRef: v });
+  }
 
   // VIDEO_LONG setters
   setVideoLongHook(v: string): void {

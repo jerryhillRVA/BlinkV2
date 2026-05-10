@@ -211,6 +211,12 @@ export interface ProductionDraftVideoContract {
   body?: string;
   cta?: string;
   hookBank?: string[];
+  /**
+   * Top-level "cover" / primary asset attached at the shot-list level
+   * (not tied to a specific shot). Filename or AgenticFilesystem URL.
+   * Distinct from each shot's per-shot `assetRef` on `shotList[].assetRef`.
+   */
+  coverAssetRef?: string;
   targetDuration?: string;
   bRollNotes?: string;
   voiceoverNotes?: string;

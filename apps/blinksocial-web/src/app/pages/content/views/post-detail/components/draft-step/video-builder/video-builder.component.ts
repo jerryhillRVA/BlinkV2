@@ -97,6 +97,10 @@ export class VideoBuilderComponent {
     this.store.setVideoShotList(shots);
   }
 
+  protected onCoverAssetRefChange(v: string | undefined): void {
+    this.store.setVideoCoverAssetRef(v);
+  }
+
   protected onHookBank(): void {
     if (this.disabled()) return;
     this.hookBankLoading.set(true);
