@@ -121,12 +121,14 @@ describe('PostDetailStore — field mutations (unapproved brief)', () => {
     expect(store.item()?.tonePreset).toBeUndefined();
   });
 
-  it('setKeyMessage caps at max and clears when empty', () => {
+  it('setKeyMessage caps at max and persists "" on clear (not undefined)', () => {
     const { store } = setup();
     store.setKeyMessage('x'.repeat(200));
     expect(store.item()?.keyMessage?.length).toBeLessThanOrEqual(140);
     store.setKeyMessage('');
-    expect(store.item()?.keyMessage).toBeUndefined();
+    // Explicit '' so JSON.stringify keeps the key on the wire and the
+    // mock-API merge actually clears the value. See #112 follow-up.
+    expect(store.item()?.keyMessage).toBe('');
   });
 
   it('togglePillar enforces MAX_PILLARS_PER_ITEM', () => {
@@ -276,6 +278,17 @@ describe('PostDetailStore — validation', () => {
   it('cta-text-empty no longer produces an error (CTA text field was removed in #112)', () => {
     const { store } = setup(makeItem({ cta: { type: 'buy', text: '' } }));
     expect(store.errors().some((e) => e.field === 'cta')).toBe(false);
+  });
+
+  it('setKeyMessage("") persists an empty string (not undefined) so a delete actually clears the field', () => {
+    const { store } = setup(
+      makeItem({ keyMessage: 'The audience should remember this.' }),
+    );
+    store.setKeyMessage('');
+    expect(store.item()?.keyMessage).toBe('');
+    expect(store.keyMessageValid()).toBe(false);
+    // And errors() now includes keyMessage
+    expect(store.errors().map((e) => e.field)).toContain('keyMessage');
   });
 
   it('requiredFieldsDone reflects valid count', () => {

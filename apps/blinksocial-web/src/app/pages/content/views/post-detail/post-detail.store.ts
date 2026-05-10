@@ -80,8 +80,12 @@ export class PostDetailStore {
   }
 
   setKeyMessage(v: string): void {
-    const trimmed = v.slice(0, KEY_MESSAGE_MAX_CHARS);
-    this.persist({ keyMessage: trimmed.length > 0 ? trimmed : undefined });
+    // Cap to max but DO persist an empty string when the user clears the
+    // field — `keyMessage: undefined` would be dropped by JSON.stringify
+    // on the PUT body and the mock API would merge the old value back in,
+    // making the field's text "reappear" after a delete + space + delete.
+    const capped = v.slice(0, KEY_MESSAGE_MAX_CHARS);
+    this.persist({ keyMessage: capped });
   }
 
   togglePillar(id: string): void {
