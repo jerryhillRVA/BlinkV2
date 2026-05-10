@@ -159,6 +159,101 @@ export type ProductionStepContract =
   | 'qa'
   | 'handoff';
 
+export type DraftModeContract =
+  | 'VIDEO'
+  | 'VIDEO_LONG'
+  | 'IMAGE_SINGLE'
+  | 'CAROUSEL'
+  | 'TEXT'
+  | 'DOCUMENT'
+  | 'STORY'
+  | 'LIVE'
+  | 'LINK';
+
+export type DraftShotItemTypeContract =
+  | 'Shot'
+  | 'B-Roll'
+  | 'Voiceover'
+  | 'Transition'
+  | 'CTA';
+
+export interface DraftShotItemContract {
+  id: string;
+  type: DraftShotItemTypeContract;
+  description: string;
+  duration: string;
+  assetRef?: string;
+}
+
+export type DraftSequenceBlockTypeContract =
+  | 'Hook'
+  | 'Body'
+  | 'Section'
+  | 'CTA';
+
+export interface DraftSequenceBlockContract {
+  id: string;
+  type: DraftSequenceBlockTypeContract;
+  description: string;
+  duration: string;
+}
+
+export interface DraftCarouselSlideContract {
+  id: string;
+  headline: string;
+  body: string;
+  imageRef?: string;
+  altText?: string;
+}
+
+export interface ProductionDraftVideoContract {
+  hook?: string;
+  body?: string;
+  cta?: string;
+  hookBank?: string[];
+  targetDuration?: string;
+  bRollNotes?: string;
+  voiceoverNotes?: string;
+  shotList?: DraftShotItemContract[];
+}
+
+export interface ProductionDraftVideoLongContract {
+  hook?: string;
+  sequenceBlocks?: DraftSequenceBlockContract[];
+  targetDuration?: string;
+  voiceoverNotes?: string;
+}
+
+export interface ProductionDraftImageSingleContract {
+  hook?: string;
+  creativeDirectionNotes?: string;
+  imageRef?: string;
+  altText?: string;
+  hashtags?: string[];
+}
+
+export interface ProductionDraftCarouselContract {
+  hook?: string;
+  slides?: DraftCarouselSlideContract[];
+  hashtags?: string[];
+}
+
+export interface ProductionDraftTextContract {
+  caption?: string;
+  imageRef?: string;
+  altText?: string;
+  hashtags?: string[];
+}
+
+export interface ProductionDraftContract {
+  mode?: DraftModeContract;
+  video?: ProductionDraftVideoContract;
+  videoLong?: ProductionDraftVideoLongContract;
+  imageSingle?: ProductionDraftImageSingleContract;
+  carousel?: ProductionDraftCarouselContract;
+  text?: ProductionDraftTextContract;
+}
+
 export type ProductionSourceTypeContract =
   | 'article'
   | 'report'
@@ -200,6 +295,7 @@ export interface ProductionVersionContract {
 export interface ProductionContract {
   productionStep?: ProductionStepContract;
   brief?: ProductionBriefContract;
+  draft?: ProductionDraftContract;
   outputs?: Record<string, unknown>;
   sources?: ProductionSourceContract[];
   assets?: ProductionAssetContract[];

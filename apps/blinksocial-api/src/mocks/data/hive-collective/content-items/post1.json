@@ -110,6 +110,31 @@
       "hasMusic": true,
       "needsAccessibility": true
     },
+    "draft": {
+      "mode": "VIDEO",
+      "video": {
+        "hook": "Your body shouldn't feel 80 when you're 40.",
+        "body": "Three minutes a day. No equipment. Five gentle moves that wake your spine and hips before coffee.",
+        "cta": "Save this — your tomorrow self will thank you.",
+        "hookBank": [
+          "Your body shouldn't feel 80 when you're 40.",
+          "This 60-second routine changed my mornings.",
+          "No gym. No equipment. Just movement.",
+          "Try this before your coffee tomorrow."
+        ],
+        "targetDuration": "60s",
+        "bRollNotes": "B-roll: feet planted, slow zoom on hip rotation. Window light, no harsh shadows.",
+        "voiceoverNotes": "Soft, warm tone. Pause after each cue so viewers can match form.",
+        "shotList": [
+          { "id": "sl-1", "type": "Shot", "description": "Hook on camera, eye-level", "duration": "0:00–0:03" },
+          { "id": "sl-2", "type": "Shot", "description": "Cat-Cow stretch — three reps", "duration": "0:03–0:15" },
+          { "id": "sl-3", "type": "Shot", "description": "Thoracic rotation, each side", "duration": "0:15–0:30" },
+          { "id": "sl-4", "type": "Shot", "description": "Hip circles, each direction", "duration": "0:30–0:45" },
+          { "id": "sl-5", "type": "Shot", "description": "Standing reach + fold", "duration": "0:45–0:55" },
+          { "id": "sl-6", "type": "CTA", "description": "Hold final pose, deliver CTA", "duration": "0:55–1:00" }
+        ]
+      }
+    },
     "sources": [],
     "outputs": {
       "hook": "Your body shouldn't feel 80 when you're 40",
