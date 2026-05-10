@@ -26,19 +26,28 @@
   color: var(--blink-on-surface-muted);
 }
 
+// Prototype: bg-gray-100 / border-gray-200 / text-gray-400 (`text-[9px] px-1.5 py-0`).
+// We bump each shade up a step (gray-200 / gray-300 / gray-500) so the badge
+// reads as a proper Locked indicator instead of fading into the card surface.
 .card-locked {
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  padding: 1px 6px;
+  padding: 2px 6px;
   margin-left: auto;
   border-radius: 999px;
-  background: var(--blink-surface-container-low);
-  color: var(--blink-on-surface-faint);
+  border: 1px solid #d1d5db;
+  background: #e5e7eb;
+  color: #4b5563;
   font-size: 9px;
   font-weight: 700;
   letter-spacing: 0.04em;
   text-transform: uppercase;
+
+  svg {
+    color: #4b5563;
+    flex-shrink: 0;
+  }
 }
 
 .card-edit {
