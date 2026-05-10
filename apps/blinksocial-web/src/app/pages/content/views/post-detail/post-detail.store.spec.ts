@@ -35,7 +35,7 @@ function makeItem(partial: Partial<ContentItem> = {}): ContentItem {
     platform: 'instagram',
     contentType: 'reel',
     keyMessage: 'The one thing the audience should remember.',
-    owner: 'tm-amelia',
+    owner: 'user-sarah',
     cta: { type: 'learn-more', text: 'Read more' },
     createdAt: now,
     updatedAt: now,

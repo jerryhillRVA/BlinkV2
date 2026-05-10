@@ -164,9 +164,9 @@ describe('BriefStepComponent — Ownership & Timeline', () => {
   it('Owner select binds to ContentItem.owner', () => {
     const { fixture, store } = setup();
     const select = fixture.nativeElement.querySelector('.brief-select') as HTMLSelectElement;
-    select.value = 'tm-amelia';
+    select.value = 'user-sarah';
     select.dispatchEvent(new Event('change'));
-    expect(store.item()?.owner).toBe('tm-amelia');
+    expect(store.item()?.owner).toBe('user-sarah');
   });
 
   it('past Due Date triggers the warning copy', () => {
@@ -184,14 +184,16 @@ describe('BriefStepComponent — Ownership & Timeline', () => {
     expect(fixture.nativeElement.querySelector('.publishing-toggle')).toBeNull();
   });
 
-  it('Required-to-approve list under the toggle includes Owner / CTA type / Key message when missing', () => {
+  it('Required-to-approve list under the toggle (no title header) includes Owner / CTA type / Key message when missing', () => {
     const { fixture } = setup(
       makeItem({ owner: null as never, keyMessage: undefined }),
     );
     const required = fixture.nativeElement.querySelector('.approve-required') as HTMLElement;
     expect(required).not.toBeNull();
+    // Prototype parity — no "Required to approve:" header above the list.
+    expect(fixture.nativeElement.textContent).not.toContain('Required to approve');
     const items = Array.from(
-      required.querySelectorAll('.approve-required-list li') as NodeListOf<HTMLElement>,
+      required.querySelectorAll('li') as NodeListOf<HTMLElement>,
     ).map((el) => el.textContent?.trim() ?? '');
     expect(items.some((t) => t.includes('Owner is required'))).toBe(true);
     expect(items.some((t) => t.includes('CTA type is required'))).toBe(true);
@@ -220,7 +222,7 @@ describe('BriefStepComponent — CTA Type', () => {
 describe('BriefStepComponent — Brief Status', () => {
   it('toggling Approve writes briefApproved, briefApprovedAt, briefApprovedBy when canApprove is true', () => {
     const { fixture, store } = setup(
-      makeItem({ owner: 'tm-amelia', cta: { type: 'learn-more', text: 'Read more' } }),
+      makeItem({ owner: 'user-sarah', cta: { type: 'learn-more', text: 'Read more' } }),
     );
     fixture.detectChanges();
     const toggle = fixture.nativeElement.querySelector(

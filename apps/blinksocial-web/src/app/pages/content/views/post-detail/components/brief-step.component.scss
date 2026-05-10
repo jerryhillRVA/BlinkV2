@@ -427,29 +427,15 @@
 }
 
 // Required-fields summary that appears below the toggle when canApprove
-// is false. Lists each missing required field by label, in red.
+// is false. Lists each missing required field by label with a Lucide
+// AlertTriangle icon, in red. No header — matches the prototype.
 .approve-required {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.approve-required-title {
-  margin: 0;
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  color: #b91c1c;
-}
-
-.approve-required-list {
   margin: 0;
   padding: 0;
   list-style: none;
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 4px;
 
   li {
     display: inline-flex;
