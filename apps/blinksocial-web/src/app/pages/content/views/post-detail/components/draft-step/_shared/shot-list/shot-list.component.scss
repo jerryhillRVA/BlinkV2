@@ -50,19 +50,24 @@
   gap: 6px;
   padding: 4px 10px;
   background: #fff;
-  border: 1px solid var(--blink-outline-variant);
+  // Border + text are tuned to match the prototype's "Attach file"
+  // button exactly. The previous values used the design-token
+  // outline-variant (#f3f4f6) + on-surface-medium (#666) which were
+  // both noticeably lighter than the prototype's gray-200/gray-600.
+  border: 1px solid #e5e7eb; // gray-200
   border-radius: 8px;
   font-size: var(--blink-label-small);
   font-weight: 600;
-  color: var(--blink-on-surface-medium);
+  color: #4b5563; // gray-600
   cursor: pointer;
-  transition: background-color 120ms ease, border-color 120ms ease;
+  transition: background-color 120ms ease, border-color 120ms ease, color 120ms ease;
   line-height: 1.2;
   white-space: nowrap;
 
   &:hover:not(:disabled):not(.is-disabled) {
     background: #f9fafb;
-    border-color: #d4d4d8;
+    border-color: #d4d4d8; // gray-300
+    color: #1f2937; // gray-800
   }
 
   &:focus-within {
@@ -81,10 +86,14 @@
     opacity: 0.6;
   }
 
+  // Per-shot "Attach file" variant — slightly tighter padding and a
+  // more square border-radius (rounded-md / 6px) to match the
+  // prototype's per-shot Attach file button.
   &--sm {
     padding: 2px 8px;
     font-size: 9px;
     gap: 4px;
+    border-radius: 6px;
   }
 }
 
