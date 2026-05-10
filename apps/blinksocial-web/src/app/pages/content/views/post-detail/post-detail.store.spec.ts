@@ -595,3 +595,279 @@ describe('PostDetailStore — menu actions', () => {
     });
   });
 });
+
+describe('PostDetailStore — production.draft (#114)', () => {
+  function makeApprovedItem(partial: Partial<ContentItem> = {}): ContentItem {
+    return makeItem({ briefApproved: true, ...partial });
+  }
+
+  it('all draft slots default to empty objects', () => {
+    const { store } = setup(makeApprovedItem());
+    expect(store.draft()).toBeUndefined();
+    expect(store.videoDraft()).toEqual({});
+    expect(store.videoLongDraft()).toEqual({});
+    expect(store.imageSingleDraft()).toEqual({});
+    expect(store.carouselDraft()).toEqual({});
+    expect(store.textDraft()).toEqual({});
+  });
+
+  describe('write-lock — drafting requires briefApproved=true', () => {
+    it('persistVideoDraft is a no-op when briefApproved=false', () => {
+      const { store } = setup(makeItem({ briefApproved: false }));
+      store.setVideoHook('Locked out');
+      expect(store.videoDraft().hook).toBeUndefined();
+    });
+
+    it('persistVideoDraft persists when briefApproved=true', () => {
+      const { store } = setup(makeApprovedItem());
+      store.setVideoHook('Open me');
+      expect(store.videoDraft().hook).toBe('Open me');
+    });
+  });
+
+  describe('VIDEO setters', () => {
+    it('all video setters route to videoDraft', () => {
+      const { store } = setup(makeApprovedItem());
+      store.setVideoHook('hook');
+      store.setVideoBody('body');
+      store.setVideoCta('cta');
+      store.setVideoHookBank(['a', 'b']);
+      store.setVideoTargetDuration('60s');
+      store.setVideoBRollNotes('b-roll');
+      store.setVideoVoiceoverNotes('vo');
+      store.setVideoShotList([
+        { id: 's1', type: 'Shot', description: 'd', duration: '5s' },
+      ]);
+      const v = store.videoDraft();
+      expect(v).toEqual({
+        hook: 'hook',
+        body: 'body',
+        cta: 'cta',
+        hookBank: ['a', 'b'],
+        targetDuration: '60s',
+        bRollNotes: 'b-roll',
+        voiceoverNotes: 'vo',
+        shotList: [{ id: 's1', type: 'Shot', description: 'd', duration: '5s' }],
+      });
+    });
+  });
+
+  describe('VIDEO_LONG setters', () => {
+    it('all videoLong setters route to videoLongDraft', () => {
+      const { store } = setup(makeApprovedItem());
+      store.setVideoLongHook('hook');
+      store.setVideoLongSequenceBlocks([
+        { id: 'b1', type: 'Hook', description: 'open', duration: '10s' },
+      ]);
+      store.setVideoLongTargetDuration('10m');
+      store.setVideoLongVoiceoverNotes('vo');
+      const v = store.videoLongDraft();
+      expect(v.hook).toBe('hook');
+      expect(v.sequenceBlocks).toHaveLength(1);
+      expect(v.targetDuration).toBe('10m');
+      expect(v.voiceoverNotes).toBe('vo');
+    });
+  });
+
+  describe('IMAGE_SINGLE setters', () => {
+    it('all imageSingle setters route to imageSingleDraft', () => {
+      const { store } = setup(makeApprovedItem());
+      store.setImageSingleHook('hook');
+      store.setImageSingleCreativeDirectionNotes('notes');
+      store.setImageSingleImageRef('img.png');
+      store.setImageSingleAltText('alt');
+      store.setImageSingleHashtags(['#a', '#b']);
+      const v = store.imageSingleDraft();
+      expect(v).toEqual({
+        hook: 'hook',
+        creativeDirectionNotes: 'notes',
+        imageRef: 'img.png',
+        altText: 'alt',
+        hashtags: ['#a', '#b'],
+      });
+    });
+  });
+
+  describe('CAROUSEL setters', () => {
+    it('all carousel setters route to carouselDraft', () => {
+      const { store } = setup(makeApprovedItem());
+      store.setCarouselHook('hook');
+      store.setCarouselSlides([
+        { id: 's1', headline: 'h', body: 'b' },
+        { id: 's2', headline: 'h2', body: 'b2' },
+      ]);
+      store.setCarouselHashtags(['#x']);
+      const v = store.carouselDraft();
+      expect(v.hook).toBe('hook');
+      expect(v.slides).toHaveLength(2);
+      expect(v.hashtags).toEqual(['#x']);
+    });
+  });
+
+  describe('TEXT setters', () => {
+    it('all text setters route to textDraft', () => {
+      const { store } = setup(makeApprovedItem());
+      store.setTextCaption('caption');
+      store.setTextImageRef('img.png');
+      store.setTextAltText('alt');
+      store.setTextHashtags(['#z']);
+      const v = store.textDraft();
+      expect(v).toEqual({
+        caption: 'caption',
+        imageRef: 'img.png',
+        altText: 'alt',
+        hashtags: ['#z'],
+      });
+    });
+  });
+
+  describe('setDraftMode', () => {
+    it('persists the canonical mode', () => {
+      const { store } = setup(makeApprovedItem());
+      store.setDraftMode('VIDEO');
+      expect(store.draft()?.mode).toBe('VIDEO');
+    });
+
+    it('is a no-op when briefApproved=false', () => {
+      const { store } = setup(makeItem({ briefApproved: false }));
+      store.setDraftMode('VIDEO');
+      expect(store.draft()).toBeUndefined();
+    });
+
+    it('is a no-op when mode is unchanged', () => {
+      const seeded = makeApprovedItem({
+        production: {
+          draft: { mode: 'VIDEO', video: { hook: 'kept' } },
+        },
+      });
+      const { store } = setup(seeded);
+      const before = store.item()?.updatedAt;
+      store.setDraftMode('VIDEO');
+      // hook is preserved (no rewrite)
+      expect(store.videoDraft().hook).toBe('kept');
+      expect(store.item()?.updatedAt).toBe(before);
+    });
+  });
+
+  describe('per-mode validation (draftErrors)', () => {
+    it('VIDEO: requires hook + ≥ 1 shot', () => {
+      const { store } = setup(makeApprovedItem());
+      store.setDraftMode('VIDEO');
+      expect(store.draftErrors().map((e) => e.field)).toEqual([
+        'hook',
+        'shotList',
+      ]);
+      store.setVideoHook('h');
+      expect(store.draftErrors().map((e) => e.field)).toEqual(['shotList']);
+      store.setVideoShotList([
+        { id: 's1', type: 'Shot', description: 'd', duration: '5s' },
+      ]);
+      expect(store.draftErrors()).toEqual([]);
+      expect(store.canContinueFromDraft()).toBe(true);
+    });
+
+    it('VIDEO_LONG: requires ≥ 1 sequence block with non-empty description', () => {
+      const { store } = setup(makeApprovedItem());
+      store.setDraftMode('VIDEO_LONG');
+      expect(store.draftErrors().map((e) => e.field)).toEqual([
+        'sequenceBlocks',
+      ]);
+      store.setVideoLongSequenceBlocks([
+        { id: 'b1', type: 'Hook', description: '', duration: '' },
+      ]);
+      expect(store.draftErrors().map((e) => e.field)).toEqual([
+        'sequenceBlocks',
+      ]);
+      store.setVideoLongSequenceBlocks([
+        { id: 'b1', type: 'Hook', description: 'open', duration: '' },
+      ]);
+      expect(store.draftErrors()).toEqual([]);
+    });
+
+    it('IMAGE_SINGLE: requires hook + image ref', () => {
+      const { store } = setup(makeApprovedItem());
+      store.setDraftMode('IMAGE_SINGLE');
+      expect(store.draftErrors().map((e) => e.field)).toEqual([
+        'hook',
+        'imageRef',
+      ]);
+      store.setImageSingleHook('h');
+      store.setImageSingleImageRef('img.png');
+      expect(store.draftErrors()).toEqual([]);
+    });
+
+    it('CAROUSEL: requires hook + ≥ 2 slides with headlines', () => {
+      const { store } = setup(makeApprovedItem());
+      store.setDraftMode('CAROUSEL');
+      expect(store.draftErrors().map((e) => e.field)).toEqual([
+        'hook',
+        'slides',
+      ]);
+      store.setCarouselHook('h');
+      store.setCarouselSlides([
+        { id: 's1', headline: 'a', body: '' },
+      ]);
+      expect(store.draftErrors().map((e) => e.field)).toEqual(['slides']);
+      store.setCarouselSlides([
+        { id: 's1', headline: 'a', body: '' },
+        { id: 's2', headline: 'b', body: '' },
+      ]);
+      expect(store.draftErrors()).toEqual([]);
+    });
+
+    it('TEXT: requires caption', () => {
+      const { store } = setup(makeApprovedItem());
+      store.setDraftMode('TEXT');
+      expect(store.draftErrors().map((e) => e.field)).toEqual(['caption']);
+      store.setTextCaption('a caption');
+      expect(store.draftErrors()).toEqual([]);
+    });
+
+    it('unsupported mode (DOCUMENT) returns "not supported" error', () => {
+      const { store } = setup(makeApprovedItem());
+      store.setDraftMode('DOCUMENT');
+      expect(store.draftErrors().map((e) => e.field)).toEqual(['mode']);
+    });
+  });
+
+  describe('errors() — step-aware routing', () => {
+    it('returns brief errors when activeStep=brief', () => {
+      const item = makeItem({
+        keyMessage: '',
+        owner: null,
+        cta: undefined,
+      });
+      const { store } = setup(item);
+      store.setActiveStep('brief');
+      expect(store.errors().map((e) => e.field)).toEqual([
+        'keyMessage',
+        'owner',
+        'ctaType',
+      ]);
+    });
+
+    it('returns draft errors when activeStep=draft', () => {
+      const item = makeApprovedItem({
+        keyMessage: 'set',
+        owner: 'user-sarah',
+        cta: { type: 'learn-more', text: 'go' },
+      });
+      const { store } = setup(item);
+      store.setDraftMode('VIDEO');
+      store.setActiveStep('draft');
+      expect(store.errors().map((e) => e.field)).toEqual([
+        'hook',
+        'shotList',
+      ]);
+    });
+
+    it('canApprove gates only on briefErrors — drafting cannot re-disable approval', () => {
+      const { store } = setup(makeApprovedItem());
+      store.setDraftMode('VIDEO');
+      // Draft is incomplete, but canApprove (a brief-side concept) should not
+      // be blocked by it.
+      expect(store.draftErrors().length).toBeGreaterThan(0);
+      expect(store.canApprove()).toBe(true);
+    });
+  });
+});

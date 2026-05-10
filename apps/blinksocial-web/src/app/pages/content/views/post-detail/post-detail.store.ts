@@ -15,8 +15,17 @@ import type {
   TonePreset,
 } from '../../content.types';
 import type {
+  DraftCarouselSlideContract,
+  DraftSequenceBlockContract,
+  DraftShotItemContract,
   PrimaryCtaContract,
   ProductionBriefContract,
+  ProductionDraftCarouselContract,
+  ProductionDraftContract,
+  ProductionDraftImageSingleContract,
+  ProductionDraftTextContract,
+  ProductionDraftVideoContract,
+  ProductionDraftVideoLongContract,
   PublishingModeContract,
 } from '@blinksocial/contracts';
 import { generateId, toggleArrayItem } from '../../content.utils';
@@ -224,6 +233,108 @@ export class PostDetailStore {
     });
   }
 
+  // ── draft sub-field setters (production.draft) ─────────────────────
+  readonly draft = computed<ProductionDraftContract | undefined>(
+    () => this.item()?.production?.draft,
+  );
+  readonly videoDraft = computed<ProductionDraftVideoContract>(
+    () => this.draft()?.video ?? {},
+  );
+  readonly videoLongDraft = computed<ProductionDraftVideoLongContract>(
+    () => this.draft()?.videoLong ?? {},
+  );
+  readonly imageSingleDraft = computed<ProductionDraftImageSingleContract>(
+    () => this.draft()?.imageSingle ?? {},
+  );
+  readonly carouselDraft = computed<ProductionDraftCarouselContract>(
+    () => this.draft()?.carousel ?? {},
+  );
+  readonly textDraft = computed<ProductionDraftTextContract>(
+    () => this.draft()?.text ?? {},
+  );
+
+  // VIDEO setters
+  setVideoHook(v: string): void {
+    this.persistVideoDraft({ hook: v });
+  }
+  setVideoBody(v: string): void {
+    this.persistVideoDraft({ body: v });
+  }
+  setVideoCta(v: string): void {
+    this.persistVideoDraft({ cta: v });
+  }
+  setVideoHookBank(v: string[]): void {
+    this.persistVideoDraft({ hookBank: v });
+  }
+  setVideoTargetDuration(v: string): void {
+    this.persistVideoDraft({ targetDuration: v });
+  }
+  setVideoBRollNotes(v: string): void {
+    this.persistVideoDraft({ bRollNotes: v });
+  }
+  setVideoVoiceoverNotes(v: string): void {
+    this.persistVideoDraft({ voiceoverNotes: v });
+  }
+  setVideoShotList(v: DraftShotItemContract[]): void {
+    this.persistVideoDraft({ shotList: v });
+  }
+
+  // VIDEO_LONG setters
+  setVideoLongHook(v: string): void {
+    this.persistVideoLongDraft({ hook: v });
+  }
+  setVideoLongSequenceBlocks(v: DraftSequenceBlockContract[]): void {
+    this.persistVideoLongDraft({ sequenceBlocks: v });
+  }
+  setVideoLongTargetDuration(v: string): void {
+    this.persistVideoLongDraft({ targetDuration: v });
+  }
+  setVideoLongVoiceoverNotes(v: string): void {
+    this.persistVideoLongDraft({ voiceoverNotes: v });
+  }
+
+  // IMAGE_SINGLE setters
+  setImageSingleHook(v: string): void {
+    this.persistImageSingleDraft({ hook: v });
+  }
+  setImageSingleCreativeDirectionNotes(v: string): void {
+    this.persistImageSingleDraft({ creativeDirectionNotes: v });
+  }
+  setImageSingleImageRef(v: string): void {
+    this.persistImageSingleDraft({ imageRef: v });
+  }
+  setImageSingleAltText(v: string): void {
+    this.persistImageSingleDraft({ altText: v });
+  }
+  setImageSingleHashtags(v: string[]): void {
+    this.persistImageSingleDraft({ hashtags: v });
+  }
+
+  // CAROUSEL setters
+  setCarouselHook(v: string): void {
+    this.persistCarouselDraft({ hook: v });
+  }
+  setCarouselSlides(v: DraftCarouselSlideContract[]): void {
+    this.persistCarouselDraft({ slides: v });
+  }
+  setCarouselHashtags(v: string[]): void {
+    this.persistCarouselDraft({ hashtags: v });
+  }
+
+  // TEXT setters
+  setTextCaption(v: string): void {
+    this.persistTextDraft({ caption: v });
+  }
+  setTextImageRef(v: string): void {
+    this.persistTextDraft({ imageRef: v });
+  }
+  setTextAltText(v: string): void {
+    this.persistTextDraft({ altText: v });
+  }
+  setTextHashtags(v: string[]): void {
+    this.persistTextDraft({ hashtags: v });
+  }
+
   // ── menu actions ────────────────────────────────────────────────────
   archive(): void {
     const item = this.item();
@@ -322,7 +433,7 @@ export class PostDetailStore {
   // Pillars / Audience are all set during the concept stage and locked here,
   // so they don't belong in the brief's Required-to-approve list. Mirrors
   // the prototype's BriefBuilder errors at lines 453-458.
-  readonly errors = computed<BriefValidationIssue[]>(() => {
+  readonly briefErrors = computed<BriefValidationIssue[]>(() => {
     const out: BriefValidationIssue[] = [];
     if (!this.keyMessageValid())
       out.push({ field: 'keyMessage', label: 'Key message is required' });
@@ -331,6 +442,15 @@ export class PostDetailStore {
     if (!this.ctaTypeValid())
       out.push({ field: 'ctaType', label: 'CTA type is required' });
     return out;
+  });
+
+  // Step-aware errors: callers ask for "the errors I should display right
+  // now," and the answer depends on which step is active. Brief consumers
+  // (e.g. the approve toggle) keep using briefErrors directly so they
+  // don't get polluted by draft state.
+  readonly errors = computed<BriefValidationIssue[]>(() => {
+    if (this.activeStep() === 'draft') return this.draftErrors();
+    return this.briefErrors();
   });
 
   readonly warnings = computed<BriefValidationIssue[]>(() => {
@@ -367,7 +487,77 @@ export class PostDetailStore {
     return done;
   });
 
-  readonly canApprove = computed(() => this.errors().length === 0);
+  // canApprove gates only on the brief's errors. Drafting can never
+  // accidentally re-disable a previously-approved brief.
+  readonly canApprove = computed(() => this.briefErrors().length === 0);
+
+  // ── draft validation (per mode) ─────────────────────────────────────
+  readonly draftErrors = computed<BriefValidationIssue[]>(() => {
+    return this.computeDraftErrorsForMode(this.draft()?.mode);
+  });
+
+  computeDraftErrorsForMode(
+    mode: ProductionDraftContract['mode'] | undefined,
+  ): BriefValidationIssue[] {
+    const out: BriefValidationIssue[] = [];
+    switch (mode) {
+      case 'VIDEO': {
+        const v = this.videoDraft();
+        if (!v.hook?.trim().length)
+          out.push({ field: 'hook', label: 'Hook is required' });
+        if ((v.shotList?.length ?? 0) < 1)
+          out.push({ field: 'shotList', label: 'At least one shot is required' });
+        return out;
+      }
+      case 'VIDEO_LONG': {
+        const v = this.videoLongDraft();
+        if (!v.sequenceBlocks?.some((b) => b.description.trim().length > 0))
+          out.push({
+            field: 'sequenceBlocks',
+            label: 'At least one sequence block with a description is required',
+          });
+        return out;
+      }
+      case 'IMAGE_SINGLE': {
+        const v = this.imageSingleDraft();
+        if (!v.hook?.trim().length)
+          out.push({ field: 'hook', label: 'Hook is required' });
+        if (!v.imageRef?.trim().length)
+          out.push({ field: 'imageRef', label: 'An image is required' });
+        return out;
+      }
+      case 'CAROUSEL': {
+        const v = this.carouselDraft();
+        if (!v.hook?.trim().length)
+          out.push({ field: 'hook', label: 'Hook is required' });
+        const filled = (v.slides ?? []).filter(
+          (s) => s.headline.trim().length > 0,
+        );
+        if (filled.length < 2)
+          out.push({
+            field: 'slides',
+            label: 'At least two slides with headlines are required',
+          });
+        return out;
+      }
+      case 'TEXT': {
+        const v = this.textDraft();
+        if (!v.caption?.trim().length)
+          out.push({ field: 'caption', label: 'Caption is required' });
+        return out;
+      }
+      default:
+        out.push({
+          field: 'mode',
+          label: 'This builder is not yet supported',
+        });
+        return out;
+    }
+  }
+
+  readonly canContinueFromDraft = computed(
+    () => this.draftErrors().length === 0,
+  );
 
   // ── internal ────────────────────────────────────────────────────────
   private persist(patch: Partial<ContentItem>): void {
@@ -394,6 +584,71 @@ export class PostDetailStore {
     const next: ContentItem = {
       ...item,
       production: { ...item.production, brief: nextBrief },
+      updatedAt: new Date().toISOString(),
+    };
+    this.state.saveItem(next);
+  }
+
+  // Patch one mode slot on production.draft. Drafting is GATED by
+  // briefApproved being true (you can't draft until the brief has
+  // been approved); after a brief unlock, draft state is preserved
+  // but cannot be edited until the brief is re-approved.
+  private persistDraftSlot<
+    K extends Exclude<keyof ProductionDraftContract, 'mode'>,
+  >(
+    slot: K,
+    patch: Partial<NonNullable<ProductionDraftContract[K]>>,
+  ): void {
+    const item = this.item();
+    if (!item) return;
+    if (!item.briefApproved) return;
+    const draft: ProductionDraftContract = item.production?.draft ?? {};
+    const current = (draft[slot] ?? {}) as Record<string, unknown>;
+    const merged = { ...current, ...patch } as unknown as ProductionDraftContract[K];
+    const nextDraft: ProductionDraftContract = { ...draft, [slot]: merged };
+    const next: ContentItem = {
+      ...item,
+      production: { ...item.production, draft: nextDraft },
+      updatedAt: new Date().toISOString(),
+    };
+    this.state.saveItem(next);
+  }
+
+  private persistVideoDraft(patch: Partial<ProductionDraftVideoContract>): void {
+    this.persistDraftSlot('video', patch);
+  }
+  private persistVideoLongDraft(
+    patch: Partial<ProductionDraftVideoLongContract>,
+  ): void {
+    this.persistDraftSlot('videoLong', patch);
+  }
+  private persistImageSingleDraft(
+    patch: Partial<ProductionDraftImageSingleContract>,
+  ): void {
+    this.persistDraftSlot('imageSingle', patch);
+  }
+  private persistCarouselDraft(
+    patch: Partial<ProductionDraftCarouselContract>,
+  ): void {
+    this.persistDraftSlot('carousel', patch);
+  }
+  private persistTextDraft(patch: Partial<ProductionDraftTextContract>): void {
+    this.persistDraftSlot('text', patch);
+  }
+
+  // Set the canonical draft mode at brief-approval time. Callers should
+  // invoke this when transitioning Brief → Draft so a later platform/contentType
+  // change can't silently retarget the draft.
+  setDraftMode(mode: ProductionDraftContract['mode']): void {
+    const item = this.item();
+    if (!item) return;
+    if (!item.briefApproved) return;
+    const draft: ProductionDraftContract = item.production?.draft ?? {};
+    if (draft.mode === mode) return;
+    const nextDraft: ProductionDraftContract = { ...draft, mode };
+    const next: ContentItem = {
+      ...item,
+      production: { ...item.production, draft: nextDraft },
       updatedAt: new Date().toISOString(),
     };
     this.state.saveItem(next);
