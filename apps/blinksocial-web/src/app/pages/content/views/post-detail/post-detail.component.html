@@ -119,5 +119,12 @@
     </div>
 
     <app-step-action-bar (backToList)="onBack()" />
+    <!-- Sentinel for the step-action-bar's pinned/floating detection.
+         Lives OUTSIDE the bar's sticky-positioned host so it stays at
+         its natural position in .post-detail's flex flow. When the
+         user scrolls until this sentinel enters the viewport, the bar
+         has reached its natural position above the footer and the bar
+         transitions to its "floating card" look. -->
+    <div class="step-action-bar-sentinel" aria-hidden="true"></div>
   </div>
 }

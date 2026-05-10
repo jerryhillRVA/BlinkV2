@@ -1,4 +1,17 @@
-import { Component, EventEmitter, Output, computed, inject } from '@angular/core';
+import {
+  AfterViewInit,
+  Component,
+  ElementRef,
+  EventEmitter,
+  HostBinding,
+  OnDestroy,
+  Output,
+  PLATFORM_ID,
+  computed,
+  inject,
+  signal,
+} from '@angular/core';
+import { isPlatformBrowser } from '@angular/common';
 import { PostDetailStore } from '../../post-detail.store';
 import type { ProductionStep } from '../../post-detail.types';
 import { IconComponent } from '../../../../../../shared/icons/icon.component';
@@ -29,11 +42,30 @@ const STEP_LABEL: Record<ProductionStep, string> = {
   templateUrl: './step-action-bar.component.html',
   styleUrl: './step-action-bar.component.scss',
 })
-export class StepActionBarComponent {
+export class StepActionBarComponent implements AfterViewInit, OnDestroy {
   protected readonly store = inject(PostDetailStore);
+  private readonly platformId = inject(PLATFORM_ID);
+  private readonly hostRef = inject(ElementRef<HTMLElement>);
 
   /** Emitted when Back is clicked on the Brief step (no previous step). */
   @Output() backToList = new EventEmitter<void>();
+
+  /**
+   * The visual state of the bar, driven by an IntersectionObserver on a
+   * sentinel positioned just below the bar:
+   *   - 'pinned' — bar is sticky-stuck to viewport bottom (default).
+   *   - 'floating' — user has scrolled past the bar's natural position;
+   *     the bar now sits above the page footer like a card.
+   * CSS animates the visual differences between the two states.
+   */
+  protected readonly state = signal<'pinned' | 'floating'>('pinned');
+
+  @HostBinding('attr.data-state')
+  get hostStateAttr(): 'pinned' | 'floating' {
+    return this.state();
+  }
+
+  private observer?: IntersectionObserver;
 
   protected readonly activeStep = this.store.activeStep;
 
@@ -108,5 +140,39 @@ export class StepActionBarComponent {
     if (!this.continueEnabled()) return;
     const next = this.nextStep();
     if (next) this.store.advanceProductionStep(next);
+  }
+
+  // ── pinned / floating detection via IntersectionObserver ───────────────
+
+  ngAfterViewInit(): void {
+    // Skip on the server. SSR's first paint uses the default 'pinned'
+    // state which is correct for the typical landing (bar above-the-fold
+    // viewport bottom; pinned-look until the user scrolls).
+    if (!isPlatformBrowser(this.platformId)) return;
+    if (typeof IntersectionObserver === 'undefined') return;
+
+    // The sentinel is placed by post-detail.component as the next-element
+    // sibling of this host. Placing it outside the sticky-positioned host
+    // is mandatory: an absolutely-positioned sentinel INSIDE the host
+    // follows the sticky offset and never reflects the natural position.
+    const sentinel = this.hostRef.nativeElement.nextElementSibling;
+    if (!(sentinel instanceof HTMLElement)) return;
+
+    this.observer = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          // Sentinel sits just below the bar's natural position. When it
+          // enters the viewport, the user has scrolled past the bar's
+          // natural position — i.e., the bar has un-pinned.
+          this.state.set(entry.isIntersecting ? 'floating' : 'pinned');
+        }
+      },
+      { threshold: 0 },
+    );
+    this.observer.observe(sentinel);
+  }
+
+  ngOnDestroy(): void {
+    this.observer?.disconnect();
   }
 }

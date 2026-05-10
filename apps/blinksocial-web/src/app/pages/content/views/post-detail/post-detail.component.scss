@@ -8,6 +8,16 @@
   gap: 12px;
 }
 
+// 1px sentinel for app-step-action-bar's pinned/floating detection.
+// Placed AFTER the bar in flex flow so its natural position is just
+// below the bar — watched by the bar's IntersectionObserver.
+.step-action-bar-sentinel {
+  width: 1px;
+  height: 1px;
+  pointer-events: none;
+  flex-shrink: 0;
+}
+
 .post-body {
   display: block;
 }
