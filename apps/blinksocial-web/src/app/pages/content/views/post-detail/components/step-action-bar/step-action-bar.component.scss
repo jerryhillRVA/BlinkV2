@@ -38,20 +38,24 @@
   background: var(--blink-surface);
   border-top: 1px solid var(--blink-outline-variant);
   box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.04);
-  padding: 0;
 
+  // NOTE: do NOT animate the host's height (e.g. via padding). The host
+  // is the sticky element, and any height change shifts its natural
+  // position mid-animation, which makes sticky re-pin and re-unpin and
+  // looks janky. Visual breathing room when floating comes from the
+  // inner nav's box-shadow extending beyond its borders (no layout
+  // change); the inner nav's max-width animation is what creates the
+  // shape difference between states.
   transition:
     background-color 280ms cubic-bezier(0.4, 0, 0.2, 1),
     border-top-color 280ms cubic-bezier(0.4, 0, 0.2, 1),
-    box-shadow 280ms cubic-bezier(0.4, 0, 0.2, 1),
-    padding 280ms cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow 280ms cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 :host([data-state='floating']) {
   background: transparent;
   border-top-color: transparent;
   box-shadow: none;
-  padding: 4px 0 12px;
 }
 
 .step-action-bar {

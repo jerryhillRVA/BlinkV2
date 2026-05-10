@@ -11,11 +11,21 @@
 // 1px sentinel for app-step-action-bar's pinned/floating detection.
 // Placed AFTER the bar in flex flow so its natural position is just
 // below the bar — watched by the bar's IntersectionObserver.
+//
+// `margin-top: -12px` cancels the parent's flex `gap: 12px` so the
+// sentinel sits flush against the bar's bottom edge. Without this,
+// there's a 12px scroll range where the sticky-bottom threshold has
+// already crossed (bar at natural position) but the sentinel hasn't
+// entered the viewport yet — which causes a visible position JUMP
+// when scrolling back up: the state flips to 'pinned' first, then
+// sticky kicks in a few frames later and the bar snaps down to the
+// viewport bottom mid-animation.
 .step-action-bar-sentinel {
   width: 1px;
   height: 1px;
   pointer-events: none;
   flex-shrink: 0;
+  margin-top: -12px;
 }
 
 .post-body {
