@@ -68,14 +68,6 @@
   color: var(--blink-on-surface-strong);
 }
 
-.detail-saved {
-  font-size: var(--blink-label-small);
-  font-weight: 600;
-  color: var(--blink-on-surface-faint);
-  letter-spacing: 0.03em;
-  text-transform: uppercase;
-}
-
 .detail-actions {
   display: inline-flex;
   align-items: center;
@@ -137,9 +129,5 @@
 
   &:hover {
     background: var(--blink-surface-hover);
-  }
-
-  &.is-danger {
-    color: var(--blink-brand-primary);
   }
 }
