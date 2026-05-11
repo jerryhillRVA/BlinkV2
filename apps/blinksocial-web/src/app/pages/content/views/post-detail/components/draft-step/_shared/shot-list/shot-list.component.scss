@@ -90,9 +90,9 @@
   // more square border-radius (rounded-md / 6px) to match the
   // prototype's per-shot Attach file button.
   &--sm {
-    padding: 2px 8px;
-    font-size: 9px;
-    gap: 4px;
+    padding: 3px 10px;
+    font-size: 10px;
+    gap: 5px;
     border-radius: 6px;
   }
 }
@@ -179,14 +179,35 @@
   align-items: center;
 }
 
-// ── Per-shot asset sub-row ──────────────────────────────────────────
+// ── Per-shot asset zone (dropzone-style wrapper) ────────────────────
+//
+// Wraps the Attach-file button (or attached-asset chip) in a defined
+// region with its own border + padding. Matches the prototype's per-
+// shot asset slot:
+//
+//   - Empty: dashed gray-300 border on white. Reads as "this is a
+//     drop zone — drop or click to attach."
+//   - Attached: solid blue-200 border on blue-50. Reads as
+//     "something is here and lives in this slot."
 
-.shot-asset-row {
+.shot-asset-zone {
   display: flex;
   align-items: center;
   gap: 6px;
-  padding-top: 2px;
   flex-wrap: wrap;
+  padding: 8px;
+  border-radius: 6px;
+  transition: background-color 120ms ease, border-color 120ms ease;
+}
+
+.shot-asset-zone--empty {
+  background: #fff;
+  border: 1px dashed #d1d5db; // gray-300
+}
+
+.shot-asset-zone--attached {
+  background: #eff6ff; // blue-50
+  border: 1px solid #bfdbfe; // blue-200
 }
 
 // ── Empty state ──────────────────────────────────────────────────────────────

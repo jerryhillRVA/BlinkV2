@@ -117,7 +117,7 @@ describe('ShotListComponent', () => {
     fixture.componentInstance.shotsChange.subscribe((v) => events.push(v));
     const file = new File(['x'], 'first-shot.mp4', { type: 'video/mp4' });
     const input = fixture.nativeElement.querySelector(
-      '.shot-row .shot-asset-row input[type="file"]',
+      '.shot-row .shot-asset-zone input[type="file"]',
     ) as HTMLInputElement;
     Object.defineProperty(input, 'files', { value: [file] });
     input.dispatchEvent(new Event('change'));

@@ -150,8 +150,16 @@
             (input)="onDescriptionChange(shot.id, $event)"
           ></textarea>
 
-          <!-- Per-shot asset sub-row -->
-          <div class="shot-asset-row">
+          <!-- Per-shot asset sub-row, wrapped in a dropzone-style
+               container: dashed border + soft padding when empty
+               (matches the prototype's `border-dashed border-gray-300`
+               attach-zone), solid blue-tinted background when
+               attached. -->
+          <div
+            class="shot-asset-zone"
+            [class.shot-asset-zone--empty]="!shot.assetRef"
+            [class.shot-asset-zone--attached]="!!shot.assetRef"
+          >
             @if (!shot.assetRef) {
               <label class="ghost-btn ghost-btn--sm" [class.is-disabled]="disabled">
                 <input
@@ -160,7 +168,7 @@
                   [disabled]="disabled"
                   (change)="onShotFile(shot.id, $event)"
                 />
-                <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                   <path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l8.57-8.57A4 4 0 1 1 17.99 8.8L9.41 17.37a2 2 0 0 1-2.83-2.83l8.49-8.48"/>
                 </svg>
                 <span>Attach file</span>
