@@ -165,14 +165,6 @@
                 </svg>
                 <span>Attach file</span>
               </label>
-              <app-ai-button
-                label="AI Create Asset"
-                loadingLabel="Creating…"
-                variant="compact"
-                [loading]="isShotAiLoading(shot.id)"
-                [disabled]="disabled"
-                (activate)="onShotAiCreate(shot.id)"
-              />
             } @else {
               <div class="asset-chip asset-chip--sm">
                 <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">

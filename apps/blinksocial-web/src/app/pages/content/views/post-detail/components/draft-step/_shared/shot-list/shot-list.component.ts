@@ -44,7 +44,6 @@ export class ShotListComponent {
 
   protected readonly shotTypes = SHOT_TYPES;
   protected readonly aiLoading = signal(false);
-  protected readonly shotAiLoading = signal<Record<string, boolean>>({});
 
   protected get countLabel(): string {
     const n = this.shots.length;
@@ -148,21 +147,8 @@ export class ShotListComponent {
     this.patch(id, { assetRef: file.name });
   }
 
-  protected onShotAiCreate(id: string): void {
-    if (this.disabled) return;
-    this.shotAiLoading.update((m) => ({ ...m, [id]: true }));
-    setTimeout(() => {
-      this.patch(id, { assetRef: `ai-generated-${id}.png` });
-      this.shotAiLoading.update((m) => ({ ...m, [id]: false }));
-    }, 600);
-  }
-
   protected onShotAssetClear(id: string): void {
     if (this.disabled) return;
     this.patch(id, { assetRef: undefined });
-  }
-
-  protected isShotAiLoading(id: string): boolean {
-    return !!this.shotAiLoading()[id];
   }
 }

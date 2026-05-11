@@ -125,18 +125,6 @@ describe('ShotListComponent', () => {
     expect(events[0][0].assetRef).toBe('first-shot.mp4');
   });
 
-  it('Per-shot AI Create Asset eventually sets assetRef to a stub filename', () => {
-    vi.useFakeTimers();
-    const fixture = setup({ shots: SHOTS });
-    const events: DraftShotItemContract[][] = [];
-    fixture.componentInstance.shotsChange.subscribe((v) => events.push(v));
-    fixture.componentInstance['onShotAiCreate']('s1');
-    vi.advanceTimersByTime(700);
-    expect(events).toHaveLength(1);
-    expect(events[0][0].assetRef).toContain('ai-generated');
-    vi.useRealTimers();
-  });
-
   it('Remove emits the array minus that shot', () => {
     const fixture = setup({ shots: SHOTS });
     const events: DraftShotItemContract[][] = [];
