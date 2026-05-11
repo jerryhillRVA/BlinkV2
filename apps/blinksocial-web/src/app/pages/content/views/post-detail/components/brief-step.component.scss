@@ -135,7 +135,13 @@
 // box and effectively pulls the indicator inward. The empty padding area on
 // the right is still part of the input — clicking it focuses the field.
 .brief-date-input {
-  padding-right: 65%;
+  // Lock the content area to a fixed pixel width so the picker indicator
+  // sits at a constant distance from the date text regardless of how wide
+  // the field grows. A percentage padding-right would shrink at narrow
+  // viewports and let the indicator overlap "mm/dd/yyyy"; this calc keeps
+  // ~130px of content area (date text + indicator + breathing gap) at any
+  // field width and pushes the empty space onto the right padding.
+  padding-right: calc(100% - 140px);
   font-size: var(--blink-body-medium); // 14px — matches prototype
 }
 
