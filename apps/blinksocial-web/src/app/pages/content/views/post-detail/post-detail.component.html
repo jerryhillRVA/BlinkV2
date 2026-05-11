@@ -13,7 +13,7 @@
 
     <app-production-steps-bar
       [activeStep]="store.activeStep()"
-      [briefApproved]="!!item.briefApproved"
+      [unlockedThroughIndex]="store.unlockedThroughIndex()"
       (stepChange)="store.setActiveStep($event)"
     />
 

@@ -12,7 +12,14 @@ import {
 })
 export class ProductionStepsBarComponent {
   readonly activeStep = input.required<ProductionStep>();
-  readonly briefApproved = input(false);
+  /**
+   * Highest step-index whose preceding gate has been satisfied. Drives both
+   * `isClickable` (i <= unlockedThroughIndex) and `isPast` (i <
+   * unlockedThroughIndex). Computed by the store from briefApproved +
+   * canContinueFromDraft + canContinueFromPackaging — see
+   * `PostDetailStore.unlockedThroughIndex` for the source of truth.
+   */
+  readonly unlockedThroughIndex = input(0);
 
   @Output() stepChange = new EventEmitter<ProductionStep>();
 
@@ -36,12 +43,13 @@ export class ProductionStepsBarComponent {
   }
 
   protected isPast(index: number): boolean {
-    if (this.steps[index]?.id === 'brief') return this.briefApproved();
-    return index < this.activeIndex() && this.briefApproved();
+    return index < this.unlockedThroughIndex();
   }
 
   protected isClickable(index: number): boolean {
-    if (this.briefApproved()) return true;
-    return index <= this.activeIndex() + 1;
+    // Past + current-next-up are reachable. Active step always stays
+    // clickable so a user sitting on it after a gate regression (e.g.
+    // unlockBrief) isn't stranded.
+    return index <= this.unlockedThroughIndex() || this.isActive(this.steps[index]?.id);
   }
 }

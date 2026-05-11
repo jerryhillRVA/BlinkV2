@@ -979,4 +979,37 @@ describe('PostDetailStore — production.draft (#114)', () => {
       expect(store.canApprove()).toBe(true);
     });
   });
+
+  describe('unlockedThroughIndex — Model A gating chain', () => {
+    it('returns 0 when the brief is not approved (only Brief reachable)', () => {
+      const { store } = setup(makeItem({ briefApproved: false }));
+      expect(store.unlockedThroughIndex()).toBe(0);
+    });
+
+    it('returns 1 when briefApproved but draft is not yet valid (Brief + Draft reachable)', () => {
+      const { store } = setup(makeApprovedItem());
+      store.setDraftMode('VIDEO');
+      // No hook, no shots — draft is invalid.
+      expect(store.canContinueFromDraft()).toBe(false);
+      expect(store.unlockedThroughIndex()).toBe(1);
+    });
+
+    it('returns 2 when draft is valid (Packaging reachable; Approve & Schedule stays locked until packaging is built)', () => {
+      const { store } = setup(makeApprovedItem());
+      store.setDraftMode('VIDEO');
+      store.setVideoHook('Hook copy');
+      store.setVideoShotList([
+        { id: 's1', type: 'Shot', description: 'desc', duration: '5s' },
+      ]);
+      expect(store.canContinueFromDraft()).toBe(true);
+      expect(store.canContinueFromPackaging()).toBe(false);
+      expect(store.unlockedThroughIndex()).toBe(2);
+    });
+
+    it('packagingErrors flags the not-yet-implemented placeholder', () => {
+      const { store } = setup(makeApprovedItem());
+      expect(store.packagingErrors().map((e) => e.field)).toEqual(['packaging']);
+      expect(store.canContinueFromPackaging()).toBe(false);
+    });
+  });
 });

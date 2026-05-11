@@ -707,6 +707,41 @@ export class PostDetailStore {
     () => this.draftErrors().length === 0,
   );
 
+  // Packaging is not yet implemented — the step renders a placeholder.
+  // Until it has a real validation surface, its "ready to continue"
+  // predicate is always false, which keeps Approve & Schedule locked in
+  // the Model-A gating chain (briefApproved → canContinueFromDraft →
+  // canContinueFromPackaging). When we build Packaging, replace this
+  // stub with the real per-mode validation, mirroring draftErrors.
+  readonly packagingErrors = computed<BriefValidationIssue[]>(() => [
+    { field: 'packaging', label: 'Packaging step is not yet implemented' },
+  ]);
+
+  readonly canContinueFromPackaging = computed(
+    () => this.packagingErrors().length === 0,
+  );
+
+  /**
+   * Model A gating: a step's tab is clickable only if every prior step's
+   * "ready to continue" gate has been satisfied. This returns the highest
+   * index up to which the bar is unlocked.
+   *
+   *   0  → only Brief is reachable (brief not yet approved)
+   *   1  → Brief + Draft (brief approved, draft not yet valid)
+   *   2  → Brief + Draft + Packaging (draft valid, packaging not yet valid)
+   *   3  → all four steps reachable
+   *
+   * The bar reads this and uses `i <= unlockedThroughIndex()` to gate
+   * tab clicks. `isPast(i)` correspondingly means `unlockedThroughIndex() > i`
+   * (step i's gate has been satisfied).
+   */
+  readonly unlockedThroughIndex = computed<number>(() => {
+    if (!this.item()?.briefApproved) return 0;
+    if (!this.canContinueFromDraft()) return 1;
+    if (!this.canContinueFromPackaging()) return 2;
+    return 3;
+  });
+
   // ── internal ────────────────────────────────────────────────────────
   private persist(patch: Partial<ContentItem>): void {
     const item = this.item();
