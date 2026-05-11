@@ -135,7 +135,8 @@
 // box and effectively pulls the indicator inward. The empty padding area on
 // the right is still part of the input — clicking it focuses the field.
 .brief-date-input {
-  padding-right: 60%;
+  padding-right: 65%;
+  font-size: var(--blink-body-medium); // 14px — matches prototype
 }
 
 // Custom chevron — native <select> default leaves no breathing room on the
