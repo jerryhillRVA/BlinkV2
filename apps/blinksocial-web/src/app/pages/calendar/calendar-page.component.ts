@@ -53,6 +53,7 @@ const PLATFORM_LABELS: Record<PlatformContract, string> = {
   youtube: 'YouTube',
   facebook: 'Facebook',
   linkedin: 'LinkedIn',
+  x: 'X',
   tbd: 'TBD',
 };
 

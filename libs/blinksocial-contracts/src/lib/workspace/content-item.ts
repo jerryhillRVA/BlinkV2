@@ -19,6 +19,7 @@ export type PlatformContract =
   | 'youtube'
   | 'facebook'
   | 'linkedin'
+  | 'x'
   | 'tbd';
 
 export type ContentObjectiveContract =
@@ -55,7 +56,10 @@ export type ContentTypeContract =
   | 'ln-text-post'
   | 'ln-document'
   | 'ln-article'
-  | 'ln-video';
+  | 'ln-video'
+  | 'tweet'
+  | 'thread'
+  | 'quote';
 
 export type CtaTypeContract =
   | 'learn-more'
@@ -302,10 +306,116 @@ export interface ProductionVersionContract {
   savedAt: string;
 }
 
+// ── Production Packaging contracts (#116) ──────────────────────────
+//
+// The Packaging step's persistence payload. Lives alongside `brief` and
+// `draft` on ProductionContract. Sibling per-platform slots (not a
+// discriminated union — Angular templates handle DUs poorly; siblings
+// let each builder read its own typed slot directly via the store).
+// Only the slot matching the post's `item.platform` is populated;
+// others stay undefined. The optional `platform` field captures the
+// canonical platform at packaging-entry time as a defensive
+// cross-platform-migration guard (mirror of ProductionDraftContract.mode).
+
+export interface PackagingUtmContract {
+  source?: string;
+  medium?: string;
+  campaign?: string;
+  content?: string;
+  term?: string;
+}
+
+export interface PackagingAudioTrackContract {
+  trackId: string;
+  trackName: string;
+  artistName: string;
+  previewUrl?: string;
+  source: 'trending' | 'search' | 'custom';
+}
+
+export interface PackagingSlideOrderContract {
+  order: number[]; // indices into the draft's carousel.slides
+}
+
+export type PackagingVisibilityContract = 'public' | 'unlisted' | 'private';
+
+export interface PackagingPlatformControlsContract {
+  visibility?: PackagingVisibilityContract;
+  allowComments?: boolean;
+  allowDuetStitch?: boolean; // TikTok-only meaningfully, kept on common type
+  boostEnabled?: boolean;
+}
+
+export interface PackagingInstagramContract {
+  caption?: string;
+  hashtags?: string[];
+  link?: string;
+  utm?: PackagingUtmContract;
+  slideOrder?: PackagingSlideOrderContract;
+  audio?: PackagingAudioTrackContract;
+  platformControls?: PackagingPlatformControlsContract;
+}
+
+export interface PackagingTikTokContract {
+  caption?: string;
+  hashtags?: string[];
+  link?: string;
+  utm?: PackagingUtmContract;
+  audio?: PackagingAudioTrackContract;
+  platformControls?: PackagingPlatformControlsContract;
+}
+
+export interface PackagingYouTubeContract {
+  title?: string;       // required for VIDEO_LONG_HORIZONTAL
+  description?: string;
+  tags?: string[];      // keywords / SEO tags
+  categoryId?: string;  // YOUTUBE_CATEGORIES lookup key
+  thumbnailRef?: string;
+  platformControls?: PackagingPlatformControlsContract;
+}
+
+export interface PackagingLinkedInContract {
+  caption?: string;
+  hashtags?: string[];
+  link?: string;
+  utm?: PackagingUtmContract;
+  platformControls?: PackagingPlatformControlsContract;
+}
+
+export interface PackagingFacebookContract {
+  caption?: string;
+  hashtags?: string[];
+  link?: string;
+  utm?: PackagingUtmContract;
+  slideOrder?: PackagingSlideOrderContract;
+  audio?: PackagingAudioTrackContract;
+  platformControls?: PackagingPlatformControlsContract;
+}
+
+export interface PackagingXContract {
+  caption?: string;       // 280 char hard cap
+  hashtags?: string[];    // inline # convention, no bank
+  keywords?: string[];    // optional SEO/topic keywords
+  link?: string;
+  utm?: PackagingUtmContract;
+  platformControls?: PackagingPlatformControlsContract;
+}
+
+export interface ProductionPackagingContract {
+  platform?: PlatformContract;
+  instagram?: PackagingInstagramContract;
+  tiktok?: PackagingTikTokContract;
+  youtube?: PackagingYouTubeContract;
+  linkedin?: PackagingLinkedInContract;
+  facebook?: PackagingFacebookContract;
+  x?: PackagingXContract;
+}
+
 export interface ProductionContract {
   productionStep?: ProductionStepContract;
   brief?: ProductionBriefContract;
   draft?: ProductionDraftContract;
+  packaging?: ProductionPackagingContract;
   outputs?: Record<string, unknown>;
   sources?: ProductionSourceContract[];
   assets?: ProductionAssetContract[];
