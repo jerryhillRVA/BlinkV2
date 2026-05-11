@@ -169,9 +169,14 @@
     border-color: var(--blink-brand-primary);
     cursor: pointer;
 
+    // Darken on hover. --blink-brand-primary-hover-bg is a 5%-opacity coral
+    // wash designed for transparent-button hovers (it reads as near-white
+    // over a white surface) — wrong for a solid coral button. -active is
+    // the app-wide convention for solid coral buttons' hover-darken; see
+    // styles.scss .btn-primary, pipeline-view, voice-mission, etc.
     &:hover {
-      background: var(--blink-brand-primary-hover-bg);
-      border-color: var(--blink-brand-primary-hover-bg);
+      background: var(--blink-brand-primary-active);
+      border-color: var(--blink-brand-primary-active);
     }
   }
 
