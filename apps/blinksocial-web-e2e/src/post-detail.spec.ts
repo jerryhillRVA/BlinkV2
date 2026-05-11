@@ -152,15 +152,13 @@ test.describe('Production Brief (#112)', () => {
     await expect(page.locator('app-brief-step .status-approved-badge')).toHaveCount(0);
   });
 
-  test('TC-8: sidebar Content Concept card renders locked summary with Edit Concept link', async ({ page }) => {
+  test('TC-8: sidebar Content Concept card renders locked summary with NO Edit Concept link', async ({ page }) => {
+    // The Edit Concept link was removed by team decision — concept editing
+    // flows through the kebab menu's "Send back to Concept" instead.
     const card = page.locator('app-brief-content-concept .brief-content-concept-card').first();
     await expect(card).toBeVisible();
     await expect(card.locator('.card-locked')).toContainText(/locked/i);
-    const editLink = card.locator('.card-edit');
-    await expect(editLink).toBeVisible();
-    await editLink.click();
-    // Edit Concept routes to the parent concept-detail
-    await expect(page.locator('app-concept-detail')).toBeVisible();
+    await expect(card.locator('.card-edit')).toHaveCount(0);
   });
 });
 
@@ -256,7 +254,7 @@ test.describe('Production Draft (#114)', () => {
     await expect(page.locator('app-draft-step')).toBeVisible();
     // Fill the required fields, then click Continue to Packaging.
     await page.locator('app-video-builder textarea[aria-label="Hook"]').fill('A hook');
-    await page.locator('app-shot-list .asset-slot .ghost-btn').click();
+    await page.locator('app-shot-list .add-shot-row .ghost-btn').click();
     await page.locator('app-step-action-bar .continue-btn').click();
     await expect(page.locator('app-step-placeholder')).toBeVisible();
     // Reload — should land on Packaging directly (productionStep persisted).
@@ -291,7 +289,7 @@ test.describe('Production Draft (#114)', () => {
       .fill('Open with smile');
     await expect(continueBtn).toBeDisabled(); // shotList still empty
     // Add a shot via app-shot-list
-    await page.locator('app-shot-list .asset-slot .ghost-btn').click();
+    await page.locator('app-shot-list .add-shot-row .ghost-btn').click();
     await expect(continueBtn).toBeEnabled();
     await continueBtn.click();
     // After advance, shell renders the Packaging placeholder (existing
@@ -410,7 +408,7 @@ test.describe('Production Draft (#114)', () => {
     await page
       .locator('app-video-builder textarea[aria-label="Hook"]')
       .fill('Persistence hook');
-    await page.locator('app-shot-list .asset-slot .ghost-btn').click();
+    await page.locator('app-shot-list .add-shot-row .ghost-btn').click();
     // Reload — the mock-merge middleware persists writes between fetches.
     await page.reload();
     await expect(page.locator('app-post-detail')).toBeVisible();
@@ -438,7 +436,7 @@ test.describe('Production Draft (#114)', () => {
     await hook.focus();
     await hook.fill('Keyboard hook');
     // Add a shot via the Add-shot button — via keyboard
-    const addShot = page.locator('app-shot-list .asset-slot .ghost-btn');
+    const addShot = page.locator('app-shot-list .add-shot-row .ghost-btn');
     await addShot.focus();
     await page.keyboard.press('Enter');
     await expect(page.locator('app-shot-list li.shot-row')).toHaveCount(1);
@@ -468,7 +466,7 @@ test.describe('Production Draft (#114)', () => {
       .fill('A hook');
     await expect(continueBtn).toBeDisabled();
     // Add shot → all required fields satisfied, button enables
-    await page.locator('app-shot-list .asset-slot .ghost-btn').click();
+    await page.locator('app-shot-list .add-shot-row .ghost-btn').click();
     await expect(continueBtn).toBeEnabled();
   });
 });
