@@ -235,12 +235,17 @@ export class ContentItemsService {
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString(),
         } as ContentItemContract;
-        return {
+        const merged = {
           ...base,
           ...patch,
           id: itemId,
           updatedAt: new Date().toISOString(),
         } as ContentItemContract;
+        // Persist in-memory so the next GET reflects this write — e.g.
+        // advancing production.productionStep lands the user on the new
+        // step on the next visit instead of reverting to the seed.
+        this.mockDataService.setItemOverride(workspaceId, itemId, merged);
+        return merged;
       }
       throw new NotFoundException(`Workspace not found: ${workspaceId}`);
     }

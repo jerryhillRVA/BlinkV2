@@ -203,4 +203,46 @@ describe('MockDataService', () => {
       }
     });
   });
+
+  describe('setItemOverride / getItemFile override layer', () => {
+    it('a recorded override is returned by getItemFile in preference to the seed JSON', async () => {
+      const seeded = (await service.getItemFile('booze-kills', 'bk-idea1')) as {
+        id: string;
+        title: string;
+      };
+      expect(seeded?.id).toBe('bk-idea1');
+      const patched = { ...seeded, title: 'overridden title' };
+      service.setItemOverride('booze-kills', 'bk-idea1', patched);
+      const result = (await service.getItemFile('booze-kills', 'bk-idea1')) as {
+        id: string;
+        title: string;
+      };
+      expect(result.title).toBe('overridden title');
+    });
+
+    it('overrides are scoped per workspace + itemId — other items still come from disk', async () => {
+      const otherSeedBefore = await service.getItemFile('booze-kills', 'bk-idea2');
+      service.setItemOverride('booze-kills', 'bk-idea1', { id: 'bk-idea1', title: 'patched' });
+      const otherSeedAfter = await service.getItemFile('booze-kills', 'bk-idea2');
+      expect(otherSeedAfter).toEqual(otherSeedBefore);
+    });
+
+    it('setItemOverride is a no-op for non-mock workspaces (defensive)', async () => {
+      service.setItemOverride('unknown', 'whatever', { id: 'whatever' });
+      const result = await service.getItemFile('unknown', 'whatever');
+      expect(result).toBeNull();
+    });
+
+    it('an override for an item that does not exist on disk is still served', async () => {
+      service.setItemOverride('booze-kills', 'made-up-id', {
+        id: 'made-up-id',
+        title: 'invented',
+      });
+      const result = (await service.getItemFile('booze-kills', 'made-up-id')) as {
+        id: string;
+        title: string;
+      };
+      expect(result.title).toBe('invented');
+    });
+  });
 });

@@ -323,6 +323,59 @@ describe('ContentItemsService', () => {
       expect(Object.keys(fs.files)).toHaveLength(0);
     });
 
+    it('updateItem records an in-memory override so subsequent reads reflect the patch', async () => {
+      fs.setConfigured(false);
+      const seed = {
+        id: 'item-1',
+        stage: 'post',
+        status: 'in-progress',
+        title: 'Seeded',
+        description: '',
+        pillarIds: [],
+        segmentIds: [],
+        createdAt: '2026-05-01T00:00:00Z',
+        updatedAt: '2026-05-01T00:00:00Z',
+        briefApproved: true,
+        production: { productionStep: 'draft' },
+      };
+      const setItemOverride = vi.fn();
+      const mockDs = {
+        isMockWorkspace: (id: string) => id === 'hive-collective',
+        getNamespaceAggregate: vi.fn(),
+        getItemFile: vi.fn().mockResolvedValue(seed),
+        setItemOverride,
+      };
+      const moduleRef = await Test.createTestingModule({
+        providers: [
+          ContentItemsService,
+          { provide: AgenticFilesystemService, useValue: fs },
+          { provide: 'MOCK_DATA_SERVICE', useValue: mockDs },
+        ],
+      }).compile();
+      const svc = moduleRef.get(ContentItemsService);
+
+      const updated = await svc.updateItem('hive-collective', 'item-1', {
+        production: { productionStep: 'packaging' },
+      } as unknown as Parameters<ContentItemsService['updateItem']>[2]);
+
+      // updateItem must persist the merged item via setItemOverride so
+      // a follow-up GET lands the user on the new productionStep.
+      expect(setItemOverride).toHaveBeenCalledTimes(1);
+      const [ws, id, persisted] = setItemOverride.mock.calls[0];
+      expect(ws).toBe('hive-collective');
+      expect(id).toBe('item-1');
+      expect(
+        (persisted as { production?: { productionStep?: string } }).production
+          ?.productionStep,
+      ).toBe('packaging');
+      // The returned value must reflect the patch (and the merge from base).
+      expect(updated.title).toBe('Seeded');
+      expect(
+        (updated as { production?: { productionStep?: string } }).production
+          ?.productionStep,
+      ).toBe('packaging');
+    });
+
     it('404s for an unknown non-mock workspace when fs is not configured', async () => {
       fs.setConfigured(false);
       const mockDs = {

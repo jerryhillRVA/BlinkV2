@@ -8,8 +8,37 @@ export class MockDataService {
 
   private readonly mockTenants = new Set(['hive-collective', 'booze-kills']);
 
+  /**
+   * In-memory write layer for mock workspaces. Keyed by workspaceId → itemId.
+   * Lives for the lifetime of the Nest process — restarting the API resets
+   * the mocks to whatever the on-disk JSON seeds say. This is what makes
+   * PUTs against mock workspaces "stick" within a session (e.g. advancing
+   * production.productionStep so the next visit lands the user on the
+   * step they advanced to), without dirtying the checked-in seed files.
+   */
+  private readonly itemOverrides = new Map<string, Map<string, unknown>>();
+
   isMockWorkspace(workspaceId: string): boolean {
     return this.mockTenants.has(workspaceId);
+  }
+
+  /**
+   * Record an in-memory override for a single content item. Subsequent
+   * calls to {@link getItemFile} for the same (workspaceId, itemId) return
+   * this object instead of reading the seed JSON.
+   */
+  setItemOverride(
+    workspaceId: string,
+    itemId: string,
+    item: unknown,
+  ): void {
+    if (!this.isMockWorkspace(workspaceId)) return;
+    let workspaceMap = this.itemOverrides.get(workspaceId);
+    if (!workspaceMap) {
+      workspaceMap = new Map<string, unknown>();
+      this.itemOverrides.set(workspaceId, workspaceMap);
+    }
+    workspaceMap.set(itemId, item);
   }
 
   async getSettings(workspaceId: string, tab: string): Promise<unknown | null> {
@@ -69,6 +98,10 @@ export class MockDataService {
     if (!this.isMockWorkspace(workspaceId)) {
       return null;
     }
+    // In-memory overrides take precedence over the seed JSON so writes
+    // PUT against mock workspaces are observable on subsequent reads.
+    const override = this.itemOverrides.get(workspaceId)?.get(itemId);
+    if (override !== undefined) return override;
     const filePath = join(
       this.dataDir,
       workspaceId,

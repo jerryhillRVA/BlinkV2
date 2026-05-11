@@ -80,7 +80,13 @@
 
   &.is-disabled,
   &:disabled {
-    color: var(--blink-on-surface-faint);
+    // Disabled future steps use the lighter "tertiary" token so the
+    // label reads as clearly faded — matching the lighter number circle
+    // and signalling "not reachable yet." Tertiary is normally reserved
+    // for decorative chrome, but disabled UI is explicitly exempt from
+    // the WCAG 2.1 SC 1.4.3 contrast floor (Incidental — inactive
+    // components), so labels on disabled steps may go below 4.5:1.
+    color: var(--blink-on-surface-tertiary);
     cursor: not-allowed;
   }
 
