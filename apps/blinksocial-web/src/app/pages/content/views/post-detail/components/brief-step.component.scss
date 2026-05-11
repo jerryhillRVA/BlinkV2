@@ -127,6 +127,17 @@
   }
 }
 
+// Date input: keep the field full-width like every other brief field, but
+// inset the native ::-webkit-calendar-picker-indicator from the right edge
+// so it sits ~just after the date text instead of floating at the far right
+// (matches the prototype). Trick: the indicator anchors to the right edge
+// of the content box, so adding generous right-padding shrinks the content
+// box and effectively pulls the indicator inward. The empty padding area on
+// the right is still part of the input — clicking it focuses the field.
+.brief-date-input {
+  padding-right: 60%;
+}
+
 // Custom chevron — native <select> default leaves no breathing room on the
 // right. Hide the platform chevron and inline a 12px caret SVG so the icon
 // has the same right-edge inset as the text on the left.
