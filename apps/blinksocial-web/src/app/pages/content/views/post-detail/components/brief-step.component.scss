@@ -141,13 +141,6 @@
   background-color: var(--blink-input-bg-dark);
 }
 
-// Date input: clamp width so the native picker indicator sits next to the
-// date text instead of being pushed to the right wall of a stretched field.
-.brief-date-input {
-  width: max-content;
-  min-width: 160px;
-}
-
 // ── AI Assist (mirror of post-#110 concept-detail) ─────────────────
 .assist-btn {
   display: inline-flex;
