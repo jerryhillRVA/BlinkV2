@@ -127,6 +127,24 @@
   }
 }
 
+// Date input: keep the field full-width like every other brief field, but
+// inset the native ::-webkit-calendar-picker-indicator from the right edge
+// so it sits ~just after the date text instead of floating at the far right
+// (matches the prototype). Trick: the indicator anchors to the right edge
+// of the content box, so adding generous right-padding shrinks the content
+// box and effectively pulls the indicator inward. The empty padding area on
+// the right is still part of the input — clicking it focuses the field.
+.brief-date-input {
+  // Lock the content area to a fixed pixel width so the picker indicator
+  // sits at a constant distance from the date text regardless of how wide
+  // the field grows. A percentage padding-right would shrink at narrow
+  // viewports and let the indicator overlap "mm/dd/yyyy"; this calc keeps
+  // ~130px of content area (date text + indicator + breathing gap) at any
+  // field width and pushes the empty space onto the right padding.
+  padding-right: calc(100% - 140px);
+  font-size: var(--blink-body-medium); // 14px — matches prototype
+}
+
 // Custom chevron — native <select> default leaves no breathing room on the
 // right. Hide the platform chevron and inline a 12px caret SVG so the icon
 // has the same right-edge inset as the text on the left.
@@ -139,13 +157,6 @@
   background-position: right 10px center;
   background-size: 12px 12px;
   background-color: var(--blink-input-bg-dark);
-}
-
-// Date input: clamp width so the native picker indicator sits next to the
-// date text instead of being pushed to the right wall of a stretched field.
-.brief-date-input {
-  width: max-content;
-  min-width: 160px;
 }
 
 // ── AI Assist (mirror of post-#110 concept-detail) ─────────────────

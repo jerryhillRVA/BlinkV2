@@ -1,0 +1,130 @@
+<div class="video-long-builder">
+  <section class="card" aria-labelledby="long-hook-title">
+    <header class="card-header">
+      <h3 class="card-title" id="long-hook-title">Hook</h3>
+      <button type="button" class="ai-btn" [disabled]="disabled()" (click)="onHookAssist()">
+        <span aria-hidden="true">✨</span>
+        AI assist
+      </button>
+    </header>
+    <textarea
+      class="field"
+      rows="2"
+      placeholder="What promise pulls the viewer through 10 minutes?"
+      aria-label="Hook"
+      [disabled]="disabled()"
+      [value]="draft().hook ?? ''"
+      (input)="onHookInput($event)"
+    ></textarea>
+  </section>
+
+  <section class="card" aria-labelledby="long-blocks-title">
+    <header class="card-header">
+      <h3 class="card-title" id="long-blocks-title">Sequence blocks</h3>
+    </header>
+    <ul class="block-list" role="list">
+      @for (block of (draft().sequenceBlocks ?? []); track block.id; let i = $index) {
+        <li class="block-row">
+          <span class="block-index" aria-hidden="true">{{ i + 1 }}</span>
+          <select
+            class="field field--select"
+            [disabled]="disabled()"
+            [attr.aria-label]="'Block ' + (i + 1) + ' type'"
+            (change)="onBlockType(block.id, $event)"
+          >
+            @for (t of types; track t) {
+              <option [value]="t" [selected]="t === block.type">{{ t }}</option>
+            }
+          </select>
+          <input
+            type="text"
+            class="field"
+            placeholder="Describe this block…"
+            [disabled]="disabled()"
+            [attr.aria-label]="'Block ' + (i + 1) + ' description'"
+            [value]="block.description"
+            (input)="onBlockDescription(block.id, $event)"
+          />
+          <input
+            type="text"
+            class="field block-duration"
+            placeholder="Duration"
+            [disabled]="disabled()"
+            [attr.aria-label]="'Block ' + (i + 1) + ' duration'"
+            [value]="block.duration"
+            (input)="onBlockDuration(block.id, $event)"
+          />
+          <div class="block-actions">
+            <button
+              type="button"
+              class="action-btn"
+              [disabled]="disabled() || i === 0"
+              [attr.aria-label]="'Move block ' + (i + 1) + ' up'"
+              (click)="onMoveUp(i)"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m18 15-6-6-6 6"/></svg>
+            </button>
+            <button
+              type="button"
+              class="action-btn"
+              [disabled]="disabled() || i === (draft().sequenceBlocks?.length ?? 0) - 1"
+              [attr.aria-label]="'Move block ' + (i + 1) + ' down'"
+              (click)="onMoveDown(i)"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
+            </button>
+            <button
+              type="button"
+              class="action-btn"
+              [disabled]="disabled()"
+              [attr.aria-label]="'Remove block ' + (i + 1)"
+              (click)="onRemoveBlock(block.id)"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+            </button>
+          </div>
+        </li>
+      }
+    </ul>
+    <button type="button" class="add-btn" [disabled]="disabled()" (click)="onAddBlock()">
+      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14"/><path d="M5 12h14"/></svg>
+      <span>Add block</span>
+    </button>
+  </section>
+
+  <section class="card" aria-labelledby="long-duration-title">
+    <header class="card-header">
+      <h3 class="card-title" id="long-duration-title">Target duration</h3>
+    </header>
+    <select class="field field--select" aria-label="Target duration" [disabled]="disabled()" (change)="onDurationChange($event)">
+      @for (d of durations; track d) {
+        <option [value]="d" [selected]="d === duration">{{ d }}</option>
+      }
+    </select>
+  </section>
+
+  <section class="card collapsible">
+    <button
+      type="button"
+      class="collapse-toggle"
+      [attr.aria-expanded]="voiceoverOpen()"
+      aria-controls="long-vo-panel"
+      (click)="toggleVoiceover()"
+    >
+      <span>Voiceover notes</span>
+      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="caret" [class.caret--open]="voiceoverOpen()" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg>
+    </button>
+    @if (voiceoverOpen()) {
+      <textarea
+        id="long-vo-panel"
+        class="field"
+        rows="3"
+        aria-label="Voiceover notes"
+        placeholder="Tone, pacing, energy…"
+        [disabled]="disabled()"
+        [value]="draft().voiceoverNotes ?? ''"
+        (input)="onVoiceoverInput($event)"
+      ></textarea>
+    }
+  </section>
+</div>

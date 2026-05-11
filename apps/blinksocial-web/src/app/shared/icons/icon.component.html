@@ -1,0 +1,43 @@
+@if (def(); as d) {
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    [attr.width]="sizeValue"
+    [attr.height]="sizeValue"
+    [attr.viewBox]="d.viewBox"
+    fill="none"
+    stroke="currentColor"
+    [attr.stroke-width]="strokeWidth"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+    [attr.aria-hidden]="ariaLabel ? null : 'true'"
+    [attr.aria-label]="ariaLabel"
+    [attr.role]="ariaLabel ? 'img' : null"
+    focusable="false"
+  >
+    @for (p of d.primitives; track $index) {
+      @switch (p.kind) {
+        @case ('path') {
+          <path [attr.d]="p.d" />
+        }
+        @case ('circle') {
+          <circle [attr.cx]="p.cx" [attr.cy]="p.cy" [attr.r]="p.r" />
+        }
+        @case ('line') {
+          <line [attr.x1]="p.x1" [attr.y1]="p.y1" [attr.x2]="p.x2" [attr.y2]="p.y2" />
+        }
+        @case ('polyline') {
+          <polyline [attr.points]="p.points" />
+        }
+        @case ('rect') {
+          <rect
+            [attr.x]="p.x"
+            [attr.y]="p.y"
+            [attr.width]="p.width"
+            [attr.height]="p.height"
+            [attr.rx]="p.rx"
+          />
+        }
+      }
+    }
+  </svg>
+}

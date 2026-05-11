@@ -23,35 +23,73 @@
   "contentType": "short-video",
   "keyMessage": "The NA beer category is finally good enough to recommend without caveats.",
   "tonePreset": "playful",
+  "cta": { "type": "follow", "text": "Follow for the full mocktail + NA series" },
   "scheduledDate": "2026-04-30",
   "scheduledAt": "2026-04-30T17:00:00Z",
   "claimsFlag": false,
   "riskLevel": "low",
+  "briefApproved": true,
+  "briefApprovedAt": "2026-02-12T11:00:00Z",
+  "briefApprovedBy": "user-jordan",
   "createdAt": "2026-02-05T10:00:00Z",
   "updatedAt": "2026-02-25T11:00:00Z",
   "production": {
+    "productionStep": "draft",
     "brief": {
       "strategy": {
         "objective": "engagement",
-        "audienceSegmentIds": [
-          "bk-s1"
-        ],
-        "pillarIds": [
-          "bk-p4"
-        ],
+        "audienceSegmentIds": ["bk-s1"],
+        "pillarIds": ["bk-p4"],
         "keyMessage": "The NA beer category is finally good enough to recommend without caveats.",
         "ctaType": "follow",
-        "ctaText": "Follow for the full mocktail + NA series.",
+        "ctaText": "Follow for the full mocktail + NA series",
         "tonePreset": "playful"
+      },
+      "creativePlan": {
+        "hook": "We tried 20 NA beers so you don't have to.",
+        "storyArc": "hook-rapid-rankings-cta",
+        "musicNotes": "Up-tempo synth-pop, hard cuts on each taste"
       },
       "platformRules": {
         "durationTarget": 60,
         "hookType": "outcome-first",
         "loopEnding": true
-      }
+      },
+      "compliance": { "containsClaims": false, "disclosureNeeded": false },
+      "approved": true,
+      "canonicalType": "VIDEO_SHORT_VERTICAL",
+      "hasTalent": true,
+      "hasMusic": true,
+      "needsAccessibility": true
     },
     "outputs": {
       "ctaLine": "Follow for the full mocktail + NA series."
+    },
+    "draft": {
+      "mode": "VIDEO",
+      "video": {
+        "hook": "We tried 20 NA beers so you don't have to.",
+        "body": "Three of us. Blind taste test. Real beer drinkers, not influencers. Here are the only five we'd actually buy a six-pack of.\n\nNumber 5: Athletic Brewing 'Run Wild' IPA. Hops without the headache.\nNumber 4: Heineken 0.0. Boring, dependable, never offends.\nNumber 3: Best Day 'Kölsch.' Smooth enough that two of us thought it had alcohol.\nNumber 2: Untitled Art 'Italian Pilsner.' The dark horse — get it if you can find it.\nNumber 1: Lagunitas 'Hoppy Refresher.' Not even labeled as beer. Drinks like one. Wins.",
+        "cta": "Follow for the mocktail half of this series next Thursday.",
+        "hookBank": [
+          "We tried 20 NA beers so you don't have to.",
+          "These five NA beers don't taste like punishment.",
+          "Blind taste test of NA beers. The result surprised us.",
+          "If you've given up on NA beer, watch this first."
+        ],
+        "targetDuration": "60s",
+        "bRollNotes": "Quick cuts on each pour. Tight on faces during first sip. On-screen ranking jumps on every cut. End on a tight close-up of the #1 can.",
+        "voiceoverNotes": "Playful, fast-paced. Mara hosts. Jordan reacts off-camera. No script reads — let the reactions carry it.",
+        "shotList": [
+          { "id": "sl-1", "type": "Shot", "description": "Hook shot — 20 cans lined up on bar, camera dolly past", "duration": "5s" },
+          { "id": "sl-2", "type": "B-Roll", "description": "Pour + first sip + reaction for #5", "duration": "13s" },
+          { "id": "sl-3", "type": "B-Roll", "description": "Pour + sip + reaction for #4", "duration": "10s" },
+          { "id": "sl-4", "type": "B-Roll", "description": "Pour + sip + reaction for #3", "duration": "10s" },
+          { "id": "sl-5", "type": "B-Roll", "description": "Pour + sip + reaction for #2", "duration": "10s" },
+          { "id": "sl-6", "type": "Shot", "description": "Reveal #1, cans clinking, all three on camera", "duration": "7s" },
+          { "id": "sl-7", "type": "CTA", "description": "Mara delivers follow CTA, hold on logo", "duration": "5s" }
+        ]
+      }
     }
   },
   "conceptId": "bk-concept2",

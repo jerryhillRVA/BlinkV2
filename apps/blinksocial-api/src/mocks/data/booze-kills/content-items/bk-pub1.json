@@ -31,25 +31,64 @@
     "https://example.com/community-survey/dry-jan-2026"
   ],
   "riskLevel": "low",
+  "cta": { "type": "follow", "text": "Follow for the next challenge" },
+  "briefApproved": true,
+  "briefApprovedAt": "2026-02-08T10:00:00Z",
+  "briefApprovedBy": "user-mara",
   "createdAt": "2026-02-01T08:00:00Z",
   "updatedAt": "2026-02-15T10:00:00Z",
   "production": {
+    "productionStep": "draft",
     "brief": {
       "strategy": {
         "objective": "awareness",
-        "audienceSegmentIds": [
-          "bk-s1",
-          "bk-s3"
-        ],
-        "pillarIds": [
-          "bk-p2",
-          "bk-p1"
-        ],
+        "audienceSegmentIds": ["bk-s1", "bk-s3"],
+        "pillarIds": ["bk-p2", "bk-p1"],
         "keyMessage": "Aggregated community data shows consistent improvements after 30 alcohol-free days.",
         "ctaType": "follow",
-        "ctaText": "Follow for the next challenge."
+        "ctaText": "Follow for the next challenge"
+      },
+      "creativePlan": {
+        "hook": "30 days changed everything. Here are the numbers.",
+        "storyArc": "hook-data-three-takeaways-cta",
+        "musicNotes": "Synth-pop, mid-tempo, no vocals"
+      },
+      "compliance": { "containsClaims": true, "disclosureNeeded": true },
+      "approved": true,
+      "canonicalType": "VIDEO_SHORT_VERTICAL",
+      "hasTalent": true,
+      "hasMusic": true,
+      "needsAccessibility": true
+    },
+    "draft": {
+      "mode": "VIDEO",
+      "video": {
+        "hook": "30 days changed everything. Here are the numbers.",
+        "body": "We surveyed 412 members at the end of Dry January. Sleep up 38%. Energy up 51%. Cravings down 67% by week three.\n\nThe outlier? Most surprising change wasn't physical — it was how much extra time everyone reported.",
+        "cta": "Drop a 🌑 if you're in for next month's challenge.",
+        "hookBank": [
+          "30 days changed everything. Here are the numbers.",
+          "We tracked what 400+ people felt after 30 days off booze.",
+          "Most surprising stat from Dry January? Not what you'd guess.",
+          "30 days. 412 humans. One number that floored us."
+        ],
+        "targetDuration": "60s",
+        "bRollNotes": "Cut to b-roll of the survey results overlay (charts) on every stat. Speed-ramp through the numbers; slow down on the time-reclaimed punchline.",
+        "voiceoverNotes": "Energetic but matter-of-fact. Don't oversell. Let the numbers speak.",
+        "shotList": [
+          { "id": "sl-1", "type": "Shot", "description": "Hook delivered to camera, kitchen lighting", "duration": "5s" },
+          { "id": "sl-2", "type": "B-Roll", "description": "Sleep-quality bar chart overlay (38% up)", "duration": "10s" },
+          { "id": "sl-3", "type": "B-Roll", "description": "Energy + cravings stats stacked, animated", "duration": "15s" },
+          { "id": "sl-4", "type": "Shot", "description": "Pivot to the time-reclaimed insight", "duration": "15s" },
+          { "id": "sl-5", "type": "Shot", "description": "CTA delivered with the 🌑 emoji visible", "duration": "15s" }
+        ]
       }
-    }
+    },
+    "sources": [],
+    "outputs": {},
+    "assets": [],
+    "tasks": [],
+    "versions": []
   },
   "conceptId": "bk-concept2",
   "parentConceptId": "bk-concept2"

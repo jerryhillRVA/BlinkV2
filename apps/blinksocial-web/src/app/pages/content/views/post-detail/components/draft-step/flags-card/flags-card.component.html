@@ -1,0 +1,58 @@
+<section class="flags-card">
+  <button
+    type="button"
+    class="flags-toggle"
+    [attr.aria-expanded]="open()"
+    aria-controls="flags-panel"
+    (click)="toggleOpen()"
+  >
+    <span class="flags-title">
+      <app-icon name="shield" size="16" />
+      <span class="flags-label">Flags</span>
+      @if (activeCount() > 0) {
+        <span class="flags-active-badge">{{ activeCount() }} active</span>
+      }
+    </span>
+    <span class="flags-meta">
+      <span class="flags-subtitle">Compliance, talent, music &amp; accessibility</span>
+      <app-icon
+        [name]="open() ? 'chevron-up' : 'chevron-down'"
+        size="14"
+      />
+    </span>
+  </button>
+
+  @if (open()) {
+    <div id="flags-panel" class="flags-grid">
+      @for (flag of flags; track flag.key) {
+        <div
+          class="flag-cell"
+          [class.is-active]="flagValue()[flag.key]"
+        >
+          <div class="flag-row">
+            <span
+              class="flag-icon"
+              [style.color]="flag.iconColor"
+              aria-hidden="true"
+            >
+              <app-icon [name]="flag.icon" size="14" />
+            </span>
+            <span class="flag-label">{{ flag.label }}</span>
+            <button
+              type="button"
+              class="toggle-switch"
+              role="switch"
+              [class.is-on]="flagValue()[flag.key]"
+              [attr.aria-checked]="flagValue()[flag.key]"
+              [attr.aria-label]="'Toggle ' + flag.label"
+              (click)="onToggle(flag.key)"
+            >
+              <span class="toggle-thumb" aria-hidden="true"></span>
+            </button>
+          </div>
+          <p class="flag-hint">{{ flag.hint(flagValue()[flag.key]) }}</p>
+        </div>
+      }
+    </div>
+  }
+</section>

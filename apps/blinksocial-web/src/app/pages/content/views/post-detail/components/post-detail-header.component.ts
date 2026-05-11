@@ -27,8 +27,6 @@ export class PostDetailHeaderComponent {
   @Output() backToConcept = new EventEmitter<void>();
   @Output() archive = new EventEmitter<void>();
   @Output() unarchive = new EventEmitter<void>();
-  @Output() duplicate = new EventEmitter<void>();
-  @Output() deletePost = new EventEmitter<void>();
 
   protected readonly menuOpen = signal(false);
 
@@ -64,15 +62,5 @@ export class PostDetailHeaderComponent {
   protected onUnarchive(): void {
     this.closeMenu();
     this.unarchive.emit();
-  }
-
-  protected onDuplicate(): void {
-    this.closeMenu();
-    this.duplicate.emit();
-  }
-
-  protected onDelete(): void {
-    this.closeMenu();
-    this.deletePost.emit();
   }
 }

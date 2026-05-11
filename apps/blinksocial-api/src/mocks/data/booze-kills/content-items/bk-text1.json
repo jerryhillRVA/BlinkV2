@@ -1,0 +1,65 @@
+{
+  "id": "bk-text1",
+  "stage": "post",
+  "status": "in-progress",
+  "title": "The first work dinner without alcohol",
+  "description": "LinkedIn text post — first-person reflection on navigating the first sober work dinner without making it weird, framed for professionals who quit drinking.",
+  "pillarIds": ["bk-p2"],
+  "segmentIds": ["bk-s1", "bk-s2"],
+  "tags": ["work-dinner", "professional-life", "linkedin"],
+  "owner": "user-jordan",
+  "hook": "The first sober work dinner is harder than the first sober wedding.",
+  "objective": "community",
+  "platform": "linkedin",
+  "contentType": "ln-text-post",
+  "cta": { "type": "comment", "text": "What's a work scenario that surprised you about getting sober?" },
+  "keyMessage": "The hardest part of professional sobriety is not the alcohol — it's the social ritual.",
+  "tonePreset": "professional",
+  "claimsFlag": false,
+  "riskLevel": "low",
+  "scheduledDate": "2026-05-20",
+  "scheduledAt": "2026-05-20T13:00:00Z",
+  "briefApproved": true,
+  "briefApprovedAt": "2026-04-28T11:00:00Z",
+  "briefApprovedBy": "user-jordan",
+  "createdAt": "2026-04-22T09:00:00Z",
+  "updatedAt": "2026-04-30T14:00:00Z",
+  "conceptId": "bk-concept4",
+  "parentConceptId": "bk-concept4",
+  "production": {
+    "productionStep": "draft",
+    "brief": {
+      "strategy": {
+        "objective": "community",
+        "audienceSegmentIds": ["bk-s1", "bk-s2"],
+        "pillarIds": ["bk-p2"],
+        "keyMessage": "The hardest part of professional sobriety is not the alcohol — it's the social ritual.",
+        "ctaType": "comment",
+        "ctaText": "What's a work scenario that surprised you about getting sober?",
+        "tonePreset": "professional"
+      },
+      "creativePlan": {
+        "hook": "The first sober work dinner is harder than the first sober wedding.",
+        "storyArc": "personal-anecdote-then-observation-then-question"
+      },
+      "compliance": { "containsClaims": false, "disclosureNeeded": false },
+      "approved": true,
+      "canonicalType": "TEXT_POST",
+      "hasTalent": false,
+      "hasMusic": false,
+      "needsAccessibility": true
+    },
+    "draft": {
+      "mode": "TEXT",
+      "text": {
+        "caption": "The first sober work dinner is harder than the first sober wedding.\n\nWeddings are explicit — there's a bar, you walk past it, you don't get a drink, end of story. Everyone's distracted by the speeches.\n\nWork dinners are implicit. Someone orders the wine. The waiter doesn't ask if you want a glass — they just pour. You have to actively decline, in front of your boss, before the appetizers arrive. Then someone says \"oh, are you not drinking?\" and the entire table looks at you.\n\nI was 47 days sober. I'd planned the wedding I'd attended two weeks earlier. I had not planned this.\n\nWhat got me through it: a script I'd written on my phone in the parking lot.\n\n\"Just sticking with water tonight, but please go ahead.\"\n\nNo medical reason. No personal story. No ask for understanding. Just a sentence that ends the topic.\n\nIt landed in 6 seconds. Then someone changed the subject. Then nothing happened for the next two hours.\n\nI'd over-prepared for the conversation that was never going to happen. Most people genuinely don't care what's in your glass. They notice for two seconds and forget.\n\nThe hardest part of professional sobriety wasn't the alcohol. It was the script. Once I had the script, the dinners stopped being a problem.\n\nWhat's a work scenario that surprised you about getting sober?",
+        "hashtags": ["#sobercurious", "#worklife", "#professional", "#mentalhealth", "#sobriety"]
+      }
+    },
+    "sources": [],
+    "outputs": {},
+    "assets": [],
+    "tasks": [],
+    "versions": []
+  }
+}

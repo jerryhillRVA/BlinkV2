@@ -1,0 +1,22 @@
+<nav class="step-action-bar" aria-label="Production step navigation">
+  <button
+    type="button"
+    class="back-btn"
+    (click)="onBack()"
+  >
+    <app-icon name="arrow-left" size="14" />
+    <span>{{ backLabel() }}</span>
+  </button>
+
+  <button
+    type="button"
+    class="continue-btn"
+    [class.continue-btn--ready]="continueEnabled()"
+    [disabled]="!continueEnabled()"
+    [attr.aria-disabled]="!continueEnabled() ? 'true' : null"
+    (click)="onContinue()"
+  >
+    <span>{{ continueLabel() }}</span>
+    <app-icon name="arrow-right" size="14" />
+  </button>
+</nav>

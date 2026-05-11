@@ -14,6 +14,8 @@ import { PostDetailHeaderComponent } from './components/post-detail-header.compo
 import { ProductionStepsBarComponent } from './components/production-steps-bar.component';
 import { BriefStepComponent } from './components/brief-step.component';
 import { BriefContentConceptComponent } from './components/brief-content-concept.component';
+import { DraftStepComponent } from './components/draft-step/draft-step.component';
+import { StepActionBarComponent } from './components/step-action-bar/step-action-bar.component';
 import { StepPlaceholderComponent } from './components/step-placeholder.component';
 import { DetailBackButtonComponent } from '../_shared/detail-back-button/detail-back-button.component';
 import { ContentJourneyComponent } from '../idea-detail/components/content-journey.component';
@@ -26,6 +28,8 @@ import type { ContentItem } from '../../content.types';
     ProductionStepsBarComponent,
     BriefStepComponent,
     BriefContentConceptComponent,
+    DraftStepComponent,
+    StepActionBarComponent,
     ContentJourneyComponent,
     StepPlaceholderComponent,
     DetailBackButtonComponent,
@@ -49,7 +53,6 @@ export class PostDetailComponent {
   @Input() backLabel = 'Back to pipeline';
 
   @Output() back = new EventEmitter<void>();
-  @Output() deleted = new EventEmitter<void>();
 
   // ── Computeds ───────────────────────────────────────────────────────
   protected readonly parentConcept = computed<ContentItem | null>(() => {
@@ -93,21 +96,6 @@ export class PostDetailComponent {
 
   protected onUnarchive(): void {
     this.store.unarchive();
-  }
-
-  protected onDuplicate(): void {
-    const copy = this.store.duplicate();
-    if (!copy) return;
-    const workspaceId = this.route.snapshot.paramMap.get('id') ?? '';
-    this.router.navigate(['/workspace', workspaceId, 'content', copy.id]);
-  }
-
-  protected onDelete(): void {
-    const item = this.store.item();
-    const label = item?.title ? `"${item.title}"` : 'this post';
-    if (!window.confirm(`Delete ${label}? This cannot be undone.`)) return;
-    this.store.deleteSelf();
-    this.deleted.emit();
   }
 
   protected formatDate(iso: string | undefined): string {

@@ -67,20 +67,31 @@
     color: var(--blink-on-surface);
   }
 
+  // Past comes BEFORE active so that if a step ever ends up with both
+  // classes (defensive — the TS isPast/isActive predicates should be
+  // mutually exclusive), the orange "active" treatment still wins. CSS
+  // cascade order means the later rule overrides; active is the more
+  // important signal for "where you are right now."
+  &.is-past {
+    color: #16a34a;
+    background: rgba(22, 163, 74, 0.08);
+  }
+
   &.is-active {
     background: linear-gradient(to right, var(--blink-brand-primary), #f26b4d);
     color: #fff;
     box-shadow: var(--blink-shadow-sm);
   }
 
-  &.is-past {
-    color: #16a34a;
-    background: rgba(22, 163, 74, 0.08);
-  }
-
   &.is-disabled,
   &:disabled {
-    color: var(--blink-on-surface-faint);
+    // Disabled future steps use the lighter "tertiary" token so the
+    // label reads as clearly faded — matching the lighter number circle
+    // and signalling "not reachable yet." Tertiary is normally reserved
+    // for decorative chrome, but disabled UI is explicitly exempt from
+    // the WCAG 2.1 SC 1.4.3 contrast floor (Incidental — inactive
+    // components), so labels on disabled steps may go below 4.5:1.
+    color: var(--blink-on-surface-tertiary);
     cursor: not-allowed;
   }
 
@@ -111,14 +122,14 @@
   font-size: 9px;
   font-weight: 700;
 
-  .is-active & {
-    background: rgba(255, 255, 255, 0.22);
-    color: #fff;
-  }
-
   .is-past & {
     background: rgba(22, 163, 74, 0.18);
     color: #16a34a;
+  }
+
+  .is-active & {
+    background: rgba(255, 255, 255, 0.22);
+    color: #fff;
   }
 
   .is-disabled &,

@@ -111,4 +111,50 @@ const TEST_NAMESPACE = '__test_ns__';
     expect(brief.primaryCta).toBe('shop-now');
     expect(brief.unlockedAt).toBe('2026-11-28T08:30:00.000Z');
   }, 15_000);
+
+  it('should round-trip a content item with ProductionDraftContract.video (#114)', async () => {
+    const filename = `test-draft-roundtrip-${Date.now()}.json`;
+    const item = {
+      id: 'integration-post-draft-1',
+      stage: 'post',
+      status: 'in-progress',
+      title: 'Integration test draft',
+      description: 'a'.repeat(80),
+      pillarIds: ['p1'],
+      segmentIds: ['s1'],
+      production: {
+        productionStep: 'draft',
+        draft: {
+          mode: 'VIDEO',
+          video: {
+            hook: 'Test hook',
+            body: 'Test body',
+            cta: 'Test CTA',
+            hookBank: ['alt 1', 'alt 2'],
+            targetDuration: '60s',
+            bRollNotes: 'B-roll notes',
+            voiceoverNotes: 'VO notes',
+            shotList: [
+              { id: 'sl-1', type: 'Shot', description: 'Open on smile', duration: '0:00–0:03' },
+              { id: 'sl-2', type: 'CTA', description: 'Outro', duration: '0:55–1:00' },
+            ],
+          },
+        },
+      },
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+
+    const uploaded = await service.uploadJsonFile(TEST_TENANT, TEST_NAMESPACE, filename, item);
+    const retrieved = await service.batchRetrieve(TEST_TENANT, [uploaded.file_id]);
+    expect(retrieved).toHaveLength(1);
+    expect(retrieved[0].content).toEqual(item);
+    // Spot-check the draft.video sub-object survived intact.
+    const draft = (retrieved[0].content as { production: { draft: Record<string, unknown> } })
+      .production.draft;
+    expect(draft.mode).toBe('VIDEO');
+    const video = draft.video as { hook: string; shotList: unknown[] };
+    expect(video.hook).toBe('Test hook');
+    expect(video.shotList).toHaveLength(2);
+  }, 15_000);
 });

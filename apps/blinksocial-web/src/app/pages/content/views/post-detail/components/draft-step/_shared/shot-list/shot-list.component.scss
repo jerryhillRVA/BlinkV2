@@ -1,0 +1,435 @@
+:host {
+  display: block;
+}
+
+.shot-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+// ── Top-level asset slot ─────────────────────────────────────────────────────
+
+.asset-slot {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 12px;
+  background: #fff;
+  border: 1px solid var(--blink-outline-variant);
+  border-radius: 8px;
+}
+
+.asset-slot-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.asset-slot-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.asset-empty {
+  margin: 0;
+  font-size: var(--blink-body-small);
+  font-style: italic;
+  color: var(--blink-on-surface-faint, #6b7280);
+}
+
+// ── Add shot / utility ghost button ──────────────────────────────────────────
+
+.ghost-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  background: #fff;
+  // Border + text are tuned to match the prototype's "Attach file"
+  // button exactly. The previous values used the design-token
+  // outline-variant (#f3f4f6) + on-surface-medium (#666) which were
+  // both noticeably lighter than the prototype's gray-200/gray-600.
+  border: 1px solid #e5e7eb; // gray-200
+  border-radius: 8px;
+  font-size: var(--blink-label-small);
+  font-weight: 600;
+  color: #4b5563; // gray-600
+  cursor: pointer;
+  transition: background-color 120ms ease, border-color 120ms ease, color 120ms ease;
+  line-height: 1.2;
+  white-space: nowrap;
+
+  &:hover:not(:disabled):not(.is-disabled) {
+    background: #f9fafb;
+    border-color: #d4d4d8; // gray-300
+    color: #1f2937; // gray-800
+  }
+
+  &:focus-within {
+    outline: 2px solid var(--blink-brand-primary);
+    outline-offset: 2px;
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--blink-brand-primary);
+    outline-offset: 2px;
+  }
+
+  &:disabled,
+  &.is-disabled {
+    cursor: not-allowed;
+    opacity: 0.6;
+  }
+
+  // Per-shot "Attach file" variant — slightly tighter padding and a
+  // more square border-radius (rounded-md / 6px) to match the
+  // prototype's per-shot Attach file button.
+  &--sm {
+    padding: 3px 10px;
+    font-size: 10px;
+    gap: 5px;
+    border-radius: 6px;
+  }
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+// ── Attached-asset chip ──────────────────────────────────────────────
+
+.asset-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 6px 4px 10px;
+  background: #eff6ff; // blue-50
+  border: 1px solid #bfdbfe; // blue-200
+  border-radius: 999px;
+  color: #1d4ed8; // blue-700
+  font-size: var(--blink-label-small);
+  font-weight: 600;
+  max-width: 100%;
+
+  .asset-chip-name {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: 200px;
+  }
+
+  &--sm {
+    padding: 2px 4px 2px 8px;
+    font-size: 9px;
+    gap: 4px;
+
+    .asset-chip-name {
+      max-width: 160px;
+    }
+  }
+}
+
+.asset-chip-remove {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  background: transparent;
+  border: none;
+  border-radius: 50%;
+  color: inherit;
+  cursor: pointer;
+  opacity: 0.7;
+  transition: opacity 120ms ease, background-color 120ms ease;
+
+  &:hover:not(:disabled) {
+    opacity: 1;
+    background: rgba(0, 0, 0, 0.06);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--blink-brand-primary);
+    outline-offset: 1px;
+  }
+
+  &:disabled {
+    cursor: not-allowed;
+    opacity: 0.4;
+  }
+}
+
+// ── Add-shot row (between asset slot and shot list) ─────────────────
+
+.add-shot-row {
+  display: flex;
+  align-items: center;
+}
+
+// ── Per-shot asset zone (dropzone-style wrapper) ────────────────────
+//
+// Wraps the Attach-file button (or attached-asset chip) in a defined
+// region with its own border + padding. Matches the prototype's per-
+// shot asset slot:
+//
+//   - Empty: dashed gray-300 border on white. Reads as "this is a
+//     drop zone — drop or click to attach."
+//   - Attached: solid blue-200 border on blue-50. Reads as
+//     "something is here and lives in this slot."
+
+.shot-asset-zone {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  padding: 8px;
+  border-radius: 6px;
+  transition: background-color 120ms ease, border-color 120ms ease;
+}
+
+.shot-asset-zone--empty {
+  background: #fff;
+  border: 1px dashed #d1d5db; // gray-300
+}
+
+.shot-asset-zone--attached {
+  background: #eff6ff; // blue-50
+  border: 1px solid #bfdbfe; // blue-200
+}
+
+// ── Empty state ──────────────────────────────────────────────────────────────
+
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 28px 16px;
+  background: #f9fafb;
+  border: 1px dashed var(--blink-outline-dashed);
+  border-radius: 8px;
+  text-align: center;
+  color: var(--blink-on-surface-faint, #6b7280);
+
+  svg {
+    color: var(--blink-on-surface-faint, #6b7280);
+  }
+
+  .empty-title {
+    margin: 0;
+    font-size: var(--blink-body-small);
+    font-weight: 600;
+    color: #b45309; // amber-700
+  }
+
+  .empty-hint {
+    margin: 0;
+    font-size: var(--blink-label-tiny);
+    color: var(--blink-on-surface-faint, #6b7280);
+
+    span {
+      font-weight: 600;
+      color: var(--blink-on-surface-medium);
+    }
+  }
+}
+
+// ── Shot rows ────────────────────────────────────────────────────────────────
+
+.shot-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.shot-row {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px 12px;
+  background: #f9fafb;
+  border: 1px solid var(--blink-outline-variant);
+  border-radius: 8px;
+}
+
+.shot-row-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.shot-index {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: #e4e7eb;
+  color: var(--blink-on-surface-medium);
+  font-size: 9px;
+  font-weight: 700;
+}
+
+.shot-type {
+  height: 24px;
+  width: 110px;
+  // Use appearance: none + a custom inline-SVG caret so we can position
+  // the caret with consistent inset on the right. The native browser
+  // caret sits flush against the right edge and looks cramped against
+  // the rounded background.
+  appearance: none;
+  -webkit-appearance: none;
+  padding: 0 22px 0 10px;
+  background-color: #f3f4f6;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><polyline points='6 9 12 15 18 9'/></svg>");
+  background-repeat: no-repeat;
+  background-position: right 8px center;
+  border: none;
+  border-radius: 6px;
+  font-size: var(--blink-label-tiny);
+  font-weight: 600;
+  color: var(--blink-on-surface-strong);
+  cursor: pointer;
+  transition: background-color 120ms ease;
+
+  &:hover:not(:disabled) {
+    background-color: #edeff2;
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--blink-brand-primary);
+    outline-offset: 1px;
+  }
+
+  &:disabled {
+    cursor: not-allowed;
+    opacity: 0.6;
+  }
+}
+
+.shot-duration {
+  height: 24px;
+  width: 56px;
+  padding: 0 8px;
+  text-align: center;
+  background: #f3f4f6;
+  border: none;
+  border-radius: 6px;
+  font-size: var(--blink-label-tiny);
+  font-weight: 500;
+  color: var(--blink-on-surface-strong);
+  transition: background-color 120ms ease;
+
+  &::placeholder {
+    color: var(--blink-on-surface-faint, #6b7280);
+  }
+
+  &:focus-visible {
+    background: #edeff2;
+    outline: none;
+    box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.05);
+  }
+
+  &:disabled {
+    cursor: not-allowed;
+    opacity: 0.6;
+  }
+}
+
+.shot-row-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  margin-left: auto;
+}
+
+.action-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  background: transparent;
+  border: none;
+  border-radius: 4px;
+  color: var(--blink-on-surface-faint, #6b7280);
+  cursor: pointer;
+  transition: background-color 120ms ease, color 120ms ease;
+
+  &:hover:not(:disabled) {
+    background: #fff;
+    color: var(--blink-on-surface-strong);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--blink-brand-primary);
+    outline-offset: 2px;
+  }
+
+  &:disabled {
+    cursor: not-allowed;
+    opacity: 0.4;
+  }
+
+  &--remove:hover:not(:disabled) {
+    color: #ef4444; // red-500
+  }
+}
+
+.shot-description {
+  width: 100%;
+  min-height: 52px;
+  padding: 8px 10px;
+  background: #f3f4f6;
+  border: none;
+  border-radius: 6px;
+  font: inherit;
+  font-size: var(--blink-body-small);
+  line-height: 1.55;
+  color: var(--blink-on-surface-strong);
+  resize: vertical;
+  transition: background-color 120ms ease;
+
+  &::placeholder {
+    color: var(--blink-on-surface-faint, #6b7280);
+  }
+
+  &:focus-visible {
+    background: #edeff2;
+    outline: none;
+    box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.05);
+  }
+
+  &:disabled {
+    cursor: not-allowed;
+    opacity: 0.6;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ghost-btn,
+  .shot-type,
+  .shot-duration,
+  .shot-description,
+  .action-btn {
+    transition: none;
+  }
+}

@@ -1,0 +1,112 @@
+<div class="hashtag-input">
+  <ul
+    class="chip-list"
+    role="list"
+    aria-live="polite"
+    [attr.aria-label]="'Hashtags: ' + hashtags.length"
+  >
+    @for (tag of hashtags; track tag) {
+      <li class="chip">
+        <span class="chip-text">{{ tag }}</span>
+        <button
+          type="button"
+          class="chip-remove"
+          [disabled]="disabled"
+          [attr.aria-label]="'Remove hashtag ' + tag"
+          (click)="onRemove(tag)"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="10"
+            height="10"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="3"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            aria-hidden="true"
+          >
+            <path d="M18 6 6 18" />
+            <path d="m6 6 12 12" />
+          </svg>
+        </button>
+      </li>
+    }
+    <li class="chip-input-row">
+      <input
+        type="text"
+        class="chip-input"
+        placeholder="Add hashtag…"
+        aria-label="Add hashtag"
+        [disabled]="disabled"
+        [ngModel]="draft()"
+        (ngModelChange)="draft.set($event)"
+        (keydown)="onKeydown($event)"
+      />
+    </li>
+  </ul>
+
+  <div class="bank">
+    <button
+      type="button"
+      class="bank-toggle"
+      [attr.aria-expanded]="bankOpen()"
+      aria-controls="hashtag-bank"
+      (click)="toggleBank()"
+    >
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        width="14"
+        height="14"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        aria-hidden="true"
+      >
+        <path d="M12 3v3" />
+        <path d="M12 18v3" />
+        <path d="M3 12h3" />
+        <path d="M18 12h3" />
+        <path d="M5.6 5.6l2.1 2.1" />
+        <path d="M16.3 16.3l2.1 2.1" />
+        <path d="M18.4 5.6l-2.1 2.1" />
+        <path d="M7.7 16.3l-2.1 2.1" />
+      </svg>
+      <span>AI suggested</span>
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        width="14"
+        height="14"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        class="caret"
+        [class.caret--open]="bankOpen()"
+        aria-hidden="true"
+      >
+        <polyline points="6 9 12 15 18 9" />
+      </svg>
+    </button>
+    @if (bankOpen()) {
+      <div id="hashtag-bank" class="bank-grid">
+        @for (s of suggestions; track s) {
+          <button
+            type="button"
+            class="bank-chip"
+            [disabled]="disabled || hashtags.includes(s)"
+            (click)="onSuggested(s)"
+          >
+            {{ s }}
+          </button>
+        }
+      </div>
+    }
+  </div>
+</div>

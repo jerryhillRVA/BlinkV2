@@ -1,0 +1,56 @@
+<div class="text-builder">
+  <section class="card" aria-labelledby="txt-caption-title">
+    <header class="card-header">
+      <h3 class="card-title" id="txt-caption-title">Caption</h3>
+      <button type="button" class="ai-btn" [disabled]="disabled()" (click)="onCaptionAssist()">
+        <span aria-hidden="true">✨</span> AI assist
+      </button>
+    </header>
+    <textarea
+      class="field"
+      rows="8"
+      placeholder="Write a post that pulls people in and rewards them for staying."
+      aria-label="Caption"
+      [disabled]="disabled()"
+      [value]="draft().caption ?? ''"
+      (input)="onCaptionInput($event)"
+    ></textarea>
+    <div class="char-counter" aria-live="polite">
+      {{ captionLength() }} / {{ captionMax }}
+    </div>
+  </section>
+
+  <section class="card" aria-labelledby="txt-image-title">
+    <header class="card-header">
+      <h3 class="card-title" id="txt-image-title">Optional inline image</h3>
+    </header>
+    <app-asset-uploader
+      label="Attach an image"
+      [filename]="draft().imageRef"
+      [disabled]="disabled()"
+      (fileChange)="onFileChange($event)"
+    />
+    @if (draft().imageRef) {
+      <textarea
+        class="field"
+        rows="2"
+        aria-label="Alt text"
+        placeholder="Describe the image for screen readers"
+        [disabled]="disabled()"
+        [value]="draft().altText ?? ''"
+        (input)="onAltInput($event)"
+      ></textarea>
+    }
+  </section>
+
+  <section class="card" aria-labelledby="txt-tags-title">
+    <header class="card-header">
+      <h3 class="card-title" id="txt-tags-title">Hashtags</h3>
+    </header>
+    <app-hashtag-input
+      [hashtags]="draft().hashtags ?? []"
+      [disabled]="disabled()"
+      (hashtagsChange)="onHashtags($event)"
+    />
+  </section>
+</div>

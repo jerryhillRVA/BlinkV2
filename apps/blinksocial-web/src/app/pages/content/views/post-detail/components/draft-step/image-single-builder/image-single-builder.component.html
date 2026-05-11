@@ -1,0 +1,90 @@
+<div class="image-single-builder">
+  <section class="card" aria-labelledby="img-hook-title">
+    <header class="card-header">
+      <h3 class="card-title" id="img-hook-title">Hook</h3>
+      <button type="button" class="ai-btn" [disabled]="disabled()" (click)="onHookAssist()">
+        <span aria-hidden="true">✨</span> AI assist
+      </button>
+    </header>
+    <textarea
+      class="field"
+      rows="2"
+      placeholder="What stops the scroll?"
+      aria-label="Hook"
+      [disabled]="disabled()"
+      [value]="draft().hook ?? ''"
+      (input)="onHookInput($event)"
+    ></textarea>
+  </section>
+
+  <section class="card collapsible">
+    <button
+      type="button"
+      class="collapse-toggle"
+      [attr.aria-expanded]="creativeOpen()"
+      aria-controls="img-creative-panel"
+      (click)="toggleCreative()"
+    >
+      <span>Creative direction</span>
+      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="caret" [class.caret--open]="creativeOpen()" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg>
+    </button>
+    @if (creativeOpen()) {
+      <div id="img-creative-panel" class="creative-panel">
+        <textarea
+          class="field"
+          rows="3"
+          aria-label="Creative direction notes"
+          placeholder="Mood, framing, props…"
+          [disabled]="disabled()"
+          [value]="draft().creativeDirectionNotes ?? ''"
+          (input)="onCreativeInput($event)"
+        ></textarea>
+        <button type="button" class="ai-btn ai-btn--secondary" [disabled]="disabled()" (click)="onCreativeAssist()">
+          <span aria-hidden="true">✨</span> Suggest direction
+        </button>
+      </div>
+    }
+  </section>
+
+  <section class="card" aria-labelledby="img-asset-title">
+    <header class="card-header">
+      <h3 class="card-title" id="img-asset-title">Image</h3>
+    </header>
+    <app-asset-uploader
+      label="Upload image"
+      [filename]="draft().imageRef"
+      [disabled]="disabled()"
+      (fileChange)="onFileChange($event)"
+      (aiGenerate)="onAiGenerate()"
+    />
+  </section>
+
+  <section class="card" aria-labelledby="img-alt-title">
+    <header class="card-header">
+      <h3 class="card-title" id="img-alt-title">Alt text</h3>
+      <button type="button" class="ai-btn" [disabled]="disabled()" (click)="onAltAssist()">
+        <span aria-hidden="true">✨</span> Generate alt text
+      </button>
+    </header>
+    <textarea
+      class="field"
+      rows="2"
+      aria-label="Alt text"
+      placeholder="Describe the image for screen readers"
+      [disabled]="disabled()"
+      [value]="draft().altText ?? ''"
+      (input)="onAltInput($event)"
+    ></textarea>
+  </section>
+
+  <section class="card" aria-labelledby="img-hashtags-title">
+    <header class="card-header">
+      <h3 class="card-title" id="img-hashtags-title">Hashtags</h3>
+    </header>
+    <app-hashtag-input
+      [hashtags]="draft().hashtags ?? []"
+      [disabled]="disabled()"
+      (hashtagsChange)="onHashtags($event)"
+    />
+  </section>
+</div>

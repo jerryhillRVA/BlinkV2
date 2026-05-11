@@ -1,0 +1,28 @@
+{
+  "id": "bk-concept3",
+  "stage": "concept",
+  "status": "posting",
+  "parentIdeaId": "bk-idea1",
+  "title": "Brain Recovery: Why Sobriety Feels Worse First",
+  "description": "Long-form YouTube explainer on the early-sobriety brain — dopamine downregulation, 'PAWS' symptoms, when fog lifts and what to expect. Anti-doom-spiral framing: this is biology, not failure.",
+  "pillarIds": ["bk-p1"],
+  "segmentIds": ["bk-s1", "bk-s3"],
+  "tags": ["brain-recovery", "sober-curious", "long-form"],
+  "owner": "user-mara",
+  "createdAt": "2026-03-12T10:00:00Z",
+  "updatedAt": "2026-03-20T11:00:00Z",
+  "targetPlatforms": [
+    { "platform": "youtube", "contentType": "long-form", "postId": null }
+  ],
+  "hook": "Your brain isn't broken. Here's what's actually happening.",
+  "objective": "education",
+  "cta": { "type": "subscribe", "text": "Subscribe for the rest of the recovery science series" },
+  "keyMessage": "The first month of sobriety feels worse because your brain is recalibrating, not because something is wrong with you.",
+  "angle": "Reframe early-sobriety distress as a feature of recovery, not a bug",
+  "claimsFlag": true,
+  "sourceLinks": ["https://example.com/research/paws-dopamine-recovery"],
+  "riskLevel": "medium",
+  "platform": "youtube",
+  "contentType": "long-form",
+  "objectiveId": "obj-2"
+}

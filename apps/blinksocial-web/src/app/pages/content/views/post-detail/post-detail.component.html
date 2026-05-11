@@ -7,15 +7,13 @@
       (backToConcept)="onBackToConcept()"
       (archive)="onArchive()"
       (unarchive)="onUnarchive()"
-      (duplicate)="onDuplicate()"
-      (deletePost)="onDelete()"
     >
       <app-detail-back-button [ariaLabel]="backLabel" (back)="onBack()" />
     </app-post-detail-header>
 
     <app-production-steps-bar
       [activeStep]="store.activeStep()"
-      [briefApproved]="!!item.briefApproved"
+      [unlockedThroughIndex]="store.unlockedThroughIndex()"
       (stepChange)="store.setActiveStep($event)"
     />
 
@@ -32,7 +30,6 @@
                 [pillars]="store.pillars()"
                 [segments]="store.segments()"
                 [objectives]="businessObjectives()"
-                (editConcept)="onBackToConcept()"
               />
 
               <section class="panel panel-journey side-card">
@@ -66,7 +63,47 @@
           </div>
         }
         @case ('draft') {
-          <app-step-placeholder label="Draft" />
+          <div class="brief-grid">
+            <div class="brief-main">
+              <app-draft-step />
+            </div>
+            <aside class="brief-side">
+              <app-brief-content-concept
+                [concept]="parentConcept()"
+                [pillars]="store.pillars()"
+                [segments]="store.segments()"
+                [objectives]="businessObjectives()"
+              />
+
+              <section class="panel panel-journey side-card">
+                <h3 class="side-card-title">Content Journey</h3>
+                <app-content-journey [stage]="item.stage" />
+              </section>
+
+              <section class="panel timestamps-panel side-card">
+                <div class="timestamp-row">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <circle cx="12" cy="12" r="10"/>
+                    <polyline points="12 6 12 12 16 14"/>
+                  </svg>
+                  <div class="timestamp-content">
+                    <span class="timestamp-label">Created</span>
+                    <span class="timestamp-value">{{ formatDate(item.createdAt) }}</span>
+                  </div>
+                </div>
+                <div class="timestamp-row">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <circle cx="12" cy="12" r="10"/>
+                    <polyline points="12 6 12 12 16 14"/>
+                  </svg>
+                  <div class="timestamp-content">
+                    <span class="timestamp-label">Last Updated</span>
+                    <span class="timestamp-value">{{ formatDate(item.updatedAt) }}</span>
+                  </div>
+                </div>
+              </section>
+            </aside>
+          </div>
         }
         @case ('packaging') {
           <app-step-placeholder label="Packaging" />
@@ -76,5 +113,14 @@
         }
       }
     </div>
+
+    <app-step-action-bar (backToList)="onBack()" />
+    <!-- Sentinel for the step-action-bar's pinned/floating detection.
+         Lives OUTSIDE the bar's sticky-positioned host so it stays at
+         its natural position in .post-detail's flex flow. When the
+         user scrolls until this sentinel enters the viewport, the bar
+         has reached its natural position above the footer and the bar
+         transitions to its "floating card" look. -->
+    <div class="step-action-bar-sentinel" aria-hidden="true"></div>
   </div>
 }

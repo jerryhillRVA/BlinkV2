@@ -1,0 +1,111 @@
+<div class="carousel-builder">
+  <section class="card" aria-labelledby="car-hook-title">
+    <header class="card-header">
+      <h3 class="card-title" id="car-hook-title">Hook</h3>
+      <button type="button" class="ai-btn" [disabled]="disabled()" (click)="onHookAssist()">
+        <span aria-hidden="true">✨</span> AI assist
+      </button>
+    </header>
+    <textarea
+      class="field"
+      rows="2"
+      placeholder="Slide one: what stops the scroll?"
+      aria-label="Hook"
+      [disabled]="disabled()"
+      [value]="draft().hook ?? ''"
+      (input)="onHookInput($event)"
+    ></textarea>
+  </section>
+
+  <section class="card" aria-labelledby="car-slides-title">
+    <header class="card-header">
+      <h3 class="card-title" id="car-slides-title">Slides</h3>
+    </header>
+    <ol class="slide-list" role="list">
+      @for (slide of slides(); track slide.id; let i = $index) {
+        <li class="slide" [attr.aria-label]="'Slide ' + (i + 1) + ' of ' + slides().length">
+          <header class="slide-header">
+            <span class="slide-num">Slide {{ i + 1 }}</span>
+            <div class="slide-actions">
+              <button
+                type="button"
+                class="action-btn"
+                [disabled]="disabled() || i === 0"
+                [attr.aria-label]="'Move slide ' + (i + 1) + ' up'"
+                (click)="onMoveUp(i)"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m18 15-6-6-6 6"/></svg>
+              </button>
+              <button
+                type="button"
+                class="action-btn"
+                [disabled]="disabled() || i === slides().length - 1"
+                [attr.aria-label]="'Move slide ' + (i + 1) + ' down'"
+                (click)="onMoveDown(i)"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
+              </button>
+              <button
+                type="button"
+                class="action-btn"
+                [disabled]="disabled()"
+                [attr.aria-label]="'Remove slide ' + (i + 1)"
+                (click)="onRemoveSlide(slide.id)"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/></svg>
+              </button>
+            </div>
+          </header>
+          <input
+            type="text"
+            class="field"
+            placeholder="Headline"
+            [attr.aria-label]="'Slide ' + (i + 1) + ' headline'"
+            [disabled]="disabled()"
+            [value]="slide.headline"
+            (input)="onSlideHeadline(slide.id, $event)"
+          />
+          <textarea
+            class="field"
+            rows="3"
+            placeholder="Body copy"
+            [attr.aria-label]="'Slide ' + (i + 1) + ' body'"
+            [disabled]="disabled()"
+            [value]="slide.body"
+            (input)="onSlideBody(slide.id, $event)"
+          ></textarea>
+          <app-asset-uploader
+            label="Slide image"
+            [filename]="slide.imageRef"
+            [disabled]="disabled()"
+            (fileChange)="onSlideFile(slide.id, $event)"
+          />
+          <textarea
+            class="field"
+            rows="2"
+            placeholder="Alt text"
+            [attr.aria-label]="'Slide ' + (i + 1) + ' alt text'"
+            [disabled]="disabled()"
+            [value]="slide.altText ?? ''"
+            (input)="onSlideAlt(slide.id, $event)"
+          ></textarea>
+        </li>
+      }
+    </ol>
+    <button type="button" class="add-btn" [disabled]="disabled()" (click)="onAddSlide()">
+      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14"/><path d="M5 12h14"/></svg>
+      <span>Add slide</span>
+    </button>
+  </section>
+
+  <section class="card" aria-labelledby="car-tags-title">
+    <header class="card-header">
+      <h3 class="card-title" id="car-tags-title">Hashtags</h3>
+    </header>
+    <app-hashtag-input
+      [hashtags]="draft().hashtags ?? []"
+      [disabled]="disabled()"
+      (hashtagsChange)="onHashtags($event)"
+    />
+  </section>
+</div>

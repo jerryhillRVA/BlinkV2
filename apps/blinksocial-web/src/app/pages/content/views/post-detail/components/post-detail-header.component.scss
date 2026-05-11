@@ -33,11 +33,13 @@
   white-space: nowrap;
 
   &.stage-production {
-    // Tailwind orange-50 / orange-200 / orange-700 reproduced via rgba so
-    // the dark theme blends instead of showing a near-white chunk.
-    background: rgba(249, 115, 22, 0.06);
-    color: #c2410c;
-    border-color: rgba(249, 115, 22, 0.35);
+    // Matches the prototype's Tailwind bg-orange-50 / border-orange-200 /
+    // text-orange-700 exactly. The previous rgba(249, 115, 22, 0.06) was
+    // intended to blend on dark theme but rendered the badge nearly
+    // invisible on light theme too — orange-50 is the right value.
+    background: #fff7ed; // orange-50
+    color: #c2410c; // orange-700
+    border-color: #fed7aa; // orange-200
   }
 }
 
@@ -64,14 +66,6 @@
   font-weight: 700;
   line-height: 1.2;
   color: var(--blink-on-surface-strong);
-}
-
-.detail-saved {
-  font-size: var(--blink-label-small);
-  font-weight: 600;
-  color: var(--blink-on-surface-faint);
-  letter-spacing: 0.03em;
-  text-transform: uppercase;
 }
 
 .detail-actions {
@@ -135,9 +129,5 @@
 
   &:hover {
     background: var(--blink-surface-hover);
-  }
-
-  &.is-danger {
-    color: var(--blink-brand-primary);
   }
 }

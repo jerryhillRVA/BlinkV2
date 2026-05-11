@@ -1,0 +1,153 @@
+:host {
+  display: block;
+}
+
+.hashtag-input {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.chip-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  list-style: none;
+  margin: 0;
+  padding: 8px;
+  background: var(--blink-surface);
+  border: 1px solid var(--blink-outline-variant);
+  border-radius: 8px;
+  align-items: center;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 8px;
+  background: var(--blink-brand-primary-lightest-bg);
+  color: var(--blink-brand-primary);
+  border-radius: 12px;
+  font-size: var(--blink-body-small);
+  font-weight: 500;
+}
+
+.chip-remove {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  background: transparent;
+  border: none;
+  border-radius: 50%;
+  color: var(--blink-brand-primary);
+  cursor: pointer;
+
+  &:hover:not([disabled]) {
+    background: rgba(0, 0, 0, 0.06);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--blink-brand-primary);
+    outline-offset: 2px;
+  }
+
+  &[disabled] {
+    cursor: not-allowed;
+    opacity: 0.6;
+  }
+}
+
+.chip-input-row {
+  flex: 1 1 120px;
+}
+
+.chip-input {
+  width: 100%;
+  border: none;
+  background: transparent;
+  font-size: var(--blink-body-medium);
+  color: var(--blink-on-surface-strong);
+
+  &::placeholder {
+    color: var(--blink-on-surface-muted);
+  }
+
+  &:focus {
+    outline: none;
+  }
+}
+
+.bank-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  background: transparent;
+  border: 1px solid var(--blink-outline-variant);
+  border-radius: 6px;
+  font-size: var(--blink-body-small);
+  color: var(--blink-on-surface-medium);
+  align-self: flex-start;
+  cursor: pointer;
+
+  &:hover {
+    background: var(--blink-surface-hover);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--blink-brand-primary);
+    outline-offset: 2px;
+  }
+
+  .caret {
+    transition: transform 120ms ease;
+
+    &--open {
+      transform: rotate(180deg);
+    }
+  }
+}
+
+.bank-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 8px 0;
+}
+
+.bank-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  background: var(--blink-surface);
+  border: 1px solid var(--blink-outline-variant);
+  border-radius: 12px;
+  font-size: var(--blink-body-small);
+  color: var(--blink-on-surface-medium);
+  cursor: pointer;
+
+  &:hover:not([disabled]) {
+    background: var(--blink-brand-primary-lightest-bg);
+    color: var(--blink-brand-primary);
+    border-color: var(--blink-brand-primary);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--blink-brand-primary);
+    outline-offset: 2px;
+  }
+
+  &[disabled] {
+    cursor: not-allowed;
+    opacity: 0.5;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .caret {
+    transition: none;
+  }
+}

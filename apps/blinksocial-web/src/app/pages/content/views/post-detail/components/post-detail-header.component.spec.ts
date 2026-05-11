@@ -46,19 +46,17 @@ describe('PostDetailHeaderComponent', () => {
     expect(paths.some((d) => d.startsWith('M20.2 6'))).toBe(true);
   });
 
-  it('renders inline-edit title, Saved indicator, and the kebab menu button', () => {
+  it('renders inline-edit title and the kebab menu button (no Saved indicator)', () => {
     const fixture = setup();
     expect(fixture.nativeElement.querySelector('app-inline-edit')).not.toBeNull();
-    expect(
-      (fixture.nativeElement.querySelector('.detail-saved') as HTMLElement).textContent?.trim(),
-    ).toBe('Saved');
+    expect(fixture.nativeElement.querySelector('.detail-saved')).toBeNull();
     expect(fixture.nativeElement.querySelector('.detail-menu-btn')).not.toBeNull();
     expect(fixture.nativeElement.querySelector('.detail-back')).toBeNull();
     // The old inline back-to-concept button is gone — moved into the kebab menu.
     expect(fixture.nativeElement.querySelector('.btn-back-to-concept')).toBeNull();
   });
 
-  it('kebab menu shows "Send back to Concept" when conceptId is set', () => {
+  it('kebab menu shows only Send back to Concept + Archive (no Duplicate, no Delete) when conceptId is set', () => {
     const fixture = setup(makeItem({ conceptId: 'c-42' }));
     (fixture.nativeElement.querySelector('.detail-menu-btn') as HTMLButtonElement).click();
     fixture.detectChanges();
@@ -67,8 +65,8 @@ describe('PostDetailHeaderComponent', () => {
     ).map((el) => el.textContent?.trim() ?? '');
     expect(labels.some((t) => t.includes('Send back to Concept'))).toBe(true);
     expect(labels.some((t) => t.includes('Archive'))).toBe(true);
-    expect(labels.some((t) => t.includes('Duplicate'))).toBe(true);
-    expect(labels.some((t) => t.includes('Delete'))).toBe(true);
+    expect(labels.some((t) => t.includes('Duplicate'))).toBe(false);
+    expect(labels.some((t) => t.includes('Delete'))).toBe(false);
   });
 
   it('hides "Send back to Concept" item when conceptId is not set', () => {
@@ -95,29 +93,18 @@ describe('PostDetailHeaderComponent', () => {
     expect(fixture.componentInstance['menuOpen']()).toBe(false);
   });
 
-  it('Archive / Duplicate / Delete menu items emit their outputs', () => {
+  it('Archive menu item emits archive', () => {
     const fixture = setup();
     let arc = 0;
-    let dup = 0;
-    let del = 0;
     fixture.componentInstance.archive.subscribe(() => arc++);
-    fixture.componentInstance.duplicate.subscribe(() => dup++);
-    fixture.componentInstance.deletePost.subscribe(() => del++);
-
-    const open = (): HTMLButtonElement[] => {
-      (fixture.nativeElement.querySelector('.detail-menu-btn') as HTMLButtonElement).click();
-      fixture.detectChanges();
-      return Array.from(
-        fixture.nativeElement.querySelectorAll('.detail-menu-item') as NodeListOf<HTMLButtonElement>,
-      );
-    };
-
-    open().find((b) => b.textContent?.includes('Archive'))!.click();
+    (fixture.nativeElement.querySelector('.detail-menu-btn') as HTMLButtonElement).click();
+    fixture.detectChanges();
+    Array.from(
+      fixture.nativeElement.querySelectorAll('.detail-menu-item') as NodeListOf<HTMLButtonElement>,
+    )
+      .find((b) => b.textContent?.includes('Archive'))!
+      .click();
     expect(arc).toBe(1);
-    open().find((b) => b.textContent?.includes('Duplicate'))!.click();
-    expect(dup).toBe(1);
-    open().find((b) => b.textContent?.includes('Delete'))!.click();
-    expect(del).toBe(1);
   });
 
   it('Unarchive replaces Archive in the menu when item.archived is true', () => {

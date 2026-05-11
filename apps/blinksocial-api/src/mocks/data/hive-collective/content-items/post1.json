@@ -2,7 +2,10 @@
   "id": "post1",
   "stage": "post",
   "status": "scheduled",
-  "parentConceptId": "concept1",
+  "parentConceptId": "concept2",
+  "briefApproved": true,
+  "briefApprovedAt": "2026-02-22T10:00:00Z",
+  "briefApprovedBy": "user-brett",
   "title": "60-Second Morning Mobility Flow",
   "description": "Quick morning mobility routine targeting stiff joints. Designed for beginners who want a fast, equipment-free flow.",
   "pillarIds": [
@@ -64,7 +67,7 @@
     "user-brett"
   ],
   "production": {
-    "productionStep": "packaging",
+    "productionStep": "draft",
     "brief": {
       "strategy": {
         "objective": "engagement",
@@ -109,6 +112,31 @@
       "hasTalent": true,
       "hasMusic": true,
       "needsAccessibility": true
+    },
+    "draft": {
+      "mode": "VIDEO",
+      "video": {
+        "hook": "Your body shouldn't feel 80 when you're 40.",
+        "body": "Three minutes a day. No equipment. Five gentle moves that wake your spine and hips before coffee.",
+        "cta": "Save this — your tomorrow self will thank you.",
+        "hookBank": [
+          "Your body shouldn't feel 80 when you're 40.",
+          "This 60-second routine changed my mornings.",
+          "No gym. No equipment. Just movement.",
+          "Try this before your coffee tomorrow."
+        ],
+        "targetDuration": "60s",
+        "bRollNotes": "B-roll: feet planted, slow zoom on hip rotation. Window light, no harsh shadows.",
+        "voiceoverNotes": "Soft, warm tone. Pause after each cue so viewers can match form.",
+        "shotList": [
+          { "id": "sl-1", "type": "Shot", "description": "Hook on camera, eye-level", "duration": "3s" },
+          { "id": "sl-2", "type": "Shot", "description": "Cat-Cow stretch — three reps", "duration": "12s" },
+          { "id": "sl-3", "type": "Shot", "description": "Thoracic rotation, each side", "duration": "15s" },
+          { "id": "sl-4", "type": "Shot", "description": "Hip circles, each direction", "duration": "15s" },
+          { "id": "sl-5", "type": "Shot", "description": "Standing reach + fold", "duration": "10s" },
+          { "id": "sl-6", "type": "CTA", "description": "Hold final pose, deliver CTA", "duration": "5s" }
+        ]
+      }
     },
     "sources": [],
     "outputs": {

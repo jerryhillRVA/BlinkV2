@@ -1,0 +1,211 @@
+:host {
+  display: block;
+}
+
+.video-long-builder {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 16px;
+  background: var(--blink-surface);
+  border: 1px solid var(--blink-outline-variant);
+  border-radius: 12px;
+}
+
+.card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.card-title {
+  margin: 0;
+  font-size: var(--blink-title-small);
+  font-weight: 600;
+  color: var(--blink-on-surface-strong);
+}
+
+.field {
+  width: 100%;
+  padding: 8px 10px;
+  background: var(--blink-surface-container-low);
+  border: 1px solid var(--blink-outline-variant);
+  border-radius: 8px;
+  font: inherit;
+  font-size: var(--blink-body-medium);
+  color: var(--blink-on-surface-strong);
+
+  &:focus-visible {
+    outline: 2px solid var(--blink-brand-primary);
+    outline-offset: 1px;
+  }
+
+  &[disabled] {
+    cursor: not-allowed;
+    opacity: 0.6;
+  }
+
+  &--select {
+    appearance: none;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23666' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><polyline points='6 9 12 15 18 9'/></svg>");
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+    padding-right: 28px;
+  }
+}
+
+.ai-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  background: transparent;
+  border: 1px solid var(--blink-outline-variant);
+  border-radius: 14px;
+  font-size: var(--blink-body-small);
+  font-weight: 500;
+  color: var(--blink-on-surface-medium);
+  cursor: pointer;
+
+  &:hover:not([disabled]) {
+    background: var(--blink-brand-primary-lightest-bg);
+    color: var(--blink-brand-primary);
+    border-color: var(--blink-brand-primary);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--blink-brand-primary);
+    outline-offset: 2px;
+  }
+
+  &[disabled] {
+    cursor: not-allowed;
+    opacity: 0.6;
+  }
+}
+
+.block-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.block-row {
+  display: grid;
+  grid-template-columns: 24px 110px 1fr 80px auto;
+  gap: 8px;
+  align-items: center;
+}
+
+.block-index {
+  font-size: var(--blink-body-small);
+  color: var(--blink-on-surface-muted);
+  text-align: center;
+}
+
+.block-actions {
+  display: flex;
+  gap: 2px;
+}
+
+.action-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  color: var(--blink-on-surface-muted);
+  cursor: pointer;
+
+  &:hover:not([disabled]) {
+    background: var(--blink-surface-hover);
+    color: var(--blink-on-surface-strong);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--blink-brand-primary);
+    outline-offset: 2px;
+  }
+
+  &[disabled] {
+    cursor: not-allowed;
+    opacity: 0.4;
+  }
+}
+
+.add-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  background: transparent;
+  border: 1px dashed var(--blink-outline-dashed);
+  border-radius: 8px;
+  font-size: var(--blink-body-medium);
+  color: var(--blink-on-surface-medium);
+  align-self: flex-start;
+  cursor: pointer;
+
+  &:hover {
+    background: var(--blink-brand-primary-lightest-bg);
+    border-color: var(--blink-brand-primary);
+    color: var(--blink-brand-primary);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--blink-brand-primary);
+    outline-offset: 2px;
+  }
+
+  &[disabled] {
+    cursor: not-allowed;
+    opacity: 0.6;
+  }
+}
+
+.collapse-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 8px 0;
+  background: transparent;
+  border: none;
+  font-size: var(--blink-title-small);
+  font-weight: 600;
+  color: var(--blink-on-surface-strong);
+  cursor: pointer;
+  text-align: left;
+
+  &:focus-visible {
+    outline: 2px solid var(--blink-brand-primary);
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
+
+  .caret {
+    transition: transform 120ms ease;
+
+    &--open {
+      transform: rotate(180deg);
+    }
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .caret {
+    transition: none;
+  }
+}

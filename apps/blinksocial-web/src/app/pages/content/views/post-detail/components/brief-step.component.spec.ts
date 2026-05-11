@@ -271,38 +271,9 @@ describe('BriefStepComponent — Brief Status', () => {
   });
 });
 
-describe('BriefStepComponent — Continue to Draft', () => {
-  it('button is disabled when brief is not approved', () => {
-    const { fixture } = setup();
-    const btn = fixture.nativeElement.querySelector(
-      '.btn-continue-draft',
-    ) as HTMLButtonElement;
-    expect(btn).not.toBeNull();
-    expect(btn.disabled).toBe(true);
-  });
-
-  it('button is enabled and advances activeStep to draft once briefApproved is true', () => {
-    const { fixture, store } = setup();
-    store.approveBrief();
-    fixture.detectChanges();
-    const btn = fixture.nativeElement.querySelector(
-      '.btn-continue-draft',
-    ) as HTMLButtonElement;
-    expect(btn.disabled).toBe(false);
-    btn.click();
-    expect(store.activeStep()).toBe('draft');
-  });
-
-  it('clicking the button is a no-op when brief is not approved (defensive)', () => {
-    const { fixture, store } = setup();
-    expect(store.activeStep()).toBe('brief');
-    const comp = fixture.componentInstance as unknown as {
-      onContinueToDraft: () => void;
-    };
-    comp.onContinueToDraft();
-    expect(store.activeStep()).toBe('brief');
-  });
-});
+// The Brief → Draft Continue button moved to the shared
+// <app-step-action-bar> at the bottom of the production detail page —
+// see step-action-bar.component.spec.ts for the equivalent assertions.
 
 describe('BriefStepComponent — empty item', () => {
   it('renders nothing when the store has no item', () => {
@@ -313,5 +284,202 @@ describe('BriefStepComponent — empty item', () => {
     const fixture = TestBed.createComponent(BriefStepComponent);
     fixture.detectChanges();
     expect(fixture.nativeElement.querySelector('.brief-step')).toBeNull();
+  });
+});
+
+describe('BriefStepComponent — Key Message handlers', () => {
+  it('typing in the textarea persists the value via the store', () => {
+    const { fixture, store } = setup(makeItem({ keyMessage: '' }));
+    const textarea = fixture.nativeElement.querySelector('.brief-textarea') as HTMLTextAreaElement;
+    textarea.value = 'Updated message text';
+    textarea.dispatchEvent(new Event('input'));
+    expect(store.item()?.keyMessage).toBe('Updated message text');
+  });
+
+  it('AI Assist click writes the canned suggestion when not locked', () => {
+    const { fixture, store } = setup(makeItem({ keyMessage: '' }));
+    const assist = fixture.nativeElement.querySelector('.assist-btn') as HTMLButtonElement;
+    assist.click();
+    expect(store.item()?.keyMessage).toContain('empowering users');
+  });
+
+  it('AI Assist click is a no-op once the brief is approved (locked branch)', () => {
+    const { fixture, store } = setup(
+      makeItem({ owner: 'user-sarah', cta: { type: 'learn-more', text: 'Read more' } }),
+    );
+    store.approveBrief();
+    fixture.detectChanges();
+    // After approval the AI Assist button is rendered with [disabled]; calling
+    // its handler programmatically (or via a synthetic click on a disabled
+    // button) should be a no-op due to the locked() guard. We invoke the
+    // method directly through the rendered DOM to exercise the guard branch.
+    const before = store.item()?.keyMessage;
+    const assistFromDom = fixture.nativeElement.querySelector('.assist-btn') as HTMLButtonElement | null;
+    // The AI Assist button is inside the goal/message card which only renders
+    // when not approved — depending on the template that path may not render
+    // a button. Either way the guard branch is what we want to cover, so we
+    // call through the component instance.
+    const cmp = fixture.componentInstance as unknown as {
+      onKeyMessageAssist: () => void;
+    };
+    cmp.onKeyMessageAssist();
+    expect(store.item()?.keyMessage).toBe(before);
+    // Sanity: when locked, the goal-message card is still rendered, but the
+    // button (if present) is disabled.
+    if (assistFromDom) expect(assistFromDom.disabled).toBe(true);
+  });
+});
+
+describe('BriefStepComponent — Reference Link handlers', () => {
+  it('typing in the add input updates newRefLink (covers onRefLinkInput)', () => {
+    const { fixture, store } = setup();
+    const inputs = fixture.nativeElement.querySelectorAll('.reference-link-row input') as NodeListOf<HTMLInputElement>;
+    const addInput = inputs[inputs.length - 1] as HTMLInputElement;
+    addInput.value = 'https://typed.example';
+    addInput.dispatchEvent(new Event('input'));
+    // Pressing Enter consumes newRefLink and pushes it through — proves the
+    // input handler stored the value first.
+    addInput.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter' }));
+    expect(store.referenceLinks()).toEqual(['https://typed.example']);
+  });
+
+  it('non-Enter keys on the add input do not push a link (covers Enter guard)', () => {
+    const { fixture, store } = setup();
+    const inputs = fixture.nativeElement.querySelectorAll('.reference-link-row input') as NodeListOf<HTMLInputElement>;
+    const addInput = inputs[inputs.length - 1] as HTMLInputElement;
+    addInput.value = 'https://typed.example';
+    addInput.dispatchEvent(new Event('input'));
+    addInput.dispatchEvent(new KeyboardEvent('keydown', { key: 'a' }));
+    expect(store.referenceLinks()).toEqual([]);
+  });
+
+  it('Enter with an empty (whitespace) value is a no-op (covers !v guard)', () => {
+    const { fixture, store } = setup();
+    const inputs = fixture.nativeElement.querySelectorAll('.reference-link-row input') as NodeListOf<HTMLInputElement>;
+    const addInput = inputs[inputs.length - 1] as HTMLInputElement;
+    addInput.value = '   ';
+    addInput.dispatchEvent(new Event('input'));
+    addInput.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter' }));
+    expect(store.referenceLinks()).toEqual([]);
+  });
+
+  it('clicking the + button pushes the typed link (covers onAddRefLink truthy branch)', () => {
+    const { fixture, store } = setup();
+    const inputs = fixture.nativeElement.querySelectorAll('.reference-link-row input') as NodeListOf<HTMLInputElement>;
+    const addInput = inputs[inputs.length - 1] as HTMLInputElement;
+    addInput.value = 'https://added-via-button.example';
+    addInput.dispatchEvent(new Event('input'));
+    const addBtn = fixture.nativeElement.querySelector('.link-row-add') as HTMLButtonElement;
+    addBtn.click();
+    expect(store.referenceLinks()).toEqual(['https://added-via-button.example']);
+  });
+
+  it('clicking the + button with an empty input is a no-op (covers !v guard)', () => {
+    const { fixture, store } = setup();
+    const addBtn = fixture.nativeElement.querySelector('.link-row-add') as HTMLButtonElement;
+    addBtn.click();
+    expect(store.referenceLinks()).toEqual([]);
+  });
+
+  it('editing an existing link via change updates the array in place', () => {
+    const seeded = makeItem({
+      production: { brief: { referenceLinks: ['https://a.com', 'https://b.com'] } },
+    });
+    const { fixture, store } = setup(seeded);
+    const editable = fixture.nativeElement.querySelectorAll(
+      '.reference-link-row input',
+    ) as NodeListOf<HTMLInputElement>;
+    // The first two inputs are the saved-link rows; the last one is the add row.
+    editable[0].value = 'https://edited.example';
+    editable[0].dispatchEvent(new Event('change'));
+    expect(store.referenceLinks()).toEqual(['https://edited.example', 'https://b.com']);
+  });
+});
+
+describe('BriefStepComponent — Due Date + CTA locked guards', () => {
+  it('changing Due Date persists it via the store', () => {
+    const { fixture, store } = setup();
+    const dateInput = fixture.nativeElement.querySelector('.brief-date-input') as HTMLInputElement;
+    dateInput.value = '2099-12-31';
+    dateInput.dispatchEvent(new Event('change'));
+    expect(store.dueDate()).toBe('2099-12-31');
+  });
+
+  it('Primary CTA pill click is a no-op when locked', () => {
+    const { fixture, store } = setup(
+      makeItem({
+        owner: 'user-sarah',
+        cta: { type: 'learn-more', text: 'Read more' },
+        objective: 'traffic',
+      }),
+    );
+    store.approveBrief();
+    fixture.detectChanges();
+    const before = store.primaryCta();
+    const cmp = fixture.componentInstance as unknown as {
+      onPrimaryCta: (v: 'shop-now') => void;
+    };
+    cmp.onPrimaryCta('shop-now');
+    expect(store.primaryCta()).toBe(before);
+  });
+
+  it('CTA Type click is a no-op when locked', () => {
+    const { fixture, store } = setup(
+      makeItem({ owner: 'user-sarah', cta: { type: 'learn-more', text: 'Read more' } }),
+    );
+    store.approveBrief();
+    fixture.detectChanges();
+    const before = store.item()?.cta?.type;
+    const cmp = fixture.componentInstance as unknown as {
+      onCtaType: (v: 'shop-now') => void;
+    };
+    cmp.onCtaType('shop-now');
+    expect(store.item()?.cta?.type).toBe(before);
+  });
+});
+
+describe('BriefStepComponent — Approve toggle branches + approval note', () => {
+  it('canApprove=false + checked=true exits early (no approveBrief / no unlockBrief)', () => {
+    // Force canApprove false by omitting owner; keyMessage valid via default.
+    const { fixture, store } = setup(makeItem({ owner: null as never }));
+    const cmp = fixture.componentInstance as unknown as {
+      onApproveToggle: (e: Event) => void;
+    };
+    const target = document.createElement('input');
+    target.type = 'checkbox';
+    target.checked = true;
+    const evt = new Event('change');
+    Object.defineProperty(evt, 'target', { value: target });
+    cmp.onApproveToggle(evt);
+    expect(store.item()?.briefApproved).not.toBe(true);
+  });
+
+  it('unchecking the toggle calls unlockBrief (covers else branch)', () => {
+    const { fixture, store } = setup(
+      makeItem({ owner: 'user-sarah', cta: { type: 'learn-more', text: 'Read more' } }),
+    );
+    store.approveBrief();
+    fixture.detectChanges();
+    expect(store.item()?.briefApproved).toBe(true);
+    // approve-toggle is not in the DOM once approved — but we can exercise
+    // the un-approve branch directly through the handler.
+    const cmp = fixture.componentInstance as unknown as {
+      onApproveToggle: (e: Event) => void;
+    };
+    const target = document.createElement('input');
+    target.type = 'checkbox';
+    target.checked = false;
+    const evt = new Event('change');
+    Object.defineProperty(evt, 'target', { value: target });
+    cmp.onApproveToggle(evt);
+    expect(store.item()?.briefApproved).toBe(false);
+  });
+
+  it('approval note textarea writes through to the store', () => {
+    const { fixture, store } = setup();
+    const note = fixture.nativeElement.querySelector('.approval-note') as HTMLTextAreaElement;
+    note.value = 'Looks good to me';
+    note.dispatchEvent(new Event('input'));
+    expect(store.approvalNote()).toBe('Looks good to me');
   });
 });

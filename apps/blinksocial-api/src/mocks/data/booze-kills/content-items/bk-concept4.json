@@ -1,0 +1,29 @@
+{
+  "id": "bk-concept4",
+  "stage": "concept",
+  "status": "posting",
+  "parentIdeaId": "bk-idea4",
+  "title": "What Sober Looks Like",
+  "description": "Recurring multi-format series of honest snapshots from people 6+ months sober. Photo posts on IG, longer reflections on LinkedIn. No 'I'm so happy now' testimonialism — the unsexy parts that nobody else writes about.",
+  "pillarIds": ["bk-p2", "bk-p3"],
+  "segmentIds": ["bk-s1"],
+  "tags": ["honest-stories", "social-proof", "anti-toxic-positivity"],
+  "owner": "user-jordan",
+  "createdAt": "2026-04-18T10:00:00Z",
+  "updatedAt": "2026-04-22T09:00:00Z",
+  "targetPlatforms": [
+    { "platform": "instagram", "contentType": "feed-post", "postId": null },
+    { "platform": "instagram", "contentType": "carousel", "postId": null },
+    { "platform": "linkedin", "contentType": "ln-text-post", "postId": null }
+  ],
+  "hook": "Nobody tells you about the ordinary days.",
+  "objective": "community",
+  "cta": { "type": "comment", "text": "What's a sober moment that surprised you?" },
+  "keyMessage": "Sobriety mostly feels normal — and that's the win.",
+  "angle": "Lead with what surprised them, not with the dramatic transformation",
+  "claimsFlag": false,
+  "riskLevel": "low",
+  "platform": "instagram",
+  "contentType": "feed-post",
+  "objectiveId": "obj-1"
+}

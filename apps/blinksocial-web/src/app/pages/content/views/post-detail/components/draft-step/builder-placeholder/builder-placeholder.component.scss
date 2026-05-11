@@ -1,0 +1,48 @@
+:host {
+  display: block;
+}
+
+.builder-placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 24px;
+}
+
+.placeholder-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  max-width: 480px;
+  text-align: center;
+  padding: 32px 24px;
+  background: var(--blink-surface);
+  border: 1px dashed var(--blink-outline-variant);
+  border-radius: 12px;
+}
+
+.placeholder-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: var(--blink-brand-primary-lightest-bg);
+  color: var(--blink-brand-primary);
+}
+
+.placeholder-title {
+  font-size: var(--blink-title-medium);
+  font-weight: 600;
+  color: var(--blink-on-surface-strong);
+  margin: 0;
+}
+
+.placeholder-copy {
+  font-size: var(--blink-body-medium);
+  color: var(--blink-on-surface-medium);
+  line-height: 1.5;
+  margin: 0;
+}

@@ -1,0 +1,59 @@
+{
+  "id": "bk-story1",
+  "stage": "post",
+  "status": "in-progress",
+  "title": "Sober Bar Night Survival Frames",
+  "description": "Story frame set of seven prompts for navigating bar nights without drinking — one frame per scenario, framed as helpful peer prep, not lecture.",
+  "pillarIds": ["bk-p2"],
+  "segmentIds": ["bk-s1"],
+  "tags": ["bar-night", "story", "survival-tips"],
+  "owner": "user-jordan",
+  "hook": "Going to a bar tonight? Open this first.",
+  "objective": "community",
+  "platform": "instagram",
+  "contentType": "story",
+  "cta": { "type": "follow", "text": "Tap to follow for more sober survival prompts" },
+  "keyMessage": "A few prepared lines remove most of the bar-night friction.",
+  "tonePreset": "casual",
+  "claimsFlag": false,
+  "riskLevel": "low",
+  "scheduledDate": "2026-05-23",
+  "scheduledAt": "2026-05-23T20:00:00Z",
+  "briefApproved": true,
+  "briefApprovedAt": "2026-05-04T14:00:00Z",
+  "briefApprovedBy": "user-jordan",
+  "createdAt": "2026-04-30T09:00:00Z",
+  "updatedAt": "2026-05-05T11:00:00Z",
+  "conceptId": "bk-concept4",
+  "parentConceptId": "bk-concept4",
+  "production": {
+    "productionStep": "draft",
+    "brief": {
+      "strategy": {
+        "objective": "community",
+        "audienceSegmentIds": ["bk-s1"],
+        "pillarIds": ["bk-p2"],
+        "keyMessage": "A few prepared lines remove most of the bar-night friction.",
+        "ctaType": "follow",
+        "ctaText": "Tap to follow for more sober survival prompts",
+        "tonePreset": "casual"
+      },
+      "creativePlan": {
+        "hook": "Going to a bar tonight? Open this first.",
+        "storyArc": "frame-per-scenario",
+        "musicNotes": "n/a"
+      },
+      "compliance": { "containsClaims": false, "disclosureNeeded": false },
+      "approved": true,
+      "canonicalType": "STORY_FRAME_SET",
+      "hasTalent": false,
+      "hasMusic": false,
+      "needsAccessibility": true
+    },
+    "sources": [],
+    "outputs": {},
+    "assets": [],
+    "tasks": [],
+    "versions": []
+  }
+}

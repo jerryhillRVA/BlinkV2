@@ -1,0 +1,13 @@
+:host {
+  display: block;
+}
+
+.draft-step {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.draft-body {
+  display: block;
+}

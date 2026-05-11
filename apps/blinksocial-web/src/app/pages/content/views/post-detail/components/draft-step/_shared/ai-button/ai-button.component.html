@@ -1,0 +1,12 @@
+<button
+  [type]="type"
+  class="ai-btn"
+  [class.ai-btn--compact]="variant === 'compact'"
+  [class.is-loading]="loading"
+  [disabled]="disabled || loading"
+  [attr.aria-busy]="loading ? 'true' : null"
+  (click)="onClick()"
+>
+  <span class="icon"><app-icon name="sparkles" [size]="variant === 'compact' ? 10 : 12" /></span>
+  <span class="label">{{ displayLabel }}</span>
+</button>

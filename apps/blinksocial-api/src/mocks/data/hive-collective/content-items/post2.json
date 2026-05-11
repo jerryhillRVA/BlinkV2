@@ -4,30 +4,100 @@
   "status": "scheduled",
   "title": "Anti-Inflammatory Breakfast Bowl Walkthrough",
   "description": "Step-by-step photo carousel showing how to build a hormone-friendly breakfast bowl in under five minutes.",
-  "pillarIds": [
-    "p4"
-  ],
-  "segmentIds": [
-    "s1",
-    "s5"
-  ],
-  "tags": [
-    "breakfast",
-    "anti-inflammatory",
-    "carousel"
-  ],
+  "pillarIds": ["p4"],
+  "segmentIds": ["s1", "s5"],
+  "tags": ["breakfast", "anti-inflammatory", "carousel"],
   "owner": "user-sarah",
+  "hook": "Five ingredients. Five minutes. Five days of better mornings.",
   "objective": "education",
   "platform": "instagram",
   "contentType": "carousel",
+  "cta": { "type": "other", "text": "Save this for tomorrow's grocery run" },
   "keyMessage": "A balanced breakfast can be fast and ingredient-light.",
   "tonePreset": "friendly",
   "claimsFlag": false,
   "riskLevel": "low",
   "scheduledDate": "2026-05-04",
   "scheduledAt": "2026-05-04T13:00:00Z",
+  "briefApproved": true,
+  "briefApprovedAt": "2026-04-15T11:00:00Z",
+  "briefApprovedBy": "user-sarah",
   "createdAt": "2026-04-12T09:00:00Z",
   "updatedAt": "2026-04-22T11:00:00Z",
   "conceptId": "concept1",
-  "parentConceptId": "concept1"
+  "parentConceptId": "concept1",
+  "production": {
+    "productionStep": "draft",
+    "brief": {
+      "strategy": {
+        "objective": "education",
+        "audienceSegmentIds": ["s1", "s5"],
+        "pillarIds": ["p4"],
+        "keyMessage": "A balanced breakfast can be fast and ingredient-light.",
+        "ctaType": "other",
+        "ctaText": "Save this for tomorrow's grocery run",
+        "tonePreset": "friendly"
+      },
+      "creativePlan": {
+        "hook": "Five ingredients. Five minutes. Five days of better mornings.",
+        "storyArc": "promise-five-recipes-cta",
+        "musicNotes": "n/a — visual-only carousel"
+      },
+      "compliance": { "containsClaims": false, "disclosureNeeded": false },
+      "approved": true,
+      "canonicalType": "IMAGE_CAROUSEL",
+      "hasTalent": false,
+      "hasMusic": false,
+      "needsAccessibility": true
+    },
+    "draft": {
+      "mode": "CAROUSEL",
+      "carousel": {
+        "hook": "Five ingredients. Five minutes. Five days of better mornings.",
+        "slides": [
+          {
+            "id": "cs-1",
+            "headline": "The 5-ingredient anti-inflammatory base",
+            "body": "Greek yogurt + berries + ground flax + walnuts + cinnamon. Stocks in two minutes; nothing exotic.",
+            "imageRef": "breakfast-bowl-base.jpg",
+            "altText": "Overhead shot of a glass jar with yogurt, blueberries, ground flax, walnuts, and a cinnamon stick."
+          },
+          {
+            "id": "cs-2",
+            "headline": "Why these five",
+            "body": "Each one targets a different inflammation lever: protein, polyphenols, fiber, omega-3s, and blood-sugar.",
+            "imageRef": "breakfast-bowl-why.jpg",
+            "altText": "Five labeled jars, one per ingredient, lined up on a wooden counter."
+          },
+          {
+            "id": "cs-3",
+            "headline": "The 5-minute morning",
+            "body": "Layer everything in a jar the night before. In the morning, stir and eat. That's the whole protocol.",
+            "imageRef": "breakfast-bowl-morning.jpg",
+            "altText": "A hand stirring a layered jar of yogurt and toppings beside a coffee cup."
+          },
+          {
+            "id": "cs-4",
+            "headline": "Variations for the rest of the week",
+            "body": "Mon: classic. Tue: peach + ginger. Wed: cocoa + raspberry. Thu: apple + tahini. Fri: tropical.",
+            "imageRef": "breakfast-bowl-variations.jpg",
+            "altText": "Five jars side by side, each with a different fruit topping."
+          },
+          {
+            "id": "cs-5",
+            "headline": "Save this for grocery day",
+            "body": "Tap the bookmark icon — your future-Monday-morning self will thank you.",
+            "imageRef": "breakfast-bowl-cta.jpg",
+            "altText": "A close-up of a hand bookmarking the post in the Instagram interface."
+          }
+        ],
+        "hashtags": ["#antiinflammatory", "#hormonebalance", "#breakfastrecipes", "#womenshealth", "#perimenopause"]
+      }
+    },
+    "sources": [],
+    "outputs": {},
+    "assets": [],
+    "tasks": [],
+    "versions": []
+  }
 }

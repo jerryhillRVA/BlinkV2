@@ -1,0 +1,21 @@
+<div
+  class="pill-group"
+  role="radiogroup"
+  [attr.aria-label]="ariaLabel"
+>
+  @for (opt of options; track opt.value) {
+    <button
+      type="button"
+      class="pill"
+      role="radio"
+      [class.is-active]="opt.value === value"
+      [attr.aria-checked]="opt.value === value"
+      [attr.tabindex]="opt.value === value || (value === null && $first) ? 0 : -1"
+      [disabled]="disabled"
+      (click)="onSelect(opt.value)"
+      (keydown)="onKeydown($event)"
+    >
+      {{ opt.label }}
+    </button>
+  }
+</div>

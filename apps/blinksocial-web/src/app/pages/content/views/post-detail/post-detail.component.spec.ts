@@ -123,13 +123,16 @@ describe('PostDetailComponent — composition', () => {
     expect(fixture.nativeElement.querySelector('.post-detail')).toBeNull();
   });
 
-  it('renders Draft placeholder when stepper sets activeStep=draft', () => {
+  it('renders Draft step when stepper sets activeStep=draft', () => {
     const { fixture } = setup();
     const store = (fixture.componentInstance as unknown as { store: PostDetailStore }).store;
     store.setActiveStep('draft');
     fixture.detectChanges();
     expect(fixture.nativeElement.querySelector('app-brief-step')).toBeNull();
-    expect(fixture.nativeElement.querySelector('app-step-placeholder')).not.toBeNull();
+    expect(fixture.nativeElement.querySelector('app-draft-step')).not.toBeNull();
+    // Draft uses the same sidebar layout as Brief.
+    expect(fixture.nativeElement.querySelector('.brief-side app-brief-content-concept')).not.toBeNull();
+    expect(fixture.nativeElement.querySelector('.brief-side app-content-journey')).not.toBeNull();
   });
 
   it('renders Packaging placeholder when active', () => {
@@ -217,50 +220,10 @@ describe('PostDetailComponent — actions', () => {
     expect(back).toBe(1);
   });
 
-  it('onDuplicate saves a copy and navigates to it', () => {
-    const { fixture, state } = setup();
-    const router = TestBed.inject(Router);
-    const spy = vi.spyOn(router, 'navigate').mockResolvedValue(true);
-    (fixture.componentInstance as unknown as { onDuplicate: () => void }).onDuplicate();
-    expect(state.items().length).toBe(2);
-    const nav = spy.mock.calls.at(-1)?.[0] as string[];
-    expect(nav[0]).toBe('/workspace');
-    expect(nav[1]).toBe('ws-1');
-    expect(nav[2]).toBe('content');
-    expect(nav[3]).not.toBe('post-1');
-  });
-
-  it('onDuplicate is a no-op when the item is missing', () => {
-    TestBed.configureTestingModule({
-      imports: [PostDetailComponent],
-      providers: [
-        ContentStateService,
-        provideRouter([]),
-        {
-          provide: ActivatedRoute,
-          useValue: { snapshot: { paramMap: { get: () => null } } },
-        },
-      ],
-    });
-    const fixture = TestBed.createComponent(PostDetailComponent);
-    fixture.componentRef.setInput('itemId', 'missing');
-    fixture.detectChanges();
-    const router = TestBed.inject(Router);
-    const spy = vi.spyOn(router, 'navigate').mockResolvedValue(true);
-    (fixture.componentInstance as unknown as { onDuplicate: () => void }).onDuplicate();
-    expect(spy).not.toHaveBeenCalled();
-  });
-
-  it('onDelete removes the item and emits deleted', () => {
-    const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(true);
-    const { fixture, state } = setup();
-    let deleted = 0;
-    fixture.componentInstance.deleted.subscribe(() => deleted++);
-    (fixture.componentInstance as unknown as { onDelete: () => void }).onDelete();
-    expect(state.items().some((i) => i.id === 'post-1')).toBe(false);
-    expect(deleted).toBe(1);
-    confirmSpy.mockRestore();
-  });
+  // Duplicate + Delete were removed from the post-detail header menu
+  // to match the prototype (Send back to Concept + Archive only). The
+  // store-level duplicate()/deleteSelf() methods remain in case future
+  // entry points (kanban card menu) need them — see post-detail.store.spec.
 
   it('parentConcept() resolves the linked concept by conceptId', () => {
     const { fixture, state } = setup();
@@ -286,14 +249,4 @@ describe('PostDetailComponent — actions', () => {
     expect(comp.parentConcept()?.id).toBe('concept-1');
   });
 
-  it('onDelete is a no-op when user cancels the confirm', () => {
-    const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(false);
-    const { fixture, state } = setup();
-    let deleted = 0;
-    fixture.componentInstance.deleted.subscribe(() => deleted++);
-    (fixture.componentInstance as unknown as { onDelete: () => void }).onDelete();
-    expect(state.items().some((i) => i.id === 'post-1')).toBe(true);
-    expect(deleted).toBe(0);
-    confirmSpy.mockRestore();
-  });
 });

@@ -1,0 +1,89 @@
+:host {
+  display: inline-flex;
+}
+
+.ai-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  background: #fff;
+  // Label is gray-900 (matches the prototype's <AIButton> exactly:
+  // dark label + purple-500 icon). Was previously --on-surface-strong
+  // (#222) which is in the same neighborhood, but gray-900 (#111827)
+  // matches the source.
+  color: #111827; // gray-900
+  // Border is purple-300, not purple-200 — purple-200 reads almost
+  // identical to plain gray on white and looks washed out at this size.
+  border: 1px solid #c4b5fd; // purple-300
+  // rounded-lg, not pill. The prototype's AIButton uses 8px; pill
+  // (999px) made the button feel disconnected from the rest of the
+  // rounded-rect language on the page.
+  border-radius: 8px;
+  font-size: var(--blink-label-tiny);
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+  transition: background-color 120ms ease, border-color 120ms ease;
+  line-height: 1;
+  white-space: nowrap;
+
+  // The icon stays purple — child <app-icon> picks up this currentColor.
+  .icon {
+    display: inline-flex;
+    color: #a855f7; // purple-500
+    flex-shrink: 0;
+  }
+
+  .label {
+    line-height: 1;
+  }
+
+  &:hover:not(:disabled) {
+    background: #f5f3ff; // purple-50
+    border-color: #c4b5fd; // purple-300
+  }
+
+  &:focus-visible {
+    outline: 2px solid #7c3aed;
+    outline-offset: 2px;
+  }
+
+  &:disabled {
+    cursor: not-allowed;
+    opacity: 0.6;
+  }
+
+  &.is-loading {
+    cursor: progress;
+
+    .icon {
+      animation: ai-btn-pulse 1.5s ease-in-out infinite;
+    }
+  }
+
+  &--compact {
+    padding: 2px 8px;
+    font-size: 9px;
+    gap: 3px;
+  }
+}
+
+@keyframes ai-btn-pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.4;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ai-btn {
+    transition: none;
+
+    &.is-loading .icon {
+      animation: none;
+    }
+  }
+}

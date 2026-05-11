@@ -1,0 +1,26 @@
+<div class="draft-step" role="region" aria-label="Draft builder">
+  <div class="draft-body">
+    @switch (mode()) {
+      @case ('VIDEO') {
+        <app-video-builder />
+      }
+      @case ('VIDEO_LONG') {
+        <app-video-long-builder />
+      }
+      @case ('IMAGE_SINGLE') {
+        <app-image-single-builder />
+      }
+      @case ('CAROUSEL') {
+        <app-carousel-builder />
+      }
+      @case ('TEXT') {
+        <app-text-builder />
+      }
+      @default {
+        <app-builder-placeholder [mode]="mode()" />
+      }
+    }
+  </div>
+
+  <app-flags-card />
+</div>
