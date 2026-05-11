@@ -83,4 +83,39 @@ describe('TextBuilderComponent', () => {
     fixture.componentInstance['onHashtags'](['#a']);
     expect(store.textDraft().hashtags).toEqual(['#a']);
   });
+
+  it('Caption AI assist is a no-op when disabled (brief not approved)', () => {
+    const { fixture, store } = setup();
+    store.unlockBrief();
+    fixture.detectChanges();
+    fixture.componentInstance['onCaptionAssist']();
+    expect(store.textDraft().caption).toBeUndefined();
+  });
+
+  it('clearing the attached file resets imageRef to an empty string', () => {
+    const { fixture, store } = setup();
+    fixture.componentInstance['onFileChange']({ name: 'p.png', size: 1 });
+    expect(store.textDraft().imageRef).toBe('p.png');
+    fixture.componentInstance['onFileChange'](null);
+    expect(store.textDraft().imageRef).toBe('');
+  });
+
+  it('Alt text input writes through to setTextAltText', () => {
+    const { fixture, store } = setup();
+    fixture.componentInstance['onFileChange']({ name: 'p.png', size: 1 });
+    fixture.detectChanges();
+    const alt = fixture.nativeElement.querySelector(
+      'textarea[aria-label="Alt text"]',
+    ) as HTMLTextAreaElement;
+    alt.value = 'A close-up of …';
+    alt.dispatchEvent(new Event('input'));
+    expect(store.textDraft().altText).toBe('A close-up of …');
+  });
+
+  it('caption input truncates to the max length', () => {
+    const { fixture, store } = setup();
+    const fakeEvent = { target: { value: 'x'.repeat(3500) } } as unknown as Event;
+    fixture.componentInstance['onCaptionInput'](fakeEvent);
+    expect(store.textDraft().caption?.length).toBe(3000);
+  });
 });

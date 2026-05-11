@@ -164,4 +164,70 @@ describe('VideoBuilderComponent', () => {
     ) as HTMLButtonElement;
     expect(aiBtn.disabled).toBe(true);
   });
+
+  it('onHookBank / onBodyAssist / onCtaAssist are no-ops while disabled', () => {
+    vi.useFakeTimers();
+    const { fixture, store } = setup(makeApprovedItem({ briefApproved: false }));
+    fixture.componentInstance['onHookBank']();
+    fixture.componentInstance['onBodyAssist']();
+    fixture.componentInstance['onCtaAssist']();
+    vi.advanceTimersByTime(1000);
+    expect(store.videoDraft().hookBank).toBeUndefined();
+    expect(store.videoDraft().body).toBeUndefined();
+    expect(store.videoDraft().cta).toBeUndefined();
+    vi.useRealTimers();
+  });
+
+  it('B-roll + Voiceover textareas route to their setters', () => {
+    const { fixture, store } = setup();
+    // Open the collapsible panels so the textareas render.
+    fixture.componentInstance['toggleBRoll']();
+    fixture.componentInstance['toggleVoiceover']();
+    fixture.detectChanges();
+    const broll = fixture.nativeElement.querySelector(
+      'textarea[aria-label="B-roll notes"]',
+    ) as HTMLTextAreaElement;
+    const vo = fixture.nativeElement.querySelector(
+      'textarea[aria-label="Voiceover notes"]',
+    ) as HTMLTextAreaElement;
+    broll.value = 'Insert wide shot at 0:05';
+    broll.dispatchEvent(new Event('input'));
+    vo.value = 'Confident, conversational tone';
+    vo.dispatchEvent(new Event('input'));
+    expect(store.videoDraft().bRollNotes).toBe('Insert wide shot at 0:05');
+    expect(store.videoDraft().voiceoverNotes).toBe('Confident, conversational tone');
+  });
+
+  it('hide-bank button closes the hook-bank panel', () => {
+    vi.useFakeTimers();
+    const { fixture } = setup();
+    fixture.componentInstance['onHookBank']();
+    vi.advanceTimersByTime(700);
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.hook-bank')).toBeTruthy();
+    fixture.componentInstance['onHideBank']();
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.hook-bank')).toBeNull();
+    vi.useRealTimers();
+  });
+
+  it('cover asset ref change routes to setVideoCoverAssetRef', () => {
+    const { fixture, store } = setup();
+    fixture.componentInstance['onCoverAssetRefChange']('cover.png');
+    expect(store.videoDraft().coverAssetRef).toBe('cover.png');
+    fixture.componentInstance['onCoverAssetRefChange'](undefined);
+    expect(store.videoDraft().coverAssetRef).toBeUndefined();
+  });
+
+  it('ctaTypeLabel formats the brief CTA type to upper-kebab-removed form', () => {
+    const { fixture } = setup();
+    const label = fixture.componentInstance['ctaTypeLabel']();
+    expect(label).toBe('LEARN MORE');
+  });
+
+  it('ctaTypeLabel is null when the brief has no CTA type', () => {
+    const item = makeApprovedItem({ cta: undefined });
+    const { fixture } = setup(item);
+    expect(fixture.componentInstance['ctaTypeLabel']()).toBeNull();
+  });
 });

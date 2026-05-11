@@ -126,4 +126,61 @@ describe('BriefContentConceptComponent', () => {
     expect(chips[0].style.color).not.toBe('');
     expect(chips[0].style.borderColor).not.toBe('');
   });
+
+  it('platform strip falls back to the raw key when no option label matches', () => {
+    const fixture = setup(
+      makeConcept({
+        platform: 'unknown-platform' as unknown as 'instagram',
+        contentType: 'unknown-type' as unknown as 'reel',
+      }),
+    );
+    const row = fixture.nativeElement.querySelector('.platform-row');
+    expect(row).not.toBeNull();
+    expect(row.textContent).toContain('unknown-platform');
+    expect(row.textContent).toContain('unknown-type');
+  });
+
+  it('hides the content-type label when only platform is set', () => {
+    const fixture = setup(
+      makeConcept({ platform: 'instagram', contentType: undefined }),
+    );
+    // Platform strip still renders (platform set), but the content-type
+    // half is empty — exercises the `!ct` branch of contentTypeLabel.
+    expect(fixture.componentInstance['contentTypeLabel']()).toBeNull();
+  });
+
+  it('hides selected pillars / segments when the lookup misses', () => {
+    const fixture = setup(
+      makeConcept({ pillarIds: ['no-such-pillar'], segmentIds: ['no-such-seg'] }),
+    );
+    expect(fixture.nativeElement.querySelectorAll('.chip-grid--pillar .chip').length).toBe(0);
+    expect(fixture.nativeElement.querySelectorAll('.chip-grid--segment .chip').length).toBe(0);
+  });
+
+  it('objectiveLabel returns null when objective is missing', () => {
+    const noneFixture = setup(makeConcept({ objective: undefined }));
+    expect(noneFixture.componentInstance['objectiveLabel']()).toBeNull();
+  });
+
+  it('objectiveLabel resolves to the matching OBJECTIVE_OPTIONS label', () => {
+    const someFixture = setup(makeConcept({ objective: 'engagement' }));
+    expect(someFixture.componentInstance['objectiveLabel']()).toBe('Engagement');
+  });
+
+  it('businessObjectiveStatement is null when objectiveId is unset', () => {
+    const fixture = setup(makeConcept({ objectiveId: undefined }));
+    expect(fixture.componentInstance['businessObjectiveStatement']()).toBeNull();
+  });
+
+  it('hasStrategy is false when objective + pillars + segments all empty', () => {
+    const fixture = setup(
+      makeConcept({
+        objective: undefined,
+        objectiveId: undefined,
+        pillarIds: [],
+        segmentIds: [],
+      }),
+    );
+    expect(fixture.componentInstance['hasStrategy']()).toBe(false);
+  });
 });

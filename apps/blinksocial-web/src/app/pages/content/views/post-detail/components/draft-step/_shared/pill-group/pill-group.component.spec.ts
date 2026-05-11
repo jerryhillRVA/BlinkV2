@@ -77,4 +77,29 @@ describe('PillGroupComponent', () => {
     const pills = fixture.nativeElement.querySelectorAll('button.pill');
     pills.forEach((p: HTMLButtonElement) => expect(p.disabled).toBe(true));
   });
+
+  it('disabled prevents both click and keyboard emission', () => {
+    const fixture = setup({ disabled: true });
+    let count = 0;
+    fixture.componentInstance.valueChange.subscribe(() => count++);
+    fixture.componentInstance['onSelect']('15s');
+    fixture.componentInstance['onKeydown'](new KeyboardEvent('keydown', { key: 'ArrowRight' }));
+    expect(count).toBe(0);
+  });
+
+  it('non-arrow keys are ignored', () => {
+    const fixture = setup();
+    let count = 0;
+    fixture.componentInstance.valueChange.subscribe(() => count++);
+    fixture.componentInstance['onKeydown'](new KeyboardEvent('keydown', { key: 'Tab' }));
+    expect(count).toBe(0);
+  });
+
+  it('Arrow keys default to first option when no value is selected', () => {
+    const fixture = setup({ value: null });
+    let emitted: string | null = null;
+    fixture.componentInstance.valueChange.subscribe((v) => (emitted = v));
+    fixture.componentInstance['onKeydown'](new KeyboardEvent('keydown', { key: 'ArrowRight' }));
+    expect(emitted).toBe('30s');
+  });
 });

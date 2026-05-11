@@ -100,4 +100,39 @@ describe('ImageSingleBuilderComponent', () => {
     fixture.componentInstance['onHashtags'](['#a', '#b']);
     expect(store.imageSingleDraft().hashtags).toEqual(['#a', '#b']);
   });
+
+  it('all AI assist + onAiGenerate handlers are no-ops while disabled', () => {
+    const { fixture, store } = setup();
+    store.unlockBrief();
+    fixture.detectChanges();
+    fixture.componentInstance['onHookAssist']();
+    fixture.componentInstance['onCreativeAssist']();
+    fixture.componentInstance['onAltAssist']();
+    fixture.componentInstance['onAiGenerate']();
+    const draft = store.imageSingleDraft();
+    expect(draft.hook).toBeUndefined();
+    expect(draft.creativeDirectionNotes).toBeUndefined();
+    expect(draft.altText).toBeUndefined();
+    expect(draft.imageRef).toBeUndefined();
+  });
+
+  it('Creative direction textarea routes to setImageSingleCreativeDirectionNotes', () => {
+    const { fixture, store } = setup();
+    fixture.componentInstance['toggleCreative']();
+    fixture.detectChanges();
+    const ta = fixture.nativeElement.querySelector(
+      'textarea[aria-label="Creative direction notes"]',
+    ) as HTMLTextAreaElement;
+    ta.value = 'Cool tones, mid-afternoon light';
+    ta.dispatchEvent(new Event('input'));
+    expect(store.imageSingleDraft().creativeDirectionNotes).toBe(
+      'Cool tones, mid-afternoon light',
+    );
+  });
+
+  it('Creative AI assist fills notes when not disabled', () => {
+    const { fixture, store } = setup();
+    fixture.componentInstance['onCreativeAssist']();
+    expect((store.imageSingleDraft().creativeDirectionNotes?.length ?? 0)).toBeGreaterThan(0);
+  });
 });

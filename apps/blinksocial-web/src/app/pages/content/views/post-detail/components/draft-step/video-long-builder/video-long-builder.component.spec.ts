@@ -115,4 +115,57 @@ describe('VideoLongBuilderComponent', () => {
     fixture.detectChanges();
     expect(toggle.getAttribute('aria-expanded')).toBe('true');
   });
+
+  it('Duration change + Voiceover textarea route to setters', () => {
+    const { fixture, store } = setup();
+    fixture.componentInstance['toggleVoiceover']();
+    fixture.detectChanges();
+    const select = fixture.nativeElement.querySelector(
+      'select[aria-label="Target duration"]',
+    ) as HTMLSelectElement;
+    select.value = '15m';
+    select.dispatchEvent(new Event('change'));
+    expect(store.videoLongDraft().targetDuration).toBe('15m');
+    const vo = fixture.nativeElement.querySelector(
+      'textarea[aria-label="Voiceover notes"]',
+    ) as HTMLTextAreaElement;
+    vo.value = 'Calm, deliberate cadence';
+    vo.dispatchEvent(new Event('input'));
+    expect(store.videoLongDraft().voiceoverNotes).toBe('Calm, deliberate cadence');
+  });
+
+  it('all add / remove / move / edit handlers are no-ops while disabled', () => {
+    const { fixture, store } = setup();
+    // Seed a couple of blocks while enabled, then unlock.
+    fixture.componentInstance['onAddBlock']();
+    fixture.componentInstance['onAddBlock']();
+    const before = store.videoLongDraft().sequenceBlocks?.map((b) => ({ ...b })) ?? [];
+    store.unlockBrief();
+    fixture.detectChanges();
+    const fakeEvent = (value: string) => ({ target: { value } } as unknown as Event);
+    fixture.componentInstance['onHookAssist']();
+    fixture.componentInstance['onAddBlock']();
+    fixture.componentInstance['onRemoveBlock'](before[0].id);
+    fixture.componentInstance['onMoveUp'](1);
+    fixture.componentInstance['onMoveDown'](0);
+    fixture.componentInstance['onBlockType'](before[0].id, fakeEvent('CTA'));
+    fixture.componentInstance['onBlockDescription'](before[0].id, fakeEvent('changed'));
+    fixture.componentInstance['onBlockDuration'](before[0].id, fakeEvent('99s'));
+    expect(store.videoLongDraft().sequenceBlocks).toEqual(before);
+  });
+
+  it('onMoveUp at index 0 and onMoveDown at the last index are no-ops', () => {
+    const { fixture, store } = setup();
+    fixture.componentInstance['onAddBlock']();
+    fixture.componentInstance['onAddBlock']();
+    const before = store.videoLongDraft().sequenceBlocks?.map((b) => b.id) ?? [];
+    fixture.componentInstance['onMoveUp'](0);
+    fixture.componentInstance['onMoveDown'](before.length - 1);
+    expect(store.videoLongDraft().sequenceBlocks?.map((b) => b.id)).toEqual(before);
+  });
+
+  it('duration getter falls back to "10m" when no targetDuration is set', () => {
+    const { fixture } = setup();
+    expect(fixture.componentInstance['duration']).toBe('10m');
+  });
 });

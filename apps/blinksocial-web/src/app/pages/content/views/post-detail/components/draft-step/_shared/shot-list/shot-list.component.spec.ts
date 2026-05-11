@@ -189,4 +189,103 @@ describe('ShotListComponent', () => {
     fixture.componentInstance['onMoveDown'](0);
     expect(events).toEqual([]);
   });
+
+  it('per-row type / description / duration edits + per-shot file + clear are no-ops when disabled', () => {
+    const fixture = setup({ shots: SHOTS, disabled: true });
+    const events: DraftShotItemContract[][] = [];
+    fixture.componentInstance.shotsChange.subscribe((v) => events.push(v));
+    const fakeEvent = (value: string) => ({ target: { value } } as unknown as Event);
+    fixture.componentInstance['onTypeChange']('s1', fakeEvent('B-Roll'));
+    fixture.componentInstance['onDescriptionChange']('s1', fakeEvent('x'));
+    fixture.componentInstance['onDurationChange']('s1', fakeEvent('1s'));
+    const file = new File(['x'], 'p.png', { type: 'image/png' });
+    const fileEvt = { target: { files: [file] } } as unknown as Event;
+    fixture.componentInstance['onShotFile']('s1', fileEvt);
+    fixture.componentInstance['onShotAssetClear']('s1');
+    expect(events).toEqual([]);
+  });
+
+  it('cover file / cover clear are no-ops when disabled', () => {
+    const fixture = setup({ shots: SHOTS, coverAssetRef: 'c.png', disabled: true });
+    const events: (string | undefined)[] = [];
+    fixture.componentInstance.coverAssetRefChange.subscribe((v) => events.push(v));
+    const file = new File(['x'], 'c.png', { type: 'image/png' });
+    const fileEvt = { target: { files: [file] } } as unknown as Event;
+    fixture.componentInstance['onCoverFile'](fileEvt);
+    fixture.componentInstance['onCoverClear']();
+    expect(events).toEqual([]);
+  });
+
+  it('onTypeChange ignores empty values (no-op when select is reset)', () => {
+    const fixture = setup({ shots: SHOTS });
+    const events: DraftShotItemContract[][] = [];
+    fixture.componentInstance.shotsChange.subscribe((v) => events.push(v));
+    const fakeEvent = { target: { value: '' } } as unknown as Event;
+    fixture.componentInstance['onTypeChange']('s1', fakeEvent);
+    expect(events).toEqual([]);
+  });
+
+  it('cover file with no selected file is a no-op', () => {
+    const fixture = setup({ shots: [], coverAssetRef: undefined });
+    const events: (string | undefined)[] = [];
+    fixture.componentInstance.coverAssetRefChange.subscribe((v) => events.push(v));
+    const fileEvt = { target: { files: [] } } as unknown as Event;
+    fixture.componentInstance['onCoverFile'](fileEvt);
+    expect(events).toEqual([]);
+  });
+
+  it('per-shot file with no selected file is a no-op', () => {
+    const fixture = setup({ shots: SHOTS });
+    const events: DraftShotItemContract[][] = [];
+    fixture.componentInstance.shotsChange.subscribe((v) => events.push(v));
+    const fileEvt = { target: { files: [] } } as unknown as Event;
+    fixture.componentInstance['onShotFile']('s1', fileEvt);
+    expect(events).toEqual([]);
+  });
+
+  it('per-shot asset clear emits with assetRef:undefined', () => {
+    const seeded: DraftShotItemContract[] = [
+      { id: 's1', type: 'Shot', description: 'first', duration: '5s', assetRef: 'cur.mp4' },
+    ];
+    const fixture = setup({ shots: seeded });
+    const events: DraftShotItemContract[][] = [];
+    fixture.componentInstance.shotsChange.subscribe((v) => events.push(v));
+    fixture.componentInstance['onShotAssetClear']('s1');
+    expect(events).toHaveLength(1);
+    expect(events[0][0].assetRef).toBeUndefined();
+  });
+
+  it('AI generate appends generated shots after the delay', () => {
+    vi.useFakeTimers();
+    const fixture = setup({ shots: [] });
+    const events: DraftShotItemContract[][] = [];
+    fixture.componentInstance.shotsChange.subscribe((v) => events.push(v));
+    fixture.componentInstance['onAiGenerate']();
+    vi.advanceTimersByTime(900);
+    expect(events).toHaveLength(1);
+    expect(events[0].length).toBeGreaterThan(0);
+    vi.useRealTimers();
+  });
+
+  it('AI generate is a no-op when disabled', () => {
+    vi.useFakeTimers();
+    const fixture = setup({ shots: [], disabled: true });
+    const events: DraftShotItemContract[][] = [];
+    fixture.componentInstance.shotsChange.subscribe((v) => events.push(v));
+    fixture.componentInstance['onAiGenerate']();
+    vi.advanceTimersByTime(900);
+    expect(events).toEqual([]);
+    vi.useRealTimers();
+  });
+
+  it('countLabel pluralizes for 3 shots', () => {
+    const three: DraftShotItemContract[] = [
+      { id: 's1', type: 'Shot', description: 'a', duration: '1s' },
+      { id: 's2', type: 'Shot', description: 'b', duration: '1s' },
+      { id: 's3', type: 'Shot', description: 'c', duration: '1s' },
+    ];
+    const fixture = setup({ shots: three });
+    const list = fixture.nativeElement.querySelector('ul.shot-rows');
+    expect(list.getAttribute('aria-label')).toBe('Shot list: 3 shots');
+  });
 });

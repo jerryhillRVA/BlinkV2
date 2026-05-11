@@ -360,6 +360,16 @@ describe('PostDetailStore — menu actions', () => {
     expect(store.duplicate()).toBeNull();
   });
 
+  it('unarchive flips archived back to false; is a no-op when item missing', () => {
+    const { store } = setup(makeItem({ archived: true }));
+    expect(store.item()?.archived).toBe(true);
+    store.unarchive();
+    expect(store.item()?.archived).toBe(false);
+    store.setItemId('missing');
+    // No throw / no error path — just exercises the early-return guard.
+    expect(() => store.unarchive()).not.toThrow();
+  });
+
   it('deleteSelf removes the item', () => {
     const { store, state } = setup();
     store.deleteSelf();

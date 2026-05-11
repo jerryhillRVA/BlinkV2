@@ -211,4 +211,90 @@ describe('StepActionBarComponent', () => {
     expect(nav).toBeTruthy();
     expect(nav.getAttribute('aria-label')).toBe('Production step navigation');
   });
+
+  describe('IntersectionObserver lifecycle', () => {
+    it('wires an observer when a sibling HTMLElement sentinel is present + flips state on intersect', () => {
+      type Cb = (entries: { isIntersecting: boolean }[]) => void;
+      const observers: { cb: Cb }[] = [];
+      const RealIO = (
+        globalThis as unknown as { IntersectionObserver: unknown }
+      ).IntersectionObserver;
+      class FakeIO {
+        cb: Cb;
+        disconnect = vi.fn();
+        observe = vi.fn();
+        constructor(cb: Cb) {
+          this.cb = cb;
+          observers.push({ cb });
+        }
+      }
+      (globalThis as unknown as { IntersectionObserver: unknown }).IntersectionObserver = FakeIO;
+
+      const { fixture } = setup();
+      // Wrap the host with a parent we control, then append a sentinel
+      // as the host's next-element sibling so the component's lookup hits.
+      const host = fixture.nativeElement as HTMLElement;
+      const wrapper = document.createElement('div');
+      document.body.appendChild(wrapper);
+      wrapper.appendChild(host);
+      const sentinel = document.createElement('div');
+      wrapper.appendChild(sentinel);
+      // Re-fire ngAfterViewInit now that the DOM has the expected shape.
+      fixture.componentInstance.ngAfterViewInit();
+      expect(observers.length).toBeGreaterThan(0);
+      const { cb } = observers[observers.length - 1];
+      cb([{ isIntersecting: true }]);
+      fixture.detectChanges();
+      expect(fixture.nativeElement.getAttribute('data-state')).toBe('floating');
+      cb([{ isIntersecting: false }]);
+      fixture.detectChanges();
+      expect(fixture.nativeElement.getAttribute('data-state')).toBe('pinned');
+      // Restore.
+      (globalThis as unknown as { IntersectionObserver: unknown }).IntersectionObserver = RealIO;
+      wrapper.remove();
+    });
+
+    it('does nothing when there is no sibling sentinel (covers the non-HTMLElement branch)', () => {
+      const { fixture } = setup();
+      // Default jsdom fixture has no sibling for the host.
+      expect(() => fixture.componentInstance.ngAfterViewInit()).not.toThrow();
+      // Bar stays in its default state.
+      expect(fixture.nativeElement.getAttribute('data-state')).toBe('pinned');
+    });
+
+    it('skips wiring entirely when IntersectionObserver is unavailable', () => {
+      const RealIO = (
+        globalThis as unknown as { IntersectionObserver: unknown }
+      ).IntersectionObserver;
+      (globalThis as unknown as { IntersectionObserver: unknown }).IntersectionObserver = undefined;
+      const { fixture } = setup();
+      const host = fixture.nativeElement as HTMLElement;
+      host.parentElement?.appendChild(document.createElement('div'));
+      expect(() => fixture.componentInstance.ngAfterViewInit()).not.toThrow();
+      (globalThis as unknown as { IntersectionObserver: unknown }).IntersectionObserver = RealIO;
+    });
+
+    it('ngOnDestroy disconnects the observer if one was wired', () => {
+      type Cb = (entries: { isIntersecting: boolean }[]) => void;
+      const disconnect = vi.fn();
+      const RealIO = (
+        globalThis as unknown as { IntersectionObserver: unknown }
+      ).IntersectionObserver;
+      class FakeIO {
+        disconnect = disconnect;
+        observe = vi.fn();
+        constructor(_cb: Cb) {
+          // no-op
+        }
+      }
+      (globalThis as unknown as { IntersectionObserver: unknown }).IntersectionObserver = FakeIO;
+      const { fixture } = setup();
+      const host = fixture.nativeElement as HTMLElement;
+      host.parentElement?.appendChild(document.createElement('div'));
+      fixture.componentInstance.ngAfterViewInit();
+      fixture.componentInstance.ngOnDestroy();
+      expect(disconnect).toHaveBeenCalled();
+      (globalThis as unknown as { IntersectionObserver: unknown }).IntersectionObserver = RealIO;
+    });
+  });
 });

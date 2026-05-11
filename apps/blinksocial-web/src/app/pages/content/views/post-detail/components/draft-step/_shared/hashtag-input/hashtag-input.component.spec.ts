@@ -110,4 +110,40 @@ describe('HashtagInputComponent', () => {
     fixture.componentInstance['onSuggested']('#yoga');
     expect(events).toEqual([]);
   });
+
+  it('submit with an empty (whitespace) draft is a no-op (covers !v guard)', () => {
+    const fixture = setup({ hashtags: ['#a'] });
+    const events: string[][] = [];
+    fixture.componentInstance.hashtagsChange.subscribe((v) => events.push(v));
+    fixture.componentInstance['draft'].set('   ');
+    fixture.componentInstance['onSubmit']();
+    expect(events).toEqual([]);
+  });
+
+  it('Backspace with text in the draft does not remove the last chip', () => {
+    const fixture = setup({ hashtags: ['#a', '#b'] });
+    const events: string[][] = [];
+    fixture.componentInstance.hashtagsChange.subscribe((v) => events.push(v));
+    fixture.componentInstance['draft'].set('typing');
+    fixture.componentInstance['onKeydown'](new KeyboardEvent('keydown', { key: 'Backspace' }));
+    expect(events).toEqual([]);
+  });
+
+  it('Backspace with empty hashtags is a no-op even if draft is empty', () => {
+    const fixture = setup({ hashtags: [] });
+    const events: string[][] = [];
+    fixture.componentInstance.hashtagsChange.subscribe((v) => events.push(v));
+    fixture.componentInstance['onKeydown'](new KeyboardEvent('keydown', { key: 'Backspace' }));
+    expect(events).toEqual([]);
+  });
+
+  it('submitting a tag already present clears the draft without emitting', () => {
+    const fixture = setup({ hashtags: ['#yoga'] });
+    const events: string[][] = [];
+    fixture.componentInstance.hashtagsChange.subscribe((v) => events.push(v));
+    fixture.componentInstance['draft'].set('#yoga');
+    fixture.componentInstance['onSubmit']();
+    expect(events).toEqual([]);
+    expect(fixture.componentInstance['draft']()).toBe('');
+  });
 });

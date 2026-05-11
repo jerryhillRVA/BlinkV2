@@ -109,4 +109,72 @@ describe('CarouselBuilderComponent', () => {
     fixture.componentInstance['onHashtags'](['#a']);
     expect(store.carouselDraft().hashtags).toEqual(['#a']);
   });
+
+  it('AI Assist + Add Slide are no-ops while disabled (brief not approved)', () => {
+    const { fixture, store } = setup();
+    // Unlock then mutate item to mark brief not approved — exercises the
+    // disabled() guards on onHookAssist + onAddSlide.
+    store.unlockBrief();
+    fixture.detectChanges();
+    const before = store.carouselDraft();
+    fixture.componentInstance['onHookAssist']();
+    fixture.componentInstance['onAddSlide']();
+    expect(store.carouselDraft()).toEqual(before);
+  });
+
+  it('Remove / MoveUp / MoveDown are no-ops while disabled', () => {
+    const { fixture, store } = setup();
+    fixture.componentInstance['onAddSlide']();
+    fixture.componentInstance['onAddSlide']();
+    const before = store.carouselDraft().slides!.map((s) => s.id);
+    store.unlockBrief();
+    fixture.detectChanges();
+    fixture.componentInstance['onRemoveSlide'](before[0]);
+    fixture.componentInstance['onMoveUp'](1);
+    fixture.componentInstance['onMoveDown'](0);
+    expect(store.carouselDraft().slides!.map((s) => s.id)).toEqual(before);
+  });
+
+  it('onMoveUp at index 0 is a no-op (already at top)', () => {
+    const { fixture, store } = setup();
+    fixture.componentInstance['onAddSlide']();
+    fixture.componentInstance['onAddSlide']();
+    const before = store.carouselDraft().slides!.map((s) => s.id);
+    fixture.componentInstance['onMoveUp'](0);
+    expect(store.carouselDraft().slides!.map((s) => s.id)).toEqual(before);
+  });
+
+  it('onMoveDown at the last index is a no-op (already at bottom)', () => {
+    const { fixture, store } = setup();
+    fixture.componentInstance['onAddSlide']();
+    fixture.componentInstance['onAddSlide']();
+    const before = store.carouselDraft().slides!.map((s) => s.id);
+    fixture.componentInstance['onMoveDown'](before.length - 1);
+    expect(store.carouselDraft().slides!.map((s) => s.id)).toEqual(before);
+  });
+
+  it('per-slide field edits are no-ops while disabled', () => {
+    const { fixture, store } = setup();
+    fixture.componentInstance['onAddSlide']();
+    const id = store.carouselDraft().slides![0].id;
+    store.unlockBrief();
+    fixture.detectChanges();
+    const before = store.carouselDraft().slides![0];
+    const fakeEvent = (value: string) =>
+      ({ target: { value } } as unknown as Event);
+    fixture.componentInstance['onSlideHeadline'](id, fakeEvent('changed'));
+    fixture.componentInstance['onSlideBody'](id, fakeEvent('changed'));
+    fixture.componentInstance['onSlideAlt'](id, fakeEvent('changed'));
+    expect(store.carouselDraft().slides![0]).toEqual(before);
+  });
+
+  it('clearing a slide image (file=null) wipes imageRef', () => {
+    const { fixture, store } = setup();
+    fixture.componentInstance['onAddSlide']();
+    const id = store.carouselDraft().slides![0].id;
+    fixture.componentInstance['onSlideFile'](id, { name: 'p.png', size: 1 });
+    expect(store.carouselDraft().slides![0].imageRef).toBe('p.png');
+    fixture.componentInstance['onSlideFile'](id, null);
+    expect(store.carouselDraft().slides![0].imageRef).toBeUndefined();
+  });
 });

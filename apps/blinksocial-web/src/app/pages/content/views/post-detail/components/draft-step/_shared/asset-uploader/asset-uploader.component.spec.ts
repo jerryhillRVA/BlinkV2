@@ -77,4 +77,16 @@ describe('AssetUploaderComponent', () => {
     fixture.componentInstance['onAiGenerate']();
     expect(count).toBe(0);
   });
+
+  it('emits fileChange(null) when the change event fires with no file selected', () => {
+    const fixture = setup();
+    const events: ({ name: string; size: number } | null)[] = [];
+    fixture.componentInstance.fileChange.subscribe((v) => events.push(v));
+    const input = fixture.nativeElement.querySelector(
+      'input[type="file"]',
+    ) as HTMLInputElement;
+    Object.defineProperty(input, 'files', { value: [] });
+    input.dispatchEvent(new Event('change'));
+    expect(events).toEqual([null]);
+  });
 });

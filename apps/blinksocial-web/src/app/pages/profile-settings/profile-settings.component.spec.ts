@@ -109,6 +109,48 @@ describe('ProfileSettingsComponent', () => {
       const texts = Array.from(labels).map((l) => l.textContent?.trim());
       expect(texts).toContain('Workspace Access');
     });
+
+    it('currentRole returns "N/A" when the user has no workspaces', () => {
+      const auth = TestBed.inject(AuthService);
+      auth.currentUser.set({
+        id: 'u1',
+        email: 'x@x.com',
+        displayName: 'X',
+        workspaces: [],
+      });
+      const fixture = TestBed.createComponent(ProfileSettingsComponent);
+      fixture.detectChanges();
+      expect(fixture.componentInstance.currentRole).toBe('N/A');
+    });
+
+    it('currentRole returns "Editor" when no Admin role is present', () => {
+      const auth = TestBed.inject(AuthService);
+      auth.currentUser.set({
+        id: 'u1',
+        email: 'x@x.com',
+        displayName: 'X',
+        workspaces: [
+          { workspaceId: 'ws1', role: 'Editor' },
+          { workspaceId: 'ws2', role: 'Viewer' },
+        ],
+      });
+      const fixture = TestBed.createComponent(ProfileSettingsComponent);
+      fixture.detectChanges();
+      expect(fixture.componentInstance.currentRole).toBe('Editor');
+    });
+
+    it('currentRole returns "Viewer" when only Viewer roles are present', () => {
+      const auth = TestBed.inject(AuthService);
+      auth.currentUser.set({
+        id: 'u1',
+        email: 'x@x.com',
+        displayName: 'X',
+        workspaces: [{ workspaceId: 'ws1', role: 'Viewer' }],
+      });
+      const fixture = TestBed.createComponent(ProfileSettingsComponent);
+      fixture.detectChanges();
+      expect(fixture.componentInstance.currentRole).toBe('Viewer');
+    });
   });
 
   describe('Change Password Card', () => {
