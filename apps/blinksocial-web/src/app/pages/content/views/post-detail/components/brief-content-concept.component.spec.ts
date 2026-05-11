@@ -59,11 +59,10 @@ describe('BriefContentConceptComponent', () => {
     expect(fixture.nativeElement.querySelector('.brief-content-concept-card')).toBeNull();
   });
 
-  it('renders the Edit Concept link in the header', () => {
+  it('does not render an Edit Concept link in the header (removed by design)', () => {
     const fixture = setup(makeConcept());
-    expect(
-      (fixture.nativeElement.querySelector('.card-edit') as HTMLElement).textContent,
-    ).toContain('Edit Concept');
+    expect(fixture.nativeElement.querySelector('.card-edit')).toBeNull();
+    expect(fixture.nativeElement.textContent).not.toContain('Edit Concept');
   });
 
   it('renders Platform + Content Type strip with locked badge when both are set', () => {
@@ -98,14 +97,6 @@ describe('BriefContentConceptComponent', () => {
     expect(fixture.nativeElement.textContent).toContain('Q3 awareness lift');
     expect(fixture.nativeElement.querySelectorAll('.chip-grid--pillar .chip').length).toBe(1);
     expect(fixture.nativeElement.querySelectorAll('.chip-grid--segment .chip').length).toBe(1);
-  });
-
-  it('clicking Edit Concept emits editConcept', () => {
-    const fixture = setup(makeConcept());
-    let fired = 0;
-    fixture.componentInstance.editConcept.subscribe(() => fired++);
-    (fixture.nativeElement.querySelector('.card-edit') as HTMLButtonElement).click();
-    expect(fired).toBe(1);
   });
 
   it('hides hook / pillars / segments / goal sections when their data is missing', () => {

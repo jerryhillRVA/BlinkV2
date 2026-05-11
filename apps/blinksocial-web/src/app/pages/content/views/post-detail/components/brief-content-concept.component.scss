@@ -50,26 +50,6 @@
   }
 }
 
-.card-edit {
-  margin-left: auto;
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  border: none;
-  background: none;
-  color: var(--blink-brand-primary);
-  font-size: 10px;
-  font-weight: 600;
-  cursor: pointer;
-  padding: 2px 4px;
-  border-radius: 4px;
-  transition: background 0.15s;
-
-  &:hover {
-    background: var(--blink-brand-primary-lightest-bg, rgba(217, 78, 51, 0.08));
-  }
-}
-
 // Platform + Content Type strip below the header
 .platform-row {
   display: flex;

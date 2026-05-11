@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Output, computed, input } from '@angular/core';
+import { Component, computed, input } from '@angular/core';
 import { PlatformIconComponent } from '../../../../../shared/platform-icon/platform-icon.component';
 import {
   pillarBg as sharedPillarBg,
@@ -28,8 +28,6 @@ export class BriefContentConceptComponent {
   readonly pillars = input<ContentPillar[]>([]);
   readonly segments = input<AudienceSegment[]>([]);
   readonly objectives = input<BusinessObjectiveContract[]>([]);
-
-  @Output() editConcept = new EventEmitter<void>();
 
   protected readonly platformLabel = computed<string | null>(() => {
     const p = this.concept()?.platform;
@@ -85,9 +83,5 @@ export class BriefContentConceptComponent {
   }
   protected pillarText(p: ContentPillar): string | null {
     return sharedPillarText(p, true);
-  }
-
-  protected onEdit(): void {
-    this.editConcept.emit();
   }
 }
