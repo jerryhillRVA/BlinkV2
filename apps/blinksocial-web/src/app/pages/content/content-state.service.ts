@@ -55,6 +55,16 @@ function indexEntryToItem(entry: ContentItemsIndexEntryContract): ContentItem {
   };
 }
 
+// Ensure cached full items expose the web-side `conceptId` alias whenever the
+// server payload carries only `parentConceptId`. Mirrors the alias in
+// indexEntryToItem so the cache-wins branch of items() stays shape-compatible
+// with the projected index entry.
+function normalizeFullItem(item: ContentItem): ContentItem {
+  if (item.conceptId !== undefined) return item;
+  if (item.parentConceptId == null) return item;
+  return { ...item, conceptId: item.parentConceptId };
+}
+
 function itemToIndexEntry(
   item: ContentItem,
 ): ContentItemsIndexEntryContract {
@@ -585,7 +595,11 @@ export class ContentStateService {
   }
 
   private cacheFullItem(item: ContentItem): void {
-    this.fullItemCacheSignal.update((cache) => ({ ...cache, [item.id]: item }));
+    const normalized = normalizeFullItem(item);
+    this.fullItemCacheSignal.update((cache) => ({
+      ...cache,
+      [normalized.id]: normalized,
+    }));
   }
 
   private findIndexEntry(id: string): ContentItem | null {
