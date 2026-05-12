@@ -240,13 +240,60 @@ describe('MediaSelectionsCardComponent', () => {
     expect(note.textContent).toContain('Commercial Music Library');
   });
 
-  it('IG and FB sub-tabs render no licensing note', () => {
-    for (const p of ['instagram', 'facebook'] as PlatformContract[]) {
-      const fixture = setup({ platform: p });
-      (fixture.nativeElement.querySelector('.audio-browse') as HTMLButtonElement).click();
-      fixture.detectChanges();
-      expect(fixture.nativeElement.querySelector('.sounds-note')).toBeNull();
-    }
+  it('IG sub-tab shows the blue Meta-licensing note for Instagram Reels', () => {
+    const fixture = setup({ platform: 'instagram' });
+    (fixture.nativeElement.querySelector('.audio-browse') as HTMLButtonElement).click();
+    fixture.detectChanges();
+    const note = fixture.nativeElement.querySelector('.sounds-note');
+    expect(note).not.toBeNull();
+    expect(note.classList.contains('sounds-note--amber')).toBe(false);
+    expect(note.textContent).toContain('Instagram Reels');
+  });
+
+  it('artworkLetter returns the first letter of the track name, uppercased', () => {
+    const fixture = setup({ platform: 'instagram' });
+    expect(fixture.componentInstance['artworkLetter']('Espresso')).toBe('E');
+    expect(fixture.componentInstance['artworkLetter']('apt.')).toBe('A');
+    expect(fixture.componentInstance['artworkLetter']('  morning glow')).toBe('M');
+    expect(fixture.componentInstance['artworkLetter']('')).toBe('?');
+  });
+
+  it('artworkStyle returns a stable gradient for the same trackId', () => {
+    const fixture = setup({ platform: 'instagram' });
+    const a = fixture.componentInstance['artworkStyle']('ig-1');
+    const b = fixture.componentInstance['artworkStyle']('ig-1');
+    expect(a.background).toBe(b.background);
+    expect(a.background.startsWith('linear-gradient(135deg,')).toBe(true);
+  });
+
+  it('artworkStyle returns different gradients for different trackIds', () => {
+    const fixture = setup({ platform: 'instagram' });
+    const a = fixture.componentInstance['artworkStyle']('ig-1');
+    const b = fixture.componentInstance['artworkStyle']('ig-2');
+    expect(a.background).not.toBe(b.background);
+  });
+
+  it('renders artwork thumbnails on every trending row + the selected chip', () => {
+    const fixture = setup({
+      platform: 'instagram',
+      audio: { trackId: 'ig-1', trackName: 'X', artistName: 'Y', source: 'trending' },
+    });
+    // Selected chip artwork.
+    expect(fixture.nativeElement.querySelector('.audio-art')).not.toBeNull();
+    // Trending rows artwork (6 tracks per platform).
+    (fixture.nativeElement.querySelector('.audio-browse') as HTMLButtonElement).click();
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelectorAll('.sounds-art').length).toBe(6);
+  });
+
+  it('FB sub-tab shows the blue Meta-licensing note for Facebook', () => {
+    const fixture = setup({ platform: 'facebook' });
+    (fixture.nativeElement.querySelector('.audio-browse') as HTMLButtonElement).click();
+    fixture.detectChanges();
+    const note = fixture.nativeElement.querySelector('.sounds-note');
+    expect(note).not.toBeNull();
+    expect(note.classList.contains('sounds-note--amber')).toBe(false);
+    expect(note.textContent).toContain('Facebook');
   });
 
   it('clicking a track Select pill emits the chosen track and closes the panel', () => {

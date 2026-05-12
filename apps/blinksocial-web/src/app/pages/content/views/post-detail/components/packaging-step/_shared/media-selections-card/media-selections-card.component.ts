@@ -26,10 +26,15 @@ const TRENDING_PANEL_LABEL: Record<TrendingPanelPlatform, string> = {
   facebook: 'Facebook',
 };
 
-/** Per-platform licensing note shown in the trending tab (TikTok-only per prototype). */
-const PLATFORM_AUDIO_NOTES: Partial<Record<TrendingPanelPlatform, string>> = {
+/** Per-platform licensing note shown in the trending tab. Verbatim from
+ *  the prototype's PLATFORM_AUDIO_NOTES (PackagingStudio.tsx:259-263). */
+const PLATFORM_AUDIO_NOTES: Record<TrendingPanelPlatform, string> = {
+  instagram:
+    'Meta licensing covers most trending songs for business accounts on Instagram Reels.',
   tiktok:
     "Business accounts on TikTok are restricted from most trending audio. Use TikTok's Commercial Music Library for brand content.",
+  facebook:
+    'Meta licensing covers most trending songs for business accounts on Facebook.',
 };
 
 /**
@@ -106,6 +111,33 @@ export class MediaSelectionsCardComponent {
   protected readonly currentPlatformNote = computed(
     () => PLATFORM_AUDIO_NOTES[this.panelPlatform()] ?? null,
   );
+
+  /**
+   * Synthetic artwork: deterministic two-tone gradient + first-letter glyph
+   * derived from the trackId so each track reads as a consistent visual
+   * thumbnail. Real iTunes artwork would require an API fetch — out of
+   * scope today, but the audio-track contract already supports
+   * `previewUrl` / artwork wiring when that lands.
+   */
+  protected artworkStyle(trackId: string): { background: string } {
+    const hue1 = this.hashHue(trackId);
+    const hue2 = (hue1 + 40) % 360;
+    return {
+      background: `linear-gradient(135deg, hsl(${hue1}, 70%, 55%), hsl(${hue2}, 75%, 45%))`,
+    };
+  }
+
+  protected artworkLetter(name: string): string {
+    return (name?.trim()?.[0] ?? '?').toUpperCase();
+  }
+
+  private hashHue(s: string): number {
+    let h = 0;
+    for (let i = 0; i < s.length; i++) {
+      h = (h * 31 + s.charCodeAt(i)) | 0;
+    }
+    return Math.abs(h) % 360;
+  }
 
   /**
    * Search results: union of every Trending Panel platform's tracks
