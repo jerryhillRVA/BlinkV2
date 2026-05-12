@@ -1,4 +1,26 @@
 /**
+ * Pull every `#tag` token out of a string, preserving order of first
+ * appearance and skipping duplicates. Token shape: `#` followed by one
+ * or more alphanumeric / underscore characters (matches the rest of the
+ * file's whole-word convention).
+ *
+ * Used when AI Generate Caption produces text that already contains
+ * hashtags inline — we surface them as removable chips without
+ * stripping them from the caption.
+ */
+export function extractHashtagsFromCaption(caption: string): string[] {
+  const matches = caption.match(/#[a-zA-Z0-9_]+/g) ?? [];
+  const seen = new Set<string>();
+  const out: string[] = [];
+  for (const tag of matches) {
+    if (seen.has(tag)) continue;
+    seen.add(tag);
+    out.push(tag);
+  }
+  return out;
+}
+
+/**
  * Sync a caption with a diff between old and new hashtag sets. Newly-added
  * tags are appended to the caption (skipping any that are already present);
  * removed tags are stripped from the caption (matching whole-word, so

@@ -1,4 +1,45 @@
-import { syncCaptionWithHashtags } from './caption-hashtag.utils';
+import {
+  extractHashtagsFromCaption,
+  syncCaptionWithHashtags,
+} from './caption-hashtag.utils';
+
+describe('extractHashtagsFromCaption', () => {
+  it('returns an empty array when there are no hashtags', () => {
+    expect(extractHashtagsFromCaption('Hello world')).toEqual([]);
+  });
+
+  it('extracts a single trailing hashtag', () => {
+    expect(extractHashtagsFromCaption('Try this #wellness')).toEqual(['#wellness']);
+  });
+
+  it('extracts multiple hashtags in order of first appearance', () => {
+    expect(
+      extractHashtagsFromCaption('Try #a then #b and finally #c'),
+    ).toEqual(['#a', '#b', '#c']);
+  });
+
+  it('dedupes hashtags that appear more than once', () => {
+    expect(
+      extractHashtagsFromCaption('#wellness now and #wellness later'),
+    ).toEqual(['#wellness']);
+  });
+
+  it('handles tags at start, middle, and end of caption', () => {
+    expect(
+      extractHashtagsFromCaption('#open story #middle thing #end'),
+    ).toEqual(['#open', '#middle', '#end']);
+  });
+
+  it('handles underscores and digits in tags', () => {
+    expect(
+      extractHashtagsFromCaption('Check out #yoga_flow_2026 today'),
+    ).toEqual(['#yoga_flow_2026']);
+  });
+
+  it('does not match a lone "#" with no following word', () => {
+    expect(extractHashtagsFromCaption('Number sign # alone')).toEqual([]);
+  });
+});
 
 describe('syncCaptionWithHashtags', () => {
   it('appends a newly-added hashtag to an empty caption', () => {

@@ -181,6 +181,41 @@ describe('InstagramPackagingComponent', () => {
     vi.useRealTimers();
   });
 
+  it('AI Generate Caption extracts inline hashtags into the chip array (additive)', () => {
+    const fixture = setup({ value: { hashtags: ['#existing'] } });
+    const emitted: PackagingInstagramContract[] = [];
+    fixture.componentInstance.valueChange.subscribe((v) => emitted.push(v));
+    vi.useFakeTimers();
+    fixture.componentInstance['onGenerateCaption']();
+    vi.runAllTimers();
+    // STUB_CAPTION ends with #MorningRoutine and #Wellness — both must
+    // now appear as chips alongside the pre-existing #existing chip.
+    // The caption itself keeps the tags inline (additive merge, not strip).
+    expect(emitted[0]?.hashtags).toEqual([
+      '#existing',
+      '#MorningRoutine',
+      '#Wellness',
+    ]);
+    expect(emitted[0]?.caption).toContain('#MorningRoutine');
+    expect(emitted[0]?.caption).toContain('#Wellness');
+    vi.useRealTimers();
+  });
+
+  it('AI Generate Caption dedupes hashtags that already exist as chips', () => {
+    const fixture = setup({ value: { hashtags: ['#MorningRoutine'] } });
+    const emitted: PackagingInstagramContract[] = [];
+    fixture.componentInstance.valueChange.subscribe((v) => emitted.push(v));
+    vi.useFakeTimers();
+    fixture.componentInstance['onGenerateCaption']();
+    vi.runAllTimers();
+    // Only one entry for #MorningRoutine even though it's both in the
+    // pre-existing chip array and in the AI-generated caption.
+    expect(
+      emitted[0]?.hashtags?.filter((t) => t === '#MorningRoutine').length,
+    ).toBe(1);
+    vi.useRealTimers();
+  });
+
   it('AI Suggest Hashtags appends suggestions to existing hashtags without duplicates', async () => {
     const fixture = setup({ value: { hashtags: ['#wellness'] } });
     const emitted: PackagingInstagramContract[] = [];

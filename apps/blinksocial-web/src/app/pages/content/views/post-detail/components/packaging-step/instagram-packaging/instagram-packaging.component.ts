@@ -8,7 +8,10 @@ import type {
   PublishingModeContract,
 } from '@blinksocial/contracts';
 import { AiButtonComponent } from '../../draft-step/_shared/ai-button/ai-button.component';
-import { syncCaptionWithHashtags } from '../_shared/caption-hashtag.utils';
+import {
+  extractHashtagsFromCaption,
+  syncCaptionWithHashtags,
+} from '../_shared/caption-hashtag.utils';
 import { AudioPickerComponent } from '../_shared/audio-picker/audio-picker.component';
 import { PaidBoostedFieldsComponent } from '../_shared/paid-boosted-fields/paid-boosted-fields.component';
 import { PkgHashtagBankComponent, type HashtagBankGroup } from '../_shared/pkg-hashtag-bank/pkg-hashtag-bank.component';
@@ -120,7 +123,18 @@ export class InstagramPackagingComponent {
     if (this.aiGeneratingCaption() || this.disabled()) return;
     this.aiGeneratingCaption.set(true);
     setTimeout(() => {
-      this.patch({ caption: STUB_CAPTION });
+      const caption = STUB_CAPTION;
+      // Pull any inline hashtags out of the new caption and merge them
+      // into the chip array so they render as removable chips. The tags
+      // are kept in the caption text (the chip array is additive, not a
+      // strip-on-extract operation — clicking X on a chip later will
+      // strip via syncCaptionWithHashtags).
+      const extracted = extractHashtagsFromCaption(caption);
+      const merged = [...this.hashtags()];
+      for (const tag of extracted) {
+        if (!merged.includes(tag)) merged.push(tag);
+      }
+      this.patch({ caption, hashtags: merged });
       this.aiGeneratingCaption.set(false);
     }, AI_DELAY_MS);
   }
