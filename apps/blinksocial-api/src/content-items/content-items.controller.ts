@@ -63,4 +63,12 @@ export class ContentItemsController {
   deleteItem(@Param('id') id: string, @Param('itemId') itemId: string) {
     return this.service.deleteItem(id, itemId);
   }
+
+  @Post(':id/content-items/:conceptId/send-back')
+  sendConceptBack(
+    @Param('id') id: string,
+    @Param('conceptId') conceptId: string,
+  ) {
+    return this.service.sendConceptBack(id, conceptId);
+  }
 }

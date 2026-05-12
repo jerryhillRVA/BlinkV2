@@ -1,4 +1,8 @@
-import { NotFoundException, ServiceUnavailableException } from '@nestjs/common';
+import {
+  BadRequestException,
+  NotFoundException,
+  ServiceUnavailableException,
+} from '@nestjs/common';
 import { Test } from '@nestjs/testing';
 import { ContentItemsService } from './content-items.service';
 import { AgenticFilesystemService } from '../agentic-filesystem/agentic-filesystem.service';
@@ -618,6 +622,159 @@ describe('ContentItemsService', () => {
       // Archived post still in archive index — the un-flip must NOT fire.
       const refreshed = await service.getItem('w1', concept.id);
       expect(refreshed.status).toBe('used');
+    });
+  });
+
+  describe('sendConceptBack (ticket #118)', () => {
+    async function seedConceptWithChildren(
+      workspaceId: string,
+      liveCount: number,
+      archivedCount = 0,
+    ): Promise<{ concept: ContentItemContract; liveIds: string[]; archivedIds: string[] }> {
+      const concept = await service.createItem(workspaceId, {
+        stage: 'concept',
+        status: 'new',
+        title: 'Parent concept',
+      });
+      const liveIds: string[] = [];
+      for (let i = 0; i < liveCount; i++) {
+        const p = await service.createItem(workspaceId, {
+          stage: 'post',
+          status: 'in-progress',
+          title: `Live ${i + 1}`,
+          parentConceptId: concept.id,
+        });
+        liveIds.push(p.id);
+      }
+      const archivedIds: string[] = [];
+      for (let i = 0; i < archivedCount; i++) {
+        const p = await service.createItem(workspaceId, {
+          stage: 'post',
+          status: 'in-progress',
+          title: `Archived ${i + 1}`,
+          parentConceptId: concept.id,
+        });
+        await service.archiveItem(workspaceId, p.id);
+        archivedIds.push(p.id);
+      }
+      return { concept, liveIds, archivedIds };
+    }
+
+    it('archives every live child post and flips the concept to `new`', async () => {
+      const { concept, liveIds, archivedIds } = await seedConceptWithChildren(
+        'w1',
+        2,
+        1,
+      );
+
+      const result = await service.sendConceptBack('w1', concept.id);
+
+      expect(result.conceptId).toBe(concept.id);
+      expect(result.conceptStatus).toBe('new');
+      expect(result.archivedPostIds.sort()).toEqual([...liveIds].sort());
+      expect(result.alreadyArchivedPostIds.sort()).toEqual([...archivedIds].sort());
+
+      const refreshedConcept = await service.getItem('w1', concept.id);
+      expect(refreshedConcept.status).toBe('new');
+
+      for (const id of liveIds) {
+        const post = await service.getItem('w1', id);
+        expect(post.archived).toBe(true);
+      }
+      for (const id of archivedIds) {
+        const post = await service.getItem('w1', id);
+        expect(post.archived).toBe(true);
+      }
+    });
+
+    it('is idempotent — second call on the same concept is a no-op', async () => {
+      const { concept } = await seedConceptWithChildren('w1', 2);
+      await service.sendConceptBack('w1', concept.id);
+
+      const result = await service.sendConceptBack('w1', concept.id);
+
+      expect(result.archivedPostIds).toEqual([]);
+      expect(result.conceptStatus).toBe('new');
+      const refreshedConcept = await service.getItem('w1', concept.id);
+      expect(refreshedConcept.status).toBe('new');
+    });
+
+    it('returns empty arrays when the concept has no posts', async () => {
+      const concept = await service.createItem('w1', {
+        stage: 'concept',
+        status: 'new',
+        title: 'Childless',
+      });
+
+      const result = await service.sendConceptBack('w1', concept.id);
+
+      expect(result.archivedPostIds).toEqual([]);
+      expect(result.alreadyArchivedPostIds).toEqual([]);
+      expect(result.conceptStatus).toBe('new');
+    });
+
+    it('rejects with BadRequestException when the target is not a concept', async () => {
+      const idea = await service.createItem('w1', {
+        stage: 'idea',
+        status: 'new',
+        title: 'Idea',
+      });
+      await expect(service.sendConceptBack('w1', idea.id)).rejects.toBeInstanceOf(
+        BadRequestException,
+      );
+
+      const concept = await service.createItem('w1', {
+        stage: 'concept',
+        status: 'new',
+        title: 'Parent',
+      });
+      const post = await service.createItem('w1', {
+        stage: 'post',
+        status: 'in-progress',
+        title: 'Post',
+        parentConceptId: concept.id,
+      });
+      await expect(service.sendConceptBack('w1', post.id)).rejects.toBeInstanceOf(
+        BadRequestException,
+      );
+    });
+
+    it('rejects with NotFoundException when the concept does not exist', async () => {
+      await expect(
+        service.sendConceptBack('w1', 'c-does-not-exist'),
+      ).rejects.toBeInstanceOf(NotFoundException);
+    });
+
+    it('rolls back archived posts when the concept-flip throws', async () => {
+      const { concept, liveIds } = await seedConceptWithChildren('w1', 2);
+
+      // Force flipParentToNew to fail by stubbing it. Cast through unknown
+      // to bypass the private-method visibility guard.
+      const orig = (
+        service as unknown as { flipParentToNew: (w: string, p: string) => Promise<void> }
+      ).flipParentToNew.bind(service);
+      let calls = 0;
+      (
+        service as unknown as { flipParentToNew: (w: string, p: string) => Promise<void> }
+      ).flipParentToNew = async (w: string, p: string) => {
+        calls++;
+        if (p === concept.id) throw new Error('forced flip failure');
+        return orig(w, p);
+      };
+
+      await expect(service.sendConceptBack('w1', concept.id)).rejects.toBeInstanceOf(
+        ServiceUnavailableException,
+      );
+
+      expect(calls).toBeGreaterThan(0);
+      // Every live post should be restored to archived=false (rollback).
+      for (const id of liveIds) {
+        const post = await service.getItem('w1', id);
+        expect(post.archived).toBe(false);
+      }
+      // Concept stays `used` because the flip never landed.
+      const refreshedConcept = await service.getItem('w1', concept.id);
+      expect(refreshedConcept.status).toBe('used');
     });
   });
 });
