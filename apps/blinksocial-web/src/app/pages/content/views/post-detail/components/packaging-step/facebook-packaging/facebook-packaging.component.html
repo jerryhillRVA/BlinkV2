@@ -1,0 +1,76 @@
+<section class="fb-packaging" aria-label="Facebook packaging">
+  <div class="field">
+    <label class="field-label" for="fb-caption">Caption</label>
+    <textarea
+      id="fb-caption"
+      class="caption-area"
+      rows="6"
+      [value]="caption()"
+      [readOnly]="disabled()"
+      [attr.maxlength]="captionMax"
+      (input)="onCaptionInput($event)"
+    ></textarea>
+    <p
+      class="char-counter"
+      [class.warn]="captionState() === 'warn'"
+      [class.fail]="captionState() === 'fail'"
+      aria-live="polite"
+    >
+      {{ caption().length }} / {{ captionMax }}
+    </p>
+  </div>
+
+  <div class="field">
+    <span class="field-label">Hashtags</span>
+    <app-hashtag-input
+      [hashtags]="hashtags()"
+      [disabled]="disabled()"
+      (hashtagsChange)="onHashtagsChange($event)"
+    />
+  </div>
+
+  <div class="field">
+    <label class="field-label" for="fb-link">Link</label>
+    <input
+      id="fb-link"
+      type="url"
+      class="link-input"
+      placeholder="https://example.com"
+      [value]="link()"
+      [readOnly]="disabled()"
+      (input)="onLinkInput($event)"
+    />
+  </div>
+
+  <app-utm-builder [utm]="utm()" [disabled]="disabled()" (utmChange)="onUtmChange($event)" />
+
+  @if (isCarousel()) {
+    <div class="field">
+      <span class="field-label">Slide order</span>
+      <!-- Conditionally rendered only when draft.mode === 'CAROUSEL'. -->
+      <app-slide-order-picker
+        [slides]="slides()"
+        [order]="slideOrder()"
+        [disabled]="disabled()"
+        (orderChange)="onOrderChange($event)"
+      />
+    </div>
+  }
+
+  <div class="field">
+    <span class="field-label">Audio</span>
+    <app-audio-picker
+      platform="facebook"
+      [track]="audio()"
+      [disabled]="disabled()"
+      (trackChange)="onAudioChange($event)"
+    />
+  </div>
+
+  <app-platform-controls
+    platform="facebook"
+    [controls]="controls()"
+    [disabled]="disabled()"
+    (controlsChange)="onControlsChange($event)"
+  />
+</section>

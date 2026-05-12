@@ -1,0 +1,77 @@
+<section class="ig-packaging" aria-label="Instagram packaging">
+  <div class="field">
+    <label class="field-label" for="ig-caption">Caption</label>
+    <textarea
+      id="ig-caption"
+      class="caption-area"
+      rows="6"
+      [value]="caption()"
+      [readOnly]="disabled()"
+      [attr.maxlength]="captionMax"
+      (input)="onCaptionInput($event)"
+    ></textarea>
+    <p
+      class="char-counter"
+      [class.warn]="captionState() === 'warn'"
+      [class.fail]="captionState() === 'fail'"
+      aria-live="polite"
+    >
+      {{ caption().length }} / {{ captionMax }}
+    </p>
+  </div>
+
+  <div class="field">
+    <span class="field-label">Hashtags</span>
+    <app-hashtag-input
+      [hashtags]="hashtags()"
+      [disabled]="disabled()"
+      (hashtagsChange)="onHashtagsChange($event)"
+    />
+  </div>
+
+  <div class="field">
+    <label class="field-label" for="ig-link">Link in bio or link sticker</label>
+    <input
+      id="ig-link"
+      type="url"
+      class="link-input"
+      placeholder="https://example.com"
+      [value]="link()"
+      [readOnly]="disabled()"
+      (input)="onLinkInput($event)"
+    />
+  </div>
+
+  <app-utm-builder [utm]="utm()" [disabled]="disabled()" (utmChange)="onUtmChange($event)" />
+
+  @if (isCarousel()) {
+    <div class="field">
+      <span class="field-label">Slide order</span>
+      <!-- Conditionally rendered only when draft.mode === 'CAROUSEL'. Empty
+           slides array still mounts the component; the picker handles it. -->
+      <app-slide-order-picker
+        [slides]="slides()"
+        [order]="slideOrder()"
+        [disabled]="disabled()"
+        (orderChange)="onOrderChange($event)"
+      />
+    </div>
+  }
+
+  <div class="field">
+    <span class="field-label">Audio</span>
+    <app-audio-picker
+      platform="instagram"
+      [track]="audio()"
+      [disabled]="disabled()"
+      (trackChange)="onAudioChange($event)"
+    />
+  </div>
+
+  <app-platform-controls
+    platform="instagram"
+    [controls]="controls()"
+    [disabled]="disabled()"
+    (controlsChange)="onControlsChange($event)"
+  />
+</section>

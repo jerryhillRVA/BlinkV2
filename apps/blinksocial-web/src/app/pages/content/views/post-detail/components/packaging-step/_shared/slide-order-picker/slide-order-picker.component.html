@@ -1,0 +1,62 @@
+<ol class="slide-order" role="list" [class.is-disabled]="disabled()">
+  @for (row of rows(); track row.slideIdx) {
+    <li
+      class="slide-row"
+      [attr.aria-label]="'Slide ' + (row.position + 1) + ' of ' + total()"
+    >
+      <div class="slide-thumb" aria-hidden="true">
+        <span class="thumb-initial">{{ initial(row.slide.headline) }}</span>
+      </div>
+      <div class="slide-meta">
+        <span class="slide-position">Slide {{ row.position + 1 }} of {{ total() }}</span>
+        <span class="slide-headline">{{ row.slide.headline }}</span>
+      </div>
+      <div class="slide-actions">
+        <button
+          type="button"
+          class="move-btn"
+          [disabled]="disabled() || row.position === 0"
+          [attr.aria-label]="'Move slide ' + (row.position + 1) + ' up'"
+          (click)="onMoveUp(row.position)"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="14"
+            height="14"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            aria-hidden="true"
+          >
+            <polyline points="18 15 12 9 6 15" />
+          </svg>
+        </button>
+        <button
+          type="button"
+          class="move-btn"
+          [disabled]="disabled() || row.position === total() - 1"
+          [attr.aria-label]="'Move slide ' + (row.position + 1) + ' down'"
+          (click)="onMoveDown(row.position)"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="14"
+            height="14"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            aria-hidden="true"
+          >
+            <polyline points="6 9 12 15 18 9" />
+          </svg>
+        </button>
+      </div>
+    </li>
+  }
+</ol>

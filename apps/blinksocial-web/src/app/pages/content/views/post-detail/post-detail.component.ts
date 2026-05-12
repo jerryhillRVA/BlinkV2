@@ -15,6 +15,7 @@ import { ProductionStepsBarComponent } from './components/production-steps-bar.c
 import { BriefStepComponent } from './components/brief-step.component';
 import { BriefContentConceptComponent } from './components/brief-content-concept.component';
 import { DraftStepComponent } from './components/draft-step/draft-step.component';
+import { PackagingStepComponent } from './components/packaging-step/packaging-step.component';
 import { StepActionBarComponent } from './components/step-action-bar/step-action-bar.component';
 import { StepPlaceholderComponent } from './components/step-placeholder.component';
 import { DetailBackButtonComponent } from '../_shared/detail-back-button/detail-back-button.component';
@@ -29,6 +30,7 @@ import type { ContentItem } from '../../content.types';
     BriefStepComponent,
     BriefContentConceptComponent,
     DraftStepComponent,
+    PackagingStepComponent,
     StepActionBarComponent,
     ContentJourneyComponent,
     StepPlaceholderComponent,

@@ -18,6 +18,13 @@ import type {
   DraftCarouselSlideContract,
   DraftSequenceBlockContract,
   DraftShotItemContract,
+  PackagingFacebookContract,
+  PackagingInstagramContract,
+  PackagingLinkedInContract,
+  PackagingTikTokContract,
+  PackagingXContract,
+  PackagingYouTubeContract,
+  PlatformContract,
   PrimaryCtaContract,
   ProductionBriefContract,
   ProductionDraftCarouselContract,
@@ -26,6 +33,7 @@ import type {
   ProductionDraftTextContract,
   ProductionDraftVideoContract,
   ProductionDraftVideoLongContract,
+  ProductionPackagingContract,
   PublishingModeContract,
 } from '@blinksocial/contracts';
 import { generateId, toggleArrayItem } from '../../content.utils';
@@ -611,8 +619,9 @@ export class PostDetailStore {
   // Step-aware errors: callers ask for "the errors I should display right
   // now," and the answer depends on which step is active. Brief consumers
   // (e.g. the approve toggle) keep using briefErrors directly so they
-  // don't get polluted by draft state.
+  // don't get polluted by draft / packaging state.
   readonly errors = computed<BriefValidationIssue[]>(() => {
+    if (this.activeStep() === 'packaging') return this.packagingErrors();
     if (this.activeStep() === 'draft') return this.draftErrors();
     return this.briefErrors();
   });
@@ -723,15 +732,67 @@ export class PostDetailStore {
     () => this.draftErrors().length === 0,
   );
 
-  // Packaging is not yet implemented — the step renders a placeholder.
-  // Until it has a real validation surface, its "ready to continue"
-  // predicate is always false, which keeps Approve & Schedule locked in
-  // the Model-A gating chain (briefApproved → canContinueFromDraft →
-  // canContinueFromPackaging). When we build Packaging, replace this
-  // stub with the real per-mode validation, mirroring draftErrors.
-  readonly packagingErrors = computed<BriefValidationIssue[]>(() => [
-    { field: 'packaging', label: 'Packaging step is not yet implemented' },
-  ]);
+  // Per-platform packaging validation (mirrors draftErrors). Required-field
+  // rules come from PackagingStudio.tsx:286-385 (the prototype's validate()).
+  // Caption-driven platforms require a non-empty caption. YouTube requires
+  // title + description (when canonical = VIDEO_LONG_HORIZONTAL the title is
+  // hard-required; otherwise warn-only). X enforces 280-char hard cap.
+  readonly packagingErrors = computed<BriefValidationIssue[]>(() => {
+    return this.computePackagingErrorsForPlatform(this.item()?.platform);
+  });
+
+  computePackagingErrorsForPlatform(
+    platform: PlatformContract | null | undefined,
+  ): BriefValidationIssue[] {
+    const out: BriefValidationIssue[] = [];
+    const pkg = this.packaging();
+    switch (platform) {
+      case 'instagram': {
+        const v = pkg?.instagram;
+        if (!v?.caption?.trim().length)
+          out.push({ field: 'caption', label: 'Caption is required' });
+        return out;
+      }
+      case 'tiktok': {
+        const v = pkg?.tiktok;
+        if (!v?.caption?.trim().length)
+          out.push({ field: 'caption', label: 'Caption is required' });
+        return out;
+      }
+      case 'youtube': {
+        const v = pkg?.youtube;
+        if (!v?.title?.trim().length)
+          out.push({ field: 'title', label: 'Title is required' });
+        if (!v?.description?.trim().length)
+          out.push({ field: 'description', label: 'Description is required' });
+        return out;
+      }
+      case 'linkedin': {
+        const v = pkg?.linkedin;
+        if (!v?.caption?.trim().length)
+          out.push({ field: 'caption', label: 'Caption is required' });
+        return out;
+      }
+      case 'facebook': {
+        const v = pkg?.facebook;
+        if (!v?.caption?.trim().length)
+          out.push({ field: 'caption', label: 'Caption is required' });
+        return out;
+      }
+      case 'x': {
+        const v = pkg?.x;
+        if (!v?.caption?.trim().length)
+          out.push({ field: 'caption', label: 'Caption is required' });
+        else if (v.caption.length > 280)
+          out.push({ field: 'caption', label: 'Caption exceeds 280 characters' });
+        return out;
+      }
+      default:
+        // 'tbd' or undefined — keep Continue disabled with a clear reason.
+        out.push({ field: 'platform', label: 'Set a platform first' });
+        return out;
+    }
+  }
 
   readonly canContinueFromPackaging = computed(
     () => this.packagingErrors().length === 0,
@@ -880,6 +941,73 @@ export class PostDetailStore {
     const next: ContentItem = {
       ...item,
       production: { ...item.production, draft: nextDraft },
+      updatedAt: new Date().toISOString(),
+    };
+    this.state.saveItem(next);
+  }
+
+  // ── Packaging slot (#116) ────────────────────────────────────────────
+  readonly packaging = computed<ProductionPackagingContract | undefined>(
+    () => this.item()?.production?.packaging,
+  );
+  readonly instagramPackaging = computed<PackagingInstagramContract | undefined>(
+    () => this.packaging()?.instagram,
+  );
+  readonly tiktokPackaging = computed<PackagingTikTokContract | undefined>(
+    () => this.packaging()?.tiktok,
+  );
+  readonly youtubePackaging = computed<PackagingYouTubeContract | undefined>(
+    () => this.packaging()?.youtube,
+  );
+  readonly linkedinPackaging = computed<PackagingLinkedInContract | undefined>(
+    () => this.packaging()?.linkedin,
+  );
+  readonly facebookPackaging = computed<PackagingFacebookContract | undefined>(
+    () => this.packaging()?.facebook,
+  );
+  readonly xPackaging = computed<PackagingXContract | undefined>(
+    () => this.packaging()?.x,
+  );
+
+  /**
+   * Replace a per-platform packaging slot with a merged-in patch. Same
+   * briefApproved write-lock as the brief / draft slots — packaging
+   * can only be edited once the brief is approved.
+   */
+  setInstagramPackaging(value: PackagingInstagramContract): void {
+    this.persistPackagingSlot('instagram', value);
+  }
+  setTikTokPackaging(value: PackagingTikTokContract): void {
+    this.persistPackagingSlot('tiktok', value);
+  }
+  setYouTubePackaging(value: PackagingYouTubeContract): void {
+    this.persistPackagingSlot('youtube', value);
+  }
+  setLinkedInPackaging(value: PackagingLinkedInContract): void {
+    this.persistPackagingSlot('linkedin', value);
+  }
+  setFacebookPackaging(value: PackagingFacebookContract): void {
+    this.persistPackagingSlot('facebook', value);
+  }
+  setXPackaging(value: PackagingXContract): void {
+    this.persistPackagingSlot('x', value);
+  }
+
+  private persistPackagingSlot<
+    K extends Exclude<keyof ProductionPackagingContract, 'platform'>,
+  >(slot: K, value: NonNullable<ProductionPackagingContract[K]>): void {
+    const item = this.item();
+    if (!item) return;
+    if (!item.briefApproved) return;
+    const pkg: ProductionPackagingContract = item.production?.packaging ?? {};
+    const nextPkg: ProductionPackagingContract = {
+      ...pkg,
+      platform: pkg.platform ?? item.platform ?? undefined,
+      [slot]: value,
+    };
+    const next: ContentItem = {
+      ...item,
+      production: { ...item.production, packaging: nextPkg },
       updatedAt: new Date().toISOString(),
     };
     this.state.saveItem(next);

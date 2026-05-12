@@ -1,0 +1,22 @@
+<section class="builder-placeholder" role="status" aria-live="polite">
+  <div class="placeholder-icon" aria-hidden="true">
+    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+      <rect width="18" height="14" x="3" y="5" rx="2"/>
+      <path d="M3 9h18"/>
+    </svg>
+  </div>
+  <h3 class="placeholder-title">
+    @if (isTbd()) {
+      Set a platform first
+    } @else {
+      Packaging for {{ label() }} coming soon
+    }
+  </h3>
+  <p class="placeholder-body">
+    @if (isTbd()) {
+      Pick a platform in the Brief step so we know what packaging surface to render.
+    } @else {
+      We'll add this builder shortly. The Brief and Draft for this post are still editable.
+    }
+  </p>
+</section>

@@ -1,0 +1,40 @@
+<details class="utm-builder" [class.is-disabled]="disabled()">
+  <summary class="utm-summary">
+    <span class="summary-label">UTM parameters</span>
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      class="caret"
+      width="14"
+      height="14"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="2"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+      aria-hidden="true"
+    >
+      <polyline points="6 9 12 15 18 9" />
+    </svg>
+  </summary>
+
+  <div class="utm-fields">
+    @for (f of fields; track f.key) {
+      <div class="utm-field">
+        <label class="utm-label" [attr.for]="idFor(f.idSuffix)">{{ f.label }}</label>
+        <input
+          class="utm-input"
+          type="text"
+          [id]="idFor(f.idSuffix)"
+          [value]="valueFor(f.key)"
+          [readOnly]="disabled()"
+          (input)="onFieldInput(f.key, $any($event.target).value)"
+        />
+      </div>
+    }
+  </div>
+
+  @if (preview()) {
+    <p class="utm-preview" role="status" aria-live="polite">{{ preview() }}</p>
+  }
+</details>

@@ -1,0 +1,69 @@
+<div class="platform-controls" [class.is-disabled]="disabled()">
+  <fieldset class="visibility-fieldset" [disabled]="disabled()">
+    <legend>Visibility</legend>
+    <div class="radio-row">
+      @for (opt of visibilityOptions(); track opt.value) {
+        <label class="radio-option" [attr.for]="radioId(opt.value)">
+          <input
+            type="radio"
+            name="pc-visibility"
+            [id]="radioId(opt.value)"
+            [value]="opt.value"
+            [checked]="currentVisibility() === opt.value"
+            [disabled]="disabled()"
+            (change)="onVisibility(opt.value)"
+          />
+          <span>{{ opt.label }}</span>
+        </label>
+      }
+    </div>
+  </fieldset>
+
+  <div class="switches">
+    <button
+      type="button"
+      role="switch"
+      class="switch"
+      [attr.aria-checked]="allowComments()"
+      [disabled]="disabled()"
+      (click)="onToggleComments()"
+    >
+      <span class="switch-label">Allow comments</span>
+      <span class="switch-track" aria-hidden="true">
+        <span class="switch-thumb"></span>
+      </span>
+    </button>
+
+    @if (showDuetStitch()) {
+      <button
+        type="button"
+        role="switch"
+        class="switch"
+        [attr.aria-checked]="allowDuetStitch()"
+        [disabled]="disabled()"
+        (click)="onToggleDuetStitch()"
+      >
+        <span class="switch-label">Allow Duet / Stitch</span>
+        <span class="switch-track" aria-hidden="true">
+          <span class="switch-thumb"></span>
+        </span>
+      </button>
+    }
+
+    @if (showBoost()) {
+      <button
+        type="button"
+        role="switch"
+        class="switch"
+        [attr.aria-checked]="boostEnabled()"
+        [disabled]="disabled()"
+        (click)="onToggleBoost()"
+      >
+        <span class="switch-label">Enable Boost</span>
+        <span class="switch-track" aria-hidden="true">
+          <span class="switch-thumb"></span>
+        </span>
+      </button>
+    }
+  </div>
+</div>

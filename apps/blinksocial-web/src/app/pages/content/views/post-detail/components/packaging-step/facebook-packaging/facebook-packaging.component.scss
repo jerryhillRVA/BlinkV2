@@ -1,0 +1,70 @@
+:host {
+  display: block;
+}
+
+.fb-packaging {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.field-label {
+  font-size: var(--blink-label-small);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--blink-on-surface-faint);
+}
+
+.caption-area {
+  font-family: inherit;
+  font-size: var(--blink-body-medium);
+  padding: 10px 12px;
+  border: 1px solid var(--blink-outline-variant);
+  border-radius: 8px;
+  background: var(--blink-surface);
+  color: var(--blink-on-surface);
+  resize: vertical;
+
+  &:focus-visible {
+    outline: 2px solid var(--blink-brand-primary);
+    outline-offset: 1px;
+  }
+}
+
+.char-counter {
+  margin: 0;
+  align-self: flex-end;
+  font-size: var(--blink-body-small);
+  color: var(--blink-on-surface-faint);
+
+  &.warn {
+    color: var(--blink-icon-orange);
+    font-weight: 600;
+  }
+
+  &.fail {
+    color: var(--blink-brand-primary);
+    font-weight: 700;
+  }
+}
+
+.link-input {
+  font-size: var(--blink-body-medium);
+  padding: 8px 10px;
+  border: 1px solid var(--blink-outline-variant);
+  border-radius: 8px;
+  background: var(--blink-surface);
+  color: var(--blink-on-surface);
+
+  &:focus-visible {
+    outline: 2px solid var(--blink-brand-primary);
+    outline-offset: 1px;
+  }
+}

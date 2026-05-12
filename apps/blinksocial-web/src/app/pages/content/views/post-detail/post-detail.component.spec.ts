@@ -136,12 +136,15 @@ describe('PostDetailComponent — composition', () => {
     expect(fixture.nativeElement.querySelector('.brief-side app-content-journey')).not.toBeNull();
   });
 
-  it('renders Packaging placeholder when active', () => {
+  it('renders Packaging step shell when active', () => {
     const { fixture } = setup();
     const store = (fixture.componentInstance as unknown as { store: PostDetailStore }).store;
     store.setActiveStep('packaging');
     fixture.detectChanges();
-    expect(fixture.nativeElement.querySelector('app-step-placeholder')).not.toBeNull();
+    // Packaging now ships as a real step shell that dispatches on platform
+    // (no longer the generic app-step-placeholder). The Instagram fixture
+    // routes to app-instagram-packaging via the factory.
+    expect(fixture.nativeElement.querySelector('app-packaging-step')).not.toBeNull();
   });
 
   it('renders QA placeholder when active', () => {

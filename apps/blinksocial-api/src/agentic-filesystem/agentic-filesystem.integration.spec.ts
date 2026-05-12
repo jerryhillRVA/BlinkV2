@@ -157,4 +157,68 @@ const TEST_NAMESPACE = '__test_ns__';
     expect(video.hook).toBe('Test hook');
     expect(video.shotList).toHaveLength(2);
   }, 15_000);
+
+  it('should round-trip a content item with ProductionPackagingContract.instagram (#116)', async () => {
+    const filename = `test-packaging-roundtrip-${Date.now()}.json`;
+    const item = {
+      id: 'integration-post-packaging-1',
+      stage: 'post',
+      status: 'in-progress',
+      title: 'Integration test packaging',
+      description: 'p'.repeat(80),
+      pillarIds: ['p1'],
+      segmentIds: ['s1'],
+      platform: 'instagram',
+      contentType: 'reel',
+      production: {
+        productionStep: 'packaging',
+        packaging: {
+          platform: 'instagram',
+          instagram: {
+            caption: 'Caption with hashtags #wellness #mobility',
+            hashtags: ['wellness', 'mobility', 'morningroutine'],
+            link: 'https://example.com/landing',
+            utm: {
+              source: 'instagram',
+              medium: 'social',
+              campaign: 'launch-q3',
+              content: 'reel-mobility',
+            },
+            audio: {
+              trackId: 'audio-1',
+              trackName: 'Morning Glow',
+              artistName: 'Loop Studio',
+              source: 'trending',
+            },
+            platformControls: {
+              visibility: 'public',
+              allowComments: true,
+            },
+          },
+        },
+      },
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+
+    const uploaded = await service.uploadJsonFile(TEST_TENANT, TEST_NAMESPACE, filename, item);
+    const retrieved = await service.batchRetrieve(TEST_TENANT, [uploaded.file_id]);
+    expect(retrieved).toHaveLength(1);
+    expect(retrieved[0].content).toEqual(item);
+    // Spot-check the packaging.instagram sub-object survived intact.
+    const packaging = (
+      retrieved[0].content as { production: { packaging: Record<string, unknown> } }
+    ).production.packaging;
+    expect(packaging.platform).toBe('instagram');
+    const ig = packaging.instagram as {
+      caption: string;
+      hashtags: string[];
+      utm: { source: string };
+      audio: { trackId: string };
+    };
+    expect(ig.caption).toContain('#mobility');
+    expect(ig.hashtags).toHaveLength(3);
+    expect(ig.utm.source).toBe('instagram');
+    expect(ig.audio.trackId).toBe('audio-1');
+  }, 15_000);
 });

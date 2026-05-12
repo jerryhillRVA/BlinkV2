@@ -256,11 +256,11 @@ test.describe('Production Draft (#114)', () => {
     await page.locator('app-video-builder textarea[aria-label="Hook"]').fill('A hook');
     await page.locator('app-shot-list .add-shot-row .ghost-btn').click();
     await page.locator('app-step-action-bar .continue-btn').click();
-    await expect(page.locator('app-step-placeholder')).toBeVisible();
+    await expect(page.locator('app-packaging-step')).toBeVisible();
     // Reload — should land on Packaging directly (productionStep persisted).
     await page.reload();
     await expect(page.locator('app-post-detail')).toBeVisible();
-    await expect(page.locator('app-step-placeholder')).toBeVisible();
+    await expect(page.locator('app-packaging-step')).toBeVisible();
     await expect(page.locator('app-draft-step')).toHaveCount(0);
   });
 
@@ -295,7 +295,7 @@ test.describe('Production Draft (#114)', () => {
     // After advance, shell renders the Packaging placeholder (existing
     // step-placeholder). Draft step is no longer rendered.
     await expect(page.locator('app-draft-step')).toHaveCount(0);
-    await expect(page.locator('app-step-placeholder')).toBeVisible();
+    await expect(page.locator('app-packaging-step')).toBeVisible();
   });
 
   test('TC-3: VIDEO_LONG builder — sequence block with description enables Continue', async ({ page }) => {
@@ -445,7 +445,7 @@ test.describe('Production Draft (#114)', () => {
     await expect(continueBtn).toBeEnabled();
     await continueBtn.focus();
     await page.keyboard.press('Enter');
-    await expect(page.locator('app-step-placeholder')).toBeVisible();
+    await expect(page.locator('app-packaging-step')).toBeVisible();
   });
 
   test('TC-10: Continue button gating reflects required-field state in real-time', async ({ page }) => {

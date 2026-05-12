@@ -1,0 +1,154 @@
+<div class="audio-picker">
+  <button
+    #triggerBtn
+    type="button"
+    class="trigger-btn"
+    [disabled]="disabled()"
+    [attr.aria-haspopup]="'dialog'"
+    (click)="onOpen()"
+  >
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="14"
+      height="14"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="2"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+      aria-hidden="true"
+    >
+      <path d="M9 18V5l12-2v13" />
+      <circle cx="6" cy="18" r="3" />
+      <circle cx="18" cy="16" r="3" />
+    </svg>
+    <span>{{ triggerLabel() }}</span>
+  </button>
+
+  @if (track(); as t) {
+    <div class="selected-chip" role="status" aria-live="polite">
+      <span class="selected-track">{{ t.trackName }}</span>
+      <span class="selected-artist">{{ t.artistName }}</span>
+      <button
+        type="button"
+        class="remove-btn"
+        [disabled]="disabled()"
+        aria-label="Remove audio track"
+        (click)="onClear()"
+      >
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          width="12"
+          height="12"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2.5"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          aria-hidden="true"
+        >
+          <path d="M18 6 6 18" />
+          <path d="m6 6 12 12" />
+        </svg>
+      </button>
+    </div>
+  }
+
+  <dialog
+    #dialogEl
+    class="audio-dialog"
+    aria-label="Choose audio track"
+    (close)="onClose()"
+    (cancel)="onClose()"
+  >
+    <header class="dialog-head">
+      <h3 class="dialog-title">Trending tracks (preview)</h3>
+      <button
+        type="button"
+        class="dialog-close"
+        aria-label="Close audio picker"
+        (click)="onClose()"
+      >
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          width="14"
+          height="14"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2.5"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          aria-hidden="true"
+        >
+          <path d="M18 6 6 18" />
+          <path d="m6 6 12 12" />
+        </svg>
+      </button>
+    </header>
+
+    @if (platformNote(); as note) {
+      <p class="platform-note" role="alert">{{ note }}</p>
+    }
+
+    <ul class="track-list" role="list">
+      @for (t of tracks(); track t.trackId) {
+        <li class="track-row">
+          <button
+            type="button"
+            class="preview-btn"
+            [attr.aria-pressed]="isPreviewing(t.trackId)"
+            [attr.aria-label]="'Play preview of ' + t.trackName"
+            (click)="onTogglePreview(t.trackId)"
+          >
+            @if (isPreviewing(t.trackId)) {
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="12"
+                height="12"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                aria-hidden="true"
+              >
+                <rect x="6" y="4" width="4" height="16" />
+                <rect x="14" y="4" width="4" height="16" />
+              </svg>
+            } @else {
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="12"
+                height="12"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                aria-hidden="true"
+              >
+                <polygon points="6 3 20 12 6 21 6 3" />
+              </svg>
+            }
+          </button>
+          <div class="track-meta">
+            <span class="track-name">{{ t.trackName }}</span>
+            <span class="track-artist">{{ t.artistName }}</span>
+          </div>
+          <button
+            type="button"
+            class="select-btn"
+            (click)="onSelect(t)"
+          >
+            Select
+          </button>
+        </li>
+      }
+    </ul>
+  </dialog>
+</div>

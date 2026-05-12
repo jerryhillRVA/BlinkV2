@@ -118,9 +118,10 @@ export class StepActionBarComponent implements AfterViewInit, OnDestroy {
       case 'draft':
         return this.store.canContinueFromDraft();
       case 'packaging':
+        return this.store.canContinueFromPackaging();
       case 'qa':
-        // Not implemented yet — leave the CTA visible but disabled so the
-        // affordance is consistent across all four steps.
+        // Approve & Schedule is the terminal step — its Continue button is
+        // the "Finish" action which a future ticket will wire up.
         return false;
     }
   });

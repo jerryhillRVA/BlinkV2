@@ -1,0 +1,63 @@
+<section class="x-packaging" aria-label="X packaging">
+  <div class="field">
+    <label class="field-label" for="x-caption">Caption</label>
+    <textarea
+      id="x-caption"
+      class="caption-area"
+      rows="4"
+      [value]="caption()"
+      [readOnly]="disabled()"
+      [attr.maxlength]="captionMax"
+      (input)="onCaptionInput($event)"
+    ></textarea>
+    <p
+      class="char-counter"
+      [class.warn]="captionState() === 'warn'"
+      [class.fail]="captionState() === 'fail'"
+      aria-live="polite"
+    >
+      {{ caption().length }} / {{ captionMax }}
+    </p>
+  </div>
+
+  <div class="field">
+    <span class="field-label">Hashtags</span>
+    <app-hashtag-input
+      [hashtags]="hashtags()"
+      [disabled]="disabled()"
+      (hashtagsChange)="onHashtagsChange($event)"
+    />
+  </div>
+
+  <div class="field">
+    <span class="field-label">Topic keywords</span>
+    <app-keyword-input
+      [keywords]="keywords()"
+      placeholder="Add a topic keyword and press Enter"
+      [disabled]="disabled()"
+      (keywordsChange)="onKeywordsChange($event)"
+    />
+  </div>
+
+  <div class="field">
+    <label class="field-label" for="x-link">Link</label>
+    <input
+      id="x-link"
+      type="url"
+      class="link-input"
+      placeholder="https://example.com"
+      [value]="link()"
+      [readOnly]="disabled()"
+      (input)="onLinkInput($event)"
+    />
+  </div>
+
+  <app-utm-builder [utm]="utm()" [disabled]="disabled()" (utmChange)="onUtmChange($event)" />
+
+  <app-platform-controls
+    platform="x"
+    [controls]="controls()"
+    [disabled]="disabled()"
+    (controlsChange)="onControlsChange($event)"
+  />
+</section>

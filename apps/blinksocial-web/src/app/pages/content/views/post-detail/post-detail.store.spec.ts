@@ -1016,10 +1016,72 @@ describe('PostDetailStore — production.draft (#114)', () => {
       expect(store.unlockedThroughIndex()).toBe(2);
     });
 
-    it('packagingErrors flags the not-yet-implemented placeholder', () => {
-      const { store } = setup(makeApprovedItem());
-      expect(store.packagingErrors().map((e) => e.field)).toEqual(['packaging']);
+    it('packagingErrors gates on per-platform caption presence (#116)', () => {
+      // Brief-approved Instagram post with no caption: packaging is invalid.
+      const { store } = setup(makeApprovedItem({ platform: 'instagram' }));
+      expect(store.packagingErrors().map((e) => e.field)).toEqual(['caption']);
       expect(store.canContinueFromPackaging()).toBe(false);
+      // Setting a caption clears the error.
+      store.setInstagramPackaging({ caption: 'Hello world' });
+      expect(store.packagingErrors()).toEqual([]);
+      expect(store.canContinueFromPackaging()).toBe(true);
+    });
+
+    it('packagingErrors gates TikTok on caption presence (#116)', () => {
+      const { store } = setup(makeApprovedItem({ platform: 'tiktok' }));
+      expect(store.packagingErrors().map((e) => e.field)).toEqual(['caption']);
+      store.setTikTokPackaging({ caption: 'tiktok caption' });
+      expect(store.packagingErrors()).toEqual([]);
+    });
+
+    it('packagingErrors gates LinkedIn on caption presence (#116)', () => {
+      const { store } = setup(makeApprovedItem({ platform: 'linkedin' }));
+      expect(store.packagingErrors().map((e) => e.field)).toEqual(['caption']);
+      store.setLinkedInPackaging({ caption: 'li' });
+      expect(store.packagingErrors()).toEqual([]);
+    });
+
+    it('packagingErrors gates Facebook on caption presence (#116)', () => {
+      const { store } = setup(makeApprovedItem({ platform: 'facebook' }));
+      expect(store.packagingErrors().map((e) => e.field)).toEqual(['caption']);
+      store.setFacebookPackaging({ caption: 'fb' });
+      expect(store.packagingErrors()).toEqual([]);
+    });
+
+    it('packagingErrors for X enforces both presence + 280-char hard cap (#116)', () => {
+      const { store } = setup(makeApprovedItem({ platform: 'x' }));
+      // Empty caption → required error
+      expect(store.packagingErrors().map((e) => e.field)).toEqual(['caption']);
+      // 281 chars → length error
+      store.setXPackaging({ caption: 'x'.repeat(281) });
+      expect(store.packagingErrors()[0].label).toContain('280');
+      // Exactly 280 → ok
+      store.setXPackaging({ caption: 'x'.repeat(280) });
+      expect(store.packagingErrors()).toEqual([]);
+    });
+
+    it('packagingErrors for YouTube requires both title and description (#116)', () => {
+      const { store } = setup(makeApprovedItem({ platform: 'youtube' }));
+      // Both missing → two errors
+      expect(store.packagingErrors().map((e) => e.field)).toEqual(['title', 'description']);
+      // Title only → description error remains
+      store.setYouTubePackaging({ title: 'My video' });
+      expect(store.packagingErrors().map((e) => e.field)).toEqual(['description']);
+      // Both set → clear
+      store.setYouTubePackaging({ title: 'My video', description: 'Big description' });
+      expect(store.packagingErrors()).toEqual([]);
+    });
+
+    it('packagingErrors for tbd / unknown platform tells the user to set a platform (#116)', () => {
+      const { store } = setup(makeApprovedItem({ platform: 'tbd' }));
+      expect(store.packagingErrors()[0].field).toBe('platform');
+      expect(store.canContinueFromPackaging()).toBe(false);
+    });
+
+    it('errors() routes to packagingErrors when activeStep=packaging (#116)', () => {
+      const { store } = setup(makeApprovedItem({ platform: 'instagram' }));
+      store.setActiveStep('packaging');
+      expect(store.errors().map((e) => e.field)).toEqual(['caption']);
     });
   });
 
