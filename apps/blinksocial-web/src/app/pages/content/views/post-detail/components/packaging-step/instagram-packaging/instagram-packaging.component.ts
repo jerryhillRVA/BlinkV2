@@ -123,18 +123,7 @@ export class InstagramPackagingComponent {
     if (this.aiGeneratingCaption() || this.disabled()) return;
     this.aiGeneratingCaption.set(true);
     setTimeout(() => {
-      const caption = STUB_CAPTION;
-      // Pull any inline hashtags out of the new caption and merge them
-      // into the chip array so they render as removable chips. The tags
-      // are kept in the caption text (the chip array is additive, not a
-      // strip-on-extract operation — clicking X on a chip later will
-      // strip via syncCaptionWithHashtags).
-      const extracted = extractHashtagsFromCaption(caption);
-      const merged = [...this.hashtags()];
-      for (const tag of extracted) {
-        if (!merged.includes(tag)) merged.push(tag);
-      }
-      this.patch({ caption, hashtags: merged });
+      this.applyCaption(STUB_CAPTION);
       this.aiGeneratingCaption.set(false);
     }, AI_DELAY_MS);
   }
@@ -143,14 +132,13 @@ export class InstagramPackagingComponent {
     if (this.aiSuggestingHashtags() || this.disabled()) return;
     this.aiSuggestingHashtags.set(true);
     setTimeout(() => {
-      const current = this.hashtags();
-      const merged = [...current];
+      // Appending each new tag to the caption flows through the
+      // caption-is-source-of-truth model: chips re-derive from the
+      // updated caption automatically.
+      const merged = [...this.hashtags()];
       for (const tag of STUB_HASHTAGS) {
         if (!merged.includes(tag)) merged.push(tag);
       }
-      // Route through onHashtagsChange so the caption stays in sync —
-      // AI-suggested tags are appended to the caption with the same
-      // dedupe / strip semantics as manual adds.
       this.onHashtagsChange(merged);
       this.aiSuggestingHashtags.set(false);
     }, AI_DELAY_MS);
@@ -159,7 +147,7 @@ export class InstagramPackagingComponent {
   protected onRevertToDraft(): void {
     const seed = this.draftCaptionSeed();
     if (seed === undefined) return;
-    this.patch({ caption: seed });
+    this.applyCaption(seed);
   }
 
   protected toggleBank(): void {
@@ -173,18 +161,35 @@ export class InstagramPackagingComponent {
   }
 
   protected onCaptionInput(e: Event): void {
-    this.patch({ caption: (e.target as HTMLTextAreaElement).value ?? '' });
+    // Caption is the source of truth for the chip array. Every keystroke
+    // re-extracts #tags so typing/deleting hashtags in the caption text
+    // adds or removes chips automatically.
+    this.applyCaption((e.target as HTMLTextAreaElement).value ?? '');
   }
 
   protected onHashtagsChange(tags: string[]): void {
-    // Keep caption + hashtag chip array in sync: append newly-added
-    // tags to the caption (skipping duplicates), strip removed tags.
+    // Chip-component operations (Add input, AI Suggest, Bank chip click,
+    // chip × remove) all route here. We sync the caption to reflect the
+    // delta, then re-derive the chip array from the new caption so it
+    // stays the source of truth.
     const nextCaption = syncCaptionWithHashtags(
       this.caption(),
       this.hashtags(),
       tags,
     );
-    this.patch({ hashtags: tags, caption: nextCaption });
+    this.applyCaption(nextCaption);
+  }
+
+  /**
+   * Apply a new caption value and re-derive the chip array from it.
+   * This is the single mutation point for caption changes — every entry
+   * point (typing, AI Generate, Revert, chip operations via
+   * syncCaptionWithHashtags) flows through here so the chip array is
+   * always exactly `extractHashtagsFromCaption(caption)`.
+   */
+  private applyCaption(caption: string): void {
+    const hashtags = extractHashtagsFromCaption(caption);
+    this.patch({ caption, hashtags });
   }
 
   protected onLinkInput(e: Event): void {

@@ -54,14 +54,38 @@ describe('InstagramPackagingComponent', () => {
     expect(fixture.nativeElement.querySelector('app-slide-order-picker')).not.toBeNull();
   });
 
-  it('typing in the caption emits a valueChange with the patched caption', () => {
+  it('typing a plain-text caption emits the caption + empty hashtag array (caption is source of truth)', () => {
     const fixture = setup({ value: { hashtags: ['#a'] } });
     const emitted: PackagingInstagramContract[] = [];
     fixture.componentInstance.valueChange.subscribe((v) => emitted.push(v));
     const ta = fixture.nativeElement.querySelector('#ig-caption') as HTMLTextAreaElement;
     ta.value = 'hello';
     ta.dispatchEvent(new Event('input'));
-    expect(emitted).toEqual([{ hashtags: ['#a'], caption: 'hello' }]);
+    // The pre-existing chip #a was a stale carryover that doesn't appear
+    // in the new caption text — chips re-derive from caption, so they
+    // empty out.
+    expect(emitted[0]?.caption).toBe('hello');
+    expect(emitted[0]?.hashtags).toEqual([]);
+  });
+
+  it('typing a #tag in the caption auto-adds it to the chip array', () => {
+    const fixture = setup({ value: { caption: '' } });
+    const emitted: PackagingInstagramContract[] = [];
+    fixture.componentInstance.valueChange.subscribe((v) => emitted.push(v));
+    const ta = fixture.nativeElement.querySelector('#ig-caption') as HTMLTextAreaElement;
+    ta.value = 'Try this #wellness today';
+    ta.dispatchEvent(new Event('input'));
+    expect(emitted[0]?.hashtags).toEqual(['#wellness']);
+  });
+
+  it('deleting a #tag from the caption auto-removes the matching chip', () => {
+    const fixture = setup({ value: { caption: 'Hello #wellness', hashtags: ['#wellness'] } });
+    const emitted: PackagingInstagramContract[] = [];
+    fixture.componentInstance.valueChange.subscribe((v) => emitted.push(v));
+    const ta = fixture.nativeElement.querySelector('#ig-caption') as HTMLTextAreaElement;
+    ta.value = 'Hello'; // user erased the #wellness suffix
+    ta.dispatchEvent(new Event('input'));
+    expect(emitted[0]?.hashtags).toEqual([]);
   });
 
   it('char counter switches to warn when caption length crosses 90% of cap', () => {
@@ -181,43 +205,40 @@ describe('InstagramPackagingComponent', () => {
     vi.useRealTimers();
   });
 
-  it('AI Generate Caption extracts inline hashtags into the chip array (additive)', () => {
-    const fixture = setup({ value: { hashtags: ['#existing'] } });
+  it('AI Generate Caption extracts inline hashtags into the chip array', () => {
+    const fixture = setup({ value: { hashtags: ['#carryover'] } });
     const emitted: PackagingInstagramContract[] = [];
     fixture.componentInstance.valueChange.subscribe((v) => emitted.push(v));
     vi.useFakeTimers();
     fixture.componentInstance['onGenerateCaption']();
     vi.runAllTimers();
-    // STUB_CAPTION ends with #MorningRoutine and #Wellness — both must
-    // now appear as chips alongside the pre-existing #existing chip.
-    // The caption itself keeps the tags inline (additive merge, not strip).
-    expect(emitted[0]?.hashtags).toEqual([
-      '#existing',
-      '#MorningRoutine',
-      '#Wellness',
-    ]);
+    // STUB_CAPTION ends with #MorningRoutine and #Wellness — those are
+    // the ONLY chips after AI Generate. The pre-existing #carryover chip
+    // is not in the new caption, so it's dropped (chips re-derive from
+    // caption — caption is the source of truth).
+    expect(emitted[0]?.hashtags).toEqual(['#MorningRoutine', '#Wellness']);
     expect(emitted[0]?.caption).toContain('#MorningRoutine');
     expect(emitted[0]?.caption).toContain('#Wellness');
     vi.useRealTimers();
   });
 
-  it('AI Generate Caption dedupes hashtags that already exist as chips', () => {
+  it('AI Generate Caption produces a single entry per inline hashtag (no dupes)', () => {
     const fixture = setup({ value: { hashtags: ['#MorningRoutine'] } });
     const emitted: PackagingInstagramContract[] = [];
     fixture.componentInstance.valueChange.subscribe((v) => emitted.push(v));
     vi.useFakeTimers();
     fixture.componentInstance['onGenerateCaption']();
     vi.runAllTimers();
-    // Only one entry for #MorningRoutine even though it's both in the
-    // pre-existing chip array and in the AI-generated caption.
     expect(
       emitted[0]?.hashtags?.filter((t) => t === '#MorningRoutine').length,
     ).toBe(1);
     vi.useRealTimers();
   });
 
-  it('AI Suggest Hashtags appends suggestions to existing hashtags without duplicates', async () => {
-    const fixture = setup({ value: { hashtags: ['#wellness'] } });
+  it('AI Suggest Hashtags appends suggestions to caption and chip array (no duplicates)', async () => {
+    // Pre-seed caption with #wellness so the chip exists in the
+    // source-of-truth caption. AI Suggest then appends the rest.
+    const fixture = setup({ value: { caption: 'My caption #wellness', hashtags: ['#wellness'] } });
     const emitted: PackagingInstagramContract[] = [];
     fixture.componentInstance.valueChange.subscribe((v) => emitted.push(v));
     vi.useFakeTimers();
@@ -225,6 +246,8 @@ describe('InstagramPackagingComponent', () => {
     vi.runAllTimers();
     expect(emitted[0]?.hashtags).toContain('#wellness');
     expect(emitted[0]?.hashtags).toContain('#mobility');
+    // Caption gets the suggestions appended too.
+    expect(emitted[0]?.caption).toContain('#mobility');
     // No duplicate of #wellness
     expect(emitted[0]?.hashtags?.filter((t) => t === '#wellness').length).toBe(1);
     vi.useRealTimers();
