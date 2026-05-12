@@ -143,10 +143,25 @@ test.describe('Idea detail header typography', () => {
     const bgUnfocused = await textarea.evaluate((el) => getComputedStyle(el).backgroundColor);
     expectRgbNear(bgUnfocused, [243, 244, 246]);
 
-    // Re-focus explicitly — Playwright's `.click()` on the wrapper button
-    // can leave focus unsettled by the time evaluate() runs.
-    await textarea.focus();
-    await page.waitForTimeout(100);
+    // Re-focus the textarea so the :focus background takes effect. Use
+    // `.click()` rather than `.focus()` — WebKit's synthetic `.focus()`
+    // doesn't always promote the element to the :focus state for CSS
+    // matching, but a real mouse click reliably does in every browser.
+    await textarea.click();
+    // The :focus background transitions in over 150ms. Under parallel-run
+    // load WebKit can race the assertion; poll until the computed bg
+    // settles to the focused color (rgb(237, 239, 242)) before reading
+    // the rest of the computed styles below.
+    await page.waitForFunction(() => {
+      const el = document.querySelector(
+        'app-idea-detail textarea.detail-description-input',
+      );
+      if (!el) return false;
+      const m = getComputedStyle(el).backgroundColor.match(
+        /^rgba?\((\d+),\s*(\d+),\s*(\d+)/,
+      );
+      return m ? Math.abs(parseInt(m[1], 10) - 237) <= 2 : false;
+    }, null, { timeout: 2000 });
     const computed = await textarea.evaluate((el) => {
       const cs = getComputedStyle(el);
       return {
@@ -577,6 +592,33 @@ test.describe('Idea detail right column (#106)', () => {
     // Move cursor off the chip — :hover state would otherwise mask the
     // tinted border color in Firefox/WebKit.
     await page.mouse.move(0, 0);
+    // Wait for Angular to flush the inline-style pillar-color binding and
+    // for the 150ms background transition to fully settle. Without this,
+    // parallel-run CD scheduling can race the assertion and leave bg/
+    // border partway through their transition, producing intermediate
+    // computed values that don't match the pillar.color tolerance.
+    await page.waitForFunction(() => {
+      const el = document.querySelector(
+        'app-idea-detail .chip-grid--pillar .chip',
+      );
+      if (!el) return false;
+      const cs = getComputedStyle(el);
+      const inRange = (raw: string, want: [number, number, number]) => {
+        const m = raw.match(/^rgba?\((\d+),\s*(\d+),\s*(\d+)/);
+        if (!m) return false;
+        return (
+          Math.abs(parseInt(m[1], 10) - want[0]) <= 20 &&
+          Math.abs(parseInt(m[2], 10) - want[1]) <= 20 &&
+          Math.abs(parseInt(m[3], 10) - want[2]) <= 20
+        );
+      };
+      const want: [number, number, number] = [217, 78, 51];
+      return (
+        inRange(cs.color, want) &&
+        inRange(cs.backgroundColor, want) &&
+        inRange(cs.borderTopColor, want)
+      );
+    }, null, { timeout: 3000 });
 
     const styles = await allChips.nth(0).evaluate((el) => {
       const cs = getComputedStyle(el);

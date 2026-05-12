@@ -1,6 +1,6 @@
 import { test, expect, type Page } from '@playwright/test';
 import { mockAuthenticatedUser } from './helpers/login';
-import { mockHiveContent } from './helpers/content-mocks';
+import { mockHiveContent, IDEA_ENTRY, CONCEPT_ENTRY } from './helpers/content-mocks';
 
 async function openFirstConceptCard(page: Page): Promise<void> {
   const firstCard = page.locator('.kanban-column').nth(1).locator('.content-card').first();
@@ -13,7 +13,10 @@ async function openFirstConceptCard(page: Page): Promise<void> {
 test.describe('Concept detail page', () => {
   test.beforeEach(async ({ page }) => {
     await mockAuthenticatedUser(page);
-    await mockHiveContent(page);
+    // Drop POST_ENTRY from the index so reconcileLineageStatuses keeps
+    // concept1 at status: 'new' — without this it gets bumped to 'used'
+    // by its child post and disappears from the Concepts kanban column.
+    await mockHiveContent(page, { indexItems: [IDEA_ENTRY, CONCEPT_ENTRY] });
     await page.goto('/workspace/hive-collective/content');
     await expect(page.locator('app-pipeline-view')).toBeVisible();
   });
@@ -106,7 +109,10 @@ function expectRgbNear(actual: string, expected: [number, number, number], tol =
 test.describe('Concept detail right column (#110)', () => {
   test.beforeEach(async ({ page }) => {
     await mockAuthenticatedUser(page);
-    await mockHiveContent(page);
+    // Drop POST_ENTRY from the index so reconcileLineageStatuses keeps
+    // concept1 at status: 'new' — without this it gets bumped to 'used'
+    // by its child post and disappears from the Concepts kanban column.
+    await mockHiveContent(page, { indexItems: [IDEA_ENTRY, CONCEPT_ENTRY] });
     await page.goto('/workspace/hive-collective/content');
     await openFirstConceptCard(page);
   });

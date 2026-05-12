@@ -74,9 +74,17 @@ test.describe('Content Page — type picker + drawer', () => {
   test('Esc dismisses the drawer', async ({ page }) => {
     await page.locator('.btn-new-content').click();
     await page.locator('[data-type="idea"]').click();
-    await expect(page.locator('[data-testid="content-create-drawer"]')).toBeVisible();
+    const drawer = page.locator('[data-testid="content-create-drawer"]');
+    await expect(drawer).toBeVisible();
+    // The drawer's (keyup.escape) host listener only fires when the keyup
+    // event bubbles from a descendant of the drawer. WebKit sometimes
+    // drops focus to <body> after the picker option is detached, so the
+    // keyup never reaches the drawer. Re-anchor focus inside the drawer
+    // before pressing Esc — this matches real-user behavior, where focus
+    // lands on the drawer's first input/textarea/button via rAF.
+    await drawer.focus();
     await page.keyboard.press('Escape');
-    await expect(page.locator('[data-testid="content-create-drawer"]')).toBeHidden();
+    await expect(drawer).toBeHidden();
   });
 
   test('X button dismisses the drawer', async ({ page }) => {

@@ -272,6 +272,43 @@ describe('ContentStateService', () => {
       const merged = service.items().find((i) => i.id === 'full-1');
       expect(merged?.description).toBe('Detail body');
     });
+
+    it('aliases conceptId from parentConceptId when the API payload lacks conceptId', () => {
+      const full = fullItem({
+        id: 'post-1',
+        stage: 'post',
+        parentConceptId: 'concept-1',
+      });
+      delete (full as { conceptId?: string }).conceptId;
+      itemsApi.getItem.mockReturnValue(of(full));
+      service.loadFullItem('post-1');
+      const cached = service.items().find((i) => i.id === 'post-1');
+      expect(cached?.conceptId).toBe('concept-1');
+      expect(cached?.parentConceptId).toBe('concept-1');
+    });
+
+    it('preserves an explicit conceptId on the API payload', () => {
+      const full = fullItem({
+        id: 'post-2',
+        stage: 'post',
+        parentConceptId: 'concept-a',
+        conceptId: 'concept-b',
+      });
+      itemsApi.getItem.mockReturnValue(of(full));
+      service.loadFullItem('post-2');
+      const cached = service.items().find((i) => i.id === 'post-2');
+      expect(cached?.conceptId).toBe('concept-b');
+    });
+
+    it('leaves conceptId undefined when both fields are missing (top-level Idea)', () => {
+      const full = fullItem({ id: 'idea-1', stage: 'idea' });
+      delete (full as { conceptId?: string }).conceptId;
+      delete (full as { parentConceptId?: string | null }).parentConceptId;
+      itemsApi.getItem.mockReturnValue(of(full));
+      service.loadFullItem('idea-1');
+      const cached = service.items().find((i) => i.id === 'idea-1');
+      expect(cached?.conceptId).toBeUndefined();
+    });
   });
 
   describe('saveItem', () => {
@@ -315,6 +352,48 @@ describe('ContentStateService', () => {
         expect.objectContaining({ title: 'Updated' }),
       );
     });
+
+    it('aliases conceptId on the cached item when createItem returns a payload without conceptId', () => {
+      itemsApi.getIndex.mockReturnValue(
+        of({ items: [], totalCount: 0, lastUpdated: '' }),
+      );
+      service.loadAll('ws-1');
+      const saved = fullItem({
+        id: 'server-1',
+        stage: 'post',
+        parentConceptId: 'concept-1',
+      });
+      delete (saved as { conceptId?: string }).conceptId;
+      itemsApi.createItem.mockReturnValue(of(saved));
+
+      service.saveItem(fullItem({ id: 'temp-1', stage: 'post' })).subscribe();
+
+      const cached = service.items().find((i) => i.id === 'server-1');
+      expect(cached?.conceptId).toBe('concept-1');
+    });
+
+    it('aliases conceptId on the cached item when updateItem returns a payload without conceptId', () => {
+      const row = indexRow({ id: 'post-existing', stage: 'post' });
+      itemsApi.getIndex.mockReturnValue(
+        of({ items: [row], totalCount: 1, lastUpdated: '' }),
+      );
+      service.loadAll('ws-1');
+      const saved = fullItem({
+        id: 'post-existing',
+        stage: 'post',
+        parentConceptId: 'concept-1',
+        title: 'Updated',
+      });
+      delete (saved as { conceptId?: string }).conceptId;
+      itemsApi.updateItem.mockReturnValue(of(saved));
+
+      service
+        .saveItem(fullItem({ id: 'post-existing', stage: 'post', title: 'Updated' }))
+        .subscribe();
+
+      const cached = service.items().find((i) => i.id === 'post-existing');
+      expect(cached?.conceptId).toBe('concept-1');
+    });
   });
 
   describe('archive / unarchive', () => {
@@ -333,6 +412,20 @@ describe('ContentStateService', () => {
       service.archive('c-1').subscribe();
       expect(service.activeItems().find((i) => i.id === 'c-1')).toBeUndefined();
       expect(service.archivedItems().find((i) => i.id === 'c-1')).toBeDefined();
+    });
+
+    it('archive normalizes conceptId when the server response omits the alias', () => {
+      const archived = fullItem({
+        id: 'c-1',
+        stage: 'post',
+        parentConceptId: 'concept-1',
+        archived: true,
+      });
+      delete (archived as { conceptId?: string }).conceptId;
+      itemsApi.archiveItem.mockReturnValue(of(archived));
+      service.archive('c-1').subscribe();
+      const cached = service.items().find((i) => i.id === 'c-1');
+      expect(cached?.conceptId).toBe('concept-1');
     });
 
     it('unarchive moves row out of archivedItems back into activeItems', () => {

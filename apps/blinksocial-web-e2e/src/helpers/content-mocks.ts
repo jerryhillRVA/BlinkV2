@@ -40,7 +40,7 @@ const SEGMENTS = [
 
 const NOW = '2026-04-01T09:00:00Z';
 
-const IDEA_ENTRY = {
+export const IDEA_ENTRY = {
   id: 'idea1',
   stage: 'idea',
   status: 'new',
@@ -61,7 +61,7 @@ const IDEA_ENTRY = {
 // parentIdeaId is intentionally null so demoteToIdea doesn't trigger the
 // follow-up syncIdeaConceptStatus save, which races with the persist PUT
 // in some browsers and clobbers the stage transition.
-const CONCEPT_ENTRY = {
+export const CONCEPT_ENTRY = {
   id: 'concept1',
   stage: 'concept',
   status: 'new',
@@ -123,7 +123,7 @@ const CONCEPT_DETAIL = {
   tags: ['breathwork'],
 } satisfies ContentItemContract;
 
-const POST_DETAIL = {
+export const POST_DETAIL_PROD1 = {
   ...POST_ENTRY,
   description: 'Quick morning mobility routine for stiff joints.',
   hook: "Your body shouldn't feel 80 when you're 30.",
@@ -173,7 +173,7 @@ const POST_DETAIL = {
 const BASE_DETAILS: Record<string, ContentItemContract> = {
   idea1: IDEA_DETAIL,
   concept1: CONCEPT_DETAIL,
-  prod1: POST_DETAIL,
+  prod1: POST_DETAIL_PROD1,
 };
 
 const ARCHIVE_INDEX_PAYLOAD = {
