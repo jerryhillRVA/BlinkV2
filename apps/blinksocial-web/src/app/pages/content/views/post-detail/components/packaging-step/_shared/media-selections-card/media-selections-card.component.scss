@@ -248,6 +248,11 @@
   font-size: 16px;
   font-weight: 700;
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+
+  &--img {
+    object-fit: cover;
+    text-shadow: none;
+  }
 }
 
 .audio-info {
@@ -548,6 +553,11 @@
   font-size: 14px;
   font-weight: 700;
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+
+  &--img {
+    object-fit: cover;
+    text-shadow: none;
+  }
 }
 
 .sounds-row-info {

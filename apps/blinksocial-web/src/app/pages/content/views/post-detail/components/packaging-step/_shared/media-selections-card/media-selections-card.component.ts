@@ -1,4 +1,4 @@
-import { Component, computed, input, output, signal } from '@angular/core';
+import { Component, computed, inject, input, output, signal } from '@angular/core';
 import type {
   PackagingAudioTrackContract,
   PlatformContract,
@@ -6,10 +6,10 @@ import type {
 import { TooltipComponent } from '../../../../../../../../shared/tooltip/tooltip.component';
 import { AiButtonComponent } from '../../../draft-step/_shared/ai-button/ai-button.component';
 import { TRENDING_STUB } from '../audio-picker/audio-picker.component';
+import { ITunesService, type ITunesTrack } from '../itunes.service';
 
 const AI_DELAY_MS = 2500;
 const STUB_COVER_REF = 'AI Generated Cover.png';
-const SEARCH_DELAY_MS = 600;
 
 const COVER_TOOLTIP =
   'The static image viewers see before they tap play. The single highest-impact element for click-through rate. Upload a custom image or select a frame from your video.';
@@ -73,6 +73,8 @@ export class MediaSelectionsCardComponent {
   readonly coverAssetChange = output<string | undefined>();
   readonly audioChange = output<PackagingAudioTrackContract | undefined>();
 
+  private readonly itunes = inject(ITunesService);
+
   protected readonly aiGeneratingCover = signal(false);
 
   // ── Trending Sounds panel state ────────────────────────────────────
@@ -80,12 +82,26 @@ export class MediaSelectionsCardComponent {
   protected readonly panelTab = signal<'trending' | 'search'>('trending');
   protected readonly panelPlatform = signal<TrendingPanelPlatform>('instagram');
   protected readonly searchQuery = signal('');
-  protected readonly committedSearch = signal('');
   protected readonly searching = signal(false);
   protected readonly previewingId = signal<string | null>(null);
 
   protected readonly trendingPanelPlatforms = TRENDING_PANEL_PLATFORMS;
   protected readonly trendingPanelLabel = TRENDING_PANEL_LABEL;
+
+  /**
+   * Per-platform iTunes-resolved trending tracks. `undefined` means
+   * "haven't fetched yet" (loading state); `[]` means "fetched but
+   * empty" (fallback to local stubs in the UI). Caches across panel
+   * close/reopen — only refetched on cache miss.
+   */
+  private readonly trendingResolved = signal<
+    Partial<Record<TrendingPanelPlatform, ITunesTrack[] | 'loading'>>
+  >({});
+
+  /** Search results from the iTunes Search API (free-text query). */
+  protected readonly searchResultsSig = signal<ITunesTrack[]>([]);
+  /** Whether a search has been run at least once (gates the "No results" copy). */
+  protected readonly hasSearched = signal(false);
 
   protected readonly hasCover = computed(() => {
     const v = this.coverAsset();
@@ -104,8 +120,26 @@ export class MediaSelectionsCardComponent {
     return p === 'instagram' || p === 'tiktok' || p === 'facebook';
   });
 
-  protected readonly currentPanelTracks = computed(() =>
-    TRENDING_STUB[this.panelPlatform()] ?? [],
+  /**
+   * Current platform's tracks. When iTunes has resolved real data we
+   * render that (with artwork + previewUrl); otherwise we render the
+   * local seed entries so the list never appears empty during the
+   * network round-trip. Synthetic gradient fallback handles missing
+   * artwork on a per-row basis.
+   */
+  protected readonly currentPanelTracks = computed<ITunesTrack[]>(() => {
+    const p = this.panelPlatform();
+    const cached = this.trendingResolved()[p];
+    if (Array.isArray(cached) && cached.length > 0) return cached;
+    return (TRENDING_STUB[p] ?? []).map((s) => ({
+      trackId: s.trackId,
+      trackName: s.trackName,
+      artistName: s.artistName,
+    }));
+  });
+
+  protected readonly trendingLoading = computed(
+    () => this.trendingResolved()[this.panelPlatform()] === 'loading',
   );
 
   protected readonly currentPlatformNote = computed(
@@ -113,12 +147,15 @@ export class MediaSelectionsCardComponent {
   );
 
   /**
-   * Synthetic artwork: deterministic two-tone gradient + first-letter glyph
-   * derived from the trackId so each track reads as a consistent visual
-   * thumbnail. Real iTunes artwork would require an API fetch — out of
-   * scope today, but the audio-track contract already supports
-   * `previewUrl` / artwork wiring when that lands.
+   * Per-track artwork: prefer iTunes' artworkUrl when present, otherwise
+   * fall back to a deterministic synthetic gradient. The template uses
+   * `artworkUrl(track)` for the image src + `artworkStyle(trackId)` for
+   * the fallback span's background.
    */
+  protected artworkUrl(track: ITunesTrack): string | null {
+    return track.artworkUrl ?? null;
+  }
+
   protected artworkStyle(trackId: string): { background: string } {
     const hue1 = this.hashHue(trackId);
     const hue2 = (hue1 + 40) % 360;
@@ -139,21 +176,8 @@ export class MediaSelectionsCardComponent {
     return Math.abs(h) % 360;
   }
 
-  /**
-   * Search results: union of every Trending Panel platform's tracks
-   * filtered by `committedSearch`. Case-insensitive substring match on
-   * trackName + artistName.
-   */
-  protected readonly searchResults = computed(() => {
-    const q = this.committedSearch().trim().toLowerCase();
-    if (!q) return [];
-    const all = TRENDING_PANEL_PLATFORMS.flatMap((p) => TRENDING_STUB[p] ?? []);
-    return all.filter(
-      (t) =>
-        t.trackName.toLowerCase().includes(q) ||
-        t.artistName.toLowerCase().includes(q),
-    );
-  });
+  /** Search results passthrough — fed by the iTunes service. */
+  protected readonly searchResults = computed(() => this.searchResultsSig());
 
   protected readonly trackSourceLabel = computed(() => {
     const t = this.audio();
@@ -226,6 +250,7 @@ export class MediaSelectionsCardComponent {
     this.panelPlatform.set(initial);
     this.panelTab.set('trending');
     this.panelOpen.set(true);
+    this.loadTrendingForPlatform(initial);
   }
 
   protected onClosePanel(): void {
@@ -239,6 +264,50 @@ export class MediaSelectionsCardComponent {
 
   protected onSetPanelPlatform(p: TrendingPanelPlatform): void {
     this.panelPlatform.set(p);
+    this.loadTrendingForPlatform(p);
+  }
+
+  /**
+   * Fetch real iTunes metadata for the platform's seed list. Skips if
+   * we've already resolved (or are currently resolving) this platform.
+   * On error / missing iTunes hit per seed, we keep the seed values
+   * (no artwork) — the UI falls back to the synthetic gradient.
+   */
+  private loadTrendingForPlatform(p: TrendingPanelPlatform): void {
+    const current = this.trendingResolved()[p];
+    if (current !== undefined) return; // already loading or resolved
+    this.trendingResolved.update((r) => ({ ...r, [p]: 'loading' }));
+
+    const seeds = TRENDING_STUB[p] ?? [];
+    const lookups = seeds.map((seed) =>
+      this.itunes.findTrack(seed.trackName, seed.artistName),
+    );
+
+    if (lookups.length === 0) {
+      this.trendingResolved.update((r) => ({ ...r, [p]: [] }));
+      return;
+    }
+
+    // Resolve all lookups in parallel; substitute the seed when iTunes
+    // returns null so the row still renders with its known name/artist.
+    let remaining = lookups.length;
+    const out: ITunesTrack[] = new Array(lookups.length);
+    lookups.forEach((obs, i) => {
+      obs.subscribe({
+        next: (track) => {
+          out[i] = track ?? {
+            trackId: seeds[i].trackId,
+            trackName: seeds[i].trackName,
+            artistName: seeds[i].artistName,
+          };
+        },
+        complete: () => {
+          if (--remaining === 0) {
+            this.trendingResolved.update((r) => ({ ...r, [p]: out.filter(Boolean) }));
+          }
+        },
+      });
+    });
   }
 
   protected onSearchInput(e: Event): void {
@@ -263,15 +332,14 @@ export class MediaSelectionsCardComponent {
     return this.previewingId() === trackId;
   }
 
-  protected onSelectTrack(
-    track: { trackId: string; trackName: string; artistName: string },
-    source: 'trending' | 'search',
-  ): void {
+  protected onSelectTrack(track: ITunesTrack, source: 'trending' | 'search'): void {
     if (this.disabled()) return;
     this.audioChange.emit({
       trackId: track.trackId,
       trackName: track.trackName,
       artistName: track.artistName,
+      artworkUrl: track.artworkUrl,
+      previewUrl: track.previewUrl,
       source,
     });
     this.onClosePanel();
@@ -295,14 +363,19 @@ export class MediaSelectionsCardComponent {
   private runSearch(): void {
     const q = this.searchQuery().trim();
     if (!q) {
-      this.committedSearch.set('');
+      this.searchResultsSig.set([]);
+      this.hasSearched.set(false);
       return;
     }
     this.searching.set(true);
-    // Brief simulated latency so the "Searching…" state is visible.
-    setTimeout(() => {
-      this.committedSearch.set(q);
-      this.searching.set(false);
-    }, SEARCH_DELAY_MS);
+    this.itunes.search(q).subscribe({
+      next: (results) => {
+        this.searchResultsSig.set(results);
+      },
+      complete: () => {
+        this.hasSearched.set(true);
+        this.searching.set(false);
+      },
+    });
   }
 }

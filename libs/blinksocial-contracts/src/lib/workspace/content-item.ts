@@ -334,6 +334,8 @@ export interface PackagingAudioTrackContract {
   trackId: string;
   trackName: string;
   artistName: string;
+  /** 300x300 album art URL (e.g. iTunes mzstatic). Optional — UI falls back to a synthetic gradient. */
+  artworkUrl?: string;
   previewUrl?: string;
   source: 'trending' | 'search' | 'custom';
 }

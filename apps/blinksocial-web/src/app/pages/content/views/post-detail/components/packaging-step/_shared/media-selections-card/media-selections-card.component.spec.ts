@@ -1,4 +1,9 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { provideHttpClient } from '@angular/common/http';
+import {
+  HttpTestingController,
+  provideHttpClientTesting,
+} from '@angular/common/http/testing';
 import type {
   PackagingAudioTrackContract,
   PlatformContract,
@@ -13,17 +18,45 @@ interface SetupOptions {
   thumbnailMode?: boolean;
 }
 
-function setup(opts: SetupOptions = {}): ComponentFixture<MediaSelectionsCardComponent> {
+interface SetupReturn {
+  fixture: ComponentFixture<MediaSelectionsCardComponent>;
+  http: HttpTestingController;
+}
+
+function setupWithHttp(opts: SetupOptions = {}): SetupReturn {
   TestBed.resetTestingModule();
-  TestBed.configureTestingModule({ imports: [MediaSelectionsCardComponent] });
+  TestBed.configureTestingModule({
+    imports: [MediaSelectionsCardComponent],
+    providers: [provideHttpClient(), provideHttpClientTesting()],
+  });
   const fixture = TestBed.createComponent(MediaSelectionsCardComponent);
+  const http = TestBed.inject(HttpTestingController);
   fixture.componentRef.setInput('platform', opts.platform ?? 'instagram');
   fixture.componentRef.setInput('coverAsset', opts.coverAsset);
   fixture.componentRef.setInput('audio', opts.audio);
   fixture.componentRef.setInput('disabled', opts.disabled ?? false);
   fixture.componentRef.setInput('thumbnailMode', opts.thumbnailMode ?? false);
   fixture.detectChanges();
-  return fixture;
+  return { fixture, http };
+}
+
+function setup(opts: SetupOptions = {}): ComponentFixture<MediaSelectionsCardComponent> {
+  return setupWithHttp(opts).fixture;
+}
+
+/**
+ * After Browse Trending opens the panel, six iTunes findTrack lookups
+ * fire. Flush them all with empty responses so the resolver caches
+ * the seed fallback. Tests that don't care about iTunes can ignore
+ * artwork; tests that do can flush with real-looking responses.
+ */
+function flushTrendingLookups(http: HttpTestingController, count = 6): void {
+  const reqs = http.match(
+    (r) => r.url === 'https://itunes.apple.com/search' && r.params.get('limit') === '1',
+  );
+  for (const req of reqs.slice(0, count)) {
+    req.flush({ results: [] });
+  }
 }
 
 describe('MediaSelectionsCardComponent', () => {
@@ -339,52 +372,80 @@ describe('MediaSelectionsCardComponent', () => {
     expect(fixture.nativeElement.querySelector('.sounds-platform-tabs')).toBeNull();
   });
 
-  it('Search input + Enter filters across all three trending platforms', () => {
-    const fixture = setup({ platform: 'instagram' });
+  it('Search input + Enter renders iTunes-returned tracks (real artwork URL when present)', () => {
+    const { fixture, http } = setupWithHttp({ platform: 'instagram' });
     (fixture.nativeElement.querySelector('.audio-browse') as HTMLButtonElement).click();
+    flushTrendingLookups(http);
     fixture.detectChanges();
     (fixture.nativeElement.querySelectorAll('.sounds-tab')[1] as HTMLButtonElement).click();
     fixture.detectChanges();
     const input = fixture.nativeElement.querySelector('.sounds-search-input') as HTMLInputElement;
     input.value = 'Espresso';
     input.dispatchEvent(new Event('input'));
-    vi.useFakeTimers();
     input.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter' }));
-    vi.runAllTimers();
+    // The component issued an iTunes search request — fulfill it.
+    const req = http.expectOne(
+      (r) =>
+        r.url === 'https://itunes.apple.com/search' &&
+        r.params.get('term') === 'Espresso' &&
+        r.params.get('limit') === '8',
+    );
+    req.flush({
+      results: [
+        {
+          trackId: 1,
+          trackName: 'Espresso',
+          artistName: 'Sabrina Carpenter',
+          artworkUrl100: 'https://itunes.example/100x100/x.jpg',
+          previewUrl: 'https://aud.example/x.m4a',
+        },
+        {
+          trackId: 2,
+          trackName: 'Espresso (Live)',
+          artistName: 'Sabrina Carpenter',
+        },
+      ],
+    });
     fixture.detectChanges();
-    // "Espresso" appears in both Instagram and TikTok stubs.
     const rows = fixture.nativeElement.querySelectorAll('.sounds-row');
     expect(rows.length).toBe(2);
-    vi.useRealTimers();
+    // First row has real artwork (img); second falls back to gradient.
+    expect(
+      (rows[0] as HTMLElement).querySelector('.sounds-art--img'),
+    ).not.toBeNull();
+    expect(
+      (rows[1] as HTMLElement).querySelector('.sounds-art--img'),
+    ).toBeNull();
   });
 
-  it('Search "No results" empty state shows when no track matches', () => {
-    const fixture = setup({ platform: 'instagram' });
+  it('Search "No results" empty state shows when iTunes returns an empty list', () => {
+    const { fixture, http } = setupWithHttp({ platform: 'instagram' });
     (fixture.nativeElement.querySelector('.audio-browse') as HTMLButtonElement).click();
+    flushTrendingLookups(http);
     fixture.detectChanges();
     (fixture.nativeElement.querySelectorAll('.sounds-tab')[1] as HTMLButtonElement).click();
     fixture.detectChanges();
-    const input = fixture.nativeElement.querySelector('.sounds-search-input') as HTMLInputElement;
-    input.value = 'xyzxyzxyz';
-    input.dispatchEvent(new Event('input'));
-    vi.useFakeTimers();
+    fixture.componentInstance['searchQuery'].set('xyzxyzxyz');
     fixture.componentInstance['onSearchClick']();
-    vi.runAllTimers();
+    http.expectOne(() => true).flush({ results: [] });
     fixture.detectChanges();
     expect(
       (fixture.nativeElement.querySelector('.sounds-empty') as HTMLElement)?.textContent,
     ).toBe('No results');
-    vi.useRealTimers();
   });
 
-  it('Empty search query is a no-op (committedSearch stays empty)', () => {
-    const fixture = setup({ platform: 'instagram' });
+  it('Empty search query is a no-op (issues no HTTP request)', () => {
+    const { fixture, http } = setupWithHttp({ platform: 'instagram' });
     (fixture.nativeElement.querySelector('.audio-browse') as HTMLButtonElement).click();
+    flushTrendingLookups(http);
     fixture.detectChanges();
     (fixture.nativeElement.querySelectorAll('.sounds-tab')[1] as HTMLButtonElement).click();
     fixture.detectChanges();
     fixture.componentInstance['onSearchClick']();
-    expect(fixture.componentInstance['committedSearch']()).toBe('');
+    // No /search?term= request fired (other than the trending lookups
+    // which we've already flushed).
+    expect(fixture.componentInstance['searchResults']()).toEqual([]);
+    expect(fixture.componentInstance['hasSearched']()).toBe(false);
   });
 
   it('Panel platform defaults to instagram when the post platform is non-trending (e.g. youtube)', () => {
@@ -403,7 +464,8 @@ describe('MediaSelectionsCardComponent', () => {
     fixture.componentInstance['onSearchKeydown'](
       new KeyboardEvent('keydown', { key: 'Tab' }),
     );
-    expect(fixture.componentInstance['committedSearch']()).toBe('');
+    expect(fixture.componentInstance['hasSearched']()).toBe(false);
+    expect(fixture.componentInstance['searchResults']()).toEqual([]);
   });
 
   it('isPreviewing returns false for non-current track ids', () => {
@@ -443,28 +505,32 @@ describe('MediaSelectionsCardComponent', () => {
     ).toBe('');
   });
 
-  it('searchResults stays empty when the query is whitespace-only', () => {
-    const fixture = setup({ platform: 'instagram' });
+  it('Whitespace-only search query is treated as empty (no request)', () => {
+    const { fixture, http } = setupWithHttp({ platform: 'instagram' });
     fixture.componentInstance['onBrowseTrending']();
+    flushTrendingLookups(http);
     fixture.componentInstance['onSetPanelTab']('search');
-    fixture.componentInstance['committedSearch'].set('   ');
+    fixture.componentInstance['searchQuery'].set('   ');
+    fixture.componentInstance['onSearchClick']();
     expect(fixture.componentInstance['searchResults']()).toEqual([]);
+    expect(fixture.componentInstance['hasSearched']()).toBe(false);
   });
 
-  it('Search shows "Searching..." mid-flight before the simulated latency resolves', () => {
-    const fixture = setup({ platform: 'instagram' });
+  it('Search shows "Searching..." while the iTunes request is in flight', () => {
+    const { fixture, http } = setupWithHttp({ platform: 'instagram' });
     fixture.componentInstance['onBrowseTrending']();
+    flushTrendingLookups(http);
     fixture.componentInstance['onSetPanelTab']('search');
     fixture.detectChanges();
-    vi.useFakeTimers();
     fixture.componentInstance['searchQuery'].set('Espresso');
     fixture.componentInstance['onSearchClick']();
     fixture.detectChanges();
+    // Before the HTTP response lands, the panel should show "Searching..."
     expect(
       (fixture.nativeElement.querySelector('.sounds-empty') as HTMLElement)?.textContent,
     ).toBe('Searching...');
-    vi.runAllTimers();
-    vi.useRealTimers();
+    // Flush so the test cleans up.
+    http.expectOne(() => true).flush({ results: [] });
   });
 
   it('Closing the panel resets the previewing track id', () => {
@@ -476,26 +542,72 @@ describe('MediaSelectionsCardComponent', () => {
     expect(fixture.componentInstance['previewingId']()).toBeNull();
   });
 
-  it('searchResults filters by both trackName and artistName (substring, case-insensitive)', () => {
-    const fixture = setup({ platform: 'instagram' });
+  it('Selecting a track from Search results emits with source="search" and carries iTunes metadata', () => {
+    const { fixture, http } = setupWithHttp({ platform: 'instagram' });
     fixture.componentInstance['onBrowseTrending']();
-    fixture.componentInstance['onSetPanelTab']('search');
-    // "weeknd" matches artist of Facebook's "Blinding Lights" + TikTok's "Starboy"
-    fixture.componentInstance['committedSearch'].set('weeknd');
-    expect(fixture.componentInstance['searchResults']().length).toBeGreaterThanOrEqual(2);
-  });
-
-  it('Selecting a track from Search results emits with source="search"', () => {
-    const fixture = setup({ platform: 'instagram' });
-    fixture.componentInstance['onBrowseTrending']();
+    flushTrendingLookups(http);
     fixture.componentInstance['onSetPanelTab']('search');
     fixture.componentInstance['searchQuery'].set('Espresso');
-    fixture.componentInstance['committedSearch'].set('Espresso');
+    fixture.componentInstance['onSearchClick']();
+    http.expectOne(() => true).flush({
+      results: [
+        {
+          trackId: 99,
+          trackName: 'Espresso',
+          artistName: 'Sabrina Carpenter',
+          artworkUrl100: 'https://art.example/100x100/e.jpg',
+          previewUrl: 'https://aud.example/e.m4a',
+        },
+      ],
+    });
     fixture.detectChanges();
     const emitted: (PackagingAudioTrackContract | undefined)[] = [];
     fixture.componentInstance.audioChange.subscribe((v) => emitted.push(v));
     (fixture.nativeElement.querySelectorAll('.sounds-select')[0] as HTMLButtonElement).click();
     expect(emitted[0]?.source).toBe('search');
+    expect(emitted[0]?.trackId).toBe('99');
+    expect(emitted[0]?.artworkUrl).toBe('https://art.example/300x300/e.jpg');
+    expect(emitted[0]?.previewUrl).toBe('https://aud.example/e.m4a');
+  });
+
+  it('Browse Trending fetches iTunes findTrack for each seed and renders artwork when present', () => {
+    const { fixture, http } = setupWithHttp({ platform: 'instagram' });
+    (fixture.nativeElement.querySelector('.audio-browse') as HTMLButtonElement).click();
+    // Six findTrack requests fire — flush all six with stub iTunes data.
+    const reqs = http.match(
+      (r) => r.url === 'https://itunes.apple.com/search' && r.params.get('limit') === '1',
+    );
+    expect(reqs.length).toBe(6);
+    reqs.forEach((req, i) => {
+      req.flush({
+        results: [
+          {
+            trackId: 1000 + i,
+            trackName: 'Resolved ' + i,
+            artistName: 'Artist ' + i,
+            artworkUrl100: `https://art.example/100x100/r${i}.jpg`,
+            previewUrl: `https://aud.example/r${i}.m4a`,
+          },
+        ],
+      });
+    });
+    fixture.detectChanges();
+    // Six rows; each has a real-img artwork.
+    expect(fixture.nativeElement.querySelectorAll('.sounds-row').length).toBe(6);
+    expect(fixture.nativeElement.querySelectorAll('.sounds-art--img').length).toBe(6);
+  });
+
+  it('iTunes findTrack failures fall back to the local seed (gradient artwork)', () => {
+    const { fixture, http } = setupWithHttp({ platform: 'instagram' });
+    (fixture.nativeElement.querySelector('.audio-browse') as HTMLButtonElement).click();
+    const reqs = http.match(
+      (r) => r.url === 'https://itunes.apple.com/search' && r.params.get('limit') === '1',
+    );
+    reqs.forEach((req) => req.flush({ results: [] }));
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelectorAll('.sounds-row').length).toBe(6);
+    // No image elements — all gradient placeholders.
+    expect(fixture.nativeElement.querySelectorAll('.sounds-art--img').length).toBe(0);
   });
 
   it('clicking Use Original emits an Original Audio track with source=custom', () => {

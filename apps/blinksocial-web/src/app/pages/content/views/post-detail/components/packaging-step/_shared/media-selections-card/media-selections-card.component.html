@@ -87,11 +87,15 @@
 
       @if (audio(); as track) {
         <div class="audio-selected">
-          <span
-            class="audio-art"
-            [style.background]="artworkStyle(track.trackId).background"
-            aria-hidden="true"
-          >{{ artworkLetter(track.trackName) }}</span>
+          @if (track.artworkUrl) {
+            <img class="audio-art audio-art--img" [src]="track.artworkUrl" alt="" />
+          } @else {
+            <span
+              class="audio-art"
+              [style.background]="artworkStyle(track.trackId).background"
+              aria-hidden="true"
+            >{{ artworkLetter(track.trackName) }}</span>
+          }
           <div class="audio-info">
             <p class="audio-name">{{ track.trackName }}</p>
             @if (track.artistName) {
@@ -197,11 +201,15 @@
             <ul class="sounds-list" role="list">
               @for (track of currentPanelTracks(); track track.trackId) {
                 <li class="sounds-row">
-                  <span
-                    class="sounds-art"
-                    [style.background]="artworkStyle(track.trackId).background"
-                    aria-hidden="true"
-                  >{{ artworkLetter(track.trackName) }}</span>
+                  @if (track.artworkUrl) {
+                    <img class="sounds-art sounds-art--img" [src]="track.artworkUrl" alt="" />
+                  } @else {
+                    <span
+                      class="sounds-art"
+                      [style.background]="artworkStyle(track.trackId).background"
+                      aria-hidden="true"
+                    >{{ artworkLetter(track.trackName) }}</span>
+                  }
                   <div class="sounds-row-info">
                     <p class="sounds-row-name">{{ track.trackName }}</p>
                     <p class="sounds-row-artist">{{ track.artistName }}</p>
@@ -253,16 +261,20 @@
               <ul class="sounds-list" role="list">
                 @if (searching()) {
                   <li class="sounds-empty">Searching...</li>
-                } @else if (committedSearch() && searchResults().length === 0) {
+                } @else if (hasSearched() && searchResults().length === 0) {
                   <li class="sounds-empty">No results</li>
                 } @else {
                   @for (track of searchResults(); track track.trackId) {
                     <li class="sounds-row">
-                      <span
-                        class="sounds-art"
-                        [style.background]="artworkStyle(track.trackId).background"
-                        aria-hidden="true"
-                      >{{ artworkLetter(track.trackName) }}</span>
+                      @if (track.artworkUrl) {
+                        <img class="sounds-art sounds-art--img" [src]="track.artworkUrl" alt="" />
+                      } @else {
+                        <span
+                          class="sounds-art"
+                          [style.background]="artworkStyle(track.trackId).background"
+                          aria-hidden="true"
+                        >{{ artworkLetter(track.trackName) }}</span>
+                      }
                       <div class="sounds-row-info">
                         <p class="sounds-row-name">{{ track.trackName }}</p>
                         <p class="sounds-row-artist">{{ track.artistName }}</p>
