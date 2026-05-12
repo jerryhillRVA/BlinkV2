@@ -42,8 +42,10 @@ describe('AudioPickerComponent', () => {
     fixture.componentInstance['onOpen']();
     fixture.detectChanges();
     const rows = fixture.nativeElement.querySelectorAll('.track-row');
-    expect(rows.length).toBe(3);
-    expect(rows[0].textContent).toContain('Sunset Drift');
+    // TRENDING_STUB now ships six tracks for IG/TT/FB to match the
+    // prototype's TRENDING_TRACKS literal.
+    expect(rows.length).toBe(6);
+    expect(rows[0].textContent).toContain('Espresso');
   });
 
   it('TikTok platform shows the Commercial Music Library warning banner', () => {
@@ -87,8 +89,8 @@ describe('AudioPickerComponent', () => {
     expect(emitted.length).toBe(1);
     expect(emitted[0]).toEqual({
       trackId: 'tt-1',
-      trackName: 'Hype Beat',
-      artistName: 'Pulse',
+      trackName: 'APT.',
+      artistName: 'ROSÉ & Bruno Mars',
       source: 'trending',
     });
   });
@@ -109,7 +111,7 @@ describe('AudioPickerComponent', () => {
     fixture.componentInstance['onOpen']();
     fixture.detectChanges();
     const buttons = fixture.nativeElement.querySelectorAll('.preview-btn');
-    expect(buttons[0].getAttribute('aria-label')).toBe('Play preview of Sunset Drift');
+    expect(buttons[0].getAttribute('aria-label')).toBe('Play preview of Espresso');
   });
 
   it('trigger button has aria-haspopup="dialog"', () => {

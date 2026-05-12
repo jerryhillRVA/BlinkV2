@@ -9,11 +9,28 @@ import { TRENDING_STUB } from '../audio-picker/audio-picker.component';
 
 const AI_DELAY_MS = 2500;
 const STUB_COVER_REF = 'AI Generated Cover.png';
+const SEARCH_DELAY_MS = 600;
 
 const COVER_TOOLTIP =
   'The static image viewers see before they tap play. The single highest-impact element for click-through rate. Upload a custom image or select a frame from your video.';
 const AUDIO_TOOLTIP =
   "Plan which audio to use during video editing. This is a production reference — select your track in the platform's native app when you post. Your video editor applies the audio before export if embedding in the file.";
+
+/** Platforms the Trending Sounds panel surfaces (matches prototype). */
+const TRENDING_PANEL_PLATFORMS = ['instagram', 'tiktok', 'facebook'] as const;
+type TrendingPanelPlatform = (typeof TRENDING_PANEL_PLATFORMS)[number];
+
+const TRENDING_PANEL_LABEL: Record<TrendingPanelPlatform, string> = {
+  instagram: 'Instagram',
+  tiktok: 'TikTok',
+  facebook: 'Facebook',
+};
+
+/** Per-platform licensing note shown in the trending tab (TikTok-only per prototype). */
+const PLATFORM_AUDIO_NOTES: Partial<Record<TrendingPanelPlatform, string>> = {
+  tiktok:
+    "Business accounts on TikTok are restricted from most trending audio. Use TikTok's Commercial Music Library for brand content.",
+};
 
 /**
  * "Media Selections" card from the prototype's PackagingStudio. Hosts the
@@ -53,6 +70,18 @@ export class MediaSelectionsCardComponent {
 
   protected readonly aiGeneratingCover = signal(false);
 
+  // ── Trending Sounds panel state ────────────────────────────────────
+  protected readonly panelOpen = signal(false);
+  protected readonly panelTab = signal<'trending' | 'search'>('trending');
+  protected readonly panelPlatform = signal<TrendingPanelPlatform>('instagram');
+  protected readonly searchQuery = signal('');
+  protected readonly committedSearch = signal('');
+  protected readonly searching = signal(false);
+  protected readonly previewingId = signal<string | null>(null);
+
+  protected readonly trendingPanelPlatforms = TRENDING_PANEL_PLATFORMS;
+  protected readonly trendingPanelLabel = TRENDING_PANEL_LABEL;
+
   protected readonly hasCover = computed(() => {
     const v = this.coverAsset();
     return !!v && v.trim().length > 0;
@@ -68,6 +97,30 @@ export class MediaSelectionsCardComponent {
   protected readonly showAudioSection = computed(() => {
     const p = this.platform();
     return p === 'instagram' || p === 'tiktok' || p === 'facebook';
+  });
+
+  protected readonly currentPanelTracks = computed(() =>
+    TRENDING_STUB[this.panelPlatform()] ?? [],
+  );
+
+  protected readonly currentPlatformNote = computed(
+    () => PLATFORM_AUDIO_NOTES[this.panelPlatform()] ?? null,
+  );
+
+  /**
+   * Search results: union of every Trending Panel platform's tracks
+   * filtered by `committedSearch`. Case-insensitive substring match on
+   * trackName + artistName.
+   */
+  protected readonly searchResults = computed(() => {
+    const q = this.committedSearch().trim().toLowerCase();
+    if (!q) return [];
+    const all = TRENDING_PANEL_PLATFORMS.flatMap((p) => TRENDING_STUB[p] ?? []);
+    return all.filter(
+      (t) =>
+        t.trackName.toLowerCase().includes(q) ||
+        t.artistName.toLowerCase().includes(q),
+    );
   });
 
   protected readonly trackSourceLabel = computed(() => {
@@ -120,28 +173,76 @@ export class MediaSelectionsCardComponent {
   }
 
   /**
-   * "Browse Trending Sounds" stub: until the full trending+search modal
-   * lands, we pick the first hardcoded trending track for the current
-   * platform. Matches the prototype's `selectAudioTrack(..., 'trending')`
-   * shape so the rest of the audio surface works against real data.
+   * Browse Trending Sounds — opens the inline panel underneath the
+   * action buttons (mirrors the prototype's setAudioPanel(true) flow).
+   * The panel defaults to the Trending tab and the user's current
+   * platform if that platform supports trending sounds; otherwise
+   * Instagram (first entry).
    */
   protected onBrowseTrending(): void {
     if (this.disabled()) return;
-    const tracks = TRENDING_STUB[this.platform()] ?? [];
-    const next = this.audio()
-      ? // Cycle through stubs so repeated clicks demo different tracks.
-        tracks[
-          (tracks.findIndex((t) => t.trackId === this.audio()?.trackId) + 1) %
-            tracks.length
-        ]
-      : tracks[0];
-    if (!next) return;
+    if (this.panelOpen()) {
+      this.onClosePanel();
+      return;
+    }
+    const current = this.platform();
+    const initial = TRENDING_PANEL_PLATFORMS.includes(
+      current as TrendingPanelPlatform,
+    )
+      ? (current as TrendingPanelPlatform)
+      : 'instagram';
+    this.panelPlatform.set(initial);
+    this.panelTab.set('trending');
+    this.panelOpen.set(true);
+  }
+
+  protected onClosePanel(): void {
+    this.panelOpen.set(false);
+    this.previewingId.set(null);
+  }
+
+  protected onSetPanelTab(tab: 'trending' | 'search'): void {
+    this.panelTab.set(tab);
+  }
+
+  protected onSetPanelPlatform(p: TrendingPanelPlatform): void {
+    this.panelPlatform.set(p);
+  }
+
+  protected onSearchInput(e: Event): void {
+    this.searchQuery.set((e.target as HTMLInputElement).value ?? '');
+  }
+
+  protected onSearchKeydown(e: KeyboardEvent): void {
+    if (e.key !== 'Enter') return;
+    e.preventDefault();
+    this.runSearch();
+  }
+
+  protected onSearchClick(): void {
+    this.runSearch();
+  }
+
+  protected onTogglePreview(trackId: string): void {
+    this.previewingId.update((cur) => (cur === trackId ? null : trackId));
+  }
+
+  protected isPreviewing(trackId: string): boolean {
+    return this.previewingId() === trackId;
+  }
+
+  protected onSelectTrack(
+    track: { trackId: string; trackName: string; artistName: string },
+    source: 'trending' | 'search',
+  ): void {
+    if (this.disabled()) return;
     this.audioChange.emit({
-      trackId: next.trackId,
-      trackName: next.trackName,
-      artistName: next.artistName,
-      source: 'trending',
+      trackId: track.trackId,
+      trackName: track.trackName,
+      artistName: track.artistName,
+      source,
     });
+    this.onClosePanel();
   }
 
   protected onUseOriginal(): void {
@@ -157,5 +258,19 @@ export class MediaSelectionsCardComponent {
   protected onClearAudio(): void {
     if (this.disabled()) return;
     this.audioChange.emit(undefined);
+  }
+
+  private runSearch(): void {
+    const q = this.searchQuery().trim();
+    if (!q) {
+      this.committedSearch.set('');
+      return;
+    }
+    this.searching.set(true);
+    // Brief simulated latency so the "Searching…" state is visible.
+    setTimeout(() => {
+      this.committedSearch.set(q);
+      this.searching.set(false);
+    }, SEARCH_DELAY_MS);
   }
 }

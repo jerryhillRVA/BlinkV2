@@ -115,7 +115,10 @@
         <button
           type="button"
           class="audio-browse"
+          [class.is-open]="panelOpen()"
           [disabled]="disabled()"
+          [attr.aria-expanded]="panelOpen()"
+          aria-controls="trending-sounds-panel"
           (click)="onBrowseTrending()"
         >Browse Trending Sounds</button>
         <button
@@ -125,6 +128,164 @@
           (click)="onUseOriginal()"
         >Use Original</button>
       </div>
+
+      @if (panelOpen()) {
+        <div id="trending-sounds-panel" class="sounds-panel" role="region" aria-label="Trending sounds">
+          <header class="sounds-panel-header">
+            <span class="sounds-panel-title">Trending Sounds</span>
+            <button
+              type="button"
+              class="sounds-panel-close"
+              aria-label="Close Trending Sounds panel"
+              (click)="onClosePanel()"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M18 6 6 18"/>
+                <path d="m6 6 12 12"/>
+              </svg>
+            </button>
+          </header>
+
+          <div class="sounds-tabs" role="tablist">
+            <button
+              type="button"
+              class="sounds-tab"
+              [class.is-active]="panelTab() === 'trending'"
+              role="tab"
+              [attr.aria-selected]="panelTab() === 'trending'"
+              (click)="onSetPanelTab('trending')"
+            >Trending</button>
+            <button
+              type="button"
+              class="sounds-tab"
+              [class.is-active]="panelTab() === 'search'"
+              role="tab"
+              [attr.aria-selected]="panelTab() === 'search'"
+              (click)="onSetPanelTab('search')"
+            >Search</button>
+          </div>
+
+          @if (panelTab() === 'trending') {
+            <!-- Platform sub-tabs -->
+            <div class="sounds-platform-tabs" role="tablist" aria-label="Trending platform">
+              @for (p of trendingPanelPlatforms; track p) {
+                <button
+                  type="button"
+                  class="sounds-platform-tab"
+                  [class.is-active]="panelPlatform() === p"
+                  role="tab"
+                  [attr.aria-selected]="panelPlatform() === p"
+                  (click)="onSetPanelPlatform(p)"
+                >{{ trendingPanelLabel[p] }}</button>
+              }
+            </div>
+
+            @if (currentPlatformNote(); as note) {
+              <div class="sounds-note-wrap">
+                <p
+                  class="sounds-note"
+                  [class.sounds-note--amber]="panelPlatform() === 'tiktok'"
+                >{{ note }}</p>
+              </div>
+            }
+
+            <ul class="sounds-list" role="list">
+              @for (track of currentPanelTracks(); track track.trackId) {
+                <li class="sounds-row">
+                  <div class="sounds-row-info">
+                    <p class="sounds-row-name">{{ track.trackName }}</p>
+                    <p class="sounds-row-artist">{{ track.artistName }}</p>
+                  </div>
+                  <div class="sounds-row-actions">
+                    <button
+                      type="button"
+                      class="sounds-preview"
+                      [attr.aria-label]="isPreviewing(track.trackId) ? 'Stop preview of ' + track.trackName : 'Play preview of ' + track.trackName"
+                      [attr.aria-pressed]="isPreviewing(track.trackId)"
+                      (click)="onTogglePreview(track.trackId)"
+                    >
+                      @if (isPreviewing(track.trackId)) {
+                        <span aria-hidden="true">■</span>
+                      } @else {
+                        <span aria-hidden="true">▶</span>
+                      }
+                    </button>
+                    <button
+                      type="button"
+                      class="sounds-select"
+                      (click)="onSelectTrack(track, 'trending')"
+                    >Select</button>
+                  </div>
+                </li>
+              }
+            </ul>
+          }
+
+          @if (panelTab() === 'search') {
+            <div class="sounds-search-wrap">
+              <div class="sounds-search-row">
+                <input
+                  type="text"
+                  class="sounds-search-input"
+                  placeholder="Search any track or artist..."
+                  aria-label="Search audio tracks"
+                  [value]="searchQuery()"
+                  (input)="onSearchInput($event)"
+                  (keydown)="onSearchKeydown($event)"
+                />
+                <button
+                  type="button"
+                  class="sounds-search-btn"
+                  (click)="onSearchClick()"
+                >Search</button>
+              </div>
+
+              <ul class="sounds-list" role="list">
+                @if (searching()) {
+                  <li class="sounds-empty">Searching...</li>
+                } @else if (committedSearch() && searchResults().length === 0) {
+                  <li class="sounds-empty">No results</li>
+                } @else {
+                  @for (track of searchResults(); track track.trackId) {
+                    <li class="sounds-row">
+                      <div class="sounds-row-info">
+                        <p class="sounds-row-name">{{ track.trackName }}</p>
+                        <p class="sounds-row-artist">{{ track.artistName }}</p>
+                      </div>
+                      <div class="sounds-row-actions">
+                        <button
+                          type="button"
+                          class="sounds-preview"
+                          [attr.aria-label]="isPreviewing(track.trackId) ? 'Stop preview of ' + track.trackName : 'Play preview of ' + track.trackName"
+                          [attr.aria-pressed]="isPreviewing(track.trackId)"
+                          (click)="onTogglePreview(track.trackId)"
+                        >
+                          @if (isPreviewing(track.trackId)) {
+                            <span aria-hidden="true">■</span>
+                          } @else {
+                            <span aria-hidden="true">▶</span>
+                          }
+                        </button>
+                        <button
+                          type="button"
+                          class="sounds-select"
+                          (click)="onSelectTrack(track, 'search')"
+                        >Select</button>
+                      </div>
+                    </li>
+                  }
+                }
+              </ul>
+            </div>
+          }
+
+          <footer class="sounds-panel-footer">
+            <p class="sounds-panel-footer-text">
+              30-second previews via iTunes. Select your track in the platform's native app when posting.
+            </p>
+          </footer>
+        </div>
+      }
     </div>
   }
 </section>

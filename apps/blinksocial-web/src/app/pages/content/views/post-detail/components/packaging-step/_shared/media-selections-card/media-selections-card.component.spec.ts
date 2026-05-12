@@ -182,24 +182,273 @@ describe('MediaSelectionsCardComponent', () => {
     expect(fixture.nativeElement.querySelector('.audio-clear')).not.toBeNull();
   });
 
-  it('clicking Browse Trending Sounds emits the first stub track for the platform', () => {
+  it('clicking Browse Trending Sounds opens the inline Trending Sounds panel', () => {
+    const fixture = setup({ platform: 'instagram' });
+    expect(fixture.nativeElement.querySelector('.sounds-panel')).toBeNull();
+    (fixture.nativeElement.querySelector('.audio-browse') as HTMLButtonElement).click();
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.sounds-panel')).not.toBeNull();
+    expect(
+      (fixture.nativeElement.querySelector('.sounds-panel-title') as HTMLElement).textContent,
+    ).toBe('Trending Sounds');
+  });
+
+  it('clicking Browse Trending Sounds again (when open) closes the panel', () => {
+    const fixture = setup({ platform: 'instagram' });
+    const btn = fixture.nativeElement.querySelector('.audio-browse') as HTMLButtonElement;
+    btn.click();
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.sounds-panel')).not.toBeNull();
+    btn.click();
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.sounds-panel')).toBeNull();
+  });
+
+  it('the panel-close X button closes the panel', () => {
+    const fixture = setup({ platform: 'instagram' });
+    (fixture.nativeElement.querySelector('.audio-browse') as HTMLButtonElement).click();
+    fixture.detectChanges();
+    (fixture.nativeElement.querySelector('.sounds-panel-close') as HTMLButtonElement).click();
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.sounds-panel')).toBeNull();
+  });
+
+  it('the trending panel defaults to the user\'s current platform sub-tab', () => {
+    const fixture = setup({ platform: 'tiktok' });
+    (fixture.nativeElement.querySelector('.audio-browse') as HTMLButtonElement).click();
+    fixture.detectChanges();
+    const activeTab = fixture.nativeElement.querySelector(
+      '.sounds-platform-tab.is-active',
+    ) as HTMLElement;
+    expect(activeTab?.textContent?.trim()).toBe('TikTok');
+  });
+
+  it('renders six trending tracks per platform sub-tab (mirrors prototype TRENDING_TRACKS)', () => {
+    const fixture = setup({ platform: 'instagram' });
+    (fixture.nativeElement.querySelector('.audio-browse') as HTMLButtonElement).click();
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelectorAll('.sounds-row').length).toBe(6);
+  });
+
+  it('TikTok sub-tab shows the amber commercial-music licensing note', () => {
+    const fixture = setup({ platform: 'tiktok' });
+    (fixture.nativeElement.querySelector('.audio-browse') as HTMLButtonElement).click();
+    fixture.detectChanges();
+    const note = fixture.nativeElement.querySelector('.sounds-note');
+    expect(note).not.toBeNull();
+    expect(note.classList.contains('sounds-note--amber')).toBe(true);
+    expect(note.textContent).toContain('Commercial Music Library');
+  });
+
+  it('IG and FB sub-tabs render no licensing note', () => {
+    for (const p of ['instagram', 'facebook'] as PlatformContract[]) {
+      const fixture = setup({ platform: p });
+      (fixture.nativeElement.querySelector('.audio-browse') as HTMLButtonElement).click();
+      fixture.detectChanges();
+      expect(fixture.nativeElement.querySelector('.sounds-note')).toBeNull();
+    }
+  });
+
+  it('clicking a track Select pill emits the chosen track and closes the panel', () => {
     const fixture = setup({ platform: 'instagram' });
     const emitted: (PackagingAudioTrackContract | undefined)[] = [];
     fixture.componentInstance.audioChange.subscribe((v) => emitted.push(v));
     (fixture.nativeElement.querySelector('.audio-browse') as HTMLButtonElement).click();
+    fixture.detectChanges();
+    const firstSelect = fixture.nativeElement.querySelectorAll(
+      '.sounds-select',
+    )[0] as HTMLButtonElement;
+    firstSelect.click();
+    fixture.detectChanges();
+    expect(emitted[0]?.trackName).toBe('Espresso'); // first instagram entry
     expect(emitted[0]?.source).toBe('trending');
-    expect(emitted[0]?.trackId).toBe('ig-1'); // first stub from TRENDING_STUB.instagram
+    expect(fixture.nativeElement.querySelector('.sounds-panel')).toBeNull();
   });
 
-  it('Browse Trending Sounds cycles to the next stub when audio is already selected', () => {
+  it('clicking a preview button toggles aria-pressed state', () => {
+    const fixture = setup({ platform: 'instagram' });
+    (fixture.nativeElement.querySelector('.audio-browse') as HTMLButtonElement).click();
+    fixture.detectChanges();
+    const preview = fixture.nativeElement.querySelectorAll(
+      '.sounds-preview',
+    )[0] as HTMLButtonElement;
+    expect(preview.getAttribute('aria-pressed')).toBe('false');
+    preview.click();
+    fixture.detectChanges();
+    expect(preview.getAttribute('aria-pressed')).toBe('true');
+    preview.click();
+    fixture.detectChanges();
+    expect(preview.getAttribute('aria-pressed')).toBe('false');
+  });
+
+  it('Search tab swaps the body for a search row + results list', () => {
+    const fixture = setup({ platform: 'instagram' });
+    (fixture.nativeElement.querySelector('.audio-browse') as HTMLButtonElement).click();
+    fixture.detectChanges();
+    const tabs = fixture.nativeElement.querySelectorAll('.sounds-tab');
+    (tabs[1] as HTMLButtonElement).click();
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.sounds-search-row')).not.toBeNull();
+    expect(fixture.nativeElement.querySelector('.sounds-platform-tabs')).toBeNull();
+  });
+
+  it('Search input + Enter filters across all three trending platforms', () => {
+    const fixture = setup({ platform: 'instagram' });
+    (fixture.nativeElement.querySelector('.audio-browse') as HTMLButtonElement).click();
+    fixture.detectChanges();
+    (fixture.nativeElement.querySelectorAll('.sounds-tab')[1] as HTMLButtonElement).click();
+    fixture.detectChanges();
+    const input = fixture.nativeElement.querySelector('.sounds-search-input') as HTMLInputElement;
+    input.value = 'Espresso';
+    input.dispatchEvent(new Event('input'));
+    vi.useFakeTimers();
+    input.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter' }));
+    vi.runAllTimers();
+    fixture.detectChanges();
+    // "Espresso" appears in both Instagram and TikTok stubs.
+    const rows = fixture.nativeElement.querySelectorAll('.sounds-row');
+    expect(rows.length).toBe(2);
+    vi.useRealTimers();
+  });
+
+  it('Search "No results" empty state shows when no track matches', () => {
+    const fixture = setup({ platform: 'instagram' });
+    (fixture.nativeElement.querySelector('.audio-browse') as HTMLButtonElement).click();
+    fixture.detectChanges();
+    (fixture.nativeElement.querySelectorAll('.sounds-tab')[1] as HTMLButtonElement).click();
+    fixture.detectChanges();
+    const input = fixture.nativeElement.querySelector('.sounds-search-input') as HTMLInputElement;
+    input.value = 'xyzxyzxyz';
+    input.dispatchEvent(new Event('input'));
+    vi.useFakeTimers();
+    fixture.componentInstance['onSearchClick']();
+    vi.runAllTimers();
+    fixture.detectChanges();
+    expect(
+      (fixture.nativeElement.querySelector('.sounds-empty') as HTMLElement)?.textContent,
+    ).toBe('No results');
+    vi.useRealTimers();
+  });
+
+  it('Empty search query is a no-op (committedSearch stays empty)', () => {
+    const fixture = setup({ platform: 'instagram' });
+    (fixture.nativeElement.querySelector('.audio-browse') as HTMLButtonElement).click();
+    fixture.detectChanges();
+    (fixture.nativeElement.querySelectorAll('.sounds-tab')[1] as HTMLButtonElement).click();
+    fixture.detectChanges();
+    fixture.componentInstance['onSearchClick']();
+    expect(fixture.componentInstance['committedSearch']()).toBe('');
+  });
+
+  it('Panel platform defaults to instagram when the post platform is non-trending (e.g. youtube)', () => {
+    const fixture = setup({ platform: 'youtube' });
+    // Audio actions row is hidden for youtube — but if Browse is invoked
+    // programmatically, the default platform should still be instagram.
+    fixture.componentInstance['onBrowseTrending']();
+    expect(fixture.componentInstance['panelPlatform']()).toBe('instagram');
+  });
+
+  it('non-Enter keydown in the search input is a no-op', () => {
+    const fixture = setup({ platform: 'instagram' });
+    fixture.componentInstance['onBrowseTrending']();
+    fixture.componentInstance['onSetPanelTab']('search');
+    fixture.detectChanges();
+    fixture.componentInstance['onSearchKeydown'](
+      new KeyboardEvent('keydown', { key: 'Tab' }),
+    );
+    expect(fixture.componentInstance['committedSearch']()).toBe('');
+  });
+
+  it('isPreviewing returns false for non-current track ids', () => {
+    const fixture = setup({ platform: 'instagram' });
+    fixture.componentInstance['onBrowseTrending']();
+    expect(fixture.componentInstance['isPreviewing']('ig-1')).toBe(false);
+    fixture.componentInstance['onTogglePreview']('ig-1');
+    expect(fixture.componentInstance['isPreviewing']('ig-1')).toBe(true);
+    expect(fixture.componentInstance['isPreviewing']('ig-2')).toBe(false);
+  });
+
+  it('search input updates the searchQuery signal as user types', () => {
+    const fixture = setup({ platform: 'instagram' });
+    fixture.componentInstance['onBrowseTrending']();
+    fixture.componentInstance['onSetPanelTab']('search');
+    fixture.detectChanges();
+    const input = fixture.nativeElement.querySelector('.sounds-search-input') as HTMLInputElement;
+    input.value = 'Apt';
+    input.dispatchEvent(new Event('input'));
+    expect(fixture.componentInstance['searchQuery']()).toBe('Apt');
+  });
+
+  it('trackSourceLabel returns empty string for an unknown source value (defensive default)', () => {
     const fixture = setup({
       platform: 'instagram',
-      audio: { trackId: 'ig-1', trackName: 'a', artistName: 'b', source: 'trending' },
+      audio: {
+        trackId: 't1',
+        trackName: 'X',
+        artistName: 'Y',
+        // Cast to bypass the union — covers the default branch in
+        // the switch which guards against future source values.
+        source: 'unknown' as unknown as 'trending',
+      },
     });
+    expect(
+      (fixture.nativeElement.querySelector('.audio-source') as HTMLElement).textContent,
+    ).toBe('');
+  });
+
+  it('searchResults stays empty when the query is whitespace-only', () => {
+    const fixture = setup({ platform: 'instagram' });
+    fixture.componentInstance['onBrowseTrending']();
+    fixture.componentInstance['onSetPanelTab']('search');
+    fixture.componentInstance['committedSearch'].set('   ');
+    expect(fixture.componentInstance['searchResults']()).toEqual([]);
+  });
+
+  it('Search shows "Searching..." mid-flight before the simulated latency resolves', () => {
+    const fixture = setup({ platform: 'instagram' });
+    fixture.componentInstance['onBrowseTrending']();
+    fixture.componentInstance['onSetPanelTab']('search');
+    fixture.detectChanges();
+    vi.useFakeTimers();
+    fixture.componentInstance['searchQuery'].set('Espresso');
+    fixture.componentInstance['onSearchClick']();
+    fixture.detectChanges();
+    expect(
+      (fixture.nativeElement.querySelector('.sounds-empty') as HTMLElement)?.textContent,
+    ).toBe('Searching...');
+    vi.runAllTimers();
+    vi.useRealTimers();
+  });
+
+  it('Closing the panel resets the previewing track id', () => {
+    const fixture = setup({ platform: 'instagram' });
+    fixture.componentInstance['onBrowseTrending']();
+    fixture.componentInstance['onTogglePreview']('ig-1');
+    expect(fixture.componentInstance['previewingId']()).toBe('ig-1');
+    fixture.componentInstance['onClosePanel']();
+    expect(fixture.componentInstance['previewingId']()).toBeNull();
+  });
+
+  it('searchResults filters by both trackName and artistName (substring, case-insensitive)', () => {
+    const fixture = setup({ platform: 'instagram' });
+    fixture.componentInstance['onBrowseTrending']();
+    fixture.componentInstance['onSetPanelTab']('search');
+    // "weeknd" matches artist of Facebook's "Blinding Lights" + TikTok's "Starboy"
+    fixture.componentInstance['committedSearch'].set('weeknd');
+    expect(fixture.componentInstance['searchResults']().length).toBeGreaterThanOrEqual(2);
+  });
+
+  it('Selecting a track from Search results emits with source="search"', () => {
+    const fixture = setup({ platform: 'instagram' });
+    fixture.componentInstance['onBrowseTrending']();
+    fixture.componentInstance['onSetPanelTab']('search');
+    fixture.componentInstance['searchQuery'].set('Espresso');
+    fixture.componentInstance['committedSearch'].set('Espresso');
+    fixture.detectChanges();
     const emitted: (PackagingAudioTrackContract | undefined)[] = [];
     fixture.componentInstance.audioChange.subscribe((v) => emitted.push(v));
-    (fixture.nativeElement.querySelector('.audio-browse') as HTMLButtonElement).click();
-    expect(emitted[0]?.trackId).toBe('ig-2');
+    (fixture.nativeElement.querySelectorAll('.sounds-select')[0] as HTMLButtonElement).click();
+    expect(emitted[0]?.source).toBe('search');
   });
 
   it('clicking Use Original emits an Original Audio track with source=custom', () => {

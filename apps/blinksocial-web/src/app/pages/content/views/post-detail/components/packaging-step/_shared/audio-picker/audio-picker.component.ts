@@ -18,21 +18,35 @@ interface TrendingStub {
   artistName: string;
 }
 
+// Mirror of the prototype's TRENDING_TRACKS constant (PackagingStudio.tsx:
+// 232-256). Six real-world tracks per platform — IG / TikTok / FB only
+// (the prototype's Browse Trending Sounds panel only surfaces those
+// three). The remaining `Platform` entries get short stub lists for
+// completeness so the Record stays exhaustive against the union type.
 export const TRENDING_STUB: Record<PlatformContract, ReadonlyArray<TrendingStub>> = {
   instagram: [
-    { trackId: 'ig-1', trackName: 'Sunset Drift', artistName: 'Lo-Fi Loop' },
-    { trackId: 'ig-2', trackName: 'Morning Light', artistName: 'Aria Sky' },
-    { trackId: 'ig-3', trackName: 'Slow Motion', artistName: 'Driftwood' },
+    { trackId: 'ig-1', trackName: 'Espresso', artistName: 'Sabrina Carpenter' },
+    { trackId: 'ig-2', trackName: 'APT.', artistName: 'ROSÉ & Bruno Mars' },
+    { trackId: 'ig-3', trackName: 'Die With A Smile', artistName: 'Lady Gaga & Bruno Mars' },
+    { trackId: 'ig-4', trackName: 'Birds of a Feather', artistName: 'Billie Eilish' },
+    { trackId: 'ig-5', trackName: 'Good Luck Babe!', artistName: 'Chappell Roan' },
+    { trackId: 'ig-6', trackName: 'Taste', artistName: 'Sabrina Carpenter' },
   ],
   tiktok: [
-    { trackId: 'tt-1', trackName: 'Hype Beat', artistName: 'Pulse' },
-    { trackId: 'tt-2', trackName: 'Cool Down', artistName: 'Echo Lane' },
-    { trackId: 'tt-3', trackName: 'Funk Rev', artistName: 'Neon Rider' },
+    { trackId: 'tt-1', trackName: 'APT.', artistName: 'ROSÉ & Bruno Mars' },
+    { trackId: 'tt-2', trackName: 'Espresso', artistName: 'Sabrina Carpenter' },
+    { trackId: 'tt-3', trackName: 'Luther', artistName: 'Kendrick Lamar & SZA' },
+    { trackId: 'tt-4', trackName: '360', artistName: 'Charli XCX' },
+    { trackId: 'tt-5', trackName: 'Starboy', artistName: 'The Weeknd' },
+    { trackId: 'tt-6', trackName: 'Good Luck Babe!', artistName: 'Chappell Roan' },
   ],
   facebook: [
-    { trackId: 'fb-1', trackName: 'Weekend Drive', artistName: 'Skyline' },
-    { trackId: 'fb-2', trackName: 'Coffee House', artistName: 'Warm Strings' },
-    { trackId: 'fb-3', trackName: 'Family Day', artistName: 'Bright Side' },
+    { trackId: 'fb-1', trackName: 'Die With A Smile', artistName: 'Lady Gaga & Bruno Mars' },
+    { trackId: 'fb-2', trackName: 'Blinding Lights', artistName: 'The Weeknd' },
+    { trackId: 'fb-3', trackName: 'As It Was', artistName: 'Harry Styles' },
+    { trackId: 'fb-4', trackName: 'Unholy', artistName: 'Sam Smith & Kim Petras' },
+    { trackId: 'fb-5', trackName: 'Flowers', artistName: 'Miley Cyrus' },
+    { trackId: 'fb-6', trackName: 'Levitating', artistName: 'Dua Lipa' },
   ],
   youtube: [
     { trackId: 'yt-1', trackName: 'Cinematic Open', artistName: 'Northstar' },
