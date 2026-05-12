@@ -11,6 +11,7 @@ import type {
   ContentItemsIndexContract,
   ContentItemsArchiveIndexContract,
   CreateContentItemRequestContract,
+  SendConceptBackResponseContract,
   UpdateContentItemRequestContract,
   ContentPillarContract,
   AudienceSegmentContract,
@@ -507,6 +508,39 @@ export class ContentStateService {
       tap((saved) => this.moveRowBetweenIndexes(saved, false)),
       tap((saved) => this.cacheFullItem(saved)),
     );
+    return this.share(source$);
+  }
+
+  /**
+   * Ticket #118: bulk-archive every live post under the concept and flip
+   * the concept's status to `'new'`. The server is authoritative — on
+   * success we mirror the returned ids into local state so the pipeline
+   * + post lists update without a refetch. Failures leave local state
+   * untouched (the component handles the error path).
+   */
+  sendConceptBack(
+    conceptId: string,
+  ): Observable<SendConceptBackResponseContract> {
+    const workspaceId = this.workspaceId();
+    const source$ = this.itemsApi
+      .sendConceptBack(workspaceId, conceptId)
+      .pipe(
+        tap((res) => {
+          for (const id of res.archivedPostIds) {
+            const base =
+              this.fullItemCacheSignal()[id] ?? this.findIndexEntry(id);
+            if (!base) continue;
+            const next: ContentItem = {
+              ...(base as ContentItem),
+              archived: true,
+              updatedAt: new Date().toISOString(),
+            };
+            this.moveRowBetweenIndexes(next, true);
+            this.cacheFullItem(next);
+          }
+          this.applyLocalStatus(res.conceptId, 'new');
+        }),
+      );
     return this.share(source$);
   }
 

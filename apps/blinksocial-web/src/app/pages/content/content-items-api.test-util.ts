@@ -48,6 +48,13 @@ export function provideContentItemsApiStubs() {
       } as ContentItemContract),
     deleteItem: (_workspaceId: string, itemId: string) =>
       of({ deleted: true as const, id: itemId }),
+    sendConceptBack: (_workspaceId: string, conceptId: string) =>
+      of({
+        conceptId,
+        archivedPostIds: [],
+        alreadyArchivedPostIds: [],
+        conceptStatus: 'new' as const,
+      }),
   };
 
   const workspaceStub = {

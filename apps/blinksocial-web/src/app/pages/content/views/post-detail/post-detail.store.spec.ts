@@ -1022,4 +1022,61 @@ describe('PostDetailStore — production.draft (#114)', () => {
       expect(store.canContinueFromPackaging()).toBe(false);
     });
   });
+
+  describe('liveSiblingPostCount (ticket #118)', () => {
+    function seedWith(siblings: ContentItem[]): {
+      store: PostDetailStore;
+      state: ContentStateService;
+    } {
+      const current = makeItem({ id: 'post-1', conceptId: 'concept-1' });
+      const { store, state } = setup(current);
+      state.setItems([current, ...siblings]);
+      return { store, state };
+    }
+
+    it('returns 0 when the current item has no conceptId', () => {
+      const { store } = setup(makeItem({ conceptId: undefined }));
+      expect(store.liveSiblingPostCount()).toBe(0);
+    });
+
+    it('counts the current post itself when it is the only live child', () => {
+      const { store } = seedWith([]);
+      expect(store.liveSiblingPostCount()).toBe(1);
+    });
+
+    it('counts live sibling posts under the same concept', () => {
+      const { store } = seedWith([
+        makeItem({ id: 'post-2', conceptId: 'concept-1', title: 'Sib1' }),
+        makeItem({ id: 'post-3', conceptId: 'concept-1', title: 'Sib2' }),
+      ]);
+      expect(store.liveSiblingPostCount()).toBe(3);
+    });
+
+    it('excludes archived siblings', () => {
+      const { store } = seedWith([
+        makeItem({ id: 'post-2', conceptId: 'concept-1', title: 'Live' }),
+        makeItem({
+          id: 'post-3',
+          conceptId: 'concept-1',
+          title: 'Archived',
+          archived: true,
+        }),
+      ]);
+      expect(store.liveSiblingPostCount()).toBe(2);
+    });
+
+    it('excludes non-post stages even if they share the concept id', () => {
+      const { store } = seedWith([
+        makeItem({ id: 'other-concept', conceptId: 'concept-1', stage: 'concept', title: 'Concept dup' }),
+      ]);
+      expect(store.liveSiblingPostCount()).toBe(1);
+    });
+
+    it('excludes posts under a different concept', () => {
+      const { store } = seedWith([
+        makeItem({ id: 'post-other', conceptId: 'concept-2', title: 'Other parent' }),
+      ]);
+      expect(store.liveSiblingPostCount()).toBe(1);
+    });
+  });
 });

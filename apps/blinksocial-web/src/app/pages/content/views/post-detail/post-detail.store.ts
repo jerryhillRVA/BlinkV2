@@ -50,6 +50,22 @@ export class PostDetailStore {
   readonly pillars = this.state.pillars;
   readonly segments = this.state.segments;
 
+  /**
+   * Ticket #118: count of live (non-archived) sibling posts under the same
+   * parent concept, including the current post itself. Drives the count in
+   * the "Send back to Concept" confirm copy.
+   */
+  readonly liveSiblingPostCount = computed<number>(() => {
+    const conceptId = this.item()?.conceptId;
+    if (!conceptId) return 0;
+    return this.state
+      .items()
+      .filter(
+        (i) =>
+          i.stage === 'post' && i.conceptId === conceptId && !i.archived,
+      ).length;
+  });
+
   readonly activeStep = signal<ProductionStep>('brief');
 
   /**
