@@ -57,6 +57,8 @@ export class InstagramPackagingComponent {
   readonly draftCaptionSeed = input<string | undefined>(undefined);
 
   readonly valueChange = output<PackagingInstagramContract>();
+  /** User toggled the Publishing Mode pill — parent persists via store.setPublishingMode. */
+  readonly publishingModeChange = output<PublishingModeContract>();
 
   protected readonly captionMax = CAPTION_MAX;
   protected readonly aiGeneratingCaption = signal(false);
@@ -116,6 +118,12 @@ export class InstagramPackagingComponent {
 
   protected toggleBank(): void {
     this.bankOpen.update((v) => !v);
+  }
+
+  protected onSetPublishingMode(mode: PublishingModeContract): void {
+    if (this.disabled()) return;
+    if (this.publishingMode() === mode) return;
+    this.publishingModeChange.emit(mode);
   }
 
   protected onCaptionInput(e: Event): void {

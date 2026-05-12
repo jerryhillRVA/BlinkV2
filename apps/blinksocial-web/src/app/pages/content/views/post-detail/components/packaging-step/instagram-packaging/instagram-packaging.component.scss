@@ -19,6 +19,13 @@
   background: var(--blink-surface);
   border: 1px solid var(--blink-outline-variant);
   border-radius: 12px;
+
+  // Some cards use tighter padding (matches prototype's px-2.5 py-2 vs
+  // p-3 on different cards). The Publishing Mode card is one of these.
+  &--tight {
+    padding: 8px 10px;
+    gap: 6px;
+  }
 }
 
 .card-label {
@@ -27,17 +34,26 @@
   letter-spacing: 0.06em;
   text-transform: uppercase;
   color: var(--blink-on-surface-muted);
+
+  // Publishing Mode label sits directly above the pills — prototype uses
+  // a `block mb-1.5` here (6px bottom margin via the parent's gap).
+  &--pubmode {
+    display: block;
+  }
 }
 
-// ── Publishing Mode (read-only display) ──────────────────────────────
-// Prototype: pill-group on gray-100 background; one pill highlighted.
-// Our packaging step shows it informationally because briefApproved
-// locks the brief — the toggle is set during the Brief step.
+// ── Publishing Mode (interactive — matches prototype pixel-for-pixel) ─
+// Prototype: <div className="flex gap-1 p-0.5 bg-gray-100/80 rounded-lg">
+//   - container: 2px padding, 4px gap, gray-100 @ 80%, rounded-lg (8px)
+//   - each pill: flex-1, px-2 py-1, rounded-md (6px), 10px font-bold
+//   - active organic: white bg + shadow-sm + gray-900 text
+//   - active paid:    amber-500 bg + shadow-sm + white text + Zap icon
+//   - inactive:       text-gray-500, hover:text-gray-700
 .mode-toggle {
   display: flex;
   gap: 4px;
   padding: 2px;
-  background: var(--blink-surface-container);
+  background: rgba(243, 244, 246, 0.8); // gray-100/80 — prototype literal
   border-radius: 8px;
 }
 
@@ -48,31 +64,42 @@
   justify-content: center;
   gap: 4px;
   padding: 4px 8px;
+  border: none;
+  background: transparent;
   border-radius: 6px;
-  font-size: var(--blink-label-small);
+  font-family: inherit;
+  font-size: 10px;
   font-weight: 700;
-  letter-spacing: 0.02em;
-  color: var(--blink-on-surface-muted);
-  transition: background-color 120ms ease, color 120ms ease;
+  letter-spacing: 0;
+  color: #6b7280; // gray-500
+  cursor: pointer;
+  transition: background-color 120ms ease, color 120ms ease, box-shadow 120ms ease;
+
+  &:hover:not(:disabled):not(.is-active) {
+    color: #374151; // gray-700
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--blink-brand-primary);
+    outline-offset: 2px;
+  }
+
+  &:disabled {
+    cursor: not-allowed;
+    opacity: 0.6;
+  }
 
   &.is-active {
-    background: var(--blink-surface);
-    color: var(--blink-on-surface-strong);
-    box-shadow: var(--blink-shadow-sm);
+    background: #fff;
+    color: #111827; // gray-900
+    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05); // shadow-sm
   }
 
   &--paid.is-active {
-    background: var(--blink-icon-orange);
+    background: #f59e0b; // amber-500 — prototype literal
     color: #fff;
-    box-shadow: var(--blink-shadow-sm);
+    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
   }
-}
-
-.mode-note {
-  margin: 0;
-  font-size: var(--blink-label-small);
-  font-style: italic;
-  color: var(--blink-on-surface-faint);
 }
 
 // ── Field groups (caption + hashtags inside Platform Metadata) ───────

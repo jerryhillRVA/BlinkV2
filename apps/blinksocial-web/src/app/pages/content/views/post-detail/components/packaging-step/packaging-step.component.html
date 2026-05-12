@@ -8,6 +8,7 @@
         [publishingMode]="store.publishingMode()"
         [draftCaptionSeed]="draftCaptionSeed()"
         (valueChange)="store.setInstagramPackaging($event)"
+        (publishingModeChange)="store.setPublishingMode($event)"
       />
     }
     @case ('tiktok') {

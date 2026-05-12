@@ -447,20 +447,29 @@ describe('PostDetailStore — menu actions', () => {
       expect(store.approvalNote()).toBe('');
     });
 
-    it('all brief sub-field setters respect the briefApproved write-lock', () => {
+    it('most brief sub-field setters respect the briefApproved write-lock (publishingMode is exempt)', () => {
       const { store } = setup(makeItem({ briefApproved: true }));
       store.setReferenceLinks(['https://x.com']);
       store.setDueDate('2030-01-01');
       store.setCampaignName('blocked');
-      store.setPublishingMode('PAID_BOOSTED');
       store.togglePrimaryCta('sign-up');
       store.setApprovalNote('blocked');
       expect(store.referenceLinks()).toEqual([]);
       expect(store.dueDate()).toBeUndefined();
       expect(store.campaignName()).toBeUndefined();
-      expect(store.publishingMode()).toBeUndefined();
       expect(store.primaryCta()).toBeUndefined();
       expect(store.approvalNote()).toBe('');
+    });
+
+    it('setPublishingMode bypasses the briefApproved write-lock (#116 — packaging-side toggle)', () => {
+      // The Publishing Mode pill lives on the Packaging step in the
+      // prototype and is the canonical place users decide Organic vs
+      // Paid. Locking it after brief approval would break that flow.
+      const { store } = setup(makeItem({ briefApproved: true }));
+      store.setPublishingMode('PAID_BOOSTED');
+      expect(store.publishingMode()).toBe('PAID_BOOSTED');
+      store.setPublishingMode('ORGANIC');
+      expect(store.publishingMode()).toBe('ORGANIC');
     });
 
     it('unlockBrief writes unlockedAt onto production.brief (no prior production)', () => {

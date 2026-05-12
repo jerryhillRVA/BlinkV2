@@ -1,27 +1,35 @@
 <section class="ig-packaging" aria-label="Instagram packaging">
-  <!-- Publishing Mode (read-only display on packaging — set in Brief) -->
-  <div class="pkg-card">
-    <span class="card-label">Publishing Mode</span>
-    <div class="mode-toggle" role="radiogroup" aria-label="Publishing mode (set in Brief)">
-      <span
+  <!-- Publishing Mode: interactive toggle (prototype-parity). Bypasses
+       the brief write-lock because publishing mode is the canonical
+       packaging-side decision — see PostDetailStore.setPublishingMode. -->
+  <div class="pkg-card pkg-card--tight">
+    <span class="card-label card-label--pubmode">Publishing Mode</span>
+    <div class="mode-toggle" role="radiogroup" aria-label="Publishing mode">
+      <button
+        type="button"
         class="mode-pill"
         [class.is-active]="!paidBoosted()"
+        [disabled]="disabled()"
         role="radio"
         [attr.aria-checked]="!paidBoosted()"
-      >Organic</span>
-      <span
+        (click)="onSetPublishingMode('ORGANIC')"
+      >Organic</button>
+      <button
+        type="button"
         class="mode-pill mode-pill--paid"
         [class.is-active]="paidBoosted()"
+        [disabled]="disabled()"
         role="radio"
         [attr.aria-checked]="paidBoosted()"
+        (click)="onSetPublishingMode('PAID_BOOSTED')"
       >
-        <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-          <path d="M4 14a1 1 0 0 1-.78-1.63l9.9-10.2a.5.5 0 0 1 .86.46l-1.92 6.02A1 1 0 0 0 13 10h7a1 1 0 0 1 .78 1.63l-9.9 10.2a.5.5 0 0 1-.86-.46l1.92-6.02A1 1 0 0 0 11 14z"/>
+        <!-- lucide Zap: same polygon the prototype renders -->
+        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
         </svg>
         Paid
-      </span>
+      </button>
     </div>
-    <p class="mode-note">Switch publishing mode in the Brief step.</p>
   </div>
 
   <!-- Platform Metadata: caption + hashtags -->

@@ -308,7 +308,23 @@ export class PostDetailStore {
   }
 
   setPublishingMode(v: PublishingModeContract | undefined): void {
-    this.persistBrief({ publishingMode: v });
+    // publishingMode is the one brief-side field we DON'T gate on the
+    // briefApproved write-lock. The Packaging step's Publishing Mode
+    // toggle is the canonical place users actually decide Organic vs
+    // Paid (the Brief step just defaults it). Locking this field after
+    // approval would break the prototype's intended flow.
+    const item = this.item();
+    if (!item) return;
+    const nextBrief: ProductionBriefContract = {
+      ...(item.production?.brief ?? {}),
+      publishingMode: v,
+    };
+    const next: ContentItem = {
+      ...item,
+      production: { ...item.production, brief: nextBrief },
+      updatedAt: new Date().toISOString(),
+    };
+    this.state.saveItem(next);
   }
 
   setPrimaryCta(v: PrimaryCtaContract | undefined): void {
