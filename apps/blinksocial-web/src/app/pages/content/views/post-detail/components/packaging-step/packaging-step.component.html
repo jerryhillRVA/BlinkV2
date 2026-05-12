@@ -5,6 +5,8 @@
         [value]="store.instagramPackaging()"
         [disabled]="disabled()"
         [isCarousel]="store.draft()?.mode === 'CAROUSEL'"
+        [publishingMode]="store.publishingMode()"
+        [draftCaptionSeed]="draftCaptionSeed()"
         (valueChange)="store.setInstagramPackaging($event)"
       />
     }

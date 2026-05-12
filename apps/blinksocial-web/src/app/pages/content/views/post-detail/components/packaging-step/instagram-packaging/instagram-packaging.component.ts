@@ -1,11 +1,13 @@
-import { Component, computed, input, output } from '@angular/core';
+import { Component, computed, input, output, signal } from '@angular/core';
 import type {
   PackagingAudioTrackContract,
   PackagingInstagramContract,
   PackagingPlatformControlsContract,
   PackagingSlideOrderContract,
   PackagingUtmContract,
+  PublishingModeContract,
 } from '@blinksocial/contracts';
+import { AiButtonComponent } from '../../draft-step/_shared/ai-button/ai-button.component';
 import { HashtagInputComponent } from '../../draft-step/_shared/hashtag-input/hashtag-input.component';
 import { AudioPickerComponent } from '../_shared/audio-picker/audio-picker.component';
 import { PlatformControlsComponent } from '../_shared/platform-controls/platform-controls.component';
@@ -17,6 +19,10 @@ import { UtmBuilderComponent } from '../_shared/utm-builder/utm-builder.componen
 
 const CAPTION_MAX = 2200;
 const WARN_RATIO = 0.9;
+const STUB_CAPTION =
+  'Stop scrolling — this 60-second mobility flow is what your body needs every morning. Save this for tomorrow. 💪 #MorningRoutine #Wellness';
+const STUB_HASHTAGS = ['#mobility', '#morningroutine', '#wellness', '#stretching', '#dailyhabits'];
+const AI_DELAY_MS = 2500;
 
 /**
  * Instagram packaging builder scaffold. Caption + hashtags + link + UTM
@@ -26,6 +32,7 @@ const WARN_RATIO = 0.9;
 @Component({
   selector: 'app-instagram-packaging',
   imports: [
+    AiButtonComponent,
     HashtagInputComponent,
     UtmBuilderComponent,
     SlideOrderPickerComponent,
@@ -40,10 +47,21 @@ export class InstagramPackagingComponent {
   readonly disabled = input(false);
   readonly isCarousel = input(false);
   readonly slides = input<ReadonlyArray<SlideOrderItem>>([]);
+  /**
+   * Read-only display of the brief's publishingMode. The mode itself is
+   * set in the Brief step; we surface it here as the prototype does, but
+   * the toggle is informational only on the locked-brief packaging step.
+   */
+  readonly publishingMode = input<PublishingModeContract | undefined>(undefined);
+  /** Read-only display of the parent draft's caption seed, for the "from Draft" hint. */
+  readonly draftCaptionSeed = input<string | undefined>(undefined);
 
   readonly valueChange = output<PackagingInstagramContract>();
 
   protected readonly captionMax = CAPTION_MAX;
+  protected readonly aiGeneratingCaption = signal(false);
+  protected readonly aiSuggestingHashtags = signal(false);
+  protected readonly bankOpen = signal(false);
 
   protected readonly caption = computed(() => this.value()?.caption ?? '');
   protected readonly hashtags = computed(() => this.value()?.hashtags ?? []);
@@ -53,12 +71,52 @@ export class InstagramPackagingComponent {
   protected readonly audio = computed(() => this.value()?.audio);
   protected readonly controls = computed(() => this.value()?.platformControls);
 
+  protected readonly paidBoosted = computed(() => this.publishingMode() === 'PAID_BOOSTED');
+
+  protected readonly captionDivergedFromDraft = computed(() => {
+    const seed = this.draftCaptionSeed();
+    return !!seed && this.caption() !== seed;
+  });
+
   protected readonly captionState = computed(() => {
     const len = this.caption().length;
     if (len >= CAPTION_MAX) return 'fail';
     if (len >= CAPTION_MAX * WARN_RATIO) return 'warn';
     return 'ok';
   });
+
+  protected onGenerateCaption(): void {
+    if (this.aiGeneratingCaption() || this.disabled()) return;
+    this.aiGeneratingCaption.set(true);
+    setTimeout(() => {
+      this.patch({ caption: STUB_CAPTION });
+      this.aiGeneratingCaption.set(false);
+    }, AI_DELAY_MS);
+  }
+
+  protected onSuggestHashtags(): void {
+    if (this.aiSuggestingHashtags() || this.disabled()) return;
+    this.aiSuggestingHashtags.set(true);
+    setTimeout(() => {
+      const current = this.hashtags();
+      const merged = [...current];
+      for (const tag of STUB_HASHTAGS) {
+        if (!merged.includes(tag)) merged.push(tag);
+      }
+      this.patch({ hashtags: merged });
+      this.aiSuggestingHashtags.set(false);
+    }, AI_DELAY_MS);
+  }
+
+  protected onRevertToDraft(): void {
+    const seed = this.draftCaptionSeed();
+    if (seed === undefined) return;
+    this.patch({ caption: seed });
+  }
+
+  protected toggleBank(): void {
+    this.bankOpen.update((v) => !v);
+  }
 
   protected onCaptionInput(e: Event): void {
     this.patch({ caption: (e.target as HTMLTextAreaElement).value ?? '' });

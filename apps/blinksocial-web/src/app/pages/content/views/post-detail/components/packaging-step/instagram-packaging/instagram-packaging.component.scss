@@ -5,43 +5,141 @@
 .ig-packaging {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 6px;
 }
 
-.field {
+// Card primitive — mirrors the prototype's <Card border-gray-100> wrapping.
+// Tight padding + soft outline + rounded corners. Cards stack with a small
+// gap between (the prototype uses `space-y-1.5` = 6px).
+.pkg-card {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px;
+  background: var(--blink-surface);
+  border: 1px solid var(--blink-outline-variant);
+  border-radius: 12px;
+}
+
+.card-label {
+  font-size: var(--blink-label-small);
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--blink-on-surface-muted);
+}
+
+// ── Publishing Mode (read-only display) ──────────────────────────────
+// Prototype: pill-group on gray-100 background; one pill highlighted.
+// Our packaging step shows it informationally because briefApproved
+// locks the brief — the toggle is set during the Brief step.
+.mode-toggle {
+  display: flex;
+  gap: 4px;
+  padding: 2px;
+  background: var(--blink-surface-container);
+  border-radius: 8px;
+}
+
+.mode-pill {
+  flex: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-size: var(--blink-label-small);
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: var(--blink-on-surface-muted);
+  transition: background-color 120ms ease, color 120ms ease;
+
+  &.is-active {
+    background: var(--blink-surface);
+    color: var(--blink-on-surface-strong);
+    box-shadow: var(--blink-shadow-sm);
+  }
+
+  &--paid.is-active {
+    background: var(--blink-icon-orange);
+    color: #fff;
+    box-shadow: var(--blink-shadow-sm);
+  }
+}
+
+.mode-note {
+  margin: 0;
+  font-size: var(--blink-label-small);
+  font-style: italic;
+  color: var(--blink-on-surface-faint);
+}
+
+// ── Field groups (caption + hashtags inside Platform Metadata) ───────
+.field-group {
   display: flex;
   flex-direction: column;
   gap: 6px;
 }
 
+.field-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-height: 24px;
+}
+
 .field-label {
   font-size: var(--blink-label-small);
   font-weight: 700;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
-  color: var(--blink-on-surface-faint);
+  color: var(--blink-on-surface-muted);
+}
+
+.field-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-height: 18px;
+}
+
+// Soft-input look: matches prototype's bg-[#f3f4f6] border-none textareas.
+// Uses --blink-surface-container as the soft fill; outline on focus.
+.caption-area,
+.link-input {
+  width: 100%;
+  font-family: inherit;
+  font-size: var(--blink-body-medium);
+  background: var(--blink-surface-container);
+  border: 1px solid transparent;
+  border-radius: 8px;
+  color: var(--blink-on-surface);
+  outline: none;
+  transition: background-color 120ms ease, border-color 120ms ease;
+
+  &:focus-visible {
+    background: var(--blink-surface-dim);
+    border-color: var(--blink-outline);
+  }
 }
 
 .caption-area {
-  font-family: inherit;
-  font-size: var(--blink-body-medium);
   padding: 10px 12px;
-  border: 1px solid var(--blink-outline-variant);
-  border-radius: 8px;
-  background: var(--blink-surface);
-  color: var(--blink-on-surface);
   resize: vertical;
+  min-height: 96px;
+}
 
-  &:focus-visible {
-    outline: 2px solid var(--blink-brand-primary);
-    outline-offset: 1px;
-  }
+.link-input {
+  padding: 8px 12px;
+  height: 32px;
 }
 
 .char-counter {
   margin: 0;
-  align-self: flex-end;
-  font-size: var(--blink-body-small);
+  font-size: var(--blink-label-small);
   color: var(--blink-on-surface-faint);
 
   &.warn {
@@ -55,16 +153,38 @@
   }
 }
 
-.link-input {
-  font-size: var(--blink-body-medium);
-  padding: 8px 10px;
-  border: 1px solid var(--blink-outline-variant);
-  border-radius: 8px;
-  background: var(--blink-surface);
-  color: var(--blink-on-surface);
+.from-draft {
+  font-size: var(--blink-label-small);
+  font-style: italic;
+  color: var(--blink-on-surface-faint);
+}
+
+.revert-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 0;
+  background: transparent;
+  border: none;
+  font-size: var(--blink-label-small);
+  font-weight: 600;
+  color: var(--blink-brand-primary);
+  cursor: pointer;
+
+  &:hover:not(:disabled) {
+    color: var(--blink-brand-primary-active);
+    text-decoration: underline;
+    text-underline-offset: 2px;
+  }
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
 
   &:focus-visible {
     outline: 2px solid var(--blink-brand-primary);
-    outline-offset: 1px;
+    outline-offset: 2px;
+    border-radius: 4px;
   }
 }

@@ -37,4 +37,30 @@ export class PackagingStepComponent {
   protected readonly platform = computed(() => this.store.item()?.platform ?? null);
 
   protected readonly disabled = computed(() => !this.store.item()?.briefApproved);
+
+  /**
+   * Caption seed inherited from the draft. We surface this in caption-driven
+   * platform builders so the user sees a "from Draft" / "Revert to Draft"
+   * affordance when their packaging caption diverges from what the draft
+   * step produced. For VIDEO mode the seed is the draft's hook; for other
+   * modes it resolves from the matching mode slot.
+   */
+  protected readonly draftCaptionSeed = computed<string | undefined>(() => {
+    const draft = this.store.draft();
+    if (!draft) return undefined;
+    switch (draft.mode) {
+      case 'VIDEO':
+        return draft.video?.hook;
+      case 'VIDEO_LONG':
+        return draft.videoLong?.hook;
+      case 'IMAGE_SINGLE':
+        return draft.imageSingle?.hook;
+      case 'CAROUSEL':
+        return draft.carousel?.hook;
+      case 'TEXT':
+        return draft.text?.caption;
+      default:
+        return undefined;
+    }
+  });
 }

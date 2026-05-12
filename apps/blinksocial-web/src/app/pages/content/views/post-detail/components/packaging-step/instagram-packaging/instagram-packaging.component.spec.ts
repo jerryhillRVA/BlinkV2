@@ -6,6 +6,8 @@ interface SetupOptions {
   value?: PackagingInstagramContract | undefined;
   disabled?: boolean;
   isCarousel?: boolean;
+  publishingMode?: 'ORGANIC' | 'PAID_BOOSTED';
+  draftCaptionSeed?: string;
 }
 
 function setup(opts: SetupOptions = {}): ComponentFixture<InstagramPackagingComponent> {
@@ -15,19 +17,31 @@ function setup(opts: SetupOptions = {}): ComponentFixture<InstagramPackagingComp
   fixture.componentRef.setInput('value', opts.value);
   fixture.componentRef.setInput('disabled', opts.disabled ?? false);
   fixture.componentRef.setInput('isCarousel', opts.isCarousel ?? false);
+  fixture.componentRef.setInput('publishingMode', opts.publishingMode);
+  fixture.componentRef.setInput('draftCaptionSeed', opts.draftCaptionSeed);
   fixture.detectChanges();
   return fixture;
 }
 
 describe('InstagramPackagingComponent', () => {
-  it('renders the core IG fields (caption, hashtags, link, UTM, audio, platform-controls)', () => {
+  it('renders the always-visible IG fields (caption, hashtags, audio, platform-controls)', () => {
     const fixture = setup();
     expect(fixture.nativeElement.querySelector('#ig-caption')).not.toBeNull();
     expect(fixture.nativeElement.querySelector('app-hashtag-input')).not.toBeNull();
-    expect(fixture.nativeElement.querySelector('#ig-link')).not.toBeNull();
-    expect(fixture.nativeElement.querySelector('app-utm-builder')).not.toBeNull();
     expect(fixture.nativeElement.querySelector('app-audio-picker')).not.toBeNull();
     expect(fixture.nativeElement.querySelector('app-platform-controls')).not.toBeNull();
+  });
+
+  it('Link + UTM are hidden under ORGANIC publishing mode (prototype-aligned)', () => {
+    const fixture = setup({ publishingMode: 'ORGANIC' });
+    expect(fixture.nativeElement.querySelector('#ig-link')).toBeNull();
+    expect(fixture.nativeElement.querySelector('app-utm-builder')).toBeNull();
+  });
+
+  it('Link + UTM appear under PAID_BOOSTED publishing mode', () => {
+    const fixture = setup({ publishingMode: 'PAID_BOOSTED' });
+    expect(fixture.nativeElement.querySelector('#ig-link')).not.toBeNull();
+    expect(fixture.nativeElement.querySelector('app-utm-builder')).not.toBeNull();
   });
 
   it('does NOT render the slide-order picker unless isCarousel is true', () => {
@@ -105,6 +119,94 @@ describe('InstagramPackagingComponent', () => {
     expect(fixture.componentInstance['audio']()).toBeUndefined();
     expect(fixture.componentInstance['controls']()).toBeUndefined();
     expect(fixture.componentInstance['captionState']()).toBe('ok');
+  });
+
+  it('from-Draft hint appears when caption matches the draft seed', () => {
+    const fixture = setup({ value: { caption: 'shared' }, draftCaptionSeed: 'shared' });
+    expect(fixture.nativeElement.querySelector('.from-draft')).not.toBeNull();
+    expect(fixture.nativeElement.querySelector('.revert-btn')).toBeNull();
+  });
+
+  it('Revert-to-Draft button appears when caption has diverged from the seed', () => {
+    const fixture = setup({ value: { caption: 'edited' }, draftCaptionSeed: 'original' });
+    expect(fixture.nativeElement.querySelector('.revert-btn')).not.toBeNull();
+    expect(fixture.nativeElement.querySelector('.from-draft')).toBeNull();
+  });
+
+  it('clicking Revert-to-Draft emits valueChange with the seed restored', () => {
+    const fixture = setup({ value: { caption: 'edited' }, draftCaptionSeed: 'original' });
+    const emitted: PackagingInstagramContract[] = [];
+    fixture.componentInstance.valueChange.subscribe((v) => emitted.push(v));
+    (fixture.nativeElement.querySelector('.revert-btn') as HTMLButtonElement).click();
+    expect(emitted[0]?.caption).toBe('original');
+  });
+
+  it('AI Generate Caption sets the loading flag synchronously and emits the stub on tick', async () => {
+    const fixture = setup();
+    const emitted: PackagingInstagramContract[] = [];
+    fixture.componentInstance.valueChange.subscribe((v) => emitted.push(v));
+    vi.useFakeTimers();
+    fixture.componentInstance['onGenerateCaption']();
+    expect(fixture.componentInstance['aiGeneratingCaption']()).toBe(true);
+    // Second call while loading should be a no-op
+    fixture.componentInstance['onGenerateCaption']();
+    vi.runAllTimers();
+    expect(fixture.componentInstance['aiGeneratingCaption']()).toBe(false);
+    expect(emitted.length).toBe(1);
+    expect(emitted[0]?.caption).toContain('60-second mobility');
+    vi.useRealTimers();
+  });
+
+  it('AI Suggest Hashtags appends suggestions to existing hashtags without duplicates', async () => {
+    const fixture = setup({ value: { hashtags: ['#wellness'] } });
+    const emitted: PackagingInstagramContract[] = [];
+    fixture.componentInstance.valueChange.subscribe((v) => emitted.push(v));
+    vi.useFakeTimers();
+    fixture.componentInstance['onSuggestHashtags']();
+    vi.runAllTimers();
+    expect(emitted[0]?.hashtags).toContain('#wellness');
+    expect(emitted[0]?.hashtags).toContain('#mobility');
+    // No duplicate of #wellness
+    expect(emitted[0]?.hashtags?.filter((t) => t === '#wellness').length).toBe(1);
+    vi.useRealTimers();
+  });
+
+  it('AI buttons are no-ops while disabled', () => {
+    const fixture = setup({ disabled: true });
+    const emitted: PackagingInstagramContract[] = [];
+    fixture.componentInstance.valueChange.subscribe((v) => emitted.push(v));
+    fixture.componentInstance['onGenerateCaption']();
+    fixture.componentInstance['onSuggestHashtags']();
+    expect(emitted).toEqual([]);
+    expect(fixture.componentInstance['aiGeneratingCaption']()).toBe(false);
+    expect(fixture.componentInstance['aiSuggestingHashtags']()).toBe(false);
+  });
+
+  it('Publishing Mode pill reflects the active mode via aria-checked', () => {
+    const organic = setup({ publishingMode: 'ORGANIC' });
+    const organicPill = organic.nativeElement.querySelectorAll('.mode-pill')[0];
+    expect(organicPill.getAttribute('aria-checked')).toBe('true');
+
+    const paid = setup({ publishingMode: 'PAID_BOOSTED' });
+    const paidPill = paid.nativeElement.querySelectorAll('.mode-pill')[1];
+    expect(paidPill.getAttribute('aria-checked')).toBe('true');
+  });
+
+  it('Revert handler is a no-op when draftCaptionSeed is undefined', () => {
+    const fixture = setup({ value: { caption: 'x' } });
+    const emitted: PackagingInstagramContract[] = [];
+    fixture.componentInstance.valueChange.subscribe((v) => emitted.push(v));
+    fixture.componentInstance['onRevertToDraft']();
+    expect(emitted).toEqual([]);
+  });
+
+  it('toggleBank flips the bankOpen signal', () => {
+    const fixture = setup();
+    expect(fixture.componentInstance['bankOpen']()).toBe(false);
+    fixture.componentInstance['toggleBank']();
+    expect(fixture.componentInstance['bankOpen']()).toBe(true);
+    fixture.componentInstance['toggleBank']();
+    expect(fixture.componentInstance['bankOpen']()).toBe(false);
   });
 
   it('all computed accessors read explicit value-fields when provided', () => {

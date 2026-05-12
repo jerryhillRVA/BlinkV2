@@ -1,54 +1,134 @@
 <section class="ig-packaging" aria-label="Instagram packaging">
-  <div class="field">
-    <label class="field-label" for="ig-caption">Caption</label>
-    <textarea
-      id="ig-caption"
-      class="caption-area"
-      rows="6"
-      [value]="caption()"
-      [readOnly]="disabled()"
-      [attr.maxlength]="captionMax"
-      (input)="onCaptionInput($event)"
-    ></textarea>
-    <p
-      class="char-counter"
-      [class.warn]="captionState() === 'warn'"
-      [class.fail]="captionState() === 'fail'"
-      aria-live="polite"
-    >
-      {{ caption().length }} / {{ captionMax }}
-    </p>
+  <!-- Publishing Mode (read-only display on packaging — set in Brief) -->
+  <div class="pkg-card">
+    <span class="card-label">Publishing Mode</span>
+    <div class="mode-toggle" role="radiogroup" aria-label="Publishing mode (set in Brief)">
+      <span
+        class="mode-pill"
+        [class.is-active]="!paidBoosted()"
+        role="radio"
+        [attr.aria-checked]="!paidBoosted()"
+      >Organic</span>
+      <span
+        class="mode-pill mode-pill--paid"
+        [class.is-active]="paidBoosted()"
+        role="radio"
+        [attr.aria-checked]="paidBoosted()"
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M4 14a1 1 0 0 1-.78-1.63l9.9-10.2a.5.5 0 0 1 .86.46l-1.92 6.02A1 1 0 0 0 13 10h7a1 1 0 0 1 .78 1.63l-9.9 10.2a.5.5 0 0 1-.86-.46l1.92-6.02A1 1 0 0 0 11 14z"/>
+        </svg>
+        Paid
+      </span>
+    </div>
+    <p class="mode-note">Switch publishing mode in the Brief step.</p>
   </div>
 
-  <div class="field">
-    <span class="field-label">Hashtags</span>
-    <app-hashtag-input
-      [hashtags]="hashtags()"
-      [disabled]="disabled()"
-      (hashtagsChange)="onHashtagsChange($event)"
-    />
+  <!-- Platform Metadata: caption + hashtags -->
+  <div class="pkg-card">
+    <span class="card-label">Platform Metadata</span>
+
+    <!-- Caption -->
+    <div class="field-group">
+      <div class="field-header">
+        <label class="field-label" for="ig-caption">Caption</label>
+        <app-ai-button
+          label="AI Generate Caption"
+          loadingLabel="Generating…"
+          variant="compact"
+          [loading]="aiGeneratingCaption()"
+          [disabled]="disabled()"
+          (activate)="onGenerateCaption()"
+        />
+      </div>
+      <textarea
+        id="ig-caption"
+        class="caption-area"
+        rows="6"
+        [value]="caption()"
+        [readOnly]="disabled()"
+        [attr.maxlength]="captionMax"
+        placeholder="Finalize your caption here..."
+        aria-label="Caption"
+        (input)="onCaptionInput($event)"
+      ></textarea>
+      <div class="field-footer">
+        @if (captionDivergedFromDraft()) {
+          <button
+            type="button"
+            class="revert-btn"
+            [disabled]="disabled()"
+            (click)="onRevertToDraft()"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M3 7v6h6"/>
+              <path d="M21 17a9 9 0 0 0-15-6.7L3 13"/>
+            </svg>
+            Revert to Draft
+          </button>
+        } @else if (draftCaptionSeed()) {
+          <span class="from-draft">from Draft</span>
+        } @else {
+          <span></span>
+        }
+        <span
+          class="char-counter"
+          [class.warn]="captionState() === 'warn'"
+          [class.fail]="captionState() === 'fail'"
+          aria-live="polite"
+        >
+          {{ caption().length }} / {{ captionMax }}
+        </span>
+      </div>
+    </div>
+
+    <!-- Hashtags -->
+    <div class="field-group">
+      <div class="field-header">
+        <span class="field-label">Hashtags</span>
+        <app-ai-button
+          label="AI Suggest Hashtags"
+          loadingLabel="Suggesting…"
+          variant="compact"
+          [loading]="aiSuggestingHashtags()"
+          [disabled]="disabled()"
+          (activate)="onSuggestHashtags()"
+        />
+      </div>
+      <app-hashtag-input
+        [hashtags]="hashtags()"
+        [disabled]="disabled()"
+        (hashtagsChange)="onHashtagsChange($event)"
+      />
+    </div>
   </div>
 
-  <div class="field">
-    <label class="field-label" for="ig-link">Link in bio or link sticker</label>
-    <input
-      id="ig-link"
-      type="url"
-      class="link-input"
-      placeholder="https://example.com"
-      [value]="link()"
-      [readOnly]="disabled()"
-      (input)="onLinkInput($event)"
-    />
-  </div>
+  <!-- Link + UTM — visible when Paid/Boosted (matches prototype's needsUrl gate) -->
+  @if (paidBoosted()) {
+    <div class="pkg-card">
+      <span class="card-label">Destination Link</span>
+      <input
+        id="ig-link"
+        type="url"
+        class="link-input"
+        placeholder="Link in bio or link sticker"
+        [value]="link()"
+        [readOnly]="disabled()"
+        aria-label="Link in bio or link sticker"
+        (input)="onLinkInput($event)"
+      />
+      <app-utm-builder
+        [utm]="utm()"
+        [disabled]="disabled()"
+        (utmChange)="onUtmChange($event)"
+      />
+    </div>
+  }
 
-  <app-utm-builder [utm]="utm()" [disabled]="disabled()" (utmChange)="onUtmChange($event)" />
-
+  <!-- Slide order (CAROUSEL only) -->
   @if (isCarousel()) {
-    <div class="field">
-      <span class="field-label">Slide order</span>
-      <!-- Conditionally rendered only when draft.mode === 'CAROUSEL'. Empty
-           slides array still mounts the component; the picker handles it. -->
+    <div class="pkg-card">
+      <span class="card-label">Slide Order</span>
       <app-slide-order-picker
         [slides]="slides()"
         [order]="slideOrder()"
@@ -58,8 +138,9 @@
     </div>
   }
 
-  <div class="field">
-    <span class="field-label">Audio</span>
+  <!-- Audio -->
+  <div class="pkg-card">
+    <span class="card-label">Audio</span>
     <app-audio-picker
       platform="instagram"
       [track]="audio()"
@@ -68,10 +149,14 @@
     />
   </div>
 
-  <app-platform-controls
-    platform="instagram"
-    [controls]="controls()"
-    [disabled]="disabled()"
-    (controlsChange)="onControlsChange($event)"
-  />
+  <!-- Platform Controls -->
+  <div class="pkg-card">
+    <span class="card-label">Platform Controls</span>
+    <app-platform-controls
+      platform="instagram"
+      [controls]="controls()"
+      [disabled]="disabled()"
+      (controlsChange)="onControlsChange($event)"
+    />
+  </div>
 </section>
