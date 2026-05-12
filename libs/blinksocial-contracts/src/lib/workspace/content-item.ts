@@ -358,6 +358,13 @@ export interface PackagingInstagramContract {
   utm?: PackagingUtmContract;
   slideOrder?: PackagingSlideOrderContract;
   audio?: PackagingAudioTrackContract;
+  /**
+   * Cover image filename / placeholder reference. Real asset upload is a
+   * follow-up epic; today we capture the chosen file's NAME (or a stub
+   * AI-generated reference) for visual continuity. Mirrors the prototype's
+   * `pkg.coverAsset` in PackagingStudio.tsx.
+   */
+  coverAsset?: string;
   platformControls?: PackagingPlatformControlsContract;
 }
 

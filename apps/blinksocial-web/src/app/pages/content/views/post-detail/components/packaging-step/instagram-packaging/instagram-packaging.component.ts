@@ -12,7 +12,7 @@ import {
   extractHashtagsFromCaption,
   syncCaptionWithHashtags,
 } from '../_shared/caption-hashtag.utils';
-import { AudioPickerComponent } from '../_shared/audio-picker/audio-picker.component';
+import { MediaSelectionsCardComponent } from '../_shared/media-selections-card/media-selections-card.component';
 import { PaidBoostedFieldsComponent } from '../_shared/paid-boosted-fields/paid-boosted-fields.component';
 import { PkgHashtagBankComponent, type HashtagBankGroup } from '../_shared/pkg-hashtag-bank/pkg-hashtag-bank.component';
 import { PlatformControlsComponent } from '../_shared/platform-controls/platform-controls.component';
@@ -59,7 +59,7 @@ const HASHTAG_BANK_GROUPS: HashtagBankGroup[] = [
     PkgHashtagBankComponent,
     UtmBuilderComponent,
     SlideOrderPickerComponent,
-    AudioPickerComponent,
+    MediaSelectionsCardComponent,
     PaidBoostedFieldsComponent,
     PlatformControlsComponent,
   ],
@@ -103,6 +103,7 @@ export class InstagramPackagingComponent {
   protected readonly utm = computed(() => this.value()?.utm);
   protected readonly slideOrder = computed(() => this.value()?.slideOrder?.order ?? []);
   protected readonly audio = computed(() => this.value()?.audio);
+  protected readonly coverAsset = computed(() => this.value()?.coverAsset);
   protected readonly controls = computed(() => this.value()?.platformControls);
 
   protected readonly paidBoosted = computed(() => this.publishingMode() === 'PAID_BOOSTED');
@@ -207,6 +208,10 @@ export class InstagramPackagingComponent {
 
   protected onAudioChange(track: PackagingAudioTrackContract | undefined): void {
     this.patch({ audio: track });
+  }
+
+  protected onCoverAssetChange(coverAsset: string | undefined): void {
+    this.patch({ coverAsset });
   }
 
   protected onControlsChange(controls: PackagingPlatformControlsContract): void {

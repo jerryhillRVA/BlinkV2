@@ -1,0 +1,91 @@
+<section class="media-selections" aria-label="Media selections">
+  <span class="card-label">Media Selections</span>
+
+  <!-- Cover Image -->
+  <div class="field-group">
+    <div class="field-header">
+      <label class="field-label" for="media-cover-input">
+        {{ coverLabel() }}
+        @if (thumbnailMode()) {
+          <span class="field-required" aria-hidden="true">*</span>
+        } @else {
+          <span class="field-helper">Recommended</span>
+        }
+      </label>
+    </div>
+
+    @if (hasCover()) {
+      <div class="cover-attached" role="status">
+        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" class="cover-check">
+          <path d="M20 6 9 17l-5-5"/>
+        </svg>
+        <span class="cover-name">{{ coverAsset() }}</span>
+        <button
+          type="button"
+          class="cover-clear"
+          [disabled]="disabled()"
+          aria-label="Remove cover image"
+          (click)="onClearCover()"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M18 6 6 18"/>
+            <path d="m6 6 12 12"/>
+          </svg>
+        </button>
+      </div>
+    } @else {
+      <div class="cover-actions">
+        <input
+          id="media-cover-input"
+          class="cover-input"
+          type="text"
+          placeholder="File name or link to cover image…"
+          [value]="coverAsset() ?? ''"
+          [readOnly]="disabled()"
+          (input)="onCoverInput($event)"
+        />
+        <label class="upload-btn" [class.is-disabled]="disabled()">
+          <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" class="upload-icon">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+            <polyline points="17 8 12 3 7 8"/>
+            <line x1="12" y1="3" x2="12" y2="15"/>
+          </svg>
+          Upload
+          <input
+            type="file"
+            accept="image/*"
+            class="upload-file-input"
+            [disabled]="disabled()"
+            aria-label="Upload cover image file"
+            (change)="onUploadChange($event)"
+          />
+        </label>
+        <app-ai-button
+          label="AI Generate"
+          loadingLabel="Generating…"
+          [loading]="aiGeneratingCover()"
+          [disabled]="disabled()"
+          (activate)="onAiGenerate()"
+        />
+      </div>
+      @if (thumbnailMode()) {
+        <p class="field-error">Thumbnail required for YouTube long-form</p>
+      }
+    }
+  </div>
+
+  <!-- Audio Planning (only for platforms that support audio: IG / TT / FB) -->
+  @if (platform() === 'instagram' || platform() === 'tiktok' || platform() === 'facebook') {
+    <div class="field-group">
+      <div class="field-header">
+        <span class="field-label">Audio Planning</span>
+      </div>
+      <app-audio-picker
+        [platform]="platform()"
+        [track]="audio()"
+        [disabled]="disabled()"
+        (trackChange)="onAudioChange($event)"
+      />
+    </div>
+  }
+</section>

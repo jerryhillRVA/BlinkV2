@@ -150,14 +150,15 @@
     </div>
   }
 
-  <!-- Audio -->
-  <div class="pkg-card">
-    <span class="card-label">Audio</span>
-    <app-audio-picker
+  <!-- Media Selections — Cover Image + Audio Planning -->
+  <div class="pkg-card pkg-card--snug">
+    <app-media-selections-card
       platform="instagram"
-      [track]="audio()"
+      [coverAsset]="coverAsset()"
+      [audio]="audio()"
       [disabled]="disabled()"
-      (trackChange)="onAudioChange($event)"
+      (coverAssetChange)="onCoverAssetChange($event)"
+      (audioChange)="onAudioChange($event)"
     />
   </div>
 

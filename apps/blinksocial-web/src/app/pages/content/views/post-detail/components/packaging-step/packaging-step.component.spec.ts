@@ -107,4 +107,59 @@ describe('PackagingStepComponent', () => {
     expect(region.getAttribute('role')).toBe('region');
     expect(region.getAttribute('aria-label')).toBe('Packaging builder');
   });
+
+  type DraftSeedComp = { draftCaptionSeed: () => string | undefined };
+  type DraftHooks = {
+    setDraftMode: (m: string) => void;
+    setVideoHook: (v: string) => void;
+    setVideoLongHook: (v: string) => void;
+    setImageSingleHook: (v: string) => void;
+    setCarouselHook: (v: string) => void;
+    setTextCaption: (v: string) => void;
+  };
+
+  it('draftCaptionSeed → VIDEO mode resolves to video.hook', () => {
+    const fixture = setup('instagram');
+    const store = (fixture.componentInstance as unknown as { store: DraftHooks }).store;
+    store.setDraftMode('VIDEO');
+    store.setVideoHook('video-hook');
+    expect((fixture.componentInstance as unknown as DraftSeedComp).draftCaptionSeed()).toBe('video-hook');
+  });
+
+  it('draftCaptionSeed → VIDEO_LONG mode resolves to videoLong.hook', () => {
+    const fixture = setup('instagram');
+    const store = (fixture.componentInstance as unknown as { store: DraftHooks }).store;
+    store.setDraftMode('VIDEO_LONG');
+    store.setVideoLongHook('long-hook');
+    expect((fixture.componentInstance as unknown as DraftSeedComp).draftCaptionSeed()).toBe('long-hook');
+  });
+
+  it('draftCaptionSeed → IMAGE_SINGLE mode resolves to imageSingle.hook', () => {
+    const fixture = setup('instagram');
+    const store = (fixture.componentInstance as unknown as { store: DraftHooks }).store;
+    store.setDraftMode('IMAGE_SINGLE');
+    store.setImageSingleHook('image-hook');
+    expect((fixture.componentInstance as unknown as DraftSeedComp).draftCaptionSeed()).toBe('image-hook');
+  });
+
+  it('draftCaptionSeed → CAROUSEL mode resolves to carousel.hook', () => {
+    const fixture = setup('instagram');
+    const store = (fixture.componentInstance as unknown as { store: DraftHooks }).store;
+    store.setDraftMode('CAROUSEL');
+    store.setCarouselHook('carousel-hook');
+    expect((fixture.componentInstance as unknown as DraftSeedComp).draftCaptionSeed()).toBe('carousel-hook');
+  });
+
+  it('draftCaptionSeed → TEXT mode resolves to text.caption', () => {
+    const fixture = setup('instagram');
+    const store = (fixture.componentInstance as unknown as { store: DraftHooks }).store;
+    store.setDraftMode('TEXT');
+    store.setTextCaption('text-caption');
+    expect((fixture.componentInstance as unknown as DraftSeedComp).draftCaptionSeed()).toBe('text-caption');
+  });
+
+  it('draftCaptionSeed returns undefined when no draft is set', () => {
+    const fixture = setup('instagram');
+    expect((fixture.componentInstance as unknown as DraftSeedComp).draftCaptionSeed()).toBeUndefined();
+  });
 });
