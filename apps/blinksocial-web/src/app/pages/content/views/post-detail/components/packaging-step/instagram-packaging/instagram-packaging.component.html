@@ -47,8 +47,8 @@
     />
   }
 
-  <!-- Platform Metadata: caption + hashtags -->
-  <div class="pkg-card">
+  <!-- Platform Metadata: caption + hashtags (px-3 pt-2 pb-2 in prototype) -->
+  <div class="pkg-card pkg-card--snug">
     <span class="card-label">Platform Metadata</span>
 
     <!-- Caption -->
@@ -67,7 +67,7 @@
       <textarea
         id="ig-caption"
         class="caption-area"
-        rows="6"
+        rows="5"
         [value]="caption()"
         [readOnly]="disabled()"
         [attr.maxlength]="captionMax"
@@ -83,7 +83,7 @@
             [disabled]="disabled()"
             (click)="onRevertToDraft()"
           >
-            <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <svg xmlns="http://www.w3.org/2000/svg" width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
               <path d="M3 7v6h6"/>
               <path d="M21 17a9 9 0 0 0-15-6.7L3 13"/>
             </svg>
@@ -105,25 +105,15 @@
       </div>
     </div>
 
-    <!-- Hashtags -->
-    <div class="field-group">
-      <div class="field-header">
-        <span class="field-label">Hashtags</span>
-        <app-ai-button
-          label="AI Suggest Hashtags"
-          loadingLabel="Suggesting…"
-          variant="compact"
-          [loading]="aiSuggestingHashtags()"
-          [disabled]="disabled()"
-          (activate)="onSuggestHashtags()"
-        />
-      </div>
-      <app-hashtag-input
-        [hashtags]="hashtags()"
-        [disabled]="disabled()"
-        (hashtagsChange)="onHashtagsChange($event)"
-      />
-    </div>
+    <!-- Hashtags (packaging-bank layout — distinct from draft step) -->
+    <app-pkg-hashtag-bank
+      [hashtags]="hashtags()"
+      [disabled]="disabled()"
+      [aiSuggesting]="aiSuggestingHashtags()"
+      [groups]="hashtagBankGroups"
+      (hashtagsChange)="onHashtagsChange($event)"
+      (aiSuggest)="onSuggestHashtags()"
+    />
   </div>
 
   <!-- Link + UTM — visible when Paid/Boosted (matches prototype's needsUrl gate) -->

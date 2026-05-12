@@ -26,6 +26,12 @@
     padding: 8px 10px;
     gap: 6px;
   }
+
+  // Platform Metadata uses px-3 pt-2 pb-2 (12 horizontal, 8 vertical).
+  &--snug {
+    padding: 8px 12px;
+    gap: 8px;
+  }
 }
 
 .card-label {
@@ -117,12 +123,14 @@
   min-height: 24px;
 }
 
+// Caption field label matches the prototype's 10px gray-500
+// uppercase tracking-wider — same look as the card-level label.
 .field-label {
-  font-size: var(--blink-label-small);
+  font-size: 10px;
   font-weight: 700;
   letter-spacing: 0.06em;
   text-transform: uppercase;
-  color: var(--blink-on-surface-muted);
+  color: #6b7280; // gray-500
 }
 
 .field-footer {
@@ -130,17 +138,18 @@
   align-items: center;
   justify-content: space-between;
   gap: 8px;
-  min-height: 18px;
+  min-height: 14px;
+  margin-top: 2px;
 }
 
-// Soft-input look: matches prototype's bg-[#f3f4f6] border-none textareas.
-// Uses --blink-surface-container as the soft fill; outline on focus.
+// Soft-input look: matches prototype's bg-[#f3f4f6] border-none.
+// Solid fill (not the transparent container token — that bleeds parent
+// colors; see project_transparent_surface_tokens.md).
 .caption-area,
 .link-input {
   width: 100%;
   font-family: inherit;
-  font-size: var(--blink-body-medium);
-  background: var(--blink-surface-container);
+  background: var(--blink-input-bg-dark);
   border: 1px solid transparent;
   border-radius: 8px;
   color: var(--blink-on-surface);
@@ -148,26 +157,32 @@
   transition: background-color 120ms ease, border-color 120ms ease;
 
   &:focus-visible {
-    background: var(--blink-surface-dim);
+    background: var(--blink-input-bg-focus, var(--blink-input-bg-dark));
     border-color: var(--blink-outline);
   }
 }
 
+// Caption — prototype: min-h-[80px] resize-none text-xs.
+// text-xs = 12px in tailwind defaults.
 .caption-area {
-  padding: 10px 12px;
-  resize: vertical;
-  min-height: 96px;
+  padding: 8px 12px;
+  resize: none;
+  min-height: 80px;
+  font-size: 12px;
+  line-height: 1.5;
 }
 
 .link-input {
   padding: 8px 12px;
   height: 32px;
+  font-size: var(--blink-body-medium);
 }
 
+// Footer text — prototype: text-[9px] / text-[10px].
 .char-counter {
   margin: 0;
-  font-size: var(--blink-label-small);
-  color: var(--blink-on-surface-faint);
+  font-size: 9px;
+  color: #9ca3af; // gray-400
 
   &.warn {
     color: var(--blink-icon-orange);
@@ -181,22 +196,23 @@
 }
 
 .from-draft {
-  font-size: var(--blink-label-small);
+  font-size: 9px;
   font-style: italic;
-  color: var(--blink-on-surface-faint);
+  color: #9ca3af; // gray-400
 }
 
 .revert-btn {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
+  gap: 2px;
   padding: 0;
   background: transparent;
   border: none;
-  font-size: var(--blink-label-small);
-  font-weight: 600;
+  font-family: inherit;
+  font-size: 9px;
   color: var(--blink-brand-primary);
   cursor: pointer;
+  line-height: 1;
 
   &:hover:not(:disabled) {
     color: var(--blink-brand-primary-active);

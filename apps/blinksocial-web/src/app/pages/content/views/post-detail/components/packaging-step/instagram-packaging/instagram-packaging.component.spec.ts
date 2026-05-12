@@ -27,7 +27,7 @@ describe('InstagramPackagingComponent', () => {
   it('renders the always-visible IG fields (caption, hashtags, audio, platform-controls)', () => {
     const fixture = setup();
     expect(fixture.nativeElement.querySelector('#ig-caption')).not.toBeNull();
-    expect(fixture.nativeElement.querySelector('app-hashtag-input')).not.toBeNull();
+    expect(fixture.nativeElement.querySelector('app-pkg-hashtag-bank')).not.toBeNull();
     expect(fixture.nativeElement.querySelector('app-audio-picker')).not.toBeNull();
     expect(fixture.nativeElement.querySelector('app-platform-controls')).not.toBeNull();
   });

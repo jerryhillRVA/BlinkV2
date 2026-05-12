@@ -8,9 +8,9 @@ import type {
   PublishingModeContract,
 } from '@blinksocial/contracts';
 import { AiButtonComponent } from '../../draft-step/_shared/ai-button/ai-button.component';
-import { HashtagInputComponent } from '../../draft-step/_shared/hashtag-input/hashtag-input.component';
 import { AudioPickerComponent } from '../_shared/audio-picker/audio-picker.component';
 import { PaidBoostedFieldsComponent } from '../_shared/paid-boosted-fields/paid-boosted-fields.component';
+import { PkgHashtagBankComponent, type HashtagBankGroup } from '../_shared/pkg-hashtag-bank/pkg-hashtag-bank.component';
 import { PlatformControlsComponent } from '../_shared/platform-controls/platform-controls.component';
 import {
   SlideOrderPickerComponent,
@@ -30,11 +30,29 @@ const AI_DELAY_MS = 2500;
  * + (CAROUSEL-only) slide-order picker + audio picker + platform
  * controls.
  */
+// Hashtag bank groups for IG/TT/FB packaging. Mirrors the prototype's
+// HASHTAG_BANK_GROUPS in PackagingStudio.tsx — wellness-brand-flavored
+// stub data. Real per-workspace bank wiring is a follow-up.
+const HASHTAG_BANK_GROUPS: HashtagBankGroup[] = [
+  {
+    name: 'Yoga & Movement',
+    tags: ['#yoga', '#yogalife', '#yogapractice', '#yogainspiration', '#asana'],
+  },
+  {
+    name: "Women's Wellness",
+    tags: ['#womenover40', '#wellness40', '#healthyaging', '#selfcare', '#holistichealth'],
+  },
+  {
+    name: 'Fitness',
+    tags: ['#fitnessjourney', '#strengthtraining', '#activeliving', '#fitnessmotivation'],
+  },
+];
+
 @Component({
   selector: 'app-instagram-packaging',
   imports: [
     AiButtonComponent,
-    HashtagInputComponent,
+    PkgHashtagBankComponent,
     UtmBuilderComponent,
     SlideOrderPickerComponent,
     AudioPickerComponent,
@@ -70,6 +88,7 @@ export class InstagramPackagingComponent {
   readonly legalApproverChange = output<string>();
 
   protected readonly captionMax = CAPTION_MAX;
+  protected readonly hashtagBankGroups = HASHTAG_BANK_GROUPS;
   protected readonly aiGeneratingCaption = signal(false);
   protected readonly aiSuggestingHashtags = signal(false);
   protected readonly bankOpen = signal(false);
