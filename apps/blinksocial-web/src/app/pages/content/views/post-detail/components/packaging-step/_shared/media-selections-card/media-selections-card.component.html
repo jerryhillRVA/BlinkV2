@@ -12,6 +12,7 @@
           <span class="field-helper">Recommended</span>
         }
       </label>
+      <app-tooltip [text]="coverTooltip" />
     </div>
 
     @if (hasCover()) {
@@ -74,18 +75,56 @@
     }
   </div>
 
-  <!-- Audio Planning (only for platforms that support audio: IG / TT / FB) -->
-  @if (platform() === 'instagram' || platform() === 'tiktok' || platform() === 'facebook') {
+  <!-- Audio Planning (IG / TT / FB) — empty state + dual-button action row -->
+  @if (showAudioSection()) {
     <div class="field-group">
       <div class="field-header">
-        <span class="field-label">Audio Planning</span>
+        <span class="field-label-row">
+          <span class="field-label">Audio Planning</span>
+          <app-tooltip [text]="audioTooltip" />
+        </span>
       </div>
-      <app-audio-picker
-        [platform]="platform()"
-        [track]="audio()"
-        [disabled]="disabled()"
-        (trackChange)="onAudioChange($event)"
-      />
+
+      @if (audio(); as track) {
+        <div class="audio-selected">
+          <div class="audio-info">
+            <p class="audio-name">{{ track.trackName }}</p>
+            @if (track.artistName) {
+              <p class="audio-artist">{{ track.artistName }}</p>
+            }
+            <span class="audio-source">{{ trackSourceLabel() }}</span>
+          </div>
+          <button
+            type="button"
+            class="audio-clear"
+            [disabled]="disabled()"
+            aria-label="Remove audio track"
+            (click)="onClearAudio()"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M18 6 6 18"/>
+              <path d="m6 6 12 12"/>
+            </svg>
+          </button>
+        </div>
+      } @else {
+        <p class="audio-empty">No audio selected yet</p>
+      }
+
+      <div class="audio-actions">
+        <button
+          type="button"
+          class="audio-browse"
+          [disabled]="disabled()"
+          (click)="onBrowseTrending()"
+        >Browse Trending Sounds</button>
+        <button
+          type="button"
+          class="audio-original"
+          [disabled]="disabled()"
+          (click)="onUseOriginal()"
+        >Use Original</button>
+      </div>
     </div>
   }
 </section>

@@ -7,6 +7,7 @@ import type {
   PackagingUtmContract,
   PublishingModeContract,
 } from '@blinksocial/contracts';
+import { TooltipComponent } from '../../../../../../../shared/tooltip/tooltip.component';
 import { AiButtonComponent } from '../../draft-step/_shared/ai-button/ai-button.component';
 import {
   extractHashtagsFromCaption,
@@ -62,6 +63,7 @@ const HASHTAG_BANK_GROUPS: HashtagBankGroup[] = [
     MediaSelectionsCardComponent,
     PaidBoostedFieldsComponent,
     PlatformControlsComponent,
+    TooltipComponent,
   ],
   templateUrl: './instagram-packaging.component.html',
   styleUrl: './instagram-packaging.component.scss',

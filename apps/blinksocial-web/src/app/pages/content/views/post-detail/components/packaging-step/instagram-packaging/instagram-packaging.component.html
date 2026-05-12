@@ -54,7 +54,12 @@
     <!-- Caption -->
     <div class="field-group">
       <div class="field-header">
-        <label class="field-label" for="ig-caption">Caption</label>
+        <span class="field-label-row">
+          <label class="field-label" for="ig-caption">Caption</label>
+          <app-tooltip
+            text="First written here — not carried from Draft. Lead with your hook angle, deliver value, end with a CTA. AI Generate pulls from your Brief, Concept, and script as context."
+          />
+        </span>
         <app-ai-button
           label="AI Generate Caption"
           loadingLabel="Generating…"

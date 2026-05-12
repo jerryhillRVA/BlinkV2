@@ -28,9 +28,9 @@ describe('InstagramPackagingComponent', () => {
     const fixture = setup();
     expect(fixture.nativeElement.querySelector('#ig-caption')).not.toBeNull();
     expect(fixture.nativeElement.querySelector('app-pkg-hashtag-bank')).not.toBeNull();
-    // Audio picker is now nested inside the Media Selections card.
+    // Audio Planning is rendered inline inside the Media Selections card
+    // (Browse Trending Sounds / Use Original buttons + selected chip).
     expect(fixture.nativeElement.querySelector('app-media-selections-card')).not.toBeNull();
-    expect(fixture.nativeElement.querySelector('app-audio-picker')).not.toBeNull();
     expect(fixture.nativeElement.querySelector('app-platform-controls')).not.toBeNull();
   });
 
