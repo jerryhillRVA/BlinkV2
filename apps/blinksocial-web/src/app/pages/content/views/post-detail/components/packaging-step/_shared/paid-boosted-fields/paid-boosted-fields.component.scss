@@ -64,7 +64,12 @@
   font-size: var(--blink-body-medium);
   padding: 8px 12px;
   height: 36px;
-  background: var(--blink-surface-container); // ~ gray-100
+  // Solid gray-100 fill. The earlier --blink-surface-container token is
+  // rgba(255,255,255,0.5) — sitting over the amber-50 parent, the 50%
+  // white shows the amber through and the field reads as yellow. Use
+  // --blink-input-bg-dark (#f3f4f6 in light theme) for a flat gray-100
+  // that matches the prototype's `bg-[#f3f4f6] border-none` literal.
+  background: var(--blink-input-bg-dark);
   border: 1px solid transparent;
   border-radius: 8px;
   color: var(--blink-on-surface);
@@ -72,7 +77,7 @@
   transition: background-color 120ms ease, border-color 120ms ease;
 
   &:focus-visible {
-    background: var(--blink-surface-dim);
+    background: var(--blink-input-bg-focus, var(--blink-input-bg-dark));
     border-color: var(--blink-outline);
   }
 
