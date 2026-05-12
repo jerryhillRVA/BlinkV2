@@ -66,3 +66,10 @@ export type UpdateContentItemRequestContract = Partial<
 export interface ArchiveContentItemRequestContract {
   archived: boolean;
 }
+
+export interface SendConceptBackResponseContract {
+  conceptId: string;
+  archivedPostIds: string[];
+  alreadyArchivedPostIds: string[];
+  conceptStatus: 'new';
+}

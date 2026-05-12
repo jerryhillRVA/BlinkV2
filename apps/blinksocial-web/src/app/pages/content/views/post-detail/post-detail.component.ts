@@ -86,7 +86,20 @@ export class PostDetailComponent {
     const conceptId = this.store.item()?.conceptId;
     if (!conceptId) return;
     const workspaceId = this.route.snapshot.paramMap.get('id') ?? '';
-    this.router.navigate(['/workspace', workspaceId, 'content', conceptId]);
+    const n = this.store.liveSiblingPostCount();
+    const msg =
+      n > 0
+        ? `Sending this concept back will permanently delete all ${n} post${n === 1 ? '' : 's'} under it. This cannot be undone. Continue?`
+        : 'Sending this concept back will return it to the Ideas/Concepts pipeline. Continue?';
+    if (!window.confirm(msg)) return;
+    this.state.sendConceptBack(conceptId).subscribe({
+      next: () => {
+        this.router.navigate(['/workspace', workspaceId, 'content', conceptId]);
+      },
+      error: () => {
+        // Failure leaves the user on the post detail; no toast wiring in scope.
+      },
+    });
   }
 
   protected onArchive(): void {

@@ -95,4 +95,27 @@ describe('ContentItemsApiService', () => {
     expect(req.request.method).toBe('DELETE');
     req.flush({ deleted: true, id: 'c-1' });
   });
+
+  it('POST send-back posts to the cascade endpoint with empty body', () => {
+    let received: import('@blinksocial/contracts').SendConceptBackResponseContract | undefined;
+    service.sendConceptBack('ws-1', 'concept-9').subscribe((r) => {
+      received = r;
+    });
+    const req = httpMock.expectOne(
+      '/api/workspaces/ws-1/content-items/concept-9/send-back',
+    );
+    expect(req.request.method).toBe('POST');
+    expect(req.request.body).toEqual({});
+    req.flush({
+      conceptId: 'concept-9',
+      archivedPostIds: ['p1', 'p2'],
+      alreadyArchivedPostIds: [],
+      conceptStatus: 'new',
+    });
+    expect(received).toMatchObject({
+      conceptId: 'concept-9',
+      archivedPostIds: ['p1', 'p2'],
+      conceptStatus: 'new',
+    });
+  });
 });

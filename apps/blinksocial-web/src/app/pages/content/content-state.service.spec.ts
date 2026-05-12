@@ -61,6 +61,7 @@ describe('ContentStateService', () => {
     archiveItem: ReturnType<typeof vi.fn>;
     unarchiveItem: ReturnType<typeof vi.fn>;
     deleteItem: ReturnType<typeof vi.fn>;
+    sendConceptBack: ReturnType<typeof vi.fn>;
   };
   let mockDataService: { markReal: ReturnType<typeof vi.fn>; isMock: ReturnType<typeof vi.fn> };
   let toastService: { showError: ReturnType<typeof vi.fn>; showSuccess: ReturnType<typeof vi.fn> };
@@ -82,6 +83,7 @@ describe('ContentStateService', () => {
       archiveItem: vi.fn(),
       unarchiveItem: vi.fn(),
       deleteItem: vi.fn(),
+      sendConceptBack: vi.fn(),
     };
     mockDataService = {
       markReal: vi.fn(),
@@ -362,6 +364,77 @@ describe('ContentStateService', () => {
       itemsApi.deleteItem.mockReturnValue(of({ deleted: true, id: 'c-1' }));
       service.deleteItem('c-1').subscribe();
       expect(service.items().find((i) => i.id === 'c-1')).toBeUndefined();
+    });
+  });
+
+  describe('sendConceptBack (ticket #118)', () => {
+    beforeEach(() => {
+      const concept = indexRow({
+        id: 'concept-1',
+        stage: 'concept',
+        status: 'used',
+      });
+      const post1 = indexRow({
+        id: 'post-1',
+        stage: 'post',
+        parentConceptId: 'concept-1',
+      });
+      const post2 = indexRow({
+        id: 'post-2',
+        stage: 'post',
+        parentConceptId: 'concept-1',
+      });
+      itemsApi.getIndex.mockReturnValue(
+        of({ items: [concept, post1, post2], totalCount: 3, lastUpdated: '' }),
+      );
+      service.loadAll('ws-1');
+    });
+
+    it('on success: archives every returned post id and flips the concept to `new`', () => {
+      itemsApi.sendConceptBack.mockReturnValue(
+        of({
+          conceptId: 'concept-1',
+          archivedPostIds: ['post-1', 'post-2'],
+          alreadyArchivedPostIds: [],
+          conceptStatus: 'new',
+        }),
+      );
+
+      service.sendConceptBack('concept-1').subscribe();
+
+      expect(itemsApi.sendConceptBack).toHaveBeenCalledWith('ws-1', 'concept-1');
+      expect(
+        service.activeItems().find((i) => i.id === 'post-1'),
+      ).toBeUndefined();
+      expect(
+        service.archivedItems().find((i) => i.id === 'post-1'),
+      ).toBeDefined();
+      expect(
+        service.activeItems().find((i) => i.id === 'post-2'),
+      ).toBeUndefined();
+      expect(
+        service.items().find((i) => i.id === 'concept-1')?.status,
+      ).toBe('new');
+    });
+
+    it('on error: local state stays put', () => {
+      itemsApi.sendConceptBack.mockReturnValue(
+        throwError(() => new Error('storage down')),
+      );
+
+      let errored = false;
+      service.sendConceptBack('concept-1').subscribe({
+        error: () => {
+          errored = true;
+        },
+      });
+
+      expect(errored).toBe(true);
+      expect(service.activeItems().find((i) => i.id === 'post-1')).toBeDefined();
+      expect(service.activeItems().find((i) => i.id === 'post-2')).toBeDefined();
+      expect(
+        service.items().find((i) => i.id === 'concept-1')?.status,
+      ).toBe('used');
     });
   });
 

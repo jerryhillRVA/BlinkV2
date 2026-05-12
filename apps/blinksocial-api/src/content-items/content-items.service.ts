@@ -3,6 +3,7 @@ import {
   Inject,
   Optional,
   Logger,
+  BadRequestException,
   NotFoundException,
   ServiceUnavailableException,
 } from '@nestjs/common';
@@ -13,6 +14,7 @@ import type {
   ContentItemsArchiveIndexContract,
   ContentItemsIndexEntryContract,
   CreateContentItemRequestContract,
+  SendConceptBackResponseContract,
   UpdateContentItemRequestContract,
 } from '@blinksocial/contracts';
 import { AgenticFilesystemService } from '../agentic-filesystem/agentic-filesystem.service';
@@ -501,6 +503,100 @@ export class ContentItemsService {
       if (error instanceof NotFoundException) throw error;
       this.logger.error(`Failed to delete ${workspaceId}/${itemId}`, error);
       throw new ServiceUnavailableException('Storage service unavailable.');
+    }
+  }
+
+  /**
+   * Ticket #118: cascade-soft-delete every live post under the given concept,
+   * then flip the concept's status from `'used'` → `'new'`. The two-phase
+   * operation is wrapped in a try/catch that unwinds already-archived posts
+   * on failure, so a partial flip never leaves a `'used'` concept with no
+   * remaining live children.
+   */
+  async sendConceptBack(
+    workspaceId: string,
+    conceptId: string,
+  ): Promise<SendConceptBackResponseContract> {
+    if (!this.fs.isConfigured()) {
+      if (this.mockDataService?.isMockWorkspace(workspaceId)) {
+        return {
+          conceptId,
+          archivedPostIds: [],
+          alreadyArchivedPostIds: [],
+          conceptStatus: 'new',
+        };
+      }
+      throw new NotFoundException(`Workspace not found: ${workspaceId}`);
+    }
+
+    const concept = await this.readItem(workspaceId, conceptId);
+    if (!concept) {
+      throw new NotFoundException(`Item not found: ${conceptId}`);
+    }
+    if (concept.stage !== 'concept') {
+      throw new BadRequestException(
+        `Item ${conceptId} is not a concept (stage=${concept.stage})`,
+      );
+    }
+
+    const primary = await this.readIndex(workspaceId);
+    const archive = await this.readArchiveIndex(workspaceId);
+
+    const liveChildren = primary.items.filter(
+      (r) =>
+        r.stage === 'post' && r.parentConceptId === conceptId && !r.archived,
+    );
+    const alreadyArchivedPostIds = archive.items
+      .filter((r) => r.stage === 'post' && r.parentConceptId === conceptId)
+      .map((r) => r.id);
+
+    const archivedPostIds: string[] = [];
+    try {
+      for (const child of liveChildren) {
+        await this.setArchivedFlag(workspaceId, child.id, true);
+        archivedPostIds.push(child.id);
+      }
+    } catch (archiveError) {
+      this.logger.error(
+        `sendConceptBack: cascade archive failed mid-flight — rolling back ${archivedPostIds.length} archives`,
+        archiveError,
+      );
+      await this.rollbackArchives(workspaceId, archivedPostIds);
+      throw new ServiceUnavailableException('Storage service unavailable.');
+    }
+
+    try {
+      await this.flipParentToNew(workspaceId, conceptId);
+    } catch (flipError) {
+      this.logger.error(
+        `sendConceptBack: concept flip failed — rolling back ${archivedPostIds.length} archives`,
+        flipError,
+      );
+      await this.rollbackArchives(workspaceId, archivedPostIds);
+      throw new ServiceUnavailableException('Storage service unavailable.');
+    }
+
+    return {
+      conceptId,
+      archivedPostIds,
+      alreadyArchivedPostIds,
+      conceptStatus: 'new',
+    };
+  }
+
+  private async rollbackArchives(
+    workspaceId: string,
+    ids: string[],
+  ): Promise<void> {
+    for (const id of [...ids].reverse()) {
+      try {
+        await this.setArchivedFlag(workspaceId, id, false);
+      } catch (rollbackError) {
+        this.logger.error(
+          `sendConceptBack rollback failed for ${id}`,
+          rollbackError,
+        );
+      }
     }
   }
 

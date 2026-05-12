@@ -1,5 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter, ActivatedRoute, Router } from '@angular/router';
+import { of, throwError } from 'rxjs';
 import { PostDetailComponent } from './post-detail.component';
 import { PostDetailStore } from './post-detail.store';
 import { ContentStateService } from '../../content-state.service';
@@ -195,20 +196,128 @@ describe('PostDetailComponent — actions', () => {
     expect(store.item()?.title).toBe('Renamed');
   });
 
-  it('onBackToConcept navigates to the concept URL when conceptId present', () => {
-    const { fixture } = setup();
-    const router = TestBed.inject(Router);
-    const spy = vi.spyOn(router, 'navigate').mockResolvedValue(true);
-    (fixture.componentInstance as unknown as { onBackToConcept: () => void }).onBackToConcept();
-    expect(spy).toHaveBeenCalledWith(['/workspace', 'ws-1', 'content', 'concept-1']);
-  });
+  describe('onBackToConcept (ticket #118)', () => {
+    afterEach(() => {
+      vi.restoreAllMocks();
+    });
 
-  it('onBackToConcept is a no-op when the item has no conceptId', () => {
-    const { fixture } = setup(makeItem({ conceptId: undefined }));
-    const router = TestBed.inject(Router);
-    const spy = vi.spyOn(router, 'navigate').mockResolvedValue(true);
-    (fixture.componentInstance as unknown as { onBackToConcept: () => void }).onBackToConcept();
-    expect(spy).not.toHaveBeenCalled();
+    function setupWithSiblings(
+      liveSiblings: number,
+      archivedSiblings = 0,
+    ): { fixture: ComponentFixture<PostDetailComponent>; state: ContentStateService } {
+      const now = new Date().toISOString();
+      const current = makeItem({ id: 'post-1', conceptId: 'concept-1' });
+      const items: ContentItem[] = [current];
+      for (let i = 0; i < liveSiblings; i++) {
+        items.push({
+          ...makeItem({
+            id: `post-sib-${i}`,
+            title: `Sibling ${i}`,
+            conceptId: 'concept-1',
+          }),
+          createdAt: now,
+          updatedAt: now,
+        });
+      }
+      for (let i = 0; i < archivedSiblings; i++) {
+        items.push({
+          ...makeItem({
+            id: `post-arch-${i}`,
+            title: `Archived ${i}`,
+            conceptId: 'concept-1',
+            archived: true,
+          }),
+          createdAt: now,
+          updatedAt: now,
+        });
+      }
+      const { fixture, state } = setup(current);
+      state.setItems(items);
+      fixture.detectChanges();
+      return { fixture, state };
+    }
+
+    it('cancel at the confirm leaves the user on the post — no API call, no navigation', () => {
+      const { fixture, state } = setupWithSiblings(1);
+      const router = TestBed.inject(Router);
+      const navSpy = vi.spyOn(router, 'navigate').mockResolvedValue(true);
+      const sendSpy = vi.spyOn(state, 'sendConceptBack');
+      const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(false);
+
+      (fixture.componentInstance as unknown as { onBackToConcept: () => void }).onBackToConcept();
+
+      expect(confirmSpy).toHaveBeenCalledTimes(1);
+      expect(sendSpy).not.toHaveBeenCalled();
+      expect(navSpy).not.toHaveBeenCalled();
+    });
+
+    it('confirm OK calls sendConceptBack then navigates to the concept detail', () => {
+      const { fixture, state } = setupWithSiblings(2);
+      const router = TestBed.inject(Router);
+      const navSpy = vi.spyOn(router, 'navigate').mockResolvedValue(true);
+      const sendSpy = vi.spyOn(state, 'sendConceptBack').mockReturnValue(
+        of({
+          conceptId: 'concept-1',
+          archivedPostIds: ['post-1', 'post-sib-0', 'post-sib-1'],
+          alreadyArchivedPostIds: [],
+          conceptStatus: 'new',
+        }),
+      );
+      vi.spyOn(window, 'confirm').mockReturnValue(true);
+
+      (fixture.componentInstance as unknown as { onBackToConcept: () => void }).onBackToConcept();
+
+      expect(sendSpy).toHaveBeenCalledWith('concept-1');
+      expect(navSpy).toHaveBeenCalledWith(['/workspace', 'ws-1', 'content', 'concept-1']);
+    });
+
+    it('error from sendConceptBack does not navigate', () => {
+      const { fixture, state } = setupWithSiblings(1);
+      const router = TestBed.inject(Router);
+      const navSpy = vi.spyOn(router, 'navigate').mockResolvedValue(true);
+      vi.spyOn(state, 'sendConceptBack').mockReturnValue(
+        throwError(() => new Error('boom')),
+      );
+      vi.spyOn(window, 'confirm').mockReturnValue(true);
+
+      (fixture.componentInstance as unknown as { onBackToConcept: () => void }).onBackToConcept();
+
+      expect(navSpy).not.toHaveBeenCalled();
+    });
+
+    it('confirm copy uses plural "posts" with the live-sibling count when N > 1', () => {
+      const { fixture } = setupWithSiblings(2); // current + 2 siblings = 3 live
+      const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(false);
+
+      (fixture.componentInstance as unknown as { onBackToConcept: () => void }).onBackToConcept();
+
+      expect(confirmSpy).toHaveBeenCalledWith(
+        'Sending this concept back will permanently delete all 3 posts under it. This cannot be undone. Continue?',
+      );
+    });
+
+    it('confirm copy uses singular "post" when only the current post is live', () => {
+      const { fixture } = setupWithSiblings(0, 2); // current only + 2 archived siblings
+      const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(false);
+
+      (fixture.componentInstance as unknown as { onBackToConcept: () => void }).onBackToConcept();
+
+      expect(confirmSpy).toHaveBeenCalledWith(
+        'Sending this concept back will permanently delete all 1 post under it. This cannot be undone. Continue?',
+      );
+    });
+
+    it('is a no-op when the item has no conceptId', () => {
+      const { fixture } = setup(makeItem({ conceptId: undefined }));
+      const router = TestBed.inject(Router);
+      const navSpy = vi.spyOn(router, 'navigate').mockResolvedValue(true);
+      const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(true);
+
+      (fixture.componentInstance as unknown as { onBackToConcept: () => void }).onBackToConcept();
+
+      expect(confirmSpy).not.toHaveBeenCalled();
+      expect(navSpy).not.toHaveBeenCalled();
+    });
   });
 
   it('onArchive marks the item archived and emits back', () => {

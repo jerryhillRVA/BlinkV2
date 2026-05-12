@@ -6,6 +6,7 @@ import type {
   ContentItemsIndexContract,
   ContentItemsArchiveIndexContract,
   CreateContentItemRequestContract,
+  SendConceptBackResponseContract,
   UpdateContentItemRequestContract,
 } from '@blinksocial/contracts';
 
@@ -83,6 +84,16 @@ export class ContentItemsApiService {
   ): Observable<{ deleted: true; id: string }> {
     return this.http.delete<{ deleted: true; id: string }>(
       `/api/workspaces/${workspaceId}/content-items/${itemId}`,
+    );
+  }
+
+  sendConceptBack(
+    workspaceId: string,
+    conceptId: string,
+  ): Observable<SendConceptBackResponseContract> {
+    return this.http.post<SendConceptBackResponseContract>(
+      `/api/workspaces/${workspaceId}/content-items/${conceptId}/send-back`,
+      {},
     );
   }
 }
