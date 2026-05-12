@@ -7,8 +7,14 @@
         [isCarousel]="store.draft()?.mode === 'CAROUSEL'"
         [publishingMode]="store.publishingMode()"
         [draftCaptionSeed]="draftCaptionSeed()"
+        [campaignName]="store.campaignName()"
+        [destinationUrl]="store.destinationUrl()"
+        [legalApprover]="store.legalApprover()"
         (valueChange)="store.setInstagramPackaging($event)"
         (publishingModeChange)="store.setPublishingMode($event)"
+        (campaignNameChange)="store.setCampaignName($event)"
+        (destinationUrlChange)="store.setDestinationUrl($event)"
+        (legalApproverChange)="store.setLegalApprover($event)"
       />
     }
     @case ('tiktok') {

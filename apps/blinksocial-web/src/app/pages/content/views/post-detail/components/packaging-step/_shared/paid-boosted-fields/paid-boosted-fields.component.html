@@ -1,0 +1,60 @@
+<section
+  class="paid-card"
+  role="group"
+  aria-label="Paid / Boosted required fields"
+>
+  <header class="paid-header">
+    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <path d="m3 11 18-5v12L3 14v-3z"/>
+      <path d="M11.6 16.8a3 3 0 1 1-5.8-1.6"/>
+    </svg>
+    <span class="paid-header-label">Paid / Boosted — required fields</span>
+  </header>
+  <div class="paid-body">
+    <div class="paid-field">
+      <label class="paid-label" for="paid-campaign">
+        Campaign Name <span class="paid-required" aria-hidden="true">*</span>
+      </label>
+      <input
+        id="paid-campaign"
+        class="paid-input"
+        type="text"
+        placeholder="e.g. Spring Launch 2026"
+        [value]="campaignName() ?? ''"
+        [readOnly]="disabled()"
+        [attr.aria-required]="true"
+        (input)="onCampaignInput($event)"
+      />
+    </div>
+    <div class="paid-field">
+      <label class="paid-label" for="paid-url">
+        Destination URL <span class="paid-required" aria-hidden="true">*</span>
+      </label>
+      <input
+        id="paid-url"
+        class="paid-input"
+        type="url"
+        placeholder="https://..."
+        [value]="destinationUrl() ?? ''"
+        [readOnly]="disabled()"
+        [attr.aria-required]="true"
+        (input)="onUrlInput($event)"
+      />
+    </div>
+    <div class="paid-field">
+      <label class="paid-label" for="paid-approver">
+        Legal / Compliance Approver <span class="paid-required" aria-hidden="true">*</span>
+      </label>
+      <input
+        id="paid-approver"
+        class="paid-input"
+        type="text"
+        placeholder="Name or email"
+        [value]="legalApprover() ?? ''"
+        [readOnly]="disabled()"
+        [attr.aria-required]="true"
+        (input)="onApproverInput($event)"
+      />
+    </div>
+  </div>
+</section>

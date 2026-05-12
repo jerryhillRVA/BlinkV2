@@ -447,29 +447,36 @@ describe('PostDetailStore — menu actions', () => {
       expect(store.approvalNote()).toBe('');
     });
 
-    it('most brief sub-field setters respect the briefApproved write-lock (publishingMode is exempt)', () => {
+    it('most brief sub-field setters respect the briefApproved write-lock (paid-mode fields are exempt)', () => {
       const { store } = setup(makeItem({ briefApproved: true }));
       store.setReferenceLinks(['https://x.com']);
       store.setDueDate('2030-01-01');
-      store.setCampaignName('blocked');
       store.togglePrimaryCta('sign-up');
       store.setApprovalNote('blocked');
       expect(store.referenceLinks()).toEqual([]);
       expect(store.dueDate()).toBeUndefined();
-      expect(store.campaignName()).toBeUndefined();
       expect(store.primaryCta()).toBeUndefined();
       expect(store.approvalNote()).toBe('');
     });
 
-    it('setPublishingMode bypasses the briefApproved write-lock (#116 — packaging-side toggle)', () => {
-      // The Publishing Mode pill lives on the Packaging step in the
-      // prototype and is the canonical place users decide Organic vs
-      // Paid. Locking it after brief approval would break that flow.
+    it('paid-mode brief fields (publishingMode, campaignName, destinationUrl, legalApprover) bypass the write-lock (#116)', () => {
+      // The Publishing Mode toggle + Paid/Boosted required-fields panel
+      // both live on the Packaging step in the prototype. Locking these
+      // brief fields after approval would break that flow.
       const { store } = setup(makeItem({ briefApproved: true }));
       store.setPublishingMode('PAID_BOOSTED');
+      store.setCampaignName('Spring Launch 2026');
+      store.setDestinationUrl('https://example.com');
+      store.setLegalApprover('legal@example.com');
       expect(store.publishingMode()).toBe('PAID_BOOSTED');
-      store.setPublishingMode('ORGANIC');
-      expect(store.publishingMode()).toBe('ORGANIC');
+      expect(store.campaignName()).toBe('Spring Launch 2026');
+      expect(store.destinationUrl()).toBe('https://example.com');
+      expect(store.legalApprover()).toBe('legal@example.com');
+      // Clearing destinationUrl / legalApprover (empty string) writes undefined.
+      store.setDestinationUrl('');
+      store.setLegalApprover('');
+      expect(store.destinationUrl()).toBeUndefined();
+      expect(store.legalApprover()).toBeUndefined();
     });
 
     it('unlockBrief writes unlockedAt onto production.brief (no prior production)', () => {

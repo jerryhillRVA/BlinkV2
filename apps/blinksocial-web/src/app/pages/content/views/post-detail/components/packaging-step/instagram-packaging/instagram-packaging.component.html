@@ -32,6 +32,21 @@
     </div>
   </div>
 
+  <!-- Paid / Boosted required fields — slides in below the toggle when
+       publishingMode === PAID_BOOSTED. Fields live on the brief and are
+       legitimately editable from packaging (see store.persistPackagingSideBrief). -->
+  @if (paidBoosted()) {
+    <app-paid-boosted-fields
+      [campaignName]="campaignName()"
+      [destinationUrl]="destinationUrl()"
+      [legalApprover]="legalApprover()"
+      [disabled]="disabled()"
+      (campaignNameChange)="campaignNameChange.emit($event)"
+      (destinationUrlChange)="destinationUrlChange.emit($event)"
+      (legalApproverChange)="legalApproverChange.emit($event)"
+    />
+  }
+
   <!-- Platform Metadata: caption + hashtags -->
   <div class="pkg-card">
     <span class="card-label">Platform Metadata</span>

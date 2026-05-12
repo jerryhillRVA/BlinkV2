@@ -10,6 +10,7 @@ import type {
 import { AiButtonComponent } from '../../draft-step/_shared/ai-button/ai-button.component';
 import { HashtagInputComponent } from '../../draft-step/_shared/hashtag-input/hashtag-input.component';
 import { AudioPickerComponent } from '../_shared/audio-picker/audio-picker.component';
+import { PaidBoostedFieldsComponent } from '../_shared/paid-boosted-fields/paid-boosted-fields.component';
 import { PlatformControlsComponent } from '../_shared/platform-controls/platform-controls.component';
 import {
   SlideOrderPickerComponent,
@@ -37,6 +38,7 @@ const AI_DELAY_MS = 2500;
     UtmBuilderComponent,
     SlideOrderPickerComponent,
     AudioPickerComponent,
+    PaidBoostedFieldsComponent,
     PlatformControlsComponent,
   ],
   templateUrl: './instagram-packaging.component.html',
@@ -55,10 +57,17 @@ export class InstagramPackagingComponent {
   readonly publishingMode = input<PublishingModeContract | undefined>(undefined);
   /** Read-only display of the parent draft's caption seed, for the "from Draft" hint. */
   readonly draftCaptionSeed = input<string | undefined>(undefined);
+  /** Brief-side paid/boosted fields (also editable from packaging). */
+  readonly campaignName = input<string | undefined>(undefined);
+  readonly destinationUrl = input<string | undefined>(undefined);
+  readonly legalApprover = input<string | undefined>(undefined);
 
   readonly valueChange = output<PackagingInstagramContract>();
   /** User toggled the Publishing Mode pill — parent persists via store.setPublishingMode. */
   readonly publishingModeChange = output<PublishingModeContract>();
+  readonly campaignNameChange = output<string>();
+  readonly destinationUrlChange = output<string>();
+  readonly legalApproverChange = output<string>();
 
   protected readonly captionMax = CAPTION_MAX;
   protected readonly aiGeneratingCaption = signal(false);

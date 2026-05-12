@@ -151,6 +151,11 @@ export interface ProductionBriefContract {
   referenceLinks?: string[];
   dueDate?: string;
   campaignName?: string;
+  // Required when publishingMode = PAID_BOOSTED. Lives on the brief but
+  // is editable from the Packaging step (the prototype's canonical
+  // entry point for paid-mode metadata).
+  destinationUrl?: string;
+  legalApprover?: string;
   publishingMode?: PublishingModeContract;
   primaryCta?: PrimaryCtaContract;
   approvalNote?: string;

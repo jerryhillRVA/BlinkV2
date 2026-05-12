@@ -260,6 +260,12 @@ export class PostDetailStore {
   readonly campaignName = computed<string | undefined>(
     () => this.brief()?.campaignName,
   );
+  readonly destinationUrl = computed<string | undefined>(
+    () => this.brief()?.destinationUrl,
+  );
+  readonly legalApprover = computed<string | undefined>(
+    () => this.brief()?.legalApprover,
+  );
   readonly publishingMode = computed<PublishingModeContract | undefined>(
     () => this.brief()?.publishingMode,
   );
@@ -304,20 +310,42 @@ export class PostDetailStore {
   }
 
   setCampaignName(v: string): void {
-    this.persistBrief({ campaignName: v.trim() || undefined });
+    // Paid/Boosted fields are editable from packaging — see
+    // persistPackagingSideBrief for the carve-out.
+    this.persistPackagingSideBrief({ campaignName: v.trim() || undefined });
   }
 
   setPublishingMode(v: PublishingModeContract | undefined): void {
-    // publishingMode is the one brief-side field we DON'T gate on the
-    // briefApproved write-lock. The Packaging step's Publishing Mode
-    // toggle is the canonical place users actually decide Organic vs
-    // Paid (the Brief step just defaults it). Locking this field after
-    // approval would break the prototype's intended flow.
+    this.persistPackagingSideBrief({ publishingMode: v });
+  }
+
+  setDestinationUrl(v: string): void {
+    this.persistPackagingSideBrief({
+      destinationUrl: v.length > 0 ? v : undefined,
+    });
+  }
+
+  setLegalApprover(v: string): void {
+    this.persistPackagingSideBrief({
+      legalApprover: v.length > 0 ? v : undefined,
+    });
+  }
+
+  /**
+   * Brief-side fields the Packaging step legitimately edits even after the
+   * brief is approved. publishingMode, destinationUrl, legalApprover all
+   * live on the brief but are the user's canonical packaging-side decisions
+   * per the prototype — locking them after approval would break that flow.
+   * All other brief fields stay gated via persistBrief.
+   */
+  private persistPackagingSideBrief(
+    patch: Partial<ProductionBriefContract>,
+  ): void {
     const item = this.item();
     if (!item) return;
     const nextBrief: ProductionBriefContract = {
       ...(item.production?.brief ?? {}),
-      publishingMode: v,
+      ...patch,
     };
     const next: ContentItem = {
       ...item,
