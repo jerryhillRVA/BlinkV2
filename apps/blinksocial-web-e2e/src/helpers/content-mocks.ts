@@ -123,7 +123,7 @@ const CONCEPT_DETAIL = {
   tags: ['breathwork'],
 } satisfies ContentItemContract;
 
-const POST_DETAIL = {
+export const POST_DETAIL_PROD1 = {
   ...POST_ENTRY,
   description: 'Quick morning mobility routine for stiff joints.',
   hook: "Your body shouldn't feel 80 when you're 30.",
@@ -173,7 +173,7 @@ const POST_DETAIL = {
 const BASE_DETAILS: Record<string, ContentItemContract> = {
   idea1: IDEA_DETAIL,
   concept1: CONCEPT_DETAIL,
-  prod1: POST_DETAIL,
+  prod1: POST_DETAIL_PROD1,
 };
 
 const ARCHIVE_INDEX_PAYLOAD = {

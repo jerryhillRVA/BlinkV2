@@ -1,6 +1,6 @@
 import { test, expect, type Page } from '@playwright/test';
 import { mockAuthenticatedUser } from './helpers/login';
-import { mockHiveContent } from './helpers/content-mocks';
+import { mockHiveContent, POST_DETAIL_PROD1 } from './helpers/content-mocks';
 import { approvedPostDetail, approvedPostEntry } from './helpers/draft-mocks';
 
 async function openFirstInProductionCard(page: Page): Promise<void> {
@@ -468,5 +468,32 @@ test.describe('Production Draft (#114)', () => {
     // Add shot → all required fields satisfied, button enables
     await page.locator('app-shot-list .add-shot-row .ghost-btn').click();
     await expect(continueBtn).toBeEnabled();
+  });
+});
+
+test.describe('Send back to Concept menu visibility (#121)', () => {
+  test.beforeEach(async ({ page }) => {
+    await mockAuthenticatedUser(page);
+    // Simulate a Post whose server payload carries parentConceptId but no
+    // conceptId alias — the repro case from #121. Without the cache
+    // normalizer in ContentStateService, the "Send back to Concept" kebab
+    // entry would be hidden by its @if (item.conceptId) guard.
+    const postWithoutConceptId = {
+      ...POST_DETAIL_PROD1,
+      parentConceptId: 'concept1',
+    };
+    delete (postWithoutConceptId as { conceptId?: string }).conceptId;
+    await mockHiveContent(page, {
+      details: { prod1: postWithoutConceptId },
+    });
+    await page.goto('/workspace/hive-collective/content/prod1');
+    await expect(page.locator('app-post-detail-header')).toBeVisible();
+  });
+
+  test('TC-1: kebab menu shows "Send back to Concept" when payload omits conceptId', async ({ page }) => {
+    await page.locator('app-post-detail-header .detail-menu-btn').click();
+    const menuItem = page
+      .locator('app-post-detail-header [role="menuitem"]', { hasText: 'Send back to Concept' });
+    await expect(menuItem).toBeVisible();
   });
 });
