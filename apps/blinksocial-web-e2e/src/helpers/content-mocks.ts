@@ -40,7 +40,7 @@ const SEGMENTS = [
 
 const NOW = '2026-04-01T09:00:00Z';
 
-const IDEA_ENTRY = {
+export const IDEA_ENTRY = {
   id: 'idea1',
   stage: 'idea',
   status: 'new',
@@ -61,7 +61,7 @@ const IDEA_ENTRY = {
 // parentIdeaId is intentionally null so demoteToIdea doesn't trigger the
 // follow-up syncIdeaConceptStatus save, which races with the persist PUT
 // in some browsers and clobbers the stage transition.
-const CONCEPT_ENTRY = {
+export const CONCEPT_ENTRY = {
   id: 'concept1',
   stage: 'concept',
   status: 'new',

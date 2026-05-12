@@ -143,10 +143,25 @@ test.describe('Idea detail header typography', () => {
     const bgUnfocused = await textarea.evaluate((el) => getComputedStyle(el).backgroundColor);
     expectRgbNear(bgUnfocused, [243, 244, 246]);
 
-    // Re-focus explicitly — Playwright's `.click()` on the wrapper button
-    // can leave focus unsettled by the time evaluate() runs.
-    await textarea.focus();
-    await page.waitForTimeout(100);
+    // Re-focus the textarea so the :focus background takes effect. Use
+    // `.click()` rather than `.focus()` — WebKit's synthetic `.focus()`
+    // doesn't always promote the element to the :focus state for CSS
+    // matching, but a real mouse click reliably does in every browser.
+    await textarea.click();
+    // The :focus background transitions in over 150ms. Under parallel-run
+    // load WebKit can race the assertion; poll until the computed bg
+    // settles to the focused color (rgb(237, 239, 242)) before reading
+    // the rest of the computed styles below.
+    await page.waitForFunction(() => {
+      const el = document.querySelector(
+        'app-idea-detail textarea.detail-description-input',
+      );
+      if (!el) return false;
+      const m = getComputedStyle(el).backgroundColor.match(
+        /^rgba?\((\d+),\s*(\d+),\s*(\d+)/,
+      );
+      return m ? Math.abs(parseInt(m[1], 10) - 237) <= 2 : false;
+    }, null, { timeout: 2000 });
     const computed = await textarea.evaluate((el) => {
       const cs = getComputedStyle(el);
       return {
@@ -577,6 +592,18 @@ test.describe('Idea detail right column (#106)', () => {
     // Move cursor off the chip — :hover state would otherwise mask the
     // tinted border color in Firefox/WebKit.
     await page.mouse.move(0, 0);
+    // Wait for Angular to flush the inline-style pillar-color binding
+    // and for getComputedStyle to reflect the active-state color. Without
+    // this, parallel-run CD scheduling can race the assertion and leave
+    // the chip rendered with the default (unselected) text color.
+    await page.waitForFunction(() => {
+      const el = document.querySelector(
+        'app-idea-detail .chip-grid--pillar .chip',
+      );
+      if (!el) return false;
+      const m = getComputedStyle(el).color.match(/^rgba?\((\d+)/);
+      return m ? Math.abs(parseInt(m[1], 10) - 217) <= 10 : false;
+    }, null, { timeout: 2000 });
 
     const styles = await allChips.nth(0).evaluate((el) => {
       const cs = getComputedStyle(el);
