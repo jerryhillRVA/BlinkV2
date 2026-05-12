@@ -195,6 +195,33 @@ export class ContentItemsService {
       throw new ServiceUnavailableException('Storage service unavailable.');
     }
 
+    // Ticket #117: flip the parent's status to `'used'` in the same handler
+    // so the pipeline reflects child existence atomically. If the flip
+    // throws we roll back the child file so we don't leave a half-flipped
+    // lineage (best-effort — true ACID isn't possible against AgenticFS).
+    const parentId = this.resolveParentId(item);
+    if (parentId) {
+      try {
+        await this.flipParentToUsed(workspaceId, parentId);
+      } catch (flipError) {
+        this.logger.error(
+          `Parent flip failed for child ${item.id} → ${parentId}; rolling back child`,
+          flipError,
+        );
+        try {
+          await this.deleteItemFile(workspaceId, item.id);
+        } catch (rollbackError) {
+          this.logger.error(
+            `Rollback of child ${item.id} also failed`,
+            rollbackError,
+          );
+        }
+        throw new ServiceUnavailableException(
+          'Storage service unavailable.',
+        );
+      }
+    }
+
     // Best-effort index update. Ordering: item first, index second.
     // Serialized per-workspace so concurrent creates don't clobber each other (D-25).
     try {
@@ -213,6 +240,108 @@ export class ContentItemsService {
     return item;
   }
 
+  /**
+   * The id of the lineage parent for a freshly-created child item:
+   *   - concept with `parentIdeaId` → that idea
+   *   - post with `parentConceptId` → that concept
+   *   - anything else → no parent flip applies
+   * Returns `null` when there's nothing to flip.
+   */
+  private resolveParentId(item: ContentItemContract): string | null {
+    if (item.stage === 'concept' && item.parentIdeaId) {
+      return item.parentIdeaId;
+    }
+    if (item.stage === 'post' && item.parentConceptId) {
+      return item.parentConceptId;
+    }
+    return null;
+  }
+
+  /**
+   * Reads the parent, sets `status: 'used'` if not already, and rewrites
+   * both the item file and the primary-index row under the per-workspace
+   * lock. No-op if the parent is missing or already `'used'`.
+   */
+  private async flipParentToUsed(
+    workspaceId: string,
+    parentId: string,
+  ): Promise<void> {
+    await this.withIndexLock(workspaceId, async () => {
+      const parent = await this.readItem(workspaceId, parentId);
+      if (!parent) return;
+      if (parent.status === 'used') return;
+      const updated: ContentItemContract = {
+        ...parent,
+        status: 'used',
+        updatedAt: new Date().toISOString(),
+      };
+      await this.upsertItemFile(workspaceId, updated);
+      const whichIndex = updated.archived ? 'archive' : 'primary';
+      await this.replaceIndexRow(workspaceId, updated, whichIndex);
+    });
+  }
+
+  /**
+   * Reverse of `flipParentToUsed` — used by `deleteItem` / `updateItem`
+   * when the last remaining child is removed. Skips the write if the
+   * parent already shows `'new'` (idempotent).
+   */
+  private async flipParentToNew(
+    workspaceId: string,
+    parentId: string,
+  ): Promise<void> {
+    await this.withIndexLock(workspaceId, async () => {
+      const parent = await this.readItem(workspaceId, parentId);
+      if (!parent) return;
+      if (parent.status === 'new') return;
+      const updated: ContentItemContract = {
+        ...parent,
+        status: 'new',
+        updatedAt: new Date().toISOString(),
+      };
+      await this.upsertItemFile(workspaceId, updated);
+      const whichIndex = updated.archived ? 'archive' : 'primary';
+      await this.replaceIndexRow(workspaceId, updated, whichIndex);
+    });
+  }
+
+  /**
+   * Counts remaining children of `parentId` across both primary and
+   * archive indexes (archived siblings still count — they may be
+   * unarchived). Used to decide whether removing a child should trigger
+   * the parent un-flip.
+   */
+  private async countRemainingChildren(
+    workspaceId: string,
+    parentId: string,
+    parentStage: 'idea' | 'concept',
+  ): Promise<number> {
+    const primary = await this.readIndex(workspaceId);
+    const archive = await this.readArchiveIndex(workspaceId);
+    const rows = [...primary.items, ...archive.items];
+    if (parentStage === 'idea') {
+      return rows.filter(
+        (r) => r.stage === 'concept' && r.parentIdeaId === parentId,
+      ).length;
+    }
+    return rows.filter(
+      (r) => r.stage === 'post' && r.parentConceptId === parentId,
+    ).length;
+  }
+
+  private async deleteItemFile(
+    workspaceId: string,
+    itemId: string,
+  ): Promise<void> {
+    const entries = await this.fs.listDirectory(workspaceId, NAMESPACE);
+    const file = entries.find(
+      (e) => e.type === 'file' && e.name === `${itemId}.json`,
+    );
+    if (file?.file_id) {
+      await this.fs.deleteFile(workspaceId, file.file_id);
+    }
+  }
+
   async updateItem(
     workspaceId: string,
     itemId: string,
@@ -227,7 +356,7 @@ export class ContentItemsService {
         const base = existing ?? {
           id: itemId,
           stage: 'idea',
-          status: 'draft',
+          status: 'new',
           title: '',
           description: '',
           pillarIds: [],
@@ -300,6 +429,14 @@ export class ContentItemsService {
         );
       }
 
+      // Ticket #117: if the patch changed `stage`, treat the item as
+      // "removed from the old parent" — re-evaluate the old parent and
+      // un-flip if no children remain. Covers the hypothetical
+      // post→concept demote path before that UI affordance lands.
+      if (existing.stage !== updated.stage) {
+        await this.maybeUnflipParent(workspaceId, existing);
+      }
+
       return updated;
     } catch (error) {
       if (error instanceof NotFoundException) throw error;
@@ -339,13 +476,7 @@ export class ContentItemsService {
         throw new NotFoundException(`Item not found: ${itemId}`);
       }
 
-      const entries = await this.fs.listDirectory(workspaceId, NAMESPACE);
-      const file = entries.find(
-        (e) => e.type === 'file' && e.name === `${itemId}.json`,
-      );
-      if (file?.file_id) {
-        await this.fs.deleteFile(workspaceId, file.file_id);
-      }
+      await this.deleteItemFile(workspaceId, itemId);
 
       try {
         const whichIndex = existing.archived ? 'archive' : 'primary';
@@ -359,11 +490,56 @@ export class ContentItemsService {
         );
       }
 
+      // Ticket #117: if the deleted item was the last remaining child of
+      // its parent, flip the parent back to `'new'` so the pipeline can
+      // surface it again. Best-effort — the client reconcileLineageStatuses
+      // pass acts as a safety net if this fails.
+      await this.maybeUnflipParent(workspaceId, existing);
+
       return { deleted: true, id: itemId };
     } catch (error) {
       if (error instanceof NotFoundException) throw error;
       this.logger.error(`Failed to delete ${workspaceId}/${itemId}`, error);
       throw new ServiceUnavailableException('Storage service unavailable.');
+    }
+  }
+
+  /**
+   * After a child item is removed (delete or stage-change), check whether
+   * its parent has any remaining children. If zero, flip the parent back
+   * to `'new'`. Logs and continues on failure — never blocks the caller.
+   *
+   * NOTE: this only fires when the *removed* item is itself a child
+   * (concept with `parentIdeaId` or post with `parentConceptId`).
+   */
+  private async maybeUnflipParent(
+    workspaceId: string,
+    removed: ContentItemContract,
+  ): Promise<void> {
+    let parentId: string | null = null;
+    let parentStage: 'idea' | 'concept' | null = null;
+    if (removed.stage === 'concept' && removed.parentIdeaId) {
+      parentId = removed.parentIdeaId;
+      parentStage = 'idea';
+    } else if (removed.stage === 'post' && removed.parentConceptId) {
+      parentId = removed.parentConceptId;
+      parentStage = 'concept';
+    }
+    if (!parentId || !parentStage) return;
+
+    try {
+      const remaining = await this.countRemainingChildren(
+        workspaceId,
+        parentId,
+        parentStage,
+      );
+      if (remaining > 0) return;
+      await this.flipParentToNew(workspaceId, parentId);
+    } catch (error) {
+      this.logger.error(
+        `Parent un-flip failed — leaving as \`used\` (parent=${parentId})`,
+        error,
+      );
     }
   }
 

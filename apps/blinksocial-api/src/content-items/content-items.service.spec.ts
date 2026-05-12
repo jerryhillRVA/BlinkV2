@@ -435,4 +435,189 @@ describe('ContentItemsService', () => {
       }
     });
   });
+
+  // Ticket #117: backend owns the parent-flip on create and parent un-flip
+  // on delete/stage-change. The frontend's `applyLocalStatus` is just an
+  // optimistic mirror; these tests cover the authoritative behavior.
+  describe('parent-flip on create (ticket #117)', () => {
+    it('flips a `new` parent idea to `used` when a concept is created under it', async () => {
+      const idea = await service.createItem('w1', {
+        stage: 'idea',
+        status: 'new',
+        title: 'Parent idea',
+      });
+      await service.createItem('w1', {
+        stage: 'concept',
+        status: 'new',
+        title: 'Child concept',
+        parentIdeaId: idea.id,
+      });
+      const refreshed = await service.getItem('w1', idea.id);
+      expect(refreshed.status).toBe('used');
+    });
+
+    it('flips a `new` parent concept to `used` when a post is created under it', async () => {
+      const concept = await service.createItem('w1', {
+        stage: 'concept',
+        status: 'new',
+        title: 'Parent concept',
+      });
+      await service.createItem('w1', {
+        stage: 'post',
+        status: 'in-progress',
+        title: 'Child post',
+        parentConceptId: concept.id,
+      });
+      const refreshed = await service.getItem('w1', concept.id);
+      expect(refreshed.status).toBe('used');
+    });
+
+    it('parent already `used` ⇒ no parent write (idempotent)', async () => {
+      const idea = await service.createItem('w1', {
+        stage: 'idea',
+        status: 'used',
+        title: 'Already used',
+      });
+      const replaceSpy = vi.spyOn(fs, 'replaceJsonFile');
+      await service.createItem('w1', {
+        stage: 'concept',
+        status: 'new',
+        title: 'Another concept',
+        parentIdeaId: idea.id,
+      });
+      // No call referenced the parent idea's file (only the new concept +
+      // the index).
+      const calls = replaceSpy.mock.calls
+        .map((c) => c[2] as string)
+        .filter((name) => name === `${idea.id}.json`);
+      expect(calls).toEqual([]);
+    });
+
+    it('rolls back the child file when the parent flip fails', async () => {
+      const idea = await service.createItem('w1', {
+        stage: 'idea',
+        status: 'new',
+        title: 'Boomer',
+      });
+      // Make the next parent-file write fail. Note that we let the child's
+      // create write succeed first.
+      let callCount = 0;
+      const original = fs.replaceJsonFile.bind(fs);
+      vi.spyOn(fs, 'replaceJsonFile').mockImplementation(
+        ((
+          tenant: string,
+          fileId: string,
+          filename: string,
+          content: unknown,
+        ) => {
+          callCount++;
+          if (filename === `${idea.id}.json`) {
+            throw new Error('forced parent flip failure');
+          }
+          return original(tenant, fileId, filename, content);
+        }) as typeof fs.replaceJsonFile,
+      );
+
+      await expect(
+        service.createItem('w1', {
+          stage: 'concept',
+          status: 'new',
+          title: 'Doomed concept',
+          parentIdeaId: idea.id,
+        }),
+      ).rejects.toThrow(ServiceUnavailableException);
+      void callCount;
+
+      // The child should NOT remain on disk after rollback.
+      const names = Object.values(fs.files).map((f) => f.filename);
+      expect(names.filter((n) => n.startsWith('c-') && n.endsWith('.json'))).toEqual([
+        `${idea.id}.json`,
+      ]);
+    });
+  });
+
+  describe('parent un-flip on delete (ticket #117)', () => {
+    it('flips parent concept back to `new` when the last child post is deleted', async () => {
+      const concept = await service.createItem('w1', {
+        stage: 'concept',
+        status: 'new',
+        title: 'Parent',
+      });
+      const post = await service.createItem('w1', {
+        stage: 'post',
+        status: 'in-progress',
+        title: 'Sole child',
+        parentConceptId: concept.id,
+      });
+      // Parent is now `used` (verified by previous suite).
+      await service.deleteItem('w1', post.id);
+      const refreshed = await service.getItem('w1', concept.id);
+      expect(refreshed.status).toBe('new');
+    });
+
+    it('leaves parent concept `used` when sibling posts remain', async () => {
+      const concept = await service.createItem('w1', {
+        stage: 'concept',
+        status: 'new',
+        title: 'Parent',
+      });
+      const postA = await service.createItem('w1', {
+        stage: 'post',
+        status: 'in-progress',
+        title: 'A',
+        parentConceptId: concept.id,
+      });
+      await service.createItem('w1', {
+        stage: 'post',
+        status: 'in-progress',
+        title: 'B',
+        parentConceptId: concept.id,
+      });
+      await service.deleteItem('w1', postA.id);
+      const refreshed = await service.getItem('w1', concept.id);
+      expect(refreshed.status).toBe('used');
+    });
+
+    it('flips parent idea back to `new` when the last child concept is deleted', async () => {
+      const idea = await service.createItem('w1', {
+        stage: 'idea',
+        status: 'new',
+        title: 'Parent',
+      });
+      const concept = await service.createItem('w1', {
+        stage: 'concept',
+        status: 'new',
+        title: 'Sole child',
+        parentIdeaId: idea.id,
+      });
+      await service.deleteItem('w1', concept.id);
+      const refreshed = await service.getItem('w1', idea.id);
+      expect(refreshed.status).toBe('new');
+    });
+
+    it('archived siblings still count — does not trigger un-flip', async () => {
+      const concept = await service.createItem('w1', {
+        stage: 'concept',
+        status: 'new',
+        title: 'Parent',
+      });
+      const postLive = await service.createItem('w1', {
+        stage: 'post',
+        status: 'in-progress',
+        title: 'Live',
+        parentConceptId: concept.id,
+      });
+      const postArchived = await service.createItem('w1', {
+        stage: 'post',
+        status: 'in-progress',
+        title: 'Archived',
+        parentConceptId: concept.id,
+      });
+      await service.archiveItem('w1', postArchived.id);
+      await service.deleteItem('w1', postLive.id);
+      // Archived post still in archive index — the un-flip must NOT fire.
+      const refreshed = await service.getItem('w1', concept.id);
+      expect(refreshed.status).toBe('used');
+    });
+  });
 });

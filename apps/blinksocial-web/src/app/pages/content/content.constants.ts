@@ -213,9 +213,9 @@ export const STAGE_CONFIG: Record<ContentStage, { label: string; colorClass: str
 };
 
 export const STATUS_CONFIG: Record<ContentStatus, { label: string }> = {
+  new: { label: 'New' },
+  used: { label: 'Used' },
   draft: { label: 'Draft' },
-  concepting: { label: 'Concepting' },
-  posting: { label: 'Posting' },
   'in-progress': { label: 'In Progress' },
   review: { label: 'In Review' },
   scheduled: { label: 'Scheduled' },
@@ -223,8 +223,8 @@ export const STATUS_CONFIG: Record<ContentStatus, { label: string }> = {
 };
 
 export const STATUSES_BY_STAGE: Record<ContentStage, ContentStatus[]> = {
-  idea: ['draft', 'concepting', 'posting'],
-  concept: ['draft', 'concepting', 'posting'],
+  idea: ['new', 'used'],
+  concept: ['new', 'used'],
   post: ['draft', 'in-progress', 'review', 'scheduled', 'published'],
 };
 
@@ -271,8 +271,9 @@ export const PIPELINE_COLUMNS: PipelineColumn[] = [
     id: 'ideas',
     label: 'Ideas',
     stage: 'idea',
-    // Any status — idea stays in this column across its lifecycle.
-    statuses: [],
+    // Only `new` ideas surface in the pipeline. Once an idea has spawned a
+    // concept it becomes `used` and is filtered out (see ticket #117).
+    statuses: ['new'],
     colorClass: 'column-ideas',
     iconColor: '#3b82f6',
     addType: 'idea',
@@ -287,8 +288,9 @@ export const PIPELINE_COLUMNS: PipelineColumn[] = [
     id: 'concepts',
     label: 'Concepts',
     stage: 'concept',
-    // Any status — concept stays in this column across its lifecycle.
-    statuses: [],
+    // Only `new` concepts surface in the pipeline. Once a concept has spawned
+    // a post it becomes `used` and is filtered out (see ticket #117).
+    statuses: ['new'],
     colorClass: 'column-concepts',
     iconColor: '#a855f7',
     addType: 'concept',

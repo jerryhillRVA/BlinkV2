@@ -26,7 +26,7 @@ function makeItem(partial: Partial<ContentItem> = {}): ContentItem {
   return {
     id: 'c-1',
     stage: 'idea',
-    status: 'draft',
+    status: 'new',
     title: 'Original title',
     description: 'Original description',
     pillarIds: [],
@@ -206,7 +206,7 @@ describe('IdeaDetailStore — advanceToConcept', () => {
   beforeEach(() => vi.useFakeTimers());
   afterEach(() => vi.useRealTimers());
 
-  it('without a selected option, creates a new concept linked to the idea via parentIdeaId; idea itself stays as idea and both items flip to concepting', () => {
+  it('without a selected option, creates a new concept linked to the idea via parentIdeaId; idea itself stays as idea and flips to `used` while the new concept is `new`', () => {
     const { store } = setup(makeItem());
     const save$ = store.advanceToConcept();
     expect(save$).not.toBeNull();
@@ -214,11 +214,12 @@ describe('IdeaDetailStore — advanceToConcept', () => {
     save$!.subscribe((saved) => (concept = saved));
     expect(concept).toBeDefined();
     expect(concept!.stage).toBe('concept');
-    expect(concept!.status).toBe('concepting');
+    expect(concept!.status).toBe('new');
     expect(concept!.parentIdeaId).toBe('c-1');
-    // the original idea remains an idea and moves to concepting in sync
+    // Parent idea stays an idea but is locally flipped to `used` so the
+    // pipeline reacts before the server's authoritative flip lands.
     expect(store.item()?.stage).toBe('idea');
-    expect(store.item()?.status).toBe('concepting');
+    expect(store.item()?.status).toBe('used');
   });
 
   it('with a selected option, new concept merges hook/description/cta/objective + targetPlatforms from the option', () => {
@@ -274,35 +275,11 @@ describe('IdeaDetailStore — defensive fallbacks', () => {
   });
 });
 
-describe('IdeaDetailStore — tags + status', () => {
+describe('IdeaDetailStore — tags', () => {
   it('setTags trims, filters blanks, and dedupes', () => {
     const { store } = setup(makeItem());
     store.setTags(['  one ', 'two', '', 'one']);
     expect(store.item()?.tags).toEqual(['one', 'two']);
-  });
-
-  it('setStatus syncs the idea + any linked concepts', () => {
-    const { store, state } = setup(makeItem());
-    // Seed a concept linked to the idea so we can observe propagation.
-    state.setItems([
-      state.items()[0],
-      {
-        id: 'c-concept',
-        stage: 'concept',
-        status: 'draft',
-        parentIdeaId: 'c-1',
-        title: 'Linked concept',
-        description: '',
-        pillarIds: [],
-        segmentIds: [],
-        createdAt: '2026-01-01T00:00:00Z',
-        updatedAt: '2026-01-01T00:00:00Z',
-      },
-    ]);
-    store.setStatus('concepting');
-    expect(store.item()?.status).toBe('concepting');
-    const concept = state.items().find((i) => i.id === 'c-concept');
-    expect(concept?.status).toBe('concepting');
   });
 });
 
@@ -313,7 +290,7 @@ describe('IdeaDetailStore — archive + duplicate', () => {
     expect(store.item()?.archived).toBe(true);
   });
 
-  it('duplicate creates a new draft idea with "(copy)" title', () => {
+  it('duplicate creates a new `new` idea with "(copy)" title', () => {
     const { store, state } = setup(makeItem());
     const before = state.items().length;
     const copy = store.duplicate();
@@ -321,7 +298,7 @@ describe('IdeaDetailStore — archive + duplicate', () => {
     expect(copy!.id).not.toBe('c-1');
     expect(copy!.title).toContain('(copy)');
     expect(copy!.stage).toBe('idea');
-    expect(copy!.status).toBe('draft');
+    expect(copy!.status).toBe('new');
     expect(copy!.archived).toBe(false);
     expect(state.items().length).toBe(before + 1);
   });

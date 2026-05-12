@@ -1,28 +1,54 @@
 {
   "id": "concept3",
   "stage": "concept",
-  "status": "posting",
+  "status": "used",
   "parentIdeaId": "idea3",
   "title": "Why Your Sleep Is Out of Sync (And the Fix)",
   "description": "Long-form YouTube explainer for women 40+ on why perimenopause disrupts sleep cycles and the stack of small changes that actually move the needle. Anchored in research, delivered as a story.",
-  "pillarIds": ["p1", "p4"],
-  "segmentIds": ["s5"],
-  "tags": ["sleep", "perimenopause", "long-form"],
+  "pillarIds": [
+    "p1",
+    "p4"
+  ],
+  "segmentIds": [
+    "s5"
+  ],
+  "tags": [
+    "sleep",
+    "perimenopause",
+    "long-form"
+  ],
   "owner": "user-sarah",
   "createdAt": "2026-03-25T10:00:00Z",
   "updatedAt": "2026-04-02T11:00:00Z",
   "targetPlatforms": [
-    { "platform": "youtube", "contentType": "long-form", "postId": null },
-    { "platform": "instagram", "contentType": "story", "postId": null }
+    {
+      "platform": "youtube",
+      "contentType": "long-form",
+      "postId": null
+    },
+    {
+      "platform": "instagram",
+      "contentType": "story",
+      "postId": null
+    }
   ],
   "hook": "Your sleep didn't break — your hormones did.",
   "objective": "education",
-  "cta": { "type": "subscribe", "text": "Subscribe for the full sleep series" },
+  "cta": {
+    "type": "subscribe",
+    "text": "Subscribe for the full sleep series"
+  },
   "keyMessage": "Sleep loss in your 40s is hormonal, not behavioral — and it's fixable",
   "angle": "Reframe sleep failure as biology, not willpower",
-  "formatNotes": ["chapters", "lower-thirds", "research-citations"],
+  "formatNotes": [
+    "chapters",
+    "lower-thirds",
+    "research-citations"
+  ],
   "claimsFlag": true,
-  "sourceLinks": ["https://example.com/perimenopause-sleep-research"],
+  "sourceLinks": [
+    "https://example.com/perimenopause-sleep-research"
+  ],
   "riskLevel": "medium",
   "platform": "youtube",
   "contentType": "long-form",

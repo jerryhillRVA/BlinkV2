@@ -42,11 +42,11 @@ describe('buildContentItem', () => {
     segmentIds: ['s1'],
   };
 
-  it('builds an Idea item with stage=idea and status=draft', () => {
+  it('builds an Idea item with stage=idea and status=new', () => {
     const payload: IdeaPayload = { kind: 'idea', ...basePayload };
     const item = buildContentItem(payload);
     expect(item.stage).toBe('idea');
-    expect(item.status).toBe('draft');
+    expect(item.status).toBe('new');
     expect(item.title).toBe('Title');
     expect(item.description).toBe('Description');
     expect(item.pillarIds).toEqual(['p1']);
@@ -55,7 +55,7 @@ describe('buildContentItem', () => {
     expect(item.createdAt).toEqual(item.updatedAt);
   });
 
-  it('builds a Concept item with stage=concept, status=draft, hook + objective', () => {
+  it('builds a Concept item with stage=concept, status=new, hook + objective', () => {
     const payload: ConceptPayload = {
       kind: 'concept',
       ...basePayload,
@@ -67,7 +67,7 @@ describe('buildContentItem', () => {
     };
     const item = buildContentItem(payload);
     expect(item.stage).toBe('concept');
-    expect(item.status).toBe('draft');
+    expect(item.status).toBe('new');
     expect(item.hook).toBe('a hook');
     expect(item.objective).toBe('engagement');
     expect(item.platform).toBe('instagram');

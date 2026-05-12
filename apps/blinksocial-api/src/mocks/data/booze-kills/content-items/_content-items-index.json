@@ -3,7 +3,7 @@
     {
       "id": "bk-idea1",
       "stage": "idea",
-      "status": "draft",
+      "status": "used",
       "title": "What Happens to Your Body After 30 Days Sober",
       "platform": null,
       "contentType": null,
@@ -25,7 +25,7 @@
     {
       "id": "bk-idea2",
       "stage": "idea",
-      "status": "draft",
+      "status": "new",
       "title": "5 Social Situations Without Alcohol",
       "platform": null,
       "contentType": null,
@@ -46,7 +46,7 @@
     {
       "id": "bk-idea3",
       "stage": "idea",
-      "status": "draft",
+      "status": "new",
       "title": "The Hidden Calories in Your Drinks",
       "platform": null,
       "contentType": null,
@@ -68,7 +68,7 @@
     {
       "id": "bk-concept1",
       "stage": "concept",
-      "status": "concepting",
+      "status": "used",
       "title": "Alcohol & Sleep: The Myth of the Nightcap",
       "platform": null,
       "contentType": null,
@@ -90,7 +90,7 @@
     {
       "id": "bk-concept2",
       "stage": "concept",
-      "status": "concepting",
+      "status": "used",
       "title": "Weekend Mocktail Series: Spring Edition",
       "platform": null,
       "contentType": null,
@@ -132,12 +132,17 @@
     {
       "id": "bk-idea4",
       "stage": "idea",
-      "status": "posting",
+      "status": "used",
       "title": "Sober Daily Life",
       "platform": null,
       "contentType": null,
-      "pillarIds": ["bk-p2", "bk-p3"],
-      "segmentIds": ["bk-s1"],
+      "pillarIds": [
+        "bk-p2",
+        "bk-p3"
+      ],
+      "segmentIds": [
+        "bk-s1"
+      ],
       "owner": null,
       "parentIdeaId": null,
       "parentConceptId": null,
@@ -149,12 +154,17 @@
     {
       "id": "bk-concept3",
       "stage": "concept",
-      "status": "posting",
+      "status": "used",
       "title": "Brain Recovery: Why Sobriety Feels Worse First",
       "platform": "youtube",
       "contentType": "long-form",
-      "pillarIds": ["bk-p1"],
-      "segmentIds": ["bk-s1", "bk-s3"],
+      "pillarIds": [
+        "bk-p1"
+      ],
+      "segmentIds": [
+        "bk-s1",
+        "bk-s3"
+      ],
       "owner": "user-mara",
       "parentIdeaId": "bk-idea1",
       "parentConceptId": null,
@@ -166,12 +176,17 @@
     {
       "id": "bk-concept4",
       "stage": "concept",
-      "status": "posting",
+      "status": "used",
       "title": "What Sober Looks Like",
       "platform": "instagram",
       "contentType": "feed-post",
-      "pillarIds": ["bk-p2", "bk-p3"],
-      "segmentIds": ["bk-s1"],
+      "pillarIds": [
+        "bk-p2",
+        "bk-p3"
+      ],
+      "segmentIds": [
+        "bk-s1"
+      ],
       "owner": "user-jordan",
       "parentIdeaId": "bk-idea4",
       "parentConceptId": null,
@@ -274,8 +289,12 @@
       "title": "Saturday morning at six months",
       "platform": "instagram",
       "contentType": "feed-post",
-      "pillarIds": ["bk-p3"],
-      "segmentIds": ["bk-s1"],
+      "pillarIds": [
+        "bk-p3"
+      ],
+      "segmentIds": [
+        "bk-s1"
+      ],
       "owner": "user-jordan",
       "parentIdeaId": null,
       "parentConceptId": "bk-concept4",
@@ -291,8 +310,13 @@
       "title": "The first work dinner without alcohol",
       "platform": "linkedin",
       "contentType": "ln-text-post",
-      "pillarIds": ["bk-p2"],
-      "segmentIds": ["bk-s1", "bk-s2"],
+      "pillarIds": [
+        "bk-p2"
+      ],
+      "segmentIds": [
+        "bk-s1",
+        "bk-s2"
+      ],
       "owner": "user-jordan",
       "parentIdeaId": null,
       "parentConceptId": "bk-concept4",
@@ -308,8 +332,12 @@
       "title": "Sober Bar Night Survival Frames",
       "platform": "instagram",
       "contentType": "story",
-      "pillarIds": ["bk-p2"],
-      "segmentIds": ["bk-s1"],
+      "pillarIds": [
+        "bk-p2"
+      ],
+      "segmentIds": [
+        "bk-s1"
+      ],
       "owner": "user-jordan",
       "parentIdeaId": null,
       "parentConceptId": "bk-concept4",

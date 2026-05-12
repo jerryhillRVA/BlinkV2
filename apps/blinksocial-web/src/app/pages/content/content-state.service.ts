@@ -145,11 +145,7 @@ export class ContentStateService {
     return {
       overview: all.length,
       strategy: 0,
-      production: all.filter(
-        (i) =>
-          i.status === 'in-progress' ||
-          (i.stage === 'concept' && i.status === 'concepting'),
-      ).length,
+      production: all.filter((i) => i.status === 'in-progress').length,
       review:
         all.filter((i) => i.status === 'review').length +
         all.filter((i) => i.status === 'scheduled').length,
@@ -226,85 +222,48 @@ export class ContentStateService {
 
   /**
    * In-memory migration that fixes idea/concept statuses based on existing
-   * lineage. Runs once after loadAll. Addresses pre-migration data where:
-   *   - Concepts still carry status 'draft' (should be 'concepting').
-   *   - Posts reference parent ideas/concepts that were never upgraded to
-   *     'posting' when the post was created.
-   *   - A post's parentConceptId may dangle (concept deleted during
-   *     moveToProduction) but parentIdeaId still resolves a real idea.
-   * Only mutates local signals — does not write to the backend. If the user
-   * subsequently edits status via the stepper, the normal sync path persists
-   * the reconciled values.
+   * lineage (ticket #117). The rule is single-line: an idea/concept is
+   * `'used'` iff it has at least one child item with the matching parent
+   * pointer, otherwise `'new'`. Runs once after loadAll and is idempotent.
+   *
+   * Also handles legacy data where ideas/concepts still carry the old
+   * `draft` / `concepting` / `posting` statuses by mapping them through
+   * the same rule. Only mutates local signals — the next user-driven save
+   * persists the reconciled value via the normal API path.
    */
   private reconcileLineageStatuses(): void {
     const entries = [...this.indexEntries(), ...this.archiveIndexEntries()];
     const cache = this.fullItemCacheSignal();
-    const byId = new Map<string, ContentItemsIndexEntryContract>(
-      entries.map((e) => [e.id, e]),
-    );
     const newStatus = new Map<string, ContentStatus>();
 
-    const resolveAnchorIdeaId = (
-      entry: ContentItemsIndexEntryContract,
-    ): string | null => {
-      if (entry.parentIdeaId) return entry.parentIdeaId;
-      if (entry.parentConceptId) {
-        const concept = byId.get(entry.parentConceptId);
-        return concept?.parentIdeaId ?? null;
-      }
-      return null;
-    };
-
-    // Pass 1: posts propagate 'posting' to anchor idea + every sibling concept.
+    // Count children per parent pointer (archived rows count — they still
+    // exist and may be unarchived; matches the backend create rule).
+    const childConceptsByIdea = new Map<string, number>();
+    const childPostsByConcept = new Map<string, number>();
     for (const entry of entries) {
-      if (entry.stage !== 'post') continue;
-      const anchorIdeaId = resolveAnchorIdeaId(entry);
-      if (!anchorIdeaId) continue;
-      const idea = byId.get(anchorIdeaId);
-      if (idea?.stage === 'idea' && idea.status !== 'posting') {
-        newStatus.set(idea.id, 'posting');
+      if (entry.stage === 'concept' && entry.parentIdeaId) {
+        childConceptsByIdea.set(
+          entry.parentIdeaId,
+          (childConceptsByIdea.get(entry.parentIdeaId) ?? 0) + 1,
+        );
       }
-      for (const sibling of entries) {
-        if (
-          sibling.stage === 'concept' &&
-          sibling.parentIdeaId === anchorIdeaId &&
-          sibling.status !== 'posting'
-        ) {
-          newStatus.set(sibling.id, 'posting');
-        }
+      if (entry.stage === 'post' && entry.parentConceptId) {
+        childPostsByConcept.set(
+          entry.parentConceptId,
+          (childPostsByConcept.get(entry.parentConceptId) ?? 0) + 1,
+        );
       }
     }
 
-    // Pass 2: concepts still on 'draft' roll up to 'concepting'; parent ideas
-    // with any child concept roll up to at least 'concepting' (not demoting
-    // anyone already scheduled for 'posting').
     for (const entry of entries) {
-      if (entry.stage !== 'concept') continue;
-      if (entry.status === 'draft' && newStatus.get(entry.id) !== 'posting') {
-        newStatus.set(entry.id, 'concepting');
-      }
-      if (entry.parentIdeaId) {
-        const idea = byId.get(entry.parentIdeaId);
-        if (
-          idea?.stage === 'idea' &&
-          idea.status === 'draft' &&
-          newStatus.get(idea.id) !== 'posting'
-        ) {
-          newStatus.set(idea.id, 'concepting');
-        }
-      }
-    }
-
-    // Pass 3: normalize legacy statuses on idea/concept items that don't fit
-    // the new lifecycle (draft/concepting/posting). Anything else on an idea
-    // or concept (e.g. 'in-progress' from before the split) becomes
-    // 'concepting' as a sensible default so the stepper renders correctly.
-    const newLifecycle: ContentStatus[] = ['draft', 'concepting', 'posting'];
-    for (const entry of entries) {
-      if (entry.stage !== 'idea' && entry.stage !== 'concept') continue;
-      if (newStatus.has(entry.id)) continue;
-      if (!newLifecycle.includes(entry.status)) {
-        newStatus.set(entry.id, 'concepting');
+      if (entry.stage === 'idea') {
+        const desired: ContentStatus =
+          (childConceptsByIdea.get(entry.id) ?? 0) > 0 ? 'used' : 'new';
+        if (entry.status !== desired) newStatus.set(entry.id, desired);
+      } else if (entry.stage === 'concept') {
+        const desired: ContentStatus =
+          (childPostsByConcept.get(entry.id) ?? 0) > 0 ? 'used' : 'new';
+        if (entry.status !== desired) newStatus.set(entry.id, desired);
       }
     }
 
@@ -462,6 +421,28 @@ export class ContentStateService {
         updatedAt: new Date().toISOString(),
       });
     }
+  }
+
+  /**
+   * Optimistic in-memory status update for a single item. The server-side
+   * create/delete handlers (`content-items.service.ts`) own the authoritative
+   * parent flip; this helper is what the frontend uses to reflect that flip
+   * locally before the next index reload (ticket #117). Persists the new
+   * status to indexes + full-item cache without firing an API request.
+   */
+  applyLocalStatus(id: string, status: ContentStatus): void {
+    const now = new Date().toISOString();
+    const patch = <T extends { id: string; status: ContentStatus; updatedAt: string }>(
+      row: T,
+    ): T => (row.id === id ? { ...row, status, updatedAt: now } : row);
+
+    this.indexEntries.update((rows) => rows.map(patch));
+    this.archiveIndexEntries.update((rows) => rows.map(patch));
+    this.fullItemCacheSignal.update((cache) => {
+      const existing = cache[id];
+      if (!existing) return cache;
+      return { ...cache, [id]: { ...existing, status, updatedAt: now } };
+    });
   }
 
   advanceStage(id: string): Observable<ContentItem> {

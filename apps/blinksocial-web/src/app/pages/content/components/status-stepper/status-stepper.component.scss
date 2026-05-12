@@ -37,6 +37,16 @@
   &:hover { border-color: var(--blink-brand-primary); }
 }
 
+.status-step-btn--readonly {
+  cursor: default;
+
+  &:hover { border-color: var(--blink-outline-variant); }
+}
+
+.status-stepper--readonly .status-step.is-current .status-step-btn:hover {
+  border-color: var(--blink-brand-primary);
+}
+
 .status-step-index {
   display: inline-flex;
   align-items: center;

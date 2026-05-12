@@ -13,7 +13,7 @@ import {
   pillarBorder as sharedPillarBorder,
   pillarText as sharedPillarText,
 } from '../_shared/pillar-style.utils';
-import type { ContentPillar, ContentStatus } from '../../content.types';
+import type { ContentPillar } from '../../content.types';
 import {
   CTA_TEXT_MAX_CHARS,
   DESCRIPTION_MAX_CHARS,
@@ -290,9 +290,5 @@ export class ConceptDetailComponent {
   protected onObjectiveClick(id: string): void {
     const current = this.store.item()?.objectiveId;
     this.store.setObjectiveId(current === id ? undefined : id);
-  }
-
-  protected onStatusChange(status: ContentStatus): void {
-    this.store.setStatus(status);
   }
 }

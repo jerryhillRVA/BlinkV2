@@ -10,7 +10,6 @@ import {
 import type {
   ContentItem,
   ContentObjective,
-  ContentStatus,
   ContentType,
   CtaType,
   Platform,
@@ -84,12 +83,6 @@ export class ConceptDetailStore {
 
   setObjective(v: ContentObjective | ''): void {
     this.persist({ objective: v === '' ? undefined : v });
-  }
-
-  setStatus(status: ContentStatus): void {
-    const item = this.item();
-    if (!item) return;
-    this.state.syncIdeaConceptStatus(item.id, status);
   }
 
   setObjectiveId(id: string | undefined): void {
@@ -218,10 +211,11 @@ export class ConceptDetailStore {
 
   readonly hasTargets = computed(() => (this.item()?.targetPlatforms?.length ?? 0) > 0);
 
-  /** Move to Production is only reachable from early statuses (D-24). */
+  /** Move to Production is only reachable while the concept is `new`
+   *  (D-24, ticket #117 — a `used` concept already has a child post). */
   readonly statusAllowsProduction = computed(() => {
     const status = this.item()?.status;
-    return status === 'draft' || status === 'concepting';
+    return status === 'new';
   });
 
   /** Human-readable list of missing fields, for the Move-to-Production tooltip (D-15, D-24). */
@@ -234,7 +228,7 @@ export class ConceptDetailStore {
     if (!this.hasObjective()) missing.push('Content goal');
     if (!this.hasTargets()) missing.push('Production target');
     if (!this.ctaValid()) missing.push('CTA text');
-    if (!this.statusAllowsProduction()) missing.push('Status must be Draft or Concepting');
+    if (!this.statusAllowsProduction()) missing.push('Status must be New');
     return missing;
   });
 
@@ -270,7 +264,9 @@ export class ConceptDetailStore {
   /**
    * Creates one `stage: 'post'` item per production target. The concept is
    * always kept so the lineage (idea → concept → posts) is preserved and the
-   * concept's status syncs to 'posting' alongside the parent idea.
+   * concept's status flips to `'used'` (ticket #117) alongside the parent
+   * idea, which is itself flipped server-side when its first concept is
+   * created.
    *
    * Returns the created post items (in target order). Returns [] if the
    * concept is missing, invalid, or has no targets.
@@ -325,10 +321,10 @@ export class ConceptDetailStore {
       ...t,
       postId: created[i]?.id ?? t.postId ?? null,
     }));
-    this.persist({ targetPlatforms: linked });
-    // Concept is always kept; propagate 'posting' up to the parent idea and
-    // across any sibling concepts so the full lineage reflects the new state.
-    this.state.syncIdeaConceptStatus(item.id, 'posting');
+    this.persist({ targetPlatforms: linked, status: 'used' });
+    // Server flips the parent concept inside its create handler; we mirror
+    // it locally so the pipeline reacts immediately. Parent idea stays
+    // `used` regardless (it already spawned this concept).
     this.moveDialogOpen.set(false);
     return created;
   }
@@ -349,11 +345,14 @@ export class ConceptDetailStore {
         );
     this.persist({
       stage: 'idea',
-      status: 'draft',
+      status: 'new',
       targetPlatforms: undefined,
     });
+    // Parent idea flips back to `new` only when the demoted concept was its
+    // last remaining child — symmetric with the server-side un-flip on
+    // delete (ticket #117).
     if (parentIdeaId && !hasSiblingConcept) {
-      this.state.syncIdeaConceptStatus(parentIdeaId, 'draft');
+      this.state.applyLocalStatus(parentIdeaId, 'new');
     }
   }
 
@@ -376,7 +375,7 @@ export class ConceptDetailStore {
       id: generateId('c'),
       title: `${item.title} (copy)`,
       stage: 'concept',
-      status: 'draft',
+      status: 'new',
       archived: false,
       createdAt: now,
       updatedAt: now,

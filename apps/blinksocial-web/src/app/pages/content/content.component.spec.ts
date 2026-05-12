@@ -255,7 +255,7 @@ describe('ContentComponent', () => {
       const item = mockStateService.saveItem.mock.calls[0][0];
       expect(item.title).toBe('My idea');
       expect(item.stage).toBe('idea');
-      expect(item.status).toBe('draft');
+      expect(item.status).toBe('new');
       expect(item.id).toMatch(/^c-/);
       expect(component.showCreate()).toBe(false);
     });
@@ -341,7 +341,7 @@ describe('ContentComponent', () => {
       expect(mockStateService.saveItem).toHaveBeenCalledTimes(1);
       const item = mockStateService.saveItem.mock.calls[0][0];
       expect(item.stage).toBe('idea');
-      expect(item.status).toBe('draft');
+      expect(item.status).toBe('new');
       expect(component.showCreate()).toBe(true); // modal stays open
     });
 

@@ -7,7 +7,7 @@ function makeItem(partial: Partial<ContentItem> = {}): ContentItem {
   return {
     id: 'c-1',
     stage: 'concept',
-    status: 'draft',
+    status: 'new',
     title: 'A shapeable concept',
     description: '',
     pillarIds: [],

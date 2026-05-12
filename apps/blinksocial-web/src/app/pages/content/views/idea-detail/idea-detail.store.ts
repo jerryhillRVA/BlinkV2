@@ -2,7 +2,7 @@ import { DestroyRef, Injectable, computed, inject, signal } from '@angular/core'
 import type { Observable } from 'rxjs';
 import { ContentStateService } from '../../content-state.service';
 import { AI_SIMULATION_DELAY_MS } from '../../content.constants';
-import type { ContentItem, ContentObjective, ContentStatus } from '../../content.types';
+import type { ContentItem, ContentObjective } from '../../content.types';
 import { generateId, safeTimeout, toggleArrayItem } from '../../content.utils';
 import { generateConceptOptions } from './idea-detail.ai';
 import type { ConceptOption } from './idea-detail.types';
@@ -89,12 +89,6 @@ export class IdeaDetailStore {
     this.persist({ sourceUrl: trimmed.length > 0 ? trimmed : undefined });
   }
 
-  setStatus(status: ContentStatus): void {
-    const item = this.item();
-    if (!item) return;
-    this.state.syncIdeaConceptStatus(item.id, status);
-  }
-
   setScheduledAt(iso: string | null): void {
     this.persist({ scheduledAt: iso ?? undefined });
   }
@@ -141,7 +135,7 @@ export class IdeaDetailStore {
       // server assigns the authoritative id and returns it in the response.
       id: generateId('c'),
       stage: 'concept',
-      status: 'concepting',
+      status: 'new',
       parentIdeaId: item.id,
       title: item.title,
       description: selected?.description ?? item.description,
@@ -168,8 +162,12 @@ export class IdeaDetailStore {
       concept.platform = firstTarget.platform;
       concept.contentType = firstTarget.contentType;
     }
-    // Parent idea moves to 'concepting' alongside the newly-created concept.
-    this.state.syncIdeaConceptStatus(item.id, 'concepting');
+    // Server flips the parent idea to `used` inside the create handler
+    // (see content-items.service.ts). The optimistic in-memory update happens
+    // when saveItem's response (which carries no parent payload) lands; we
+    // additionally flip the local idea here so the pipeline reflects the
+    // change before the next index reload.
+    this.state.applyLocalStatus(item.id, 'used');
     return this.state.saveItem(concept);
   }
 
@@ -186,7 +184,7 @@ export class IdeaDetailStore {
       id: generateId('c'),
       title: `${item.title} (copy)`,
       stage: 'idea',
-      status: 'draft',
+      status: 'new',
       archived: false,
       createdAt: now,
       updatedAt: now,

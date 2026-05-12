@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { Component, EventEmitter, Input, Output, computed, input } from '@angular/core';
 import { NgClass } from '@angular/common';
 import type { ContentStage, ContentStatus } from '../../content.types';
 import { STATUS_CONFIG, STATUSES_BY_STAGE } from '../../content.constants';
@@ -17,6 +17,7 @@ interface Step {
 export class StatusStepperComponent {
   @Input({ required: true }) value!: ContentStatus;
   @Input({ required: true }) stage!: ContentStage;
+  readonly interactive = input(true);
 
   @Output() statusChange = new EventEmitter<ContentStatus>();
 
@@ -38,7 +39,15 @@ export class StatusStepperComponent {
     return 'is-upcoming';
   }
 
+  // Used in read-only mode so screen readers announce the current value via a
+  // single aria-label on the host list (no interactive children).
+  protected readonly currentLabel = computed(() => {
+    const v = this.value;
+    return v ? (STATUS_CONFIG[v]?.label ?? v) : '';
+  });
+
   protected onPick(value: ContentStatus): void {
+    if (!this.interactive()) return;
     if (value === this.value) return;
     this.statusChange.emit(value);
   }

@@ -1,9 +1,9 @@
 {
   "id": "bk-concept1",
   "stage": "concept",
-  "status": "concepting",
+  "status": "used",
   "title": "Alcohol & Sleep: The Myth of the Nightcap",
-  "description": "Deep dive into how alcohol disrupts sleep cycles \u2014 REM suppression, fragmented architecture, rebound insomnia \u2014 and why the cultural \"nightcap\" idea is counterproductive. Built around a single sleep-study graph rendered in the brand's electric-blue palette.",
+  "description": "Deep dive into how alcohol disrupts sleep cycles — REM suppression, fragmented architecture, rebound insomnia — and why the cultural \"nightcap\" idea is counterproductive. Built around a single sleep-study graph rendered in the brand's electric-blue palette.",
   "pillarIds": [
     "bk-p1"
   ],

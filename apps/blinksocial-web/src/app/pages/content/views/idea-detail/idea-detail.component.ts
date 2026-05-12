@@ -14,7 +14,7 @@ import {
   pillarBorder as sharedPillarBorder,
   pillarText as sharedPillarText,
 } from '../_shared/pillar-style.utils';
-import type { ContentPillar, ContentStatus } from '../../content.types';
+import type { ContentPillar } from '../../content.types';
 
 @Component({
   selector: 'app-idea-detail',
@@ -140,9 +140,5 @@ export class IdeaDetailComponent {
   protected onObjectiveClick(id: string): void {
     const current = this.store.item()?.objectiveId;
     this.store.setObjectiveId(current === id ? undefined : id);
-  }
-
-  protected onStatusChange(status: ContentStatus): void {
-    this.store.setStatus(status);
   }
 }
