@@ -8,6 +8,7 @@ import type {
   PublishingModeContract,
 } from '@blinksocial/contracts';
 import { AiButtonComponent } from '../../draft-step/_shared/ai-button/ai-button.component';
+import { syncCaptionWithHashtags } from '../_shared/caption-hashtag.utils';
 import { AudioPickerComponent } from '../_shared/audio-picker/audio-picker.component';
 import { PaidBoostedFieldsComponent } from '../_shared/paid-boosted-fields/paid-boosted-fields.component';
 import { PkgHashtagBankComponent, type HashtagBankGroup } from '../_shared/pkg-hashtag-bank/pkg-hashtag-bank.component';
@@ -133,7 +134,10 @@ export class InstagramPackagingComponent {
       for (const tag of STUB_HASHTAGS) {
         if (!merged.includes(tag)) merged.push(tag);
       }
-      this.patch({ hashtags: merged });
+      // Route through onHashtagsChange so the caption stays in sync —
+      // AI-suggested tags are appended to the caption with the same
+      // dedupe / strip semantics as manual adds.
+      this.onHashtagsChange(merged);
       this.aiSuggestingHashtags.set(false);
     }, AI_DELAY_MS);
   }
@@ -159,7 +163,14 @@ export class InstagramPackagingComponent {
   }
 
   protected onHashtagsChange(tags: string[]): void {
-    this.patch({ hashtags: tags });
+    // Keep caption + hashtag chip array in sync: append newly-added
+    // tags to the caption (skipping duplicates), strip removed tags.
+    const nextCaption = syncCaptionWithHashtags(
+      this.caption(),
+      this.hashtags(),
+      tags,
+    );
+    this.patch({ hashtags: tags, caption: nextCaption });
   }
 
   protected onLinkInput(e: Event): void {

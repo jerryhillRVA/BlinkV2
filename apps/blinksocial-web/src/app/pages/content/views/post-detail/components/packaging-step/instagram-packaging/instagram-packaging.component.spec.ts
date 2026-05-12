@@ -96,11 +96,35 @@ describe('InstagramPackagingComponent', () => {
     });
     fixture.componentInstance['onControlsChange']({ visibility: 'private' });
     expect(emitted.length).toBe(6);
-    expect(emitted[0]).toEqual({ caption: 'pre', hashtags: ['#a'] });
+    // onHashtagsChange now syncs the caption: adding #a to caption 'pre'
+    // appends it (no duplicate already-in-caption). Other handlers
+    // preserve the caption verbatim.
+    expect(emitted[0]).toEqual({ caption: 'pre #a', hashtags: ['#a'] });
     expect(emitted[1]).toEqual({ caption: 'pre', link: 'https://x' });
     expect(emitted[2]).toEqual({ caption: 'pre', utm: { source: 's' } });
     expect(emitted[3]).toEqual({ caption: 'pre', slideOrder: { order: [1, 0] } });
     expect(emitted[5]).toEqual({ caption: 'pre', platformControls: { visibility: 'private' } });
+  });
+
+  it('adding a hashtag appends it to the caption with no duplicates', () => {
+    const fixture = setup({ value: { caption: 'Already #wellness here', hashtags: [] } });
+    const emitted: PackagingInstagramContract[] = [];
+    fixture.componentInstance.valueChange.subscribe((v) => emitted.push(v));
+    fixture.componentInstance['onHashtagsChange'](['#wellness', '#mobility']);
+    // #wellness was already in caption — not re-appended; #mobility is new.
+    expect(emitted[0]?.caption).toBe('Already #wellness here #mobility');
+    expect(emitted[0]?.hashtags).toEqual(['#wellness', '#mobility']);
+  });
+
+  it('removing a hashtag strips it (with leading whitespace) from the caption', () => {
+    const fixture = setup({
+      value: { caption: 'Try this #wellness today', hashtags: ['#wellness'] },
+    });
+    const emitted: PackagingInstagramContract[] = [];
+    fixture.componentInstance.valueChange.subscribe((v) => emitted.push(v));
+    fixture.componentInstance['onHashtagsChange']([]);
+    expect(emitted[0]?.caption).toBe('Try this today');
+    expect(emitted[0]?.hashtags).toEqual([]);
   });
 
   it('caption marks fail class at or above the cap', () => {
