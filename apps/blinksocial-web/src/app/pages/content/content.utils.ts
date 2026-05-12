@@ -50,14 +50,14 @@ type BaseItemFields = Pick<
 >;
 
 function buildIdea(base: BaseItemFields, _payload: IdeaPayload): ContentItem {
-  return { ...base, stage: 'idea', status: 'draft' };
+  return { ...base, stage: 'idea', status: 'new' };
 }
 
 function buildConcept(base: BaseItemFields, payload: ConceptPayload): ContentItem {
   return {
     ...base,
     stage: 'concept',
-    status: 'draft',
+    status: 'new',
     hook: payload.hook.trim(),
     objective: payload.objective,
     ...(payload.platform ? { platform: payload.platform } : {}),

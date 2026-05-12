@@ -688,75 +688,16 @@ describe('ContentStateService', () => {
   });
 
   describe('reconcileLineageStatuses (runs automatically after loadAll)', () => {
-    it('promotes parent idea and sibling concepts to posting when a child post exists', () => {
+    it('marks an idea with any child concept as used', () => {
       itemsApi.getIndex.mockReturnValue(
         of({
           items: [
-            indexRow({ id: 'i-1', stage: 'idea', status: 'draft' }),
+            indexRow({ id: 'i-1', stage: 'idea', status: 'new' }),
             indexRow({
               id: 'c-1',
               stage: 'concept',
-              status: 'draft',
+              status: 'new',
               parentIdeaId: 'i-1',
-            }),
-            indexRow({
-              id: 'p-1',
-              stage: 'post',
-              status: 'in-progress',
-              parentConceptId: 'c-1',
-              parentIdeaId: 'i-1',
-            }),
-          ],
-          totalCount: 3,
-          lastUpdated: '',
-        }),
-      );
-      service.loadAll('ws-1');
-      expect(service.items().find((i) => i.id === 'i-1')?.status).toBe('posting');
-      expect(service.items().find((i) => i.id === 'c-1')?.status).toBe('posting');
-      expect(service.items().find((i) => i.id === 'p-1')?.status).toBe('in-progress');
-    });
-
-    it('resolves anchor idea via dangling parentConceptId when the concept is missing', () => {
-      itemsApi.getIndex.mockReturnValue(
-        of({
-          items: [
-            indexRow({ id: 'i-1', stage: 'idea', status: 'draft' }),
-            indexRow({
-              id: 'c-keep',
-              stage: 'concept',
-              status: 'draft',
-              parentIdeaId: 'i-1',
-            }),
-            // Post with a dangling parentConceptId ('c-gone') — its
-            // parentIdeaId still resolves to idea i-1.
-            indexRow({
-              id: 'p-orphan',
-              stage: 'post',
-              status: 'in-progress',
-              parentConceptId: 'c-gone',
-              parentIdeaId: 'i-1',
-            }),
-          ],
-          totalCount: 3,
-          lastUpdated: '',
-        }),
-      );
-      service.loadAll('ws-1');
-      expect(service.items().find((i) => i.id === 'i-1')?.status).toBe('posting');
-      expect(service.items().find((i) => i.id === 'c-keep')?.status).toBe('posting');
-    });
-
-    it('bumps drafted concepts and their parent ideas to concepting when no post exists', () => {
-      itemsApi.getIndex.mockReturnValue(
-        of({
-          items: [
-            indexRow({ id: 'i-2', stage: 'idea', status: 'draft' }),
-            indexRow({
-              id: 'c-2',
-              stage: 'concept',
-              status: 'draft',
-              parentIdeaId: 'i-2',
             }),
           ],
           totalCount: 2,
@@ -764,26 +705,76 @@ describe('ContentStateService', () => {
         }),
       );
       service.loadAll('ws-1');
-      expect(service.items().find((i) => i.id === 'i-2')?.status).toBe('concepting');
-      expect(service.items().find((i) => i.id === 'c-2')?.status).toBe('concepting');
+      expect(service.items().find((i) => i.id === 'i-1')?.status).toBe('used');
+      expect(service.items().find((i) => i.id === 'c-1')?.status).toBe('new');
     });
 
-    it('leaves standalone drafted ideas alone', () => {
+    it('marks a concept with any child post as used', () => {
       itemsApi.getIndex.mockReturnValue(
         of({
           items: [
-            indexRow({ id: 'i-lone', stage: 'idea', status: 'draft' }),
+            indexRow({ id: 'c-1', stage: 'concept', status: 'new' }),
+            indexRow({
+              id: 'p-1',
+              stage: 'post',
+              status: 'in-progress',
+              parentConceptId: 'c-1',
+            }),
+          ],
+          totalCount: 2,
+          lastUpdated: '',
+        }),
+      );
+      service.loadAll('ws-1');
+      expect(service.items().find((i) => i.id === 'c-1')?.status).toBe('used');
+      expect(service.items().find((i) => i.id === 'p-1')?.status).toBe('in-progress');
+    });
+
+    it('flips a `used` idea back to `new` when it has zero child concepts (inverse pass)', () => {
+      itemsApi.getIndex.mockReturnValue(
+        of({
+          items: [
+            // Stale `used` idea with no live or archived concept children.
+            indexRow({ id: 'i-stale', stage: 'idea', status: 'used' }),
           ],
           totalCount: 1,
           lastUpdated: '',
         }),
       );
       service.loadAll('ws-1');
-      expect(service.items().find((i) => i.id === 'i-lone')?.status).toBe('draft');
+      expect(service.items().find((i) => i.id === 'i-stale')?.status).toBe('new');
+    });
+
+    it('flips a `used` concept back to `new` when it has zero child posts', () => {
+      itemsApi.getIndex.mockReturnValue(
+        of({
+          items: [
+            indexRow({ id: 'c-stale', stage: 'concept', status: 'used' }),
+          ],
+          totalCount: 1,
+          lastUpdated: '',
+        }),
+      );
+      service.loadAll('ws-1');
+      expect(service.items().find((i) => i.id === 'c-stale')?.status).toBe('new');
+    });
+
+    it('leaves standalone `new` ideas alone (idempotent)', () => {
+      itemsApi.getIndex.mockReturnValue(
+        of({
+          items: [
+            indexRow({ id: 'i-lone', stage: 'idea', status: 'new' }),
+          ],
+          totalCount: 1,
+          lastUpdated: '',
+        }),
+      );
+      service.loadAll('ws-1');
+      expect(service.items().find((i) => i.id === 'i-lone')?.status).toBe('new');
     });
   });
 
-  describe('syncIdeaConceptStatus', () => {
+  describe('syncIdeaConceptStatus (kept for legacy callers + reconciler symmetry)', () => {
     beforeEach(() => {
       itemsApi.updateItem.mockImplementation(
         (_wid: string, id: string, patch: Partial<ContentItemContract>) =>
@@ -792,58 +783,58 @@ describe('ContentStateService', () => {
       service.loadAll('ws-1');
     });
 
-    it('promotes idea + every linked concept when called from a concept', () => {
+    it('propagates `used` across idea + linked concepts when called from a concept', () => {
       service.setItems([
-        fullItem({ id: 'i-1', stage: 'idea', status: 'draft' }),
+        fullItem({ id: 'i-1', stage: 'idea', status: 'new' }),
         fullItem({
           id: 'c-1',
           stage: 'concept',
-          status: 'draft',
+          status: 'new',
           parentIdeaId: 'i-1',
         }),
         fullItem({
           id: 'c-2',
           stage: 'concept',
-          status: 'draft',
+          status: 'new',
           parentIdeaId: 'i-1',
         }),
       ]);
-      service.syncIdeaConceptStatus('c-1', 'concepting');
-      expect(service.items().find((i) => i.id === 'i-1')?.status).toBe('concepting');
-      expect(service.items().find((i) => i.id === 'c-1')?.status).toBe('concepting');
-      expect(service.items().find((i) => i.id === 'c-2')?.status).toBe('concepting');
+      service.syncIdeaConceptStatus('c-1', 'used');
+      expect(service.items().find((i) => i.id === 'i-1')?.status).toBe('used');
+      expect(service.items().find((i) => i.id === 'c-1')?.status).toBe('used');
+      expect(service.items().find((i) => i.id === 'c-2')?.status).toBe('used');
     });
 
     it('does not touch items already at the target status (no-op writes)', () => {
       service.setItems([
-        fullItem({ id: 'i-1', stage: 'idea', status: 'concepting' }),
+        fullItem({ id: 'i-1', stage: 'idea', status: 'used' }),
         fullItem({
           id: 'c-1',
           stage: 'concept',
-          status: 'concepting',
+          status: 'used',
           parentIdeaId: 'i-1',
         }),
       ]);
       itemsApi.updateItem.mockClear();
-      service.syncIdeaConceptStatus('i-1', 'concepting');
+      service.syncIdeaConceptStatus('i-1', 'used');
       expect(itemsApi.updateItem).not.toHaveBeenCalled();
     });
 
     it('orphan concept (no parentIdeaId) updates only itself', () => {
       service.setItems([
-        fullItem({ id: 'c-orphan', stage: 'concept', status: 'draft' }),
+        fullItem({ id: 'c-orphan', stage: 'concept', status: 'new' }),
       ]);
-      service.syncIdeaConceptStatus('c-orphan', 'concepting');
-      expect(service.items().find((i) => i.id === 'c-orphan')?.status).toBe('concepting');
+      service.syncIdeaConceptStatus('c-orphan', 'used');
+      expect(service.items().find((i) => i.id === 'c-orphan')?.status).toBe('used');
     });
 
     it('never touches posts (post status is terminal)', () => {
       service.setItems([
-        fullItem({ id: 'i-1', stage: 'idea', status: 'draft' }),
+        fullItem({ id: 'i-1', stage: 'idea', status: 'new' }),
         fullItem({
           id: 'c-1',
           stage: 'concept',
-          status: 'draft',
+          status: 'new',
           parentIdeaId: 'i-1',
         }),
         fullItem({
@@ -854,8 +845,28 @@ describe('ContentStateService', () => {
           parentConceptId: 'c-1',
         }),
       ]);
-      service.syncIdeaConceptStatus('c-1', 'posting');
+      service.syncIdeaConceptStatus('c-1', 'used');
       expect(service.items().find((i) => i.id === 'p-1')?.status).toBe('in-progress');
+    });
+  });
+
+  describe('applyLocalStatus', () => {
+    beforeEach(() => {
+      itemsApi.updateItem.mockImplementation(
+        (_wid: string, id: string, patch: Partial<ContentItemContract>) =>
+          of({ id, ...patch, updatedAt: '2026-05-01T00:00:00Z' }),
+      );
+      service.loadAll('ws-1');
+    });
+
+    it('flips a single item in the index without firing an API write', () => {
+      itemsApi.updateItem.mockClear();
+      service.setItems([
+        fullItem({ id: 'i-1', stage: 'idea', status: 'new' }),
+      ]);
+      service.applyLocalStatus('i-1', 'used');
+      expect(service.items().find((i) => i.id === 'i-1')?.status).toBe('used');
+      expect(itemsApi.updateItem).not.toHaveBeenCalled();
     });
   });
 });

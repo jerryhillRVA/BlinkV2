@@ -1,12 +1,21 @@
 {
   "id": "bk-idea4",
   "stage": "idea",
-  "status": "posting",
+  "status": "used",
   "title": "Sober Daily Life",
   "description": "First-person, low-drama reflections on what sobriety actually feels like day-to-day — the stuff that doesn't make the testimonial reels. Targets people who quit drinking but still feel ambivalent about it.",
-  "pillarIds": ["bk-p2", "bk-p3"],
-  "segmentIds": ["bk-s1"],
-  "tags": ["sober-life", "honest", "first-person"],
+  "pillarIds": [
+    "bk-p2",
+    "bk-p3"
+  ],
+  "segmentIds": [
+    "bk-s1"
+  ],
+  "tags": [
+    "sober-life",
+    "honest",
+    "first-person"
+  ],
   "createdAt": "2026-04-15T09:00:00Z",
   "updatedAt": "2026-04-15T09:00:00Z"
 }

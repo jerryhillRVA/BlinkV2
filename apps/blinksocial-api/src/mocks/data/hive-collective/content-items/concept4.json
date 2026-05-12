@@ -1,26 +1,48 @@
 {
   "id": "concept4",
   "stage": "concept",
-  "status": "posting",
+  "status": "used",
   "parentIdeaId": "idea1",
   "title": "Member Spotlights: Three Months In",
   "description": "Recurring social-proof series highlighting Hive members at the 3-month mark. Builds community-trust signal without sounding like testimonial fluff. Photo-led on IG, reflection-led on LinkedIn.",
-  "pillarIds": ["p3"],
-  "segmentIds": ["s4"],
-  "tags": ["social-proof", "community", "member-stories"],
+  "pillarIds": [
+    "p3"
+  ],
+  "segmentIds": [
+    "s4"
+  ],
+  "tags": [
+    "social-proof",
+    "community",
+    "member-stories"
+  ],
   "owner": "user-brett",
   "createdAt": "2026-04-10T10:00:00Z",
   "updatedAt": "2026-04-15T09:00:00Z",
   "targetPlatforms": [
-    { "platform": "instagram", "contentType": "feed-post", "postId": null },
-    { "platform": "linkedin", "contentType": "ln-text-post", "postId": null }
+    {
+      "platform": "instagram",
+      "contentType": "feed-post",
+      "postId": null
+    },
+    {
+      "platform": "linkedin",
+      "contentType": "ln-text-post",
+      "postId": null
+    }
   ],
   "hook": "Three months in — here's what changed first.",
   "objective": "community",
-  "cta": { "type": "other", "text": "Read the full story in comments" },
+  "cta": {
+    "type": "other",
+    "text": "Read the full story in comments"
+  },
   "keyMessage": "Real members, real progress — without the before/after gimmickry",
   "angle": "Lead with what surprised them, not what changed visually",
-  "formatNotes": ["natural-light", "candid"],
+  "formatNotes": [
+    "natural-light",
+    "candid"
+  ],
   "claimsFlag": false,
   "riskLevel": "low",
   "platform": "instagram",

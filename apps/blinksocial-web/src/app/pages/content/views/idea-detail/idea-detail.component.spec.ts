@@ -434,13 +434,12 @@ describe('IdeaDetailComponent — business-objective + status handlers', () => {
     expect(store.item()?.objectiveId).toBeUndefined();
   });
 
-  it('onStatusChange persists the new status', () => {
-    const { fixture, store } = setup();
-    const comp = fixture.componentInstance as unknown as {
-      onStatusChange: (s: 'in-progress') => void;
-    };
-    comp.onStatusChange('in-progress');
-    expect(store.item()?.status).toBe('in-progress');
+  it('renders the status stepper in read-only mode (ticket #117)', () => {
+    const { fixture } = setup();
+    const btns = fixture.nativeElement.querySelectorAll(
+      '.status-stepper-wrap button',
+    );
+    expect(btns.length).toBe(0);
   });
 
   it('onAdvance emits the new concept id when advance succeeds', () => {

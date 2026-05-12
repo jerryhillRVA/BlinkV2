@@ -1,12 +1,21 @@
 {
   "id": "bk-idea3",
   "stage": "idea",
-  "status": "draft",
+  "status": "new",
   "title": "The Hidden Calories in Your Drinks",
   "description": "Visual breakdown of caloric content in popular alcoholic beverages, with peer comparisons (e.g. one IPA = two slices of pizza in liquid calories).",
-  "pillarIds": ["bk-p1", "bk-p4"],
-  "segmentIds": ["bk-s3"],
-  "tags": ["calories", "health-impact", "visual-explainer"],
+  "pillarIds": [
+    "bk-p1",
+    "bk-p4"
+  ],
+  "segmentIds": [
+    "bk-s3"
+  ],
+  "tags": [
+    "calories",
+    "health-impact",
+    "visual-explainer"
+  ],
   "createdAt": "2026-03-03T08:00:00Z",
   "updatedAt": "2026-03-03T08:00:00Z"
 }

@@ -43,7 +43,7 @@ const NOW = '2026-04-01T09:00:00Z';
 const IDEA_ENTRY = {
   id: 'idea1',
   stage: 'idea',
-  status: 'draft',
+  status: 'new',
   title: 'Morning Yoga Flow',
   platform: null,
   contentType: null,
@@ -64,7 +64,7 @@ const IDEA_ENTRY = {
 const CONCEPT_ENTRY = {
   id: 'concept1',
   stage: 'concept',
-  status: 'concepting',
+  status: 'new',
   title: 'Mindful Breathing 101',
   platform: null,
   contentType: null,

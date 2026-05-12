@@ -1,13 +1,17 @@
 export type ContentStageContract = 'idea' | 'concept' | 'post';
 
-export type ContentStatusContract =
+export type IdeaConceptStatusContract = 'new' | 'used';
+
+export type PostStatusContract =
   | 'draft'
-  | 'concepting'
-  | 'posting'
   | 'in-progress'
   | 'review'
   | 'scheduled'
   | 'published';
+
+export type ContentStatusContract =
+  | IdeaConceptStatusContract
+  | PostStatusContract;
 
 export type PlatformContract =
   | 'instagram'

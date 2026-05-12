@@ -24,7 +24,7 @@ function makeItem(partial: Partial<ContentItem> = {}): ContentItem {
   return {
     id: 'c-1',
     stage: 'concept',
-    status: 'draft',
+    status: 'new',
     title: 'Concept title',
     description: 'x'.repeat(80),
     pillarIds: ['p1', 'p2'],
@@ -565,10 +565,14 @@ describe('ConceptDetailComponent — new strategy + status handlers', () => {
     expect(store.item()?.objectiveId).toBeUndefined();
   });
 
-  it('onStatusChange persists status through the store', () => {
-    const { comp, store } = setupAs<{ onStatusChange: (s: 'review') => void }>();
-    comp.onStatusChange('review');
-    expect(store.item()?.status).toBe('review');
+  it('renders the status stepper in read-only mode (ticket #117)', () => {
+    const { fixture } = setup();
+    // No <button> elements inside the stepper — read-only stepper renders
+    // <div role="presentation">.
+    const btns = fixture.nativeElement.querySelectorAll(
+      '.status-stepper-wrap button',
+    );
+    expect(btns.length).toBe(0);
   });
 
   it('onArchive / onUnarchive emit the correct outputs', () => {

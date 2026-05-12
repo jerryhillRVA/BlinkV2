@@ -17,7 +17,7 @@ const FIXTURE_ITEMS: ContentItem[] = [
   {
     id: 'fx-1',
     stage: 'idea',
-    status: 'draft',
+    status: 'new',
     title: 'Morning Yoga Flow',
     description: 'A short yoga flow for the morning.',
     pillarIds: ['p1'],
@@ -30,7 +30,7 @@ const FIXTURE_ITEMS: ContentItem[] = [
   {
     id: 'fx-2',
     stage: 'concept',
-    status: 'concepting',
+    status: 'new',
     title: 'Mindful Breathing 101',
     description: 'Three breathing techniques for stress relief.',
     pillarIds: ['p2'],

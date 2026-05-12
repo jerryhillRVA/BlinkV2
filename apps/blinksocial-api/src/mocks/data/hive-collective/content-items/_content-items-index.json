@@ -3,7 +3,7 @@
     {
       "id": "idea1",
       "stage": "idea",
-      "status": "posting",
+      "status": "used",
       "title": "Chair Yoga Series for Office Workers",
       "platform": null,
       "contentType": null,
@@ -26,7 +26,7 @@
     {
       "id": "concept1",
       "stage": "concept",
-      "status": "posting",
+      "status": "used",
       "title": "5 Anti-Inflammatory Breakfast Ideas for Hormonal Balance",
       "platform": null,
       "contentType": null,
@@ -48,12 +48,17 @@
     {
       "id": "idea2",
       "stage": "idea",
-      "status": "posting",
+      "status": "used",
       "title": "Movement Snacks for Active 40s",
       "platform": null,
       "contentType": null,
-      "pillarIds": ["p1"],
-      "segmentIds": ["s4", "s2"],
+      "pillarIds": [
+        "p1"
+      ],
+      "segmentIds": [
+        "s4",
+        "s2"
+      ],
       "owner": null,
       "parentIdeaId": null,
       "parentConceptId": null,
@@ -65,12 +70,18 @@
     {
       "id": "idea3",
       "stage": "idea",
-      "status": "posting",
+      "status": "used",
       "title": "Sleep Reset for Hormonal Balance",
       "platform": null,
       "contentType": null,
-      "pillarIds": ["p1", "p4"],
-      "segmentIds": ["s5", "s1"],
+      "pillarIds": [
+        "p1",
+        "p4"
+      ],
+      "segmentIds": [
+        "s5",
+        "s1"
+      ],
       "owner": null,
       "parentIdeaId": null,
       "parentConceptId": null,
@@ -82,12 +93,16 @@
     {
       "id": "concept2",
       "stage": "concept",
-      "status": "posting",
+      "status": "used",
       "title": "60-Second Morning Mobility Flow",
       "platform": "instagram",
       "contentType": "reel",
-      "pillarIds": ["p1"],
-      "segmentIds": ["s4"],
+      "pillarIds": [
+        "p1"
+      ],
+      "segmentIds": [
+        "s4"
+      ],
       "owner": "user-brett",
       "parentIdeaId": "idea2",
       "parentConceptId": null,
@@ -99,12 +114,17 @@
     {
       "id": "concept3",
       "stage": "concept",
-      "status": "posting",
+      "status": "used",
       "title": "Why Your Sleep Is Out of Sync (And the Fix)",
       "platform": "youtube",
       "contentType": "long-form",
-      "pillarIds": ["p1", "p4"],
-      "segmentIds": ["s5"],
+      "pillarIds": [
+        "p1",
+        "p4"
+      ],
+      "segmentIds": [
+        "s5"
+      ],
       "owner": "user-sarah",
       "parentIdeaId": "idea3",
       "parentConceptId": null,
@@ -116,12 +136,16 @@
     {
       "id": "concept4",
       "stage": "concept",
-      "status": "posting",
+      "status": "used",
       "title": "Member Spotlights: Three Months In",
       "platform": "instagram",
       "contentType": "feed-post",
-      "pillarIds": ["p3"],
-      "segmentIds": ["s4"],
+      "pillarIds": [
+        "p3"
+      ],
+      "segmentIds": [
+        "s4"
+      ],
       "owner": "user-brett",
       "parentIdeaId": "idea1",
       "parentConceptId": null,
@@ -265,8 +289,12 @@
       "title": "What teaching yoga taught me about reading rooms",
       "platform": "linkedin",
       "contentType": "ln-text-post",
-      "pillarIds": ["p3"],
-      "segmentIds": ["s4"],
+      "pillarIds": [
+        "p3"
+      ],
+      "segmentIds": [
+        "s4"
+      ],
       "owner": "user-sarah",
       "parentIdeaId": null,
       "parentConceptId": "concept4",

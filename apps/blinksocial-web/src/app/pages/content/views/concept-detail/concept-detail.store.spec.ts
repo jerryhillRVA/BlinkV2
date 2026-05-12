@@ -25,7 +25,7 @@ function makeItem(partial: Partial<ContentItem> = {}): ContentItem {
   return {
     id: 'c-1',
     stage: 'concept',
-    status: 'draft',
+    status: 'new',
     title: 'Concept title',
     description: 'x'.repeat(80),
     pillarIds: ['p1', 'p2'],
@@ -277,10 +277,10 @@ describe('ConceptDetailStore — validation', () => {
     expect(store.canMoveToProduction()).toBe(false);
   });
 
-  it('D-24: status review blocks Move to Production with a clear missing-validation reason', () => {
+  it('post-stage status `review` blocks Move to Production with a clear missing-validation reason', () => {
     const { store } = setup(makeItem({ status: 'review' }));
     expect(store.canMoveToProduction()).toBe(false);
-    expect(store.missingValidations()).toContain('Status must be Draft or Concepting');
+    expect(store.missingValidations()).toContain('Status must be New');
   });
 
   it('D-24: status scheduled blocks Move to Production', () => {
@@ -293,12 +293,17 @@ describe('ConceptDetailStore — validation', () => {
     expect(store.canMoveToProduction()).toBe(false);
   });
 
-  it('D-24: status concepting keeps Move to Production available', () => {
-    const { store } = setup(makeItem({ status: 'concepting' }));
+  it('status `new` keeps Move to Production available', () => {
+    const { store } = setup(makeItem({ status: 'new' }));
     expect(store.canMoveToProduction()).toBe(true);
   });
 
-  it('D-24: status in-progress blocks Move to Production (not a concept status)', () => {
+  it('status `used` blocks Move to Production (already spawned a post)', () => {
+    const { store } = setup(makeItem({ status: 'used' }));
+    expect(store.canMoveToProduction()).toBe(false);
+  });
+
+  it('post status `in-progress` blocks Move to Production', () => {
     const { store } = setup(makeItem({ status: 'in-progress' }));
     expect(store.canMoveToProduction()).toBe(false);
   });
@@ -329,11 +334,11 @@ describe('ConceptDetailStore — moveToProduction', () => {
     expect(store.moveDialogOpen()).toBe(false);
   });
 
-  it('promotes the parent idea and the concept to posting when moving to production', () => {
+  it('flips the concept to `used` when moving to production; parent idea stays `used`', () => {
     const parentIdea: ContentItem = {
       id: 'i-1',
       stage: 'idea',
-      status: 'concepting',
+      status: 'used',
       title: 'Parent idea',
       description: '',
       pillarIds: [],
@@ -344,14 +349,14 @@ describe('ConceptDetailStore — moveToProduction', () => {
     const { store, state } = setup(
       makeItem({
         parentIdeaId: 'i-1',
-        status: 'concepting',
+        status: 'new',
         targetPlatforms: [{ platform: 'instagram', contentType: 'reel' }],
       }),
     );
     state.setItems([parentIdea, state.items().find((i) => i.id === 'c-1')!]);
     store.moveToProduction();
-    expect(state.items().find((i) => i.id === 'i-1')?.status).toBe('posting');
-    expect(state.items().find((i) => i.id === 'c-1')?.status).toBe('posting');
+    expect(state.items().find((i) => i.id === 'c-1')?.status).toBe('used');
+    expect(state.items().find((i) => i.id === 'i-1')?.status).toBe('used');
   });
 
   it('returns [] when canMoveToProduction is false', () => {
@@ -439,21 +444,21 @@ describe('ConceptDetailStore — lifecycle + helpers', () => {
     expect(store.moveDialogOpen()).toBe(false);
   });
 
-  it('demoteToIdea sets stage=idea + status=draft + clears targets', () => {
+  it('demoteToIdea sets stage=idea + status=new + clears targets', () => {
     const { store } = setup();
     store.demoteToIdea();
     expect(store.item()?.stage).toBe('idea');
-    expect(store.item()?.status).toBe('draft');
+    expect(store.item()?.status).toBe('new');
     expect(store.item()?.targetPlatforms).toBeUndefined();
   });
 
-  it('demoteToIdea resets the parent idea to draft when no sibling concepts remain', () => {
+  it('demoteToIdea flips the parent idea back to `new` when no sibling concepts remain', () => {
     const { store, state } = setup(makeItem({ parentIdeaId: 'i-1' }));
     state.setItems([
       {
         id: 'i-1',
         stage: 'idea',
-        status: 'concepting',
+        status: 'used',
         title: 'Parent idea',
         description: '',
         pillarIds: [],
@@ -465,16 +470,16 @@ describe('ConceptDetailStore — lifecycle + helpers', () => {
     ]);
     store.demoteToIdea();
     const idea = state.items().find((i) => i.id === 'i-1');
-    expect(idea?.status).toBe('draft');
+    expect(idea?.status).toBe('new');
   });
 
-  it('demoteToIdea leaves the parent idea alone when other sibling concepts still point at it', () => {
+  it('demoteToIdea leaves the parent idea `used` when other sibling concepts still point at it', () => {
     const { store, state } = setup(makeItem({ parentIdeaId: 'i-1' }));
     state.setItems([
       {
         id: 'i-1',
         stage: 'idea',
-        status: 'concepting',
+        status: 'used',
         title: 'Parent idea',
         description: '',
         pillarIds: [],
@@ -485,7 +490,7 @@ describe('ConceptDetailStore — lifecycle + helpers', () => {
       {
         id: 'c-sibling',
         stage: 'concept',
-        status: 'concepting',
+        status: 'new',
         parentIdeaId: 'i-1',
         title: 'Sibling concept',
         description: '',
@@ -498,7 +503,7 @@ describe('ConceptDetailStore — lifecycle + helpers', () => {
     ]);
     store.demoteToIdea();
     const idea = state.items().find((i) => i.id === 'i-1');
-    expect(idea?.status).toBe('concepting');
+    expect(idea?.status).toBe('used');
   });
 
   it('archive flips archived=true', () => {
@@ -517,7 +522,7 @@ describe('ConceptDetailStore — lifecycle + helpers', () => {
     expect(state.items().length).toBe(before - 1);
   });
 
-  it('duplicate creates a new concept-stage draft with "(copy)" title', () => {
+  it('duplicate creates a new concept-stage `new` item with "(copy)" title', () => {
     const { store, state } = setup();
     const before = state.items().length;
     const copy = store.duplicate();
@@ -525,7 +530,7 @@ describe('ConceptDetailStore — lifecycle + helpers', () => {
     expect(copy!.id).not.toBe('c-1');
     expect(copy!.title).toContain('(copy)');
     expect(copy!.stage).toBe('concept');
-    expect(copy!.status).toBe('draft');
+    expect(copy!.status).toBe('new');
     expect(state.items().length).toBe(before + 1);
   });
 
@@ -618,25 +623,6 @@ describe('ConceptDetailStore — strategy field setters (D-07)', () => {
     expect(store.item()?.targetPublishWindow).toBeUndefined();
     store.setTargetPublishWindow(undefined);
     expect(store.item()?.targetPublishWindow).toBeUndefined();
-  });
-
-  it('setStatus syncs the concept and its parent idea', () => {
-    const parentIdea: ContentItem = {
-      id: 'i-1',
-      stage: 'idea',
-      status: 'draft',
-      title: 'Parent idea',
-      description: '',
-      pillarIds: [],
-      segmentIds: [],
-      createdAt: '2026-01-01T00:00:00Z',
-      updatedAt: '2026-01-01T00:00:00Z',
-    };
-    const { store, state } = setup(makeItem({ parentIdeaId: 'i-1' }));
-    state.setItems([parentIdea, state.items().find((i) => i.id === 'c-1')!]);
-    store.setStatus('concepting');
-    expect(store.item()?.status).toBe('concepting');
-    expect(state.items().find((i) => i.id === 'i-1')?.status).toBe('concepting');
   });
 
   it('missingValidations surfaces each failing gate', () => {
