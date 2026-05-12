@@ -592,18 +592,33 @@ test.describe('Idea detail right column (#106)', () => {
     // Move cursor off the chip — :hover state would otherwise mask the
     // tinted border color in Firefox/WebKit.
     await page.mouse.move(0, 0);
-    // Wait for Angular to flush the inline-style pillar-color binding
-    // and for getComputedStyle to reflect the active-state color. Without
-    // this, parallel-run CD scheduling can race the assertion and leave
-    // the chip rendered with the default (unselected) text color.
+    // Wait for Angular to flush the inline-style pillar-color binding and
+    // for the 150ms background transition to fully settle. Without this,
+    // parallel-run CD scheduling can race the assertion and leave bg/
+    // border partway through their transition, producing intermediate
+    // computed values that don't match the pillar.color tolerance.
     await page.waitForFunction(() => {
       const el = document.querySelector(
         'app-idea-detail .chip-grid--pillar .chip',
       );
       if (!el) return false;
-      const m = getComputedStyle(el).color.match(/^rgba?\((\d+)/);
-      return m ? Math.abs(parseInt(m[1], 10) - 217) <= 10 : false;
-    }, null, { timeout: 2000 });
+      const cs = getComputedStyle(el);
+      const inRange = (raw: string, want: [number, number, number]) => {
+        const m = raw.match(/^rgba?\((\d+),\s*(\d+),\s*(\d+)/);
+        if (!m) return false;
+        return (
+          Math.abs(parseInt(m[1], 10) - want[0]) <= 20 &&
+          Math.abs(parseInt(m[2], 10) - want[1]) <= 20 &&
+          Math.abs(parseInt(m[3], 10) - want[2]) <= 20
+        );
+      };
+      const want: [number, number, number] = [217, 78, 51];
+      return (
+        inRange(cs.color, want) &&
+        inRange(cs.backgroundColor, want) &&
+        inRange(cs.borderTopColor, want)
+      );
+    }, null, { timeout: 3000 });
 
     const styles = await allChips.nth(0).evaluate((el) => {
       const cs = getComputedStyle(el);
