@@ -964,7 +964,43 @@ test.describe('Approve & Schedule (#124)', () => {
     await expect(page.locator('.approver-row')).toHaveAttribute('data-status', 'approved');
   });
 
-  test('TC-14: persistence round-trip — approval + publishConfig survive reload', async ({ page }) => {
+  test('TC-14: Post Preview expand state persists across Packaging ↔ Approve & Schedule', async ({ page }) => {
+    await openApprovedPostInQA(page, {
+      id: 'qa-preview-persist',
+      platform: 'instagram',
+      contentType: 'reel',
+    });
+    // Land on QA, jump back to Packaging via the steps bar.
+    await page.locator('app-production-steps-bar button', { hasText: 'Packaging' }).click();
+    await expect(page.locator('app-packaging-step')).toBeVisible();
+    // Expand the Post Preview from Packaging.
+    const previewHeader = page.locator('.brief-side app-post-preview-card .pp-header');
+    await expect(previewHeader).toBeVisible();
+    await expect(previewHeader).toHaveAttribute('aria-expanded', 'false');
+    await previewHeader.click();
+    await expect(previewHeader).toHaveAttribute('aria-expanded', 'true');
+    await expect(page.locator('.brief-side app-post-preview-card .pp-body')).toBeVisible();
+
+    // Switch to Approve & Schedule — preview must STAY expanded.
+    await page.locator('app-production-steps-bar button', { hasText: 'Approve & Schedule' }).click();
+    await expect(page.locator('app-approve-schedule-step')).toBeVisible();
+    await expect(page.locator('.brief-side app-post-preview-card .pp-header')).toHaveAttribute(
+      'aria-expanded',
+      'true',
+    );
+    await expect(page.locator('.brief-side app-post-preview-card .pp-body')).toBeVisible();
+
+    // Switch back to Packaging — still expanded.
+    await page.locator('app-production-steps-bar button', { hasText: 'Packaging' }).click();
+    await expect(page.locator('app-packaging-step')).toBeVisible();
+    await expect(page.locator('.brief-side app-post-preview-card .pp-header')).toHaveAttribute(
+      'aria-expanded',
+      'true',
+    );
+    await expect(page.locator('.brief-side app-post-preview-card .pp-body')).toBeVisible();
+  });
+
+  test('TC-15: persistence round-trip — approval + publishConfig survive reload', async ({ page }) => {
     await openApprovedPostInQA(page, {
       id: 'qa-reload',
       platform: 'instagram',

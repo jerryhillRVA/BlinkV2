@@ -159,6 +159,41 @@ describe('PostDetailComponent — composition', () => {
     expect(fixture.nativeElement.querySelector('.brief-side app-content-journey')).not.toBeNull();
     expect(fixture.nativeElement.querySelector('.brief-side .timestamps-panel')).not.toBeNull();
   });
+
+  it('Post Preview expanded state persists across Packaging ↔ Approve & Schedule', () => {
+    const { fixture } = setup();
+    const store = (fixture.componentInstance as unknown as { store: PostDetailStore }).store;
+    // Land on Packaging, expand the preview.
+    store.setActiveStep('packaging');
+    fixture.detectChanges();
+    const headerOnPackaging = fixture.nativeElement.querySelector(
+      '.brief-side app-post-preview-card .pp-header',
+    ) as HTMLButtonElement;
+    expect(headerOnPackaging).not.toBeNull();
+    headerOnPackaging.click();
+    fixture.detectChanges();
+    expect(
+      fixture.nativeElement.querySelector('.brief-side app-post-preview-card .pp-body'),
+    ).not.toBeNull();
+
+    // Switch to Approve & Schedule — the preview should STILL be expanded.
+    store.setActiveStep('qa');
+    fixture.detectChanges();
+    expect(
+      fixture.nativeElement.querySelector('.brief-side app-post-preview-card .pp-body'),
+    ).not.toBeNull();
+    const headerOnQa = fixture.nativeElement.querySelector(
+      '.brief-side app-post-preview-card .pp-header',
+    ) as HTMLButtonElement;
+    expect(headerOnQa.getAttribute('aria-expanded')).toBe('true');
+
+    // Switch back to Packaging — still expanded.
+    store.setActiveStep('packaging');
+    fixture.detectChanges();
+    expect(
+      fixture.nativeElement.querySelector('.brief-side app-post-preview-card .pp-body'),
+    ).not.toBeNull();
+  });
 });
 
 describe('PostDetailComponent — actions', () => {
