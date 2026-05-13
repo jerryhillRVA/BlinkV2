@@ -1,0 +1,63 @@
+:host {
+  display: block;
+}
+
+.banner {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  border-radius: 8px;
+  border: 1px solid var(--blink-outline-variant);
+  background: var(--blink-surface-container-low);
+}
+
+.banner[data-state='approved'] {
+  border-color: var(--blink-status-success-border);
+  background: var(--blink-status-success-bg);
+}
+
+.banner[data-state='changes-requested'] {
+  border-color: var(--blink-status-warning-border);
+  background: var(--blink-status-warning-bg);
+}
+
+.banner-icon {
+  flex-shrink: 0;
+}
+
+.banner[data-state='approved'] .banner-icon {
+  color: var(--blink-status-success-text);
+}
+
+.banner[data-state='changes-requested'] .banner-icon {
+  color: var(--blink-status-warning-text);
+}
+
+.banner[data-state='pending'] .banner-icon {
+  color: var(--blink-on-surface-faint);
+}
+
+.banner-label {
+  font-size: var(--blink-body-medium);
+  font-weight: 600;
+  color: var(--blink-on-surface);
+}
+
+.banner[data-state='approved'] .banner-label {
+  color: var(--blink-status-success-text);
+}
+
+.banner[data-state='changes-requested'] .banner-label {
+  color: var(--blink-status-warning-text);
+}
+
+.banner[data-state='pending'] .banner-label {
+  color: var(--blink-on-surface-medium);
+}
+
+.banner-secondary {
+  font-size: var(--blink-body-small);
+  color: var(--blink-on-surface-faint);
+  margin-left: 2px;
+}

@@ -117,6 +117,7 @@
                 [caption]="previewCaption()"
                 [coverAsset]="previewCoverAsset()"
                 [audioTrackName]="previewAudioTrackName()"
+                [(expanded)]="previewExpanded"
               />
 
               <app-brief-content-concept
@@ -157,7 +158,56 @@
           </div>
         }
         @case ('qa') {
-          <app-step-placeholder label="Approve & Schedule" />
+          <div class="brief-grid">
+            <div class="brief-main">
+              <app-approve-schedule-step />
+            </div>
+            <aside class="brief-side">
+              <app-post-preview-card
+                [platform]="item.platform"
+                [contentType]="item.contentType"
+                [caption]="previewCaption()"
+                [coverAsset]="previewCoverAsset()"
+                [audioTrackName]="previewAudioTrackName()"
+                [(expanded)]="previewExpanded"
+              />
+
+              <app-brief-content-concept
+                [concept]="parentConcept()"
+                [pillars]="store.pillars()"
+                [segments]="store.segments()"
+                [objectives]="businessObjectives()"
+              />
+
+              <section class="panel panel-journey side-card">
+                <h3 class="side-card-title">Content Journey</h3>
+                <app-content-journey [stage]="item.stage" />
+              </section>
+
+              <section class="panel timestamps-panel side-card">
+                <div class="timestamp-row">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <circle cx="12" cy="12" r="10"/>
+                    <polyline points="12 6 12 12 16 14"/>
+                  </svg>
+                  <div class="timestamp-content">
+                    <span class="timestamp-label">Created</span>
+                    <span class="timestamp-value">{{ formatDate(item.createdAt) }}</span>
+                  </div>
+                </div>
+                <div class="timestamp-row">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <circle cx="12" cy="12" r="10"/>
+                    <polyline points="12 6 12 12 16 14"/>
+                  </svg>
+                  <div class="timestamp-content">
+                    <span class="timestamp-label">Last Updated</span>
+                    <span class="timestamp-value">{{ formatDate(item.updatedAt) }}</span>
+                  </div>
+                </div>
+              </section>
+            </aside>
+          </div>
         }
       }
     </div>

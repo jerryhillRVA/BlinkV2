@@ -1372,3 +1372,223 @@ describe('PostDetailStore — production.draft (#114)', () => {
     });
   });
 });
+
+// ── Approve & Schedule (#124) ────────────────────────────────────────
+describe('PostDetailStore — Approve & Schedule slot', () => {
+  function approvedItem(partial: Partial<ContentItem> = {}): ContentItem {
+    return makeItem({
+      briefApproved: true,
+      briefApprovedAt: new Date().toISOString(),
+      briefApprovedBy: 'You',
+      ...partial,
+    });
+  }
+
+  describe('default workflow + computeds', () => {
+    it('returns the default single-Brand-Reviewer workflow when no approvals persisted', () => {
+      const { store } = setup(approvedItem());
+      const approvals = store.approvals();
+      expect(approvals).toHaveLength(1);
+      expect(approvals[0]).toMatchObject({
+        role: 'brand-reviewer',
+        label: 'Brand Reviewer',
+        required: true,
+        status: 'pending',
+      });
+    });
+
+    it('returns persisted approvals when present, not the default', () => {
+      const { store } = setup(
+        approvedItem({
+          production: {
+            qa: {
+              approvals: [
+                {
+                  role: 'legal',
+                  label: 'Legal',
+                  required: false,
+                  status: 'approved',
+                },
+              ],
+            },
+          },
+        }),
+      );
+      const approvals = store.approvals();
+      expect(approvals).toHaveLength(1);
+      expect(approvals[0].role).toBe('legal');
+      expect(approvals[0].status).toBe('approved');
+    });
+
+    it('treats an empty persisted approvals array as "no approvals yet" and returns the default', () => {
+      const { store } = setup(
+        approvedItem({ production: { qa: { approvals: [] } } }),
+      );
+      expect(store.approvals()).toHaveLength(1);
+      expect(store.approvals()[0].role).toBe('brand-reviewer');
+    });
+
+    it('publishConfig defaults to Save Draft + Auto when not persisted', () => {
+      const { store } = setup(approvedItem());
+      expect(store.publishConfig()).toEqual({
+        publishAction: 'save-draft',
+        deliveryMethod: 'auto',
+      });
+    });
+
+    it('publishConfig returns persisted value when present', () => {
+      const { store } = setup(
+        approvedItem({
+          production: {
+            qa: {
+              publishConfig: {
+                publishAction: 'schedule',
+                scheduleAt: '2099-01-01T10:00',
+                deliveryMethod: 'manual',
+                notifyTeam: true,
+              },
+            },
+          },
+        }),
+      );
+      expect(store.publishConfig().publishAction).toBe('schedule');
+      expect(store.publishConfig().notifyTeam).toBe(true);
+    });
+
+    it('qaApproved is true when qa.approved is true on the item', () => {
+      const { store } = setup(
+        approvedItem({ production: { qa: { approved: true } } }),
+      );
+      expect(store.qaApproved()).toBe(true);
+    });
+
+    it('qaApproved is false when the qa slot is missing', () => {
+      const { store } = setup(approvedItem());
+      expect(store.qaApproved()).toBe(false);
+    });
+
+    it('canApproveAndPublish reflects pendingRequired + hasChangesRequested', () => {
+      const { store } = setup(approvedItem());
+      // Default: 1 required pending → can't approve.
+      expect(store.canApproveAndPublish()).toBe(false);
+      expect(store.pendingRequired()).toHaveLength(1);
+      expect(store.hasChangesRequested()).toBe(false);
+
+      // Approve the row.
+      store.setApprovalStatus('brand-reviewer', 'approved');
+      expect(store.canApproveAndPublish()).toBe(true);
+      expect(store.pendingRequired()).toHaveLength(0);
+
+      // Flip to changes-requested.
+      store.setApprovalStatus('brand-reviewer', 'changes-requested', 'note');
+      expect(store.canApproveAndPublish()).toBe(false);
+      expect(store.hasChangesRequested()).toBe(true);
+    });
+  });
+
+  describe('setApprovalStatus', () => {
+    it('updates the matching approver row, stamps a timestamp, and stores the note', () => {
+      const { store } = setup(approvedItem());
+      store.setApprovalStatus('brand-reviewer', 'changes-requested', '  Tighten hook  ');
+      const updated = store.approvals()[0];
+      expect(updated.status).toBe('changes-requested');
+      expect(updated.note).toBe('Tighten hook'); // trimmed
+      expect(updated.timestamp).toBeDefined();
+    });
+
+    it('clears the note when an empty/whitespace string is passed', () => {
+      const { store } = setup(approvedItem());
+      store.setApprovalStatus('brand-reviewer', 'changes-requested', 'note');
+      expect(store.approvals()[0].note).toBe('note');
+      store.setApprovalStatus('brand-reviewer', 'pending', '   ');
+      expect(store.approvals()[0].note).toBeUndefined();
+    });
+
+    it('is a no-op when brief is not approved (write-lock honored)', () => {
+      const { store } = setup(makeItem());
+      store.setApprovalStatus('brand-reviewer', 'approved');
+      expect(store.qa()).toBeUndefined();
+    });
+
+    it('does nothing when there is no item', () => {
+      const { store } = setup(approvedItem());
+      store.setItemId('missing');
+      store.setApprovalStatus('brand-reviewer', 'approved');
+      expect(store.qa()).toBeUndefined();
+    });
+
+    it('preserves untouched rows on multi-approver workflows', () => {
+      const { store } = setup(
+        approvedItem({
+          production: {
+            qa: {
+              approvals: [
+                { role: 'brand-reviewer', label: 'Brand Reviewer', required: true, status: 'pending' },
+                { role: 'legal', label: 'Legal', required: false, status: 'pending' },
+              ],
+            },
+          },
+        }),
+      );
+      store.setApprovalStatus('legal', 'approved');
+      expect(store.approvals()[0].status).toBe('pending');
+      expect(store.approvals()[1].status).toBe('approved');
+    });
+  });
+
+  describe('setPublishConfig', () => {
+    it('merges patch with existing publish config', () => {
+      const { store } = setup(approvedItem());
+      store.setPublishConfig({ publishAction: 'schedule' });
+      store.setPublishConfig({ notifyTeam: true });
+      expect(store.publishConfig().publishAction).toBe('schedule');
+      expect(store.publishConfig().notifyTeam).toBe(true);
+      expect(store.publishConfig().deliveryMethod).toBe('auto'); // preserved default
+    });
+
+    it('is a no-op when brief is not approved', () => {
+      const { store } = setup(makeItem());
+      store.setPublishConfig({ publishAction: 'schedule' });
+      expect(store.qa()).toBeUndefined();
+    });
+  });
+
+  describe('markApproved', () => {
+    it('sets approved/qaApprovedAt/qaApprovedBy on the qa slot', () => {
+      const { store } = setup(approvedItem());
+      store.markApproved('Brand Captain');
+      expect(store.qaApproved()).toBe(true);
+      expect(store.qa()?.qaApprovedAt).toBeDefined();
+      expect(store.qa()?.qaApprovedBy).toBe('Brand Captain');
+    });
+
+    it('defaults qaApprovedBy to "You"', () => {
+      const { store } = setup(approvedItem());
+      store.markApproved();
+      expect(store.qa()?.qaApprovedBy).toBe('You');
+    });
+
+    it('is a no-op when brief is not approved', () => {
+      const { store } = setup(makeItem());
+      store.markApproved();
+      expect(store.qaApproved()).toBe(false);
+    });
+  });
+
+  it('persistence round-trip: setApprovalStatus + setPublishConfig + markApproved survives reload', () => {
+    const { store, state } = setup(approvedItem());
+    store.setApprovalStatus('brand-reviewer', 'approved');
+    store.setPublishConfig({ publishAction: 'schedule', scheduleAt: '2099-01-01T10:00' });
+    store.markApproved();
+
+    // Simulate reload: rebuild a new store against the same persisted state.
+    const newStore = TestBed.inject(PostDetailStore);
+    newStore.setItemId('post-1');
+    // The state was mutated through state.saveItem; verify by re-reading items.
+    const saved = state.items().find((i) => i.id === 'post-1');
+    expect(saved?.production?.qa?.approvals?.[0].status).toBe('approved');
+    expect(saved?.production?.qa?.publishConfig?.publishAction).toBe('schedule');
+    expect(saved?.production?.qa?.publishConfig?.scheduleAt).toBe('2099-01-01T10:00');
+    expect(saved?.production?.qa?.approved).toBe(true);
+  });
+});

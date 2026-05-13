@@ -1,4 +1,4 @@
-import { Component, computed, input, signal } from '@angular/core';
+import { Component, computed, input, model, signal } from '@angular/core';
 import type { ContentTypeContract, PlatformContract } from '@blinksocial/contracts';
 
 /**
@@ -9,6 +9,12 @@ import type { ContentTypeContract, PlatformContract } from '@blinksocial/contrac
  * The card itself is collapsible (defaults to collapsed); expanding reveals
  * a small-scale visual of the post (header / media / caption for IG; the
  * 9/16 dark frame for TikTok).
+ *
+ * `expanded` is a `model()` so the parent can preserve the expand/collapse
+ * state across `@switch` transitions (e.g. Packaging ↔ Approve & Schedule)
+ * via two-way binding `[(expanded)]="parentSignal"`. The component is
+ * destroyed/re-created on step switch — without parent-owned state, the
+ * local signal would reset to collapsed every time.
  */
 @Component({
   selector: 'app-post-preview-card',
@@ -24,7 +30,7 @@ export class PostPreviewCardComponent {
   readonly slides = input<ReadonlyArray<string>>([]);
   readonly coverAsset = input<string | undefined>(undefined);
   readonly audioTrackName = input<string | undefined>(undefined);
-  protected readonly expanded = signal(false);
+  readonly expanded = model<boolean>(false);
   protected readonly slideIndex = signal(0);
 
   protected readonly visible = computed(

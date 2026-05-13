@@ -6,6 +6,7 @@ import {
   computed,
   effect,
   inject,
+  signal,
 } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ContentStateService } from '../../content-state.service';
@@ -18,7 +19,7 @@ import { DraftStepComponent } from './components/draft-step/draft-step.component
 import { PackagingStepComponent } from './components/packaging-step/packaging-step.component';
 import { PostPreviewCardComponent } from './components/post-preview-card.component';
 import { StepActionBarComponent } from './components/step-action-bar/step-action-bar.component';
-import { StepPlaceholderComponent } from './components/step-placeholder.component';
+import { ApproveScheduleStepComponent } from './components/approve-schedule-step/approve-schedule-step.component';
 import { DetailBackButtonComponent } from '../_shared/detail-back-button/detail-back-button.component';
 import { ContentJourneyComponent } from '../idea-detail/components/content-journey.component';
 import type { ContentItem } from '../../content.types';
@@ -35,7 +36,7 @@ import type { ContentItem } from '../../content.types';
     PostPreviewCardComponent,
     StepActionBarComponent,
     ContentJourneyComponent,
-    StepPlaceholderComponent,
+    ApproveScheduleStepComponent,
     DetailBackButtonComponent,
   ],
   providers: [PostDetailStore],
@@ -92,6 +93,15 @@ export class PostDetailComponent {
     if (platform === 'tiktok') return this.store.tiktokPackaging()?.audio?.trackName;
     return undefined;
   });
+
+  /**
+   * Expand/collapse state for `<app-post-preview-card>`. Lives on the
+   * parent so it survives the `@switch` transition between Packaging
+   * and Approve & Schedule — both render the card under their own
+   * `<aside class="brief-side">`, which @switch destroys + re-creates
+   * on every step change. Two-way bound via `[(expanded)]`.
+   */
+  protected readonly previewExpanded = signal(false);
 
   constructor() {
     // Hydrate the parent concept's full detail whenever it changes, so the

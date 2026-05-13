@@ -1,0 +1,35 @@
+<section
+  class="approve-schedule-step"
+  role="region"
+  aria-label="Approve and schedule"
+>
+  @if (briefApproved()) {
+    <app-approval-status-banner
+      [canApprove]="store.canApproveAndPublish()"
+      [hasChanges]="store.hasChangesRequested()"
+      [pendingCount]="store.pendingRequired().length"
+    />
+
+    <app-approval-workflow-card
+      [approvals]="store.approvals()"
+      [canApprove]="store.canApproveAndPublish()"
+      [hasChanges]="store.hasChangesRequested()"
+      [pendingCount]="store.pendingRequired().length"
+      (statusChange)="onStatusChange($event)"
+      (approveAndPublish)="onApproveAndPublish()"
+    />
+
+    <app-publish-config-block
+      [publishConfig]="store.publishConfig()"
+      [contentType]="contentType()"
+      [isVideoLong]="isVideoLong()"
+      [connectedAccounts]="connectedAccounts"
+      (configChange)="onPublishConfigChange($event)"
+    />
+  } @else {
+    <p class="locked-empty">
+      Approve the brief before scheduling — Approve &amp; Schedule unlocks
+      once the brief has been approved.
+    </p>
+  }
+</section>

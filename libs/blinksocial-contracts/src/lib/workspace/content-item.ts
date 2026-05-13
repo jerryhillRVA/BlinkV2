@@ -460,11 +460,61 @@ export interface ProductionPackagingContract {
   x?: PackagingXContract;
 }
 
+// ── Production QA / Approve & Schedule contracts (#124) ─────────────
+//
+// Persistence payload for the Approve & Schedule step. Lives alongside
+// brief/draft/packaging on ProductionContract. Approvals are an
+// ordered list of approver entries; each entry tracks its own status
+// and optional note. PublishConfig captures publish-action choice,
+// schedule datetime, visibility, and delivery preferences. All fields
+// are optional — sensible defaults are provided by the store computeds.
+
+export type ApprovalStatusContract = 'pending' | 'approved' | 'changes-requested';
+
+export interface ApprovalEntryContract {
+  role: string;
+  label: string;
+  required: boolean;
+  status: ApprovalStatusContract;
+  note?: string;
+  timestamp?: string;
+}
+
+export type PublishActionContract =
+  | 'save-draft'
+  | 'schedule'
+  | 'publish-now'
+  | 'export-packet';
+
+export type PublishVisibilityContract = 'public' | 'unlisted' | 'private';
+
+export type DeliveryMethodContract = 'auto' | 'manual';
+
+export interface PublishConfigContract {
+  publishAction?: PublishActionContract;
+  scheduleAt?: string;
+  visibility?: PublishVisibilityContract;
+  madeForKids?: boolean;
+  accountId?: string;
+  deliveryMethod?: DeliveryMethodContract;
+  notifyTeam?: boolean;
+  notifyFollowers?: boolean;
+}
+
+export interface ProductionQAContract {
+  approvals?: ApprovalEntryContract[];
+  approved?: boolean;
+  qaApprovedAt?: string;
+  qaApprovedBy?: string;
+  publishConfig?: PublishConfigContract;
+}
+
 export interface ProductionContract {
   productionStep?: ProductionStepContract;
   brief?: ProductionBriefContract;
   draft?: ProductionDraftContract;
   packaging?: ProductionPackagingContract;
+  qa?: ProductionQAContract;
   outputs?: Record<string, unknown>;
   sources?: ProductionSourceContract[];
   assets?: ProductionAssetContract[];
