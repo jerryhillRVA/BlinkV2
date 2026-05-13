@@ -302,8 +302,42 @@
       "archived": false,
       "createdAt": "2026-04-25T09:00:00Z",
       "updatedAt": "2026-05-02T14:00:00Z"
+    },
+    {
+      "id": "post8",
+      "stage": "post",
+      "status": "in-progress",
+      "title": "Wellness Wednesday: 3 micro-habits for desk warriors",
+      "platform": "facebook",
+      "contentType": "fb-feed-post",
+      "pillarIds": ["p1"],
+      "segmentIds": ["s4"],
+      "owner": "user-brett",
+      "parentIdeaId": null,
+      "parentConceptId": "concept2",
+      "scheduledDate": "2026-05-28",
+      "archived": false,
+      "createdAt": "2026-04-28T09:00:00Z",
+      "updatedAt": "2026-05-04T14:00:00Z"
+    },
+    {
+      "id": "post9",
+      "stage": "post",
+      "status": "in-progress",
+      "title": "The hardest part of training nervous system",
+      "platform": "x",
+      "contentType": "tweet",
+      "pillarIds": ["p2"],
+      "segmentIds": ["s5"],
+      "owner": "user-sarah",
+      "parentIdeaId": null,
+      "parentConceptId": "concept3",
+      "scheduledDate": "2026-05-30",
+      "archived": false,
+      "createdAt": "2026-04-30T09:00:00Z",
+      "updatedAt": "2026-05-04T14:30:00Z"
     }
   ],
-  "totalCount": 12,
-  "lastUpdated": "2026-05-10T00:00:00.000Z"
+  "totalCount": 14,
+  "lastUpdated": "2026-05-12T00:00:00.000Z"
 }

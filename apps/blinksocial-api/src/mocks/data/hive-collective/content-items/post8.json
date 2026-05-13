@@ -1,0 +1,66 @@
+{
+  "id": "post8",
+  "stage": "post",
+  "status": "in-progress",
+  "title": "Wellness Wednesday: 3 micro-habits for desk warriors",
+  "description": "Facebook feed post sharing three tiny daily habits that loosen up the chronic tension office workers carry. Friendly, conversational, slightly longer-form than IG.",
+  "pillarIds": ["p1"],
+  "segmentIds": ["s4"],
+  "tags": ["wellness", "facebook", "habits"],
+  "owner": "user-brett",
+  "hook": "Three desk-friendly habits that reset stiff shoulders in under 60 seconds.",
+  "objective": "engagement",
+  "platform": "facebook",
+  "contentType": "fb-feed-post",
+  "cta": { "type": "comment", "text": "Which one are you trying this week?" },
+  "keyMessage": "Small, consistent habits beat big infrequent sessions.",
+  "tonePreset": "friendly",
+  "claimsFlag": false,
+  "riskLevel": "low",
+  "scheduledDate": "2026-05-28",
+  "scheduledAt": "2026-05-28T15:00:00Z",
+  "briefApproved": true,
+  "briefApprovedAt": "2026-05-01T10:00:00Z",
+  "briefApprovedBy": "user-brett",
+  "createdAt": "2026-04-28T09:00:00Z",
+  "updatedAt": "2026-05-04T14:00:00Z",
+  "conceptId": "concept2",
+  "parentConceptId": "concept2",
+  "production": {
+    "productionStep": "packaging",
+    "brief": {
+      "strategy": {
+        "objective": "engagement",
+        "audienceSegmentIds": ["s4"],
+        "pillarIds": ["p1"],
+        "keyMessage": "Small, consistent habits beat big infrequent sessions.",
+        "ctaType": "comment",
+        "ctaText": "Which one are you trying this week?",
+        "tonePreset": "friendly"
+      },
+      "creativePlan": {
+        "hook": "Three desk-friendly habits that reset stiff shoulders in under 60 seconds.",
+        "storyArc": "list-then-invitation"
+      },
+      "compliance": { "containsClaims": false, "disclosureNeeded": false },
+      "approved": true,
+      "canonicalType": "TEXT_POST",
+      "hasTalent": false,
+      "hasMusic": false,
+      "needsAccessibility": false,
+      "publishingMode": "ORGANIC"
+    },
+    "draft": {
+      "mode": "TEXT",
+      "text": {
+        "caption": "Three desk-friendly habits that reset stiff shoulders in under 60 seconds:\n\n1. Chin tuck + 3 slow breaths. Your screen pulls you forward; this resets the cervical line.\n2. Wrist circles, both directions, 10 each. Typing tightens the forearm fascia more than you think.\n3. Stand up, reach overhead, sigh out. A real audible sigh — it cues the parasympathetic.\n\nNot a workout. Not a yoga class. Just enough movement to keep the body from locking in by 3pm.\n\nWhich one are you trying this week?",
+        "hashtags": ["#wellnesswednesday", "#deskwellness", "#movementsnacks"]
+      }
+    },
+    "sources": [],
+    "outputs": {},
+    "assets": [],
+    "tasks": [],
+    "versions": []
+  }
+}
