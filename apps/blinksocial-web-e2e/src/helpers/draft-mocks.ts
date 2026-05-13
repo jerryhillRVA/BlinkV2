@@ -59,3 +59,31 @@ export function approvedPostDetail(
     },
   };
 }
+
+/**
+ * Approved post seeded directly on the Packaging step. Used by the
+ * Production Packaging (#116) e2e tests so individual TCs don't have to
+ * traverse Brief + Draft first.
+ */
+export function approvedPostInPackaging(
+  o: ApprovedPostOptions,
+): ContentItemContract {
+  return {
+    ...approvedPostDetail(o),
+    production: {
+      productionStep: 'packaging',
+      brief: {
+        approved: true,
+        canonicalType: 'auto',
+        publishingMode: 'ORGANIC',
+      },
+      draft: {
+        mode: 'TEXT',
+        text: {
+          caption: 'Draft caption seed',
+          hashtags: [],
+        },
+      },
+    },
+  };
+}

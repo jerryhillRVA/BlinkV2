@@ -147,8 +147,12 @@ describe('MediaSelectionsCardComponent', () => {
     const file = new File(['hello'], 'shot.png', { type: 'image/png' });
     Object.defineProperty(fileInput, 'files', { value: [file], configurable: true });
     fileInput.dispatchEvent(new Event('change'));
-    // FileReader.onload fires on a microtask in jsdom — yield once.
-    await new Promise<void>((resolve) => setTimeout(resolve, 0));
+    // jsdom's FileReader.onload schedules on a macrotask; a single
+    // setTimeout(0) is flaky under load. Poll up to 50 ticks (~500ms) for
+    // the URL to arrive — the typical observation is 1-2 ticks.
+    for (let i = 0; i < 50 && urls.length === 0; i++) {
+      await new Promise<void>((resolve) => setTimeout(resolve, 10));
+    }
     expect(urls.length).toBe(1);
     expect(urls[0]).toMatch(/^data:image\/png;base64,/);
   });
@@ -751,5 +755,41 @@ describe('MediaSelectionsCardComponent', () => {
     fixture.componentInstance.audioChange.subscribe((v) => emitted.push(v));
     fixture.componentInstance['onBrowseTrending']();
     expect(emitted).toEqual([]);
+  });
+
+  it('onSetPanelPlatform switches the active trending platform and triggers an iTunes lookup', () => {
+    const { fixture, http } = setupWithHttp({ platform: 'instagram' });
+    fixture.componentInstance['onBrowseTrending']();
+    fixture.detectChanges();
+    flushTrendingLookups(http, 6); // initial instagram seed lookups
+    // Now switch the panel to tiktok — this should trigger a fresh batch
+    // of findTrack lookups for the tiktok seed list.
+    fixture.componentInstance['onSetPanelPlatform']('tiktok');
+    fixture.detectChanges();
+    expect(fixture.componentInstance['panelPlatform']()).toBe('tiktok');
+    flushTrendingLookups(http, 6);
+  });
+
+  it('onSetPanelPlatform is a no-op when the platform is already loading or cached (no duplicate fetches)', () => {
+    const { fixture, http } = setupWithHttp({ platform: 'instagram' });
+    fixture.componentInstance['onBrowseTrending']();
+    fixture.detectChanges();
+    flushTrendingLookups(http, 6);
+    // Switch back to instagram — already resolved, so loadTrendingForPlatform
+    // should early-return (current !== undefined branch). No new HTTP
+    // requests should fire — match() returns no pending requests.
+    fixture.componentInstance['onSetPanelPlatform']('instagram');
+    fixture.detectChanges();
+    expect(http.match(() => true).length).toBe(0);
+  });
+
+  it('onSetPanelTab switches between trending and search', () => {
+    const fixture = setup({ platform: 'instagram' });
+    fixture.componentInstance['onBrowseTrending']();
+    expect(fixture.componentInstance['panelTab']()).toBe('trending');
+    fixture.componentInstance['onSetPanelTab']('search');
+    expect(fixture.componentInstance['panelTab']()).toBe('search');
+    fixture.componentInstance['onSetPanelTab']('trending');
+    expect(fixture.componentInstance['panelTab']()).toBe('trending');
   });
 });
