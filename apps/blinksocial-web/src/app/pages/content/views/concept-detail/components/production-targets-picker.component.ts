@@ -20,6 +20,7 @@ interface TargetGroup {
   styleUrl: './production-targets-picker.component.scss',
 })
 export class ProductionTargetsPickerComponent {
+  /* v8 ignore next 3 — V8's function-call-throws branches on input()/signal() declarations are unreachable (Angular class-field init time; ESM exports not spy-able) */
   readonly selected = input<TargetPlatform[]>([]);
   /** Returns true when (platform, contentType) is already a post item */
   readonly isInProduction = input<(target: TargetPlatform) => boolean>(

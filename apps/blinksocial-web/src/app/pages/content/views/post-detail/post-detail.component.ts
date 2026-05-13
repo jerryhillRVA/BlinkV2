@@ -15,6 +15,8 @@ import { ProductionStepsBarComponent } from './components/production-steps-bar.c
 import { BriefStepComponent } from './components/brief-step.component';
 import { BriefContentConceptComponent } from './components/brief-content-concept.component';
 import { DraftStepComponent } from './components/draft-step/draft-step.component';
+import { PackagingStepComponent } from './components/packaging-step/packaging-step.component';
+import { PostPreviewCardComponent } from './components/post-preview-card.component';
 import { StepActionBarComponent } from './components/step-action-bar/step-action-bar.component';
 import { StepPlaceholderComponent } from './components/step-placeholder.component';
 import { DetailBackButtonComponent } from '../_shared/detail-back-button/detail-back-button.component';
@@ -29,6 +31,8 @@ import type { ContentItem } from '../../content.types';
     BriefStepComponent,
     BriefContentConceptComponent,
     DraftStepComponent,
+    PackagingStepComponent,
+    PostPreviewCardComponent,
     StepActionBarComponent,
     ContentJourneyComponent,
     StepPlaceholderComponent,
@@ -59,6 +63,34 @@ export class PostDetailComponent {
     const conceptId = this.store.item()?.conceptId;
     if (!conceptId) return null;
     return this.state.items().find((i) => i.id === conceptId) ?? null;
+  });
+
+  // ── Post Preview sidebar inputs (Packaging step only) ───────────────
+  // Caption comes from the active platform's packaging slot. Slides
+  // wire-up against real asset uploads is a follow-up — for now, slides
+  // resolves to an empty array and the preview falls back to coverAsset
+  // / the "Media" placeholder. Mirrors PostPreview.tsx in the prototype.
+  protected readonly previewCaption = computed<string>(() => {
+    const platform = this.store.item()?.platform;
+    if (platform === 'instagram') return this.store.instagramPackaging()?.caption ?? '';
+    if (platform === 'tiktok') return this.store.tiktokPackaging()?.caption ?? '';
+    return '';
+  });
+
+  protected readonly previewCoverAsset = computed<string | undefined>(() => {
+    // The preview's <img src> needs a resolvable URL (data: URL today via
+    // upload's FileReader; https:// AgenticFS URL once real persistence
+    // lands). The display-only `coverAsset` filename is not src-able.
+    const platform = this.store.item()?.platform;
+    if (platform === 'instagram') return this.store.instagramPackaging()?.coverAssetUrl;
+    return undefined;
+  });
+
+  protected readonly previewAudioTrackName = computed<string | undefined>(() => {
+    const platform = this.store.item()?.platform;
+    if (platform === 'instagram') return this.store.instagramPackaging()?.audio?.trackName;
+    if (platform === 'tiktok') return this.store.tiktokPackaging()?.audio?.trackName;
+    return undefined;
   });
 
   constructor() {

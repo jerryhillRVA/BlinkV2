@@ -15,7 +15,7 @@ import type { ConceptOption } from './idea-detail.types';
 export class IdeaDetailStore {
   private readonly state = inject(ContentStateService);
   private readonly destroyRef = inject(DestroyRef);
-
+  /* v8 ignore next 1 — V8's function-call-throws branches on input()/signal() declarations are unreachable (Angular class-field init time; ESM exports not spy-able) */
   private readonly _itemId = signal<string | null>(null);
 
   readonly item = computed<ContentItem | null>(
@@ -24,7 +24,7 @@ export class IdeaDetailStore {
   readonly pillars = this.state.pillars;
   readonly segments = this.state.segments;
   readonly businessObjectives = this.state.businessObjectives;
-
+  /* v8 ignore next 3 — V8's function-call-throws branches on input()/signal() declarations are unreachable (Angular class-field init time; ESM exports not spy-able) */
   readonly conceptOptions = signal<ConceptOption[] | null>(null);
   readonly isGeneratingOptions = signal(false);
   readonly selectedOptionId = signal<string | null>(null);

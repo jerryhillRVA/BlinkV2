@@ -39,7 +39,7 @@ export class NewWorkspaceComponent implements OnInit {
   private readonly toastService = inject(ToastService);
   private readonly authService = inject(AuthService);
   protected readonly formService = inject(NewWorkspaceFormService);
-
+  /* v8 ignore next 3 — V8's function-call-throws branches on input()/signal() declarations are unreachable (Angular class-field init time; ESM exports not spy-able) */
   currentStep = signal(1);
   isSubmitting = signal(false);
   resumeWorkspaceId = signal<string | null>(null);

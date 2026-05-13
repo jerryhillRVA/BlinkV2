@@ -19,6 +19,7 @@ export class VoiceMissionComponent {
   private readonly stateService = inject(StrategyResearchStateService);
 
   readonly missionStatement = computed(() => this.stateService.brandVoice().missionStatement);
+  /* v8 ignore next 1 — V8's function-call-throws branches on input()/signal() declarations are unreachable (Angular class-field init time; ESM exports not spy-able) */
   readonly isDrafting = signal(false);
 
   updateMission(value: string): void {

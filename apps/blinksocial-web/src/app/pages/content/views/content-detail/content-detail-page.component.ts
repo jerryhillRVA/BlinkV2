@@ -22,7 +22,7 @@ export class ContentDetailPageComponent {
   private readonly toast = inject(ToastService);
 
   protected readonly stateService = inject(ContentStateService);
-
+  /* v8 ignore next 5 — V8's function-call-throws branches on input()/signal() declarations are unreachable (Angular class-field init time; ESM exports not spy-able) */
   protected readonly workspaceId = signal('');
   protected readonly itemId = signal<string | null>(null);
   protected readonly from = signal<string | null>(null);

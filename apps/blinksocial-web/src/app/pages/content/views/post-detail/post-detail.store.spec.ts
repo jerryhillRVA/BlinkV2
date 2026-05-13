@@ -447,20 +447,36 @@ describe('PostDetailStore — menu actions', () => {
       expect(store.approvalNote()).toBe('');
     });
 
-    it('all brief sub-field setters respect the briefApproved write-lock', () => {
+    it('most brief sub-field setters respect the briefApproved write-lock (paid-mode fields are exempt)', () => {
       const { store } = setup(makeItem({ briefApproved: true }));
       store.setReferenceLinks(['https://x.com']);
       store.setDueDate('2030-01-01');
-      store.setCampaignName('blocked');
-      store.setPublishingMode('PAID_BOOSTED');
       store.togglePrimaryCta('sign-up');
       store.setApprovalNote('blocked');
       expect(store.referenceLinks()).toEqual([]);
       expect(store.dueDate()).toBeUndefined();
-      expect(store.campaignName()).toBeUndefined();
-      expect(store.publishingMode()).toBeUndefined();
       expect(store.primaryCta()).toBeUndefined();
       expect(store.approvalNote()).toBe('');
+    });
+
+    it('paid-mode brief fields (publishingMode, campaignName, destinationUrl, legalApprover) bypass the write-lock (#116)', () => {
+      // The Publishing Mode toggle + Paid/Boosted required-fields panel
+      // both live on the Packaging step in the prototype. Locking these
+      // brief fields after approval would break that flow.
+      const { store } = setup(makeItem({ briefApproved: true }));
+      store.setPublishingMode('PAID_BOOSTED');
+      store.setCampaignName('Spring Launch 2026');
+      store.setDestinationUrl('https://example.com');
+      store.setLegalApprover('legal@example.com');
+      expect(store.publishingMode()).toBe('PAID_BOOSTED');
+      expect(store.campaignName()).toBe('Spring Launch 2026');
+      expect(store.destinationUrl()).toBe('https://example.com');
+      expect(store.legalApprover()).toBe('legal@example.com');
+      // Clearing destinationUrl / legalApprover (empty string) writes undefined.
+      store.setDestinationUrl('');
+      store.setLegalApprover('');
+      expect(store.destinationUrl()).toBeUndefined();
+      expect(store.legalApprover()).toBeUndefined();
     });
 
     it('unlockBrief writes unlockedAt onto production.brief (no prior production)', () => {
@@ -1016,10 +1032,245 @@ describe('PostDetailStore — production.draft (#114)', () => {
       expect(store.unlockedThroughIndex()).toBe(2);
     });
 
-    it('packagingErrors flags the not-yet-implemented placeholder', () => {
-      const { store } = setup(makeApprovedItem());
-      expect(store.packagingErrors().map((e) => e.field)).toEqual(['packaging']);
+    it('packagingErrors gates on per-platform caption presence (#116)', () => {
+      // Brief-approved Instagram post with no caption: packaging is invalid.
+      const { store } = setup(makeApprovedItem({ platform: 'instagram' }));
+      expect(store.packagingErrors().map((e) => e.field)).toEqual(['caption']);
       expect(store.canContinueFromPackaging()).toBe(false);
+      // Setting a caption clears the error.
+      store.setInstagramPackaging({ caption: 'Hello world' });
+      expect(store.packagingErrors()).toEqual([]);
+      expect(store.canContinueFromPackaging()).toBe(true);
+    });
+
+    it('packagingErrors gates TikTok on caption presence (#116)', () => {
+      const { store } = setup(makeApprovedItem({ platform: 'tiktok' }));
+      expect(store.packagingErrors().map((e) => e.field)).toEqual(['caption']);
+      store.setTikTokPackaging({ caption: 'tiktok caption' });
+      expect(store.packagingErrors()).toEqual([]);
+    });
+
+    it('packagingErrors gates LinkedIn on caption presence (#116)', () => {
+      const { store } = setup(makeApprovedItem({ platform: 'linkedin' }));
+      expect(store.packagingErrors().map((e) => e.field)).toEqual(['caption']);
+      store.setLinkedInPackaging({ caption: 'li' });
+      expect(store.packagingErrors()).toEqual([]);
+    });
+
+    it('packagingErrors gates Facebook on caption presence (#116)', () => {
+      const { store } = setup(makeApprovedItem({ platform: 'facebook' }));
+      expect(store.packagingErrors().map((e) => e.field)).toEqual(['caption']);
+      store.setFacebookPackaging({ caption: 'fb' });
+      expect(store.packagingErrors()).toEqual([]);
+    });
+
+    it('packagingErrors for X enforces both presence + 280-char hard cap (#116)', () => {
+      const { store } = setup(makeApprovedItem({ platform: 'x' }));
+      // Empty caption → required error
+      expect(store.packagingErrors().map((e) => e.field)).toEqual(['caption']);
+      // 281 chars → length error
+      store.setXPackaging({ caption: 'x'.repeat(281) });
+      expect(store.packagingErrors()[0].label).toContain('280');
+      // Exactly 280 → ok
+      store.setXPackaging({ caption: 'x'.repeat(280) });
+      expect(store.packagingErrors()).toEqual([]);
+    });
+
+    it('packagingErrors for YouTube requires both title and description (#116)', () => {
+      const { store } = setup(makeApprovedItem({ platform: 'youtube' }));
+      // Both missing → two errors
+      expect(store.packagingErrors().map((e) => e.field)).toEqual(['title', 'description']);
+      // Title only → description error remains
+      store.setYouTubePackaging({ title: 'My video' });
+      expect(store.packagingErrors().map((e) => e.field)).toEqual(['description']);
+      // Both set → clear
+      store.setYouTubePackaging({ title: 'My video', description: 'Big description' });
+      expect(store.packagingErrors()).toEqual([]);
+    });
+
+    it('packagingErrors for tbd / unknown platform tells the user to set a platform (#116)', () => {
+      const { store } = setup(makeApprovedItem({ platform: 'tbd' }));
+      expect(store.packagingErrors()[0].field).toBe('platform');
+      expect(store.canContinueFromPackaging()).toBe(false);
+    });
+
+    it('errors() routes to packagingErrors when activeStep=packaging (#116)', () => {
+      const { store } = setup(makeApprovedItem({ platform: 'instagram' }));
+      store.setActiveStep('packaging');
+      expect(store.errors().map((e) => e.field)).toEqual(['caption']);
+    });
+
+    // ── Branch-coverage tests for setter / computed nullish paths ──
+    // These exercise pre-approval setters (write-lock isn't engaged on
+    // briefApproved=false items).
+    it('setOwner converts whitespace-only value to null (|| null branch)', () => {
+      const { store } = setup(makeItem({ owner: 'someone' }));
+      store.setOwner('   ');
+      expect(store.item()?.owner).toBeNull();
+    });
+
+    it('setObjective converts empty string to undefined (=== "" branch)', () => {
+      const { store } = setup(makeItem({ objective: 'engagement' }));
+      store.setObjective('');
+      expect(store.item()?.objective).toBeUndefined();
+    });
+
+    it('setTonePreset converts empty string to undefined', () => {
+      const { store } = setup(makeItem({ tonePreset: 'casual' }));
+      store.setTonePreset('');
+      expect(store.item()?.tonePreset).toBeUndefined();
+    });
+
+    it('setCtaType("") clears cta entirely; non-empty value seeds with existing text or empty', () => {
+      const { store } = setup(makeItem({ cta: { type: 'follow', text: 'go' } }));
+      store.setCtaType('');
+      expect(store.item()?.cta).toBeUndefined();
+      // Re-setting a type uses existing text (none after clear) → empty text
+      store.setCtaType('learn-more');
+      expect(store.item()?.cta).toEqual({ type: 'learn-more', text: '' });
+    });
+
+    it('setCtaText is a no-op when there is no existing cta', () => {
+      const { store } = setup(makeItem({ cta: undefined }));
+      store.setCtaText('hello');
+      expect(store.item()?.cta).toBeUndefined();
+    });
+
+    it('togglePillar is a no-op when item is null', () => {
+      const { store } = setup();
+      store.setItemId('missing');
+      // Pre-call assert: item is null
+      expect(store.item()).toBeNull();
+      // No throw, no state change
+      expect(() => store.togglePillar('p1')).not.toThrow();
+    });
+
+    it('togglePillar respects MAX_PILLARS limit (does not add a 4th)', () => {
+      const { store } = setup(
+        makeApprovedItem({ pillarIds: ['p1', 'p2', 'p3'] }),
+      );
+      store.togglePillar('p4');
+      expect(store.item()?.pillarIds).toEqual(['p1', 'p2', 'p3']);
+    });
+
+    it('toggleSegment is a no-op when item is null', () => {
+      const { store } = setup();
+      store.setItemId('missing');
+      expect(() => store.toggleSegment('s1')).not.toThrow();
+    });
+
+    it('hasClaims/hasTalent/hasMusic flags are all false when brief is missing', () => {
+      const { store } = setup();
+      store.setItemId('missing');
+      expect(store.hasClaims()).toBe(false);
+      expect(store.hasTalent()).toBe(false);
+      expect(store.hasMusic()).toBe(false);
+      // needsAccessibility defaults to TRUE per its omitted-≠-not-needed rule
+      expect(store.needsAccessibility()).toBe(true);
+      expect(store.activeFlagCount()).toBe(1);
+    });
+
+    it('needsAccessibility returns false only when explicitly set to false', () => {
+      const { store } = setup(
+        makeApprovedItem({
+          production: {
+            brief: { needsAccessibility: false, approved: true },
+          },
+        }),
+      );
+      expect(store.needsAccessibility()).toBe(false);
+    });
+
+    it('activeFlagCount counts all four flags when all true', () => {
+      const { store } = setup(
+        makeApprovedItem({
+          production: {
+            brief: {
+              hasTalent: true,
+              hasMusic: true,
+              compliance: { containsClaims: true },
+              needsAccessibility: true,
+              approved: true,
+            },
+          },
+        }),
+      );
+      expect(store.activeFlagCount()).toBe(4);
+    });
+
+    it('pastDueDate returns false for invalid date strings', () => {
+      const { store } = setup(
+        makeApprovedItem({
+          production: { brief: { dueDate: 'not-a-date', approved: true } },
+        }),
+      );
+      expect(store.pastDueDate()).toBe(false);
+    });
+
+    it('pastDueDate returns false when no dueDate is set', () => {
+      const { store } = setup();
+      expect(store.pastDueDate()).toBe(false);
+    });
+
+    it('pastDueDate returns true for a date in the past', () => {
+      const { store } = setup(
+        makeApprovedItem({
+          production: { brief: { dueDate: '2020-01-01', approved: true } },
+        }),
+      );
+      expect(store.pastDueDate()).toBe(true);
+    });
+
+    it('approvalNote defaults to empty string when missing', () => {
+      const { store } = setup();
+      expect(store.approvalNote()).toBe('');
+    });
+
+    it('referenceLinks defaults to empty array when missing', () => {
+      const { store } = setup();
+      expect(store.referenceLinks()).toEqual([]);
+    });
+
+    it('draft slots (videoDraft, imageSingleDraft, etc.) all return empty objects when draft is missing', () => {
+      const { store } = setup();
+      expect(store.draft()).toBeUndefined();
+      expect(store.videoDraft()).toEqual({});
+      expect(store.videoLongDraft()).toEqual({});
+      expect(store.imageSingleDraft()).toEqual({});
+      expect(store.carouselDraft()).toEqual({});
+      expect(store.textDraft()).toEqual({});
+    });
+
+    it('per-platform packaging computeds return undefined when packaging slot is missing', () => {
+      const { store } = setup();
+      expect(store.packaging()).toBeUndefined();
+      expect(store.instagramPackaging()).toBeUndefined();
+      expect(store.tiktokPackaging()).toBeUndefined();
+      expect(store.youtubePackaging()).toBeUndefined();
+      expect(store.linkedinPackaging()).toBeUndefined();
+      expect(store.facebookPackaging()).toBeUndefined();
+      expect(store.xPackaging()).toBeUndefined();
+    });
+
+    it('per-platform packaging computeds resolve to the right slot when set', () => {
+      const { store } = setup(makeApprovedItem({ platform: 'tiktok' }));
+      store.setTikTokPackaging({ caption: 'tt' });
+      expect(store.tiktokPackaging()?.caption).toBe('tt');
+      expect(store.instagramPackaging()).toBeUndefined();
+    });
+
+    it('persistPackagingSlot is a no-op when briefApproved=false (write-lock)', () => {
+      const { store } = setup(makeItem({ platform: 'instagram' }));
+      // briefApproved defaults to false on makeItem → packaging write is blocked.
+      store.setInstagramPackaging({ caption: 'blocked' });
+      expect(store.instagramPackaging()).toBeUndefined();
+    });
+
+    it('persistPackagingSlot is a no-op when item is null', () => {
+      const { store } = setup();
+      store.setItemId('missing');
+      expect(() => store.setInstagramPackaging({ caption: 'x' })).not.toThrow();
+      expect(store.instagramPackaging()).toBeUndefined();
     });
   });
 
@@ -1077,6 +1328,47 @@ describe('PostDetailStore — production.draft (#114)', () => {
         makeItem({ id: 'post-other', conceptId: 'concept-2', title: 'Other parent' }),
       ]);
       expect(store.liveSiblingPostCount()).toBe(1);
+    });
+  });
+
+  // ── Function-call throw paths ──────────────────────────────────────
+  // V8's coverage instrumentation marks every function call expression
+  // as having two paths: "returned normally" and "threw an exception".
+  // For pure framework calls like computed(()=>...) and signal(...)
+  // the throw path is normally unreachable. This block intentionally
+  // forces the underlying callback to throw to exercise that path.
+  describe('Function-call throw paths (V8 coverage exhaustion)', () => {
+    it('item() computed re-throws when state.items().find() throws', () => {
+      const { store, state } = setup();
+      // Poison the state.items() signal with an iterable whose .find()
+      // throws. The item() computed wraps a .find() call; when the
+      // callback throws, computed() re-throws on read.
+      const poisoned = {
+        find: () => {
+          throw new Error('boom');
+        },
+      } as unknown as ReturnType<typeof state.items>;
+      const itemsSpy = vi.spyOn(state, 'items').mockReturnValue(poisoned);
+      expect(() => store.item()).toThrow('boom');
+      itemsSpy.mockRestore();
+    });
+
+    it('brief() computed propagates exceptions from item()', () => {
+      const { store, state } = setup();
+      const itemsSpy = vi.spyOn(state, 'items').mockImplementation(() => {
+        throw new Error('items-boom');
+      });
+      expect(() => store.brief()).toThrow('items-boom');
+      itemsSpy.mockRestore();
+    });
+
+    it('packaging() computed propagates exceptions from item()', () => {
+      const { store, state } = setup();
+      const itemsSpy = vi.spyOn(state, 'items').mockImplementation(() => {
+        throw new Error('items-boom');
+      });
+      expect(() => store.packaging()).toThrow('items-boom');
+      itemsSpy.mockRestore();
     });
   });
 });

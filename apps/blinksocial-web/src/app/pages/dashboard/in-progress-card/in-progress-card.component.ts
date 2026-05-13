@@ -11,7 +11,7 @@ import type { Workspace } from '../workspace-card/workspace-card.component';
 })
 export class InProgressCardComponent {
   private readonly router = inject(Router);
-
+  /* v8 ignore next 1 — V8's function-call-throws branches on input()/signal() declarations are unreachable (Angular class-field init time; ESM exports not spy-able) */
   workspace = input.required<Workspace>();
 
   get statusLabel(): string {

@@ -1,0 +1,165 @@
+<section class="ig-packaging" aria-label="Instagram packaging">
+  <!-- Publishing Mode: interactive toggle (prototype-parity). Bypasses
+       the brief write-lock because publishing mode is the canonical
+       packaging-side decision — see PostDetailStore.setPublishingMode. -->
+  <div class="pkg-card pkg-card--tight">
+    <span class="card-label card-label--pubmode">Publishing Mode</span>
+    <div class="mode-toggle" role="radiogroup" aria-label="Publishing mode">
+      <button
+        type="button"
+        class="mode-pill"
+        [class.is-active]="!paidBoosted()"
+        [disabled]="disabled()"
+        role="radio"
+        [attr.aria-checked]="!paidBoosted()"
+        (click)="onSetPublishingMode('ORGANIC')"
+      >Organic</button>
+      <button
+        type="button"
+        class="mode-pill mode-pill--paid"
+        [class.is-active]="paidBoosted()"
+        [disabled]="disabled()"
+        role="radio"
+        [attr.aria-checked]="paidBoosted()"
+        (click)="onSetPublishingMode('PAID_BOOSTED')"
+      >
+        <!-- lucide Zap: same polygon the prototype renders -->
+        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
+        </svg>
+        Paid
+      </button>
+    </div>
+  </div>
+
+  <!-- Paid / Boosted required fields — slides in below the toggle when
+       publishingMode === PAID_BOOSTED. Fields live on the brief and are
+       legitimately editable from packaging (see store.persistPackagingSideBrief). -->
+  @if (paidBoosted()) {
+    <app-paid-boosted-fields
+      [campaignName]="campaignName()"
+      [destinationUrl]="destinationUrl()"
+      [legalApprover]="legalApprover()"
+      [disabled]="disabled()"
+      (campaignNameChange)="campaignNameChange.emit($event)"
+      (destinationUrlChange)="destinationUrlChange.emit($event)"
+      (legalApproverChange)="legalApproverChange.emit($event)"
+    />
+  }
+
+  <!-- Platform Metadata: caption + hashtags (px-3 pt-2 pb-2 in prototype) -->
+  <div class="pkg-card pkg-card--snug">
+    <span class="card-label">Platform Metadata</span>
+
+    <!-- Caption -->
+    <div class="field-group">
+      <div class="field-header">
+        <span class="field-label-row">
+          <label class="field-label" for="ig-caption">Caption</label>
+          <app-tooltip
+            text="First written here — not carried from Draft. Lead with your hook angle, deliver value, end with a CTA. AI Generate pulls from your Brief, Concept, and script as context."
+          />
+        </span>
+        <app-ai-button
+          label="AI Generate Caption"
+          loadingLabel="Generating…"
+          [loading]="aiGeneratingCaption()"
+          [disabled]="disabled()"
+          (activate)="onGenerateCaption()"
+        />
+      </div>
+      <textarea
+        id="ig-caption"
+        class="caption-area"
+        rows="5"
+        [value]="caption()"
+        [readOnly]="disabled()"
+        [attr.maxlength]="captionMax"
+        placeholder="Finalize your caption here..."
+        aria-label="Caption"
+        (input)="onCaptionInput($event)"
+      ></textarea>
+      <div class="field-footer">
+        <span></span>
+        <span
+          class="char-counter"
+          [class.warn]="captionState() === 'warn'"
+          [class.fail]="captionState() === 'fail'"
+          aria-live="polite"
+        >
+          {{ caption().length }} / {{ captionMax }}
+        </span>
+      </div>
+    </div>
+
+    <!-- Hashtags (packaging-bank layout — distinct from draft step) -->
+    <app-pkg-hashtag-bank
+      [hashtags]="hashtags()"
+      [disabled]="disabled()"
+      [aiSuggesting]="aiSuggestingHashtags()"
+      [groups]="hashtagBankGroups"
+      (hashtagsChange)="onHashtagsChange($event)"
+      (aiSuggest)="onSuggestHashtags()"
+    />
+  </div>
+
+  <!-- Link + UTM — visible when Paid/Boosted (matches prototype's needsUrl gate) -->
+  @if (paidBoosted()) {
+    <div class="pkg-card">
+      <span class="card-label">Destination Link</span>
+      <input
+        id="ig-link"
+        type="url"
+        class="link-input"
+        placeholder="Link in bio or link sticker"
+        [value]="link()"
+        [readOnly]="disabled()"
+        aria-label="Link in bio or link sticker"
+        (input)="onLinkInput($event)"
+      />
+      <app-utm-builder
+        [utm]="utm()"
+        [disabled]="disabled()"
+        (utmChange)="onUtmChange($event)"
+      />
+    </div>
+  }
+
+  <!-- Slide order (CAROUSEL only) -->
+  @if (isCarousel()) {
+    <div class="pkg-card">
+      <span class="card-label">Slide Order</span>
+      <app-slide-order-picker
+        [slides]="slides()"
+        [order]="slideOrder()"
+        [disabled]="disabled()"
+        (orderChange)="onOrderChange($event)"
+      />
+    </div>
+  }
+
+  <!-- Media Selections — Cover Image + Audio Planning -->
+  <div class="pkg-card pkg-card--snug">
+    <app-media-selections-card
+      platform="instagram"
+      [coverAsset]="coverAsset()"
+      [audio]="audio()"
+      [disabled]="disabled()"
+      (coverAssetChange)="onCoverAssetChange($event)"
+      (coverAssetUrlChange)="onCoverAssetUrlChange($event)"
+      (audioChange)="onAudioChange($event)"
+    />
+  </div>
+
+  <!-- Publish Settings (replaces the old Platform Controls card; mirrors
+       the prototype's collapsible Metadata + Platform Controls children). -->
+  <app-publish-settings-card
+    platform="instagram"
+    [contentType]="contentType()"
+    [igMetadata]="igMetadata()"
+    [igControls]="igControls()"
+    [disabled]="disabled()"
+    (igMetadataChange)="onIgMetadataChange($event)"
+    (igControlsChange)="onIgControlsChange($event)"
+  />
+</section>

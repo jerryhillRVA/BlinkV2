@@ -21,7 +21,7 @@ export class DashboardComponent implements OnInit {
   private readonly authService = inject(AuthService);
 
   readonly canOnboard = computed(() => this.authService.isAnyWorkspaceAdmin());
-
+  /* v8 ignore next 2 — V8's function-call-throws branches on input()/signal() declarations are unreachable (Angular class-field init time; ESM exports not spy-able) */
   workspaces = signal<Workspace[]>([]);
   loading = signal(true);
 

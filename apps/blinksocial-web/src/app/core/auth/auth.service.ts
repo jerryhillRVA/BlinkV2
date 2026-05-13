@@ -15,9 +15,10 @@ export class AuthService {
   private readonly http = inject(HttpClient);
   private readonly router = inject(Router);
   private readonly platformId = inject(PLATFORM_ID);
-
+  /* v8 ignore next 1 — V8's function-call-throws branches on input()/signal() declarations are unreachable (Angular class-field init time; ESM exports not spy-able) */
   readonly currentUser = signal<AuthUserInfoContract | null>(null);
   readonly isAuthenticated = computed(() => !!this.currentUser());
+  /* v8 ignore next 2 — V8's function-call-throws branches on input()/signal() declarations are unreachable (Angular class-field init time; ESM exports not spy-able) */
   readonly isLoading = signal(true);
   readonly needsBootstrap = signal(false);
 
@@ -32,6 +33,7 @@ export class AuthService {
   });
 
   /** Track last visited workspace for navigation */
+  /* v8 ignore next 1 — V8's function-call-throws branches on input()/signal() declarations are unreachable (Angular class-field init time; ESM exports not spy-able) */
   readonly lastWorkspaceId = signal<string | null>(null);
 
   async checkStatus(): Promise<void> {

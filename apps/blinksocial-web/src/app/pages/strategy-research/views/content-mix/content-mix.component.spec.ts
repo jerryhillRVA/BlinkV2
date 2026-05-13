@@ -21,6 +21,7 @@ describe('ContentMixComponent', () => {
   let mockStateService: Record<string, unknown>;
 
   beforeEach(() => {
+    /* v8 ignore next 1 — V8's function-call-throws branches on input()/signal() declarations are unreachable (Angular class-field init time; ESM exports not spy-able) */
     mockContentMix = signal<ContentMixTarget[]>(DEFAULT_CONTENT_MIX.map(m => ({ ...m })));
     mockStateService = {
       contentMix: mockContentMix,

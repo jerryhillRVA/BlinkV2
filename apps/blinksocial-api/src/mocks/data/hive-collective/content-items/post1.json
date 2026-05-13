@@ -113,6 +113,22 @@
       "hasMusic": true,
       "needsAccessibility": true
     },
+    "packaging": {
+      "platform": "instagram",
+      "instagram": {
+        "caption": "Your body shouldn't feel 80 when you're 40. 60-second mobility flow you can do anywhere — try it before tomorrow's first scroll. 👇",
+        "link": "https://hive-collective.example/mobility-flow",
+        "utm": {
+          "source": "instagram",
+          "medium": "social",
+          "campaign": "summer-wellness-2026"
+        },
+        "platformControls": {
+          "visibility": "public",
+          "allowComments": true
+        }
+      }
+    },
     "draft": {
       "mode": "VIDEO",
       "video": {

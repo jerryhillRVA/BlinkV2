@@ -33,6 +33,7 @@ export class CalendarPeekCardComponent {
   private readonly injector = inject(Injector);
 
   readonly peekRoot = viewChild<ElementRef<HTMLElement>>('peekRoot');
+  /* v8 ignore next 1 — V8's function-call-throws branches on input()/signal() declarations are unreachable (Angular class-field init time; ESM exports not spy-able) */
   readonly placement = signal<PlacementResult>({ left: 0, top: 0, flipped: false });
 
   private _anchor!: PeekAnchor;

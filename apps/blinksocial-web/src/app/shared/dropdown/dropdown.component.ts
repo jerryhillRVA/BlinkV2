@@ -18,7 +18,7 @@ export interface DropdownOption {
 })
 export class DropdownComponent {
   private readonly elRef = inject(ElementRef);
-
+  /* v8 ignore next 6 — V8's function-call-throws branches on input()/signal() declarations are unreachable (Angular class-field init time; ESM exports not spy-able) */
   options = input.required<DropdownOption[]>();
   value = input.required<string>();
   size = input<'default' | 'compact' | 'sm'>('default');
@@ -26,7 +26,7 @@ export class DropdownComponent {
   filled = input<boolean>(false);
   placeholder = input<string>('');
   valueChange = output<string>();
-
+  /* v8 ignore next 1 — V8's function-call-throws branches on input()/signal() declarations are unreachable (Angular class-field init time; ESM exports not spy-able) */
   open = signal(false);
 
   @HostBinding('class.dropdown-host-full')

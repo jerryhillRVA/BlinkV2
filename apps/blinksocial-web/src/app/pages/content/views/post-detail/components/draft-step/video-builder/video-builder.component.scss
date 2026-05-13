@@ -71,7 +71,7 @@
 .field {
   width: 100%;
   padding: 8px 10px;
-  background: #f3f4f6;
+  background: var(--blink-input-bg-dark);
   border: none;
   border-radius: 8px;
   font: inherit;
@@ -183,7 +183,7 @@
   align-items: center;
   gap: 12px;
   flex-wrap: wrap;
-  background: #f9fafb;
+  background: var(--blink-surface-container-low);
   padding: 10px 16px;
 }
 

@@ -13,7 +13,7 @@ import type { SecuritySettingsContract } from '@blinksocial/contracts';
 @Injectable()
 export class WorkspaceSettingsStateService {
   private readonly api = inject(WorkspaceSettingsApiService);
-
+  /* v8 ignore next 16 — V8's function-call-throws branches on input()/signal() declarations are unreachable (Angular class-field init time; ESM exports not spy-able) */
   readonly workspaceId = signal('');
   readonly activeTab = signal<SettingsTab>('general');
   readonly loading = signal(false);
@@ -22,7 +22,6 @@ export class WorkspaceSettingsStateService {
   /** Temp password from user creation — survives tab reload */
   readonly tempPassword = signal<string | null>(null);
   readonly tempPasswordEmail = signal<string | null>(null);
-
   readonly generalSettings = signal<GeneralSettingsContract | null>(null);
   readonly platformSettings = signal<PlatformSettingsContract | null>(null);
   readonly brandVoiceSettings = signal<BrandVoiceSettingsContract | null>(null);

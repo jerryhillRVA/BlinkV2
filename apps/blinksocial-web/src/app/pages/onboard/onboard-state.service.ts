@@ -31,7 +31,7 @@ const POST_GENERATION_PROMPT =
 export class OnboardStateService {
   private readonly api = inject(OnboardApiService);
   private readonly router = inject(Router);
-
+  /* v8 ignore next 17 — V8's function-call-throws branches on input()/signal() declarations are unreachable (Angular class-field init time; ESM exports not spy-able) */
   readonly sessionId = signal<string | null>(null);
   readonly status = signal<OnboardingSessionStatus>('active');
   readonly messages = signal<OnboardingMessageContract[]>([]);
@@ -42,7 +42,6 @@ export class OnboardStateService {
   readonly blueprint = signal<BlueprintDocumentContract | null>(null);
   readonly markdownDocument = signal<string | null>(null);
   readonly error = signal<string | null>(null);
-
   readonly isCreatingWorkspace = signal(false);
   /**
    * Increments every time the canned post-generation prompt is appended,

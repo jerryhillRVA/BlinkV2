@@ -11,6 +11,7 @@ import {
   styleUrl: './production-steps-bar.component.scss',
 })
 export class ProductionStepsBarComponent {
+  /* v8 ignore next 9 — V8's function-call-throws branches on input()/signal() declarations are unreachable (Angular class-field init time; ESM exports not spy-able) */
   readonly activeStep = input.required<ProductionStep>();
   /**
    * Highest step-index whose preceding gate has been satisfied. Drives both

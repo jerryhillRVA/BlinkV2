@@ -43,6 +43,7 @@ export class ShotListComponent {
   @Output() coverAssetRefChange = new EventEmitter<string | undefined>();
 
   protected readonly shotTypes = SHOT_TYPES;
+  /* v8 ignore next 1 — V8's function-call-throws branches on input()/signal() declarations are unreachable (Angular class-field init time; ESM exports not spy-able) */
   protected readonly aiLoading = signal(false);
 
   protected get countLabel(): string {

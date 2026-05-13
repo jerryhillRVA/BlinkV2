@@ -18,8 +18,8 @@ describe('ProductionTargetsPickerComponent', () => {
   it('renders one group per non-tbd platform', () => {
     const fixture = setup();
     const groups = fixture.nativeElement.querySelectorAll('.target-group');
-    // Instagram, YouTube, TikTok, Facebook, LinkedIn
-    expect(groups.length).toBe(5);
+    // Instagram, YouTube, TikTok, Facebook, LinkedIn, X
+    expect(groups.length).toBe(6);
   });
 
   it('renders content-type options under each platform', () => {

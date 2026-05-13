@@ -17,6 +17,7 @@ interface Step {
 export class StatusStepperComponent {
   @Input({ required: true }) value!: ContentStatus;
   @Input({ required: true }) stage!: ContentStage;
+  /* v8 ignore next 1 — V8's function-call-throws branches on input()/signal() declarations are unreachable (Angular class-field init time; ESM exports not spy-able) */
   readonly interactive = input(true);
 
   @Output() statusChange = new EventEmitter<ContentStatus>();

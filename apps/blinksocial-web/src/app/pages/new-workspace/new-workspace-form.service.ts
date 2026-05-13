@@ -37,6 +37,7 @@ export class NewWorkspaceFormService {
   }
 
   // Step 1 — Strategic Foundation
+  /* v8 ignore next 6 — V8's function-call-throws branches on input()/signal() declarations are unreachable (Angular class-field init time; ESM exports not spy-able) */
   readonly workspaceName = signal('');
   readonly purpose = signal('');
   readonly mission = signal('');
@@ -47,6 +48,7 @@ export class NewWorkspaceFormService {
   ]);
 
   // Step 3 — Brand & Voice
+  /* v8 ignore next 1 — V8's function-call-throws branches on input()/signal() declarations are unreachable (Angular class-field init time; ESM exports not spy-able) */
   readonly brandPositioning = signal<UIBrandPositioning>({
     targetCustomer: '',
     problemSolved: '',
@@ -54,6 +56,7 @@ export class NewWorkspaceFormService {
     differentiator: '',
     positioningStatement: '',
   });
+  /* v8 ignore next 5 — V8's function-call-throws branches on input()/signal() declarations are unreachable (Angular class-field init time; ESM exports not spy-able) */
   readonly brandVoice = signal('');
   readonly toneTags = signal<string[]>([]);
 
@@ -63,6 +66,7 @@ export class NewWorkspaceFormService {
   ]);
 
   // Step 5 — Platforms
+  /* v8 ignore next 7 — V8's function-call-throws branches on input()/signal() declarations are unreachable (Angular class-field init time; ESM exports not spy-able) */
   readonly enabledPlatforms = signal<Set<string>>(new Set(['YouTube', 'LinkedIn']));
   readonly maxIdeasPerMonth = signal(30);
   readonly contentWarning = signal(false);
@@ -91,6 +95,7 @@ export class NewWorkspaceFormService {
   ]);
 
   // Step 7 — Agents
+  /* v8 ignore next 1 — V8's function-call-throws branches on input()/signal() declarations are unreachable (Angular class-field init time; ESM exports not spy-able) */
   readonly agents = signal<UIAgent[]>([
     {
       id: 1,

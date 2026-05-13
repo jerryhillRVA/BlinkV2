@@ -78,7 +78,7 @@ const DOMAIN_TO_MOCK_FEATURE: Record<DataDomain, string> = {
 export class StrategyResearchStateService {
   private readonly api = inject(WorkspaceSettingsApiService);
   private readonly mockData = inject(MockDataService);
-
+  /* v8 ignore next 3 — V8's function-call-throws branches on input()/signal() declarations are unreachable (Angular class-field init time; ESM exports not spy-able) */
   readonly workspaceId = signal('');
   readonly loading = signal(false);
   readonly saving = signal(false);
@@ -89,6 +89,7 @@ export class StrategyResearchStateService {
   private rawSegments: AudienceSegmentContract[] = [];
 
   // Mapped frontend signals
+  /* v8 ignore next 1 — V8's function-call-throws branches on input()/signal() declarations are unreachable (Angular class-field init time; ESM exports not spy-able) */
   readonly brandVoice = signal<BrandVoiceData>({
     missionStatement: '',
     voiceAttributes: [],
@@ -96,6 +97,7 @@ export class StrategyResearchStateService {
     platformToneAdjustments: [],
     vocabulary: { preferred: [], avoid: [] },
   });
+  /* v8 ignore next 11 — V8's function-call-throws branches on input()/signal() declarations are unreachable (Angular class-field init time; ESM exports not spy-able) */
   readonly objectives = signal<BusinessObjective[]>([]);
   readonly pillars = signal<ContentPillar[]>([]);
   readonly segments = signal<AudienceSegment[]>([]);

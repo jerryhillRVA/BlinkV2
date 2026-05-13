@@ -85,6 +85,7 @@ export const PLATFORM_OPTIONS: { value: Platform; label: string }[] = [
   { value: 'tiktok', label: 'TikTok' },
   { value: 'facebook', label: 'Facebook' },
   { value: 'linkedin', label: 'LinkedIn' },
+  { value: 'x', label: 'X' },
 ];
 
 export const PLATFORM_CONTENT_TYPES: Record<Platform, { value: ContentType; label: string }[]> = {
@@ -121,6 +122,11 @@ export const PLATFORM_CONTENT_TYPES: Record<Platform, { value: ContentType; labe
     { value: 'ln-document', label: 'Document' },
     { value: 'ln-article', label: 'Article' },
     { value: 'ln-video', label: 'Video' },
+  ],
+  x: [
+    { value: 'tweet', label: 'Tweet' },
+    { value: 'thread', label: 'Thread' },
+    { value: 'quote', label: 'Quote' },
   ],
 };
 

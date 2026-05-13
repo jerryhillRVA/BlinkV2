@@ -57,6 +57,11 @@ const CANONICAL_TO_CONTENT_TYPE: Record<
     LINK_POST: 'ln-text-post',
     DOCUMENT_CAROUSEL_PDF: 'ln-document',
   },
+  x: {
+    TEXT_POST: 'tweet',
+    LINK_POST: 'tweet',
+    IMAGE_SINGLE: 'tweet',
+  },
   tbd: {
     VIDEO_SHORT_VERTICAL: 'reel',
     IMAGE_SINGLE: 'feed-post',

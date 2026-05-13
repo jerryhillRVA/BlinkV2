@@ -98,16 +98,15 @@ export class ContentStateService {
   // Playwright's page.route mocks (which only intercept browser requests).
   // Letting the client always fetch keeps tests + dev mode coherent.
   private readonly platformId = inject(PLATFORM_ID);
-
+  /* v8 ignore next 6 — V8's function-call-throws branches on input()/signal() declarations are unreachable (Angular class-field init time; ESM exports not spy-able) */
   readonly workspaceId = signal('');
   readonly loading = signal(false);
   readonly saving = signal(false);
-
   readonly indexEntries = signal<ContentItemsIndexEntryContract[]>([]);
   readonly archiveIndexEntries = signal<ContentItemsIndexEntryContract[]>([]);
   private readonly fullItemCacheSignal = signal<Record<string, ContentItem>>({});
   private archiveLoaded = false;
-
+  /* v8 ignore next 3 — V8's function-call-throws branches on input()/signal() declarations are unreachable (Angular class-field init time; ESM exports not spy-able) */
   readonly pillars = signal<ContentPillar[]>([]);
   readonly segments = signal<AudienceSegment[]>([]);
   readonly businessObjectives = signal<BusinessObjectiveContract[]>([]);

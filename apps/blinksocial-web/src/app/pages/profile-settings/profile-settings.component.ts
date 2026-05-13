@@ -14,7 +14,7 @@ export class ProfileSettingsComponent {
   currentPassword = '';
   newPassword = '';
   confirmPassword = '';
-
+  /* v8 ignore next 2 — V8's function-call-throws branches on input()/signal() declarations are unreachable (Angular class-field init time; ESM exports not spy-able) */
   readonly passwordMessage = signal<{ type: 'success' | 'error'; text: string } | null>(null);
   readonly passwordLoading = signal(false);
 

@@ -1,0 +1,60 @@
+<div class="keyword-input" [class.is-disabled]="disabled()">
+  <input
+    type="text"
+    class="kw-input"
+    [placeholder]="placeholder()"
+    aria-label="Add a keyword"
+    [readOnly]="disabled()"
+    [ngModel]="draft()"
+    (ngModelChange)="draft.set($event)"
+    (keydown)="onKeydown($event)"
+  />
+
+  @if (keywords().length > 0) {
+    <ul class="chip-list" role="list" [attr.aria-label]="'Keywords: ' + keywords().length">
+      @for (kw of keywords(); track kw) {
+        <li class="chip">
+          <span class="chip-text">{{ kw }}</span>
+          <button
+            type="button"
+            class="chip-remove"
+            [disabled]="disabled()"
+            [attr.aria-label]="'Remove keyword ' + kw"
+            (click)="onRemove(kw)"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="10"
+              height="10"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="3"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              aria-hidden="true"
+            >
+              <path d="M18 6 6 18" />
+              <path d="m6 6 12 12" />
+            </svg>
+          </button>
+        </li>
+      }
+    </ul>
+  }
+
+  @if (aiSuggestions().length > 0) {
+    <div class="suggestions" aria-label="AI keyword suggestions">
+      @for (s of aiSuggestions(); track s) {
+        <button
+          type="button"
+          class="suggestion-chip"
+          [disabled]="disabled() || keywords().includes(s)"
+          (click)="onSuggestion(s)"
+        >
+          {{ s }}
+        </button>
+      }
+    </div>
+  }
+</div>

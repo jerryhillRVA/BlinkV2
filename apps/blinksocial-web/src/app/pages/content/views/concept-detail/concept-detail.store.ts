@@ -31,7 +31,7 @@ import type {
 export class ConceptDetailStore {
   private readonly state = inject(ContentStateService);
   private readonly destroyRef = inject(DestroyRef);
-
+  /* v8 ignore next 1 — V8's function-call-throws branches on input()/signal() declarations are unreachable (Angular class-field init time; ESM exports not spy-able) */
   private readonly _itemId = signal<string | null>(null);
 
   readonly item = computed<ContentItem | null>(
@@ -40,7 +40,7 @@ export class ConceptDetailStore {
   readonly pillars = this.state.pillars;
   readonly segments = this.state.segments;
   readonly businessObjectives = this.state.businessObjectives;
-
+  /* v8 ignore next 3 — V8's function-call-throws branches on input()/signal() declarations are unreachable (Angular class-field init time; ESM exports not spy-able) */
   readonly isAssistingDescription = signal(false);
   readonly isAssistingHook = signal(false);
   readonly moveDialogOpen = signal(false);

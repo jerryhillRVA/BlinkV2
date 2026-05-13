@@ -53,6 +53,7 @@ const PLATFORM_LABELS: Record<PlatformContract, string> = {
   youtube: 'YouTube',
   facebook: 'Facebook',
   linkedin: 'LinkedIn',
+  x: 'X',
   tbd: 'TBD',
 };
 
@@ -99,22 +100,20 @@ export class CalendarPageComponent implements OnInit {
   // Defer fetches until the browser hydrates — see ContentStateService for
   // the why; same SSR-vs-Playwright-mocks coherence concern.
   private readonly platformId = inject(PLATFORM_ID);
-
+  /* v8 ignore next 11 — V8's function-call-throws branches on input()/signal() declarations are unreachable (Angular class-field init time; ESM exports not spy-able) */
   readonly workspaceId = signal<string>('');
   readonly loading = signal(true);
   readonly loadError = signal<string | null>(null);
   readonly response = signal<CalendarResponseContract | null>(null);
-
   readonly viewMode = signal<CalendarViewMode>('month');
   readonly cursorDate = signal<Date>(new Date('2026-05-01T00:00:00.000Z'));
   readonly filter = signal<CalendarFilterState>({ ...EMPTY_FILTER_STATE });
   readonly upcomingCollapsed = signal(false);
   readonly filtersOpen = signal(false);
-
   readonly peekEvent = signal<CalendarEventView | null>(null);
   readonly peekAnchor = signal<{ x: number; y: number; width: number; height: number } | null>(null);
   private peekCloseTimer: ReturnType<typeof setTimeout> | null = null;
-
+  /* v8 ignore next 1 — V8's function-call-throws branches on input()/signal() declarations are unreachable (Angular class-field init time; ESM exports not spy-able) */
   readonly transitioning = signal(false);
   readonly activeFilterCount = computed(() => {
     const f = this.filter();

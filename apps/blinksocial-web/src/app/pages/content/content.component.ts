@@ -31,6 +31,7 @@ export class ContentComponent {
   private readonly destroyRef = inject(DestroyRef);
   protected readonly stateService = inject(ContentStateService);
   workspaceId = '';
+  /* v8 ignore next 4 — V8's function-call-throws branches on input()/signal() declarations are unreachable (Angular class-field init time; ESM exports not spy-able) */
   readonly activeView = signal<ContentView>('overview');
   readonly transitioning = signal(false);
   readonly showCreate = signal(false);

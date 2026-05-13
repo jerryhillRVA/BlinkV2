@@ -27,6 +27,7 @@ describe('InfluencerMarketingComponent', () => {
   };
 
   beforeEach(async () => {
+    /* v8 ignore next 2 — V8's function-call-throws branches on input()/signal() declarations are unreachable (Angular class-field init time; ESM exports not spy-able) */
     shortlistSignal = signal<ShortlistedInfluencer[]>([]);
     campaignsSignal = signal<InfluencerCampaign[]>([]);
     saveShortlist = vi.fn((data: ShortlistedInfluencer[]) => shortlistSignal.set(data));

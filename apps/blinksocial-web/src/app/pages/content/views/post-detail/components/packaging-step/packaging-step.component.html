@@ -1,0 +1,60 @@
+<section class="packaging-step" role="region" aria-label="Packaging builder">
+  @switch (platform()) {
+    @case ('instagram') {
+      <app-instagram-packaging
+        [value]="store.instagramPackaging()"
+        [disabled]="disabled()"
+        [isCarousel]="store.draft()?.mode === 'CAROUSEL'"
+        [contentType]="store.item()?.contentType ?? null"
+        [publishingMode]="store.publishingMode()"
+        [campaignName]="store.campaignName()"
+        [destinationUrl]="store.destinationUrl()"
+        [legalApprover]="store.legalApprover()"
+        (valueChange)="store.setInstagramPackaging($event)"
+        (publishingModeChange)="store.setPublishingMode($event)"
+        (campaignNameChange)="store.setCampaignName($event)"
+        (destinationUrlChange)="store.setDestinationUrl($event)"
+        (legalApproverChange)="store.setLegalApprover($event)"
+      />
+    }
+    @case ('tiktok') {
+      <app-tiktok-packaging
+        [value]="store.tiktokPackaging()"
+        [disabled]="disabled()"
+        (valueChange)="store.setTikTokPackaging($event)"
+      />
+    }
+    @case ('youtube') {
+      <app-youtube-packaging
+        [value]="store.youtubePackaging()"
+        [disabled]="disabled()"
+        (valueChange)="store.setYouTubePackaging($event)"
+      />
+    }
+    @case ('linkedin') {
+      <app-linkedin-packaging
+        [value]="store.linkedinPackaging()"
+        [disabled]="disabled()"
+        (valueChange)="store.setLinkedInPackaging($event)"
+      />
+    }
+    @case ('facebook') {
+      <app-facebook-packaging
+        [value]="store.facebookPackaging()"
+        [disabled]="disabled()"
+        [isCarousel]="store.draft()?.mode === 'CAROUSEL'"
+        (valueChange)="store.setFacebookPackaging($event)"
+      />
+    }
+    @case ('x') {
+      <app-x-packaging
+        [value]="store.xPackaging()"
+        [disabled]="disabled()"
+        (valueChange)="store.setXPackaging($event)"
+      />
+    }
+    @default {
+      <app-packaging-builder-placeholder [platform]="platform()" />
+    }
+  }
+</section>

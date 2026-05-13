@@ -31,7 +31,6 @@ export class OutreachTabComponent {
 
   /* v8 ignore start */
   readonly initialInfluencer = input<ShortlistedInfluencer | null>(null);
-
   readonly selectedHandle = signal<string>('');
   readonly selectedObjectiveId = signal<string>('');
   readonly selectedPlatform = signal<Platform | ''>('');

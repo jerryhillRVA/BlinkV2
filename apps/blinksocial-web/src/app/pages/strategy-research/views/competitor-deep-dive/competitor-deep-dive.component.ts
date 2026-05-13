@@ -22,6 +22,7 @@ export class CompetitorDeepDiveComponent {
   private readonly toast = inject(ToastService);
 
   readonly competitors = this.stateService.competitorInsights;
+  /* v8 ignore next 6 — V8's function-call-throws branches on input()/signal() declarations are unreachable (Angular class-field init time; ESM exports not spy-able) */
   readonly showAddForm = signal(false);
   readonly intelOpenIds = signal<Set<string>>(new Set());
   readonly runningIntelIds = signal<Set<string>>(new Set());

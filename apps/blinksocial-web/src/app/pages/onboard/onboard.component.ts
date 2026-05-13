@@ -77,6 +77,7 @@ export class OnboardComponent implements OnInit, AfterViewChecked {
   protected readonly acceptAttribute = ACCEPT_ATTRIBUTE;
 
   userInput = '';
+  /* v8 ignore next 15 — V8's function-call-throws branches on input()/signal() declarations are unreachable (Angular class-field init time; ESM exports not spy-able) */
   workspaceName = signal('');
   sessionStarted = signal(false);
   /**

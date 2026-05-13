@@ -15,7 +15,7 @@
   flex-direction: column;
   gap: 6px;
   padding: 12px;
-  background: #fff;
+  background: var(--blink-surface);
   border: 1px solid var(--blink-outline-variant);
   border-radius: 8px;
 }
@@ -49,25 +49,25 @@
   align-items: center;
   gap: 6px;
   padding: 4px 10px;
-  background: #fff;
+  background: var(--blink-surface);
   // Border + text are tuned to match the prototype's "Attach file"
   // button exactly. The previous values used the design-token
   // outline-variant (#f3f4f6) + on-surface-medium (#666) which were
   // both noticeably lighter than the prototype's gray-200/gray-600.
-  border: 1px solid #e5e7eb; // gray-200
+  border: 1px solid var(--blink-outline-variant); // gray-200
   border-radius: 8px;
   font-size: var(--blink-label-small);
   font-weight: 600;
-  color: #4b5563; // gray-600
+  color: var(--blink-on-surface-secondary); // gray-600
   cursor: pointer;
   transition: background-color 120ms ease, border-color 120ms ease, color 120ms ease;
   line-height: 1.2;
   white-space: nowrap;
 
   &:hover:not(:disabled):not(.is-disabled) {
-    background: #f9fafb;
+    background: var(--blink-surface-container-low);
     border-color: #d4d4d8; // gray-300
-    color: #1f2937; // gray-800
+    color: var(--blink-on-surface-label); // gray-800
   }
 
   &:focus-within {
@@ -201,7 +201,7 @@
 }
 
 .shot-asset-zone--empty {
-  background: #fff;
+  background: var(--blink-surface);
   border: 1px dashed #d1d5db; // gray-300
 }
 
@@ -218,7 +218,7 @@
   align-items: center;
   gap: 6px;
   padding: 28px 16px;
-  background: #f9fafb;
+  background: var(--blink-surface-container-low);
   border: 1px dashed var(--blink-outline-dashed);
   border-radius: 8px;
   text-align: center;
@@ -263,7 +263,7 @@
   flex-direction: column;
   gap: 8px;
   padding: 10px 12px;
-  background: #f9fafb;
+  background: var(--blink-surface-container-low);
   border: 1px solid var(--blink-outline-variant);
   border-radius: 8px;
 }
@@ -298,7 +298,7 @@
   appearance: none;
   -webkit-appearance: none;
   padding: 0 22px 0 10px;
-  background-color: #f3f4f6;
+  background-color: var(--blink-input-bg-dark);
   background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><polyline points='6 9 12 15 18 9'/></svg>");
   background-repeat: no-repeat;
   background-position: right 8px center;
@@ -330,7 +330,7 @@
   width: 56px;
   padding: 0 8px;
   text-align: center;
-  background: #f3f4f6;
+  background: var(--blink-input-bg-dark);
   border: none;
   border-radius: 6px;
   font-size: var(--blink-label-tiny);
@@ -375,7 +375,7 @@
   transition: background-color 120ms ease, color 120ms ease;
 
   &:hover:not(:disabled) {
-    background: #fff;
+    background: var(--blink-surface);
     color: var(--blink-on-surface-strong);
   }
 
@@ -398,7 +398,7 @@
   width: 100%;
   min-height: 52px;
   padding: 8px 10px;
-  background: #f3f4f6;
+  background: var(--blink-input-bg-dark);
   border: none;
   border-radius: 6px;
   font: inherit;

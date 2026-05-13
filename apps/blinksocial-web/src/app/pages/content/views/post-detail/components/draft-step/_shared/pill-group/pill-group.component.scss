@@ -16,7 +16,7 @@
   font-size: var(--blink-label-tiny);
   font-weight: 600;
   letter-spacing: 0.02em;
-  background: #fff;
+  background: var(--blink-surface);
   color: var(--blink-on-surface-muted);
   border: 1px solid var(--blink-outline-variant);
   cursor: pointer;

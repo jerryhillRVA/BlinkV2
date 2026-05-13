@@ -1,0 +1,66 @@
+{
+  "id": "post9",
+  "stage": "post",
+  "status": "in-progress",
+  "title": "The hardest part of training nervous system",
+  "description": "Short-form X tweet on why the first 90 seconds of any practice are the most leveraged for nervous system regulation.",
+  "pillarIds": ["p2"],
+  "segmentIds": ["s5"],
+  "tags": ["nervoussystem", "x", "training"],
+  "owner": "user-sarah",
+  "hook": "The first 90 seconds of any practice matter more than the next 30 minutes.",
+  "objective": "awareness",
+  "platform": "x",
+  "contentType": "tweet",
+  "cta": { "type": "follow", "text": "Follow for daily applied nervous-system reps." },
+  "keyMessage": "The opening 90 seconds are where regulation actually happens.",
+  "tonePreset": "authoritative",
+  "claimsFlag": false,
+  "riskLevel": "low",
+  "scheduledDate": "2026-05-30",
+  "scheduledAt": "2026-05-30T14:00:00Z",
+  "briefApproved": true,
+  "briefApprovedAt": "2026-05-03T11:00:00Z",
+  "briefApprovedBy": "user-sarah",
+  "createdAt": "2026-04-30T09:00:00Z",
+  "updatedAt": "2026-05-04T14:30:00Z",
+  "conceptId": "concept3",
+  "parentConceptId": "concept3",
+  "production": {
+    "productionStep": "packaging",
+    "brief": {
+      "strategy": {
+        "objective": "awareness",
+        "audienceSegmentIds": ["s5"],
+        "pillarIds": ["p2"],
+        "keyMessage": "The opening 90 seconds are where regulation actually happens.",
+        "ctaType": "follow",
+        "ctaText": "Follow for daily applied nervous-system reps.",
+        "tonePreset": "authoritative"
+      },
+      "creativePlan": {
+        "hook": "The first 90 seconds of any practice matter more than the next 30 minutes.",
+        "storyArc": "single-insight"
+      },
+      "compliance": { "containsClaims": false, "disclosureNeeded": false },
+      "approved": true,
+      "canonicalType": "TEXT_POST",
+      "hasTalent": false,
+      "hasMusic": false,
+      "needsAccessibility": false,
+      "publishingMode": "ORGANIC"
+    },
+    "draft": {
+      "mode": "TEXT",
+      "text": {
+        "caption": "The first 90 seconds of any practice matter more than the next 30 minutes.\n\nThat's when you signal to your nervous system: this is a place to settle.\n\nBlow that window and the rest of the session is rehearsal of vigilance.",
+        "hashtags": []
+      }
+    },
+    "sources": [],
+    "outputs": {},
+    "assets": [],
+    "tasks": [],
+    "versions": []
+  }
+}

@@ -1,0 +1,63 @@
+<section class="tt-packaging" aria-label="TikTok packaging">
+  <div class="field">
+    <label class="field-label" for="tt-caption">Caption</label>
+    <textarea
+      id="tt-caption"
+      class="caption-area"
+      rows="6"
+      [value]="caption()"
+      [readOnly]="disabled()"
+      [attr.maxlength]="captionMax"
+      (input)="onCaptionInput($event)"
+    ></textarea>
+    <p
+      class="char-counter"
+      [class.warn]="captionState() === 'warn'"
+      [class.fail]="captionState() === 'fail'"
+      aria-live="polite"
+    >
+      {{ caption().length }} / {{ captionMax }}
+    </p>
+  </div>
+
+  <div class="field">
+    <span class="field-label">Hashtags</span>
+    <app-hashtag-input
+      [hashtags]="hashtags()"
+      [disabled]="disabled()"
+      (hashtagsChange)="onHashtagsChange($event)"
+    />
+  </div>
+
+  <div class="field">
+    <label class="field-label" for="tt-link">Link in bio</label>
+    <input
+      id="tt-link"
+      type="url"
+      class="link-input"
+      placeholder="https://example.com"
+      [value]="link()"
+      [readOnly]="disabled()"
+      (input)="onLinkInput($event)"
+    />
+  </div>
+
+  <app-utm-builder [utm]="utm()" [disabled]="disabled()" (utmChange)="onUtmChange($event)" />
+
+  <div class="field">
+    <span class="field-label">Audio</span>
+    <app-audio-picker
+      platform="tiktok"
+      [track]="audio()"
+      [disabled]="disabled()"
+      (trackChange)="onAudioChange($event)"
+    />
+  </div>
+
+  <app-platform-controls
+    platform="tiktok"
+    [controls]="controls()"
+    [disabled]="disabled()"
+    (controlsChange)="onControlsChange($event)"
+  />
+</section>

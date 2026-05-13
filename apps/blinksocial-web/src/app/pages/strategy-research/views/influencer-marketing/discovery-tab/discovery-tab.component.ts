@@ -36,7 +36,6 @@ export class DiscoveryTabComponent {
 
   /* v8 ignore start */
   readonly outreach = output<InfluencerProfile>();
-
   readonly keyword = signal('');
   readonly platformFilters = signal<Platform[]>([]);
   readonly tierFilters = signal<InfluencerTier[]>([]);

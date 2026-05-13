@@ -22,6 +22,7 @@ describe('ShortlistTabComponent', () => {
   };
 
   beforeEach(async () => {
+    /* v8 ignore next 1 — V8's function-call-throws branches on input()/signal() declarations are unreachable (Angular class-field init time; ESM exports not spy-able) */
     shortlistSignal = signal<ShortlistedInfluencer[]>([sample]);
     saveSpy = vi.fn((data: ShortlistedInfluencer[]) => shortlistSignal.set(data));
     toastSpy = { showSuccess: vi.fn(), showError: vi.fn() };

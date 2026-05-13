@@ -36,6 +36,7 @@ export class TabTeamComponent {
   }));
 
   // Add user form state
+  /* v8 ignore next 8 — V8's function-call-throws branches on input()/signal() declarations are unreachable (Angular class-field init time; ESM exports not spy-able) */
   readonly showAddForm = signal(false);
   readonly addLoading = signal(false);
   readonly addError = signal<string | null>(null);

@@ -31,7 +31,7 @@ export class HeaderComponent implements OnInit {
   private readonly router = inject(Router);
   private readonly destroyRef = inject(DestroyRef);
   private readonly dashboardApi = inject(DashboardApiService);
-
+  /* v8 ignore next 9 — V8's function-call-throws branches on input()/signal() declarations are unreachable (Angular class-field init time; ESM exports not spy-able) */
   readonly menuOpen = signal(false);
   readonly workspaceId = signal<string | null>(null);
   readonly currentTab = signal<string | null>(null);

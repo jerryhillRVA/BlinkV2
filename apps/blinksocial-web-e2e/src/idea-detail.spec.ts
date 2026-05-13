@@ -1,6 +1,7 @@
 import { test, expect, type Page, type Request } from '@playwright/test';
 import { mockAuthenticatedUser } from './helpers/login';
 import { mockHiveContent } from './helpers/content-mocks';
+import { waitForCssToSettle } from './helpers/css-stability';
 
 const SHOTS_DIR = 'test-results/idea-detail-106';
 
@@ -148,20 +149,10 @@ test.describe('Idea detail header typography', () => {
     // doesn't always promote the element to the :focus state for CSS
     // matching, but a real mouse click reliably does in every browser.
     await textarea.click();
-    // The :focus background transitions in over 150ms. Under parallel-run
-    // load WebKit can race the assertion; poll until the computed bg
-    // settles to the focused color (rgb(237, 239, 242)) before reading
-    // the rest of the computed styles below.
-    await page.waitForFunction(() => {
-      const el = document.querySelector(
-        'app-idea-detail textarea.detail-description-input',
-      );
-      if (!el) return false;
-      const m = getComputedStyle(el).backgroundColor.match(
-        /^rgba?\((\d+),\s*(\d+),\s*(\d+)/,
-      );
-      return m ? Math.abs(parseInt(m[1], 10) - 237) <= 2 : false;
-    }, null, { timeout: 2000 });
+    // Wait for the focus-driven background transition to settle rather
+    // than a fixed sleep — adapts to actual transition speed. Helper
+    // caps at 2s and throws on overflow.
+    await waitForCssToSettle(textarea, 'background-color');
     const computed = await textarea.evaluate((el) => {
       const cs = getComputedStyle(el);
       return {
@@ -665,8 +656,9 @@ test.describe('Idea detail right column (#106)', () => {
     await segChips.nth(0).click();
     await expect(segChips.nth(0)).toHaveClass(/is-active/);
     await page.mouse.move(0, 0); // clear hover
-    // .chip has transition: border-color 0.15s; wait past it before reading.
-    await page.waitForTimeout(250);
+    // .chip has transition: border-color 0.15s; wait until it settles
+    // (replaces a fixed 250ms sleep — adapts to actual transition speed).
+    await waitForCssToSettle(segChips.nth(0), 'border-top-color');
 
     const styles = await segChips.nth(0).evaluate((el) => {
       const cs = getComputedStyle(el);
@@ -809,10 +801,7 @@ test.describe('Idea detail right column (#106)', () => {
       await page.mouse.move(0, 0);
     }
     await firstPillar.hover();
-    await page.waitForTimeout(250); // past the 150ms border-color transition
-    const pillarHoverColor = await firstPillar.evaluate(
-      (el) => getComputedStyle(el).borderTopColor,
-    );
+    const pillarHoverColor = await waitForCssToSettle(firstPillar, 'border-top-color');
     // #d94e33 = rgb(217, 78, 51); allow ±15 for color-rendering pipeline differences.
     expectRgbNear(pillarHoverColor, [217, 78, 51], 15);
 
@@ -825,10 +814,7 @@ test.describe('Idea detail right column (#106)', () => {
       await page.mouse.move(0, 0);
     }
     await firstSeg.hover();
-    await page.waitForTimeout(250); // past the 150ms border-color transition
-    const segHoverColor = await firstSeg.evaluate(
-      (el) => getComputedStyle(el).borderTopColor,
-    );
+    const segHoverColor = await waitForCssToSettle(firstSeg, 'border-top-color');
     expectRgbNear(segHoverColor, [37, 99, 235], 15);
   });
 });

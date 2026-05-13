@@ -1,0 +1,85 @@
+<section class="yt-packaging" aria-label="YouTube packaging">
+  <div class="field">
+    <label class="field-label" for="yt-title">Title</label>
+    <input
+      id="yt-title"
+      type="text"
+      class="title-input"
+      [value]="title()"
+      [readOnly]="disabled()"
+      [attr.maxlength]="titleMax"
+      (input)="onTitleInput($event)"
+    />
+    <p
+      class="char-counter"
+      [class.warn]="titleState() === 'warn'"
+      [class.fail]="titleState() === 'fail'"
+      aria-live="polite"
+    >
+      {{ title().length }} / {{ titleMax }}
+    </p>
+  </div>
+
+  <div class="field">
+    <label class="field-label" for="yt-description">Description</label>
+    <textarea
+      id="yt-description"
+      class="description-area"
+      rows="8"
+      [value]="description()"
+      [readOnly]="disabled()"
+      [attr.maxlength]="descriptionMax"
+      (input)="onDescriptionInput($event)"
+    ></textarea>
+    <p
+      class="char-counter"
+      [class.warn]="descriptionState() === 'warn'"
+      [class.fail]="descriptionState() === 'fail'"
+      aria-live="polite"
+    >
+      {{ description().length }} / {{ descriptionMax }}
+    </p>
+  </div>
+
+  <div class="field">
+    <span class="field-label">Tags / Keywords</span>
+    <app-keyword-input
+      [keywords]="tags()"
+      placeholder="Add a tag and press Enter"
+      [disabled]="disabled()"
+      (keywordsChange)="onTagsChange($event)"
+    />
+  </div>
+
+  <div class="field">
+    <label class="field-label" for="yt-category">Category</label>
+    <select
+      id="yt-category"
+      class="category-select"
+      [disabled]="disabled()"
+      (change)="onCategoryChange($event)"
+    >
+      <option value="" [selected]="categoryId() === ''">— Select a category —</option>
+      @for (c of categories; track c.value) {
+        <option [value]="c.value" [selected]="categoryId() === c.value">{{ c.label }}</option>
+      }
+    </select>
+  </div>
+
+  <div class="field">
+    <span class="field-label">Thumbnail</span>
+    <app-asset-uploader
+      label="Upload thumbnail"
+      [filename]="thumbnailRef()"
+      [disabled]="disabled()"
+      (fileChange)="onThumbnailChange($event)"
+    />
+  </div>
+
+  <app-platform-controls
+    platform="youtube"
+    [controls]="controls()"
+    [disabled]="disabled()"
+    (controlsChange)="onControlsChange($event)"
+  />
+</section>

@@ -1,0 +1,203 @@
+:host {
+  display: block;
+}
+
+.ig-packaging {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+// Card primitive — mirrors the prototype's <Card border-gray-100> wrapping.
+// Tight padding + soft outline + rounded corners. Cards stack with a small
+// gap between (the prototype uses `space-y-1.5` = 6px).
+.pkg-card {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px;
+  background: var(--blink-surface);
+  border: 1px solid var(--blink-outline-variant);
+  border-radius: 12px;
+
+  // Some cards use tighter padding (matches prototype's px-2.5 py-2 vs
+  // p-3 on different cards). The Publishing Mode card is one of these.
+  &--tight {
+    padding: 8px 10px;
+    gap: 6px;
+  }
+
+  // Platform Metadata uses px-3 pt-2 pb-2 (12 horizontal, 8 vertical).
+  &--snug {
+    padding: 8px 12px;
+    gap: 8px;
+  }
+}
+
+.card-label {
+  font-size: var(--blink-label-small);
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--blink-on-surface-muted);
+
+  // Publishing Mode label sits directly above the pills — prototype uses
+  // a `block mb-1.5` here (6px bottom margin via the parent's gap).
+  &--pubmode {
+    display: block;
+  }
+}
+
+// ── Publishing Mode (interactive — matches prototype pixel-for-pixel) ─
+// Prototype: <div className="flex gap-1 p-0.5 bg-gray-100/80 rounded-lg">
+//   - container: 2px padding, 4px gap, gray-100 @ 80%, rounded-lg (8px)
+//   - each pill: flex-1, px-2 py-1, rounded-md (6px), 10px font-bold
+//   - active organic: white bg + shadow-sm + gray-900 text
+//   - active paid:    amber-500 bg + shadow-sm + white text + Zap icon
+//   - inactive:       text-gray-500, hover:text-gray-700
+.mode-toggle {
+  display: flex;
+  gap: 4px;
+  padding: 2px;
+  background: rgba(243, 244, 246, 0.8); // gray-100/80 — prototype literal
+  border-radius: 8px;
+}
+
+.mode-pill {
+  flex: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 4px 8px;
+  border: none;
+  background: transparent;
+  border-radius: 6px;
+  font-family: inherit;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0;
+  color: var(--blink-on-surface-faint); // gray-500
+  cursor: pointer;
+  transition: background-color 120ms ease, color 120ms ease, box-shadow 120ms ease;
+
+  &:hover:not(:disabled):not(.is-active) {
+    color: var(--blink-on-surface-secondary); // gray-700
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--blink-brand-primary);
+    outline-offset: 2px;
+  }
+
+  &:disabled {
+    cursor: not-allowed;
+    opacity: 0.6;
+  }
+
+  &.is-active {
+    background: var(--blink-surface);
+    color: var(--blink-on-surface-strong); // gray-900
+    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05); // shadow-sm
+  }
+
+  &--paid.is-active {
+    background: #f59e0b; // amber-500 — prototype literal
+    color: #fff;
+    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  }
+}
+
+// ── Field groups (caption + hashtags inside Platform Metadata) ───────
+.field-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.field-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-height: 28px;
+}
+
+.field-label-row {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+// Caption field label matches the prototype's 10px gray-500
+// uppercase tracking-wider — same look as the card-level label.
+.field-label {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--blink-on-surface-faint); // gray-500
+}
+
+.field-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-height: 14px;
+  margin-top: 2px;
+}
+
+// Soft-input look: matches prototype's bg-[#f3f4f6] border-none.
+// Solid fill (not the transparent container token — that bleeds parent
+// colors; see project_transparent_surface_tokens.md).
+.caption-area,
+.link-input {
+  width: 100%;
+  font-family: inherit;
+  background: var(--blink-input-bg-dark);
+  border: 1px solid transparent;
+  border-radius: 8px;
+  color: var(--blink-on-surface);
+  outline: none;
+  transition: background-color 120ms ease, border-color 120ms ease;
+
+  &:focus-visible {
+    background: var(--blink-input-bg-focus, var(--blink-input-bg-dark));
+    border-color: var(--blink-outline);
+  }
+}
+
+// Caption — prototype: min-h-[80px] resize-none text-xs.
+// text-xs = 12px in tailwind defaults.
+.caption-area {
+  padding: 8px 12px;
+  resize: none;
+  min-height: 80px;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.link-input {
+  padding: 8px 12px;
+  height: 32px;
+  font-size: var(--blink-body-medium);
+}
+
+// Footer text — prototype: text-[9px] / text-[10px].
+.char-counter {
+  margin: 0;
+  font-size: 9px;
+  color: var(--blink-on-surface-tertiary); // gray-400
+
+  &.warn {
+    color: var(--blink-icon-orange);
+    font-weight: 600;
+  }
+
+  &.fail {
+    color: var(--blink-brand-primary);
+    font-weight: 700;
+  }
+}
+

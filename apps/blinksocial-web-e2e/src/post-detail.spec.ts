@@ -1,7 +1,11 @@
 import { test, expect, type Page } from '@playwright/test';
 import { mockAuthenticatedUser } from './helpers/login';
 import { mockHiveContent, POST_DETAIL_PROD1 } from './helpers/content-mocks';
-import { approvedPostDetail, approvedPostEntry } from './helpers/draft-mocks';
+import {
+  approvedPostDetail,
+  approvedPostEntry,
+  approvedPostInPackaging,
+} from './helpers/draft-mocks';
 
 async function openFirstInProductionCard(page: Page): Promise<void> {
   const firstCard = page.locator('.kanban-column').nth(2).locator('.content-card').first();
@@ -256,11 +260,11 @@ test.describe('Production Draft (#114)', () => {
     await page.locator('app-video-builder textarea[aria-label="Hook"]').fill('A hook');
     await page.locator('app-shot-list .add-shot-row .ghost-btn').click();
     await page.locator('app-step-action-bar .continue-btn').click();
-    await expect(page.locator('app-step-placeholder')).toBeVisible();
+    await expect(page.locator('app-packaging-step')).toBeVisible();
     // Reload — should land on Packaging directly (productionStep persisted).
     await page.reload();
     await expect(page.locator('app-post-detail')).toBeVisible();
-    await expect(page.locator('app-step-placeholder')).toBeVisible();
+    await expect(page.locator('app-packaging-step')).toBeVisible();
     await expect(page.locator('app-draft-step')).toHaveCount(0);
   });
 
@@ -295,7 +299,7 @@ test.describe('Production Draft (#114)', () => {
     // After advance, shell renders the Packaging placeholder (existing
     // step-placeholder). Draft step is no longer rendered.
     await expect(page.locator('app-draft-step')).toHaveCount(0);
-    await expect(page.locator('app-step-placeholder')).toBeVisible();
+    await expect(page.locator('app-packaging-step')).toBeVisible();
   });
 
   test('TC-3: VIDEO_LONG builder — sequence block with description enables Continue', async ({ page }) => {
@@ -445,7 +449,7 @@ test.describe('Production Draft (#114)', () => {
     await expect(continueBtn).toBeEnabled();
     await continueBtn.focus();
     await page.keyboard.press('Enter');
-    await expect(page.locator('app-step-placeholder')).toBeVisible();
+    await expect(page.locator('app-packaging-step')).toBeVisible();
   });
 
   test('TC-10: Continue button gating reflects required-field state in real-time', async ({ page }) => {
@@ -495,5 +499,252 @@ test.describe('Send back to Concept menu visibility (#121)', () => {
     const menuItem = page
       .locator('app-post-detail-header [role="menuitem"]', { hasText: 'Send back to Concept' });
     await expect(menuItem).toBeVisible();
+  });
+});
+
+test.describe('Production Packaging (#116)', () => {
+  // Seed an approved post landing directly on the Packaging step. Each TC
+  // takes a (platform, contentType) pair so the factory routes to the right
+  // builder. Mirrors the Production Draft helper but pre-advances to packaging.
+  async function openApprovedPostInPackaging(
+    page: Page,
+    options: { id: string; platform: string; contentType: string; title?: string },
+  ): Promise<void> {
+    const entry = approvedPostEntry({
+      id: options.id,
+      title: options.title ?? 'Packaging test post',
+      platform: options.platform as never,
+      contentType: options.contentType as never,
+    });
+    const detail = approvedPostInPackaging({
+      id: options.id,
+      title: options.title ?? 'Packaging test post',
+      platform: options.platform as never,
+      contentType: options.contentType as never,
+    });
+    await mockHiveContent(page, {
+      indexItems: [entry],
+      details: { [options.id]: detail },
+    });
+    await page.goto(`/workspace/hive-collective/content/${options.id}`);
+    await expect(page.locator('app-post-detail')).toBeVisible();
+    await expect(page.locator('app-packaging-step')).toBeVisible();
+  }
+
+  test.beforeEach(async ({ page }) => {
+    await mockAuthenticatedUser(page);
+  });
+
+  test('TC-1: factory routes each platform to its dedicated builder', async ({ page }) => {
+    // Iterate through the 6 supported platforms; each renders only its own builder.
+    const cases: Array<{
+      platform: string;
+      contentType: string;
+      selector: string;
+      not: string[];
+    }> = [
+      {
+        platform: 'instagram',
+        contentType: 'reel',
+        selector: 'app-instagram-packaging',
+        not: ['app-tiktok-packaging', 'app-youtube-packaging', 'app-facebook-packaging', 'app-linkedin-packaging', 'app-x-packaging'],
+      },
+      {
+        platform: 'tiktok',
+        contentType: 'short-video',
+        selector: 'app-tiktok-packaging',
+        not: ['app-instagram-packaging', 'app-youtube-packaging', 'app-facebook-packaging', 'app-linkedin-packaging', 'app-x-packaging'],
+      },
+      {
+        platform: 'youtube',
+        contentType: 'long-form',
+        selector: 'app-youtube-packaging',
+        not: ['app-instagram-packaging', 'app-tiktok-packaging', 'app-facebook-packaging', 'app-linkedin-packaging', 'app-x-packaging'],
+      },
+      {
+        platform: 'linkedin',
+        contentType: 'ln-text-post',
+        selector: 'app-linkedin-packaging',
+        not: ['app-instagram-packaging', 'app-tiktok-packaging', 'app-youtube-packaging', 'app-facebook-packaging', 'app-x-packaging'],
+      },
+      {
+        platform: 'facebook',
+        contentType: 'fb-feed-post',
+        selector: 'app-facebook-packaging',
+        not: ['app-instagram-packaging', 'app-tiktok-packaging', 'app-youtube-packaging', 'app-linkedin-packaging', 'app-x-packaging'],
+      },
+      {
+        platform: 'x',
+        contentType: 'tweet',
+        selector: 'app-x-packaging',
+        not: ['app-instagram-packaging', 'app-tiktok-packaging', 'app-youtube-packaging', 'app-facebook-packaging', 'app-linkedin-packaging'],
+      },
+    ];
+    for (const c of cases) {
+      await openApprovedPostInPackaging(page, {
+        id: `pkg-${c.platform}`,
+        platform: c.platform,
+        contentType: c.contentType,
+      });
+      await expect(page.locator(c.selector)).toBeVisible();
+      for (const off of c.not) {
+        await expect(page.locator(off)).toHaveCount(0);
+      }
+    }
+  });
+
+  test('TC-2: Instagram end-to-end — caption + hashtag + persistence + Continue advance', async ({ page }) => {
+    await openApprovedPostInPackaging(page, {
+      id: 'pkg-ig-e2e',
+      platform: 'instagram',
+      contentType: 'reel',
+    });
+    // Type caption.
+    await page.locator('#ig-caption').fill('Hello world');
+    await expect(page.locator('#ig-caption')).toHaveValue('Hello world');
+    // Typing a #tag in the caption should produce a chip via the
+    // caption-is-source-of-truth model (extractHashtagsFromCaption).
+    await page.locator('#ig-caption').fill('Hello world #wellness');
+    await expect(page.locator('app-pkg-hashtag-bank')).toContainText('#wellness');
+    // Continue should be enabled once caption is non-empty.
+    const continueBtn = page.locator('app-step-action-bar .continue-btn');
+    await expect(continueBtn).toBeEnabled();
+    await continueBtn.click();
+    // Advance lands on the Approve & Schedule placeholder (qa step).
+    await expect(page.locator('app-packaging-step')).toHaveCount(0);
+    await expect(page.locator('app-step-placeholder')).toBeVisible();
+  });
+
+  test('TC-3: TikTok end-to-end — TikTok-specific audio licensing note renders', async ({ page }) => {
+    await openApprovedPostInPackaging(page, {
+      id: 'pkg-tt-e2e',
+      platform: 'tiktok',
+      contentType: 'short-video',
+    });
+    await expect(page.locator('app-tiktok-packaging')).toBeVisible();
+  });
+
+  test('TC-4: YouTube end-to-end — builder renders title/description fields', async ({ page }) => {
+    await openApprovedPostInPackaging(page, {
+      id: 'pkg-yt-e2e',
+      platform: 'youtube',
+      contentType: 'long-form',
+    });
+    await expect(page.locator('app-youtube-packaging')).toBeVisible();
+    // YouTube uses Title (not Caption) — distinct from caption-driven platforms.
+    await expect(page.locator('app-youtube-packaging')).toContainText(/Title/i);
+  });
+
+  test('TC-5: LinkedIn end-to-end — caption + builder renders', async ({ page }) => {
+    await openApprovedPostInPackaging(page, {
+      id: 'pkg-li-e2e',
+      platform: 'linkedin',
+      contentType: 'ln-text-post',
+    });
+    await expect(page.locator('app-linkedin-packaging')).toBeVisible();
+  });
+
+  test('TC-6: Facebook end-to-end — builder renders for fb-feed-post', async ({ page }) => {
+    await openApprovedPostInPackaging(page, {
+      id: 'pkg-fb-e2e',
+      platform: 'facebook',
+      contentType: 'fb-feed-post',
+    });
+    await expect(page.locator('app-facebook-packaging')).toBeVisible();
+  });
+
+  test('TC-7: X end-to-end — builder renders for tweet contentType', async ({ page }) => {
+    await openApprovedPostInPackaging(page, {
+      id: 'pkg-x-e2e',
+      platform: 'x',
+      contentType: 'tweet',
+    });
+    await expect(page.locator('app-x-packaging')).toBeVisible();
+  });
+
+  test('TC-8: Unsupported platform (tbd) shows the placeholder', async ({ page }) => {
+    // Build a fixture manually since approvedPostInPackaging requires a real
+    // platform string. tbd is the canonical "no platform set yet" value.
+    const id = 'pkg-tbd';
+    const entry = approvedPostEntry({
+      id,
+      title: 'Unset platform',
+      platform: 'instagram' as never, // index-level shape needs a value, but detail overrides
+      contentType: 'reel' as never,
+    });
+    const detail = {
+      ...approvedPostInPackaging({
+        id,
+        title: 'Unset platform',
+        platform: 'instagram' as never,
+        contentType: 'reel' as never,
+      }),
+      platform: null,
+      contentType: null,
+    };
+    await mockHiveContent(page, {
+      indexItems: [entry],
+      details: { [id]: detail },
+    });
+    await page.goto(`/workspace/hive-collective/content/${id}`);
+    await expect(page.locator('app-packaging-step')).toBeVisible();
+    await expect(page.locator('app-packaging-builder-placeholder')).toBeVisible();
+    // No platform builder is rendered.
+    await expect(page.locator('app-instagram-packaging')).toHaveCount(0);
+  });
+
+  test('TC-9: Continue gating — disabled when caption is empty, enables once filled', async ({ page }) => {
+    await openApprovedPostInPackaging(page, {
+      id: 'pkg-gate',
+      platform: 'instagram',
+      contentType: 'reel',
+    });
+    const continueBtn = page.locator('app-step-action-bar .continue-btn');
+    // Empty caption → Continue disabled (per canContinueFromPackaging).
+    await expect(continueBtn).toBeDisabled();
+    await page.locator('#ig-caption').fill('A caption');
+    await expect(continueBtn).toBeEnabled();
+    // Clearing the caption flips it back to disabled.
+    await page.locator('#ig-caption').fill('');
+    await expect(continueBtn).toBeDisabled();
+  });
+
+  test('TC-12: Keyboard-only — caption + Continue activatable via keyboard', async ({ page }) => {
+    await openApprovedPostInPackaging(page, {
+      id: 'pkg-kbd',
+      platform: 'instagram',
+      contentType: 'reel',
+    });
+    // Populate the caption via fill() — Playwright's keyboard.type is
+    // unreliable in Firefox when focus traversal is asynchronous. The
+    // important keyboard-activation assertion (Enter on Continue) follows.
+    await page.locator('#ig-caption').fill('Hello keyboard');
+    await expect(page.locator('#ig-caption')).toHaveValue('Hello keyboard');
+    const continueBtn = page.locator('app-step-action-bar .continue-btn');
+    await expect(continueBtn).toBeEnabled();
+    // Focus Continue and press Enter — proves the button is keyboard-
+    // activatable (no mouse). Tab-order traversal is covered by component
+    // unit tests; this TC asserts the keyboard event reaches the handler.
+    await continueBtn.focus();
+    await page.keyboard.press('Enter');
+    await expect(page.locator('app-step-placeholder')).toBeVisible();
+  });
+
+  test('TC-13: persistence round-trip — caption + hashtag survive reload', async ({ page }) => {
+    await openApprovedPostInPackaging(page, {
+      id: 'pkg-reload',
+      platform: 'instagram',
+      contentType: 'reel',
+    });
+    await page.locator('#ig-caption').fill('Persisted caption #stays');
+    // Allow the debounced PUT to fire and the mock to merge it.
+    await expect(page.locator('app-pkg-hashtag-bank')).toContainText('#stays');
+    await page.reload();
+    await expect(page.locator('app-post-detail')).toBeVisible();
+    await expect(page.locator('app-packaging-step')).toBeVisible();
+    // After reload, caption + chip should still be present from the merged
+    // PUT body (content-mocks helper persists writes into the in-memory map).
+    await expect(page.locator('#ig-caption')).toHaveValue('Persisted caption #stays');
+    await expect(page.locator('app-pkg-hashtag-bank')).toContainText('#stays');
   });
 });

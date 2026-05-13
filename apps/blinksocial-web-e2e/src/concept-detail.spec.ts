@@ -1,6 +1,7 @@
 import { test, expect, type Page } from '@playwright/test';
 import { mockAuthenticatedUser } from './helpers/login';
 import { mockHiveContent, IDEA_ENTRY, CONCEPT_ENTRY } from './helpers/content-mocks';
+import { waitForCssToSettle } from './helpers/css-stability';
 
 async function openFirstConceptCard(page: Page): Promise<void> {
   const firstCard = page.locator('.kanban-column').nth(1).locator('.content-card').first();
@@ -179,7 +180,7 @@ test.describe('Concept detail right column (#110)', () => {
     }
     await allChips.nth(0).click();
     await page.mouse.move(0, 0);
-    await page.waitForTimeout(250);
+    await waitForCssToSettle(allChips.nth(0), 'border-top-color');
     const styles = await allChips.nth(0).evaluate((el) => {
       const cs = getComputedStyle(el);
       return { color: cs.color, backgroundColor: cs.backgroundColor, borderColor: cs.borderTopColor };
@@ -241,8 +242,7 @@ test.describe('Concept detail right column (#110)', () => {
       await page.mouse.move(0, 0);
     }
     await firstPillar.hover();
-    await page.waitForTimeout(250);
-    const pillarHoverBorder = await firstPillar.evaluate((el) => getComputedStyle(el).borderTopColor);
+    const pillarHoverBorder = await waitForCssToSettle(firstPillar, 'border-top-color');
     expectRgbNear(pillarHoverBorder, [217, 78, 51], 15);
 
     await page.mouse.move(0, 0);
@@ -252,8 +252,7 @@ test.describe('Concept detail right column (#110)', () => {
       await page.mouse.move(0, 0);
     }
     await firstSeg.hover();
-    await page.waitForTimeout(250);
-    const segHoverBorder = await firstSeg.evaluate((el) => getComputedStyle(el).borderTopColor);
+    const segHoverBorder = await waitForCssToSettle(firstSeg, 'border-top-color');
     expectRgbNear(segHoverBorder, [37, 99, 235], 15);
   });
 });

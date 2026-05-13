@@ -31,7 +31,7 @@ export class VideoLongBuilderComponent {
   protected readonly disabled = computed(
     () => !this.store.item()?.briefApproved,
   );
-
+  /* v8 ignore next 1 — V8's function-call-throws branches on input()/signal() declarations are unreachable (Angular class-field init time; ESM exports not spy-able) */
   protected readonly voiceoverOpen = signal(false);
   protected readonly types = SEQUENCE_TYPES;
   protected readonly durations = TARGET_DURATIONS;

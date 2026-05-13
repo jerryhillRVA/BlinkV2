@@ -16,7 +16,7 @@
   justify-content: space-between;
   width: 100%;
   padding: 10px 16px;
-  background: #f9fafb;
+  background: var(--blink-surface-container-low);
   border: none;
   border-bottom: 1px solid var(--blink-outline-variant);
   cursor: pointer;
@@ -24,7 +24,7 @@
   text-align: left;
 
   &:hover {
-    background: #f3f4f6;
+    background: var(--blink-input-bg-dark);
   }
 
   &:focus-visible {
@@ -83,13 +83,13 @@
   flex-direction: column;
   gap: 4px;
   padding: 10px 12px;
-  background: #fff;
+  background: var(--blink-surface);
   border: 1px solid var(--blink-outline-variant);
   border-radius: 8px;
   transition: background-color 120ms ease, border-color 120ms ease;
 
   &.is-active {
-    background: #f9fafb;
+    background: var(--blink-surface-container-low);
     border-color: #d4d4d8; // gray-300
   }
 }
@@ -140,7 +140,7 @@
     left: 1px;
     width: 14px;
     height: 14px;
-    background: #fff;
+    background: var(--blink-surface);
     border-radius: 50%;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
     transition: transform 160ms cubic-bezier(0.4, 0, 0.2, 1);

@@ -1,0 +1,259 @@
+:host {
+  display: block;
+}
+
+.pkg-hashtag-bank {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.bank-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-height: 28px;
+}
+
+.bank-label {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--blink-on-surface-faint); // gray-500 — prototype literal
+}
+
+.empty-state {
+  margin: 0;
+  font-size: 10px;
+  font-style: italic;
+  color: var(--blink-on-surface-tertiary); // gray-400 — prototype literal
+}
+
+// ── Chip row (selected hashtags) ─────────────────────────────────────
+// Prototype: flex flex-wrap gap-1, chips bg-gray-100 text-gray-700
+// rounded-full px-2 py-0.5 text-[10px]. The chips are NOT inside a
+// bordered container — they sit directly on the parent surface.
+.chip-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  background: var(--blink-input-bg-dark); // gray-100
+  color: var(--blink-on-surface-secondary); // gray-700
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 500;
+  line-height: 1.4;
+}
+
+.chip-text {
+  // Allow long hashtags to break — prototype lets them wrap.
+  word-break: break-all;
+}
+
+.chip-remove {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 14px;
+  height: 14px;
+  background: transparent;
+  border: none;
+  border-radius: 50%;
+  color: var(--blink-on-surface-tertiary); // gray-400
+  cursor: pointer;
+  padding: 0;
+
+  &:hover:not(:disabled) {
+    color: var(--blink-on-surface-secondary); // gray-700 (matches prototype's hover state)
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--blink-brand-primary);
+    outline-offset: 1px;
+  }
+
+  &:disabled {
+    cursor: not-allowed;
+    opacity: 0.5;
+  }
+}
+
+// ── Add-hashtag row (input + button beneath chips) ───────────────────
+.add-row {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.add-input {
+  flex: 1;
+  height: 28px;
+  padding: 0 10px;
+  font-family: inherit;
+  font-size: var(--blink-body-small);
+  background: var(--blink-input-bg-dark); // #f3f4f6 — matches prototype
+  border: 1px solid transparent;
+  border-radius: 6px;
+  color: var(--blink-on-surface);
+  outline: none;
+  transition: background-color 120ms ease, border-color 120ms ease;
+
+  &::placeholder {
+    color: var(--blink-on-surface-muted);
+  }
+
+  &:focus-visible {
+    background: var(--blink-input-bg-focus, var(--blink-input-bg-dark));
+    border-color: var(--blink-outline);
+  }
+
+  &:disabled {
+    cursor: not-allowed;
+    opacity: 0.6;
+  }
+}
+
+.add-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 28px;
+  padding: 0 12px;
+  font-family: inherit;
+  font-size: var(--blink-body-small);
+  font-weight: 600;
+  color: var(--blink-on-surface-strong);
+  background: var(--blink-surface);
+  border: 1px solid var(--blink-outline-variant);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background-color 120ms ease, border-color 120ms ease;
+
+  &:hover:not(:disabled) {
+    background: var(--blink-surface-hover);
+    border-color: var(--blink-outline);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--blink-brand-primary);
+    outline-offset: 2px;
+  }
+
+  &:disabled {
+    cursor: not-allowed;
+    opacity: 0.5;
+  }
+}
+
+// ── View Full Bank toggle ────────────────────────────────────────────
+// Prototype: text-only button (no border), 10px gray-500, hover gray-700.
+.bank-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  align-self: flex-start;
+  padding: 0;
+  background: transparent;
+  border: none;
+  font-family: inherit;
+  font-size: 10px;
+  color: var(--blink-on-surface-faint); // gray-500
+  cursor: pointer;
+  transition: color 120ms ease;
+
+  &:hover:not(:disabled) {
+    color: var(--blink-on-surface-secondary); // gray-700
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--blink-brand-primary);
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
+}
+
+.bank-caret {
+  transition: transform 120ms ease;
+
+  &--open {
+    transform: rotate(180deg);
+  }
+}
+
+// ── Full Bank groups (revealed when bank toggled open) ───────────────
+.bank-groups {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-top: 4px;
+}
+
+.bank-group-name {
+  margin: 0 0 4px 0;
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--blink-on-surface-tertiary); // gray-400
+}
+
+.bank-group-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.bank-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  font-family: inherit;
+  font-size: 10px;
+  font-weight: 500;
+  color: var(--blink-on-surface-secondary); // gray-600
+  background: var(--blink-surface);
+  border: 1px solid #d1d5db; // gray-300
+  border-radius: 999px;
+  cursor: pointer;
+  transition: background-color 120ms ease, border-color 120ms ease, color 120ms ease;
+
+  &:hover:not(:disabled):not(.is-added) {
+    color: var(--blink-on-surface-strong); // gray-800
+    border-color: var(--blink-on-surface-faint); // gray-500
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--blink-brand-primary);
+    outline-offset: 2px;
+  }
+
+  &:disabled,
+  &.is-added {
+    cursor: default;
+    background: var(--blink-input-bg-dark);
+    color: var(--blink-on-surface-tertiary); // gray-400
+    border-color: var(--blink-outline-variant); // gray-200
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bank-caret,
+  .add-input,
+  .add-btn,
+  .bank-toggle,
+  .bank-chip {
+    transition: none;
+  }
+}

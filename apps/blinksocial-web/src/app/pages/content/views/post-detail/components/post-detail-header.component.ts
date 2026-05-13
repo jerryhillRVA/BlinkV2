@@ -27,7 +27,7 @@ export class PostDetailHeaderComponent {
   @Output() backToConcept = new EventEmitter<void>();
   @Output() archive = new EventEmitter<void>();
   @Output() unarchive = new EventEmitter<void>();
-
+  /* v8 ignore next 1 — V8's function-call-throws branches on input()/signal() declarations are unreachable (Angular class-field init time; ESM exports not spy-able) */
   protected readonly menuOpen = signal(false);
 
   protected toggleMenu(): void {

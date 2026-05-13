@@ -95,7 +95,7 @@ export const INITIAL_FORM_STATE: FormState = {
 @Injectable()
 export class ContentCreateStore {
   private readonly destroyRef = inject(DestroyRef);
-
+  /* v8 ignore next 3 — V8's function-call-throws branches on input()/signal() declarations are unreachable (Angular class-field init time; ESM exports not spy-able) */
   private readonly _state = signal<FormState>({ ...INITIAL_FORM_STATE });
   private readonly _pillars = signal<ContentPillar[]>([]);
   private readonly _segments = signal<AudienceSegment[]>([]);

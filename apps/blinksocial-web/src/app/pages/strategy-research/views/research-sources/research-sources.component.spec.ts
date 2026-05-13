@@ -15,6 +15,7 @@ describe('ResearchSourcesComponent', () => {
 
   beforeEach(async () => {
     vi.useFakeTimers();
+    /* v8 ignore next 1 — V8's function-call-throws branches on input()/signal() declarations are unreachable (Angular class-field init time; ESM exports not spy-able) */
     mockResearchSources = signal([...MOCK_RESEARCH_SOURCES]);
     const mockStateService = {
       researchSources: mockResearchSources,

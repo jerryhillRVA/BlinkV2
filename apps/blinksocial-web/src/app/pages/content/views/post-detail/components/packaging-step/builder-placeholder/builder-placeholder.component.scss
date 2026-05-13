@@ -1,0 +1,41 @@
+:host {
+  display: block;
+}
+
+.builder-placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 48px 32px;
+  text-align: center;
+  background: var(--blink-surface);
+  border: 1px dashed var(--blink-outline-variant);
+  border-radius: 12px;
+}
+
+.placeholder-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  background: var(--blink-surface-container);
+  color: var(--blink-on-surface-muted);
+}
+
+.placeholder-title {
+  margin: 0;
+  font-size: var(--blink-title-medium);
+  font-weight: 700;
+  color: var(--blink-on-surface-strong);
+}
+
+.placeholder-body {
+  margin: 0;
+  max-width: 480px;
+  font-size: var(--blink-body-medium);
+  color: var(--blink-on-surface-muted);
+  line-height: 1.5;
+}

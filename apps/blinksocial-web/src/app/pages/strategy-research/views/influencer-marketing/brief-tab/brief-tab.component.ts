@@ -56,7 +56,6 @@ export class BriefTabComponent {
 
   /* v8 ignore start */
   readonly initialInfluencer = input<ShortlistedInfluencer | null>(null);
-
   readonly selectedHandle = signal<string>('');
   readonly selectedObjectiveId = signal<string>('');
   readonly selectedPlatforms = signal<Platform[]>([]);

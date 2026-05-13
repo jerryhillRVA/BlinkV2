@@ -1,0 +1,104 @@
+<section class="pkg-hashtag-bank">
+  <header class="bank-header">
+    <span class="bank-label">Hashtags</span>
+    <app-ai-button
+      label="AI Suggest Hashtags"
+      loadingLabel="Suggesting…"
+      [loading]="aiSuggesting()"
+      [disabled]="disabled()"
+      (activate)="onSuggestClick()"
+    />
+  </header>
+
+  @if (isEmpty()) {
+    <p class="empty-state">No hashtags yet</p>
+  } @else {
+    <ul class="chip-row" role="list" aria-live="polite" [attr.aria-label]="'Selected hashtags: ' + hashtags().length">
+      @for (tag of hashtags(); track tag) {
+        <li class="chip">
+          <span class="chip-text">{{ tag }}</span>
+          <button
+            type="button"
+            class="chip-remove"
+            [disabled]="disabled()"
+            [attr.aria-label]="'Remove hashtag ' + tag"
+            (click)="onChipRemove(tag)"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M18 6 6 18"/>
+              <path d="m6 6 12 12"/>
+            </svg>
+          </button>
+        </li>
+      }
+    </ul>
+  }
+
+  <div class="add-row">
+    <input
+      type="text"
+      class="add-input"
+      placeholder="Add hashtag..."
+      aria-label="Add hashtag"
+      [value]="addInput()"
+      [disabled]="disabled()"
+      (input)="onAddInput($event)"
+      (keydown)="onAddKeydown($event)"
+    />
+    <button
+      type="button"
+      class="add-btn"
+      [disabled]="disabled() || !addInput().trim()"
+      (click)="onAddClick()"
+    >Add</button>
+  </div>
+
+  @if (groups().length > 0) {
+    <button
+      type="button"
+      class="bank-toggle"
+      [attr.aria-expanded]="bankOpen()"
+      aria-controls="hashtag-bank-groups"
+      (click)="toggleBank()"
+    >
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        width="12"
+        height="12"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        class="bank-caret"
+        [class.bank-caret--open]="bankOpen()"
+        aria-hidden="true"
+      >
+        <polyline points="6 9 12 15 18 9"/>
+      </svg>
+      {{ bankOpen() ? 'Hide Full Bank' : 'View Full Bank' }}
+    </button>
+
+    @if (bankOpen()) {
+      <div id="hashtag-bank-groups" class="bank-groups">
+        @for (group of groups(); track group.name) {
+          <div class="bank-group">
+            <p class="bank-group-name">{{ group.name }}</p>
+            <div class="bank-group-chips">
+              @for (tag of group.tags; track tag) {
+                <button
+                  type="button"
+                  class="bank-chip"
+                  [class.is-added]="isInBank(tag)"
+                  [disabled]="disabled() || isInBank(tag)"
+                  (click)="onBankChipClick(tag)"
+                >{{ tag }}</button>
+              }
+            </div>
+          </div>
+        }
+      </div>
+    }
+  }
+</section>

@@ -15,6 +15,7 @@ export class StepObjectivesComponent {
   protected readonly formService = inject(NewWorkspaceFormService);
   private readonly api = inject(NewWorkspaceApiService);
   private readonly toast = inject(ToastService);
+  /* v8 ignore next 1 — V8's function-call-throws branches on input()/signal() declarations are unreachable (Angular class-field init time; ESM exports not spy-able) */
   readonly isSuggesting = signal(false);
 
   readonly CATEGORIES = [

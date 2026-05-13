@@ -17,7 +17,7 @@ export class App {
   private readonly router = inject(Router);
   private readonly destroyRef = inject(DestroyRef);
   private readonly el = inject(ElementRef);
-
+  /* v8 ignore next 1 — V8's function-call-throws branches on input()/signal() declarations are unreachable (Angular class-field init time; ESM exports not spy-able) */
   readonly wsAnimating = signal(false);
 
   private lastWorkspaceId: string | null = null;

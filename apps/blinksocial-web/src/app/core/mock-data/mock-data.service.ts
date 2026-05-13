@@ -13,6 +13,7 @@ import { Injectable, computed, signal } from '@angular/core';
  */
 @Injectable({ providedIn: 'root' })
 export class MockDataService {
+  /* v8 ignore next 1 — V8's function-call-throws branches on input()/signal() declarations are unreachable (Angular class-field init time; ESM exports not spy-able) */
   private readonly state = signal<Record<string, boolean>>({
     'brand-voice': true,
     'audience': true,

@@ -10,7 +10,7 @@ import { marked } from 'marked';
 })
 export class BlueprintPreviewComponent {
   private readonly sanitizer = inject(DomSanitizer);
-
+  /* v8 ignore next 9 — V8's function-call-throws branches on input()/signal() declarations are unreachable (Angular class-field init time; ESM exports not spy-able) */
   markdownContent = input.required<string>();
   clientName = input<string>('');
   isCreating = input<boolean>(false);

@@ -30,7 +30,6 @@ export class ContentMixComponent {
   private readonly destroyRef = inject(DestroyRef);
   private readonly stateService = inject(StrategyResearchStateService);
   private readonly toast = inject(ToastService);
-
   readonly showAddCategory = signal(false);
   newCategoryName = '';
   newCategoryDescription = '';

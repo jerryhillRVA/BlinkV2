@@ -1,0 +1,187 @@
+@if (visible()) {
+  <section class="post-preview" aria-label="Post preview">
+    <button
+      type="button"
+      class="pp-header"
+      [attr.aria-expanded]="expanded()"
+      aria-controls="post-preview-body"
+      (click)="toggleExpanded()"
+    >
+      <span class="pp-header-text">
+        <span class="pp-title">Post Preview</span>
+        <span class="pp-platform">{{ platformLabel() }}</span>
+      </span>
+      @if (expanded()) {
+        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" class="pp-chevron">
+          <path d="m18 15-6-6-6 6"/>
+        </svg>
+      } @else {
+        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" class="pp-chevron">
+          <path d="m6 9 6 6 6-6"/>
+        </svg>
+      }
+    </button>
+
+    @if (expanded()) {
+      <div id="post-preview-body" class="pp-body">
+        @if (platform() === 'instagram') {
+          <div class="pp-ig">
+            <!-- IG header (avatar + handle + Follow) -->
+            <div class="pp-ig-header">
+              <span class="pp-ig-avatar" aria-hidden="true"></span>
+              <span class="pp-ig-handle">{{ handle() }}</span>
+              <span class="pp-ig-follow">Follow</span>
+            </div>
+
+            <!-- Media frame -->
+            <div class="pp-ig-media" [style.aspectRatio]="igAspectRatio()">
+              @if (currentSrc(); as src) {
+                <img class="pp-ig-media-img" [src]="src" alt="" />
+              } @else {
+                <div class="pp-ig-media-placeholder" aria-hidden="true">
+                  @if (isCarousel()) {
+                    Slide {{ slideIndex() + 1 }}
+                  } @else {
+                    Media
+                  }
+                </div>
+              }
+
+              @if (isCarousel() && totalSlides() > 1) {
+                @if (canPrev()) {
+                  <button
+                    type="button"
+                    class="pp-ig-arrow pp-ig-arrow--left"
+                    aria-label="Previous slide"
+                    (click)="prev()"
+                  >‹</button>
+                }
+                @if (canNext()) {
+                  <button
+                    type="button"
+                    class="pp-ig-arrow pp-ig-arrow--right"
+                    aria-label="Next slide"
+                    (click)="next()"
+                  >›</button>
+                }
+                <div class="pp-ig-dots" aria-hidden="true">
+                  @for (i of dotIndices(); track i) {
+                    <span
+                      class="pp-ig-dot"
+                      [class.is-active]="i === slideIndex()"
+                    ></span>
+                  }
+                </div>
+                <div class="pp-ig-counter" aria-hidden="true">
+                  {{ slideIndex() + 1 }}/{{ totalSlides() }}
+                </div>
+              }
+            </div>
+
+            <!-- Action icons row — Lucide-style outlined SVGs (heart, message,
+                 send, bookmark) instead of mixed-metric emoji glyphs that wouldn't
+                 vertically align. 16px sized to match IG's real action affordances. -->
+            <div class="pp-ig-actions" aria-hidden="true">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" class="pp-ig-icon">
+                <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/>
+              </svg>
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" class="pp-ig-icon">
+                <path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/>
+              </svg>
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" class="pp-ig-icon">
+                <path d="m22 2-7 20-4-9-9-4Z"/>
+                <path d="M22 2 11 13"/>
+              </svg>
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" class="pp-ig-icon pp-ig-actions-bookmark">
+                <path d="m19 21-7-4-7 4V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16z"/>
+              </svg>
+            </div>
+
+            @if (caption()) {
+              <div class="pp-ig-caption">
+                <span class="pp-ig-caption-handle">{{ handle() }}</span>
+                {{ caption() }}
+              </div>
+            }
+          </div>
+        } @else if (platform() === 'tiktok') {
+          <div class="pp-tt-wrap">
+            <div class="pp-tt">
+              <div class="pp-tt-media">
+                @if (currentSrc(); as src) {
+                  <img class="pp-tt-media-img" [src]="src" alt="" />
+                } @else {
+                  <div class="pp-tt-media-placeholder" aria-hidden="true">
+                    @if (isCarousel()) {
+                      Slide {{ slideIndex() + 1 }}
+                    } @else {
+                      Media
+                    }
+                  </div>
+                }
+              </div>
+              <div class="pp-tt-gradient" aria-hidden="true"></div>
+
+              @if (isCarousel() && totalSlides() > 1) {
+                <div class="pp-tt-dots" aria-hidden="true">
+                  @for (i of dotIndices(); track i) {
+                    <span
+                      class="pp-tt-dot"
+                      [class.is-active]="i === slideIndex()"
+                    ></span>
+                  }
+                </div>
+                @if (canPrev()) {
+                  <button
+                    type="button"
+                    class="pp-tt-arrow pp-tt-arrow--left"
+                    aria-label="Previous slide"
+                    (click)="prev()"
+                  >‹</button>
+                }
+                @if (canNext()) {
+                  <button
+                    type="button"
+                    class="pp-tt-arrow pp-tt-arrow--right"
+                    aria-label="Next slide"
+                    (click)="next()"
+                  >›</button>
+                }
+              }
+
+              <div class="pp-tt-text">
+                <div class="pp-tt-handle">{{ handle() }}</div>
+                @if (caption()) {
+                  <div class="pp-tt-caption">{{ caption() }}</div>
+                }
+              </div>
+
+              <div class="pp-tt-actions" aria-hidden="true">
+                <div class="pp-tt-action">
+                  <span class="pp-tt-action-icon">♡</span>
+                  <span class="pp-tt-action-count">0</span>
+                </div>
+                <div class="pp-tt-action">
+                  <span class="pp-tt-action-icon">💬</span>
+                  <span class="pp-tt-action-count">0</span>
+                </div>
+                <div class="pp-tt-action">
+                  <span class="pp-tt-action-icon">↗</span>
+                  <span class="pp-tt-action-count">0</span>
+                </div>
+                <span class="pp-tt-disc" aria-hidden="true"></span>
+              </div>
+
+              <div class="pp-tt-sound">
+                <span class="pp-tt-sound-icon">♪</span>
+                <span class="pp-tt-sound-name">
+                  {{ audioTrackName() || 'Original audio' }}
+                </span>
+              </div>
+            </div>
+          </div>
+        }
+      </div>
+    }
+  </section>
+}

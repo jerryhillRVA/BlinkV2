@@ -11,6 +11,7 @@ export interface WizardStep {
   styleUrl: './step-indicator.component.scss',
 })
 export class StepIndicatorComponent {
+  /* v8 ignore next 2 — V8's function-call-throws branches on input()/signal() declarations are unreachable (Angular class-field init time; ESM exports not spy-able) */
   steps = input.required<WizardStep[]>();
   currentStep = input.required<number>();
 
