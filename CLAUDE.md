@@ -103,6 +103,8 @@ E2E specs are organized by component/page area — one spec file per area, NOT o
 
 When adding a new page or component, create a corresponding `<feature>.spec.ts` file. Mirror the component organization (layout files for layout components, page-named files for page components).
 
+> For a full catalog of E2E specs (web + API) with per-test descriptions, categories, and totals, see [`docs/e2e-tests.md`](docs/e2e-tests.md).
+
 ### Pre-Commit Hooks
 
 Husky runs on every commit via `.husky/pre-commit`:
