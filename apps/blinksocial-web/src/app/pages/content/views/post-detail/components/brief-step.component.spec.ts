@@ -482,4 +482,60 @@ describe('BriefStepComponent — Approve toggle branches + approval note', () =>
     note.dispatchEvent(new Event('input'));
     expect(store.approvalNote()).toBe('Looks good to me');
   });
+
+  // ── Branch coverage: `(e.target as ...)?.value ?? ''` fallbacks ──
+  it('onKeyMessageInput handles null event.target via ?? "" fallback', () => {
+    const { fixture, store } = setup();
+    const cmp = fixture.componentInstance as unknown as {
+      onKeyMessageInput: (e: Event) => void;
+    };
+    cmp.onKeyMessageInput({ target: null } as unknown as Event);
+    expect(store.item()?.keyMessage).toBe('');
+  });
+
+  it('onRefLinkInput handles null event.target via ?? "" fallback', () => {
+    const { fixture } = setup();
+    const cmp = fixture.componentInstance as unknown as {
+      onRefLinkInput: (e: Event) => void;
+      newRefLink: () => string;
+    };
+    cmp.onRefLinkInput({ target: null } as unknown as Event);
+    expect(cmp.newRefLink()).toBe('');
+  });
+
+  it('onEditRefLink handles null event.target via ?? "" fallback', () => {
+    const { fixture, store } = setup();
+    store.setReferenceLinks(['https://existing.com']);
+    const cmp = fixture.componentInstance as unknown as {
+      onEditRefLink: (i: number, e: Event) => void;
+    };
+    cmp.onEditRefLink(0, { target: null } as unknown as Event);
+    expect(store.referenceLinks()[0]).toBe('');
+  });
+
+  it('onOwnerChange handles null event.target via ?? "" fallback', () => {
+    const { fixture, store } = setup();
+    const cmp = fixture.componentInstance as unknown as {
+      onOwnerChange: (e: Event) => void;
+    };
+    cmp.onOwnerChange({ target: null } as unknown as Event);
+    expect(store.item()?.owner).toBeNull();
+  });
+
+  it('onApproveToggle handles null event.target via ?? false fallback', () => {
+    const { fixture } = setup();
+    const cmp = fixture.componentInstance as unknown as {
+      onApproveToggle: (e: Event) => void;
+    };
+    expect(() => cmp.onApproveToggle({ target: null } as unknown as Event)).not.toThrow();
+  });
+
+  it('onApprovalNoteInput handles null event.target via ?? "" fallback', () => {
+    const { fixture, store } = setup();
+    const cmp = fixture.componentInstance as unknown as {
+      onApprovalNoteInput: (e: Event) => void;
+    };
+    cmp.onApprovalNoteInput({ target: null } as unknown as Event);
+    expect(store.approvalNote()).toBe('');
+  });
 });

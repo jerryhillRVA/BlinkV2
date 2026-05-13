@@ -177,4 +177,37 @@ describe('CarouselBuilderComponent', () => {
     fixture.componentInstance['onSlideFile'](id, null);
     expect(store.carouselDraft().slides![0].imageRef).toBeUndefined();
   });
+
+  // ── Branch coverage: `.value ?? ''` fallbacks on event handlers ──
+  it('onHookInput coalesces null .value to empty string', () => {
+    const { fixture, store } = setup();
+    const spy = vi.spyOn(store, 'setCarouselHook');
+    fixture.componentInstance['onHookInput']({ target: { value: null } } as unknown as Event);
+    expect(spy).toHaveBeenCalledWith('');
+  });
+
+  it('onSlideHeadline / onSlideBody / onSlideAlt coalesce null .value to empty string', () => {
+    const { fixture, store } = setup();
+    fixture.componentInstance['onAddSlide']();
+    const id = store.carouselDraft().slides![0].id;
+    fixture.componentInstance['onSlideHeadline'](id, { target: { value: null } } as unknown as Event);
+    expect(store.carouselDraft().slides![0].headline).toBe('');
+    fixture.componentInstance['onSlideBody'](id, { target: { value: null } } as unknown as Event);
+    expect(store.carouselDraft().slides![0].body).toBe('');
+    fixture.componentInstance['onSlideAlt'](id, { target: { value: null } } as unknown as Event);
+    expect(store.carouselDraft().slides![0].altText).toBe('');
+  });
+
+  it('slide map preserves non-target slides while patching the target', () => {
+    const { fixture, store } = setup();
+    fixture.componentInstance['onAddSlide']();
+    fixture.componentInstance['onAddSlide']();
+    const id1 = store.carouselDraft().slides![0].id;
+    const id2 = store.carouselDraft().slides![1].id;
+    fixture.componentInstance['onSlideHeadline'](id2, {
+      target: { value: 'updated' },
+    } as unknown as Event);
+    expect(store.carouselDraft().slides![0].id).toBe(id1);
+    expect(store.carouselDraft().slides![1].headline).toBe('updated');
+  });
 });

@@ -1051,4 +1051,122 @@ describe('NewWorkspaceFormService', () => {
     expect(fresh.aiDisclaimer()).toBe(true);
     expect(fresh.maxIdeasPerMonth()).toBe(30);
   });
+
+  // ── populateFromWizardData: partial / missing optional fields ──
+  // Hits ~25 `?? defaultValue` fallbacks in one go by passing data
+  // where each optional field is missing.
+
+  it('populateFromWizardData: business objectives with missing optional fields fall back to defaults', () => {
+    service.populateFromWizardData({
+      businessObjectives: [
+        // Force every optional field to be undefined → fallback paths fire
+        {
+          id: 'obj-min',
+          category: undefined as never,
+          statement: undefined as never,
+          target: undefined as never,
+          unit: undefined as never,
+          timeframe: undefined as never,
+          status: 'on-track',
+        } as never,
+      ],
+    });
+    const o = service.businessObjectives()[0];
+    expect(o.category).toBe('growth');
+    expect(o.statement).toBe('');
+    expect(o.target).toBe('');
+    expect(o.unit).toBe('');
+    expect(o.timeframe).toBe('');
+  });
+
+  it('populateFromWizardData: brand positioning with missing optional fields fall back to ""', () => {
+    service.populateFromWizardData({
+      brandPositioning: {
+        targetCustomer: undefined as never,
+        problemSolved: undefined as never,
+        solution: undefined as never,
+        differentiator: undefined as never,
+        positioningStatement: undefined as never,
+      } as never,
+    });
+    const bp = service.brandPositioning();
+    expect(bp.targetCustomer).toBe('');
+    expect(bp.problemSolved).toBe('');
+    expect(bp.solution).toBe('');
+    expect(bp.differentiator).toBe('');
+    expect(bp.positioningStatement).toBe('');
+  });
+
+  it('populateFromWizardData: audience segment with missing name falls back to ""', () => {
+    service.populateFromWizardData({
+      audienceSegments: [
+        { id: 'seg-1', name: undefined as never, description: 'd' } as never,
+      ],
+    });
+    expect(service.audienceSegments()[0].name).toBe('');
+  });
+
+  it('populateFromWizardData: content pillar with missing optional fields fall back', () => {
+    service.populateFromWizardData({
+      contentPillars: [
+        {
+          id: 'p1',
+          name: undefined as never,
+          themes: undefined as never,
+          description: undefined as never,
+        } as never,
+      ],
+    });
+    const p = service.contentPillars()[0];
+    expect(p.name).toBe('');
+    expect(p.themes).toBe('');
+    expect(p.description).toBe('');
+    // objectiveId falls back to '' when objectiveIds is missing.
+    expect(p.objectiveId).toBe('');
+  });
+
+  it('populateFromWizardData: agent / skill with missing optional fields fall back', () => {
+    service.populateFromWizardData({
+      skills: {
+        skills: [
+          {
+            name: undefined as never,
+            role: undefined as never,
+            responsibilities: undefined as never,
+            expectedOutputs: undefined as never,
+          } as never,
+        ],
+      } as never,
+    });
+    const a = service.agents()[0];
+    expect(a.name).toBe('');
+    expect(a.role).toBe('');
+    expect(a.responsibilities).toBe('');
+    expect(a.outputs).toBe('');
+  });
+
+  // ── toWorkspaceContract: edge-case branches ──
+
+  it('toWorkspaceContract: primaryAudience falls back to "" when no audience segments exist', () => {
+    service.workspaceName.set('Test');
+    service.audienceSegments.set([]);
+    service.enabledPlatforms.set(new Set(['YouTube']));
+    const contract = service.formData();
+    const channel = contract.channelStrategy?.channels?.[0];
+    expect(channel?.primaryAudience).toBe('');
+  });
+
+  it('toWorkspaceContract: skills is undefined when agents array is empty (falsy branch)', () => {
+    service.workspaceName.set('Test');
+    service.agents.set([]);
+    const contract = service.formData();
+    expect(contract.skills).toBeUndefined();
+  });
+
+  it('toWorkspaceContract: businessObjectives is undefined when empty (falsy branch)', () => {
+    service.workspaceName.set('Test');
+    service.businessObjectives.set([]);
+    const contract = service.formData();
+    expect(contract.businessObjectives).toBeUndefined();
+  });
 });
