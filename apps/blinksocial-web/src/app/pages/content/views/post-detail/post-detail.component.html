@@ -111,6 +111,14 @@
               <app-packaging-step />
             </div>
             <aside class="brief-side">
+              <app-post-preview-card
+                [platform]="item.platform"
+                [contentType]="item.contentType"
+                [caption]="previewCaption()"
+                [coverAsset]="previewCoverAsset()"
+                [audioTrackName]="previewAudioTrackName()"
+              />
+
               <app-brief-content-concept
                 [concept]="parentConcept()"
                 [pillars]="store.pillars()"
