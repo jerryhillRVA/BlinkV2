@@ -6,9 +6,8 @@ import { Component, input, output } from '@angular/core';
   styleUrl: './outline-button.component.scss',
 })
 export class OutlineButtonComponent {
-  /* v8 ignore next — signal-input default-value branch unreachable from TestBed */
+  /* v8 ignore next 2 — V8's function-call-throws branches on input()/signal() declarations are unreachable (Angular class-field init time; ESM exports not spy-able) */
   disabled = input(false);
-  /* v8 ignore next — signal-input default-value branch unreachable from TestBed */
   compact = input(false);
   clicked = output<void>();
 

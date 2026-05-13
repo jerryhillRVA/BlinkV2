@@ -31,18 +31,11 @@ export class OutreachTabComponent {
 
   /* v8 ignore start */
   readonly initialInfluencer = input<ShortlistedInfluencer | null>(null);
-
-  /* v8 ignore next — signal() default-value branch unreachable from TestBed */
   readonly selectedHandle = signal<string>('');
-  /* v8 ignore next — signal() default-value branch unreachable from TestBed */
   readonly selectedObjectiveId = signal<string>('');
-  /* v8 ignore next — signal() default-value branch unreachable from TestBed */
   readonly selectedPlatform = signal<Platform | ''>('');
-  /* v8 ignore next — signal() default-value branch unreachable from TestBed */
   readonly format = signal<OutreachFormat>('dm');
-  /* v8 ignore next — signal() default-value branch unreachable from TestBed */
   readonly generatedMessage = signal<string>('');
-  /* v8 ignore next — signal() default-value branch unreachable from TestBed */
   readonly isGenerating = signal(false);
   /* v8 ignore stop */
 

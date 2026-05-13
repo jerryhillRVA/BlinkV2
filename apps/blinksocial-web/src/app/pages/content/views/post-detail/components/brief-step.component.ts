@@ -26,8 +26,7 @@ export class BriefStepComponent {
   protected readonly ctaOptions = CTA_TYPES;
   protected readonly primaryCtaOptions = PRIMARY_CTA_OPTIONS;
   protected readonly teamMembers: readonly TeamMemberStub[] = TEAM_MEMBERS_STUB;
-
-  /* v8 ignore next — signal() default-value branch unreachable from TestBed */
+  /* v8 ignore next 1 — V8's function-call-throws branches on input()/signal() declarations are unreachable (Angular class-field init time; ESM exports not spy-able) */
   protected readonly newRefLink = signal('');
 
   protected readonly locked = computed(() => !!this.store.item()?.briefApproved);

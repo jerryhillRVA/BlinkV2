@@ -35,8 +35,7 @@ export class IdeaDetailHeaderComponent {
   @Output() duplicate = new EventEmitter<void>();
   @Output() copyLink = new EventEmitter<void>();
   @Output() titleChange = new EventEmitter<string>();
-
-  /* v8 ignore next — signal() default-value branch unreachable from TestBed */
+  /* v8 ignore next 1 — V8's function-call-throws branches on input()/signal() declarations are unreachable (Angular class-field init time; ESM exports not spy-able) */
   protected readonly menuOpen = signal(false);
 
   protected stageBadge(): StageBadge {

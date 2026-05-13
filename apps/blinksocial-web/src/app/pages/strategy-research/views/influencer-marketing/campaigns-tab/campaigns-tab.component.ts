@@ -70,9 +70,7 @@ export class CampaignsTabComponent {
 
   /* v8 ignore start */
   readonly showAddForm = signal(false);
-  /* v8 ignore next — signal() default-value branch unreachable from TestBed */
   readonly addForm = signal<AddFormState>({ ...EMPTY_ADD_FORM });
-  /* v8 ignore next — signal() default-value branch unreachable from TestBed */
   readonly syncingId = signal<string | null>(null);
   /* v8 ignore stop */
 

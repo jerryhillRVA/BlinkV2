@@ -645,3 +645,46 @@ describe('ConceptDetailStore — strategy field setters (D-07)', () => {
     expect(missing).toContain('CTA text');
   });
 });
+
+describe('ConceptDetailStore \u2014 nullish-fallback branches', () => {
+  it('descriptionInRange: handles missing description (?? 0 fallback)', () => {
+    const { store } = setup(makeItem({ description: undefined as unknown as string }));
+    expect(store.descriptionInRange()).toBe(false);
+  });
+
+  it('hookInRange: handles missing hook (?? "" fallback)', () => {
+    const { store } = setup(makeItem({ hook: undefined }));
+    expect(store.hookInRange()).toBe(false);
+  });
+
+  it('pillarsInRange: handles missing pillarIds (?? 0 fallback)', () => {
+    const { store } = setup(makeItem({ pillarIds: undefined as unknown as string[] }));
+    expect(store.pillarsInRange()).toBe(false);
+  });
+
+  it('hasTargets: handles missing targetPlatforms (?? 0 fallback)', () => {
+    const { store } = setup(makeItem({ targetPlatforms: undefined }));
+    expect(store.hasTargets()).toBe(false);
+  });
+
+  it('assistDescription: handles item with missing objective (?? "" fallback)', () => {
+    const { store } = setup(
+      makeItem({ objective: undefined, title: 'Test', description: 'd'.repeat(60) }),
+    );
+    vi.useFakeTimers();
+    store.assistDescription();
+    vi.runAllTimers();
+    // Should complete without throwing
+    expect(store.isAssistingDescription()).toBe(false);
+    vi.useRealTimers();
+  });
+
+  it('assistHook: handles item with missing objective (?? "" fallback)', () => {
+    const { store } = setup(makeItem({ objective: undefined, title: 'Test' }));
+    vi.useFakeTimers();
+    store.assistHook();
+    vi.runAllTimers();
+    expect(store.isAssistingHook()).toBe(false);
+    vi.useRealTimers();
+  });
+});

@@ -1035,4 +1035,52 @@ describe('ContentStateService', () => {
       expect(itemsApi.updateItem).not.toHaveBeenCalled();
     });
   });
+
+  describe('indexEntryToItem nullish-fallback branches', () => {
+    it('loads an index entry with minimal fields — every `?? defaultValue` falls through', () => {
+      // Wire the API to return an index entry with optional fields undefined.
+      // This exercises every `?? defaultValue` branch in indexEntryToItem.
+      const lite = {
+        id: 'lite-1',
+        stage: 'concept',
+        status: 'new',
+        title: 'Lite entry',
+        // Every optional field below is undefined → fallback path taken
+      } as unknown as ContentItemsIndexEntryContract;
+      itemsApi.getIndex.mockReturnValue(
+        of({ items: [lite], totalCount: 1, lastUpdated: '' }),
+      );
+      service.loadAll('ws-1');
+      const item = service.items().find((i) => i.id === 'lite-1');
+      expect(item).toBeDefined();
+      // Each fallback resolved
+      expect(item?.pillarIds).toEqual([]);
+      expect(item?.segmentIds).toEqual([]);
+      expect(item?.platform).toBeUndefined();
+      expect(item?.contentType).toBeUndefined();
+      expect(item?.owner).toBeUndefined();
+      expect(item?.parentIdeaId).toBeUndefined();
+      expect(item?.parentConceptId).toBeUndefined();
+      expect(item?.conceptId).toBeUndefined();
+      expect(item?.scheduledDate).toBeUndefined();
+      expect(item?.archived).toBe(false);
+    });
+
+    it('archive index entry with minimal fields hits the same fallback branches', () => {
+      const lite = {
+        id: 'arch-1',
+        stage: 'concept',
+        status: 'archived',
+        title: 'Archived lite',
+      } as unknown as ContentItemsIndexEntryContract;
+      itemsApi.getArchiveIndex.mockReturnValue(
+        of({ items: [lite], totalCount: 1, lastUpdated: '' }),
+      );
+      service.workspaceId.set('ws-1');
+      service.loadArchiveIndex();
+      const item = service.archivedItems().find((i) => i.id === 'arch-1');
+      expect(item?.pillarIds).toEqual([]);
+      expect(item?.archived).toBe(false);
+    });
+  });
 });

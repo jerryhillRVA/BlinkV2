@@ -44,19 +44,12 @@ export class VideoBuilderComponent {
   protected readonly disabled = computed(
     () => !this.store.item()?.briefApproved,
   );
-
-  /* v8 ignore next — signal() default-value branch unreachable from TestBed */
+  /* v8 ignore next 6 — V8's function-call-throws branches on input()/signal() declarations are unreachable (Angular class-field init time; ESM exports not spy-able) */
   protected readonly hookBankOpen = signal(false);
-  /* v8 ignore next — signal() default-value branch unreachable from TestBed */
   protected readonly hookBankLoading = signal(false);
-  /* v8 ignore next — signal() default-value branch unreachable from TestBed */
   protected readonly bRollOpen = signal(false);
-  /* v8 ignore next — signal() default-value branch unreachable from TestBed */
   protected readonly voiceoverOpen = signal(false);
-
-  /* v8 ignore next — signal() default-value branch unreachable from TestBed */
   protected readonly bodyAiLoading = signal(false);
-  /* v8 ignore next — signal() default-value branch unreachable from TestBed */
   protected readonly ctaAiLoading = signal(false);
 
   protected readonly durationOptions = TARGET_DURATIONS;

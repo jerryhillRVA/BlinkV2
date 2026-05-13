@@ -18,7 +18,7 @@ export interface SlideOrderItem {
   styleUrl: './slide-order-picker.component.scss',
 })
 export class SlideOrderPickerComponent {
-  /* v8 ignore next 3 — signal-input default-value branches are unreachable from TestBed */
+  /* v8 ignore next 3 — V8's function-call-throws branches on input()/signal() declarations are unreachable (Angular class-field init time; ESM exports not spy-able) */
   readonly slides = input<ReadonlyArray<SlideOrderItem>>([]);
   readonly order = input<number[]>([]);
   readonly disabled = input(false);

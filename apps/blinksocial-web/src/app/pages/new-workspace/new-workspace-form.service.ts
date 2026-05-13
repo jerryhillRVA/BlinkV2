@@ -37,21 +37,18 @@ export class NewWorkspaceFormService {
   }
 
   // Step 1 — Strategic Foundation
-  /* v8 ignore next — signal() default-value branch unreachable from TestBed */
+  /* v8 ignore next 6 — V8's function-call-throws branches on input()/signal() declarations are unreachable (Angular class-field init time; ESM exports not spy-able) */
   readonly workspaceName = signal('');
-  /* v8 ignore next — signal() default-value branch unreachable from TestBed */
   readonly purpose = signal('');
-  /* v8 ignore next — signal() default-value branch unreachable from TestBed */
   readonly mission = signal('');
 
   // Step 2 — Business Objectives
-  /* v8 ignore next — signal() default-value branch unreachable from TestBed */
   readonly businessObjectives = signal<UIBusinessObjective[]>([
     { id: this.nextObjectiveId(), category: 'growth', statement: '', target: '', unit: '', timeframe: '' },
   ]);
 
   // Step 3 — Brand & Voice
-  /* v8 ignore next — signal() default-value branch unreachable from TestBed */
+  /* v8 ignore next 1 — V8's function-call-throws branches on input()/signal() declarations are unreachable (Angular class-field init time; ESM exports not spy-able) */
   readonly brandPositioning = signal<UIBrandPositioning>({
     targetCustomer: '',
     problemSolved: '',
@@ -59,29 +56,23 @@ export class NewWorkspaceFormService {
     differentiator: '',
     positioningStatement: '',
   });
-  /* v8 ignore next — signal() default-value branch unreachable from TestBed */
+  /* v8 ignore next 5 — V8's function-call-throws branches on input()/signal() declarations are unreachable (Angular class-field init time; ESM exports not spy-able) */
   readonly brandVoice = signal('');
-  /* v8 ignore next — signal() default-value branch unreachable from TestBed */
   readonly toneTags = signal<string[]>([]);
 
   // Step 4 — Audience
-  /* v8 ignore next — signal() default-value branch unreachable from TestBed */
   readonly audienceSegments = signal<UIAudienceSegment[]>([
     { id: 1, name: '' },
   ]);
 
   // Step 5 — Platforms
-  /* v8 ignore next — signal() default-value branch unreachable from TestBed */
+  /* v8 ignore next 7 — V8's function-call-throws branches on input()/signal() declarations are unreachable (Angular class-field init time; ESM exports not spy-able) */
   readonly enabledPlatforms = signal<Set<string>>(new Set(['YouTube', 'LinkedIn']));
-  /* v8 ignore next — signal() default-value branch unreachable from TestBed */
   readonly maxIdeasPerMonth = signal(30);
-  /* v8 ignore next — signal() default-value branch unreachable from TestBed */
   readonly contentWarning = signal(false);
-  /* v8 ignore next — signal() default-value branch unreachable from TestBed */
   readonly aiDisclaimer = signal(true);
 
   // Step 6 — Content Strategy
-  /* v8 ignore next — signal() default-value branch unreachable from TestBed */
   readonly contentPillars = signal<UIContentPillar[]>([
     {
       id: 1,
@@ -104,7 +95,7 @@ export class NewWorkspaceFormService {
   ]);
 
   // Step 7 — Agents
-  /* v8 ignore next — signal() default-value branch unreachable from TestBed */
+  /* v8 ignore next 1 — V8's function-call-throws branches on input()/signal() declarations are unreachable (Angular class-field init time; ESM exports not spy-able) */
   readonly agents = signal<UIAgent[]>([
     {
       id: 1,

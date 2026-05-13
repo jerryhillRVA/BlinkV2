@@ -16,15 +16,14 @@ import type { ContentTypeContract, PlatformContract } from '@blinksocial/contrac
   styleUrl: './post-preview-card.component.scss',
 })
 export class PostPreviewCardComponent {
+  /* v8 ignore next 9 — V8's function-call-throws branches on input()/signal() declarations are unreachable (Angular class-field init time; ESM exports not spy-able) */
   readonly platform = input.required<PlatformContract | null | undefined>();
-  /* v8 ignore next 6 — signal-input default-value branches are unreachable from TestBed */
   readonly contentType = input<ContentTypeContract | null | undefined>(undefined);
   readonly caption = input<string>('');
   readonly handle = input<string>('@your_handle');
   readonly slides = input<ReadonlyArray<string>>([]);
   readonly coverAsset = input<string | undefined>(undefined);
   readonly audioTrackName = input<string | undefined>(undefined);
-
   protected readonly expanded = signal(false);
   protected readonly slideIndex = signal(0);
 

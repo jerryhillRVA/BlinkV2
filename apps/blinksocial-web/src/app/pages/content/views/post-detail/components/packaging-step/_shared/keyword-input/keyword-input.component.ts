@@ -15,14 +15,14 @@ import { FormsModule } from '@angular/forms';
   styleUrl: './keyword-input.component.scss',
 })
 export class KeywordInputComponent {
-  /* v8 ignore next 4 — signal-input default-value branches are unreachable from TestBed */
+  /* v8 ignore next 4 — V8's function-call-throws branches on input()/signal() declarations are unreachable (Angular class-field init time; ESM exports not spy-able) */
   readonly keywords = input<string[]>([]);
   readonly placeholder = input('Add a keyword and press Enter');
   readonly aiSuggestions = input<string[]>([]);
   readonly disabled = input(false);
 
   readonly keywordsChange = output<string[]>();
-
+  /* v8 ignore next 1 — V8's function-call-throws branches on input()/signal() declarations are unreachable (Angular class-field init time; ESM exports not spy-able) */
   protected readonly draft = signal('');
 
   protected onKeydown(e: KeyboardEvent): void {

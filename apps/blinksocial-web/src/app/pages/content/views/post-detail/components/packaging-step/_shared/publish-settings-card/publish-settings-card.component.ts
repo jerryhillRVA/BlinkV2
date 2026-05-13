@@ -30,8 +30,8 @@ export interface PublishSettingsIGMetadataPatch {
   styleUrl: './publish-settings-card.component.scss',
 })
 export class PublishSettingsCardComponent {
+  /* v8 ignore next 5 — V8's function-call-throws branches on input()/signal() declarations are unreachable (Angular class-field init time; ESM exports not spy-able) */
   readonly platform = input.required<PlatformContract>();
-  /* v8 ignore next 4 — signal-input default-value branches are unreachable from TestBed */
   readonly contentType = input<ContentTypeContract | null | undefined>(undefined);
   readonly disabled = input(false);
   readonly igMetadata = input<Partial<PackagingInstagramContract> | undefined>(undefined);
@@ -39,7 +39,7 @@ export class PublishSettingsCardComponent {
 
   readonly igMetadataChange = output<PublishSettingsIGMetadataPatch>();
   readonly igControlsChange = output<PackagingPlatformControlsIGContract>();
-
+  /* v8 ignore next 3 — V8's function-call-throws branches on input()/signal() declarations are unreachable (Angular class-field init time; ESM exports not spy-able) */
   protected readonly cardOpen = signal(false);
   protected readonly metadataOpen = signal(true);
   protected readonly controlsOpen = signal(true);
@@ -103,6 +103,7 @@ export class PublishSettingsCardComponent {
   protected readonly igCtrls = computed(() => this.igControls() ?? {});
 
   // Chip input drafts — local-only, not persisted until Enter/Add.
+  /* v8 ignore next 3 — V8's function-call-throws branches on input()/signal() declarations are unreachable (Angular class-field init time; ESM exports not spy-able) */
   protected readonly peopleDraft = signal('');
   protected readonly productDraft = signal('');
   protected readonly coHostDraft = signal('');

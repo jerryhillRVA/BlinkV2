@@ -7,8 +7,7 @@ import type { DiscoverySectionContract, DiscoverySectionId } from '@blinksocial/
   styleUrl: './section-progress.component.scss',
 })
 export class SectionProgressComponent {
-  /* v8 ignore next — signal-input default-value branch unreachable from TestBed */
+  /* v8 ignore next 2 — V8's function-call-throws branches on input()/signal() declarations are unreachable (Angular class-field init time; ESM exports not spy-able) */
   sections = input.required<DiscoverySectionContract[]>();
-  /* v8 ignore next — signal-input default-value branch unreachable from TestBed */
   currentSection = input.required<DiscoverySectionId>();
 }

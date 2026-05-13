@@ -27,20 +27,18 @@ export class ResearchSourcesComponent {
 
   readonly sources = this.stateService.researchSources;
   readonly pillars = this.stateService.pillars;
-  /* v8 ignore next — signal() default-value branch unreachable from TestBed */
+  /* v8 ignore next 2 — V8's function-call-throws branches on input()/signal() declarations are unreachable (Angular class-field init time; ESM exports not spy-able) */
   readonly filterPillarId = signal<string>('all');
-  /* v8 ignore next — signal() default-value branch unreachable from TestBed */
   readonly isDiscovering = signal(false);
 
   readonly typeColors = TYPE_COLORS;
-
-  /* v8 ignore next — signal() default-value branch unreachable from TestBed */
+  /* v8 ignore next 1 — V8's function-call-throws branches on input()/signal() declarations are unreachable (Angular class-field init time; ESM exports not spy-able) */
   readonly showAddForm = signal(false);
   newTitle = '';
   newUrl = '';
   newType: ResearchSource['type'] = 'article';
   newRelevance = 80;
-  /* v8 ignore next — signal() default-value branch unreachable from TestBed */
+  /* v8 ignore next 1 — V8's function-call-throws branches on input()/signal() declarations are unreachable (Angular class-field init time; ESM exports not spy-able) */
   newPillarIds = signal<Set<string>>(new Set());
   newSummary = '';
 

@@ -11,7 +11,7 @@ import { ComposerAttachmentChipComponent } from '../composer-attachment-chip/com
   styleUrl: './chat-message.component.scss',
 })
 export class ChatMessageComponent {
-  /* v8 ignore next — signal-input default-value branch unreachable from TestBed */
+  /* v8 ignore next 1 — V8's function-call-throws branches on input()/signal() declarations are unreachable (Angular class-field init time; ESM exports not spy-able) */
   message = input.required<OnboardingMessageContract>();
 
   /**

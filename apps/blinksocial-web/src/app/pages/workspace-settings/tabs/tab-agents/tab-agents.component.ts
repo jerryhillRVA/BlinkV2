@@ -14,7 +14,7 @@ import { TooltipComponent } from '../../../../shared/tooltip/tooltip.component';
 })
 export class TabAgentsComponent {
   protected readonly state = inject(WorkspaceSettingsStateService);
-  /* v8 ignore next — signal() default-value branch unreachable from TestBed */
+  /* v8 ignore next 1 — V8's function-call-throws branches on input()/signal() declarations are unreachable (Angular class-field init time; ESM exports not spy-able) */
   editingIndex = signal<number | null>(null);
 
   get settings() {

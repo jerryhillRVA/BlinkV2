@@ -31,21 +31,15 @@ export class HeaderComponent implements OnInit {
   private readonly router = inject(Router);
   private readonly destroyRef = inject(DestroyRef);
   private readonly dashboardApi = inject(DashboardApiService);
-
-  /* v8 ignore next — signal() default-value branch unreachable from TestBed */
+  /* v8 ignore next 9 — V8's function-call-throws branches on input()/signal() declarations are unreachable (Angular class-field init time; ESM exports not spy-able) */
   readonly menuOpen = signal(false);
-  /* v8 ignore next — signal() default-value branch unreachable from TestBed */
   readonly workspaceId = signal<string | null>(null);
-  /* v8 ignore next — signal() default-value branch unreachable from TestBed */
   readonly currentTab = signal<string | null>(null);
-  /* v8 ignore next — signal() default-value branch unreachable from TestBed */
   readonly wsDropdownOpen = signal(false);
   /** True when the current route is in NAV_ELIGIBLE_ROUTES (e.g. /profile-settings). */
-  /* v8 ignore next — signal() default-value branch unreachable from TestBed */
   readonly isNavEligibleRoute = signal(false);
 
   /** Cached workspace summaries (loaded once, reused across navigations) */
-  /* v8 ignore next — signal() default-value branch unreachable from TestBed */
   private readonly workspaceSummaries = signal<WorkspaceSummaryContract[]>([]);
   private workspacesLoaded = false;
 

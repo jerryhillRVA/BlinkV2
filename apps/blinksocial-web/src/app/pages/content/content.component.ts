@@ -31,13 +31,10 @@ export class ContentComponent {
   private readonly destroyRef = inject(DestroyRef);
   protected readonly stateService = inject(ContentStateService);
   workspaceId = '';
-  /* v8 ignore next — signal() default-value branch unreachable from TestBed */
+  /* v8 ignore next 4 — V8's function-call-throws branches on input()/signal() declarations are unreachable (Angular class-field init time; ESM exports not spy-able) */
   readonly activeView = signal<ContentView>('overview');
-  /* v8 ignore next — signal() default-value branch unreachable from TestBed */
   readonly transitioning = signal(false);
-  /* v8 ignore next — signal() default-value branch unreachable from TestBed */
   readonly showCreate = signal(false);
-  /* v8 ignore next — signal() default-value branch unreachable from TestBed */
   readonly createInitialType = signal<ContentItemType | undefined>(undefined);
 
   constructor() {

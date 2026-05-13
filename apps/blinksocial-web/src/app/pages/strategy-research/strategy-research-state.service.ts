@@ -78,12 +78,9 @@ const DOMAIN_TO_MOCK_FEATURE: Record<DataDomain, string> = {
 export class StrategyResearchStateService {
   private readonly api = inject(WorkspaceSettingsApiService);
   private readonly mockData = inject(MockDataService);
-
-  /* v8 ignore next — signal() default-value branch unreachable from TestBed */
+  /* v8 ignore next 3 — V8's function-call-throws branches on input()/signal() declarations are unreachable (Angular class-field init time; ESM exports not spy-able) */
   readonly workspaceId = signal('');
-  /* v8 ignore next — signal() default-value branch unreachable from TestBed */
   readonly loading = signal(false);
-  /* v8 ignore next — signal() default-value branch unreachable from TestBed */
   readonly saving = signal(false);
 
   // Raw contract data (for round-trip preservation)
@@ -92,7 +89,7 @@ export class StrategyResearchStateService {
   private rawSegments: AudienceSegmentContract[] = [];
 
   // Mapped frontend signals
-  /* v8 ignore next — signal() default-value branch unreachable from TestBed */
+  /* v8 ignore next 1 — V8's function-call-throws branches on input()/signal() declarations are unreachable (Angular class-field init time; ESM exports not spy-able) */
   readonly brandVoice = signal<BrandVoiceData>({
     missionStatement: '',
     voiceAttributes: [],
@@ -100,27 +97,17 @@ export class StrategyResearchStateService {
     platformToneAdjustments: [],
     vocabulary: { preferred: [], avoid: [] },
   });
-  /* v8 ignore next — signal() default-value branch unreachable from TestBed */
+  /* v8 ignore next 11 — V8's function-call-throws branches on input()/signal() declarations are unreachable (Angular class-field init time; ESM exports not spy-able) */
   readonly objectives = signal<BusinessObjective[]>([]);
-  /* v8 ignore next — signal() default-value branch unreachable from TestBed */
   readonly pillars = signal<ContentPillar[]>([]);
-  /* v8 ignore next — signal() default-value branch unreachable from TestBed */
   readonly segments = signal<AudienceSegment[]>([]);
-  /* v8 ignore next — signal() default-value branch unreachable from TestBed */
   readonly channelStrategy = signal<ChannelStrategyEntry[]>([]);
-  /* v8 ignore next — signal() default-value branch unreachable from TestBed */
   readonly contentMix = signal<ContentMixTarget[]>([]);
-  /* v8 ignore next — signal() default-value branch unreachable from TestBed */
   readonly researchSources = signal<ResearchSource[]>([]);
-  /* v8 ignore next — signal() default-value branch unreachable from TestBed */
   readonly competitorInsights = signal<CompetitorInsight[]>([]);
-  /* v8 ignore next — signal() default-value branch unreachable from TestBed */
   readonly audienceInsights = signal<AudienceInsight[]>([]);
-  /* v8 ignore next — signal() default-value branch unreachable from TestBed */
   readonly shortlistedInfluencers = signal<ShortlistedInfluencer[]>([]);
-  /* v8 ignore next — signal() default-value branch unreachable from TestBed */
   readonly influencerCampaigns = signal<InfluencerCampaign[]>([]);
-  /* v8 ignore next — signal() default-value branch unreachable from TestBed */
   readonly dismissedInfluencers = signal<InfluencerProfile[]>([]);
 
   private readonly originalData = new Map<DataDomain, string>();

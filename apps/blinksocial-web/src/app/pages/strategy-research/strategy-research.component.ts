@@ -51,7 +51,7 @@ export class StrategyResearchComponent {
   private readonly destroyRef = inject(DestroyRef);
   protected readonly stateService = inject(StrategyResearchStateService);
   workspaceId = '';
-  /* v8 ignore next — signal() default-value branch unreachable from TestBed */
+  /* v8 ignore next 1 — V8's function-call-throws branches on input()/signal() declarations are unreachable (Angular class-field init time; ESM exports not spy-able) */
   readonly activeView = signal<StrategyView>('brand-voice');
 
   readonly sidebarSections = SIDEBAR_SECTIONS;

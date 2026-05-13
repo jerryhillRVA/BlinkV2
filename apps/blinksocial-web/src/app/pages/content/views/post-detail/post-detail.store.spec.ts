@@ -1330,4 +1330,45 @@ describe('PostDetailStore — production.draft (#114)', () => {
       expect(store.liveSiblingPostCount()).toBe(1);
     });
   });
+
+  // ── Function-call throw paths ──────────────────────────────────────
+  // V8's coverage instrumentation marks every function call expression
+  // as having two paths: "returned normally" and "threw an exception".
+  // For pure framework calls like computed(()=>...) and signal(...)
+  // the throw path is normally unreachable. This block intentionally
+  // forces the underlying callback to throw to exercise that path.
+  describe('Function-call throw paths (V8 coverage exhaustion)', () => {
+    it('item() computed re-throws when state.items().find() throws', () => {
+      const { store, state } = setup();
+      // Poison the state.items() signal with an iterable whose .find()
+      // throws. The item() computed wraps a .find() call; when the
+      // callback throws, computed() re-throws on read.
+      const poisoned = {
+        find: () => {
+          throw new Error('boom');
+        },
+      } as unknown as ReturnType<typeof state.items>;
+      const itemsSpy = vi.spyOn(state, 'items').mockReturnValue(poisoned);
+      expect(() => store.item()).toThrow('boom');
+      itemsSpy.mockRestore();
+    });
+
+    it('brief() computed propagates exceptions from item()', () => {
+      const { store, state } = setup();
+      const itemsSpy = vi.spyOn(state, 'items').mockImplementation(() => {
+        throw new Error('items-boom');
+      });
+      expect(() => store.brief()).toThrow('items-boom');
+      itemsSpy.mockRestore();
+    });
+
+    it('packaging() computed propagates exceptions from item()', () => {
+      const { store, state } = setup();
+      const itemsSpy = vi.spyOn(state, 'items').mockImplementation(() => {
+        throw new Error('items-boom');
+      });
+      expect(() => store.packaging()).toThrow('items-boom');
+      itemsSpy.mockRestore();
+    });
+  });
 });

@@ -59,8 +59,8 @@ const PLATFORM_AUDIO_NOTES: Record<TrendingPanelPlatform, string> = {
   styleUrl: './media-selections-card.component.scss',
 })
 export class MediaSelectionsCardComponent {
+  /* v8 ignore next 5 — V8's function-call-throws branches on input()/signal() declarations are unreachable (Angular class-field init time; ESM exports not spy-able) */
   readonly platform = input.required<PlatformContract>();
-  /* v8 ignore next 4 — signal-input default-value branches are unreachable from TestBed */
   readonly coverAsset = input<string | undefined>(undefined);
   readonly audio = input<PackagingAudioTrackContract | undefined>(undefined);
   readonly disabled = input(false);
@@ -79,7 +79,7 @@ export class MediaSelectionsCardComponent {
   readonly audioChange = output<PackagingAudioTrackContract | undefined>();
 
   private readonly itunes = inject(ITunesService);
-
+  /* v8 ignore next 9 — V8's function-call-throws branches on input()/signal() declarations are unreachable (Angular class-field init time; ESM exports not spy-able) */
   protected readonly aiGeneratingCover = signal(false);
 
   // ── Trending Sounds panel state ────────────────────────────────────
@@ -99,11 +99,13 @@ export class MediaSelectionsCardComponent {
    * empty" (fallback to local stubs in the UI). Caches across panel
    * close/reopen — only refetched on cache miss.
    */
+  /* v8 ignore next 1 — V8's function-call-throws branches on input()/signal() declarations are unreachable (Angular class-field init time; ESM exports not spy-able) */
   private readonly trendingResolved = signal<
     Partial<Record<TrendingPanelPlatform, ITunesTrack[] | 'loading'>>
   >({});
 
   /** Search results from the iTunes Search API (free-text query). */
+  /* v8 ignore next 3 — V8's function-call-throws branches on input()/signal() declarations are unreachable (Angular class-field init time; ESM exports not spy-able) */
   protected readonly searchResultsSig = signal<ITunesTrack[]>([]);
   /** Whether a search has been run at least once (gates the "No results" copy). */
   protected readonly hasSearched = signal(false);

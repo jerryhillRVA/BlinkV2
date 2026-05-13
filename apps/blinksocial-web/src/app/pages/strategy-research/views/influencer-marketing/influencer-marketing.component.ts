@@ -30,9 +30,7 @@ export class InfluencerMarketingComponent {
 
   /* v8 ignore start */
   readonly activeTab = signal<ActiveTab>('discovery');
-  /* v8 ignore next — signal() default-value branch unreachable from TestBed */
   readonly outreachInfluencer = signal<ShortlistedInfluencer | null>(null);
-  /* v8 ignore next — signal() default-value branch unreachable from TestBed */
   readonly briefInfluencer = signal<ShortlistedInfluencer | null>(null);
   /* v8 ignore stop */
 

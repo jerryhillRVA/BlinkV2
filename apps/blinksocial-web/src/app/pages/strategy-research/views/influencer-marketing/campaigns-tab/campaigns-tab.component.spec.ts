@@ -31,9 +31,8 @@ describe('CampaignsTabComponent', () => {
 
   beforeEach(async () => {
     vi.useFakeTimers();
-    /* v8 ignore next — signal() default-value branch unreachable from TestBed */
+    /* v8 ignore next 2 — V8's function-call-throws branches on input()/signal() declarations are unreachable (Angular class-field init time; ESM exports not spy-able) */
     campaignsSignal = signal<InfluencerCampaign[]>([]);
-    /* v8 ignore next — signal() default-value branch unreachable from TestBed */
     shortlistSignal = signal<ShortlistedInfluencer[]>([influencer]);
     saveCampaigns = vi.fn((data: InfluencerCampaign[]) => campaignsSignal.set(data));
     toastSpy = { showSuccess: vi.fn(), showError: vi.fn() };

@@ -128,39 +128,22 @@ export class ContentRepurposerComponent {
 
   /* v8 ignore start */
   readonly sources = signal<string[]>(['']);
-  /* v8 ignore next — signal() default-value branch unreachable from TestBed */
   readonly selectedPlatforms = signal<Set<Platform>>(new Set(ALL_PLATFORMS));
-  /* v8 ignore next — signal() default-value branch unreachable from TestBed */
   readonly pillars = signal<ContentPillar[]>([...DEFAULT_PILLARS]);
-  /* v8 ignore next — signal() default-value branch unreachable from TestBed */
   readonly segments = signal<AudienceSegment[]>([...DEFAULT_SEGMENTS]);
-  /* v8 ignore next — signal() default-value branch unreachable from TestBed */
   readonly selectedPillarIds = signal<Set<string>>(new Set());
-  /* v8 ignore next — signal() default-value branch unreachable from TestBed */
   readonly selectedSegmentIds = signal<Set<string>>(new Set());
-  /* v8 ignore next — signal() default-value branch unreachable from TestBed */
   readonly lastRunPillarIds = signal<Set<string>>(new Set());
-  /* v8 ignore next — signal() default-value branch unreachable from TestBed */
   readonly lastRunSegmentIds = signal<Set<string>>(new Set());
-  /* v8 ignore next — signal() default-value branch unreachable from TestBed */
   readonly lastRunPlatforms = signal<Set<Platform>>(new Set());
-  /* v8 ignore next — signal() default-value branch unreachable from TestBed */
   readonly isGenerating = signal(false);
-  /* v8 ignore next — signal() default-value branch unreachable from TestBed */
   readonly output = signal<RepurposeOutput | null>(null);
-  /* v8 ignore next — signal() default-value branch unreachable from TestBed */
   readonly savedCards = signal<Set<string>>(new Set());
-  /* v8 ignore next — signal() default-value branch unreachable from TestBed */
   readonly dismissedCards = signal<Set<string>>(new Set());
-  /* v8 ignore next — signal() default-value branch unreachable from TestBed */
   readonly copiedCard = signal<string | null>(null);
-  /* v8 ignore next — signal() default-value branch unreachable from TestBed */
   readonly cardTitles = signal<Record<string, string>>({});
-  /* v8 ignore next — signal() default-value branch unreachable from TestBed */
   readonly titleErrors = signal<Set<string>>(new Set());
-  /* v8 ignore next — signal() default-value branch unreachable from TestBed */
   readonly savedIdeaRecords = signal<SavedIdeaRecord[]>([]);
-  /* v8 ignore next — signal() default-value branch unreachable from TestBed */
   readonly showRegenerateDialog = signal(false);
   /* v8 ignore stop */
 

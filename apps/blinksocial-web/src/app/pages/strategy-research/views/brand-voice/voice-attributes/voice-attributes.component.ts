@@ -26,11 +26,9 @@ export class VoiceAttributesComponent {
   private readonly stateService = inject(StrategyResearchStateService);
 
   readonly attributes = computed(() => this.stateService.brandVoice().voiceAttributes);
-  /* v8 ignore next — signal() default-value branch unreachable from TestBed */
+  /* v8 ignore next 3 — V8's function-call-throws branches on input()/signal() declarations are unreachable (Angular class-field init time; ESM exports not spy-able) */
   readonly isGenerating = signal(false);
-  /* v8 ignore next — signal() default-value branch unreachable from TestBed */
   readonly editingId = signal<string | null>(null);
-  /* v8 ignore next — signal() default-value branch unreachable from TestBed */
   readonly editAttribute = signal<VoiceAttribute>({ id: '', label: '', description: '', doExample: '', dontExample: '' });
 
   generateAttributes(): void {

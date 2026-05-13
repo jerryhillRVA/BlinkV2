@@ -25,7 +25,7 @@ const WARN_RATIO = 0.9;
   styleUrl: './tiktok-packaging.component.scss',
 })
 export class TiktokPackagingComponent {
-  /* v8 ignore next 2 — signal-input default-value branches are unreachable from TestBed */
+  /* v8 ignore next 2 — V8's function-call-throws branches on input()/signal() declarations are unreachable (Angular class-field init time; ESM exports not spy-able) */
   readonly value = input<PackagingTikTokContract | undefined>(undefined);
   readonly disabled = input(false);
 

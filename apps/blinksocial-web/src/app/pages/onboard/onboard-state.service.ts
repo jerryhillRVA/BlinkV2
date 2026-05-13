@@ -31,36 +31,23 @@ const POST_GENERATION_PROMPT =
 export class OnboardStateService {
   private readonly api = inject(OnboardApiService);
   private readonly router = inject(Router);
-
-  /* v8 ignore next — signal() default-value branch unreachable from TestBed */
+  /* v8 ignore next 17 — V8's function-call-throws branches on input()/signal() declarations are unreachable (Angular class-field init time; ESM exports not spy-able) */
   readonly sessionId = signal<string | null>(null);
-  /* v8 ignore next — signal() default-value branch unreachable from TestBed */
   readonly status = signal<OnboardingSessionStatus>('active');
-  /* v8 ignore next — signal() default-value branch unreachable from TestBed */
   readonly messages = signal<OnboardingMessageContract[]>([]);
-  /* v8 ignore next — signal() default-value branch unreachable from TestBed */
   readonly sections = signal<DiscoverySectionContract[]>([]);
-  /* v8 ignore next — signal() default-value branch unreachable from TestBed */
   readonly currentSection = signal<DiscoverySectionId>('business');
-  /* v8 ignore next — signal() default-value branch unreachable from TestBed */
   readonly readyToGenerate = signal(false);
-  /* v8 ignore next — signal() default-value branch unreachable from TestBed */
   readonly isLoading = signal(false);
-  /* v8 ignore next — signal() default-value branch unreachable from TestBed */
   readonly blueprint = signal<BlueprintDocumentContract | null>(null);
-  /* v8 ignore next — signal() default-value branch unreachable from TestBed */
   readonly markdownDocument = signal<string | null>(null);
-  /* v8 ignore next — signal() default-value branch unreachable from TestBed */
   readonly error = signal<string | null>(null);
-
-  /* v8 ignore next — signal() default-value branch unreachable from TestBed */
   readonly isCreatingWorkspace = signal(false);
   /**
    * Increments every time the canned post-generation prompt is appended,
    * giving the component a one-shot signal to move keyboard focus to the
    * chat textarea. Components react via `effect()`.
    */
-  /* v8 ignore next — signal() default-value branch unreachable from TestBed */
   readonly postGenerationPromptCount = signal(0);
 
   readonly completedSections = computed(() =>

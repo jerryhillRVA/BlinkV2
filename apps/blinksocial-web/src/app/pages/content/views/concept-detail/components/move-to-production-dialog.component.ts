@@ -27,10 +27,8 @@ export class MoveToProductionDialogComponent implements AfterViewInit {
   private readonly doc = inject(DOCUMENT);
   private readonly vcr = inject(ViewContainerRef);
   private readonly destroyRef = inject(DestroyRef);
-
-  /* v8 ignore next — signal-input default-value branch unreachable from TestBed */
+  /* v8 ignore next 2 — V8's function-call-throws branches on input()/signal() declarations are unreachable (Angular class-field init time; ESM exports not spy-able) */
   readonly title = input<string>('this concept');
-  /* v8 ignore next — signal-input default-value branch unreachable from TestBed */
   readonly targets = input.required<TargetPlatform[]>();
 
   @Output() selectAll = new EventEmitter<void>();

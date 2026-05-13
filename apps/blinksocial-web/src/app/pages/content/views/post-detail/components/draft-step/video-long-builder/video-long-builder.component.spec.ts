@@ -168,4 +168,92 @@ describe('VideoLongBuilderComponent', () => {
     const { fixture } = setup();
     expect(fixture.componentInstance['duration']).toBe('10m');
   });
+
+  // ── Branch coverage: `?? defaultValue` fallbacks on event handlers ──
+  // Each handler reads (e.target as ...).value and coalesces null to a
+  // default. Real DOM events always carry strings, but the fallback path
+  // needs explicit exercise.
+
+  it('onHookInput coalesces null .value to empty string', () => {
+    const { fixture, store } = setup();
+    const spy = vi.spyOn(store, 'setVideoLongHook');
+    fixture.componentInstance['onHookInput']({ target: { value: null } } as unknown as Event);
+    expect(spy).toHaveBeenCalledWith('');
+  });
+
+  it('onDurationChange coalesces null .value to "10m"', () => {
+    const { fixture, store } = setup();
+    const spy = vi.spyOn(store, 'setVideoLongTargetDuration');
+    fixture.componentInstance['onDurationChange']({ target: { value: null } } as unknown as Event);
+    expect(spy).toHaveBeenCalledWith('10m');
+  });
+
+  it('onVoiceoverInput coalesces null .value to empty string', () => {
+    const { fixture, store } = setup();
+    const spy = vi.spyOn(store, 'setVideoLongVoiceoverNotes');
+    fixture.componentInstance['onVoiceoverInput']({ target: { value: null } } as unknown as Event);
+    expect(spy).toHaveBeenCalledWith('');
+  });
+
+  it('onBlockDescription coalesces null .value to empty string', () => {
+    const { fixture, store } = setup();
+    store.setVideoLongSequenceBlocks([
+      { id: 'b1', type: 'Hook', description: 'orig', duration: '5s' },
+    ]);
+    const setSpy = vi.spyOn(store, 'setVideoLongSequenceBlocks');
+    fixture.componentInstance['onBlockDescription'](
+      'b1',
+      { target: { value: null } } as unknown as Event,
+    );
+    expect(setSpy).toHaveBeenCalled();
+    const lastCall = setSpy.mock.calls[setSpy.mock.calls.length - 1][0];
+    expect(lastCall[0].description).toBe('');
+  });
+
+  it('onBlockDuration coalesces null .value to empty string', () => {
+    const { fixture, store } = setup();
+    store.setVideoLongSequenceBlocks([
+      { id: 'b1', type: 'Hook', description: 'orig', duration: '5s' },
+    ]);
+    const setSpy = vi.spyOn(store, 'setVideoLongSequenceBlocks');
+    fixture.componentInstance['onBlockDuration'](
+      'b1',
+      { target: { value: null } } as unknown as Event,
+    );
+    expect(setSpy).toHaveBeenCalled();
+    const lastCall = setSpy.mock.calls[setSpy.mock.calls.length - 1][0];
+    expect(lastCall[0].duration).toBe('');
+  });
+
+  it('onRemoveBlock filters out the targeted block id (sequenceBlocks ?? [] branch)', () => {
+    const { fixture, store } = setup();
+    store.setVideoLongSequenceBlocks([
+      { id: 'b1', type: 'Hook', description: 'a', duration: '5s' },
+      { id: 'b2', type: 'Body', description: 'b', duration: '10s' },
+    ]);
+    fixture.componentInstance['onRemoveBlock']('b1');
+    expect(store.videoLongDraft().sequenceBlocks?.map((b) => b.id)).toEqual(['b2']);
+  });
+
+  it('onAddBlock works when sequenceBlocks is undefined (?? [] fallback path)', () => {
+    const { fixture, store } = setup();
+    expect(store.videoLongDraft().sequenceBlocks).toBeUndefined();
+    fixture.componentInstance['onAddBlock']();
+    expect(store.videoLongDraft().sequenceBlocks?.length).toBe(1);
+  });
+
+  it('onBlockDescription preserves other blocks while patching the target one', () => {
+    const { fixture, store } = setup();
+    store.setVideoLongSequenceBlocks([
+      { id: 'b1', type: 'Hook', description: 'orig1', duration: '5s' },
+      { id: 'b2', type: 'Body', description: 'orig2', duration: '10s' },
+    ]);
+    fixture.componentInstance['onBlockDescription'](
+      'b2',
+      { target: { value: 'updated' } } as unknown as Event,
+    );
+    const blocks = store.videoLongDraft().sequenceBlocks ?? [];
+    expect(blocks.find((b) => b.id === 'b1')?.description).toBe('orig1');
+    expect(blocks.find((b) => b.id === 'b2')?.description).toBe('updated');
+  });
 });

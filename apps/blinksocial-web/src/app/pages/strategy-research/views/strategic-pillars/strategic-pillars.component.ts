@@ -156,15 +156,10 @@ export class StrategicPillarsComponent {
   readonly linkedObjectives = input<BusinessObjective[]>([]);
 
   readonly pillars = this.stateService.pillars;
-  /* v8 ignore next — signal() default-value branch unreachable from TestBed */
   readonly showAddForm = signal(false);
-  /* v8 ignore next — signal() default-value branch unreachable from TestBed */
   readonly isSuggestingGoals = signal(false);
-  /* v8 ignore next — signal() default-value branch unreachable from TestBed */
   readonly editingId = signal<string | null>(null);
-  /* v8 ignore next — signal() default-value branch unreachable from TestBed */
   readonly isAnalyzing = signal(false);
-  /* v8 ignore next — signal() default-value branch unreachable from TestBed */
   readonly postsPerWeek = signal<number | null>(null);
   /* v8 ignore stop */
 
@@ -179,11 +174,9 @@ export class StrategicPillarsComponent {
   /* v8 ignore start */
   // Audience Focus selection (chip toggles)
   readonly audienceSegments = this.stateService.segments;
-  /* v8 ignore next — signal() default-value branch unreachable from TestBed */
   readonly selectedSegmentIds = signal<Set<string>>(new Set());
 
   // Investment plan output (populated by analyzeDistribution)
-  /* v8 ignore next — signal() default-value branch unreachable from TestBed */
   readonly investmentPlan = signal<InvestmentPlan | null>(null);
   /* v8 ignore stop */
 
@@ -205,22 +198,16 @@ export class StrategicPillarsComponent {
   newPillarColor = PRESET_COLORS[0];
   /* v8 ignore start */
   newLinkedObjectiveIds = signal<Set<string>>(new Set());
-  /* v8 ignore next — signal() default-value branch unreachable from TestBed */
   newGoals = signal<PillarGoal[]>([]);
-  /* v8 ignore next — signal() default-value branch unreachable from TestBed */
   savedGoalIds = signal<Set<string>>(new Set());
-  /* v8 ignore next — signal() default-value branch unreachable from TestBed */
   modalEditingId = signal<string | null>(null);
 
   // Manage Goals dialog state
-  /* v8 ignore next — signal() default-value branch unreachable from TestBed */
   readonly goalsDialogPillarId = signal<string | null>(null);
   quickGoalForm: QuickGoalForm = { ...BLANK_QUICK_GOAL };
 
   // Link Objectives dialog state
-  /* v8 ignore next — signal() default-value branch unreachable from TestBed */
   readonly objectivesDialogPillarId = signal<string | null>(null);
-  /* v8 ignore next — signal() default-value branch unreachable from TestBed */
   readonly quickObjectiveIds = signal<Set<string>>(new Set());
   /* v8 ignore stop */
 

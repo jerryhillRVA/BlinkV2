@@ -16,7 +16,7 @@ import { ICONS, type IconName } from './icons';
   styleUrl: './icon.component.scss',
 })
 export class IconComponent {
-  /* v8 ignore next — signal() default-value branch unreachable from TestBed */
+  /* v8 ignore next 1 — V8's function-call-throws branches on input()/signal() declarations are unreachable (Angular class-field init time; ESM exports not spy-able) */
   protected readonly nameSignal = signal<IconName | null>(null);
 
   @Input({ required: true }) set name(v: IconName) {

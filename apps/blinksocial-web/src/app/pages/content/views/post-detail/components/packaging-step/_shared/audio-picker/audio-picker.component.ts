@@ -86,7 +86,6 @@ export const PLATFORM_AUDIO_NOTE: Partial<Record<PlatformContract, string>> = {
   styleUrl: './audio-picker.component.scss',
 })
 export class AudioPickerComponent {
-  /* v8 ignore next 2 — signal-input default-value branches are unreachable from TestBed */
   readonly track = input<PackagingAudioTrackContract | undefined>(undefined);
   readonly platform = input.required<PlatformContract>();
   /* v8 ignore next */

@@ -13,37 +13,22 @@ import type { SecuritySettingsContract } from '@blinksocial/contracts';
 @Injectable()
 export class WorkspaceSettingsStateService {
   private readonly api = inject(WorkspaceSettingsApiService);
-
-  /* v8 ignore next — signal() default-value branch unreachable from TestBed */
+  /* v8 ignore next 16 — V8's function-call-throws branches on input()/signal() declarations are unreachable (Angular class-field init time; ESM exports not spy-able) */
   readonly workspaceId = signal('');
-  /* v8 ignore next — signal() default-value branch unreachable from TestBed */
   readonly activeTab = signal<SettingsTab>('general');
-  /* v8 ignore next — signal() default-value branch unreachable from TestBed */
   readonly loading = signal(false);
-  /* v8 ignore next — signal() default-value branch unreachable from TestBed */
   readonly saving = signal(false);
 
   /** Temp password from user creation — survives tab reload */
-  /* v8 ignore next — signal() default-value branch unreachable from TestBed */
   readonly tempPassword = signal<string | null>(null);
-  /* v8 ignore next — signal() default-value branch unreachable from TestBed */
   readonly tempPasswordEmail = signal<string | null>(null);
-
-  /* v8 ignore next — signal() default-value branch unreachable from TestBed */
   readonly generalSettings = signal<GeneralSettingsContract | null>(null);
-  /* v8 ignore next — signal() default-value branch unreachable from TestBed */
   readonly platformSettings = signal<PlatformSettingsContract | null>(null);
-  /* v8 ignore next — signal() default-value branch unreachable from TestBed */
   readonly brandVoiceSettings = signal<BrandVoiceSettingsContract | null>(null);
-  /* v8 ignore next — signal() default-value branch unreachable from TestBed */
   readonly skillSettings = signal<SkillSettingsContract | null>(null);
-  /* v8 ignore next — signal() default-value branch unreachable from TestBed */
   readonly teamSettings = signal<TeamSettingsContract | null>(null);
-  /* v8 ignore next — signal() default-value branch unreachable from TestBed */
   readonly notificationSettings = signal<NotificationSettingsContract | null>(null);
-  /* v8 ignore next — signal() default-value branch unreachable from TestBed */
   readonly calendarSettings = signal<CalendarSettingsContract | null>(null);
-  /* v8 ignore next — signal() default-value branch unreachable from TestBed */
   readonly securitySettings = signal<SecuritySettingsContract | null>(null);
 
   private readonly originalData = new Map<SettingsTab, unknown>();

@@ -24,7 +24,7 @@ describe('VoiceMissionComponent', () => {
   beforeEach(async () => {
     vi.useFakeTimers();
     toastSpy = { showSuccess: vi.fn(), showError: vi.fn() };
-    /* v8 ignore next — signal() default-value branch unreachable from TestBed */
+    /* v8 ignore next 1 — V8's function-call-throws branches on input()/signal() declarations are unreachable (Angular class-field init time; ESM exports not spy-able) */
     mockBrandVoice = signal<BrandVoiceData>({ ...DEFAULT_BRAND_VOICE });
     mockStateService = {
       brandVoice: mockBrandVoice,

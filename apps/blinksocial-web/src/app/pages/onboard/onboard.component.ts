@@ -77,9 +77,8 @@ export class OnboardComponent implements OnInit, AfterViewChecked {
   protected readonly acceptAttribute = ACCEPT_ATTRIBUTE;
 
   userInput = '';
-  /* v8 ignore next — signal() default-value branch unreachable from TestBed */
+  /* v8 ignore next 15 — V8's function-call-throws branches on input()/signal() declarations are unreachable (Angular class-field init time; ESM exports not spy-able) */
   workspaceName = signal('');
-  /* v8 ignore next — signal() default-value branch unreachable from TestBed */
   sessionStarted = signal(false);
   /**
    * Active panel in the post-generation tabbed/split layout. On desktop both
@@ -87,16 +86,12 @@ export class OnboardComponent implements OnInit, AfterViewChecked {
    * drives which one is rendered at full width. Persists across regenerations
    * because nothing else writes to it.
    */
-  /* v8 ignore next — signal() default-value branch unreachable from TestBed */
   protected readonly activeTab = signal<'blueprint' | 'chat'>('blueprint');
   /** Chips rendered above the textarea before send. */
-  /* v8 ignore next — signal() default-value branch unreachable from TestBed */
   protected readonly pendingAttachments = signal<PendingAttachment[]>([]);
   /** Drives the dashed-border drop overlay. Desktop only. */
-  /* v8 ignore next — signal() default-value branch unreachable from TestBed */
   protected readonly isDragging = signal(false);
   /** Detect coarse pointers (touch) so we never wire drag listeners. */
-  /* v8 ignore next — signal() default-value branch unreachable from TestBed */
   protected readonly isTouchDevice = signal(false);
   private dragDepth = 0;
   private shouldScrollToBottom = false;

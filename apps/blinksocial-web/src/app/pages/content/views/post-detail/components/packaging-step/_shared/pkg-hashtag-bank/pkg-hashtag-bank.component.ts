@@ -24,7 +24,7 @@ export interface HashtagBankGroup {
   styleUrl: './pkg-hashtag-bank.component.scss',
 })
 export class PkgHashtagBankComponent {
-  /* v8 ignore next 4 — signal-input default-value branches are unreachable from TestBed */
+  /* v8 ignore next 4 — V8's function-call-throws branches on input()/signal() declarations are unreachable (Angular class-field init time; ESM exports not spy-able) */
   readonly hashtags = input<string[]>([]);
   readonly disabled = input(false);
   readonly aiSuggesting = input(false);
@@ -32,7 +32,7 @@ export class PkgHashtagBankComponent {
 
   readonly hashtagsChange = output<string[]>();
   readonly aiSuggest = output<void>();
-
+  /* v8 ignore next 2 — V8's function-call-throws branches on input()/signal() declarations are unreachable (Angular class-field init time; ESM exports not spy-able) */
   protected readonly bankOpen = signal(false);
   protected readonly addInput = signal('');
 

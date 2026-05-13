@@ -23,10 +23,8 @@ export class HashtagInputComponent {
   @Input() disabled = false;
 
   @Output() hashtagsChange = new EventEmitter<string[]>();
-
-  /* v8 ignore next — signal() default-value branch unreachable from TestBed */
+  /* v8 ignore next 2 — V8's function-call-throws branches on input()/signal() declarations are unreachable (Angular class-field init time; ESM exports not spy-able) */
   protected readonly draft = signal('');
-  /* v8 ignore next — signal() default-value branch unreachable from TestBed */
   protected readonly bankOpen = signal(false);
 
   protected readonly suggestions = AI_SUGGESTED_HASHTAGS;

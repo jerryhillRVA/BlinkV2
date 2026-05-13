@@ -976,4 +976,55 @@ describe('MediaSelectionsCardComponent', () => {
     // Cleanup
     reqs.forEach((r) => r.flush({ results: [] }));
   });
+
+  it('onCoverInput coalesces null .value to empty string (?? "" fallback)', () => {
+    const fixture = setup({ platform: 'instagram' });
+    const names: (string | undefined)[] = [];
+    fixture.componentInstance.coverAssetChange.subscribe((n) => names.push(n));
+    fixture.componentInstance['onCoverInput']({
+      target: { value: null },
+    } as unknown as Event);
+    // Falsy `v.length > 0` after coalesce → emits undefined.
+    expect(names).toEqual([undefined]);
+  });
+
+  it('onSearchInput coalesces null .value to empty string (?? "" fallback)', () => {
+    const fixture = setup({ platform: 'instagram' });
+    fixture.componentInstance['onSearchInput']({
+      target: { value: null },
+    } as unknown as Event);
+    expect(fixture.componentInstance['searchQuery']()).toBe('');
+  });
+
+  it('upload with non-string FileReader.result emits undefined coverAssetUrl', async () => {
+    // Spy on FileReader so reader.result is a non-string (ArrayBuffer-like).
+    // Exercises the `typeof reader.result === 'string' ? ... : undefined`
+    // ternary's else branch.
+    const fixture = setup({ platform: 'instagram' });
+    const urls: (string | undefined)[] = [];
+    fixture.componentInstance.coverAssetUrlChange.subscribe((u) => urls.push(u));
+    const originalFileReader = global.FileReader;
+    class FakeFileReader {
+      result: ArrayBuffer | string | null = new ArrayBuffer(0);
+      onload: ((this: FileReader, ev: ProgressEvent) => unknown) | null = null;
+      readAsDataURL() {
+        // Fire onload synchronously with a non-string result
+        if (this.onload) this.onload.call(this as unknown as FileReader, {} as ProgressEvent);
+      }
+    }
+    (global as { FileReader: typeof FileReader }).FileReader =
+      FakeFileReader as unknown as typeof FileReader;
+    try {
+      const fileInput = fixture.nativeElement.querySelector(
+        '.upload-file-input',
+      ) as HTMLInputElement;
+      const file = new File([''], 'cover.png', { type: 'image/png' });
+      Object.defineProperty(fileInput, 'files', { value: [file], configurable: true });
+      fileInput.dispatchEvent(new Event('change'));
+      // The non-string branch coalesces to undefined.
+      expect(urls).toEqual([undefined]);
+    } finally {
+      (global as { FileReader: typeof FileReader }).FileReader = originalFileReader;
+    }
+  });
 });

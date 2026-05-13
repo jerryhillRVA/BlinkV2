@@ -10,10 +10,8 @@ import { TooltipService } from './tooltip.service';
 export class TooltipComponent {
   private readonly elRef = inject(ElementRef);
   private readonly tooltipService = inject(TooltipService);
-
-  /* v8 ignore next — signal-input default-value branch unreachable from TestBed */
+  /* v8 ignore next 2 — V8's function-call-throws branches on input()/signal() declarations are unreachable (Angular class-field init time; ESM exports not spy-able) */
   text = input.required<string>();
-  /* v8 ignore next — signal-input default-value branch unreachable from TestBed */
   type = input<TooltipIconType>('info');
 
   show(): void {

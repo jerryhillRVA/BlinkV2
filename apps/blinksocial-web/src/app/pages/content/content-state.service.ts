@@ -98,27 +98,17 @@ export class ContentStateService {
   // Playwright's page.route mocks (which only intercept browser requests).
   // Letting the client always fetch keeps tests + dev mode coherent.
   private readonly platformId = inject(PLATFORM_ID);
-
-  /* v8 ignore next — signal() default-value branch unreachable from TestBed */
+  /* v8 ignore next 6 — V8's function-call-throws branches on input()/signal() declarations are unreachable (Angular class-field init time; ESM exports not spy-able) */
   readonly workspaceId = signal('');
-  /* v8 ignore next — signal() default-value branch unreachable from TestBed */
   readonly loading = signal(false);
-  /* v8 ignore next — signal() default-value branch unreachable from TestBed */
   readonly saving = signal(false);
-
-  /* v8 ignore next — signal() default-value branch unreachable from TestBed */
   readonly indexEntries = signal<ContentItemsIndexEntryContract[]>([]);
-  /* v8 ignore next — signal() default-value branch unreachable from TestBed */
   readonly archiveIndexEntries = signal<ContentItemsIndexEntryContract[]>([]);
-  /* v8 ignore next — signal() default-value branch unreachable from TestBed */
   private readonly fullItemCacheSignal = signal<Record<string, ContentItem>>({});
   private archiveLoaded = false;
-
-  /* v8 ignore next — signal() default-value branch unreachable from TestBed */
+  /* v8 ignore next 3 — V8's function-call-throws branches on input()/signal() declarations are unreachable (Angular class-field init time; ESM exports not spy-able) */
   readonly pillars = signal<ContentPillar[]>([]);
-  /* v8 ignore next — signal() default-value branch unreachable from TestBed */
   readonly segments = signal<AudienceSegment[]>([]);
-  /* v8 ignore next — signal() default-value branch unreachable from TestBed */
   readonly businessObjectives = signal<BusinessObjectiveContract[]>([]);
 
   /** Unified view merging lean rows + full cached items (full wins). */

@@ -30,8 +30,6 @@ export class ContentMixComponent {
   private readonly destroyRef = inject(DestroyRef);
   private readonly stateService = inject(StrategyResearchStateService);
   private readonly toast = inject(ToastService);
-
-  /* v8 ignore next — signal() default-value branch unreachable from TestBed */
   readonly showAddCategory = signal(false);
   newCategoryName = '';
   newCategoryDescription = '';
@@ -40,7 +38,6 @@ export class ContentMixComponent {
   readonly mix = computed<ContentMixEntry[]>(() =>
     this.stateService.contentMix().map(m => ({ ...m, actualPercent: m.targetPercent }))
   );
-  /* v8 ignore next — signal() default-value branch unreachable from TestBed */
   readonly isSuggesting = signal(false);
   /* v8 ignore stop */
 

@@ -121,22 +121,16 @@ export class AudienceComponent {
 
   /* v8 ignore start */
   readonly expandedSegments = signal<Set<string>>(new Set());
-  /* v8 ignore next — signal() default-value branch unreachable from TestBed */
   readonly mappingSegmentId = signal<string | null>(null);
-  /* v8 ignore next — signal() default-value branch unreachable from TestBed */
   readonly editingId = signal<string | null>(null);
 
   // AI Audience Analyzer state
-  /* v8 ignore next — signal() default-value branch unreachable from TestBed */
   readonly selectedAnalyzeId = signal<string>('');
-  /* v8 ignore next — signal() default-value branch unreachable from TestBed */
   readonly isAnalyzing = signal(false);
   readonly insights = this.stateService.audienceInsights;
 
   // Per-card insights state
-  /* v8 ignore next — signal() default-value branch unreachable from TestBed */
   readonly expandedInsights = signal<Set<string>>(new Set());
-  /* v8 ignore next — signal() default-value branch unreachable from TestBed */
   readonly analyzingSegmentId = signal<string | null>(null);
   /* v8 ignore stop */
 

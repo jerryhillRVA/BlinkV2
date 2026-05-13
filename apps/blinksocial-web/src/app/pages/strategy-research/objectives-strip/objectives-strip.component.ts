@@ -13,13 +13,13 @@ import { safeTimeout, generateId } from '../strategy-research.utils';
   styleUrl: './objectives-strip.component.scss',
 })
 export class ObjectivesStripComponent {
-  /* v8 ignore next — signal-input default-value branch unreachable from TestBed */
+  /* v8 ignore next 1 — V8's function-call-throws branches on input()/signal() declarations are unreachable (Angular class-field init time; ESM exports not spy-able) */
   readonly objectives = input<BusinessObjective[]>([]);
   readonly objectivesChange = output<BusinessObjective[]>();
 
   private readonly destroyRef = inject(DestroyRef);
   private readonly toast = inject(ToastService);
-
+  /* v8 ignore next 2 — V8's function-call-throws branches on input()/signal() declarations are unreachable (Angular class-field init time; ESM exports not spy-able) */
   readonly showDrawer = signal(false);
   readonly isSuggesting = signal(false);
   dialogObjectives: BusinessObjective[] = [];

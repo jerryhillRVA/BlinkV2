@@ -8,7 +8,7 @@ import { PLATFORM_OPTIONS } from '../../../../../content.constants';
   styleUrl: './builder-placeholder.component.scss',
 })
 export class PackagingBuilderPlaceholderComponent {
-  /* v8 ignore next — signal-input default-value branch is unreachable from TestBed */
+  /* v8 ignore next 1 — V8's function-call-throws branches on input()/signal() declarations are unreachable (Angular class-field init time; ESM exports not spy-able) */
   readonly platform = input<PlatformContract | null>(null);
 
   protected readonly label = computed(() => {

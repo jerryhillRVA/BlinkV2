@@ -32,23 +32,14 @@ export class AbAnalyzerComponent {
 
   /* v8 ignore start */
   readonly variantA = signal('');
-  /* v8 ignore next — signal() default-value branch unreachable from TestBed */
   readonly variantB = signal('');
-  /* v8 ignore next — signal() default-value branch unreachable from TestBed */
   readonly selectedGoal = signal<string>(AB_GOAL_OPTIONS[0]);
-  /* v8 ignore next — signal() default-value branch unreachable from TestBed */
   readonly selectedPlatform = signal<Platform>('instagram');
-  /* v8 ignore next — signal() default-value branch unreachable from TestBed */
   readonly isAnalyzing = signal(false);
-  /* v8 ignore next — signal() default-value branch unreachable from TestBed */
   readonly analysis = signal<AbAnalysisResult | null>(null);
-  /* v8 ignore next — signal() default-value branch unreachable from TestBed */
   readonly copiedImproved = signal(false);
-  /* v8 ignore next — signal() default-value branch unreachable from TestBed */
   readonly ideaTitle = signal('');
-  /* v8 ignore next — signal() default-value branch unreachable from TestBed */
   readonly ideaTitleError = signal(false);
-  /* v8 ignore next — signal() default-value branch unreachable from TestBed */
   readonly ideaSaved = signal(false);
   /* v8 ignore stop */
 

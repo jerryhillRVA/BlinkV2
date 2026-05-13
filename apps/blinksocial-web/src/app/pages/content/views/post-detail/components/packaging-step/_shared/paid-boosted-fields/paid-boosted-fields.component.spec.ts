@@ -1,5 +1,14 @@
+import { Component } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { PaidBoostedFieldsComponent } from './paid-boosted-fields.component';
+
+/** Host that renders the SUT without any input bindings — exercises the
+ *  signal-input default-value path (different from TestBed.setInput(name, undefined)). */
+@Component({
+  imports: [PaidBoostedFieldsComponent],
+  template: '<app-paid-boosted-fields />',
+})
+class HostNoBindingsComponent {}
 
 interface SetupOptions {
   campaignName?: string;
@@ -138,14 +147,16 @@ describe('PaidBoostedFieldsComponent', () => {
     expect(emitted).toEqual(['']);
   });
 
-  it('all four inputs default to undefined when not explicitly set (exercises signal-input default branch)', () => {
-    // Build the component WITHOUT calling setInput, so the signal-input
-    // defaults are reached for branch coverage on the input() declarations.
+  it('renders via host template with NO input bindings (exercises signal-input default-value branches)', () => {
+    // Render the SUT through a host template with NO bindings at all.
+    // Angular initializes each input with its declared default. This is
+    // a different code path from TestBed.setInput(name, undefined), which
+    // marks the input as "explicitly set" with an undefined value.
     TestBed.resetTestingModule();
-    TestBed.configureTestingModule({ imports: [PaidBoostedFieldsComponent] });
-    const fixture = TestBed.createComponent(PaidBoostedFieldsComponent);
+    TestBed.configureTestingModule({ imports: [HostNoBindingsComponent] });
+    const fixture = TestBed.createComponent(HostNoBindingsComponent);
     fixture.detectChanges();
-    // The textareas/inputs render with empty values via the `?? ''` template fallback.
+    // Inputs render with empty values; not readOnly.
     expect(
       (fixture.nativeElement.querySelector('#paid-campaign') as HTMLInputElement).value,
     ).toBe('');
@@ -155,7 +166,6 @@ describe('PaidBoostedFieldsComponent', () => {
     expect(
       (fixture.nativeElement.querySelector('#paid-approver') as HTMLInputElement).value,
     ).toBe('');
-    // disabled defaults to false → inputs are NOT readOnly.
     fixture.nativeElement.querySelectorAll('.paid-input').forEach((i: HTMLInputElement) => {
       expect(i.readOnly).toBe(false);
     });

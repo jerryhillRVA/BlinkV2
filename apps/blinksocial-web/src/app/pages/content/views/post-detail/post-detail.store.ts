@@ -49,8 +49,7 @@ import type {
 @Injectable()
 export class PostDetailStore {
   private readonly state = inject(ContentStateService);
-
-  /* v8 ignore next — signal() default-value branch unreachable from TestBed */
+  /* v8 ignore next 1 — V8's function-call-throws branches on input()/signal() declarations are unreachable (Angular class-field init time; ESM exports not spy-able) */
   private readonly _itemId = signal<string | null>(null);
 
   readonly item = computed<ContentItem | null>(
@@ -74,8 +73,7 @@ export class PostDetailStore {
           i.stage === 'post' && i.conceptId === conceptId && !i.archived,
       ).length;
   });
-
-  /* v8 ignore next — signal() default-value branch unreachable from TestBed */
+  /* v8 ignore next 1 — V8's function-call-throws branches on input()/signal() declarations are unreachable (Angular class-field init time; ESM exports not spy-able) */
   readonly activeStep = signal<ProductionStep>('brief');
 
   /**

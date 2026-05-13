@@ -56,18 +56,11 @@ export class BriefTabComponent {
 
   /* v8 ignore start */
   readonly initialInfluencer = input<ShortlistedInfluencer | null>(null);
-
-  /* v8 ignore next — signal() default-value branch unreachable from TestBed */
   readonly selectedHandle = signal<string>('');
-  /* v8 ignore next — signal() default-value branch unreachable from TestBed */
   readonly selectedObjectiveId = signal<string>('');
-  /* v8 ignore next — signal() default-value branch unreachable from TestBed */
   readonly selectedPlatforms = signal<Platform[]>([]);
-  /* v8 ignore next — signal() default-value branch unreachable from TestBed */
   readonly form = signal<BriefFormState>({ ...EMPTY_FORM });
-  /* v8 ignore next — signal() default-value branch unreachable from TestBed */
   readonly generatedBrief = signal<string>('');
-  /* v8 ignore next — signal() default-value branch unreachable from TestBed */
   readonly isGenerating = signal(false);
   /* v8 ignore stop */
 

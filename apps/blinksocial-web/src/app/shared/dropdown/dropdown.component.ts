@@ -18,21 +18,15 @@ export interface DropdownOption {
 })
 export class DropdownComponent {
   private readonly elRef = inject(ElementRef);
-
-  /* v8 ignore next — signal-input default-value branch unreachable from TestBed */
+  /* v8 ignore next 6 — V8's function-call-throws branches on input()/signal() declarations are unreachable (Angular class-field init time; ESM exports not spy-able) */
   options = input.required<DropdownOption[]>();
-  /* v8 ignore next — signal-input default-value branch unreachable from TestBed */
   value = input.required<string>();
-  /* v8 ignore next — signal-input default-value branch unreachable from TestBed */
   size = input<'default' | 'compact' | 'sm'>('default');
-  /* v8 ignore next — signal-input default-value branch unreachable from TestBed */
   fullWidth = input<boolean>(false);
-  /* v8 ignore next — signal-input default-value branch unreachable from TestBed */
   filled = input<boolean>(false);
-  /* v8 ignore next — signal-input default-value branch unreachable from TestBed */
   placeholder = input<string>('');
   valueChange = output<string>();
-
+  /* v8 ignore next 1 — V8's function-call-throws branches on input()/signal() declarations are unreachable (Angular class-field init time; ESM exports not spy-able) */
   open = signal(false);
 
   @HostBinding('class.dropdown-host-full')

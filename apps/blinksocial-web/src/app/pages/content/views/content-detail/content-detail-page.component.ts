@@ -22,16 +22,11 @@ export class ContentDetailPageComponent {
   private readonly toast = inject(ToastService);
 
   protected readonly stateService = inject(ContentStateService);
-
-  /* v8 ignore next — signal() default-value branch unreachable from TestBed */
+  /* v8 ignore next 5 — V8's function-call-throws branches on input()/signal() declarations are unreachable (Angular class-field init time; ESM exports not spy-able) */
   protected readonly workspaceId = signal('');
-  /* v8 ignore next — signal() default-value branch unreachable from TestBed */
   protected readonly itemId = signal<string | null>(null);
-  /* v8 ignore next — signal() default-value branch unreachable from TestBed */
   protected readonly from = signal<string | null>(null);
-  /* v8 ignore next — signal() default-value branch unreachable from TestBed */
   protected readonly calendarView = signal<string | null>(null);
-  /* v8 ignore next — signal() default-value branch unreachable from TestBed */
   protected readonly calendarCursor = signal<string | null>(null);
 
   protected readonly item = computed<ContentItem | null>(

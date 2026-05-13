@@ -24,8 +24,7 @@ export type IconName =
   styleUrl: './icon.component.scss',
 })
 export class IconComponent {
-  /* v8 ignore next — signal-input default-value branch unreachable from TestBed */
+  /* v8 ignore next 2 — V8's function-call-throws branches on input()/signal() declarations are unreachable (Angular class-field init time; ESM exports not spy-able) */
   readonly name = input.required<IconName>();
-  /* v8 ignore next — signal-input default-value branch unreachable from TestBed */
   readonly size = input(16);
 }

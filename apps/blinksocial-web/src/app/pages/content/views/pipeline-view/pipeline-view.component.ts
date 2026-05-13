@@ -38,10 +38,8 @@ export class PipelineViewComponent {
   private readonly route = inject(ActivatedRoute);
   private readonly stateService = inject(ContentStateService, { optional: true });
   private readonly platformId = inject(PLATFORM_ID);
-
-  /* v8 ignore next — signal-input default-value branch unreachable from TestBed */
+  /* v8 ignore next 2 — V8's function-call-throws branches on input()/signal() declarations are unreachable (Angular class-field init time; ESM exports not spy-able) */
   readonly items = input<ContentItem[]>([]);
-  /* v8 ignore next — signal-input default-value branch unreachable from TestBed */
   readonly pillars = input<ContentPillar[]>([]);
 
   private readonly sourceItems = computed<ContentItem[]>(() => {
@@ -58,7 +56,7 @@ export class PipelineViewComponent {
   @Output() navigateToStep = new EventEmitter<ContentView>();
   @Output() createItem = new EventEmitter<void>();
   @Output() createItemAs = new EventEmitter<ContentItemType>();
-
+  /* v8 ignore next 1 — V8's function-call-throws branches on input()/signal() declarations are unreachable (Angular class-field init time; ESM exports not spy-able) */
   readonly pickerOpen = signal(false);
 
   togglePicker(): void {
@@ -73,7 +71,7 @@ export class PipelineViewComponent {
     this.pickerOpen.set(false);
     this.createItemAs.emit(type);
   }
-
+  /* v8 ignore next 9 — V8's function-call-throws branches on input()/signal() declarations are unreachable (Angular class-field init time; ESM exports not spy-able) */
   readonly viewMode = signal<ViewMode>(this.loadViewMode());
   readonly searchQuery = signal('');
   readonly sortField = signal<SortField>('updatedAt');
