@@ -87,8 +87,6 @@ export class InstagramPackagingComponent {
    * the toggle is informational only on the locked-brief packaging step.
    */
   readonly publishingMode = input<PublishingModeContract | undefined>(undefined);
-  /** Read-only display of the parent draft's caption seed, for the "from Draft" hint. */
-  readonly draftCaptionSeed = input<string | undefined>(undefined);
   /** Brief-side paid/boosted fields (also editable from packaging). */
   readonly campaignName = input<string | undefined>(undefined);
   readonly destinationUrl = input<string | undefined>(undefined);
@@ -122,11 +120,6 @@ export class InstagramPackagingComponent {
 
   protected readonly paidBoosted = computed(() => this.publishingMode() === 'PAID_BOOSTED');
 
-  protected readonly captionDivergedFromDraft = computed(() => {
-    const seed = this.draftCaptionSeed();
-    return !!seed && this.caption() !== seed;
-  });
-
   protected readonly captionState = computed(() => {
     const len = this.caption().length;
     if (len >= CAPTION_MAX) return 'fail';
@@ -157,12 +150,6 @@ export class InstagramPackagingComponent {
       this.onHashtagsChange(merged);
       this.aiSuggestingHashtags.set(false);
     }, AI_DELAY_MS);
-  }
-
-  protected onRevertToDraft(): void {
-    const seed = this.draftCaptionSeed();
-    if (seed === undefined) return;
-    this.applyCaption(seed);
   }
 
   protected toggleBank(): void {

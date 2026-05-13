@@ -21,14 +21,14 @@
   font-weight: 700;
   letter-spacing: 0.06em;
   text-transform: uppercase;
-  color: #6b7280; // gray-500 — prototype literal
+  color: var(--blink-on-surface-faint); // gray-500 — prototype literal
 }
 
 .empty-state {
   margin: 0;
   font-size: 10px;
   font-style: italic;
-  color: #9ca3af; // gray-400 — prototype literal
+  color: var(--blink-on-surface-tertiary); // gray-400 — prototype literal
 }
 
 // ── Chip row (selected hashtags) ─────────────────────────────────────
@@ -50,7 +50,7 @@
   gap: 4px;
   padding: 2px 8px;
   background: var(--blink-input-bg-dark); // gray-100
-  color: #374151; // gray-700
+  color: var(--blink-on-surface-secondary); // gray-700
   border-radius: 999px;
   font-size: 10px;
   font-weight: 500;
@@ -71,12 +71,12 @@
   background: transparent;
   border: none;
   border-radius: 50%;
-  color: #9ca3af; // gray-400
+  color: var(--blink-on-surface-tertiary); // gray-400
   cursor: pointer;
   padding: 0;
 
   &:hover:not(:disabled) {
-    color: #374151; // gray-700 (matches prototype's hover state)
+    color: var(--blink-on-surface-secondary); // gray-700 (matches prototype's hover state)
   }
 
   &:focus-visible {
@@ -169,12 +169,12 @@
   border: none;
   font-family: inherit;
   font-size: 10px;
-  color: #6b7280; // gray-500
+  color: var(--blink-on-surface-faint); // gray-500
   cursor: pointer;
   transition: color 120ms ease;
 
   &:hover:not(:disabled) {
-    color: #374151; // gray-700
+    color: var(--blink-on-surface-secondary); // gray-700
   }
 
   &:focus-visible {
@@ -206,7 +206,7 @@
   font-weight: 600;
   letter-spacing: 0.06em;
   text-transform: uppercase;
-  color: #9ca3af; // gray-400
+  color: var(--blink-on-surface-tertiary); // gray-400
 }
 
 .bank-group-chips {
@@ -222,7 +222,7 @@
   font-family: inherit;
   font-size: 10px;
   font-weight: 500;
-  color: #4b5563; // gray-600
+  color: var(--blink-on-surface-secondary); // gray-600
   background: var(--blink-surface);
   border: 1px solid #d1d5db; // gray-300
   border-radius: 999px;
@@ -230,8 +230,8 @@
   transition: background-color 120ms ease, border-color 120ms ease, color 120ms ease;
 
   &:hover:not(:disabled):not(.is-added) {
-    color: #111827; // gray-800
-    border-color: #6b7280; // gray-500
+    color: var(--blink-on-surface-strong); // gray-800
+    border-color: var(--blink-on-surface-faint); // gray-500
   }
 
   &:focus-visible {
@@ -243,8 +243,8 @@
   &.is-added {
     cursor: default;
     background: var(--blink-input-bg-dark);
-    color: #9ca3af; // gray-400
-    border-color: #e5e7eb; // gray-200
+    color: var(--blink-on-surface-tertiary); // gray-400
+    border-color: var(--blink-outline-variant); // gray-200
   }
 }
 

@@ -8,7 +8,6 @@ interface SetupOptions {
   isCarousel?: boolean;
   contentType?: string;
   publishingMode?: 'ORGANIC' | 'PAID_BOOSTED';
-  draftCaptionSeed?: string;
 }
 
 function setup(opts: SetupOptions = {}): ComponentFixture<InstagramPackagingComponent> {
@@ -20,7 +19,6 @@ function setup(opts: SetupOptions = {}): ComponentFixture<InstagramPackagingComp
   fixture.componentRef.setInput('isCarousel', opts.isCarousel ?? false);
   fixture.componentRef.setInput('contentType', opts.contentType ?? null);
   fixture.componentRef.setInput('publishingMode', opts.publishingMode);
-  fixture.componentRef.setInput('draftCaptionSeed', opts.draftCaptionSeed);
   fixture.detectChanges();
   return fixture;
 }
@@ -185,24 +183,10 @@ describe('InstagramPackagingComponent', () => {
     expect(fixture.componentInstance['captionState']()).toBe('ok');
   });
 
-  it('from-Draft hint appears when caption matches the draft seed', () => {
-    const fixture = setup({ value: { caption: 'shared' }, draftCaptionSeed: 'shared' });
-    expect(fixture.nativeElement.querySelector('.from-draft')).not.toBeNull();
+  it('no Revert-to-Draft or from-Draft affordance is rendered (removed for #116)', () => {
+    const fixture = setup({ value: { caption: 'edited' } });
     expect(fixture.nativeElement.querySelector('.revert-btn')).toBeNull();
-  });
-
-  it('Revert-to-Draft button appears when caption has diverged from the seed', () => {
-    const fixture = setup({ value: { caption: 'edited' }, draftCaptionSeed: 'original' });
-    expect(fixture.nativeElement.querySelector('.revert-btn')).not.toBeNull();
     expect(fixture.nativeElement.querySelector('.from-draft')).toBeNull();
-  });
-
-  it('clicking Revert-to-Draft emits valueChange with the seed restored', () => {
-    const fixture = setup({ value: { caption: 'edited' }, draftCaptionSeed: 'original' });
-    const emitted: PackagingInstagramContract[] = [];
-    fixture.componentInstance.valueChange.subscribe((v) => emitted.push(v));
-    (fixture.nativeElement.querySelector('.revert-btn') as HTMLButtonElement).click();
-    expect(emitted[0]?.caption).toBe('original');
   });
 
   it('AI Generate Caption sets the loading flag synchronously and emits the stub on tick', async () => {
@@ -288,14 +272,6 @@ describe('InstagramPackagingComponent', () => {
     const paid = setup({ publishingMode: 'PAID_BOOSTED' });
     const paidPill = paid.nativeElement.querySelectorAll('.mode-pill')[1];
     expect(paidPill.getAttribute('aria-checked')).toBe('true');
-  });
-
-  it('Revert handler is a no-op when draftCaptionSeed is undefined', () => {
-    const fixture = setup({ value: { caption: 'x' } });
-    const emitted: PackagingInstagramContract[] = [];
-    fixture.componentInstance.valueChange.subscribe((v) => emitted.push(v));
-    fixture.componentInstance['onRevertToDraft']();
-    expect(emitted).toEqual([]);
   });
 
   it('toggleBank flips the bankOpen signal', () => {

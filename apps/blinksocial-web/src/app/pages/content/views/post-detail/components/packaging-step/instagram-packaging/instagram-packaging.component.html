@@ -80,24 +80,7 @@
         (input)="onCaptionInput($event)"
       ></textarea>
       <div class="field-footer">
-        @if (captionDivergedFromDraft()) {
-          <button
-            type="button"
-            class="revert-btn"
-            [disabled]="disabled()"
-            (click)="onRevertToDraft()"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-              <path d="M3 7v6h6"/>
-              <path d="M21 17a9 9 0 0 0-15-6.7L3 13"/>
-            </svg>
-            Revert to Draft
-          </button>
-        } @else if (draftCaptionSeed()) {
-          <span class="from-draft">from Draft</span>
-        } @else {
-          <span></span>
-        }
+        <span></span>
         <span
           class="char-counter"
           [class.warn]="captionState() === 'warn'"

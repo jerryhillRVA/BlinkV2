@@ -7,12 +7,12 @@
   align-items: center;
   gap: 6px;
   padding: 4px 10px;
-  background: #fff;
+  background: var(--blink-surface);
   // Label is gray-900 (matches the prototype's <AIButton> exactly:
   // dark label + purple-500 icon). Was previously --on-surface-strong
   // (#222) which is in the same neighborhood, but gray-900 (#111827)
   // matches the source.
-  color: #111827; // gray-900
+  color: var(--blink-on-surface-strong); // gray-900
   // Border is purple-300, not purple-200 — purple-200 reads almost
   // identical to plain gray on white and looks washed out at this size.
   border: 1px solid #c4b5fd; // purple-300

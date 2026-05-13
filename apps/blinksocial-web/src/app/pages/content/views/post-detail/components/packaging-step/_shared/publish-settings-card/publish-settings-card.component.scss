@@ -39,11 +39,11 @@
   font-weight: 700;
   letter-spacing: 0.06em;
   text-transform: uppercase;
-  color: #6b7280; // gray-500
+  color: var(--blink-on-surface-faint); // gray-500
 }
 
 .ps-chevron {
-  color: #9ca3af; // gray-400
+  color: var(--blink-on-surface-tertiary); // gray-400
   transition: transform 180ms ease;
   &.is-open {
     transform: rotate(180deg);
@@ -59,7 +59,7 @@
 
 // ── Sub-sections ────────────────────────────────────────────────────
 .ps-sub {
-  border: 1px solid #f3f4f6; // gray-100 — matches prototype's border-gray-100
+  border: 1px solid var(--blink-outline-variant); // gray-100 — matches prototype's border-gray-100
   border-radius: 4px;
   overflow: hidden;
   background: var(--blink-surface);
@@ -92,12 +92,12 @@
   font-weight: 700;
   letter-spacing: 0.06em;
   text-transform: uppercase;
-  color: #6b7280; // gray-500
+  color: var(--blink-on-surface-faint); // gray-500
 }
 
 .ps-sub-body {
   padding: 0 12px 4px 12px;
-  border-top: 1px solid #f9fafb; // gray-50
+  border-top: 1px solid var(--blink-outline-variant); // gray-50
 }
 
 .ps-empty {
@@ -105,7 +105,7 @@
   padding: 8px 0;
   font-size: 12px;
   font-style: italic;
-  color: #9ca3af; // gray-400
+  color: var(--blink-on-surface-tertiary); // gray-400
 }
 
 // ── Rows ────────────────────────────────────────────────────────────
@@ -114,7 +114,7 @@
   flex-direction: column;
   gap: 6px;
   padding: 8px 0;
-  border-bottom: 1px solid #f3f4f6; // gray-100
+  border-bottom: 1px solid var(--blink-outline-variant); // gray-100
 
   &:last-child {
     border-bottom: none;
@@ -126,7 +126,7 @@
   font-weight: 700;
   letter-spacing: 0.06em;
   text-transform: uppercase;
-  color: #6b7280; // gray-500
+  color: var(--blink-on-surface-faint); // gray-500
 
   // Some rows mix label + control inline — flatten the case-styling.
   &--mixed {
@@ -134,14 +134,14 @@
     font-weight: 400;
     text-transform: none;
     letter-spacing: 0;
-    color: #374151; // gray-700
+    color: var(--blink-on-surface-secondary); // gray-700
   }
 }
 
 .ps-hint {
   margin-left: 2px;
   font-size: 10px;
-  color: #9ca3af; // gray-400
+  color: var(--blink-on-surface-tertiary); // gray-400
 }
 
 // ── Inputs ──────────────────────────────────────────────────────────
@@ -159,7 +159,7 @@
   transition: background-color 120ms ease, border-color 120ms ease;
 
   &::placeholder {
-    color: #9ca3af; // gray-400
+    color: var(--blink-on-surface-tertiary); // gray-400
   }
 
   &:focus-visible {
@@ -199,8 +199,8 @@
   gap: 4px;
   padding: 2px 8px;
   font-size: 10px;
-  color: #374151; // gray-700
-  background: #f3f4f6; // gray-100
+  color: var(--blink-on-surface-secondary); // gray-700
+  background: var(--blink-input-bg-dark); // gray-100
   border-radius: 999px;
 
   &--cohost {
@@ -219,12 +219,12 @@
   padding: 0;
   background: transparent;
   border: none;
-  color: #9ca3af; // gray-400
+  color: var(--blink-on-surface-tertiary); // gray-400
   cursor: pointer;
   line-height: 0;
 
   &:hover:not(:disabled) {
-    color: #374151; // gray-700
+    color: var(--blink-on-surface-secondary); // gray-700
   }
 
   &:disabled {
@@ -249,7 +249,7 @@
   padding: 0 10px;
   font-family: inherit;
   font-size: 12px;
-  color: #374151; // gray-700
+  color: var(--blink-on-surface-secondary); // gray-700
   background: var(--blink-surface);
   border: 1px solid var(--blink-outline-variant);
   border-radius: 6px;
@@ -257,7 +257,7 @@
   transition: background-color 120ms ease, color 120ms ease;
 
   &:hover:not(:disabled) {
-    background: #f9fafb; // gray-50
+    background: var(--blink-surface-container-low); // gray-50
   }
 
   &:disabled {
@@ -278,7 +278,7 @@
   justify-content: space-between;
   gap: 12px;
   padding: 8px 0;
-  border-bottom: 1px solid #f3f4f6; // gray-100
+  border-bottom: 1px solid var(--blink-outline-variant); // gray-100
 
   &:last-child {
     border-bottom: none;
@@ -300,13 +300,13 @@
 
 .ps-toggle-label {
   font-size: 12px;
-  color: #374151; // gray-700
+  color: var(--blink-on-surface-secondary); // gray-700
 }
 
 .ps-callout {
   margin: 4px 0 8px 0;
   font-size: 10px;
-  color: #6b7280; // gray-500
+  color: var(--blink-on-surface-faint); // gray-500
 }
 
 .ps-switch {
