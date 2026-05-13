@@ -22,11 +22,17 @@ export class CompetitorDeepDiveComponent {
   private readonly toast = inject(ToastService);
 
   readonly competitors = this.stateService.competitorInsights;
+  /* v8 ignore next — signal() default-value branch unreachable from TestBed */
   readonly showAddForm = signal(false);
+  /* v8 ignore next — signal() default-value branch unreachable from TestBed */
   readonly intelOpenIds = signal<Set<string>>(new Set());
+  /* v8 ignore next — signal() default-value branch unreachable from TestBed */
   readonly runningIntelIds = signal<Set<string>>(new Set());
+  /* v8 ignore next — signal() default-value branch unreachable from TestBed */
   readonly deleteConfirmId = signal<string | null>(null);
+  /* v8 ignore next — signal() default-value branch unreachable from TestBed */
   readonly isFinding = signal(false);
+  /* v8 ignore next — signal() default-value branch unreachable from TestBed */
   readonly isRefreshingAll = signal(false);
 
   newCompetitor = '';

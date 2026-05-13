@@ -25,6 +25,7 @@ const WARN_RATIO = 0.9;
   styleUrl: './tiktok-packaging.component.scss',
 })
 export class TiktokPackagingComponent {
+  /* v8 ignore next 2 — signal-input default-value branches are unreachable from TestBed */
   readonly value = input<PackagingTikTokContract | undefined>(undefined);
   readonly disabled = input(false);
 

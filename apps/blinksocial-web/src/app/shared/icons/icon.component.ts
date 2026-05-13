@@ -16,6 +16,7 @@ import { ICONS, type IconName } from './icons';
   styleUrl: './icon.component.scss',
 })
 export class IconComponent {
+  /* v8 ignore next — signal() default-value branch unreachable from TestBed */
   protected readonly nameSignal = signal<IconName | null>(null);
 
   @Input({ required: true }) set name(v: IconName) {

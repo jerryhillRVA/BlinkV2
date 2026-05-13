@@ -10,6 +10,7 @@ const VALID_THEMES: Theme[] = ['light', 'dark'];
 export class ThemeService {
   private readonly platformId = inject(PLATFORM_ID);
   private readonly isBrowser = isPlatformBrowser(this.platformId);
+  /* v8 ignore next — signal() default-value branch unreachable from TestBed */
   private readonly _theme = signal<Theme>(this.loadInitialTheme());
 
   readonly theme = this._theme.asReadonly();

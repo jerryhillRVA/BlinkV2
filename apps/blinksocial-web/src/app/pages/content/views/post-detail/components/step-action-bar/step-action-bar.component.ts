@@ -58,6 +58,7 @@ export class StepActionBarComponent implements AfterViewInit, OnDestroy {
    *     the bar now sits above the page footer like a card.
    * CSS animates the visual differences between the two states.
    */
+  /* v8 ignore next — signal() default-value branch unreachable from TestBed */
   protected readonly state = signal<'pinned' | 'floating'>('pinned');
 
   @HostBinding('attr.data-state')

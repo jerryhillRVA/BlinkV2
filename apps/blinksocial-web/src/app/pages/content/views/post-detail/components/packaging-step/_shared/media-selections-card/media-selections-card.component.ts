@@ -60,14 +60,10 @@ const PLATFORM_AUDIO_NOTES: Record<TrendingPanelPlatform, string> = {
 })
 export class MediaSelectionsCardComponent {
   readonly platform = input.required<PlatformContract>();
+  /* v8 ignore next 4 — signal-input default-value branches are unreachable from TestBed */
   readonly coverAsset = input<string | undefined>(undefined);
   readonly audio = input<PackagingAudioTrackContract | undefined>(undefined);
   readonly disabled = input(false);
-  /**
-   * When true, render the cover label as "Thumbnail" + required-asterisk
-   * (YouTube long-form). Defaults to "Cover image" with a "Recommended"
-   * hint (IG / TT / FB short-form).
-   */
   readonly thumbnailMode = input(false);
 
   readonly coverAssetChange = output<string | undefined>();

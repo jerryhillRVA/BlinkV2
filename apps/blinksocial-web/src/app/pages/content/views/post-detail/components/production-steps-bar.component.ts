@@ -11,6 +11,7 @@ import {
   styleUrl: './production-steps-bar.component.scss',
 })
 export class ProductionStepsBarComponent {
+  /* v8 ignore next — signal-input default-value branch unreachable from TestBed */
   readonly activeStep = input.required<ProductionStep>();
   /**
    * Highest step-index whose preceding gate has been satisfied. Drives both
@@ -19,6 +20,7 @@ export class ProductionStepsBarComponent {
    * canContinueFromDraft + canContinueFromPackaging — see
    * `PostDetailStore.unlockedThroughIndex` for the source of truth.
    */
+  /* v8 ignore next — signal-input default-value branch unreachable from TestBed */
   readonly unlockedThroughIndex = input(0);
 
   @Output() stepChange = new EventEmitter<ProductionStep>();

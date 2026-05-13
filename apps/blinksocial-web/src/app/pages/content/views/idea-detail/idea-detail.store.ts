@@ -16,6 +16,7 @@ export class IdeaDetailStore {
   private readonly state = inject(ContentStateService);
   private readonly destroyRef = inject(DestroyRef);
 
+  /* v8 ignore next — signal() default-value branch unreachable from TestBed */
   private readonly _itemId = signal<string | null>(null);
 
   readonly item = computed<ContentItem | null>(
@@ -25,8 +26,11 @@ export class IdeaDetailStore {
   readonly segments = this.state.segments;
   readonly businessObjectives = this.state.businessObjectives;
 
+  /* v8 ignore next — signal() default-value branch unreachable from TestBed */
   readonly conceptOptions = signal<ConceptOption[] | null>(null);
+  /* v8 ignore next — signal() default-value branch unreachable from TestBed */
   readonly isGeneratingOptions = signal(false);
+  /* v8 ignore next — signal() default-value branch unreachable from TestBed */
   readonly selectedOptionId = signal<string | null>(null);
 
   readonly selectedOption = computed<ConceptOption | null>(() => {

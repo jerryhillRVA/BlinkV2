@@ -24,6 +24,7 @@ import type { BusinessObjectiveContract } from '@blinksocial/contracts';
   styleUrl: './brief-content-concept.component.scss',
 })
 export class BriefContentConceptComponent {
+  /* v8 ignore next 4 — signal-input default-value branches are unreachable from TestBed */
   readonly concept = input<ContentItem | null>(null);
   readonly pillars = input<ContentPillar[]>([]);
   readonly segments = input<AudienceSegment[]>([]);

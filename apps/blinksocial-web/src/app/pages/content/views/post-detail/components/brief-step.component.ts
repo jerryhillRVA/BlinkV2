@@ -27,6 +27,7 @@ export class BriefStepComponent {
   protected readonly primaryCtaOptions = PRIMARY_CTA_OPTIONS;
   protected readonly teamMembers: readonly TeamMemberStub[] = TEAM_MEMBERS_STUB;
 
+  /* v8 ignore next — signal() default-value branch unreachable from TestBed */
   protected readonly newRefLink = signal('');
 
   protected readonly locked = computed(() => !!this.store.item()?.briefApproved);

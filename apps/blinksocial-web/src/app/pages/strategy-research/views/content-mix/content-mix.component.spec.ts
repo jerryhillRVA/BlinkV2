@@ -21,6 +21,7 @@ describe('ContentMixComponent', () => {
   let mockStateService: Record<string, unknown>;
 
   beforeEach(() => {
+    /* v8 ignore next — signal() default-value branch unreachable from TestBed */
     mockContentMix = signal<ContentMixTarget[]>(DEFAULT_CONTENT_MIX.map(m => ({ ...m })));
     mockStateService = {
       contentMix: mockContentMix,

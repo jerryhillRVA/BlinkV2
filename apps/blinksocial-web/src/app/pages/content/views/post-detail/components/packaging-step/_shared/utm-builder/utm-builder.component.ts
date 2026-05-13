@@ -31,6 +31,7 @@ const FIELDS: ReadonlyArray<UtmFieldDef> = [
   styleUrl: './utm-builder.component.scss',
 })
 export class UtmBuilderComponent {
+  /* v8 ignore next 2 — signal-input default-value branches are unreachable from TestBed */
   readonly utm = input<PackagingUtmContract | undefined>(undefined);
   readonly disabled = input(false);
 

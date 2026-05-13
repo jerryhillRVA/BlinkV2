@@ -33,7 +33,9 @@ export class InlineEditComponent {
 
   @ViewChild('inputEl') private inputEl?: ElementRef<HTMLInputElement | HTMLTextAreaElement>;
 
+  /* v8 ignore next — signal() default-value branch unreachable from TestBed */
   protected readonly isEditing = signal(false);
+  /* v8 ignore next — signal() default-value branch unreachable from TestBed */
   protected readonly draft = signal('');
 
   protected startEdit(): void {

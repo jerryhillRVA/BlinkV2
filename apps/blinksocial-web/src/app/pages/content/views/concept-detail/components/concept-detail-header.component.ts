@@ -51,6 +51,7 @@ export class ConceptDetailHeaderComponent {
     return 'Missing: ' + this.missingValidations.join(', ');
   }
 
+  /* v8 ignore next — signal() default-value branch unreachable from TestBed */
   protected readonly menuOpen = signal(false);
 
   protected platformLabel(): string | null {

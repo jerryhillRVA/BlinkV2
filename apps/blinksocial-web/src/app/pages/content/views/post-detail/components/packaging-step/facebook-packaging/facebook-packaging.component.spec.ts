@@ -117,4 +117,18 @@ describe('FacebookPackagingComponent', () => {
     expect(fixture.componentInstance['audio']()?.trackId).toBe('t');
     expect(fixture.componentInstance['controls']()?.boostEnabled).toBe(true);
   });
+
+  it('builds with all defaults (exercises signal-input default-value branches)', () => {
+    TestBed.resetTestingModule();
+    TestBed.configureTestingModule({ imports: [FacebookPackagingComponent] });
+    const fixture = TestBed.createComponent(FacebookPackagingComponent);
+    fixture.detectChanges();
+    expect(fixture.componentInstance['caption']()).toBe('');
+    expect(fixture.componentInstance['hashtags']()).toEqual([]);
+    expect(fixture.componentInstance['link']()).toBe('');
+    expect(fixture.componentInstance['utm']()).toBeUndefined();
+    expect(fixture.componentInstance['slideOrder']()).toEqual([]);
+    expect(fixture.componentInstance['audio']()).toBeUndefined();
+    expect(fixture.componentInstance['controls']()).toBeUndefined();
+  });
 });

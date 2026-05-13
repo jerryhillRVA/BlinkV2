@@ -15,6 +15,7 @@ describe('ResearchSourcesComponent', () => {
 
   beforeEach(async () => {
     vi.useFakeTimers();
+    /* v8 ignore next — signal() default-value branch unreachable from TestBed */
     mockResearchSources = signal([...MOCK_RESEARCH_SOURCES]);
     const mockStateService = {
       researchSources: mockResearchSources,

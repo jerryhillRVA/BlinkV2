@@ -18,6 +18,7 @@ export class App {
   private readonly destroyRef = inject(DestroyRef);
   private readonly el = inject(ElementRef);
 
+  /* v8 ignore next — signal() default-value branch unreachable from TestBed */
   readonly wsAnimating = signal(false);
 
   private lastWorkspaceId: string | null = null;

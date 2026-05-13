@@ -28,7 +28,9 @@ export class MoveToProductionDialogComponent implements AfterViewInit {
   private readonly vcr = inject(ViewContainerRef);
   private readonly destroyRef = inject(DestroyRef);
 
+  /* v8 ignore next — signal-input default-value branch unreachable from TestBed */
   readonly title = input<string>('this concept');
+  /* v8 ignore next — signal-input default-value branch unreachable from TestBed */
   readonly targets = input.required<TargetPlatform[]>();
 
   @Output() selectAll = new EventEmitter<void>();

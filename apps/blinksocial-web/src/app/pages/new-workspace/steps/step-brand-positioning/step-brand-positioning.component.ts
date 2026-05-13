@@ -16,6 +16,7 @@ export class StepBrandPositioningComponent {
   protected readonly formService = inject(NewWorkspaceFormService);
   private readonly api = inject(NewWorkspaceApiService);
   private readonly toast = inject(ToastService);
+  /* v8 ignore next — signal() default-value branch unreachable from TestBed */
   readonly isGenerating = signal(false);
 
   readonly TONE_OPTIONS = [

@@ -135,4 +135,17 @@ describe('YoutubePackagingComponent', () => {
     expect(fixture.componentInstance['thumbnailRef']()).toBe('thumb.png');
     expect(fixture.componentInstance['controls']()?.visibility).toBe('unlisted');
   });
+
+  it('builds with all defaults (exercises signal-input default-value branches)', () => {
+    TestBed.resetTestingModule();
+    TestBed.configureTestingModule({ imports: [YoutubePackagingComponent] });
+    const fixture = TestBed.createComponent(YoutubePackagingComponent);
+    fixture.detectChanges();
+    expect(fixture.componentInstance['title']()).toBe('');
+    expect(fixture.componentInstance['description']()).toBe('');
+    expect(fixture.componentInstance['tags']()).toEqual([]);
+    expect(fixture.componentInstance['categoryId']()).toBe('');
+    expect(fixture.componentInstance['thumbnailRef']()).toBeUndefined();
+    expect(fixture.componentInstance['controls']()).toBeUndefined();
+  });
 });

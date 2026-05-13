@@ -100,4 +100,17 @@ describe('XPackagingComponent', () => {
     expect(fixture.componentInstance['utm']()?.term).toBe('t');
     expect(fixture.componentInstance['controls']()?.visibility).toBe('public');
   });
+
+  it('builds with all defaults (exercises signal-input default-value branches)', () => {
+    TestBed.resetTestingModule();
+    TestBed.configureTestingModule({ imports: [XPackagingComponent] });
+    const fixture = TestBed.createComponent(XPackagingComponent);
+    fixture.detectChanges();
+    expect(fixture.componentInstance['caption']()).toBe('');
+    expect(fixture.componentInstance['hashtags']()).toEqual([]);
+    expect(fixture.componentInstance['keywords']()).toEqual([]);
+    expect(fixture.componentInstance['link']()).toBe('');
+    expect(fixture.componentInstance['utm']()).toBeUndefined();
+    expect(fixture.componentInstance['controls']()).toBeUndefined();
+  });
 });

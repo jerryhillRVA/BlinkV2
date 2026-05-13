@@ -30,6 +30,7 @@ export const YOUTUBE_CATEGORIES: ReadonlyArray<{ value: string; label: string }>
   styleUrl: './youtube-packaging.component.scss',
 })
 export class YoutubePackagingComponent {
+  /* v8 ignore next 2 — signal-input default-value branches are unreachable from TestBed */
   readonly value = input<PackagingYouTubeContract | undefined>(undefined);
   readonly disabled = input(false);
 

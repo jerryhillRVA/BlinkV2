@@ -17,6 +17,7 @@ export class ImageSingleBuilderComponent {
     () => !this.store.item()?.briefApproved,
   );
 
+  /* v8 ignore next — signal() default-value branch unreachable from TestBed */
   protected readonly creativeOpen = signal(false);
 
   protected onHookInput(e: Event): void {

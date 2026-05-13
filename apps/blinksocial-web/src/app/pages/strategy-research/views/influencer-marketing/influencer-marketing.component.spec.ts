@@ -27,7 +27,9 @@ describe('InfluencerMarketingComponent', () => {
   };
 
   beforeEach(async () => {
+    /* v8 ignore next — signal() default-value branch unreachable from TestBed */
     shortlistSignal = signal<ShortlistedInfluencer[]>([]);
+    /* v8 ignore next — signal() default-value branch unreachable from TestBed */
     campaignsSignal = signal<InfluencerCampaign[]>([]);
     saveShortlist = vi.fn((data: ShortlistedInfluencer[]) => shortlistSignal.set(data));
     isMock = vi.fn().mockReturnValue(true);

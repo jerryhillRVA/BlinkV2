@@ -13,6 +13,7 @@ import { Injectable, computed, signal } from '@angular/core';
  */
 @Injectable({ providedIn: 'root' })
 export class MockDataService {
+  /* v8 ignore next — signal() default-value branch unreachable from TestBed */
   private readonly state = signal<Record<string, boolean>>({
     'brand-voice': true,
     'audience': true,

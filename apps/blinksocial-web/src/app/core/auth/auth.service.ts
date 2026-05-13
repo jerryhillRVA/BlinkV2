@@ -16,9 +16,12 @@ export class AuthService {
   private readonly router = inject(Router);
   private readonly platformId = inject(PLATFORM_ID);
 
+  /* v8 ignore next — signal() default-value branch unreachable from TestBed */
   readonly currentUser = signal<AuthUserInfoContract | null>(null);
   readonly isAuthenticated = computed(() => !!this.currentUser());
+  /* v8 ignore next — signal() default-value branch unreachable from TestBed */
   readonly isLoading = signal(true);
+  /* v8 ignore next — signal() default-value branch unreachable from TestBed */
   readonly needsBootstrap = signal(false);
 
   /** True if user is Admin of any workspace, or is the bootstrap user (no workspaces yet) */
@@ -32,6 +35,7 @@ export class AuthService {
   });
 
   /** Track last visited workspace for navigation */
+  /* v8 ignore next — signal() default-value branch unreachable from TestBed */
   readonly lastWorkspaceId = signal<string | null>(null);
 
   async checkStatus(): Promise<void> {

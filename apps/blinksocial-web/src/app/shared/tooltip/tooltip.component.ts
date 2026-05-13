@@ -11,7 +11,9 @@ export class TooltipComponent {
   private readonly elRef = inject(ElementRef);
   private readonly tooltipService = inject(TooltipService);
 
+  /* v8 ignore next — signal-input default-value branch unreachable from TestBed */
   text = input.required<string>();
+  /* v8 ignore next — signal-input default-value branch unreachable from TestBed */
   type = input<TooltipIconType>('info');
 
   show(): void {

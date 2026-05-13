@@ -792,4 +792,188 @@ describe('MediaSelectionsCardComponent', () => {
     fixture.componentInstance['onSetPanelTab']('trending');
     expect(fixture.componentInstance['panelTab']()).toBe('trending');
   });
+
+  it('builds with only required platform input (exercises optional signal-input default branches)', () => {
+    TestBed.resetTestingModule();
+    TestBed.configureTestingModule({
+      imports: [MediaSelectionsCardComponent],
+      providers: [provideHttpClient(), provideHttpClientTesting()],
+    });
+    const fixture = TestBed.createComponent(MediaSelectionsCardComponent);
+    fixture.componentRef.setInput('platform', 'instagram');
+    fixture.detectChanges();
+    expect(fixture.componentInstance['hasCover']()).toBe(false);
+    expect(fixture.componentInstance['coverLabel']()).toBe('Cover image');
+    expect(fixture.componentInstance['showAudioSection']()).toBe(true);
+  });
+
+  it('coverLabel flips to "Thumbnail" when thumbnailMode=true', () => {
+    const fixture = setup({ platform: 'youtube', thumbnailMode: true });
+    expect(fixture.componentInstance['coverLabel']()).toBe('Thumbnail');
+  });
+
+  it('showAudioSection is false for non-IG/TT/FB platforms', () => {
+    const fixture = setup({ platform: 'linkedin' });
+    expect(fixture.componentInstance['showAudioSection']()).toBe(false);
+  });
+
+  it('hasCover returns false for whitespace-only coverAsset', () => {
+    const fixture = setup({ platform: 'instagram', coverAsset: '   ' });
+    expect(fixture.componentInstance['hasCover']()).toBe(false);
+  });
+
+  it('artworkLetter handles empty/undefined names gracefully', () => {
+    const fixture = setup({ platform: 'instagram' });
+    expect(fixture.componentInstance['artworkLetter']('')).toBe('?');
+    expect(fixture.componentInstance['artworkLetter']('hello')).toBe('H');
+  });
+
+  it('artworkStyle produces a stable gradient for the same trackId', () => {
+    const fixture = setup({ platform: 'instagram' });
+    const a = fixture.componentInstance['artworkStyle']('track-1');
+    const b = fixture.componentInstance['artworkStyle']('track-1');
+    expect(a.background).toBe(b.background);
+    expect(a.background).toContain('linear-gradient');
+  });
+
+  it('trackSourceLabel resolves "Platform Library" for search, "Original" for Original Audio custom, "" when no track', () => {
+    const search = setup({
+      platform: 'instagram',
+      audio: { trackId: 't', trackName: 'n', artistName: 'a', source: 'search' },
+    });
+    expect(search.componentInstance['trackSourceLabel']()).toBe('Platform Library');
+
+    const original = setup({
+      platform: 'instagram',
+      audio: { trackId: 't', trackName: 'Original Audio', artistName: '', source: 'custom' },
+    });
+    expect(original.componentInstance['trackSourceLabel']()).toBe('Original');
+
+    const none = setup({ platform: 'instagram' });
+    expect(none.componentInstance['trackSourceLabel']()).toBe('');
+  });
+
+  // ── Comprehensive interaction sweep (drives many template branches) ──
+
+  it('drives the trending panel through all states (open → switch tab → switch platform → close)', () => {
+    const { fixture, http } = setupWithHttp({ platform: 'instagram' });
+    // Browse Trending opens panel + fires iTunes lookups
+    fixture.componentInstance['onBrowseTrending']();
+    fixture.detectChanges();
+    flushTrendingLookups(http, 6);
+    expect(fixture.componentInstance['panelOpen']()).toBe(true);
+    // Switch platform: tt → fb → ig
+    fixture.componentInstance['onSetPanelPlatform']('tiktok');
+    fixture.detectChanges();
+    flushTrendingLookups(http, 6);
+    expect(fixture.componentInstance['panelPlatform']()).toBe('tiktok');
+    // panel-platform-tab buttons render
+    expect(fixture.nativeElement.querySelectorAll('.sounds-platform-tab').length).toBeGreaterThan(0);
+    // TikTok shows the amber-styled note
+    expect(fixture.nativeElement.querySelector('.sounds-note--amber')).not.toBeNull();
+    // Switch tab to search
+    fixture.componentInstance['onSetPanelTab']('search');
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.sounds-search-input')).not.toBeNull();
+    // Close panel
+    fixture.componentInstance['onClosePanel']();
+    fixture.detectChanges();
+    expect(fixture.componentInstance['panelOpen']()).toBe(false);
+  });
+
+  it('cover upload field input handler (typed filename) clears coverAssetUrl', () => {
+    // No coverAsset → the typed-name input renders (not the attached-chip UI).
+    const fixture = setup({ platform: 'instagram' });
+    const urls: (string | undefined)[] = [];
+    fixture.componentInstance.coverAssetUrlChange.subscribe((u) => urls.push(u));
+    const input = fixture.nativeElement.querySelector('#media-cover-input') as HTMLInputElement;
+    input.value = 'new-typed.png';
+    input.dispatchEvent(new Event('input'));
+    expect(urls).toEqual([undefined]);
+  });
+
+  it('cover upload (clear cover button) emits both undefined values', () => {
+    const fixture = setup({ platform: 'instagram', coverAsset: 'existing.png' });
+    const names: (string | undefined)[] = [];
+    const urls: (string | undefined)[] = [];
+    fixture.componentInstance.coverAssetChange.subscribe((n) => names.push(n));
+    fixture.componentInstance.coverAssetUrlChange.subscribe((u) => urls.push(u));
+    fixture.componentInstance['onClearCover']();
+    expect(names).toEqual([undefined]);
+    expect(urls).toEqual([undefined]);
+  });
+
+  it('onUseOriginal emits the Original Audio track contract', () => {
+    const fixture = setup({ platform: 'instagram' });
+    const emitted: (PackagingAudioTrackContract | undefined)[] = [];
+    fixture.componentInstance.audioChange.subscribe((v) => emitted.push(v));
+    fixture.componentInstance['onUseOriginal']();
+    expect(emitted[0]?.trackName).toBe('Original Audio');
+    expect(emitted[0]?.source).toBe('custom');
+  });
+
+  it('search results: empty query produces no fetch + clears results', () => {
+    const { fixture, http } = setupWithHttp({ platform: 'instagram' });
+    fixture.componentInstance['onBrowseTrending']();
+    fixture.detectChanges();
+    flushTrendingLookups(http, 6);
+    fixture.componentInstance['onSetPanelTab']('search');
+    // Empty query: should not fire iTunes search.
+    fixture.componentInstance['searchQuery'].set('   ');
+    fixture.componentInstance['onSearchClick']();
+    expect(http.match(() => true).length).toBe(0);
+    expect(fixture.componentInstance['searchResults']()).toEqual([]);
+    expect(fixture.componentInstance['hasSearched']()).toBe(false);
+  });
+
+  it('isPreviewing returns true only for the currently-previewed track', () => {
+    const fixture = setup({ platform: 'instagram' });
+    fixture.componentInstance['previewingId'].set('track-1');
+    expect(fixture.componentInstance['isPreviewing']('track-1')).toBe(true);
+    expect(fixture.componentInstance['isPreviewing']('track-2')).toBe(false);
+  });
+
+  it('onTogglePreview toggles previewingId; clicking same track again clears', () => {
+    const fixture = setup({ platform: 'instagram' });
+    fixture.componentInstance['onTogglePreview']('a');
+    expect(fixture.componentInstance['previewingId']()).toBe('a');
+    fixture.componentInstance['onTogglePreview']('a');
+    expect(fixture.componentInstance['previewingId']()).toBeNull();
+    fixture.componentInstance['onTogglePreview']('b');
+    expect(fixture.componentInstance['previewingId']()).toBe('b');
+  });
+
+  it('onSelectTrack emits an audio contract with the chosen source attribution', () => {
+    const fixture = setup({ platform: 'instagram' });
+    const emitted: (PackagingAudioTrackContract | undefined)[] = [];
+    fixture.componentInstance.audioChange.subscribe((v) => emitted.push(v));
+    fixture.componentInstance['onSelectTrack'](
+      { trackId: 't1', trackName: 'X', artistName: 'Y' },
+      'search',
+    );
+    expect(emitted[0]?.source).toBe('search');
+    expect(emitted[0]?.trackName).toBe('X');
+  });
+
+  it('search keydown Enter triggers the search; non-Enter keys are ignored', () => {
+    const { fixture, http } = setupWithHttp({ platform: 'instagram' });
+    fixture.componentInstance['onBrowseTrending']();
+    fixture.detectChanges();
+    flushTrendingLookups(http, 6);
+    fixture.componentInstance['onSetPanelTab']('search');
+    fixture.componentInstance['searchQuery'].set('coffee');
+    // Non-Enter key: no fetch
+    fixture.componentInstance['onSearchKeydown'](
+      new KeyboardEvent('keydown', { key: 'a' }),
+    );
+    expect(http.match(() => true).length).toBe(0);
+    // Enter: fires fetch
+    fixture.componentInstance['onSearchKeydown'](
+      new KeyboardEvent('keydown', { key: 'Enter' }),
+    );
+    const reqs = http.match(() => true);
+    expect(reqs.length).toBeGreaterThan(0);
+    // Cleanup
+    reqs.forEach((r) => r.flush({ results: [] }));
+  });
 });

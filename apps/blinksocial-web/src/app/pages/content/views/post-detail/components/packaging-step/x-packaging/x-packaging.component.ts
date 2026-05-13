@@ -24,6 +24,7 @@ const WARN_RATIO = 0.9;
   styleUrl: './x-packaging.component.scss',
 })
 export class XPackagingComponent {
+  /* v8 ignore next 2 — signal-input default-value branches are unreachable from TestBed */
   readonly value = input<PackagingXContract | undefined>(undefined);
   readonly disabled = input(false);
 

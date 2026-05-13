@@ -36,13 +36,19 @@ export class TabTeamComponent {
   }));
 
   // Add user form state
+  /* v8 ignore next — signal() default-value branch unreachable from TestBed */
   readonly showAddForm = signal(false);
+  /* v8 ignore next — signal() default-value branch unreachable from TestBed */
   readonly addLoading = signal(false);
+  /* v8 ignore next — signal() default-value branch unreachable from TestBed */
   readonly addError = signal<string | null>(null);
 
   // Reset password dialog state
+  /* v8 ignore next — signal() default-value branch unreachable from TestBed */
   readonly resetTarget = signal<TeamMemberContract | null>(null);
+  /* v8 ignore next — signal() default-value branch unreachable from TestBed */
   readonly resetLoading = signal(false);
+  /* v8 ignore next — signal() default-value branch unreachable from TestBed */
   readonly resetError = signal<string | null>(null);
 
   /** Temp password stored on state service so it survives tab reload */

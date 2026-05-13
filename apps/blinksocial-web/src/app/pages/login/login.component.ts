@@ -15,7 +15,9 @@ export class LoginComponent {
 
   email = '';
   password = '';
+  /* v8 ignore next — signal() default-value branch unreachable from TestBed */
   error = signal<string | null>(null);
+  /* v8 ignore next — signal() default-value branch unreachable from TestBed */
   loading = signal(false);
 
   readonly needsBootstrap = this.authService.needsBootstrap;

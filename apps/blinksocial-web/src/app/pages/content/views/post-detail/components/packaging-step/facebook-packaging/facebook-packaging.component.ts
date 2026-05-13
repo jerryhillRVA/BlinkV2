@@ -31,6 +31,7 @@ const WARN_RATIO = 0.9;
   styleUrl: './facebook-packaging.component.scss',
 })
 export class FacebookPackagingComponent {
+  /* v8 ignore next 4 — signal-input default-value branches are unreachable from TestBed */
   readonly value = input<PackagingFacebookContract | undefined>(undefined);
   readonly disabled = input(false);
   readonly isCarousel = input(false);

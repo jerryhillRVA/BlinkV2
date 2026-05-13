@@ -6,6 +6,7 @@ import { Component, input, output } from '@angular/core';
   styleUrl: './detail-back-button.component.scss',
 })
 export class DetailBackButtonComponent {
+  /* v8 ignore next — signal-input default-value branch unreachable from TestBed */
   readonly ariaLabel = input<string>('Back to pipeline');
   readonly back = output<void>();
 

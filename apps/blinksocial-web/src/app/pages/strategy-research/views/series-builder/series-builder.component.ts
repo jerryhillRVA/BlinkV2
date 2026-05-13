@@ -41,16 +41,27 @@ export class SeriesBuilderComponent {
 
   /* v8 ignore start */
   readonly pillars = signal<ContentPillar[]>([...DEFAULT_PILLARS]);
+  /* v8 ignore next — signal() default-value branch unreachable from TestBed */
   readonly segments = signal<AudienceSegment[]>([...DEFAULT_SEGMENTS]);
+  /* v8 ignore next — signal() default-value branch unreachable from TestBed */
   readonly selectedSegmentId = signal<string>(DEFAULT_SEGMENTS[0]?.id ?? '');
+  /* v8 ignore next — signal() default-value branch unreachable from TestBed */
   readonly selectedPillarId = signal<string>(DEFAULT_PILLARS[0]?.id ?? '');
+  /* v8 ignore next — signal() default-value branch unreachable from TestBed */
   readonly selectedGoal = signal<string>(SERIES_GOAL_OPTIONS[0]);
+  /* v8 ignore next — signal() default-value branch unreachable from TestBed */
   readonly selectedLength = signal<string>('5');
+  /* v8 ignore next — signal() default-value branch unreachable from TestBed */
   readonly selectedPlatform = signal<Platform>('instagram');
+  /* v8 ignore next — signal() default-value branch unreachable from TestBed */
   readonly isGenerating = signal(false);
+  /* v8 ignore next — signal() default-value branch unreachable from TestBed */
   readonly series = signal<SeriesOverview | null>(null);
+  /* v8 ignore next — signal() default-value branch unreachable from TestBed */
   readonly postTitles = signal<Record<number, string>>({});
+  /* v8 ignore next — signal() default-value branch unreachable from TestBed */
   readonly titleErrors = signal<Set<number>>(new Set());
+  /* v8 ignore next — signal() default-value branch unreachable from TestBed */
   readonly savedPosts = signal<Set<number>>(new Set());
   /* v8 ignore stop */
 

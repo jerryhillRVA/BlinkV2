@@ -442,4 +442,41 @@ describe('PublishSettingsCardComponent', () => {
     expect(meta).toEqual([]);
     expect(ctrls).toEqual([]);
   });
+
+  it('builds with only required platform input (exercises optional signal-input default branches)', () => {
+    TestBed.resetTestingModule();
+    TestBed.configureTestingModule({ imports: [PublishSettingsCardComponent] });
+    const fixture = TestBed.createComponent(PublishSettingsCardComponent);
+    fixture.componentRef.setInput('platform', 'instagram');
+    fixture.detectChanges();
+    expect(fixture.componentInstance['hasMetadataRows']()).toBe(false);
+    expect(fixture.componentInstance['hasControlsRows']()).toBe(false);
+    expect(fixture.componentInstance['igCtrls']()).toEqual({});
+    expect(fixture.componentInstance['igPeopleTags']()).toEqual([]);
+    expect(fixture.componentInstance['igProductTags']()).toEqual([]);
+    expect(fixture.componentInstance['igReelsCoverTag']()).toBe('');
+    expect(fixture.componentInstance['cardOpen']()).toBe(false);
+    expect(fixture.componentInstance['metadataOpen']()).toBe(true);
+    expect(fixture.componentInstance['controlsOpen']()).toBe(true);
+  });
+
+  it('isIG() returns false for non-IG platforms (gating short-circuits)', () => {
+    const fixture = setup({ platform: 'youtube' as never, contentType: 'long-form' });
+    expect(fixture.componentInstance['isIG']()).toBe(false);
+    expect(fixture.componentInstance['showIgPeopleTags']()).toBe(false);
+    expect(fixture.componentInstance['showIgCommentsOff']()).toBe(false);
+    expect(fixture.componentInstance['hasMetadataRows']()).toBe(false);
+    expect(fixture.componentInstance['hasControlsRows']()).toBe(false);
+  });
+
+  it('feed-post: shows people + product (no reels-cover, no close-friends, no live)', () => {
+    const fixture = setup({ contentType: 'feed-post' });
+    expect(fixture.componentInstance['showIgPeopleTags']()).toBe(true);
+    expect(fixture.componentInstance['showIgProductTags']()).toBe(true);
+    expect(fixture.componentInstance['showIgReelsCover']()).toBe(false);
+    expect(fixture.componentInstance['showIgHideLikeCount']()).toBe(true);
+    expect(fixture.componentInstance['showIgCollaboratorTag']()).toBe(true);
+    expect(fixture.componentInstance['showIgCloseFriendsOnly']()).toBe(false);
+    expect(fixture.componentInstance['showIgLiveRows']()).toBe(false);
+  });
 });

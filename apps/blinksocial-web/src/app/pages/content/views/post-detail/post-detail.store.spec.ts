@@ -1099,6 +1099,179 @@ describe('PostDetailStore — production.draft (#114)', () => {
       store.setActiveStep('packaging');
       expect(store.errors().map((e) => e.field)).toEqual(['caption']);
     });
+
+    // ── Branch-coverage tests for setter / computed nullish paths ──
+    // These exercise pre-approval setters (write-lock isn't engaged on
+    // briefApproved=false items).
+    it('setOwner converts whitespace-only value to null (|| null branch)', () => {
+      const { store } = setup(makeItem({ owner: 'someone' }));
+      store.setOwner('   ');
+      expect(store.item()?.owner).toBeNull();
+    });
+
+    it('setObjective converts empty string to undefined (=== "" branch)', () => {
+      const { store } = setup(makeItem({ objective: 'engagement' }));
+      store.setObjective('');
+      expect(store.item()?.objective).toBeUndefined();
+    });
+
+    it('setTonePreset converts empty string to undefined', () => {
+      const { store } = setup(makeItem({ tonePreset: 'casual' }));
+      store.setTonePreset('');
+      expect(store.item()?.tonePreset).toBeUndefined();
+    });
+
+    it('setCtaType("") clears cta entirely; non-empty value seeds with existing text or empty', () => {
+      const { store } = setup(makeItem({ cta: { type: 'follow', text: 'go' } }));
+      store.setCtaType('');
+      expect(store.item()?.cta).toBeUndefined();
+      // Re-setting a type uses existing text (none after clear) → empty text
+      store.setCtaType('learn-more');
+      expect(store.item()?.cta).toEqual({ type: 'learn-more', text: '' });
+    });
+
+    it('setCtaText is a no-op when there is no existing cta', () => {
+      const { store } = setup(makeItem({ cta: undefined }));
+      store.setCtaText('hello');
+      expect(store.item()?.cta).toBeUndefined();
+    });
+
+    it('togglePillar is a no-op when item is null', () => {
+      const { store } = setup();
+      store.setItemId('missing');
+      // Pre-call assert: item is null
+      expect(store.item()).toBeNull();
+      // No throw, no state change
+      expect(() => store.togglePillar('p1')).not.toThrow();
+    });
+
+    it('togglePillar respects MAX_PILLARS limit (does not add a 4th)', () => {
+      const { store } = setup(
+        makeApprovedItem({ pillarIds: ['p1', 'p2', 'p3'] }),
+      );
+      store.togglePillar('p4');
+      expect(store.item()?.pillarIds).toEqual(['p1', 'p2', 'p3']);
+    });
+
+    it('toggleSegment is a no-op when item is null', () => {
+      const { store } = setup();
+      store.setItemId('missing');
+      expect(() => store.toggleSegment('s1')).not.toThrow();
+    });
+
+    it('hasClaims/hasTalent/hasMusic flags are all false when brief is missing', () => {
+      const { store } = setup();
+      store.setItemId('missing');
+      expect(store.hasClaims()).toBe(false);
+      expect(store.hasTalent()).toBe(false);
+      expect(store.hasMusic()).toBe(false);
+      // needsAccessibility defaults to TRUE per its omitted-≠-not-needed rule
+      expect(store.needsAccessibility()).toBe(true);
+      expect(store.activeFlagCount()).toBe(1);
+    });
+
+    it('needsAccessibility returns false only when explicitly set to false', () => {
+      const { store } = setup(
+        makeApprovedItem({
+          production: {
+            brief: { needsAccessibility: false, approved: true },
+          },
+        }),
+      );
+      expect(store.needsAccessibility()).toBe(false);
+    });
+
+    it('activeFlagCount counts all four flags when all true', () => {
+      const { store } = setup(
+        makeApprovedItem({
+          production: {
+            brief: {
+              hasTalent: true,
+              hasMusic: true,
+              compliance: { containsClaims: true },
+              needsAccessibility: true,
+              approved: true,
+            },
+          },
+        }),
+      );
+      expect(store.activeFlagCount()).toBe(4);
+    });
+
+    it('pastDueDate returns false for invalid date strings', () => {
+      const { store } = setup(
+        makeApprovedItem({
+          production: { brief: { dueDate: 'not-a-date', approved: true } },
+        }),
+      );
+      expect(store.pastDueDate()).toBe(false);
+    });
+
+    it('pastDueDate returns false when no dueDate is set', () => {
+      const { store } = setup();
+      expect(store.pastDueDate()).toBe(false);
+    });
+
+    it('pastDueDate returns true for a date in the past', () => {
+      const { store } = setup(
+        makeApprovedItem({
+          production: { brief: { dueDate: '2020-01-01', approved: true } },
+        }),
+      );
+      expect(store.pastDueDate()).toBe(true);
+    });
+
+    it('approvalNote defaults to empty string when missing', () => {
+      const { store } = setup();
+      expect(store.approvalNote()).toBe('');
+    });
+
+    it('referenceLinks defaults to empty array when missing', () => {
+      const { store } = setup();
+      expect(store.referenceLinks()).toEqual([]);
+    });
+
+    it('draft slots (videoDraft, imageSingleDraft, etc.) all return empty objects when draft is missing', () => {
+      const { store } = setup();
+      expect(store.draft()).toBeUndefined();
+      expect(store.videoDraft()).toEqual({});
+      expect(store.videoLongDraft()).toEqual({});
+      expect(store.imageSingleDraft()).toEqual({});
+      expect(store.carouselDraft()).toEqual({});
+      expect(store.textDraft()).toEqual({});
+    });
+
+    it('per-platform packaging computeds return undefined when packaging slot is missing', () => {
+      const { store } = setup();
+      expect(store.packaging()).toBeUndefined();
+      expect(store.instagramPackaging()).toBeUndefined();
+      expect(store.tiktokPackaging()).toBeUndefined();
+      expect(store.youtubePackaging()).toBeUndefined();
+      expect(store.linkedinPackaging()).toBeUndefined();
+      expect(store.facebookPackaging()).toBeUndefined();
+      expect(store.xPackaging()).toBeUndefined();
+    });
+
+    it('per-platform packaging computeds resolve to the right slot when set', () => {
+      const { store } = setup(makeApprovedItem({ platform: 'tiktok' }));
+      store.setTikTokPackaging({ caption: 'tt' });
+      expect(store.tiktokPackaging()?.caption).toBe('tt');
+      expect(store.instagramPackaging()).toBeUndefined();
+    });
+
+    it('persistPackagingSlot is a no-op when briefApproved=false (write-lock)', () => {
+      const { store } = setup(makeItem({ platform: 'instagram' }));
+      // briefApproved defaults to false on makeItem → packaging write is blocked.
+      store.setInstagramPackaging({ caption: 'blocked' });
+      expect(store.instagramPackaging()).toBeUndefined();
+    });
+
+    it('persistPackagingSlot is a no-op when item is null', () => {
+      const { store } = setup();
+      store.setItemId('missing');
+      expect(() => store.setInstagramPackaging({ caption: 'x' })).not.toThrow();
+      expect(store.instagramPackaging()).toBeUndefined();
+    });
   });
 
   describe('liveSiblingPostCount (ticket #118)', () => {

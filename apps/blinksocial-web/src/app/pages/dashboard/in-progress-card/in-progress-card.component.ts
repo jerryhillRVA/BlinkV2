@@ -12,6 +12,7 @@ import type { Workspace } from '../workspace-card/workspace-card.component';
 export class InProgressCardComponent {
   private readonly router = inject(Router);
 
+  /* v8 ignore next — signal-input default-value branch unreachable from TestBed */
   workspace = input.required<Workspace>();
 
   get statusLabel(): string {

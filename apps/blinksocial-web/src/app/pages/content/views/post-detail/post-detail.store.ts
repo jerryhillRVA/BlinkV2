@@ -50,6 +50,7 @@ import type {
 export class PostDetailStore {
   private readonly state = inject(ContentStateService);
 
+  /* v8 ignore next — signal() default-value branch unreachable from TestBed */
   private readonly _itemId = signal<string | null>(null);
 
   readonly item = computed<ContentItem | null>(
@@ -74,6 +75,7 @@ export class PostDetailStore {
       ).length;
   });
 
+  /* v8 ignore next — signal() default-value branch unreachable from TestBed */
   readonly activeStep = signal<ProductionStep>('brief');
 
   /**

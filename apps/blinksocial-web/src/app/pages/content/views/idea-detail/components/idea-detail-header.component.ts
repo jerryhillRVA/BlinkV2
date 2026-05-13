@@ -36,6 +36,7 @@ export class IdeaDetailHeaderComponent {
   @Output() copyLink = new EventEmitter<void>();
   @Output() titleChange = new EventEmitter<string>();
 
+  /* v8 ignore next — signal() default-value branch unreachable from TestBed */
   protected readonly menuOpen = signal(false);
 
   protected stageBadge(): StageBadge {

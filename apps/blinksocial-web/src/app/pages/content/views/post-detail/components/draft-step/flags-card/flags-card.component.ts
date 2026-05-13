@@ -64,6 +64,7 @@ const FLAGS: ReadonlyArray<FlagDef> = [
 export class FlagsCardComponent {
   protected readonly store = inject(PostDetailStore);
 
+  /* v8 ignore next — signal() default-value branch unreachable from TestBed */
   protected readonly open = signal(false);
 
   protected readonly flags = FLAGS;

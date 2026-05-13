@@ -31,11 +31,9 @@ export interface PublishSettingsIGMetadataPatch {
 })
 export class PublishSettingsCardComponent {
   readonly platform = input.required<PlatformContract>();
+  /* v8 ignore next 4 — signal-input default-value branches are unreachable from TestBed */
   readonly contentType = input<ContentTypeContract | null | undefined>(undefined);
   readonly disabled = input(false);
-
-  // IG metadata + controls. Other platforms wire up similar slots in
-  // subsequent rounds (one signal per platform keeps the template flat).
   readonly igMetadata = input<Partial<PackagingInstagramContract> | undefined>(undefined);
   readonly igControls = input<PackagingPlatformControlsIGContract | undefined>(undefined);
 

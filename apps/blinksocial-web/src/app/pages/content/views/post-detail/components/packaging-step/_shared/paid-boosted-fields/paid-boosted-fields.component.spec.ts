@@ -108,4 +108,56 @@ describe('PaidBoostedFieldsComponent', () => {
     const inputs = fixture.nativeElement.querySelectorAll('.paid-input');
     inputs.forEach((i: HTMLInputElement) => expect(i.readOnly).toBe(true));
   });
+
+  // Branch-coverage tests for the `(target as input).value ?? ''` fallbacks
+  // in onCampaignInput / onUrlInput / onApproverInput. A real DOM input
+  // event will always carry a string `.value`, but the nullish-coalesce
+  // path needs explicit exercise.
+
+  it('onCampaignInput coalesces null .value to empty string', () => {
+    const fixture = setup();
+    const emitted: string[] = [];
+    fixture.componentInstance.campaignNameChange.subscribe((v) => emitted.push(v));
+    fixture.componentInstance['onCampaignInput']({ target: { value: null } } as unknown as Event);
+    expect(emitted).toEqual(['']);
+  });
+
+  it('onUrlInput coalesces null .value to empty string', () => {
+    const fixture = setup();
+    const emitted: string[] = [];
+    fixture.componentInstance.destinationUrlChange.subscribe((v) => emitted.push(v));
+    fixture.componentInstance['onUrlInput']({ target: { value: null } } as unknown as Event);
+    expect(emitted).toEqual(['']);
+  });
+
+  it('onApproverInput coalesces null .value to empty string', () => {
+    const fixture = setup();
+    const emitted: string[] = [];
+    fixture.componentInstance.legalApproverChange.subscribe((v) => emitted.push(v));
+    fixture.componentInstance['onApproverInput']({ target: { value: null } } as unknown as Event);
+    expect(emitted).toEqual(['']);
+  });
+
+  it('all four inputs default to undefined when not explicitly set (exercises signal-input default branch)', () => {
+    // Build the component WITHOUT calling setInput, so the signal-input
+    // defaults are reached for branch coverage on the input() declarations.
+    TestBed.resetTestingModule();
+    TestBed.configureTestingModule({ imports: [PaidBoostedFieldsComponent] });
+    const fixture = TestBed.createComponent(PaidBoostedFieldsComponent);
+    fixture.detectChanges();
+    // The textareas/inputs render with empty values via the `?? ''` template fallback.
+    expect(
+      (fixture.nativeElement.querySelector('#paid-campaign') as HTMLInputElement).value,
+    ).toBe('');
+    expect(
+      (fixture.nativeElement.querySelector('#paid-url') as HTMLInputElement).value,
+    ).toBe('');
+    expect(
+      (fixture.nativeElement.querySelector('#paid-approver') as HTMLInputElement).value,
+    ).toBe('');
+    // disabled defaults to false → inputs are NOT readOnly.
+    fixture.nativeElement.querySelectorAll('.paid-input').forEach((i: HTMLInputElement) => {
+      expect(i.readOnly).toBe(false);
+    });
+  });
 });

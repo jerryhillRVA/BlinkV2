@@ -94,4 +94,16 @@ describe('LinkedinPackagingComponent', () => {
     expect(fixture.componentInstance['utm']()).toEqual({ medium: 'm' });
     expect(fixture.componentInstance['controls']()?.visibility).toBe('private');
   });
+
+  it('builds with all defaults (exercises signal-input default-value branches)', () => {
+    TestBed.resetTestingModule();
+    TestBed.configureTestingModule({ imports: [LinkedinPackagingComponent] });
+    const fixture = TestBed.createComponent(LinkedinPackagingComponent);
+    fixture.detectChanges();
+    expect(fixture.componentInstance['caption']()).toBe('');
+    expect(fixture.componentInstance['hashtags']()).toEqual([]);
+    expect(fixture.componentInstance['link']()).toBe('');
+    expect(fixture.componentInstance['utm']()).toBeUndefined();
+    expect(fixture.componentInstance['controls']()).toBeUndefined();
+  });
 });

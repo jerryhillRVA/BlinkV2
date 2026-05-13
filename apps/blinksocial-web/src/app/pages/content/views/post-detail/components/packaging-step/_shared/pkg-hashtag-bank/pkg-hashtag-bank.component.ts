@@ -24,6 +24,7 @@ export interface HashtagBankGroup {
   styleUrl: './pkg-hashtag-bank.component.scss',
 })
 export class PkgHashtagBankComponent {
+  /* v8 ignore next 4 — signal-input default-value branches are unreachable from TestBed */
   readonly hashtags = input<string[]>([]);
   readonly disabled = input(false);
   readonly aiSuggesting = input(false);

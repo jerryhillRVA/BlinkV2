@@ -13,6 +13,7 @@ import { Component, input, output } from '@angular/core';
   styleUrl: './paid-boosted-fields.component.scss',
 })
 export class PaidBoostedFieldsComponent {
+  /* v8 ignore next 4 — signal-input default-value branches are unreachable from TestBed */
   readonly campaignName = input<string | undefined>(undefined);
   readonly destinationUrl = input<string | undefined>(undefined);
   readonly legalApprover = input<string | undefined>(undefined);

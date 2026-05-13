@@ -51,6 +51,7 @@ export class StrategyResearchComponent {
   private readonly destroyRef = inject(DestroyRef);
   protected readonly stateService = inject(StrategyResearchStateService);
   workspaceId = '';
+  /* v8 ignore next — signal() default-value branch unreachable from TestBed */
   readonly activeView = signal<StrategyView>('brand-voice');
 
   readonly sidebarSections = SIDEBAR_SECTIONS;

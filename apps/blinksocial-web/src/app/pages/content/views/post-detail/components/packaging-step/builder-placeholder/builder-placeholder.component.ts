@@ -8,6 +8,7 @@ import { PLATFORM_OPTIONS } from '../../../../../content.constants';
   styleUrl: './builder-placeholder.component.scss',
 })
 export class PackagingBuilderPlaceholderComponent {
+  /* v8 ignore next — signal-input default-value branch is unreachable from TestBed */
   readonly platform = input<PlatformContract | null>(null);
 
   protected readonly label = computed(() => {

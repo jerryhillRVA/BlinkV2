@@ -24,7 +24,9 @@ export class HashtagInputComponent {
 
   @Output() hashtagsChange = new EventEmitter<string[]>();
 
+  /* v8 ignore next — signal() default-value branch unreachable from TestBed */
   protected readonly draft = signal('');
+  /* v8 ignore next — signal() default-value branch unreachable from TestBed */
   protected readonly bankOpen = signal(false);
 
   protected readonly suggestions = AI_SUGGESTED_HASHTAGS;

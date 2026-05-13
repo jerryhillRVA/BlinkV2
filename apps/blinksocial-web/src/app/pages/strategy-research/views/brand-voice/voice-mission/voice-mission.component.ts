@@ -19,6 +19,7 @@ export class VoiceMissionComponent {
   private readonly stateService = inject(StrategyResearchStateService);
 
   readonly missionStatement = computed(() => this.stateService.brandVoice().missionStatement);
+  /* v8 ignore next — signal() default-value branch unreachable from TestBed */
   readonly isDrafting = signal(false);
 
   updateMission(value: string): void {

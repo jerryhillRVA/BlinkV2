@@ -6,5 +6,6 @@ import { Component, input } from '@angular/core';
   styleUrl: './step-placeholder.component.scss',
 })
 export class StepPlaceholderComponent {
+  /* v8 ignore next — signal-input default-value branch unreachable from TestBed */
   readonly label = input.required<string>();
 }

@@ -33,6 +33,7 @@ export class CalendarPeekCardComponent {
   private readonly injector = inject(Injector);
 
   readonly peekRoot = viewChild<ElementRef<HTMLElement>>('peekRoot');
+  /* v8 ignore next — signal() default-value branch unreachable from TestBed */
   readonly placement = signal<PlacementResult>({ left: 0, top: 0, flipped: false });
 
   private _anchor!: PeekAnchor;

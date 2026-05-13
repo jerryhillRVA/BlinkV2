@@ -47,8 +47,10 @@ const VISIBILITY_BY_PLATFORM: Record<PlatformContract, ReadonlyArray<VisibilityO
   styleUrl: './platform-controls.component.scss',
 })
 export class PlatformControlsComponent {
+  /* v8 ignore next 2 — signal-input default-value branches are unreachable from TestBed */
   readonly controls = input<PackagingPlatformControlsContract | undefined>(undefined);
   readonly platform = input.required<PlatformContract>();
+  /* v8 ignore next */
   readonly disabled = input(false);
 
   readonly controlsChange = output<PackagingPlatformControlsContract>();

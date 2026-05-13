@@ -39,7 +39,9 @@ export class PipelineViewComponent {
   private readonly stateService = inject(ContentStateService, { optional: true });
   private readonly platformId = inject(PLATFORM_ID);
 
+  /* v8 ignore next — signal-input default-value branch unreachable from TestBed */
   readonly items = input<ContentItem[]>([]);
+  /* v8 ignore next — signal-input default-value branch unreachable from TestBed */
   readonly pillars = input<ContentPillar[]>([]);
 
   private readonly sourceItems = computed<ContentItem[]>(() => {

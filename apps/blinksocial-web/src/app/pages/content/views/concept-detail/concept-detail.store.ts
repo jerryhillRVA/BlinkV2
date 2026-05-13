@@ -32,6 +32,7 @@ export class ConceptDetailStore {
   private readonly state = inject(ContentStateService);
   private readonly destroyRef = inject(DestroyRef);
 
+  /* v8 ignore next — signal() default-value branch unreachable from TestBed */
   private readonly _itemId = signal<string | null>(null);
 
   readonly item = computed<ContentItem | null>(
@@ -41,8 +42,11 @@ export class ConceptDetailStore {
   readonly segments = this.state.segments;
   readonly businessObjectives = this.state.businessObjectives;
 
+  /* v8 ignore next — signal() default-value branch unreachable from TestBed */
   readonly isAssistingDescription = signal(false);
+  /* v8 ignore next — signal() default-value branch unreachable from TestBed */
   readonly isAssistingHook = signal(false);
+  /* v8 ignore next — signal() default-value branch unreachable from TestBed */
   readonly moveDialogOpen = signal(false);
 
   // ── context wiring ──────────────────────────────────────────────────

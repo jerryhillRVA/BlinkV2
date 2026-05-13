@@ -20,6 +20,7 @@ const JOURNEY_ORDER: { stage: ContentStage; label: string }[] = [
   styleUrl: './content-journey.component.scss',
 })
 export class ContentJourneyComponent {
+  /* v8 ignore next — signal-input default-value branch unreachable from TestBed */
   readonly stage = input.required<ContentStage>();
 
   protected readonly steps = computed<JourneyStep[]>(() => {

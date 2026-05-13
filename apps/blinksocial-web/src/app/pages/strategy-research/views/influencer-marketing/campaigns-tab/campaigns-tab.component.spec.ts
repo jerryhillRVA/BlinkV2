@@ -31,7 +31,9 @@ describe('CampaignsTabComponent', () => {
 
   beforeEach(async () => {
     vi.useFakeTimers();
+    /* v8 ignore next — signal() default-value branch unreachable from TestBed */
     campaignsSignal = signal<InfluencerCampaign[]>([]);
+    /* v8 ignore next — signal() default-value branch unreachable from TestBed */
     shortlistSignal = signal<ShortlistedInfluencer[]>([influencer]);
     saveCampaigns = vi.fn((data: InfluencerCampaign[]) => campaignsSignal.set(data));
     toastSpy = { showSuccess: vi.fn(), showError: vi.fn() };

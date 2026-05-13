@@ -40,8 +40,11 @@ export class NewWorkspaceComponent implements OnInit {
   private readonly authService = inject(AuthService);
   protected readonly formService = inject(NewWorkspaceFormService);
 
+  /* v8 ignore next — signal() default-value branch unreachable from TestBed */
   currentStep = signal(1);
+  /* v8 ignore next — signal() default-value branch unreachable from TestBed */
   isSubmitting = signal(false);
+  /* v8 ignore next — signal() default-value branch unreachable from TestBed */
   resumeWorkspaceId = signal<string | null>(null);
 
   readonly STEPS: WizardStep[] = [

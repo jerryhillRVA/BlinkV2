@@ -102,4 +102,17 @@ describe('TiktokPackagingComponent', () => {
     expect(fixture.componentInstance['utm']()).toEqual({ source: 's' });
     expect(fixture.componentInstance['audio']()?.trackId).toBe('t');
   });
+
+  it('builds with all defaults (exercises signal-input default-value branches)', () => {
+    TestBed.resetTestingModule();
+    TestBed.configureTestingModule({ imports: [TiktokPackagingComponent] });
+    const fixture = TestBed.createComponent(TiktokPackagingComponent);
+    fixture.detectChanges();
+    expect(fixture.componentInstance['caption']()).toBe('');
+    expect(fixture.componentInstance['hashtags']()).toEqual([]);
+    expect(fixture.componentInstance['link']()).toBe('');
+    expect(fixture.componentInstance['utm']()).toBeUndefined();
+    expect(fixture.componentInstance['audio']()).toBeUndefined();
+    expect(fixture.componentInstance['controls']()).toBeUndefined();
+  });
 });

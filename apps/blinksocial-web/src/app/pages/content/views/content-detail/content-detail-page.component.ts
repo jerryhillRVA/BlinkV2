@@ -23,10 +23,15 @@ export class ContentDetailPageComponent {
 
   protected readonly stateService = inject(ContentStateService);
 
+  /* v8 ignore next — signal() default-value branch unreachable from TestBed */
   protected readonly workspaceId = signal('');
+  /* v8 ignore next — signal() default-value branch unreachable from TestBed */
   protected readonly itemId = signal<string | null>(null);
+  /* v8 ignore next — signal() default-value branch unreachable from TestBed */
   protected readonly from = signal<string | null>(null);
+  /* v8 ignore next — signal() default-value branch unreachable from TestBed */
   protected readonly calendarView = signal<string | null>(null);
+  /* v8 ignore next — signal() default-value branch unreachable from TestBed */
   protected readonly calendarCursor = signal<string | null>(null);
 
   protected readonly item = computed<ContentItem | null>(

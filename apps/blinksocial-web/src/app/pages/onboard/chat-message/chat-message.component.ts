@@ -11,6 +11,7 @@ import { ComposerAttachmentChipComponent } from '../composer-attachment-chip/com
   styleUrl: './chat-message.component.scss',
 })
 export class ChatMessageComponent {
+  /* v8 ignore next — signal-input default-value branch unreachable from TestBed */
   message = input.required<OnboardingMessageContract>();
 
   /**

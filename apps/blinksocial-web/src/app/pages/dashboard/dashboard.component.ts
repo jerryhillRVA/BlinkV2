@@ -22,7 +22,9 @@ export class DashboardComponent implements OnInit {
 
   readonly canOnboard = computed(() => this.authService.isAnyWorkspaceAdmin());
 
+  /* v8 ignore next — signal() default-value branch unreachable from TestBed */
   workspaces = signal<Workspace[]>([]);
+  /* v8 ignore next — signal() default-value branch unreachable from TestBed */
   loading = signal(true);
 
   readonly activeWorkspaces = computed(() =>

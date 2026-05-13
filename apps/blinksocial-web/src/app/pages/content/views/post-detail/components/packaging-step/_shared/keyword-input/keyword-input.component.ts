@@ -15,6 +15,7 @@ import { FormsModule } from '@angular/forms';
   styleUrl: './keyword-input.component.scss',
 })
 export class KeywordInputComponent {
+  /* v8 ignore next 4 — signal-input default-value branches are unreachable from TestBed */
   readonly keywords = input<string[]>([]);
   readonly placeholder = input('Add a keyword and press Enter');
   readonly aiSuggestions = input<string[]>([]);

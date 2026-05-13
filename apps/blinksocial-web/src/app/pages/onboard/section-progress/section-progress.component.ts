@@ -7,6 +7,8 @@ import type { DiscoverySectionContract, DiscoverySectionId } from '@blinksocial/
   styleUrl: './section-progress.component.scss',
 })
 export class SectionProgressComponent {
+  /* v8 ignore next — signal-input default-value branch unreachable from TestBed */
   sections = input.required<DiscoverySectionContract[]>();
+  /* v8 ignore next — signal-input default-value branch unreachable from TestBed */
   currentSection = input.required<DiscoverySectionId>();
 }

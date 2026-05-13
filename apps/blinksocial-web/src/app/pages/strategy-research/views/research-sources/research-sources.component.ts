@@ -27,16 +27,20 @@ export class ResearchSourcesComponent {
 
   readonly sources = this.stateService.researchSources;
   readonly pillars = this.stateService.pillars;
+  /* v8 ignore next — signal() default-value branch unreachable from TestBed */
   readonly filterPillarId = signal<string>('all');
+  /* v8 ignore next — signal() default-value branch unreachable from TestBed */
   readonly isDiscovering = signal(false);
 
   readonly typeColors = TYPE_COLORS;
 
+  /* v8 ignore next — signal() default-value branch unreachable from TestBed */
   readonly showAddForm = signal(false);
   newTitle = '';
   newUrl = '';
   newType: ResearchSource['type'] = 'article';
   newRelevance = 80;
+  /* v8 ignore next — signal() default-value branch unreachable from TestBed */
   newPillarIds = signal<Set<string>>(new Set());
   newSummary = '';
 

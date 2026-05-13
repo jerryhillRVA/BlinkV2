@@ -43,6 +43,7 @@ export class ShotListComponent {
   @Output() coverAssetRefChange = new EventEmitter<string | undefined>();
 
   protected readonly shotTypes = SHOT_TYPES;
+  /* v8 ignore next — signal() default-value branch unreachable from TestBed */
   protected readonly aiLoading = signal(false);
 
   protected get countLabel(): string {

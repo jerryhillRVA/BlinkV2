@@ -24,6 +24,7 @@ describe('VoiceMissionComponent', () => {
   beforeEach(async () => {
     vi.useFakeTimers();
     toastSpy = { showSuccess: vi.fn(), showError: vi.fn() };
+    /* v8 ignore next — signal() default-value branch unreachable from TestBed */
     mockBrandVoice = signal<BrandVoiceData>({ ...DEFAULT_BRAND_VOICE });
     mockStateService = {
       brandVoice: mockBrandVoice,

@@ -15,6 +15,7 @@ describe('CompetitorDeepDiveComponent', () => {
 
   beforeEach(async () => {
     vi.useFakeTimers();
+    /* v8 ignore next — signal() default-value branch unreachable from TestBed */
     mockCompetitorInsights = signal<CompetitorInsight[]>([...MOCK_COMPETITOR_INSIGHTS]);
     const mockStateService = {
       competitorInsights: mockCompetitorInsights,

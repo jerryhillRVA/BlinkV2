@@ -361,4 +361,124 @@ describe('PostDetailComponent — actions', () => {
     expect(comp.parentConcept()?.id).toBe('concept-1');
   });
 
+  // ── Preview computeds (post-preview-card inputs) ──────────────────
+
+  it('previewCaption pulls from instagramPackaging.caption when platform=instagram', () => {
+    const item = makeItem({
+      platform: 'instagram',
+      production: {
+        packaging: { instagram: { caption: 'IG caption' } },
+      },
+    });
+    const { fixture } = setup(item);
+    const comp = fixture.componentInstance as unknown as {
+      previewCaption: () => string;
+    };
+    expect(comp.previewCaption()).toBe('IG caption');
+  });
+
+  it('previewCaption pulls from tiktokPackaging.caption when platform=tiktok', () => {
+    const item = makeItem({
+      platform: 'tiktok',
+      contentType: 'short-video',
+      production: {
+        packaging: { tiktok: { caption: 'TT caption' } },
+      },
+    });
+    const { fixture } = setup(item);
+    const comp = fixture.componentInstance as unknown as {
+      previewCaption: () => string;
+    };
+    expect(comp.previewCaption()).toBe('TT caption');
+  });
+
+  it('previewCaption returns empty string for non-IG/TT platforms', () => {
+    const item = makeItem({ platform: 'youtube', contentType: 'long-form' });
+    const { fixture } = setup(item);
+    const comp = fixture.componentInstance as unknown as {
+      previewCaption: () => string;
+    };
+    expect(comp.previewCaption()).toBe('');
+  });
+
+  it('previewCoverAsset reads coverAssetUrl from IG slot (data URL pass-through)', () => {
+    const item = makeItem({
+      platform: 'instagram',
+      production: {
+        packaging: {
+          instagram: { coverAssetUrl: 'data:image/png;base64,xx' },
+        },
+      },
+    });
+    const { fixture } = setup(item);
+    const comp = fixture.componentInstance as unknown as {
+      previewCoverAsset: () => string | undefined;
+    };
+    expect(comp.previewCoverAsset()).toBe('data:image/png;base64,xx');
+  });
+
+  it('previewCoverAsset returns undefined for non-IG platforms', () => {
+    const item = makeItem({ platform: 'tiktok', contentType: 'short-video' });
+    const { fixture } = setup(item);
+    const comp = fixture.componentInstance as unknown as {
+      previewCoverAsset: () => string | undefined;
+    };
+    expect(comp.previewCoverAsset()).toBeUndefined();
+  });
+
+  it('previewAudioTrackName reads from IG audio slot', () => {
+    const item = makeItem({
+      platform: 'instagram',
+      production: {
+        packaging: {
+          instagram: {
+            audio: {
+              trackId: 't1',
+              trackName: 'IG track',
+              artistName: 'a',
+              source: 'trending',
+            },
+          },
+        },
+      },
+    });
+    const { fixture } = setup(item);
+    const comp = fixture.componentInstance as unknown as {
+      previewAudioTrackName: () => string | undefined;
+    };
+    expect(comp.previewAudioTrackName()).toBe('IG track');
+  });
+
+  it('previewAudioTrackName reads from TT audio slot', () => {
+    const item = makeItem({
+      platform: 'tiktok',
+      contentType: 'short-video',
+      production: {
+        packaging: {
+          tiktok: {
+            audio: {
+              trackId: 't2',
+              trackName: 'TT track',
+              artistName: 'b',
+              source: 'trending',
+            },
+          },
+        },
+      },
+    });
+    const { fixture } = setup(item);
+    const comp = fixture.componentInstance as unknown as {
+      previewAudioTrackName: () => string | undefined;
+    };
+    expect(comp.previewAudioTrackName()).toBe('TT track');
+  });
+
+  it('previewAudioTrackName returns undefined for non-IG/TT platforms', () => {
+    const item = makeItem({ platform: 'youtube', contentType: 'long-form' });
+    const { fixture } = setup(item);
+    const comp = fixture.componentInstance as unknown as {
+      previewAudioTrackName: () => string | undefined;
+    };
+    expect(comp.previewAudioTrackName()).toBeUndefined();
+  });
 });

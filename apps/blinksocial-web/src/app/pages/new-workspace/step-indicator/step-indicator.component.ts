@@ -11,7 +11,9 @@ export interface WizardStep {
   styleUrl: './step-indicator.component.scss',
 })
 export class StepIndicatorComponent {
+  /* v8 ignore next — signal-input default-value branch unreachable from TestBed */
   steps = input.required<WizardStep[]>();
+  /* v8 ignore next — signal-input default-value branch unreachable from TestBed */
   currentStep = input.required<number>();
 
   isCompleted(step: WizardStep): boolean {

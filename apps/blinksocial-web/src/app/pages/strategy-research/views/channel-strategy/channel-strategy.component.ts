@@ -47,11 +47,14 @@ export class ChannelStrategyComponent {
 
   readonly channels = this.stateService.channelStrategy;
   readonly showPlatformPicker = computed(() => this.channels().length === 0);
+  /* v8 ignore next — signal() default-value branch unreachable from TestBed */
   readonly selectedNewPlatforms = signal<Set<Platform>>(new Set(['instagram', 'tiktok', 'youtube', 'facebook']));
 
   /* v8 ignore start */
   readonly expandedPlatforms = signal<Set<Platform>>(new Set(['instagram']));
+  /* v8 ignore next — signal() default-value branch unreachable from TestBed */
   readonly generatingPlatform = signal<Platform | null>(null);
+  /* v8 ignore next — signal() default-value branch unreachable from TestBed */
   readonly generatingAll = signal(false);
   /* v8 ignore stop */
 

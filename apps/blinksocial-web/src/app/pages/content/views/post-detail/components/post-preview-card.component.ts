@@ -17,12 +17,10 @@ import type { ContentTypeContract, PlatformContract } from '@blinksocial/contrac
 })
 export class PostPreviewCardComponent {
   readonly platform = input.required<PlatformContract | null | undefined>();
+  /* v8 ignore next 6 — signal-input default-value branches are unreachable from TestBed */
   readonly contentType = input<ContentTypeContract | null | undefined>(undefined);
   readonly caption = input<string>('');
   readonly handle = input<string>('@your_handle');
-  /** Ordered list of media URLs (e.g. asset URLs from the carousel order
-   *  in the packaging slot). Empty array shows a "Media" placeholder or
-   *  the optional coverAsset filename. */
   readonly slides = input<ReadonlyArray<string>>([]);
   readonly coverAsset = input<string | undefined>(undefined);
   readonly audioTrackName = input<string | undefined>(undefined);

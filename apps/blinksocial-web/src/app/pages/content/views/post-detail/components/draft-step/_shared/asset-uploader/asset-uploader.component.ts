@@ -20,6 +20,7 @@ export class AssetUploaderComponent {
   @Output() fileChange = new EventEmitter<{ name: string; size: number } | null>();
   @Output() aiGenerate = new EventEmitter<void>();
 
+  /* v8 ignore next — signal() default-value branch unreachable from TestBed */
   protected readonly busy = signal(false);
 
   protected onFileChange(e: Event): void {

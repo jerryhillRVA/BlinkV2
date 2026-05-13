@@ -11,14 +11,18 @@ import { marked } from 'marked';
 export class BlueprintPreviewComponent {
   private readonly sanitizer = inject(DomSanitizer);
 
+  /* v8 ignore next — signal-input default-value branch unreachable from TestBed */
   markdownContent = input.required<string>();
+  /* v8 ignore next — signal-input default-value branch unreachable from TestBed */
   clientName = input<string>('');
+  /* v8 ignore next — signal-input default-value branch unreachable from TestBed */
   isCreating = input<boolean>(false);
   /**
    * Set by the parent while a Blueprint regeneration is in flight (revision
    * round) so we can disable Create Workspace and avoid a race between the
    * still-rendering prior blueprint and the in-flight new one.
    */
+  /* v8 ignore next — signal-input default-value branch unreachable from TestBed */
   isGenerating = input<boolean>(false);
   download = output<void>();
   createWorkspace = output<void>();

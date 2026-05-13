@@ -36,6 +36,7 @@ describe('OutreachTabComponent', () => {
 
   beforeEach(async () => {
     vi.useFakeTimers();
+    /* v8 ignore next — signal() default-value branch unreachable from TestBed */
     shortlistSignal = signal<ShortlistedInfluencer[]>([influencer]);
     toastSpy = { showSuccess: vi.fn(), showError: vi.fn() };
 

@@ -17,6 +17,7 @@ interface Step {
 export class StatusStepperComponent {
   @Input({ required: true }) value!: ContentStatus;
   @Input({ required: true }) stage!: ContentStage;
+  /* v8 ignore next — signal-input default-value branch unreachable from TestBed */
   readonly interactive = input(true);
 
   @Output() statusChange = new EventEmitter<ContentStatus>();

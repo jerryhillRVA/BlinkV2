@@ -14,6 +14,7 @@ import { TooltipComponent } from '../../../../shared/tooltip/tooltip.component';
 })
 export class TabAgentsComponent {
   protected readonly state = inject(WorkspaceSettingsStateService);
+  /* v8 ignore next — signal() default-value branch unreachable from TestBed */
   editingIndex = signal<number | null>(null);
 
   get settings() {

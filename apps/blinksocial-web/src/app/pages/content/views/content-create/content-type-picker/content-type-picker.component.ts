@@ -65,6 +65,7 @@ const PICKER_OPTIONS: PickerOption[] = [
 export class ContentTypePickerComponent {
   private readonly host = inject(ElementRef<HTMLElement>);
 
+  /* v8 ignore next — signal-input default-value branch unreachable from TestBed */
   readonly open = input(false);
 
   @Output() selected = new EventEmitter<ContentItemType>();

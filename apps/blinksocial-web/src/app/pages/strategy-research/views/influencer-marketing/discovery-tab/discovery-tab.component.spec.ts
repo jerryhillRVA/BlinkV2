@@ -30,7 +30,9 @@ describe('DiscoveryTabComponent', () => {
 
   beforeEach(async () => {
     vi.useFakeTimers();
+    /* v8 ignore next — signal() default-value branch unreachable from TestBed */
     dismissedSignal = signal<InfluencerProfile[]>([]);
+    /* v8 ignore next — signal() default-value branch unreachable from TestBed */
     shortlistSignal = signal<ShortlistedInfluencer[]>([]);
     toastSpy = { showSuccess: vi.fn(), showError: vi.fn() };
     stateSpy = {

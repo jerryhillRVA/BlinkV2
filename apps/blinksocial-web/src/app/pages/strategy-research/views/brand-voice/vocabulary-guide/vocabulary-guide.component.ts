@@ -19,7 +19,9 @@ export class VocabularyGuideComponent {
   private readonly stateService = inject(StrategyResearchStateService);
 
   readonly vocabulary = computed(() => this.stateService.brandVoice().vocabulary);
+  /* v8 ignore next — signal() default-value branch unreachable from TestBed */
   readonly newPreferredWord = signal('');
+  /* v8 ignore next — signal() default-value branch unreachable from TestBed */
   readonly newAvoidWord = signal('');
 
   addPreferredWord(): void {

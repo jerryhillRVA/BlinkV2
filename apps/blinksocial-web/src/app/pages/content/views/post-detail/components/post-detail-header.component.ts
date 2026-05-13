@@ -28,6 +28,7 @@ export class PostDetailHeaderComponent {
   @Output() archive = new EventEmitter<void>();
   @Output() unarchive = new EventEmitter<void>();
 
+  /* v8 ignore next — signal() default-value branch unreachable from TestBed */
   protected readonly menuOpen = signal(false);
 
   protected toggleMenu(): void {

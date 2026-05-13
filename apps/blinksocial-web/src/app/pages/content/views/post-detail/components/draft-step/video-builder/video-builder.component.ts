@@ -45,12 +45,18 @@ export class VideoBuilderComponent {
     () => !this.store.item()?.briefApproved,
   );
 
+  /* v8 ignore next — signal() default-value branch unreachable from TestBed */
   protected readonly hookBankOpen = signal(false);
+  /* v8 ignore next — signal() default-value branch unreachable from TestBed */
   protected readonly hookBankLoading = signal(false);
+  /* v8 ignore next — signal() default-value branch unreachable from TestBed */
   protected readonly bRollOpen = signal(false);
+  /* v8 ignore next — signal() default-value branch unreachable from TestBed */
   protected readonly voiceoverOpen = signal(false);
 
+  /* v8 ignore next — signal() default-value branch unreachable from TestBed */
   protected readonly bodyAiLoading = signal(false);
+  /* v8 ignore next — signal() default-value branch unreachable from TestBed */
   protected readonly ctaAiLoading = signal(false);
 
   protected readonly durationOptions = TARGET_DURATIONS;

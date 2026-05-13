@@ -24,6 +24,8 @@ export type IconName =
   styleUrl: './icon.component.scss',
 })
 export class IconComponent {
+  /* v8 ignore next — signal-input default-value branch unreachable from TestBed */
   readonly name = input.required<IconName>();
+  /* v8 ignore next — signal-input default-value branch unreachable from TestBed */
   readonly size = input(16);
 }

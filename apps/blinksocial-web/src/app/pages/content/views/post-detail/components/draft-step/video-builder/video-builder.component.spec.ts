@@ -230,4 +230,38 @@ describe('VideoBuilderComponent', () => {
     const { fixture } = setup(item);
     expect(fixture.componentInstance['ctaTypeLabel']()).toBeNull();
   });
+
+  // ── Handler branches: `(target as Input).value ?? ''` fallbacks ──
+
+  it('onHookInput coalesces null .value to empty string', () => {
+    const { fixture, store } = setup();
+    const spy = vi.spyOn(store, 'setVideoHook');
+    fixture.componentInstance['onHookInput']({ target: { value: null } } as unknown as Event);
+    expect(spy).toHaveBeenCalledWith('');
+  });
+
+  it('onBodyInput / onCtaInput / onBRollInput / onVoiceoverInput coalesce null .value', () => {
+    const { fixture, store } = setup();
+    const spies = {
+      body: vi.spyOn(store, 'setVideoBody'),
+      cta: vi.spyOn(store, 'setVideoCta'),
+      bRoll: vi.spyOn(store, 'setVideoBRollNotes'),
+      voiceover: vi.spyOn(store, 'setVideoVoiceoverNotes'),
+    };
+    const nullEvent = { target: { value: null } } as unknown as Event;
+    fixture.componentInstance['onBodyInput'](nullEvent);
+    fixture.componentInstance['onCtaInput'](nullEvent);
+    fixture.componentInstance['onBRollInput'](nullEvent);
+    fixture.componentInstance['onVoiceoverInput'](nullEvent);
+    expect(spies.body).toHaveBeenCalledWith('');
+    expect(spies.cta).toHaveBeenCalledWith('');
+    expect(spies.bRoll).toHaveBeenCalledWith('');
+    expect(spies.voiceover).toHaveBeenCalledWith('');
+  });
+
+  it('duration defaults to "30s" when draft.targetDuration is undefined', () => {
+    const { fixture } = setup();
+    // No setVideoTargetDuration call → default branch reached.
+    expect(fixture.componentInstance['duration']()).toBe('30s');
+  });
 });

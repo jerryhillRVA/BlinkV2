@@ -26,8 +26,11 @@ export class VoiceAttributesComponent {
   private readonly stateService = inject(StrategyResearchStateService);
 
   readonly attributes = computed(() => this.stateService.brandVoice().voiceAttributes);
+  /* v8 ignore next — signal() default-value branch unreachable from TestBed */
   readonly isGenerating = signal(false);
+  /* v8 ignore next — signal() default-value branch unreachable from TestBed */
   readonly editingId = signal<string | null>(null);
+  /* v8 ignore next — signal() default-value branch unreachable from TestBed */
   readonly editAttribute = signal<VoiceAttribute>({ id: '', label: '', description: '', doExample: '', dontExample: '' });
 
   generateAttributes(): void {

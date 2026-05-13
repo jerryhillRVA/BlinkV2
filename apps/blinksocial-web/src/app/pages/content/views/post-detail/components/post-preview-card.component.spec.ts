@@ -188,4 +188,149 @@ describe('PostPreviewCardComponent', () => {
     expand(fixture);
     expect(fixture.nativeElement.querySelector('.pp-body')).toBeNull();
   });
+
+  // ── Branch coverage tests ──────────────────────────────────────────
+
+  it('platformLabel returns empty string when platform is null/undefined (falsy branch)', () => {
+    // Build the component directly so the setup helper's `?? 'instagram'`
+    // fallback doesn't override our `null` input — we need the falsy
+    // branch of platformLabel to fire.
+    TestBed.resetTestingModule();
+    TestBed.configureTestingModule({ imports: [PostPreviewCardComponent] });
+    const fixture = TestBed.createComponent(PostPreviewCardComponent);
+    fixture.componentRef.setInput('platform', null);
+    fixture.detectChanges();
+    expect(fixture.componentInstance['platformLabel']()).toBe('');
+    // visible() should also be false → no card renders.
+    expect(fixture.nativeElement.querySelector('.post-preview')).toBeNull();
+  });
+
+  it('isCarousel returns true for photo-carousel content type', () => {
+    const fixture = setup({ platform: 'tiktok', contentType: 'photo-carousel' });
+    expand(fixture);
+    expect(fixture.componentInstance['isCarousel']()).toBe(true);
+  });
+
+  it('isCarousel returns true when slides.length > 1 even without carousel content-type', () => {
+    const fixture = setup({
+      platform: 'instagram',
+      contentType: 'reel',
+      slides: ['a', 'b'],
+    });
+    expand(fixture);
+    expect(fixture.componentInstance['isCarousel']()).toBe(true);
+  });
+
+  it('IG story uses 4/5 aspect ratio (matches reel)', () => {
+    const fixture = setup({ platform: 'instagram', contentType: 'story' });
+    expand(fixture);
+    expect(
+      (fixture.nativeElement.querySelector('.pp-ig-media') as HTMLElement).style
+        .aspectRatio,
+    ).toBe('4 / 5');
+  });
+
+  it('dotCount caps at 7 when slides exceed 7', () => {
+    const fixture = setup({
+      platform: 'instagram',
+      contentType: 'carousel',
+      slides: Array.from({ length: 10 }, (_, i) => `slide-${i}.jpg`),
+    });
+    expand(fixture);
+    expect(fixture.componentInstance['dotCount']()).toBe(7);
+    expect(fixture.nativeElement.querySelectorAll('.pp-ig-dot').length).toBe(7);
+  });
+
+  it('currentSrc falls back to coverAsset when slides[index] is undefined', () => {
+    const fixture = setup({
+      platform: 'instagram',
+      slides: [],
+      coverAsset: 'data:image/png;base64,xxx',
+    });
+    expand(fixture);
+    expect(fixture.componentInstance['currentSrc']()).toBe(
+      'data:image/png;base64,xxx',
+    );
+  });
+
+  it('canPrev returns false on first slide; canNext returns false on last slide', () => {
+    const fixture = setup({
+      platform: 'instagram',
+      contentType: 'carousel',
+      slides: ['a', 'b'],
+    });
+    expand(fixture);
+    expect(fixture.componentInstance['canPrev']()).toBe(false);
+    expect(fixture.componentInstance['canNext']()).toBe(true);
+    fixture.componentInstance['next']();
+    expect(fixture.componentInstance['canPrev']()).toBe(true);
+    expect(fixture.componentInstance['canNext']()).toBe(false);
+  });
+
+  it('prev clamps at 0 (cannot go below the first slide)', () => {
+    const fixture = setup({
+      platform: 'instagram',
+      contentType: 'carousel',
+      slides: ['a', 'b'],
+    });
+    fixture.componentInstance['prev']();
+    expect(fixture.componentInstance['slideIndex']()).toBe(0);
+  });
+
+  it('next clamps at the last slide', () => {
+    const fixture = setup({
+      platform: 'instagram',
+      contentType: 'carousel',
+      slides: ['a', 'b'],
+    });
+    fixture.componentInstance['next']();
+    fixture.componentInstance['next']();
+    fixture.componentInstance['next']();
+    expect(fixture.componentInstance['slideIndex']()).toBe(1);
+  });
+
+  it('TikTok placeholder renders "Slide N" when carousel + no media', () => {
+    const fixture = setup({
+      platform: 'tiktok',
+      contentType: 'photo-carousel',
+      slides: [],
+    });
+    expand(fixture);
+    expect(
+      fixture.nativeElement.querySelector('.pp-tt-media-placeholder')?.textContent?.trim(),
+    ).toBe('Slide 1');
+  });
+
+  it('IG placeholder renders "Slide N" when carousel + no media', () => {
+    const fixture = setup({
+      platform: 'instagram',
+      contentType: 'carousel',
+      slides: [],
+    });
+    expand(fixture);
+    expect(
+      fixture.nativeElement.querySelector('.pp-ig-media-placeholder')?.textContent?.trim(),
+    ).toBe('Slide 1');
+  });
+
+  it('TikTok with slides renders <img> in the media frame', () => {
+    const fixture = setup({ platform: 'tiktok', slides: ['https://x/tt.jpg'] });
+    expand(fixture);
+    const img = fixture.nativeElement.querySelector('.pp-tt-media-img') as HTMLImageElement;
+    expect(img).not.toBeNull();
+    expect(img.src).toContain('tt.jpg');
+  });
+
+  it('TikTok carousel: dots + arrows render when slides > 1', () => {
+    const fixture = setup({
+      platform: 'tiktok',
+      contentType: 'photo-carousel',
+      slides: ['a', 'b', 'c'],
+    });
+    expand(fixture);
+    expect(fixture.nativeElement.querySelectorAll('.pp-tt-dot').length).toBe(3);
+    // First slide: prev arrow hidden, next visible
+    expect(fixture.nativeElement.querySelector('.pp-tt-arrow--left')).toBeNull();
+    expect(fixture.nativeElement.querySelector('.pp-tt-arrow--right')).not.toBeNull();
+  });
 });

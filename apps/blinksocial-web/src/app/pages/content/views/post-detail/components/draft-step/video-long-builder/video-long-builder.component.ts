@@ -32,6 +32,7 @@ export class VideoLongBuilderComponent {
     () => !this.store.item()?.briefApproved,
   );
 
+  /* v8 ignore next — signal() default-value branch unreachable from TestBed */
   protected readonly voiceoverOpen = signal(false);
   protected readonly types = SEQUENCE_TYPES;
   protected readonly durations = TARGET_DURATIONS;

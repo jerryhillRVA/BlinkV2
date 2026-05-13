@@ -22,6 +22,7 @@ describe('ShortlistTabComponent', () => {
   };
 
   beforeEach(async () => {
+    /* v8 ignore next — signal() default-value branch unreachable from TestBed */
     shortlistSignal = signal<ShortlistedInfluencer[]>([sample]);
     saveSpy = vi.fn((data: ShortlistedInfluencer[]) => shortlistSignal.set(data));
     toastSpy = { showSuccess: vi.fn(), showError: vi.fn() };

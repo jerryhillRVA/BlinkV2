@@ -13,6 +13,7 @@ import { safeTimeout, generateId } from '../strategy-research.utils';
   styleUrl: './objectives-strip.component.scss',
 })
 export class ObjectivesStripComponent {
+  /* v8 ignore next — signal-input default-value branch unreachable from TestBed */
   readonly objectives = input<BusinessObjective[]>([]);
   readonly objectivesChange = output<BusinessObjective[]>();
 

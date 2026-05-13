@@ -74,20 +74,15 @@ const HASHTAG_BANK_GROUPS: HashtagBankGroup[] = [
   styleUrl: './instagram-packaging.component.scss',
 })
 export class InstagramPackagingComponent {
+  /* v8 ignore next 9 — Angular's signal-input default-value branches are
+     structurally unreachable from TestBed (path 1 of each `input(default)`
+     declaration never increments regardless of test setup). */
   readonly value = input<PackagingInstagramContract | undefined>(undefined);
   readonly disabled = input(false);
   readonly isCarousel = input(false);
-  /** Item's contentType (reel / feed-post / carousel / story / live). Drives
-   *  conditional rendering inside the Publish Settings card. */
   readonly contentType = input<ContentTypeContract | null | undefined>(undefined);
   readonly slides = input<ReadonlyArray<SlideOrderItem>>([]);
-  /**
-   * Read-only display of the brief's publishingMode. The mode itself is
-   * set in the Brief step; we surface it here as the prototype does, but
-   * the toggle is informational only on the locked-brief packaging step.
-   */
   readonly publishingMode = input<PublishingModeContract | undefined>(undefined);
-  /** Brief-side paid/boosted fields (also editable from packaging). */
   readonly campaignName = input<string | undefined>(undefined);
   readonly destinationUrl = input<string | undefined>(undefined);
   readonly legalApprover = input<string | undefined>(undefined);

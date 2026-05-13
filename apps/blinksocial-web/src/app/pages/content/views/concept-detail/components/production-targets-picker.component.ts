@@ -20,8 +20,10 @@ interface TargetGroup {
   styleUrl: './production-targets-picker.component.scss',
 })
 export class ProductionTargetsPickerComponent {
+  /* v8 ignore next — signal-input default-value branch unreachable from TestBed */
   readonly selected = input<TargetPlatform[]>([]);
   /** Returns true when (platform, contentType) is already a post item */
+  /* v8 ignore next — signal-input default-value branch unreachable from TestBed */
   readonly isInProduction = input<(target: TargetPlatform) => boolean>(
     () => false,
   );

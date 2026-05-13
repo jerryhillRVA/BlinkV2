@@ -180,4 +180,24 @@ describe('AudioPickerComponent', () => {
     const fixture = setup({ platform: 'instagram' });
     expect(fixture.componentInstance['isPreviewing']('ig-1')).toBe(false);
   });
+
+  it('builds with only required platform input (exercises optional signal-input default branches)', () => {
+    TestBed.resetTestingModule();
+    TestBed.configureTestingModule({ imports: [AudioPickerComponent] });
+    const fixture = TestBed.createComponent(AudioPickerComponent);
+    fixture.componentRef.setInput('platform', 'instagram');
+    fixture.detectChanges();
+    expect(fixture.componentInstance['triggerLabel']()).toBe('Add audio');
+    expect(fixture.componentInstance['tracks']().length).toBeGreaterThan(0);
+  });
+
+  it('platformNote returns the TikTok-specific licensing note for tiktok', () => {
+    const fixture = setup({ platform: 'tiktok' });
+    expect(fixture.componentInstance['platformNote']()).toContain('TikTok');
+  });
+
+  it('platformNote returns null for platforms without a note (instagram, youtube, etc.)', () => {
+    const fixture = setup({ platform: 'youtube' });
+    expect(fixture.componentInstance['platformNote']()).toBeNull();
+  });
 });

@@ -347,4 +347,22 @@ describe('InstagramPackagingComponent', () => {
     expect(fixture.componentInstance['audio']()?.trackId).toBe('t');
     expect(fixture.componentInstance['controls']()?.allowComments).toBe(false);
   });
+
+  it('builds with all defaults (exercises signal-input default-value branches)', () => {
+    // Build the component WITHOUT calling setInput on the optional inputs,
+    // so the input() declaration defaults are reached. Lifts branch
+    // coverage on the input() default-value branches.
+    TestBed.resetTestingModule();
+    TestBed.configureTestingModule({ imports: [InstagramPackagingComponent] });
+    const fixture = TestBed.createComponent(InstagramPackagingComponent);
+    fixture.detectChanges();
+    expect(fixture.componentInstance['caption']()).toBe('');
+    expect(fixture.componentInstance['hashtags']()).toEqual([]);
+    expect(fixture.componentInstance['link']()).toBe('');
+    expect(fixture.componentInstance['utm']()).toBeUndefined();
+    expect(fixture.componentInstance['slideOrder']()).toEqual([]);
+    expect(fixture.componentInstance['paidBoosted']()).toBe(false);
+    expect(fixture.nativeElement.querySelector('#ig-caption')).not.toBeNull();
+    expect(fixture.nativeElement.querySelector('app-slide-order-picker')).toBeNull();
+  });
 });

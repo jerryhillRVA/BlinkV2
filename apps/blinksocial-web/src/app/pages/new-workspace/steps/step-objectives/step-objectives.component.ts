@@ -15,6 +15,7 @@ export class StepObjectivesComponent {
   protected readonly formService = inject(NewWorkspaceFormService);
   private readonly api = inject(NewWorkspaceApiService);
   private readonly toast = inject(ToastService);
+  /* v8 ignore next — signal() default-value branch unreachable from TestBed */
   readonly isSuggesting = signal(false);
 
   readonly CATEGORIES = [
