@@ -346,11 +346,33 @@ export interface PackagingSlideOrderContract {
 
 export type PackagingVisibilityContract = 'public' | 'unlisted' | 'private';
 
+/**
+ * Instagram-specific platform-controls. Mirrors the prototype's
+ * PlatformControlsData["ig"] in PublishSettingsCard.tsx — rendered
+ * conditionally on activeContentType (reel/feed-post/carousel/story/live).
+ */
+export interface PackagingPlatformControlsIGContract {
+  commentsOff?: boolean;
+  hideLikeCount?: boolean;
+  paidPartnership?: boolean;
+  collaboratorTag?: string;
+  closeFreindsOnly?: boolean; // spelling matches prototype
+  coHostHandles?: string[]; // live, max 4
+  fundraiserGoal?: string; // live
+  qaMode?: boolean; // live
+  notifyFollowers?: boolean; // live
+}
+
 export interface PackagingPlatformControlsContract {
+  // Legacy flat fields retained for builders that still use the old
+  // <app-platform-controls> card (TikTok, YouTube, Facebook, LinkedIn, X).
+  // Once those migrate to <app-publish-settings-card> these can be removed.
   visibility?: PackagingVisibilityContract;
   allowComments?: boolean;
-  allowDuetStitch?: boolean; // TikTok-only meaningfully, kept on common type
+  allowDuetStitch?: boolean;
   boostEnabled?: boolean;
+  // Per-platform nested shapes (matches prototype's PlatformControlsData).
+  ig?: PackagingPlatformControlsIGContract;
 }
 
 export interface PackagingInstagramContract {
@@ -367,6 +389,11 @@ export interface PackagingInstagramContract {
    * `pkg.coverAsset` in PackagingStudio.tsx.
    */
   coverAsset?: string;
+  // ── Publish Settings — Metadata (IG) ──────────────────────────────
+  // Mirrors prototype's pkg.igPeopleTags / igProductTags / igReelsCoverTag.
+  peopleTags?: string[];
+  productTags?: string[];
+  reelsCoverTag?: string;
   platformControls?: PackagingPlatformControlsContract;
 }
 

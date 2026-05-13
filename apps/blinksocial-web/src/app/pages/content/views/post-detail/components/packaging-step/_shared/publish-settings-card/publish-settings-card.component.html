@@ -1,0 +1,339 @@
+<section class="publish-settings" aria-label="Publish settings">
+  <button
+    type="button"
+    class="ps-header"
+    [attr.aria-expanded]="cardOpen()"
+    aria-controls="publish-settings-body"
+    (click)="toggleCard()"
+  >
+    <span class="ps-title">Publish Settings</span>
+    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" class="ps-chevron" [class.is-open]="cardOpen()">
+      <path d="m6 9 6 6 6-6"/>
+    </svg>
+  </button>
+
+  @if (cardOpen()) {
+    <div id="publish-settings-body" class="ps-body">
+      <!-- Metadata sub-section -->
+      <div class="ps-sub">
+        <button
+          type="button"
+          class="ps-sub-header"
+          [attr.aria-expanded]="metadataOpen()"
+          (click)="toggleMetadata()"
+        >
+          <span class="ps-sub-title">Metadata</span>
+          <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" class="ps-chevron" [class.is-open]="metadataOpen()">
+            <path d="m6 9 6 6 6-6"/>
+          </svg>
+        </button>
+        @if (metadataOpen()) {
+          <div class="ps-sub-body">
+            @if (!hasMetadataRows()) {
+              <p class="ps-empty">No platform metadata to set for this variation.</p>
+            } @else {
+              @if (showIgPeopleTags()) {
+                <div class="ps-row">
+                  <span class="ps-row-label">People tags</span>
+                  <div class="ps-chip-stack">
+                    @if (igPeopleTags().length > 0) {
+                      <div class="ps-chip-row">
+                        @for (tag of igPeopleTags(); track tag) {
+                          <span class="ps-chip">
+                            {{ tag }}
+                            <button
+                              type="button"
+                              class="ps-chip-remove"
+                              [disabled]="disabled()"
+                              [attr.aria-label]="'Remove ' + tag"
+                              (click)="removePeopleTag(tag)"
+                            >
+                              <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+                            </button>
+                          </span>
+                        }
+                      </div>
+                    }
+                    <div class="ps-chip-input-row">
+                      <input
+                        type="text"
+                        class="ps-input ps-input--chip"
+                        placeholder="Tag a person..."
+                        [value]="peopleDraft()"
+                        [disabled]="disabled()"
+                        aria-label="Add a person tag"
+                        (input)="onPeopleDraftInput($event)"
+                        (keydown)="onPeopleDraftKeydown($event)"
+                      />
+                      <button
+                        type="button"
+                        class="ps-chip-add"
+                        [disabled]="disabled() || !peopleDraft().trim()"
+                        (click)="addPeopleTag()"
+                      >Add</button>
+                    </div>
+                  </div>
+                </div>
+              }
+
+              @if (showIgProductTags()) {
+                <div class="ps-row">
+                  <span class="ps-row-label">Product tags</span>
+                  <div class="ps-chip-stack">
+                    @if (igProductTags().length > 0) {
+                      <div class="ps-chip-row">
+                        @for (tag of igProductTags(); track tag) {
+                          <span class="ps-chip">
+                            {{ tag }}
+                            <button
+                              type="button"
+                              class="ps-chip-remove"
+                              [disabled]="disabled()"
+                              [attr.aria-label]="'Remove ' + tag"
+                              (click)="removeProductTag(tag)"
+                            >
+                              <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+                            </button>
+                          </span>
+                        }
+                      </div>
+                    }
+                    <div class="ps-chip-input-row">
+                      <input
+                        type="text"
+                        class="ps-input ps-input--chip"
+                        placeholder="Tag a product..."
+                        [value]="productDraft()"
+                        [disabled]="disabled()"
+                        aria-label="Add a product tag"
+                        (input)="onProductDraftInput($event)"
+                        (keydown)="onProductDraftKeydown($event)"
+                      />
+                      <button
+                        type="button"
+                        class="ps-chip-add"
+                        [disabled]="disabled() || !productDraft().trim()"
+                        (click)="addProductTag()"
+                      >Add</button>
+                    </div>
+                  </div>
+                </div>
+              }
+
+              @if (showIgReelsCover()) {
+                <div class="ps-row">
+                  <span class="ps-row-label">#Reels cover tag</span>
+                  <input
+                    type="text"
+                    class="ps-input"
+                    placeholder="Cover tag..."
+                    [value]="igReelsCoverTag()"
+                    [disabled]="disabled()"
+                    aria-label="#Reels cover tag"
+                    (input)="onReelsCoverInput($event)"
+                  />
+                </div>
+              }
+            }
+          </div>
+        }
+      </div>
+
+      <!-- Platform Controls sub-section -->
+      <div class="ps-sub">
+        <button
+          type="button"
+          class="ps-sub-header"
+          [attr.aria-expanded]="controlsOpen()"
+          (click)="toggleControls()"
+        >
+          <span class="ps-sub-title">Platform Controls</span>
+          <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" class="ps-chevron" [class.is-open]="controlsOpen()">
+            <path d="m6 9 6 6 6-6"/>
+          </svg>
+        </button>
+        @if (controlsOpen()) {
+          <div class="ps-sub-body">
+            @if (!hasControlsRows()) {
+              <p class="ps-empty">No platform controls to set for this variation.</p>
+            } @else {
+              @if (showIgCommentsOff()) {
+                <div class="ps-toggle-row">
+                  <span class="ps-toggle-label">Turn off comments</span>
+                  <button
+                    type="button"
+                    role="switch"
+                    class="ps-switch"
+                    [attr.aria-checked]="!!igCtrls().commentsOff"
+                    [disabled]="disabled()"
+                    aria-label="Turn off comments"
+                    (click)="toggleIgCommentsOff()"
+                  >
+                    <span class="ps-switch-track" aria-hidden="true">
+                      <span class="ps-switch-thumb"></span>
+                    </span>
+                  </button>
+                </div>
+              }
+              @if (showIgHideLikeCount()) {
+                <div class="ps-toggle-row">
+                  <span class="ps-toggle-label">Hide like count</span>
+                  <button
+                    type="button"
+                    role="switch"
+                    class="ps-switch"
+                    [attr.aria-checked]="!!igCtrls().hideLikeCount"
+                    [disabled]="disabled()"
+                    aria-label="Hide like count"
+                    (click)="toggleIgHideLikeCount()"
+                  >
+                    <span class="ps-switch-track" aria-hidden="true">
+                      <span class="ps-switch-thumb"></span>
+                    </span>
+                  </button>
+                </div>
+              }
+              @if (showIgPaidPartnership()) {
+                <div class="ps-toggle-row ps-toggle-row--stacked">
+                  <div class="ps-toggle-row-line">
+                    <span class="ps-toggle-label">Paid partnership / branded content</span>
+                    <button
+                      type="button"
+                      role="switch"
+                      class="ps-switch"
+                      [attr.aria-checked]="!!igCtrls().paidPartnership"
+                      [disabled]="disabled()"
+                      aria-label="Paid partnership / branded content"
+                      (click)="toggleIgPaidPartnership()"
+                    >
+                      <span class="ps-switch-track" aria-hidden="true">
+                        <span class="ps-switch-thumb"></span>
+                      </span>
+                    </button>
+                  </div>
+                  @if (igCtrls().paidPartnership) {
+                    <p class="ps-callout">
+                      You must have a formal agreement with the brand. This label will be visible to viewers.
+                    </p>
+                  }
+                </div>
+              }
+              @if (showIgCollaboratorTag()) {
+                <div class="ps-row">
+                  <span class="ps-row-label ps-row-label--mixed">Collaborator tag</span>
+                  <input
+                    type="text"
+                    class="ps-input"
+                    placeholder="&#64;brandpartner"
+                    [value]="igCtrls().collaboratorTag ?? ''"
+                    [disabled]="disabled()"
+                    aria-label="Collaborator tag"
+                    (input)="onIgCollaboratorTagInput($event)"
+                  />
+                </div>
+              }
+              @if (showIgCloseFriendsOnly()) {
+                <div class="ps-toggle-row">
+                  <span class="ps-toggle-label">Close Friends only</span>
+                  <button
+                    type="button"
+                    role="switch"
+                    class="ps-switch"
+                    [attr.aria-checked]="!!igCtrls().closeFreindsOnly"
+                    [disabled]="disabled()"
+                    aria-label="Close Friends only"
+                    (click)="toggleIgCloseFriendsOnly()"
+                  >
+                    <span class="ps-switch-track" aria-hidden="true">
+                      <span class="ps-switch-thumb"></span>
+                    </span>
+                  </button>
+                </div>
+              }
+              @if (showIgLiveRows()) {
+                <div class="ps-row">
+                  <span class="ps-row-label ps-row-label--mixed">
+                    Co-host handles
+                    <span class="ps-hint">(up to 4)</span>
+                  </span>
+                  @if (igCoHostHandles.length > 0) {
+                    <div class="ps-chip-row ps-chip-row--cohost">
+                      @for (h of igCoHostHandles; track h) {
+                        <span class="ps-chip ps-chip--cohost">
+                          &#64;{{ h }}
+                          <button
+                            type="button"
+                            class="ps-chip-remove"
+                            [disabled]="disabled()"
+                            [attr.aria-label]="'Remove ' + h"
+                            (click)="removeCoHost(h)"
+                          >
+                            <svg xmlns="http://www.w3.org/2000/svg" width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+                          </button>
+                        </span>
+                      }
+                    </div>
+                  }
+                  <input
+                    type="text"
+                    class="ps-input"
+                    [placeholder]="igCoHostHandles.length >= 4 ? 'Max 4 reached' : '@handle'"
+                    [value]="coHostDraft()"
+                    [disabled]="disabled() || igCoHostHandles.length >= 4"
+                    aria-label="Add a co-host handle"
+                    (input)="onCoHostDraftInput($event)"
+                    (keydown)="onCoHostKeydown($event)"
+                  />
+                </div>
+                <div class="ps-row">
+                  <span class="ps-row-label ps-row-label--mixed">Fundraiser goal</span>
+                  <input
+                    type="text"
+                    class="ps-input"
+                    placeholder="$1,000"
+                    [value]="igCtrls().fundraiserGoal ?? ''"
+                    [disabled]="disabled()"
+                    aria-label="Fundraiser goal"
+                    (input)="onIgFundraiserGoalInput($event)"
+                  />
+                </div>
+                <div class="ps-toggle-row">
+                  <span class="ps-toggle-label">Q&amp;A mode</span>
+                  <button
+                    type="button"
+                    role="switch"
+                    class="ps-switch"
+                    [attr.aria-checked]="!!igCtrls().qaMode"
+                    [disabled]="disabled()"
+                    aria-label="Q&A mode"
+                    (click)="toggleIgQaMode()"
+                  >
+                    <span class="ps-switch-track" aria-hidden="true">
+                      <span class="ps-switch-thumb"></span>
+                    </span>
+                  </button>
+                </div>
+                <div class="ps-toggle-row">
+                  <span class="ps-toggle-label">Notify followers</span>
+                  <button
+                    type="button"
+                    role="switch"
+                    class="ps-switch"
+                    [attr.aria-checked]="!!igCtrls().notifyFollowers"
+                    [disabled]="disabled()"
+                    aria-label="Notify followers"
+                    (click)="toggleIgNotifyFollowers()"
+                  >
+                    <span class="ps-switch-track" aria-hidden="true">
+                      <span class="ps-switch-thumb"></span>
+                    </span>
+                  </button>
+                </div>
+              }
+            }
+          </div>
+        }
+      </div>
+    </div>
+  }
+</section>

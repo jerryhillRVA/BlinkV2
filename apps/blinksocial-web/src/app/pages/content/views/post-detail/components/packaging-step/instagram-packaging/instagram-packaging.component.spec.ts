@@ -6,6 +6,7 @@ interface SetupOptions {
   value?: PackagingInstagramContract | undefined;
   disabled?: boolean;
   isCarousel?: boolean;
+  contentType?: string;
   publishingMode?: 'ORGANIC' | 'PAID_BOOSTED';
   draftCaptionSeed?: string;
 }
@@ -17,6 +18,7 @@ function setup(opts: SetupOptions = {}): ComponentFixture<InstagramPackagingComp
   fixture.componentRef.setInput('value', opts.value);
   fixture.componentRef.setInput('disabled', opts.disabled ?? false);
   fixture.componentRef.setInput('isCarousel', opts.isCarousel ?? false);
+  fixture.componentRef.setInput('contentType', opts.contentType ?? null);
   fixture.componentRef.setInput('publishingMode', opts.publishingMode);
   fixture.componentRef.setInput('draftCaptionSeed', opts.draftCaptionSeed);
   fixture.detectChanges();
@@ -24,14 +26,14 @@ function setup(opts: SetupOptions = {}): ComponentFixture<InstagramPackagingComp
 }
 
 describe('InstagramPackagingComponent', () => {
-  it('renders the always-visible IG fields (caption, hashtags, audio, platform-controls)', () => {
+  it('renders the always-visible IG fields (caption, hashtags, audio, publish-settings)', () => {
     const fixture = setup();
     expect(fixture.nativeElement.querySelector('#ig-caption')).not.toBeNull();
     expect(fixture.nativeElement.querySelector('app-pkg-hashtag-bank')).not.toBeNull();
     // Audio Planning is rendered inline inside the Media Selections card
     // (Browse Trending Sounds / Use Original buttons + selected chip).
     expect(fixture.nativeElement.querySelector('app-media-selections-card')).not.toBeNull();
-    expect(fixture.nativeElement.querySelector('app-platform-controls')).not.toBeNull();
+    expect(fixture.nativeElement.querySelector('app-publish-settings-card')).not.toBeNull();
   });
 
   it('Link + UTM are hidden under ORGANIC publishing mode (prototype-aligned)', () => {

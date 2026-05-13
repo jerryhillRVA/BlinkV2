@@ -1,8 +1,10 @@
 import { Component, computed, input, output, signal } from '@angular/core';
 import type {
+  ContentTypeContract,
   PackagingAudioTrackContract,
   PackagingInstagramContract,
   PackagingPlatformControlsContract,
+  PackagingPlatformControlsIGContract,
   PackagingSlideOrderContract,
   PackagingUtmContract,
   PublishingModeContract,
@@ -16,7 +18,10 @@ import {
 import { MediaSelectionsCardComponent } from '../_shared/media-selections-card/media-selections-card.component';
 import { PaidBoostedFieldsComponent } from '../_shared/paid-boosted-fields/paid-boosted-fields.component';
 import { PkgHashtagBankComponent, type HashtagBankGroup } from '../_shared/pkg-hashtag-bank/pkg-hashtag-bank.component';
-import { PlatformControlsComponent } from '../_shared/platform-controls/platform-controls.component';
+import {
+  PublishSettingsCardComponent,
+  type PublishSettingsIGMetadataPatch,
+} from '../_shared/publish-settings-card/publish-settings-card.component';
 import {
   SlideOrderPickerComponent,
   type SlideOrderItem,
@@ -62,7 +67,7 @@ const HASHTAG_BANK_GROUPS: HashtagBankGroup[] = [
     SlideOrderPickerComponent,
     MediaSelectionsCardComponent,
     PaidBoostedFieldsComponent,
-    PlatformControlsComponent,
+    PublishSettingsCardComponent,
     TooltipComponent,
   ],
   templateUrl: './instagram-packaging.component.html',
@@ -72,6 +77,9 @@ export class InstagramPackagingComponent {
   readonly value = input<PackagingInstagramContract | undefined>(undefined);
   readonly disabled = input(false);
   readonly isCarousel = input(false);
+  /** Item's contentType (reel / feed-post / carousel / story / live). Drives
+   *  conditional rendering inside the Publish Settings card. */
+  readonly contentType = input<ContentTypeContract | null | undefined>(undefined);
   readonly slides = input<ReadonlyArray<SlideOrderItem>>([]);
   /**
    * Read-only display of the brief's publishingMode. The mode itself is
@@ -107,6 +115,10 @@ export class InstagramPackagingComponent {
   protected readonly audio = computed(() => this.value()?.audio);
   protected readonly coverAsset = computed(() => this.value()?.coverAsset);
   protected readonly controls = computed(() => this.value()?.platformControls);
+  protected readonly igControls = computed(() => this.value()?.platformControls?.ig);
+  // Metadata slot — the publish-settings-card reads peopleTags/productTags/
+  // reelsCoverTag directly off the IG value().
+  protected readonly igMetadata = computed(() => this.value());
 
   protected readonly paidBoosted = computed(() => this.publishingMode() === 'PAID_BOOSTED');
 
@@ -218,6 +230,17 @@ export class InstagramPackagingComponent {
 
   protected onControlsChange(controls: PackagingPlatformControlsContract): void {
     this.patch({ platformControls: controls });
+  }
+
+  /** Publish Settings → Metadata change: merge into IG value slot. */
+  protected onIgMetadataChange(patch: PublishSettingsIGMetadataPatch): void {
+    this.patch(patch);
+  }
+
+  /** Publish Settings → Platform Controls change: nest under platformControls.ig. */
+  protected onIgControlsChange(igPatch: PackagingPlatformControlsIGContract): void {
+    const prev = this.value()?.platformControls ?? {};
+    this.patch({ platformControls: { ...prev, ig: igPatch } });
   }
 
   private patch(delta: Partial<PackagingInstagramContract>): void {

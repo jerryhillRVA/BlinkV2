@@ -167,14 +167,15 @@
     />
   </div>
 
-  <!-- Platform Controls -->
-  <div class="pkg-card">
-    <span class="card-label">Platform Controls</span>
-    <app-platform-controls
-      platform="instagram"
-      [controls]="controls()"
-      [disabled]="disabled()"
-      (controlsChange)="onControlsChange($event)"
-    />
-  </div>
+  <!-- Publish Settings (replaces the old Platform Controls card; mirrors
+       the prototype's collapsible Metadata + Platform Controls children). -->
+  <app-publish-settings-card
+    platform="instagram"
+    [contentType]="contentType()"
+    [igMetadata]="igMetadata()"
+    [igControls]="igControls()"
+    [disabled]="disabled()"
+    (igMetadataChange)="onIgMetadataChange($event)"
+    (igControlsChange)="onIgControlsChange($event)"
+  />
 </section>

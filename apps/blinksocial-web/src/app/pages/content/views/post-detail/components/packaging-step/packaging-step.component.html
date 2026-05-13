@@ -5,6 +5,7 @@
         [value]="store.instagramPackaging()"
         [disabled]="disabled()"
         [isCarousel]="store.draft()?.mode === 'CAROUSEL'"
+        [contentType]="store.item()?.contentType ?? null"
         [publishingMode]="store.publishingMode()"
         [draftCaptionSeed]="draftCaptionSeed()"
         [campaignName]="store.campaignName()"
