@@ -78,8 +78,11 @@ export class PostDetailComponent {
   });
 
   protected readonly previewCoverAsset = computed<string | undefined>(() => {
+    // The preview's <img src> needs a resolvable URL (data: URL today via
+    // upload's FileReader; https:// AgenticFS URL once real persistence
+    // lands). The display-only `coverAsset` filename is not src-able.
     const platform = this.store.item()?.platform;
-    if (platform === 'instagram') return this.store.instagramPackaging()?.coverAsset;
+    if (platform === 'instagram') return this.store.instagramPackaging()?.coverAssetUrl;
     return undefined;
   });
 

@@ -155,6 +155,18 @@ describe('InstagramPackagingComponent', () => {
     expect(emitted[0]?.hashtags).toEqual([]);
   });
 
+  it('onCoverAssetUrlChange patches coverAssetUrl on the IG slot', () => {
+    const fixture = setup({ value: { caption: 'pre', coverAsset: 'photo.png' } });
+    const emitted: PackagingInstagramContract[] = [];
+    fixture.componentInstance.valueChange.subscribe((v) => emitted.push(v));
+    fixture.componentInstance['onCoverAssetUrlChange']('data:image/png;base64,iVBOR');
+    expect(emitted[0]).toEqual({
+      caption: 'pre',
+      coverAsset: 'photo.png',
+      coverAssetUrl: 'data:image/png;base64,iVBOR',
+    });
+  });
+
   it('caption marks fail class at or above the cap', () => {
     const fixture = setup({ value: { caption: 'x'.repeat(2200) } });
     const counter = fixture.nativeElement.querySelector('.char-counter') as HTMLElement;

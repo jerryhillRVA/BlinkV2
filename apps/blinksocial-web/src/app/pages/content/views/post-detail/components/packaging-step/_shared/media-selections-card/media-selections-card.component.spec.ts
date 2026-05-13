@@ -139,6 +139,49 @@ describe('MediaSelectionsCardComponent', () => {
     expect(emitted).toEqual(['cover.png']);
   });
 
+  it('uploading a file reads it via FileReader and emits a data: URL on coverAssetUrlChange', async () => {
+    const fixture = setup({ coverAsset: undefined });
+    const urls: (string | undefined)[] = [];
+    fixture.componentInstance.coverAssetUrlChange.subscribe((u) => urls.push(u));
+    const fileInput = fixture.nativeElement.querySelector('.upload-file-input') as HTMLInputElement;
+    const file = new File(['hello'], 'shot.png', { type: 'image/png' });
+    Object.defineProperty(fileInput, 'files', { value: [file], configurable: true });
+    fileInput.dispatchEvent(new Event('change'));
+    // FileReader.onload fires on a microtask in jsdom — yield once.
+    await new Promise<void>((resolve) => setTimeout(resolve, 0));
+    expect(urls.length).toBe(1);
+    expect(urls[0]).toMatch(/^data:image\/png;base64,/);
+  });
+
+  it('clicking clear emits coverAssetUrlChange(undefined) alongside the filename clear', () => {
+    const fixture = setup({ coverAsset: 'my-cover.png' });
+    const urls: (string | undefined)[] = [];
+    fixture.componentInstance.coverAssetUrlChange.subscribe((u) => urls.push(u));
+    (fixture.nativeElement.querySelector('.cover-clear') as HTMLButtonElement).click();
+    expect(urls).toEqual([undefined]);
+  });
+
+  it('typing into the cover-input clears coverAssetUrl (typed name has no backing file)', () => {
+    const fixture = setup({ coverAsset: undefined });
+    const urls: (string | undefined)[] = [];
+    fixture.componentInstance.coverAssetUrlChange.subscribe((u) => urls.push(u));
+    const input = fixture.nativeElement.querySelector('#media-cover-input') as HTMLInputElement;
+    input.value = 'typed-name.png';
+    input.dispatchEvent(new Event('input'));
+    expect(urls).toEqual([undefined]);
+  });
+
+  it('AI Generate clears coverAssetUrl (no real image generated yet)', () => {
+    const fixture = setup({ coverAsset: undefined });
+    const urls: (string | undefined)[] = [];
+    fixture.componentInstance.coverAssetUrlChange.subscribe((u) => urls.push(u));
+    vi.useFakeTimers();
+    fixture.componentInstance['onAiGenerate']();
+    vi.runAllTimers();
+    expect(urls).toEqual([undefined]);
+    vi.useRealTimers();
+  });
+
   it('upload change with no file is a no-op (no emit)', () => {
     const fixture = setup({ coverAsset: undefined });
     const emitted: (string | undefined)[] = [];

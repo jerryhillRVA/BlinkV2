@@ -185,11 +185,18 @@
 
 .pp-ig-actions {
   display: flex;
+  align-items: center;
   gap: 12px;
   padding: 6px 10px;
   border-top: 1px solid #f9fafb; // gray-50
-  font-size: 12px;
-  color: #374151; // gray-700
+  color: #1f2937; // gray-800
+}
+
+// Outlined Lucide icons render at a fixed 16x16 box and inherit currentColor
+// from the row. align-items:center on the row + display:block here gives us
+// pixel-perfect vertical alignment regardless of system font metrics.
+.pp-ig-icon {
+  display: block;
 }
 
 .pp-ig-actions-bookmark {

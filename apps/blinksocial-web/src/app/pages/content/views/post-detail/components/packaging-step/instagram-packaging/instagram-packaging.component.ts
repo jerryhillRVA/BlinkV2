@@ -228,6 +228,11 @@ export class InstagramPackagingComponent {
     this.patch({ coverAsset });
   }
 
+  /** Cover image's resolvable URL (data: URL today, AgenticFS URL future). */
+  protected onCoverAssetUrlChange(coverAssetUrl: string | undefined): void {
+    this.patch({ coverAssetUrl });
+  }
+
   protected onControlsChange(controls: PackagingPlatformControlsContract): void {
     this.patch({ platformControls: controls });
   }

@@ -383,12 +383,20 @@ export interface PackagingInstagramContract {
   slideOrder?: PackagingSlideOrderContract;
   audio?: PackagingAudioTrackContract;
   /**
-   * Cover image filename / placeholder reference. Real asset upload is a
-   * follow-up epic; today we capture the chosen file's NAME (or a stub
-   * AI-generated reference) for visual continuity. Mirrors the prototype's
+   * Cover image filename / placeholder reference. Today we capture the
+   * chosen file's NAME (or a stub AI-generated reference) for visual
+   * continuity in the Media Selections card. Mirrors the prototype's
    * `pkg.coverAsset` in PackagingStudio.tsx.
    */
   coverAsset?: string;
+  /**
+   * Resolvable URL for the cover image (data: URL today via FileReader,
+   * https:// AgenticFilesystem URL once real persistence lands). Used as
+   * the <img src> in the Post Preview card. Kept separate from
+   * coverAsset so the filename can remain user-facing for display while
+   * the URL backs the actual image render.
+   */
+  coverAssetUrl?: string;
   // ── Publish Settings — Metadata (IG) ──────────────────────────────
   // Mirrors prototype's pkg.igPeopleTags / igProductTags / igReelsCoverTag.
   peopleTags?: string[];

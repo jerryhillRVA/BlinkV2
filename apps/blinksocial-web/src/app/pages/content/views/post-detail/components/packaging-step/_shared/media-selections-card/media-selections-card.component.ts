@@ -71,6 +71,15 @@ export class MediaSelectionsCardComponent {
   readonly thumbnailMode = input(false);
 
   readonly coverAssetChange = output<string | undefined>();
+  /**
+   * Resolvable URL for the cover image. Emitted alongside coverAssetChange
+   * when the user uploads a file (FileReader → data: URL). Real
+   * AgenticFilesystem persistence will swap the data: URL for an https://
+   * URL — the downstream <img src> wiring is identical. Emits undefined
+   * when the cover is cleared / AI-generated (no real image yet) / typed
+   * by hand (no file to read).
+   */
+  readonly coverAssetUrlChange = output<string | undefined>();
   readonly audioChange = output<PackagingAudioTrackContract | undefined>();
 
   private readonly itunes = inject(ITunesService);
@@ -197,14 +206,27 @@ export class MediaSelectionsCardComponent {
   protected onCoverInput(e: Event): void {
     const v = (e.target as HTMLInputElement).value ?? '';
     this.coverAssetChange.emit(v.length > 0 ? v : undefined);
+    // Typed-in filename has no backing file — clear any previously
+    // captured data URL so the preview falls back to its placeholder.
+    this.coverAssetUrlChange.emit(undefined);
   }
 
   protected onUploadChange(e: Event): void {
     const input = e.target as HTMLInputElement;
     const file = input.files?.[0];
     if (!file) return;
-    // Capture filename only — real file persistence is a follow-up.
+    // Capture filename immediately for display in the Cover field.
     this.coverAssetChange.emit(file.name);
+    // Read the file into a data: URL so the Post Preview can render the
+    // actual image now. The data: URL slots into the same coverAssetUrl
+    // field that AgenticFilesystem will later populate with an https://
+    // URL — no downstream wiring changes when real persistence lands.
+    const reader = new FileReader();
+    reader.onload = () => {
+      const url = typeof reader.result === 'string' ? reader.result : undefined;
+      this.coverAssetUrlChange.emit(url);
+    };
+    reader.readAsDataURL(file);
     // Reset so re-uploading the same filename still fires (browsers
     // skip change events on identical file selection otherwise).
     input.value = '';
@@ -213,6 +235,7 @@ export class MediaSelectionsCardComponent {
   protected onClearCover(): void {
     if (this.disabled()) return;
     this.coverAssetChange.emit(undefined);
+    this.coverAssetUrlChange.emit(undefined);
   }
 
   protected onAiGenerate(): void {
@@ -220,6 +243,9 @@ export class MediaSelectionsCardComponent {
     this.aiGeneratingCover.set(true);
     setTimeout(() => {
       this.coverAssetChange.emit(STUB_COVER_REF);
+      // No real generated image yet — clear any prior URL so the preview
+      // doesn't show stale uploaded content under a new filename.
+      this.coverAssetUrlChange.emit(undefined);
       this.aiGeneratingCover.set(false);
     }, AI_DELAY_MS);
   }
