@@ -153,6 +153,52 @@ describe('InstagramPackagingComponent', () => {
     expect(emitted[0]?.hashtags).toEqual([]);
   });
 
+  it('onCoverAssetChange + onAudioChange + onOrderChange route through patch', () => {
+    const fixture = setup({ value: { caption: 'pre' } });
+    const emitted: PackagingInstagramContract[] = [];
+    fixture.componentInstance.valueChange.subscribe((v) => emitted.push(v));
+    fixture.componentInstance['onCoverAssetChange']('cover.png');
+    fixture.componentInstance['onAudioChange'](undefined);
+    fixture.componentInstance['onOrderChange']([2, 1, 0]);
+    expect(emitted[0]).toEqual({ caption: 'pre', coverAsset: 'cover.png' });
+    expect(emitted[1]).toEqual({ caption: 'pre', audio: undefined });
+    expect(emitted[2]).toEqual({ caption: 'pre', slideOrder: { order: [2, 1, 0] } });
+  });
+
+  it('onIgMetadataChange + onIgControlsChange route through patch', () => {
+    const fixture = setup({
+      value: { caption: 'pre', platformControls: { allowComments: true } },
+    });
+    const emitted: PackagingInstagramContract[] = [];
+    fixture.componentInstance.valueChange.subscribe((v) => emitted.push(v));
+    fixture.componentInstance['onIgMetadataChange']({ peopleTags: ['@me'] });
+    fixture.componentInstance['onIgControlsChange']({ commentsOff: true });
+    expect(emitted[0]).toEqual({
+      caption: 'pre',
+      platformControls: { allowComments: true },
+      peopleTags: ['@me'],
+    });
+    // onIgControlsChange merges into platformControls.ig (preserves existing top-level fields).
+    expect(emitted[1]).toEqual({
+      caption: 'pre',
+      platformControls: { allowComments: true, ig: { commentsOff: true } },
+    });
+  });
+
+  it('onSetPublishingMode is a no-op when disabled or when the mode is unchanged', () => {
+    const fixture = setup({ disabled: true, publishingMode: 'ORGANIC' });
+    const emitted: string[] = [];
+    fixture.componentInstance.publishingModeChange.subscribe((m) => emitted.push(m));
+    fixture.componentInstance['onSetPublishingMode']('PAID_BOOSTED');
+    expect(emitted).toEqual([]); // disabled
+    // Same mode is a no-op even when enabled.
+    const f2 = setup({ publishingMode: 'ORGANIC' });
+    const e2: string[] = [];
+    f2.componentInstance.publishingModeChange.subscribe((m) => e2.push(m));
+    f2.componentInstance['onSetPublishingMode']('ORGANIC');
+    expect(e2).toEqual([]);
+  });
+
   it('onCoverAssetUrlChange patches coverAssetUrl on the IG slot', () => {
     const fixture = setup({ value: { caption: 'pre', coverAsset: 'photo.png' } });
     const emitted: PackagingInstagramContract[] = [];

@@ -92,6 +92,16 @@ describe('FacebookPackagingComponent', () => {
     expect(fixture.componentInstance['captionState']()).toBe('ok');
   });
 
+  it('captionState reports "fail" when caption length hits the cap', () => {
+    const fixture = setup({ value: { caption: 'x'.repeat(63206) } });
+    expect(fixture.componentInstance['captionState']()).toBe('fail');
+  });
+
+  it('captionState reports "ok" for short captions', () => {
+    const fixture = setup({ value: { caption: 'short' } });
+    expect(fixture.componentInstance['captionState']()).toBe('ok');
+  });
+
   it('all computed accessors read explicit value-fields when provided', () => {
     const fixture = setup({
       value: {

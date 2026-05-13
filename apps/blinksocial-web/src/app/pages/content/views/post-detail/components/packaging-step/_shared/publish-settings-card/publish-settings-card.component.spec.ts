@@ -260,4 +260,186 @@ describe('PublishSettingsCardComponent', () => {
     expect(text).not.toContain('People tags');
     expect(text).toContain('Turn off comments');
   });
+
+  // ── Branch-coverage tests for IG control handlers ──────────────────
+  // These exercise the individual emit handlers + their disabled guards,
+  // which the higher-level UI tests don't always hit directly.
+
+  it('toggleIgHideLikeCount emits the inverted value', () => {
+    const fixture = setup({ contentType: 'reel', igControls: { hideLikeCount: false } });
+    expandCard(fixture);
+    const emitted: PackagingPlatformControlsIGContract[] = [];
+    fixture.componentInstance.igControlsChange.subscribe((p) => emitted.push(p));
+    fixture.componentInstance['toggleIgHideLikeCount']();
+    expect(emitted[0]).toEqual({ hideLikeCount: true });
+  });
+
+  it('toggleIgCloseFriendsOnly emits inverted closeFreindsOnly', () => {
+    const fixture = setup({ contentType: 'story' });
+    expandCard(fixture);
+    const emitted: PackagingPlatformControlsIGContract[] = [];
+    fixture.componentInstance.igControlsChange.subscribe((p) => emitted.push(p));
+    fixture.componentInstance['toggleIgCloseFriendsOnly']();
+    expect(emitted[0]).toEqual({ closeFreindsOnly: true });
+  });
+
+  it('toggleIgQaMode + toggleIgNotifyFollowers emit live-row controls', () => {
+    const fixture = setup({ contentType: 'live' });
+    expandCard(fixture);
+    const emitted: PackagingPlatformControlsIGContract[] = [];
+    fixture.componentInstance.igControlsChange.subscribe((p) => emitted.push(p));
+    fixture.componentInstance['toggleIgQaMode']();
+    fixture.componentInstance['toggleIgNotifyFollowers']();
+    expect(emitted).toHaveLength(2);
+    expect(emitted[0]).toEqual({ qaMode: true });
+    expect(emitted[1]).toEqual({ notifyFollowers: true });
+  });
+
+  it('onIgCollaboratorTagInput + onIgFundraiserGoalInput route through emitIgControl', () => {
+    const fixture = setup({ contentType: 'reel' });
+    expandCard(fixture);
+    const emitted: PackagingPlatformControlsIGContract[] = [];
+    fixture.componentInstance.igControlsChange.subscribe((p) => emitted.push(p));
+    fixture.componentInstance['onIgCollaboratorTagInput']({
+      target: { value: '@brand' },
+    } as unknown as Event);
+    expect(emitted[0]).toEqual({ collaboratorTag: '@brand' });
+  });
+
+  it('onIgFundraiserGoalInput emits fundraiserGoal', () => {
+    const fixture = setup({ contentType: 'live' });
+    expandCard(fixture);
+    const emitted: PackagingPlatformControlsIGContract[] = [];
+    fixture.componentInstance.igControlsChange.subscribe((p) => emitted.push(p));
+    fixture.componentInstance['onIgFundraiserGoalInput']({
+      target: { value: '$5,000' },
+    } as unknown as Event);
+    expect(emitted[0]).toEqual({ fundraiserGoal: '$5,000' });
+  });
+
+  it('emitIgControl is a no-op when disabled', () => {
+    const fixture = setup({ contentType: 'reel', disabled: true });
+    const emitted: PackagingPlatformControlsIGContract[] = [];
+    fixture.componentInstance.igControlsChange.subscribe((p) => emitted.push(p));
+    fixture.componentInstance['toggleIgCommentsOff']();
+    fixture.componentInstance['toggleIgHideLikeCount']();
+    fixture.componentInstance['toggleIgPaidPartnership']();
+    expect(emitted).toEqual([]);
+  });
+
+  it('addPeopleTag is a no-op for empty drafts or duplicates', () => {
+    const fixture = setup({ contentType: 'reel', igMetadata: { peopleTags: ['@a'] } });
+    expandCard(fixture);
+    const emitted: unknown[] = [];
+    fixture.componentInstance.igMetadataChange.subscribe((p) => emitted.push(p));
+    // Empty draft: no emit
+    fixture.componentInstance['peopleDraft'].set('');
+    fixture.componentInstance['addPeopleTag']();
+    expect(emitted).toEqual([]);
+    // Duplicate: no emit but draft clears
+    fixture.componentInstance['peopleDraft'].set('@a');
+    fixture.componentInstance['addPeopleTag']();
+    expect(emitted).toEqual([]);
+    expect(fixture.componentInstance['peopleDraft']()).toBe('');
+  });
+
+  it('addProductTag is a no-op for empty drafts or duplicates', () => {
+    const fixture = setup({ contentType: 'reel', igMetadata: { productTags: ['#p'] } });
+    expandCard(fixture);
+    const emitted: unknown[] = [];
+    fixture.componentInstance.igMetadataChange.subscribe((p) => emitted.push(p));
+    fixture.componentInstance['productDraft'].set('  ');
+    fixture.componentInstance['addProductTag']();
+    expect(emitted).toEqual([]);
+    fixture.componentInstance['productDraft'].set('#p');
+    fixture.componentInstance['addProductTag']();
+    expect(emitted).toEqual([]);
+    expect(fixture.componentInstance['productDraft']()).toBe('');
+  });
+
+  it('removeProductTag emits a filtered productTags array', () => {
+    const fixture = setup({
+      contentType: 'reel',
+      igMetadata: { productTags: ['#a', '#b'] },
+    });
+    expandCard(fixture);
+    const emitted: unknown[] = [];
+    fixture.componentInstance.igMetadataChange.subscribe((p) => emitted.push(p));
+    fixture.componentInstance['removeProductTag']('#a');
+    expect(emitted[0]).toEqual({ productTags: ['#b'] });
+  });
+
+  it('removeCoHost emits the filtered coHostHandles array', () => {
+    const fixture = setup({
+      contentType: 'live',
+      igControls: { coHostHandles: ['x', 'y', 'z'] },
+    });
+    expandCard(fixture);
+    const emitted: PackagingPlatformControlsIGContract[] = [];
+    fixture.componentInstance.igControlsChange.subscribe((p) => emitted.push(p));
+    fixture.componentInstance['removeCoHost']('y');
+    expect(emitted[0]).toEqual({ coHostHandles: ['x', 'z'] });
+  });
+
+  it('Co-host non-Enter keys do not add to handles', () => {
+    const fixture = setup({ contentType: 'live' });
+    expandCard(fixture);
+    const emitted: PackagingPlatformControlsIGContract[] = [];
+    fixture.componentInstance.igControlsChange.subscribe((p) => emitted.push(p));
+    fixture.componentInstance['coHostDraft'].set('foo');
+    fixture.componentInstance['onCoHostKeydown'](
+      new KeyboardEvent('keydown', { key: 'a' }),
+    );
+    expect(emitted).toEqual([]);
+  });
+
+  it('Co-host Enter with empty draft is a no-op', () => {
+    const fixture = setup({ contentType: 'live' });
+    expandCard(fixture);
+    const emitted: PackagingPlatformControlsIGContract[] = [];
+    fixture.componentInstance.igControlsChange.subscribe((p) => emitted.push(p));
+    fixture.componentInstance['coHostDraft'].set('');
+    fixture.componentInstance['onCoHostKeydown'](
+      new KeyboardEvent('keydown', { key: 'Enter' }),
+    );
+    expect(emitted).toEqual([]);
+  });
+
+  it('Co-host Enter at 4-handle cap is a no-op', () => {
+    const fixture = setup({
+      contentType: 'live',
+      igControls: { coHostHandles: ['a', 'b', 'c', 'd'] },
+    });
+    expandCard(fixture);
+    const emitted: PackagingPlatformControlsIGContract[] = [];
+    fixture.componentInstance.igControlsChange.subscribe((p) => emitted.push(p));
+    fixture.componentInstance['coHostDraft'].set('e');
+    fixture.componentInstance['onCoHostKeydown'](
+      new KeyboardEvent('keydown', { key: 'Enter' }),
+    );
+    expect(emitted).toEqual([]);
+  });
+
+  it('disabled state guards: addPeopleTag, removePeopleTag, removeCoHost, onReelsCoverInput are no-ops', () => {
+    const fixture = setup({
+      contentType: 'live',
+      disabled: true,
+      igMetadata: { peopleTags: ['@a'], reelsCoverTag: '' },
+      igControls: { coHostHandles: ['x'] },
+    });
+    expandCard(fixture);
+    const meta: unknown[] = [];
+    const ctrls: unknown[] = [];
+    fixture.componentInstance.igMetadataChange.subscribe((p) => meta.push(p));
+    fixture.componentInstance.igControlsChange.subscribe((p) => ctrls.push(p));
+    fixture.componentInstance['peopleDraft'].set('@b');
+    fixture.componentInstance['addPeopleTag']();
+    fixture.componentInstance['removePeopleTag']('@a');
+    fixture.componentInstance['removeCoHost']('x');
+    fixture.componentInstance['onReelsCoverInput']({
+      target: { value: 'x' },
+    } as unknown as Event);
+    expect(meta).toEqual([]);
+    expect(ctrls).toEqual([]);
+  });
 });
