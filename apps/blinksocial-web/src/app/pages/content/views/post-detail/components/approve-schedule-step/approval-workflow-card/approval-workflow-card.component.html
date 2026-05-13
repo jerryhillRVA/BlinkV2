@@ -1,0 +1,141 @@
+<section class="workflow-card" aria-label="Approval workflow">
+  <header class="workflow-header">
+    <span class="workflow-eyebrow">Approvals</span>
+  </header>
+
+  <ul class="approver-list">
+    @for (approval of approvals(); track approval.role) {
+      <li
+        class="approver-row"
+        [attr.data-status]="approval.status"
+        role="group"
+        [attr.aria-labelledby]="'approver-' + approval.role + '-label'"
+      >
+        <div class="approver-row-top">
+          <div class="approver-row-identity">
+            <span
+              class="approver-label"
+              [id]="'approver-' + approval.role + '-label'"
+            >
+              {{ approval.label }}
+            </span>
+            <span
+              class="approver-required-badge"
+              [class.approver-required-badge--opt]="!approval.required"
+              [attr.aria-label]="approval.required ? 'Required' : 'Optional'"
+            >
+              {{ approval.required ? 'req' : 'opt' }}
+            </span>
+          </div>
+
+          @switch (approval.status) {
+            @case ('approved') {
+              <span
+                class="status-pill status-pill--approved"
+                [attr.aria-label]="'Approved by ' + approval.label"
+              >
+                <app-icon name="check-circle" size="10" />
+                Approved
+              </span>
+            }
+            @case ('changes-requested') {
+              <span
+                class="status-pill status-pill--changes"
+                [attr.aria-label]="'Changes requested by ' + approval.label"
+              >
+                <app-icon name="rotate-ccw" size="10" />
+                Changes
+              </span>
+            }
+            @default {
+              <span
+                class="status-pill status-pill--pending"
+                [attr.aria-label]="'Pending ' + approval.label + ' review'"
+              >
+                Pending
+              </span>
+            }
+          }
+        </div>
+
+        @if (approval.note) {
+          <p class="approver-note">"{{ approval.note }}"</p>
+        }
+
+        @if (isNoteOpen(approval.role)) {
+          <textarea
+            class="note-input"
+            [value]="noteValue(approval.role)"
+            (input)="onNoteInput(approval.role, $event)"
+            placeholder="Describe required changes..."
+            [attr.aria-label]="'Required-changes note for ' + approval.label"
+            rows="2"
+          ></textarea>
+          @if (hasNoteError(approval.role)) {
+            <p class="note-error" role="alert">
+              Add a note describing the required changes
+            </p>
+          }
+        }
+
+        <div class="approver-actions">
+          @if (approval.status !== 'approved') {
+            <button
+              type="button"
+              class="btn btn--primary"
+              (click)="approve(approval.role)"
+            >
+              <app-icon name="check-circle" size="12" />
+              Approve
+            </button>
+          }
+          @if (approval.status === 'pending') {
+            <button
+              type="button"
+              class="btn btn--outline"
+              (click)="onRequestChangesClick(approval.role)"
+            >
+              <app-icon name="rotate-ccw" size="12" />
+              {{ requestChangesLabel(approval.role) }}
+            </button>
+          }
+          @if (approval.status !== 'pending') {
+            <button
+              type="button"
+              class="btn btn--ghost"
+              (click)="revoke(approval.role)"
+            >
+              <app-icon name="rotate-ccw" size="12" />
+              Revoke
+            </button>
+          }
+          @if (isNoteOpen(approval.role)) {
+            <button
+              type="button"
+              class="btn btn--ghost"
+              (click)="cancelNote(approval.role)"
+            >
+              Cancel
+            </button>
+          }
+        </div>
+      </li>
+    }
+  </ul>
+
+  <button
+    type="button"
+    class="approve-publish"
+    [class.approve-publish--ready]="canApprove()"
+    [disabled]="!canApprove()"
+    [attr.aria-disabled]="!canApprove() ? 'true' : null"
+    (click)="onApproveAndPublish()"
+  >
+    <app-icon name="check-circle" size="14" />
+    {{ approveCtaLabel() }}
+  </button>
+
+  @if (disabledMessage(); as msg) {
+    <p class="approve-publish-helper">{{ msg }}</p>
+  }
+</section>

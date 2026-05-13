@@ -18,7 +18,7 @@ import { DraftStepComponent } from './components/draft-step/draft-step.component
 import { PackagingStepComponent } from './components/packaging-step/packaging-step.component';
 import { PostPreviewCardComponent } from './components/post-preview-card.component';
 import { StepActionBarComponent } from './components/step-action-bar/step-action-bar.component';
-import { StepPlaceholderComponent } from './components/step-placeholder.component';
+import { ApproveScheduleStepComponent } from './components/approve-schedule-step/approve-schedule-step.component';
 import { DetailBackButtonComponent } from '../_shared/detail-back-button/detail-back-button.component';
 import { ContentJourneyComponent } from '../idea-detail/components/content-journey.component';
 import type { ContentItem } from '../../content.types';
@@ -35,7 +35,7 @@ import type { ContentItem } from '../../content.types';
     PostPreviewCardComponent,
     StepActionBarComponent,
     ContentJourneyComponent,
-    StepPlaceholderComponent,
+    ApproveScheduleStepComponent,
     DetailBackButtonComponent,
   ],
   providers: [PostDetailStore],

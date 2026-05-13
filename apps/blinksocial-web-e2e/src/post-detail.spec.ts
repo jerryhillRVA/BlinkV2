@@ -5,6 +5,7 @@ import {
   approvedPostDetail,
   approvedPostEntry,
   approvedPostInPackaging,
+  approvedPostInQA,
 } from './helpers/draft-mocks';
 
 async function openFirstInProductionCard(page: Page): Promise<void> {
@@ -612,7 +613,7 @@ test.describe('Production Packaging (#116)', () => {
     await continueBtn.click();
     // Advance lands on the Approve & Schedule placeholder (qa step).
     await expect(page.locator('app-packaging-step')).toHaveCount(0);
-    await expect(page.locator('app-step-placeholder')).toBeVisible();
+    await expect(page.locator('app-approve-schedule-step')).toBeVisible();
   });
 
   test('TC-3: TikTok end-to-end — TikTok-specific audio licensing note renders', async ({ page }) => {
@@ -727,7 +728,7 @@ test.describe('Production Packaging (#116)', () => {
     // unit tests; this TC asserts the keyboard event reaches the handler.
     await continueBtn.focus();
     await page.keyboard.press('Enter');
-    await expect(page.locator('app-step-placeholder')).toBeVisible();
+    await expect(page.locator('app-approve-schedule-step')).toBeVisible();
   });
 
   test('TC-13: persistence round-trip — caption + hashtag survive reload', async ({ page }) => {
@@ -746,5 +747,242 @@ test.describe('Production Packaging (#116)', () => {
     // PUT body (content-mocks helper persists writes into the in-memory map).
     await expect(page.locator('#ig-caption')).toHaveValue('Persisted caption #stays');
     await expect(page.locator('app-pkg-hashtag-bank')).toContainText('#stays');
+  });
+});
+
+test.describe('Approve & Schedule (#124)', () => {
+  async function openApprovedPostInQA(
+    page: Page,
+    options: { id: string; platform: string; contentType: string; title?: string },
+  ): Promise<void> {
+    const entry = approvedPostEntry({
+      id: options.id,
+      title: options.title ?? 'Approve & Schedule test post',
+      platform: options.platform as never,
+      contentType: options.contentType as never,
+    });
+    const detail = approvedPostInQA({
+      id: options.id,
+      title: options.title ?? 'Approve & Schedule test post',
+      platform: options.platform as never,
+      contentType: options.contentType as never,
+    });
+    await mockHiveContent(page, {
+      indexItems: [entry],
+      details: { [options.id]: detail },
+    });
+    await page.goto(`/workspace/hive-collective/content/${options.id}`);
+    await expect(page.locator('app-post-detail')).toBeVisible();
+    await expect(page.locator('app-approve-schedule-step')).toBeVisible();
+  }
+
+  test.beforeEach(async ({ page }) => {
+    await mockAuthenticatedUser(page);
+  });
+
+  test('TC-1: shell renders with pending banner + single Brand Reviewer row', async ({ page }) => {
+    await openApprovedPostInQA(page, {
+      id: 'qa-tc1',
+      platform: 'instagram',
+      contentType: 'reel',
+    });
+    await expect(page.locator('app-approval-status-banner .banner')).toHaveAttribute(
+      'data-state',
+      'pending',
+    );
+    await expect(page.locator('app-approval-status-banner')).toContainText('Pending Review');
+    await expect(page.locator('app-approval-status-banner')).toContainText('1 required approval pending');
+    await expect(page.locator('.approver-row')).toHaveCount(1);
+    await expect(page.locator('.approver-row')).toContainText('Brand Reviewer');
+  });
+
+  test('TC-2: Approve flips the row to approved and the banner to green', async ({ page }) => {
+    await openApprovedPostInQA(page, {
+      id: 'qa-tc2',
+      platform: 'instagram',
+      contentType: 'reel',
+    });
+    await page.locator('.approver-row .btn--primary', { hasText: 'Approve' }).first().click();
+    await expect(page.locator('.approver-row')).toHaveAttribute('data-status', 'approved');
+    await expect(page.locator('.status-pill--approved')).toBeVisible();
+    await expect(page.locator('app-approval-status-banner .banner')).toHaveAttribute(
+      'data-state',
+      'approved',
+    );
+  });
+
+  test('TC-3: Request Changes → Submit with empty note shows the inline error', async ({ page }) => {
+    await openApprovedPostInQA(page, {
+      id: 'qa-tc3',
+      platform: 'instagram',
+      contentType: 'reel',
+    });
+    await page.locator('.approver-row .btn--outline', { hasText: 'Request Changes' }).click();
+    await expect(page.locator('.note-input')).toBeVisible();
+    await page.locator('.approver-row .btn--outline', { hasText: 'Submit' }).click();
+    await expect(page.locator('.note-error')).toContainText(
+      'Add a note describing the required changes',
+    );
+    // Row remains pending — no status change.
+    await expect(page.locator('.approver-row')).toHaveAttribute('data-status', 'pending');
+  });
+
+  test('TC-4: Request Changes with note flips the row to changes + banner amber', async ({ page }) => {
+    await openApprovedPostInQA(page, {
+      id: 'qa-tc4',
+      platform: 'instagram',
+      contentType: 'reel',
+    });
+    await page.locator('.approver-row .btn--outline', { hasText: 'Request Changes' }).click();
+    await page.locator('.note-input').fill('Tighten the hook copy');
+    await page.locator('.approver-row .btn--outline', { hasText: 'Submit' }).click();
+    await expect(page.locator('.approver-row')).toHaveAttribute('data-status', 'changes-requested');
+    await expect(page.locator('.status-pill--changes')).toBeVisible();
+    await expect(page.locator('.approver-note')).toContainText('Tighten the hook copy');
+    await expect(page.locator('app-approval-status-banner .banner')).toHaveAttribute(
+      'data-state',
+      'changes-requested',
+    );
+  });
+
+  test('TC-5: Revoke flips an approved row back to pending', async ({ page }) => {
+    await openApprovedPostInQA(page, {
+      id: 'qa-tc5',
+      platform: 'instagram',
+      contentType: 'reel',
+    });
+    await page.locator('.approver-row .btn--primary', { hasText: 'Approve' }).first().click();
+    await expect(page.locator('.approver-row')).toHaveAttribute('data-status', 'approved');
+    await page.locator('.approver-row .btn--ghost', { hasText: 'Revoke' }).click();
+    await expect(page.locator('.approver-row')).toHaveAttribute('data-status', 'pending');
+    await expect(page.locator('.status-pill--pending')).toBeVisible();
+  });
+
+  test('TC-6: Approve & Publish is disabled when required pending; enabled after approval', async ({ page }) => {
+    await openApprovedPostInQA(page, {
+      id: 'qa-tc6',
+      platform: 'instagram',
+      contentType: 'reel',
+    });
+    const cta = page.locator('.approve-publish');
+    await expect(cta).toBeDisabled();
+    await expect(page.locator('.approve-publish-helper')).toContainText('1 required approval pending');
+    await page.locator('.approver-row .btn--primary', { hasText: 'Approve' }).first().click();
+    await expect(cta).toBeEnabled();
+    await cta.click();
+    // Button label flips to the approved variant.
+    await expect(cta).toContainText('Approved — Publish');
+  });
+
+  test('TC-7: Schedule pill reveals the datetime input', async ({ page }) => {
+    await openApprovedPostInQA(page, {
+      id: 'qa-tc7',
+      platform: 'instagram',
+      contentType: 'reel',
+    });
+    await expect(page.locator('#schedule-at-input')).toHaveCount(0);
+    await page
+      .locator('app-publish-config-block .pill-row [role="radio"]', { hasText: 'Schedule' })
+      .click();
+    await expect(page.locator('#schedule-at-input')).toBeVisible();
+  });
+
+  test('TC-8: past-date scheduleAt renders the inline error', async ({ page }) => {
+    await openApprovedPostInQA(page, {
+      id: 'qa-tc8',
+      platform: 'instagram',
+      contentType: 'reel',
+    });
+    await page
+      .locator('app-publish-config-block .pill-row [role="radio"]', { hasText: 'Schedule' })
+      .click();
+    await page.locator('#schedule-at-input').fill('2020-01-01T10:00');
+    await expect(page.locator('app-publish-config-block .field-error')).toContainText(
+      'Must be a future date/time',
+    );
+  });
+
+  test('TC-9: Delivery method "Notify me to publish" toggles the selected pill', async ({ page }) => {
+    await openApprovedPostInQA(page, {
+      id: 'qa-tc9',
+      platform: 'instagram',
+      contentType: 'reel',
+    });
+    // Delivery method pills are the second pill-row in the publish-config-block.
+    const deliveryPills = page.locator('app-publish-config-block .pill-row').nth(1).locator('[role="radio"]');
+    await deliveryPills.filter({ hasText: 'Notify me to publish' }).click();
+    await expect(
+      deliveryPills.filter({ hasText: 'Notify me to publish' }),
+    ).toHaveClass(/pill--selected/);
+  });
+
+  test('TC-10: Notify team on publish checkbox toggles state', async ({ page }) => {
+    await openApprovedPostInQA(page, {
+      id: 'qa-tc10',
+      platform: 'instagram',
+      contentType: 'reel',
+    });
+    const cb = page.locator('#notify-team-input');
+    await expect(cb).not.toBeChecked();
+    await cb.check();
+    await expect(cb).toBeChecked();
+  });
+
+  test('TC-11: visibility + Made for Kids do NOT render on an Instagram post', async ({ page }) => {
+    await openApprovedPostInQA(page, {
+      id: 'qa-tc11',
+      platform: 'instagram',
+      contentType: 'reel',
+    });
+    await expect(page.locator('#visibility-select')).toHaveCount(0);
+    await expect(page.locator('.switch-row')).toHaveCount(0);
+  });
+
+  test('TC-12: empty connected-accounts list shows the workspace-settings prompt', async ({ page }) => {
+    await openApprovedPostInQA(page, {
+      id: 'qa-tc12',
+      platform: 'instagram',
+      contentType: 'reel',
+    });
+    await expect(page.locator('app-publish-config-block .empty-state')).toContainText(
+      'No accounts connected for this platform',
+    );
+    await expect(page.locator('app-publish-config-block .empty-state-cta')).toContainText(
+      'Connect one in Workspace Settings → Accounts',
+    );
+  });
+
+  test('TC-13: keyboard-only — focus Approve via Tab and activate with Enter', async ({ page }) => {
+    await openApprovedPostInQA(page, {
+      id: 'qa-tc13',
+      platform: 'instagram',
+      contentType: 'reel',
+    });
+    const approveBtn = page.locator('.approver-row .btn--primary', { hasText: 'Approve' }).first();
+    await approveBtn.focus();
+    await page.keyboard.press('Enter');
+    await expect(page.locator('.approver-row')).toHaveAttribute('data-status', 'approved');
+  });
+
+  test('TC-14: persistence round-trip — approval + publishConfig survive reload', async ({ page }) => {
+    await openApprovedPostInQA(page, {
+      id: 'qa-reload',
+      platform: 'instagram',
+      contentType: 'reel',
+    });
+    // Approve the row and switch to Schedule + future datetime.
+    await page.locator('.approver-row .btn--primary', { hasText: 'Approve' }).first().click();
+    await page
+      .locator('app-publish-config-block .pill-row [role="radio"]', { hasText: 'Schedule' })
+      .click();
+    await page.locator('#schedule-at-input').fill('2099-01-01T10:00');
+    // Allow the PUT to land.
+    await expect(page.locator('.status-pill--approved')).toBeVisible();
+    await page.reload();
+    await expect(page.locator('app-post-detail')).toBeVisible();
+    await expect(page.locator('app-approve-schedule-step')).toBeVisible();
+    // After reload: approval + scheduleAt persist via the mock's merge-on-PUT.
+    await expect(page.locator('.status-pill--approved')).toBeVisible();
+    await expect(page.locator('#schedule-at-input')).toHaveValue('2099-01-01T10:00');
   });
 });

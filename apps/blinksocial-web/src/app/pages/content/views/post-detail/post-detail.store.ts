@@ -15,6 +15,8 @@ import type {
   TonePreset,
 } from '../../content.types';
 import type {
+  ApprovalEntryContract,
+  ApprovalStatusContract,
   DraftCarouselSlideContract,
   DraftSequenceBlockContract,
   DraftShotItemContract,
@@ -34,6 +36,8 @@ import type {
   ProductionDraftVideoContract,
   ProductionDraftVideoLongContract,
   ProductionPackagingContract,
+  ProductionQAContract,
+  PublishConfigContract,
   PublishingModeContract,
 } from '@blinksocial/contracts';
 import { generateId, toggleArrayItem } from '../../content.utils';
@@ -1056,4 +1060,117 @@ export class PostDetailStore {
     };
     this.state.saveItem(next);
   }
+
+  // ── QA / Approve & Schedule slot (#124) ──────────────────────────────
+  // Hardcoded default workflow: a single required Brand Reviewer. Real
+  // workspace-level workflow customization is out of scope for this ticket.
+  readonly qa = computed<ProductionQAContract | undefined>(
+    () => this.item()?.production?.qa,
+  );
+
+  readonly approvals = computed<ApprovalEntryContract[]>(() => {
+    const persisted = this.qa()?.approvals;
+    if (persisted && persisted.length > 0) return persisted;
+    return DEFAULT_APPROVAL_WORKFLOW.map((entry) => ({ ...entry }));
+  });
+
+  readonly publishConfig = computed<PublishConfigContract>(
+    () => this.qa()?.publishConfig ?? DEFAULT_PUBLISH_CONFIG,
+  );
+
+  readonly qaApproved = computed<boolean>(() => !!this.qa()?.approved);
+
+  readonly requiredApprovals = computed<ApprovalEntryContract[]>(
+    () => this.approvals().filter((a) => a.required),
+  );
+
+  readonly pendingRequired = computed<ApprovalEntryContract[]>(
+    () => this.requiredApprovals().filter((a) => a.status !== 'approved'),
+  );
+
+  readonly hasChangesRequested = computed<boolean>(
+    () => this.approvals().some((a) => a.status === 'changes-requested'),
+  );
+
+  readonly canApproveAndPublish = computed<boolean>(
+    () => this.pendingRequired().length === 0 && !this.hasChangesRequested(),
+  );
+
+  /**
+   * Set an approval row's status. Mutates the matching entry in the
+   * persisted approvals list (creates the list from the default workflow
+   * if not yet persisted) and stamps a timestamp. Empty `note` clears
+   * any prior note on that row.
+   */
+  setApprovalStatus(
+    role: string,
+    status: ApprovalStatusContract,
+    note?: string,
+  ): void {
+    const current = this.approvals();
+    const next = current.map((a) =>
+      a.role === role
+        ? {
+            ...a,
+            status,
+            note: note?.trim() ? note.trim() : undefined,
+            timestamp: new Date().toISOString(),
+          }
+        : a,
+    );
+    this.persistQA({ approvals: next });
+  }
+
+  /** Merge a partial PublishConfig into the persisted publishConfig. */
+  setPublishConfig(patch: Partial<PublishConfigContract>): void {
+    const current = this.publishConfig();
+    this.persistQA({ publishConfig: { ...current, ...patch } });
+  }
+
+  /**
+   * Flip `qa.approved` to true and stamp `qaApprovedAt` / `qaApprovedBy`.
+   * Real publishing is downstream; this is the persistence-only commit
+   * the prototype's "Approved — Publish" button represents.
+   */
+  markApproved(approvedBy = 'You'): void {
+    this.persistQA({
+      approved: true,
+      qaApprovedAt: new Date().toISOString(),
+      qaApprovedBy: approvedBy,
+    });
+  }
+
+  // Patch the production.qa slot. Same briefApproved write-lock as the
+  // draft/packaging slots — Approve & Schedule is downstream of brief
+  // approval and cannot be edited before the brief is approved.
+  private persistQA(patch: Partial<ProductionQAContract>): void {
+    const item = this.item();
+    if (!item) return;
+    if (!item.briefApproved) return;
+    const currentQA: ProductionQAContract = item.production?.qa ?? {};
+    const nextQA: ProductionQAContract = { ...currentQA, ...patch };
+    const next: ContentItem = {
+      ...item,
+      production: { ...item.production, qa: nextQA },
+      updatedAt: new Date().toISOString(),
+    };
+    this.state.saveItem(next);
+  }
 }
+
+// Default approval workflow: a single required Brand Reviewer. Used when
+// the post has no persisted approvals yet. The store always returns a
+// fresh-mapped copy so consumers never mutate the constant.
+const DEFAULT_APPROVAL_WORKFLOW: ReadonlyArray<ApprovalEntryContract> = [
+  {
+    role: 'brand-reviewer',
+    label: 'Brand Reviewer',
+    required: true,
+    status: 'pending',
+  },
+];
+
+const DEFAULT_PUBLISH_CONFIG: PublishConfigContract = {
+  publishAction: 'save-draft',
+  deliveryMethod: 'auto',
+};

@@ -147,12 +147,17 @@ describe('PostDetailComponent — composition', () => {
     expect(fixture.nativeElement.querySelector('app-packaging-step')).not.toBeNull();
   });
 
-  it('renders QA placeholder when active', () => {
+  it('renders Approve & Schedule step shell when active', () => {
     const { fixture } = setup();
     const store = (fixture.componentInstance as unknown as { store: PostDetailStore }).store;
     store.setActiveStep('qa');
     fixture.detectChanges();
-    expect(fixture.nativeElement.querySelector('app-step-placeholder')).not.toBeNull();
+    expect(fixture.nativeElement.querySelector('app-approve-schedule-step')).not.toBeNull();
+    // Sidebar mirrors Packaging: preview + concept + journey + timestamps.
+    expect(fixture.nativeElement.querySelector('.brief-side app-post-preview-card')).not.toBeNull();
+    expect(fixture.nativeElement.querySelector('.brief-side app-brief-content-concept')).not.toBeNull();
+    expect(fixture.nativeElement.querySelector('.brief-side app-content-journey')).not.toBeNull();
+    expect(fixture.nativeElement.querySelector('.brief-side .timestamps-panel')).not.toBeNull();
   });
 });
 

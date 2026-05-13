@@ -1,0 +1,12 @@
+<div
+  class="banner"
+  [attr.data-state]="state()"
+  role="status"
+  aria-live="polite"
+>
+  <app-icon [name]="iconName()" size="14" class="banner-icon" />
+  <span class="banner-label">{{ label() }}</span>
+  @if (secondary(); as sec) {
+    <span class="banner-secondary">{{ sec }}</span>
+  }
+</div>
