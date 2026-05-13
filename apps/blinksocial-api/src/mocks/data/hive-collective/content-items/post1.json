@@ -2,6 +2,7 @@
   "id": "post1",
   "stage": "post",
   "status": "scheduled",
+  "conceptId": "concept2",
   "parentConceptId": "concept2",
   "briefApproved": true,
   "briefApprovedAt": "2026-02-22T10:00:00Z",
@@ -515,6 +516,5 @@
         "savedAt": "2026-03-08T10:00:00Z"
       }
     ]
-  },
-  "conceptId": "concept1"
+  }
 }
