@@ -704,6 +704,89 @@ describe('PostDetailStore — advanceProductionStep + approveBrief persistence',
     expect(store.item()).toBeNull();
   });
 
+  // ── #129: pipeline-lane sync — qa advance flips in-progress→review ──
+  it('U-1: advanceProductionStep("qa") on in-progress post flips status to review + persists step + bumps updatedAt', () => {
+    const before = '2026-01-01T00:00:00.000Z';
+    const seeded = makeApprovedItem({
+      status: 'in-progress',
+      updatedAt: before,
+      production: { productionStep: 'packaging' },
+    });
+    const { store } = setup(seeded);
+    store.advanceProductionStep('qa');
+    const after = store.item();
+    expect(after?.status).toBe('review');
+    expect(after?.production?.productionStep).toBe('qa');
+    expect(after?.updatedAt).not.toBe(before);
+  });
+
+  it('U-2: advanceProductionStep("qa") on a "review" post leaves status="review" (no churn), still persists step', () => {
+    const seeded = makeApprovedItem({
+      status: 'review',
+      production: { productionStep: 'packaging' },
+    });
+    const { store } = setup(seeded);
+    store.advanceProductionStep('qa');
+    const after = store.item();
+    expect(after?.status).toBe('review');
+    expect(after?.production?.productionStep).toBe('qa');
+  });
+
+  it('U-3a: advanceProductionStep("qa") does NOT downgrade status="scheduled"', () => {
+    const seeded = makeApprovedItem({
+      status: 'scheduled',
+      production: { productionStep: 'packaging' },
+    });
+    const { store } = setup(seeded);
+    store.advanceProductionStep('qa');
+    expect(store.item()?.status).toBe('scheduled');
+    expect(store.item()?.production?.productionStep).toBe('qa');
+  });
+
+  it('U-3b: advanceProductionStep("qa") does NOT downgrade status="published"', () => {
+    const seeded = makeApprovedItem({
+      status: 'published',
+      production: { productionStep: 'packaging' },
+    });
+    const { store } = setup(seeded);
+    store.advanceProductionStep('qa');
+    expect(store.item()?.status).toBe('published');
+    expect(store.item()?.production?.productionStep).toBe('qa');
+  });
+
+  it('U-4a: advanceProductionStep("draft") on in-progress post never touches status', () => {
+    const seeded = makeApprovedItem({ status: 'in-progress' });
+    const { store } = setup(seeded);
+    store.advanceProductionStep('draft');
+    expect(store.item()?.status).toBe('in-progress');
+    expect(store.item()?.production?.productionStep).toBe('draft');
+  });
+
+  it('U-4b: advanceProductionStep("packaging") on in-progress post never touches status', () => {
+    const seeded = makeApprovedItem({ status: 'in-progress' });
+    const { store } = setup(seeded);
+    store.advanceProductionStep('packaging');
+    expect(store.item()?.status).toBe('in-progress');
+    expect(store.item()?.production?.productionStep).toBe('packaging');
+  });
+
+  it('U-5: setActiveStep("qa") does NOT call saveItem and does NOT mutate status', () => {
+    const seeded = makeApprovedItem({
+      status: 'in-progress',
+      production: { productionStep: 'packaging' },
+    });
+    const { store, state } = setup(seeded);
+    const saveSpy = vi.spyOn(state, 'saveItem');
+    const updatedAtBefore = store.item()?.updatedAt;
+    store.setActiveStep('qa');
+    expect(store.activeStep()).toBe('qa');
+    expect(saveSpy).not.toHaveBeenCalled();
+    expect(store.item()?.status).toBe('in-progress');
+    expect(store.item()?.production?.productionStep).toBe('packaging');
+    expect(store.item()?.updatedAt).toBe(updatedAtBefore);
+    saveSpy.mockRestore();
+  });
+
   it('approveBrief persists productionStep="draft" alongside the approval flags', () => {
     const item = makeItem({ briefApproved: false });
     const { store } = setup(item);

@@ -148,13 +148,21 @@ export class PostDetailStore {
    * the next visit lands the user on the latest step. Persistence flows through
    * the existing opaque-JSON path that AgenticFilesystem will service in
    * production — no contract changes needed at swap-time.
+   *
+   * Pipeline-lane sync (#129): advancing into `'qa'` from `status: 'in-progress'`
+   * also flips top-level `status` to `'review'` so the post moves from the
+   * Post Builder swim lane into Review & Schedule on the pipeline board. The
+   * flip is conditional on the current status being `'in-progress'` to avoid
+   * downgrading posts that have already reached `'scheduled'` or `'published'`.
    */
   advanceProductionStep(step: ProductionStep): void {
     this.activeStep.set(step);
     const item = this.item();
     if (!item) return;
+    const shouldPromoteToReview = step === 'qa' && item.status === 'in-progress';
     const next: ContentItem = {
       ...item,
+      ...(shouldPromoteToReview ? { status: 'review' as ContentStatus } : {}),
       production: { ...item.production, productionStep: step },
       updatedAt: new Date().toISOString(),
     };
