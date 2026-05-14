@@ -624,4 +624,62 @@ test.describe('Calendar — content round-trip in mock mode', () => {
       /active/,
     );
   });
+
+  // Ticket #130: prove that an AFS-shaped Calendar response (single IG-Reel
+  // scheduled via the Approve & Schedule step) renders correctly end-to-end.
+  // Asserts the bits TC10–TC12 don't cover: peek-card *content* (owner,
+  // status pill, milestone-type chip absence) and the scheduled-status
+  // pill rendering.
+  test('TC17 AFS-projected IG-Reel renders with the correct peek-card content', async ({
+    page,
+  }) => {
+    const afsReel = {
+      id: 'afs-reel-tc17',
+      title: 'TC-17 AFS reel',
+      platform: 'instagram' as const,
+      canonicalType: 'VIDEO_SHORT_VERTICAL' as const,
+      status: 'scheduled' as const,
+      owner: 'AFS Owner',
+      scheduleAt: '2026-05-20T14:00:00.000Z',
+      blockers: [],
+    };
+    await mockAuthenticatedUser(page);
+    await page.route('**/api/workspaces', (route) =>
+      route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify(WORKSPACES_PAYLOAD),
+      }),
+    );
+    await page.route(
+      new RegExp('/api/calendar/hive-collective$'),
+      (route) =>
+        route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify({
+            workspaceId: 'hive-collective',
+            referenceDate: REFERENCE_DATE,
+            items: [afsReel],
+            milestones: [],
+          }),
+        }),
+    );
+    await page.goto('/workspace/hive-collective/calendar');
+    await expect(page.locator('[data-testid="month-grid"]')).toBeVisible();
+
+    const pill = page
+      .locator('[data-testid="event-pill-publish-afs-reel-tc17"]')
+      .first();
+    await expect(pill).toBeVisible();
+    await expect(pill).toHaveAttribute('data-status', 'scheduled');
+    await expect(pill).toHaveAttribute('data-platform', 'instagram');
+
+    await pill.hover();
+    const card = page.locator('[data-testid="peek-card"]');
+    await expect(card).toBeVisible();
+    await expect(card).toContainText('TC-17 AFS reel');
+    await expect(card).toContainText('AFS Owner');
+    await expect(card).toContainText(/scheduled/i);
+  });
 });

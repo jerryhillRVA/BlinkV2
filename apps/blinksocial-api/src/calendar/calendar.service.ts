@@ -1,4 +1,10 @@
-import { Inject, Injectable, Optional } from '@nestjs/common';
+import {
+  Inject,
+  Injectable,
+  Logger,
+  Optional,
+  ServiceUnavailableException,
+} from '@nestjs/common';
 import type {
   CalendarCanonicalTypeContract,
   CalendarContentItemContract,
@@ -10,6 +16,7 @@ import type {
   ContentItemsIndexContract,
   PlatformContract,
 } from '@blinksocial/contracts';
+import { AgenticFilesystemService } from '../agentic-filesystem/agentic-filesystem.service';
 import type { MockDataService } from '../mocks/mock-data.service';
 import {
   deriveMilestonesForItem,
@@ -123,12 +130,26 @@ function addDays(iso: string, days: number): string {
 
 @Injectable()
 export class CalendarService {
+  private readonly logger = new Logger(CalendarService.name);
+
   constructor(
+    private readonly fs: AgenticFilesystemService,
     @Inject('MOCK_DATA_SERVICE') @Optional()
     private readonly mockDataService: MockDataService | null,
   ) {}
 
   async getCalendar(workspaceId: string): Promise<CalendarResponseContract> {
+    if (this.fs.isConfigured()) {
+      try {
+        return await this.tryDeriveFromAfs(workspaceId);
+      } catch (error) {
+        this.logger.error(
+          `Calendar AFS read failed for ${workspaceId}`,
+          error,
+        );
+        throw new ServiceUnavailableException('Storage service unavailable.');
+      }
+    }
     const fixture = await this.tryLoadFixture(workspaceId);
     if (fixture) {
       return fixture;
@@ -138,6 +159,73 @@ export class CalendarService {
       return derived;
     }
     return this.generateSynthetic(workspaceId);
+  }
+
+  private async tryDeriveFromAfs(
+    workspaceId: string,
+  ): Promise<CalendarResponseContract> {
+    const index = (await this.readAfsAggregate(
+      workspaceId,
+      CONTENT_ITEMS_NAMESPACE,
+      CONTENT_ITEMS_INDEX_FILE,
+    )) as ContentItemsIndexContract | null;
+    const settings = (await this.readAfsAggregate(
+      workspaceId,
+      'settings',
+      `${CALENDAR_SETTINGS_TAB}.json`,
+    )) as CalendarSettingsContract | null;
+
+    const items: CalendarContentItemContract[] = [];
+    const milestones: CalendarMilestoneContract[] = [];
+    const entries = Array.isArray(index?.items) ? index.items : [];
+    for (const entry of entries) {
+      if (entry.archived) continue;
+      const calItem = mapContentItemToCalendarItem(entry);
+      if (!calItem) continue;
+      items.push(calItem);
+      // Mirror the mock-derived path: only generate milestones for items
+      // with an explicit contentType. Items that default to IMAGE_SINGLE
+      // because contentType is null must not inherit the template.
+      if (entry.contentType) {
+        milestones.push(
+          ...deriveMilestonesForItem(
+            calItem.id,
+            calItem.scheduleAt as string,
+            calItem.canonicalType,
+            calItem.owner,
+            settings,
+          ),
+        );
+      }
+    }
+    return {
+      workspaceId,
+      referenceDate: REFERENCE_DATE,
+      items,
+      milestones,
+    };
+  }
+
+  private async readAfsAggregate(
+    workspaceId: string,
+    namespace: string,
+    filename: string,
+  ): Promise<unknown | null> {
+    let entries: Awaited<
+      ReturnType<AgenticFilesystemService['listDirectory']>
+    > = [];
+    try {
+      entries = await this.fs.listDirectory(workspaceId, namespace);
+    } catch {
+      return null;
+    }
+    const file = entries.find(
+      (e) => e.type === 'file' && e.name === filename,
+    );
+    if (!file?.file_id) return null;
+    const files = await this.fs.batchRetrieve(workspaceId, [file.file_id]);
+    if (files.length === 0 || files[0].content_type === 'error') return null;
+    return files[0].content;
   }
 
   private async tryDeriveFromMockContent(

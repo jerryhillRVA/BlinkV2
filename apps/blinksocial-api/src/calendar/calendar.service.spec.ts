@@ -1,5 +1,11 @@
+import { ServiceUnavailableException } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
 import { CalendarService } from './calendar.service';
+import { AgenticFilesystemService } from '../agentic-filesystem/agentic-filesystem.service';
+import type {
+  BatchFileEntry,
+  DirEntry,
+} from '../agentic-filesystem/agentic-filesystem.service';
 import type {
   CalendarItemStatusContract,
   CalendarResponseContract,
@@ -15,6 +21,12 @@ type FixtureMockDataService = {
     file: string,
   ) => Promise<unknown | null>;
   getSettings: (id: string, tab: string) => Promise<unknown | null>;
+};
+
+type FixtureFsService = {
+  isConfigured: () => boolean;
+  listDirectory: (tenant: string, namespace: string) => Promise<DirEntry[]>;
+  batchRetrieve: (tenant: string, fileIds: string[]) => Promise<BatchFileEntry[]>;
 };
 
 function buildFixture(): CalendarResponseContract {
@@ -129,6 +141,7 @@ function buildSettings(): CalendarSettingsContract {
 
 async function buildService(
   mock?: Partial<FixtureMockDataService>,
+  fsMock?: Partial<FixtureFsService>,
 ): Promise<CalendarService> {
   const defaultMock: FixtureMockDataService = {
     isMockWorkspace: () => false,
@@ -136,9 +149,16 @@ async function buildService(
     getSettings: async () => null,
     ...mock,
   };
+  const defaultFs: FixtureFsService = {
+    isConfigured: () => false,
+    listDirectory: async () => [],
+    batchRetrieve: async () => [],
+    ...fsMock,
+  };
   const module = await Test.createTestingModule({
     providers: [
       CalendarService,
+      { provide: AgenticFilesystemService, useValue: defaultFs },
       { provide: 'MOCK_DATA_SERVICE', useValue: defaultMock },
     ],
   }).compile();
@@ -348,5 +368,288 @@ describe('CalendarService', () => {
     });
     const result = await service.getCalendar('hive-collective');
     expect(result.workspaceId).toBe('hive-collective');
+  });
+
+  describe('AFS mode', () => {
+    function fsThatServes(
+      files: Record<string, unknown>,
+    ): Partial<FixtureFsService> {
+      // files: namespace+filename → JSON content. Mocks listDirectory to
+      // return matching DirEntry shapes and batchRetrieve to return the
+      // content for the requested file_ids.
+      const dir = Object.entries(files).reduce<Record<string, DirEntry[]>>(
+        (acc, [key, _content]) => {
+          const [namespace, filename] = key.split('|');
+          acc[namespace] = acc[namespace] ?? [];
+          acc[namespace].push({
+            name: filename,
+            type: 'file',
+            file_id: `id-${namespace}-${filename}`,
+          });
+          return acc;
+        },
+        {},
+      );
+      return {
+        isConfigured: () => true,
+        listDirectory: async (_tenant, namespace) => dir[namespace] ?? [],
+        batchRetrieve: async (_tenant, fileIds) =>
+          fileIds.map((id) => {
+            const match = Object.entries(files).find(
+              ([key]) => `id-${key.split('|')[0]}-${key.split('|')[1]}` === id,
+            );
+            return {
+              file_id: id,
+              filename: id,
+              content_type: 'json',
+              content: match ? match[1] : null,
+            } as BatchFileEntry;
+          }),
+      };
+    }
+
+    it('projects an IG-Reel post from the AFS index with the documented field shape', async () => {
+      const index: ContentItemsIndexContract = {
+        items: [
+          {
+            id: 'afs-reel-1',
+            stage: 'post',
+            status: 'scheduled',
+            title: 'AFS-mode reel',
+            platform: 'instagram',
+            contentType: 'reel',
+            pillarIds: [],
+            segmentIds: [],
+            owner: 'Test Owner',
+            parentIdeaId: null,
+            parentConceptId: null,
+            scheduledDate: '2026-05-20',
+            archived: false,
+            createdAt: '2026-04-01T08:00:00Z',
+            updatedAt: '2026-04-20T10:00:00Z',
+          },
+        ],
+        totalCount: 1,
+        lastUpdated: '2026-04-26T00:00:00.000Z',
+      };
+      const service = await buildService(
+        // mock-mode isn't reachable when fs.isConfigured() === true, but
+        // we still provide a stub so any accidental call surfaces a fail.
+        { isMockWorkspace: () => true, getNamespaceAggregate: async () => null },
+        fsThatServes({
+          'content-items|_content-items-index.json': index,
+        }),
+      );
+      const result = await service.getCalendar('afs-tenant');
+      expect(result.workspaceId).toBe('afs-tenant');
+      expect(result.items).toEqual([
+        {
+          id: 'afs-reel-1',
+          title: 'AFS-mode reel',
+          platform: 'instagram',
+          canonicalType: 'VIDEO_SHORT_VERTICAL',
+          status: 'scheduled',
+          owner: 'Test Owner',
+          scheduleAt: '2026-05-20T14:00:00.000Z',
+          blockers: [],
+        },
+      ]);
+      expect(result.milestones).toEqual([]);
+    });
+
+    it('derives milestones from settings/calendar.json deadline templates', async () => {
+      const index: ContentItemsIndexContract = {
+        items: [
+          {
+            id: 'afs-reel-2',
+            stage: 'post',
+            status: 'scheduled',
+            title: 'AFS milestone reel',
+            platform: 'instagram',
+            contentType: 'reel',
+            pillarIds: [],
+            segmentIds: [],
+            owner: 'Owner-TC3',
+            parentIdeaId: null,
+            parentConceptId: null,
+            scheduledDate: '2026-06-01',
+            archived: false,
+            createdAt: '2026-04-01T08:00:00Z',
+            updatedAt: '2026-04-20T10:00:00Z',
+          },
+        ],
+        totalCount: 1,
+        lastUpdated: '2026-04-26T00:00:00.000Z',
+      };
+      const settings: CalendarSettingsContract = {
+        enableDeadlineTemplates: true,
+        deadlineTemplates: {
+          VIDEO_SHORT_VERTICAL: {
+            milestones: [
+              { milestoneType: 'draft_due', offsetDays: -7, required: true },
+              { milestoneType: 'assets_due', offsetDays: -5, required: true },
+              { milestoneType: 'qa_due', offsetDays: -2, required: true },
+            ],
+            phases: [],
+          },
+        },
+        reminderSettings: {
+          milestone72h: false,
+          milestone24h: false,
+          milestoneOverdue: false,
+          publish24h: false,
+        },
+        autoCreateOnPublish: false,
+      };
+      const service = await buildService(
+        undefined,
+        fsThatServes({
+          'content-items|_content-items-index.json': index,
+          'settings|calendar.json': settings,
+        }),
+      );
+      const result = await service.getCalendar('afs-tenant');
+      expect(result.milestones).toHaveLength(3);
+      const due = result.milestones.map((m) => ({
+        type: m.milestoneType,
+        dueAt: m.dueAt,
+        owner: m.milestoneOwner,
+        required: m.isRequired,
+      }));
+      expect(due).toEqual([
+        {
+          type: 'draft_due',
+          dueAt: '2026-05-25T14:00:00.000Z',
+          owner: 'Owner-TC3',
+          required: true,
+        },
+        {
+          type: 'assets_due',
+          dueAt: '2026-05-27T14:00:00.000Z',
+          owner: 'Owner-TC3',
+          required: true,
+        },
+        {
+          type: 'qa_due',
+          dueAt: '2026-05-30T14:00:00.000Z',
+          owner: 'Owner-TC3',
+          required: true,
+        },
+      ]);
+    });
+
+    it('returns empty items + milestones for a fresh AFS workspace (no index, no settings)', async () => {
+      const service = await buildService(undefined, {
+        isConfigured: () => true,
+        // listDirectory throws → readAfsAggregate returns null → empty response.
+        listDirectory: async () => {
+          throw new Error('namespace not found');
+        },
+        batchRetrieve: async () => [],
+      });
+      const result = await service.getCalendar('fresh-tenant');
+      expect(result).toEqual({
+        workspaceId: 'fresh-tenant',
+        referenceDate: '2026-05-01T00:00:00.000Z',
+        items: [],
+        milestones: [],
+      });
+    });
+
+    it('throws ServiceUnavailableException when batchRetrieve fails', async () => {
+      const service = await buildService(undefined, {
+        isConfigured: () => true,
+        listDirectory: async () => [
+          {
+            name: '_content-items-index.json',
+            type: 'file',
+            file_id: 'some-id',
+          },
+        ],
+        batchRetrieve: async () => {
+          throw new Error('connection refused');
+        },
+      });
+      await expect(service.getCalendar('broken-tenant')).rejects.toBeInstanceOf(
+        ServiceUnavailableException,
+      );
+    });
+
+    it('does not invoke the mock-mode fixture / synthetic paths when AFS is configured', async () => {
+      const fixture = buildFixture();
+      const mockFixtureCalls: string[] = [];
+      const service = await buildService(
+        {
+          isMockWorkspace: () => {
+            mockFixtureCalls.push('isMockWorkspace');
+            return true;
+          },
+          getNamespaceAggregate: async (_id, ns) => {
+            mockFixtureCalls.push(`getNamespaceAggregate:${ns}`);
+            return ns === 'calendar' ? fixture : null;
+          },
+          getSettings: async () => {
+            mockFixtureCalls.push('getSettings');
+            return null;
+          },
+        },
+        fsThatServes({}),
+      );
+      const result = await service.getCalendar('afs-tenant');
+      expect(mockFixtureCalls).toEqual([]);
+      expect(result.items).toEqual([]);
+      expect(result.milestones).toEqual([]);
+    });
+
+    it('skips archived entries when projecting from the AFS index', async () => {
+      const index: ContentItemsIndexContract = {
+        items: [
+          {
+            id: 'afs-archived',
+            stage: 'post',
+            status: 'scheduled',
+            title: 'Archived',
+            platform: 'instagram',
+            contentType: 'reel',
+            pillarIds: [],
+            segmentIds: [],
+            owner: 'A',
+            parentIdeaId: null,
+            parentConceptId: null,
+            scheduledDate: '2026-05-20',
+            archived: true,
+            createdAt: '2026-04-01T08:00:00Z',
+            updatedAt: '2026-04-20T10:00:00Z',
+          },
+          {
+            id: 'afs-live',
+            stage: 'post',
+            status: 'scheduled',
+            title: 'Live',
+            platform: 'instagram',
+            contentType: 'reel',
+            pillarIds: [],
+            segmentIds: [],
+            owner: 'A',
+            parentIdeaId: null,
+            parentConceptId: null,
+            scheduledDate: '2026-05-21',
+            archived: false,
+            createdAt: '2026-04-01T08:00:00Z',
+            updatedAt: '2026-04-20T10:00:00Z',
+          },
+        ],
+        totalCount: 2,
+        lastUpdated: '2026-04-26T00:00:00.000Z',
+      };
+      const service = await buildService(
+        undefined,
+        fsThatServes({
+          'content-items|_content-items-index.json': index,
+        }),
+      );
+      const result = await service.getCalendar('afs-tenant');
+      expect(result.items.map((i) => i.id)).toEqual(['afs-live']);
+    });
   });
 });
