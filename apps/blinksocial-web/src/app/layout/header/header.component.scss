@@ -332,3 +332,116 @@
   background: var(--blink-outline-variant);
   margin: 4px 0;
 }
+
+// ── Mobile Menu (hamburger) ──
+.mobile-menu-container {
+  position: relative;
+  margin-left: 12px;
+  display: none;
+  flex-shrink: 0;
+}
+
+.mobile-menu-btn {
+  appearance: none;
+  background: transparent;
+  border: none;
+  color: white;
+  padding: 6px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background 0.15s;
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.15);
+  }
+
+  &:focus-visible {
+    outline: 2px solid white;
+    outline-offset: 2px;
+  }
+}
+
+.mobile-menu-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 99;
+}
+
+.mobile-menu {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  min-width: 220px;
+  background: var(--blink-surface);
+  border: 1px solid var(--blink-outline-variant);
+  border-radius: 8px;
+  box-shadow: var(--blink-shadow-lg);
+  padding: 4px 0;
+  z-index: 100;
+}
+
+.mobile-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 10px 16px;
+  font-size: 14px;
+  color: var(--blink-on-surface);
+  text-decoration: none;
+  background: none;
+  border: none;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+
+  &:hover {
+    background: var(--blink-surface-hover);
+  }
+
+  &.active {
+    background: var(--blink-brand-primary-lightest-bg);
+    color: var(--blink-brand-primary);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--blink-brand-primary);
+    outline-offset: -2px;
+  }
+}
+
+// ── Profile menu user-info (mobile-only) ──
+.profile-menu-user-info,
+.profile-menu-user-info-divider {
+  display: none;
+}
+
+.profile-menu-user-info {
+  padding: 12px 16px 8px;
+  flex-direction: column;
+}
+
+.profile-menu-user-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--blink-on-surface);
+}
+
+.profile-menu-user-role {
+  font-size: 11px;
+  color: var(--blink-on-surface-muted);
+  margin-top: 2px;
+}
+
+// ── Mobile layout (≤ 768px) ──
+@media (max-width: 768px) {
+  .workspace-nav { display: none; }
+  .settings-btn,
+  .settings-btn + .navbar-separator { display: none; }
+  .user-info { display: none; }
+  .mobile-menu-container { display: block; }
+  .profile-menu-user-info { display: flex; }
+  .profile-menu-user-info-divider { display: block; }
+}

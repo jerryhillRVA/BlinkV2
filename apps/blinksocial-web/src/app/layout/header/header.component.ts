@@ -31,11 +31,12 @@ export class HeaderComponent implements OnInit {
   private readonly router = inject(Router);
   private readonly destroyRef = inject(DestroyRef);
   private readonly dashboardApi = inject(DashboardApiService);
-  /* v8 ignore next 9 — V8's function-call-throws branches on input()/signal() declarations are unreachable (Angular class-field init time; ESM exports not spy-able) */
+  /* v8 ignore next 10 — V8's function-call-throws branches on input()/signal() declarations are unreachable (Angular class-field init time; ESM exports not spy-able) */
   readonly menuOpen = signal(false);
   readonly workspaceId = signal<string | null>(null);
   readonly currentTab = signal<string | null>(null);
   readonly wsDropdownOpen = signal(false);
+  readonly mobileMenuOpen = signal(false);
   /** True when the current route is in NAV_ELIGIBLE_ROUTES (e.g. /profile-settings). */
   readonly isNavEligibleRoute = signal(false);
 
@@ -166,9 +167,19 @@ export class HeaderComponent implements OnInit {
     this.wsDropdownOpen.set(false);
   }
 
+  toggleMobileMenu(): void {
+    this.mobileMenuOpen.update((v) => !v);
+  }
+
+  closeMobileMenu(): void {
+    this.mobileMenuOpen.set(false);
+  }
+
   @HostListener('document:keydown.escape')
   onDocumentEscape(): void {
     if (this.wsDropdownOpen()) this.closeWsDropdown();
+    if (this.mobileMenuOpen()) this.closeMobileMenu();
+    if (this.menuOpen()) this.closeMenu();
   }
 
   addWorkspace(): void {
