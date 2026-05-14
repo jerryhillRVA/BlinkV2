@@ -809,4 +809,188 @@ describe('HeaderComponent', () => {
       });
     });
   });
+
+  describe('Mobile menu (hamburger)', () => {
+    it('U-1: mobileMenuOpen defaults to false on init', () => {
+      const fixture = TestBed.createComponent(HeaderComponent);
+      fixture.detectChanges();
+      expect(fixture.componentInstance.mobileMenuOpen()).toBe(false);
+    });
+
+    it('U-2: toggleMobileMenu() flips the signal false → true → false', () => {
+      const fixture = TestBed.createComponent(HeaderComponent);
+      fixture.detectChanges();
+      const c = fixture.componentInstance;
+      c.toggleMobileMenu();
+      expect(c.mobileMenuOpen()).toBe(true);
+      c.toggleMobileMenu();
+      expect(c.mobileMenuOpen()).toBe(false);
+    });
+
+    it('U-3: closeMobileMenu() sets the signal to false regardless of prior state', () => {
+      const fixture = TestBed.createComponent(HeaderComponent);
+      fixture.detectChanges();
+      const c = fixture.componentInstance;
+      c.closeMobileMenu();
+      expect(c.mobileMenuOpen()).toBe(false);
+      c.toggleMobileMenu();
+      expect(c.mobileMenuOpen()).toBe(true);
+      c.closeMobileMenu();
+      expect(c.mobileMenuOpen()).toBe(false);
+    });
+
+    it('U-4: onDocumentEscape() closes mobileMenuOpen when it is open (no effect when closed)', () => {
+      const fixture = TestBed.createComponent(HeaderComponent);
+      fixture.detectChanges();
+      const c = fixture.componentInstance;
+      c.onDocumentEscape();
+      expect(c.mobileMenuOpen()).toBe(false);
+      c.toggleMobileMenu();
+      expect(c.mobileMenuOpen()).toBe(true);
+      c.onDocumentEscape();
+      expect(c.mobileMenuOpen()).toBe(false);
+    });
+
+    it('U-5: onDocumentEscape() closes all open dropdowns in a single call', () => {
+      const fixture = TestBed.createComponent(HeaderComponent);
+      fixture.detectChanges();
+      const c = fixture.componentInstance;
+      c.toggleWsDropdown();
+      c.toggleMobileMenu();
+      c.toggleMenu();
+      expect(c.wsDropdownOpen()).toBe(true);
+      expect(c.mobileMenuOpen()).toBe(true);
+      expect(c.menuOpen()).toBe(true);
+      c.onDocumentEscape();
+      expect(c.wsDropdownOpen()).toBe(false);
+      expect(c.mobileMenuOpen()).toBe(false);
+      expect(c.menuOpen()).toBe(false);
+    });
+
+    it('U-6: [data-testid=mobile-menu-btn] not rendered when showWorkspaceNav() is false', () => {
+      // Default route '/' is not workspace-eligible, so showWorkspaceNav() is false
+      const fixture = TestBed.createComponent(HeaderComponent);
+      fixture.detectChanges();
+      const el: HTMLElement = fixture.nativeElement;
+      expect(fixture.componentInstance.showWorkspaceNav()).toBe(false);
+      expect(el.querySelector('[data-testid="mobile-menu-btn"]')).toBeFalsy();
+    });
+
+    it('U-7: btn rendered, menu not rendered when showWorkspaceNav() true and mobileMenuOpen() false', async () => {
+      const router = TestBed.inject(Router);
+      const fixture = TestBed.createComponent(HeaderComponent);
+      fixture.detectChanges();
+      await router.navigateByUrl('/workspace/abc123/content');
+      fixture.detectChanges();
+      const el: HTMLElement = fixture.nativeElement;
+      expect(el.querySelector('[data-testid="mobile-menu-btn"]')).toBeTruthy();
+      expect(el.querySelector('[data-testid="mobile-menu"]')).toBeFalsy();
+    });
+
+    it('U-8: menu renders with three items linking to content/calendar/strategy when open', async () => {
+      const router = TestBed.inject(Router);
+      const fixture = TestBed.createComponent(HeaderComponent);
+      fixture.detectChanges();
+      await router.navigateByUrl('/workspace/abc123/content');
+      fixture.detectChanges();
+      fixture.componentInstance.toggleMobileMenu();
+      fixture.detectChanges();
+      const el: HTMLElement = fixture.nativeElement;
+      const menu = el.querySelector('[data-testid="mobile-menu"]');
+      expect(menu).toBeTruthy();
+      const items = menu!.querySelectorAll<HTMLAnchorElement>('.mobile-menu-item');
+      expect(items.length).toBe(3);
+      expect(items[0].getAttribute('href')).toBe('/workspace/abc123/content');
+      expect(items[1].getAttribute('href')).toBe('/workspace/abc123/calendar');
+      expect(items[2].getAttribute('href')).toBe('/workspace/abc123/strategy');
+      expect(items[0].textContent).toContain('Content');
+      expect(items[1].textContent).toContain('Calendar');
+      expect(items[2].textContent).toContain('Strategy');
+    });
+
+    it('aria-expanded reflects mobileMenuOpen state', async () => {
+      const router = TestBed.inject(Router);
+      const fixture = TestBed.createComponent(HeaderComponent);
+      fixture.detectChanges();
+      await router.navigateByUrl('/workspace/abc123/content');
+      fixture.detectChanges();
+      const el: HTMLElement = fixture.nativeElement;
+      const btn = el.querySelector('[data-testid="mobile-menu-btn"]') as HTMLButtonElement;
+      expect(btn.getAttribute('aria-expanded')).toBe('false');
+      fixture.componentInstance.toggleMobileMenu();
+      fixture.detectChanges();
+      expect(btn.getAttribute('aria-expanded')).toBe('true');
+    });
+
+    it('clicking a mobile nav row closes the menu', async () => {
+      const router = TestBed.inject(Router);
+      const fixture = TestBed.createComponent(HeaderComponent);
+      fixture.detectChanges();
+      await router.navigateByUrl('/workspace/abc123/content');
+      fixture.detectChanges();
+      fixture.componentInstance.toggleMobileMenu();
+      fixture.detectChanges();
+      const el: HTMLElement = fixture.nativeElement;
+      const calendarRow = el.querySelectorAll<HTMLAnchorElement>('.mobile-menu-item')[1];
+      calendarRow.click();
+      fixture.detectChanges();
+      expect(fixture.componentInstance.mobileMenuOpen()).toBe(false);
+    });
+
+    it('clicking the backdrop closes the menu', async () => {
+      const router = TestBed.inject(Router);
+      const fixture = TestBed.createComponent(HeaderComponent);
+      fixture.detectChanges();
+      await router.navigateByUrl('/workspace/abc123/content');
+      fixture.detectChanges();
+      fixture.componentInstance.toggleMobileMenu();
+      fixture.detectChanges();
+      const el: HTMLElement = fixture.nativeElement;
+      const backdrop = el.querySelector('.mobile-menu-backdrop') as HTMLElement;
+      expect(backdrop).toBeTruthy();
+      backdrop.click();
+      fixture.detectChanges();
+      expect(fixture.componentInstance.mobileMenuOpen()).toBe(false);
+    });
+
+    it('active class is applied to the current tab row', async () => {
+      const router = TestBed.inject(Router);
+      const fixture = TestBed.createComponent(HeaderComponent);
+      fixture.detectChanges();
+      await router.navigateByUrl('/workspace/abc123/calendar');
+      fixture.detectChanges();
+      fixture.componentInstance.toggleMobileMenu();
+      fixture.detectChanges();
+      const el: HTMLElement = fixture.nativeElement;
+      const items = el.querySelectorAll('.mobile-menu-item');
+      expect(items[0].classList.contains('active')).toBe(false);
+      expect(items[1].classList.contains('active')).toBe(true);
+      expect(items[2].classList.contains('active')).toBe(false);
+    });
+  });
+
+  describe('Profile menu user-info section', () => {
+    it('U-9: .profile-menu-user-info renders inside the profile menu with displayName and currentRole', () => {
+      const fixture = TestBed.createComponent(HeaderComponent);
+      fixture.detectChanges();
+      const el: HTMLElement = fixture.nativeElement;
+      (el.querySelector('.avatar-placeholder') as HTMLElement).click();
+      fixture.detectChanges();
+      const info = el.querySelector('[data-testid="profile-menu-user-info"]');
+      expect(info).toBeTruthy();
+      expect(info?.querySelector('.profile-menu-user-name')?.textContent).toBe('Brett Lewis');
+      expect(info?.querySelector('.profile-menu-user-role')?.textContent).toBe('Admin');
+    });
+
+    it('user-info section is the first child of .profile-menu, before Profile Settings', () => {
+      const fixture = TestBed.createComponent(HeaderComponent);
+      fixture.detectChanges();
+      const el: HTMLElement = fixture.nativeElement;
+      (el.querySelector('.avatar-placeholder') as HTMLElement).click();
+      fixture.detectChanges();
+      const menu = el.querySelector('.profile-menu') as HTMLElement;
+      const firstChild = menu.children[0];
+      expect(firstChild.getAttribute('data-testid')).toBe('profile-menu-user-info');
+    });
+  });
 });
