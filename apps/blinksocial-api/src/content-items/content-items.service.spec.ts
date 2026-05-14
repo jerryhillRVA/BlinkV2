@@ -292,19 +292,66 @@ describe('ContentItemsService', () => {
   });
 
   describe('mock mode (fs not configured, mockDataService present)', () => {
-    it('reads from mock data service and echoes on create', async () => {
-      fs.setConfigured(false);
-      const mockDs = {
-        isMockWorkspace: (id: string) => id === 'hive-collective',
-        getNamespaceAggregate: vi
-          .fn()
-          .mockImplementation((_w: string, _n: string, filename: string) =>
-            filename === '_content-items-index.json'
-              ? { items: [], totalCount: 0, lastUpdated: '' }
-              : null,
-          ),
-        getItemFile: vi.fn().mockResolvedValue(null),
+    /**
+     * Build a stateful MockDataService stand-in that mirrors the real
+     * service's override semantics: items/aggregates can be written and
+     * read back, and deleted items mask seed JSON. Used by #126's tests
+     * that verify mock-mode CRUD + cascade.
+     */
+    function buildStatefulMockDs(mockWorkspaceId = 'hive-collective') {
+      const items = new Map<string, Map<string, unknown>>();
+      const aggregates = new Map<string, Map<string, Map<string, unknown>>>();
+      const deleted = new Map<string, Set<string>>();
+      const isMock = (id: string) => id === mockWorkspaceId;
+      return {
+        isMockWorkspace: (id: string) => isMock(id),
+        async getItemFile(workspaceId: string, itemId: string) {
+          if (!isMock(workspaceId)) return null;
+          if (deleted.get(workspaceId)?.has(itemId)) return null;
+          return items.get(workspaceId)?.get(itemId) ?? null;
+        },
+        setItemOverride(workspaceId: string, itemId: string, item: unknown) {
+          if (!isMock(workspaceId)) return;
+          if (!items.has(workspaceId)) items.set(workspaceId, new Map());
+          items.get(workspaceId)?.set(itemId, item);
+          deleted.get(workspaceId)?.delete(itemId);
+        },
+        deleteItemOverride(workspaceId: string, itemId: string) {
+          if (!isMock(workspaceId)) return;
+          items.get(workspaceId)?.delete(itemId);
+          if (!deleted.has(workspaceId)) deleted.set(workspaceId, new Set());
+          deleted.get(workspaceId)?.add(itemId);
+        },
+        async getNamespaceAggregate(
+          workspaceId: string,
+          namespace: string,
+          filename: string,
+        ) {
+          if (!isMock(workspaceId)) return null;
+          return aggregates.get(workspaceId)?.get(namespace)?.get(filename) ?? null;
+        },
+        setAggregateOverride(
+          workspaceId: string,
+          namespace: string,
+          filename: string,
+          data: unknown,
+        ) {
+          if (!isMock(workspaceId)) return;
+          if (!aggregates.has(workspaceId)) aggregates.set(workspaceId, new Map());
+          const ns = aggregates.get(workspaceId)!;
+          if (!ns.has(namespace)) ns.set(namespace, new Map());
+          ns.get(namespace)!.set(filename, data);
+        },
+        // Test-only inspection helpers.
+        __items: items,
+        __aggregates: aggregates,
+        __deleted: deleted,
       };
+    }
+
+    async function buildMockService() {
+      fs.setConfigured(false);
+      const mockDs = buildStatefulMockDs();
       const moduleRef = await Test.createTestingModule({
         providers: [
           ContentItemsService,
@@ -312,19 +359,223 @@ describe('ContentItemsService', () => {
           { provide: 'MOCK_DATA_SERVICE', useValue: mockDs },
         ],
       }).compile();
-      const svc = moduleRef.get(ContentItemsService);
+      return { svc: moduleRef.get(ContentItemsService), mockDs };
+    }
 
-      const idx = await svc.getIndex('hive-collective');
-      expect(idx.items).toEqual([]);
+    it('createItem persists override + index row in mock mode (#126: no silent drop)', async () => {
+      const { svc, mockDs } = await buildMockService();
 
       const created = await svc.createItem('hive-collective', {
         stage: 'idea',
-        status: 'draft',
+        status: 'new',
         title: 'Echo',
       });
-      expect(created.title).toBe('Echo');
-      // Mock-mode creates must NOT touch the fake AFS
+
+      // Item override is recorded.
+      const item = await mockDs.getItemFile('hive-collective', created.id);
+      expect(item).toMatchObject({ id: created.id, title: 'Echo' });
+      // Index aggregate now contains the new row.
+      const idx = (await svc.getIndex('hive-collective')) as {
+        items: { id: string }[];
+        totalCount: number;
+      };
+      expect(idx.totalCount).toBe(1);
+      expect(idx.items[0].id).toBe(created.id);
+      // Mock-mode creates must NOT touch the fake AFS layer.
       expect(Object.keys(fs.files)).toHaveLength(0);
+    });
+
+    it('createItem in mock mode flips parent idea to used when a concept is added', async () => {
+      const { svc, mockDs } = await buildMockService();
+      const idea = await svc.createItem('hive-collective', {
+        stage: 'idea',
+        status: 'new',
+        title: 'Idea',
+      });
+      await svc.createItem('hive-collective', {
+        stage: 'concept',
+        status: 'new',
+        title: 'Concept',
+        parentIdeaId: idea.id,
+      });
+      const refreshed = (await mockDs.getItemFile('hive-collective', idea.id)) as {
+        status: string;
+      };
+      expect(refreshed.status).toBe('used');
+    });
+
+    it('createItem in mock mode flips parent concept to used when a post is added', async () => {
+      const { svc, mockDs } = await buildMockService();
+      const concept = await svc.createItem('hive-collective', {
+        stage: 'concept',
+        status: 'new',
+        title: 'Concept',
+      });
+      await svc.createItem('hive-collective', {
+        stage: 'post',
+        status: 'in-progress',
+        title: 'Post',
+        parentConceptId: concept.id,
+      });
+      const refreshed = (await mockDs.getItemFile('hive-collective', concept.id)) as {
+        status: string;
+      };
+      expect(refreshed.status).toBe('used');
+    });
+
+    it('createItem in mock mode is a no-op flip when the parent is already used', async () => {
+      const { svc, mockDs } = await buildMockService();
+      const idea = await svc.createItem('hive-collective', {
+        stage: 'idea',
+        status: 'used',
+        title: 'Already used',
+      });
+      await svc.createItem('hive-collective', {
+        stage: 'concept',
+        status: 'new',
+        title: 'Concept',
+        parentIdeaId: idea.id,
+      });
+      const refreshed = (await mockDs.getItemFile('hive-collective', idea.id)) as {
+        status: string;
+        updatedAt: string;
+      };
+      expect(refreshed.status).toBe('used');
+    });
+
+    it('deleteItem in mock mode removes the override, the index row, and un-flips the parent (#126)', async () => {
+      const { svc, mockDs } = await buildMockService();
+      const concept = await svc.createItem('hive-collective', {
+        stage: 'concept',
+        status: 'new',
+        title: 'Parent',
+      });
+      const post = await svc.createItem('hive-collective', {
+        stage: 'post',
+        status: 'in-progress',
+        title: 'Sole child',
+        parentConceptId: concept.id,
+      });
+
+      await svc.deleteItem('hive-collective', post.id);
+
+      // Override is gone (deletion masks it).
+      const removedItem = await mockDs.getItemFile('hive-collective', post.id);
+      expect(removedItem).toBeNull();
+      // Index row gone.
+      const idx = (await svc.getIndex('hive-collective')) as {
+        items: { id: string }[];
+      };
+      expect(idx.items.find((r) => r.id === post.id)).toBeUndefined();
+      // Parent un-flipped.
+      const refreshedConcept = (await mockDs.getItemFile(
+        'hive-collective',
+        concept.id,
+      )) as { status: string };
+      expect(refreshedConcept.status).toBe('new');
+    });
+
+    it('deleteItem in mock mode leaves parent used when sibling posts remain', async () => {
+      const { svc, mockDs } = await buildMockService();
+      const concept = await svc.createItem('hive-collective', {
+        stage: 'concept',
+        status: 'new',
+        title: 'Parent',
+      });
+      const postA = await svc.createItem('hive-collective', {
+        stage: 'post',
+        status: 'in-progress',
+        title: 'A',
+        parentConceptId: concept.id,
+      });
+      await svc.createItem('hive-collective', {
+        stage: 'post',
+        status: 'in-progress',
+        title: 'B',
+        parentConceptId: concept.id,
+      });
+      await svc.deleteItem('hive-collective', postA.id);
+      const refreshedConcept = (await mockDs.getItemFile(
+        'hive-collective',
+        concept.id,
+      )) as { status: string };
+      expect(refreshedConcept.status).toBe('used');
+    });
+
+    it('archived siblings in mock mode still count — delete does not flip', async () => {
+      const { svc, mockDs } = await buildMockService();
+      const concept = await svc.createItem('hive-collective', {
+        stage: 'concept',
+        status: 'new',
+        title: 'Parent',
+      });
+      const live = await svc.createItem('hive-collective', {
+        stage: 'post',
+        status: 'in-progress',
+        title: 'Live',
+        parentConceptId: concept.id,
+      });
+      const archived = await svc.createItem('hive-collective', {
+        stage: 'post',
+        status: 'in-progress',
+        title: 'Archived',
+        parentConceptId: concept.id,
+      });
+      await svc.archiveItem('hive-collective', archived.id);
+      await svc.deleteItem('hive-collective', live.id);
+      const refreshedConcept = (await mockDs.getItemFile(
+        'hive-collective',
+        concept.id,
+      )) as { status: string };
+      expect(refreshedConcept.status).toBe('used');
+    });
+
+    it('sendConceptBack in mock mode cascades archive + flips concept to new (#126)', async () => {
+      const { svc, mockDs } = await buildMockService();
+      const concept = await svc.createItem('hive-collective', {
+        stage: 'concept',
+        status: 'new',
+        title: 'Parent',
+      });
+      const postA = await svc.createItem('hive-collective', {
+        stage: 'post',
+        status: 'in-progress',
+        title: 'Live A',
+        parentConceptId: concept.id,
+      });
+      const postB = await svc.createItem('hive-collective', {
+        stage: 'post',
+        status: 'in-progress',
+        title: 'Live B',
+        parentConceptId: concept.id,
+      });
+      const postC = await svc.createItem('hive-collective', {
+        stage: 'post',
+        status: 'in-progress',
+        title: 'Already archived',
+        parentConceptId: concept.id,
+      });
+      await svc.archiveItem('hive-collective', postC.id);
+
+      const result = await svc.sendConceptBack('hive-collective', concept.id);
+
+      expect(result.conceptStatus).toBe('new');
+      expect(result.archivedPostIds.sort()).toEqual([postA.id, postB.id].sort());
+      expect(result.alreadyArchivedPostIds).toEqual([postC.id]);
+
+      // Concept is now `new` in the mock layer.
+      const refreshedConcept = (await mockDs.getItemFile(
+        'hive-collective',
+        concept.id,
+      )) as { status: string };
+      expect(refreshedConcept.status).toBe('new');
+      // Live posts are now archived.
+      for (const id of [postA.id, postB.id]) {
+        const p = (await mockDs.getItemFile('hive-collective', id)) as {
+          archived: boolean;
+        };
+        expect(p.archived).toBe(true);
+      }
     });
 
     it('updateItem records an in-memory override so subsequent reads reflect the patch', async () => {
@@ -362,8 +613,6 @@ describe('ContentItemsService', () => {
         production: { productionStep: 'packaging' },
       } as unknown as Parameters<ContentItemsService['updateItem']>[2]);
 
-      // updateItem must persist the merged item via setItemOverride so
-      // a follow-up GET lands the user on the new productionStep.
       expect(setItemOverride).toHaveBeenCalledTimes(1);
       const [ws, id, persisted] = setItemOverride.mock.calls[0];
       expect(ws).toBe('hive-collective');
@@ -372,7 +621,6 @@ describe('ContentItemsService', () => {
         (persisted as { production?: { productionStep?: string } }).production
           ?.productionStep,
       ).toBe('packaging');
-      // The returned value must reflect the patch (and the merge from base).
       expect(updated.title).toBe('Seeded');
       expect(
         (updated as { production?: { productionStep?: string } }).production

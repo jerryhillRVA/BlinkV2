@@ -204,6 +204,99 @@ describe('MockDataService', () => {
     });
   });
 
+  describe('deleteItemOverride (ticket #126)', () => {
+    it('masks the seed JSON so getItemFile returns null after delete', async () => {
+      const seeded = await service.getItemFile('booze-kills', 'bk-idea1');
+      expect(seeded).not.toBeNull();
+      service.deleteItemOverride('booze-kills', 'bk-idea1');
+      const result = await service.getItemFile('booze-kills', 'bk-idea1');
+      expect(result).toBeNull();
+    });
+
+    it('removes a prior override AND masks the seed', async () => {
+      service.setItemOverride('booze-kills', 'bk-idea1', {
+        id: 'bk-idea1',
+        title: 'patched',
+      });
+      const patched = await service.getItemFile('booze-kills', 'bk-idea1');
+      expect((patched as { title: string }).title).toBe('patched');
+      service.deleteItemOverride('booze-kills', 'bk-idea1');
+      const result = await service.getItemFile('booze-kills', 'bk-idea1');
+      expect(result).toBeNull();
+    });
+
+    it('a subsequent setItemOverride re-instates the item', async () => {
+      service.deleteItemOverride('booze-kills', 'bk-idea1');
+      expect(await service.getItemFile('booze-kills', 'bk-idea1')).toBeNull();
+      service.setItemOverride('booze-kills', 'bk-idea1', {
+        id: 'bk-idea1',
+        title: 'restored',
+      });
+      const result = (await service.getItemFile('booze-kills', 'bk-idea1')) as {
+        title: string;
+      };
+      expect(result.title).toBe('restored');
+    });
+
+    it('is a no-op for non-mock workspaces', async () => {
+      // Just verify it doesn't throw and doesn't disturb anything.
+      service.deleteItemOverride('unknown', 'something');
+      // Reads still return null per isMockWorkspace gate.
+      const result = await service.getItemFile('unknown', 'something');
+      expect(result).toBeNull();
+    });
+  });
+
+  describe('setAggregateOverride / getAggregateOverride / getNamespaceAggregate (ticket #126)', () => {
+    it('a recorded aggregate override is returned by getNamespaceAggregate in preference to the seed', async () => {
+      const seed = (await service.getNamespaceAggregate(
+        'booze-kills',
+        'content-items',
+        '_content-items-index.json',
+      )) as { items: unknown[] };
+      expect(seed.items).toHaveLength(16);
+      service.setAggregateOverride(
+        'booze-kills',
+        'content-items',
+        '_content-items-index.json',
+        { items: [], totalCount: 0, lastUpdated: 'overridden' },
+      );
+      const result = (await service.getNamespaceAggregate(
+        'booze-kills',
+        'content-items',
+        '_content-items-index.json',
+      )) as { items: unknown[]; lastUpdated: string };
+      expect(result.items).toEqual([]);
+      expect(result.lastUpdated).toBe('overridden');
+    });
+
+    it('aggregate overrides are scoped per (workspace, namespace, filename)', async () => {
+      service.setAggregateOverride(
+        'booze-kills',
+        'content-items',
+        '_content-items-index.json',
+        { items: ['overridden'] },
+      );
+      const otherAgg = await service.getNamespaceAggregate(
+        'booze-kills',
+        'content-items',
+        '_content-items-archive-index.json',
+      );
+      expect(otherAgg).not.toEqual({ items: ['overridden'] });
+    });
+
+    it('setAggregateOverride is a no-op for non-mock workspaces', () => {
+      service.setAggregateOverride('unknown', 'ns', 'x.json', { x: 1 });
+      expect(service.getAggregateOverride('unknown', 'ns', 'x.json')).toBeUndefined();
+    });
+
+    it('getAggregateOverride returns undefined when no override has been set', () => {
+      expect(
+        service.getAggregateOverride('booze-kills', 'content-items', 'nope.json'),
+      ).toBeUndefined();
+    });
+  });
+
   describe('setItemOverride / getItemFile override layer', () => {
     it('a recorded override is returned by getItemFile in preference to the seed JSON', async () => {
       const seeded = (await service.getItemFile('booze-kills', 'bk-idea1')) as {

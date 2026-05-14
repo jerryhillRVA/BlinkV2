@@ -36,37 +36,10 @@
   "claimsFlag": false,
   "riskLevel": "low",
   "scheduledDate": "2026-03-12",
-  "scheduledTime": "07:00",
   "targetPublishWindow": {
     "start": "2026-03-10T00:00:00Z",
     "end": "2026-03-14T23:59:59Z"
   },
-  "assetRefs": [
-    {
-      "fileId": "af-uuid-001",
-      "filename": "morning-mobility-final.mp4",
-      "role": "primary-media",
-      "mimeType": "video/mp4",
-      "sizeBytes": 29779558
-    },
-    {
-      "fileId": "af-uuid-002",
-      "filename": "morning-mobility-cover.jpg",
-      "role": "cover",
-      "mimeType": "image/jpeg",
-      "sizeBytes": 245760
-    },
-    {
-      "fileId": "af-uuid-003",
-      "filename": "morning-mobility-raw.mov",
-      "role": "source-file",
-      "mimeType": "video/quicktime",
-      "sizeBytes": 148897792
-    }
-  ],
-  "collaborators": [
-    "user-brett"
-  ],
   "production": {
     "productionStep": "draft",
     "brief": {
@@ -106,9 +79,6 @@
         "containsClaims": false,
         "disclosureNeeded": false
       },
-      "approved": true,
-      "approvedAt": "2026-02-22T10:00:00Z",
-      "approvedBy": "user-brett",
       "canonicalType": "VIDEO_SHORT_VERTICAL",
       "hasTalent": true,
       "hasMusic": true,

@@ -1174,7 +1174,7 @@ describe('PostDetailStore — production.draft (#114)', () => {
       const { store } = setup(
         makeApprovedItem({
           production: {
-            brief: { needsAccessibility: false, approved: true },
+            brief: { needsAccessibility: false },
           },
         }),
       );
@@ -1190,7 +1190,6 @@ describe('PostDetailStore — production.draft (#114)', () => {
               hasMusic: true,
               compliance: { containsClaims: true },
               needsAccessibility: true,
-              approved: true,
             },
           },
         }),
@@ -1201,7 +1200,7 @@ describe('PostDetailStore — production.draft (#114)', () => {
     it('pastDueDate returns false for invalid date strings', () => {
       const { store } = setup(
         makeApprovedItem({
-          production: { brief: { dueDate: 'not-a-date', approved: true } },
+          production: { brief: { dueDate: 'not-a-date' } },
         }),
       );
       expect(store.pastDueDate()).toBe(false);
@@ -1215,7 +1214,7 @@ describe('PostDetailStore — production.draft (#114)', () => {
     it('pastDueDate returns true for a date in the past', () => {
       const { store } = setup(
         makeApprovedItem({
-          production: { brief: { dueDate: '2020-01-01', approved: true } },
+          production: { brief: { dueDate: '2020-01-01' } },
         }),
       );
       expect(store.pastDueDate()).toBe(true);
