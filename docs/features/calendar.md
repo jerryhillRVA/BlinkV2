@@ -189,7 +189,6 @@ Defined in the contract but not surfaced or fully wired today. Each is a candida
 - `flags.publishingMode` (`ORGANIC` / `PAID_BOOSTED`) — same shape, same gap. Note the Approve & Schedule step **does** read/write this on the post itself; it just doesn't currently project onto the calendar item.
 - `blockers[]` reason strings — `item.blockers.length > 0` drives the `blocked` severity, but the reason text is never displayed (peek-card severity row uses a static "required step not approved" copy).
 - Distinct `archived` styling — the contract supports `status === 'archived'` but the SCSS reuses the `published` token treatment; archived items therefore appear identical to published.
-- `--blink-on-surface-faint` — referenced in `calendar-page.component.scss:120` with a hex fallback (`#9ca3af`); the token itself is not defined in `_blink-tokens.scss`. The fallback masks the gap; either the token should be added or the references should switch to an existing token.
 
 ## 12. Color-token inventory
 
@@ -225,8 +224,4 @@ Light values shown in §4 above; full dark-mode values:
 
 ### Shared surface tokens (in calendar SCSS)
 
-Calendar surfaces also use the global tokens: `--blink-surface`, `--blink-surface-dim`, `--blink-surface-container`, `--blink-surface-hover`, `--blink-on-surface`, `--blink-on-surface-strong`, `--blink-on-surface-muted`, `--blink-outline`, `--blink-outline-variant`, `--blink-shadow-sm` / `-lg`, `--blink-brand-primary` (+ hover-bg variant), and the typography scale (`--blink-headline-small`, `--blink-body-medium`, `--blink-label-small/medium/large`). All defined in `_blink-tokens.scss`.
-
-### Inventory gaps
-
-- `--blink-on-surface-faint` — referenced with hex fallback (see §11). Track as follow-up.
+Calendar surfaces also use the global tokens: `--blink-surface`, `--blink-surface-dim`, `--blink-surface-container`, `--blink-surface-hover`, `--blink-on-surface`, `--blink-on-surface-strong`, `--blink-on-surface-muted`, `--blink-on-surface-faint`, `--blink-outline`, `--blink-outline-variant`, `--blink-shadow-sm` / `-lg`, `--blink-brand-primary` (+ hover-bg variant), and the typography scale (`--blink-headline-small`, `--blink-body-medium`, `--blink-label-small/medium/large`). All defined in `_blink-tokens.scss`.
