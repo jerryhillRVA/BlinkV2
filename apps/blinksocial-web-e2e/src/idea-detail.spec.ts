@@ -159,6 +159,22 @@ test.describe('Idea detail header typography', () => {
     // transition has settled. Wait for the shadow itself before the
     // alpha/spread assertions below or webkit reads rgba(0,0,0,0).
     await waitForCssToSettle(textarea, 'box-shadow');
+    // Under heavy parallel webkit load `waitForCssToSettle` can settle on
+    // the initial `rgba(0,0,0,0) 0px 0px 0px 0px` (transition hasn't kicked
+    // in yet, value is "stable" because nothing is changing). Poll until
+    // alpha is actually non-zero so the assertions below see a real shadow.
+    await expect
+      .poll(
+        async () =>
+          textarea.evaluate((el) => {
+            const m = getComputedStyle(el).boxShadow.match(
+              /rgba\(\s*\d+,\s*\d+,\s*\d+,\s*([\d.]+)\)/,
+            );
+            return m ? parseFloat(m[1]) : 0;
+          }),
+        { timeout: 5_000, intervals: [50, 100, 200] },
+      )
+      .toBeGreaterThan(0);
     const computed = await textarea.evaluate((el) => {
       const cs = getComputedStyle(el);
       return {
