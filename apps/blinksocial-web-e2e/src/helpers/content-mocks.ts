@@ -209,12 +209,48 @@ export const mockHiveContent = async (
   options: MockHiveOptions = {},
 ) => {
   const ws = options.workspaceId ?? 'hive-collective';
-  const indexItems = options.indexItems ?? [IDEA_ENTRY, CONCEPT_ENTRY, POST_ENTRY];
+  // Mutable per-test stores. The index list is mutated in-place whenever a
+  // PUT lands so subsequent /index GETs reflect the change — faithful to a
+  // real backend that would project the persisted item back into the index.
+  const indexItems: ContentItemsIndexEntryContract[] = [
+    ...(options.indexItems ?? [IDEA_ENTRY, CONCEPT_ENTRY, POST_ENTRY]),
+  ];
   const details: Record<string, ContentItemContract> = {
     ...BASE_DETAILS,
     ...(options.details ?? {}),
   };
   const objectives = options.objectives ?? OBJECTIVES_PAYLOAD;
+
+  // Project a (possibly partial) ContentItemContract back into the lite
+  // index-entry shape. Mirrors the frontend's itemToIndexEntry — only the
+  // index-entry-shaped fields are propagated; everything else stays on the
+  // detail. Preserves prior values where the PUT body omits a field.
+  const projectToIndexEntry = (
+    prev: ContentItemsIndexEntryContract,
+    next: Partial<ContentItemContract>,
+  ): ContentItemsIndexEntryContract => ({
+    ...prev,
+    status: next.status ?? prev.status,
+    title: next.title ?? prev.title,
+    platform: next.platform === undefined ? prev.platform : next.platform,
+    contentType:
+      next.contentType === undefined ? prev.contentType : next.contentType,
+    pillarIds: next.pillarIds ?? prev.pillarIds,
+    segmentIds: next.segmentIds ?? prev.segmentIds,
+    owner: next.owner === undefined ? prev.owner : next.owner,
+    parentIdeaId:
+      next.parentIdeaId === undefined ? prev.parentIdeaId : next.parentIdeaId,
+    parentConceptId:
+      next.parentConceptId === undefined
+        ? prev.parentConceptId
+        : next.parentConceptId,
+    scheduledDate:
+      next.scheduledDate === undefined
+        ? prev.scheduledDate
+        : next.scheduledDate,
+    archived: next.archived ?? prev.archived,
+    updatedAt: next.updatedAt ?? prev.updatedAt,
+  });
 
   // Catch-all detail route (registered first → invoked LAST as fallback).
   // Echoes back the PUT/POST body so the frontend's optimistic state
@@ -244,6 +280,18 @@ export const mockHiveContent = async (
         // reflect the change. Echo-only previously left GETs returning stale
         // data after a write.
         details[itemId] = merged as ContentItemContract;
+        // Project the changed item back into the index list so a subsequent
+        // GET /index reflects the new lite-entry shape. Critical for tests
+        // that assert pipeline-column membership after persistence — e.g.
+        // the #129 lane-sync flow where status flips during productionStep
+        // advance and the pipeline view must see the new status.
+        const idx = indexItems.findIndex((e) => e.id === itemId);
+        if (idx >= 0) {
+          indexItems[idx] = projectToIndexEntry(
+            indexItems[idx],
+            merged as Partial<ContentItemContract>,
+          );
+        }
         return route.fulfill({
           status: 200,
           contentType: 'application/json',

@@ -1022,3 +1022,181 @@ test.describe('Approve & Schedule (#124)', () => {
     await expect(page.locator('#schedule-at-input')).toHaveValue('2099-01-01T10:00');
   });
 });
+
+// ─────────────────────────────────────────────────────────────────────────
+// Pipeline-lane sync (#129) — advancing into Approve & Schedule from
+// in-progress flips top-level status to 'review' so the post moves from
+// the Post Builder lane to Review & Schedule. The pipeline view reads
+// from the cache-merged items() signal, so the swap is observable both
+// immediately after Continue and across a reload.
+// ─────────────────────────────────────────────────────────────────────────
+test.describe('Pipeline lane sync (#129)', () => {
+  const POST_BUILDER_COL = 2; // 0=Ideas, 1=Concepts, 2=Post Builder
+  const REVIEW_COL = 3; // 3=Review & Schedule, 4=Published
+
+  test.beforeEach(async ({ page }) => {
+    await mockAuthenticatedUser(page);
+  });
+
+  test('TC-1: Continue from Packaging swaps post from Post Builder to Review & Schedule lane', async ({
+    page,
+  }) => {
+    const id = 'lane-tc1';
+    const title = 'Lane-swap TC1';
+    const entry = approvedPostEntry({
+      id,
+      title,
+      platform: 'instagram',
+      contentType: 'reel',
+    });
+    const detail = approvedPostInPackaging({
+      id,
+      title,
+      platform: 'instagram',
+      contentType: 'reel',
+    });
+    await mockHiveContent(page, { indexItems: [entry], details: { [id]: detail } });
+
+    await page.goto(`/workspace/hive-collective/content/${id}`);
+    await expect(page.locator('app-post-detail')).toBeVisible();
+    await expect(page.locator('app-packaging-step')).toBeVisible();
+
+    // Caption the Instagram packaging slot so canContinueFromPackaging flips true.
+    await page.locator('#ig-caption').fill('Hello world');
+
+    const continueBtn = page.locator('app-step-action-bar .continue-btn');
+    await expect(continueBtn).toBeEnabled();
+    await continueBtn.click();
+    await expect(page.locator('app-approve-schedule-step')).toBeVisible();
+
+    // Back to the pipeline. items() is cache-merged so the lane swap is
+    // visible immediately (no reload required).
+    await page.locator('app-post-detail-header .detail-back').click();
+    await expect(page.locator('app-pipeline-view')).toBeVisible();
+
+    const reviewCol = page.locator('.kanban-column').nth(REVIEW_COL);
+    await expect(reviewCol.locator('.column-title')).toContainText('Review & Schedule');
+    await expect(reviewCol.locator('.content-card', { hasText: title })).toBeVisible();
+
+    const postBuilderCol = page.locator('.kanban-column').nth(POST_BUILDER_COL);
+    await expect(postBuilderCol.locator('.column-title')).toContainText('Post Builder');
+    await expect(postBuilderCol.locator('.content-card', { hasText: title })).toHaveCount(0);
+  });
+
+  test('TC-2: lane swap persists across page reload (round-trip)', async ({ page }) => {
+    const id = 'lane-tc2';
+    const title = 'Lane-swap TC2';
+    const entry = approvedPostEntry({
+      id,
+      title,
+      platform: 'instagram',
+      contentType: 'reel',
+    });
+    const detail = approvedPostInPackaging({
+      id,
+      title,
+      platform: 'instagram',
+      contentType: 'reel',
+    });
+    await mockHiveContent(page, { indexItems: [entry], details: { [id]: detail } });
+
+    await page.goto(`/workspace/hive-collective/content/${id}`);
+    await expect(page.locator('app-packaging-step')).toBeVisible();
+    await page.locator('#ig-caption').fill('Caption for reload');
+
+    const continueBtn = page.locator('app-step-action-bar .continue-btn');
+    await expect(continueBtn).toBeEnabled();
+    await continueBtn.click();
+    await expect(page.locator('app-approve-schedule-step')).toBeVisible();
+
+    // Reload while on post-detail. The mock route handler has persisted the
+    // status:'review' bytes into details[id]; post-detail re-mounts on reload
+    // and re-caches the full item via loadFullItem.
+    await page.reload();
+    await expect(page.locator('app-post-detail')).toBeVisible();
+    await expect(page.locator('app-approve-schedule-step')).toBeVisible();
+
+    // Navigate to pipeline. loadAll refreshes indexEntries from the (stale)
+    // /index GET, but items() merges fullItemCache on top — the cached full
+    // item carries status:'review', so the lane membership reflects it.
+    await page.locator('app-post-detail-header .detail-back').click();
+    await expect(page.locator('app-pipeline-view')).toBeVisible();
+
+    const reviewCol = page.locator('.kanban-column').nth(REVIEW_COL);
+    await expect(reviewCol.locator('.column-title')).toContainText('Review & Schedule');
+    await expect(reviewCol.locator('.content-card', { hasText: title })).toBeVisible();
+
+    const postBuilderCol = page.locator('.kanban-column').nth(POST_BUILDER_COL);
+    await expect(postBuilderCol.locator('.content-card', { hasText: title })).toHaveCount(0);
+  });
+
+  test('TC-3: tab-clicks on a status="review" QA post fire no save and do not churn status', async ({
+    page,
+  }) => {
+    const id = 'lane-tc3';
+    const title = 'Lane-swap TC3';
+    // Pre-seed the post directly on the QA step with status='review' so
+    // the lane is correct from the start. Both the index entry AND the
+    // detail must carry status='review' — the entry feeds the pipeline's
+    // initial /index GET while the detail feeds /content-items/<id>.
+    const entry = {
+      ...approvedPostEntry({
+        id,
+        title,
+        platform: 'instagram',
+        contentType: 'reel',
+      }),
+      status: 'review' as const,
+    };
+    const detail = {
+      ...approvedPostInQA({
+        id,
+        title,
+        platform: 'instagram',
+        contentType: 'reel',
+      }),
+      status: 'review' as const,
+    };
+    await mockHiveContent(page, { indexItems: [entry], details: { [id]: detail } });
+
+    // Count PUT/PATCH/POST hits to the content-item endpoint. Tab-clicks
+    // should be UI-only — zero saves.
+    let writeCount = 0;
+    page.on('request', (req) => {
+      const url = req.url();
+      const method = req.method();
+      if (
+        (method === 'PUT' || method === 'PATCH' || method === 'POST') &&
+        url.includes(`/api/workspaces/hive-collective/content-items/${id}`)
+      ) {
+        writeCount++;
+      }
+    });
+
+    await page.goto(`/workspace/hive-collective/content/${id}`);
+    await expect(page.locator('app-approve-schedule-step')).toBeVisible();
+
+    // Tab-click round-trip: QA → Packaging → QA. setActiveStep only,
+    // no advanceProductionStep, so saveItem must NOT fire.
+    await page
+      .locator('app-production-steps-bar button', { hasText: 'Packaging' })
+      .click();
+    await expect(page.locator('app-packaging-step')).toBeVisible();
+    await page
+      .locator('app-production-steps-bar button', { hasText: 'Approve & Schedule' })
+      .click();
+    await expect(page.locator('app-approve-schedule-step')).toBeVisible();
+
+    // No writes at all — tab-clicks are UI-only.
+    expect(writeCount).toBe(0);
+
+    // Lane membership unchanged: still in Review & Schedule, absent from Post Builder.
+    await page.locator('app-post-detail-header .detail-back').click();
+    await expect(page.locator('app-pipeline-view')).toBeVisible();
+
+    const reviewCol = page.locator('.kanban-column').nth(REVIEW_COL);
+    await expect(reviewCol.locator('.content-card', { hasText: title })).toBeVisible();
+    const postBuilderCol = page.locator('.kanban-column').nth(POST_BUILDER_COL);
+    await expect(postBuilderCol.locator('.content-card', { hasText: title })).toHaveCount(0);
+  });
+});
