@@ -156,7 +156,6 @@ export const POST_DETAIL_PROD1 = {
         musicNotes: 'Lo-fi ambient',
       },
       compliance: { containsClaims: false, disclosureNeeded: false },
-      approved: false,
       canonicalType: 'VIDEO_SHORT_VERTICAL',
       hasTalent: false,
       hasMusic: false,

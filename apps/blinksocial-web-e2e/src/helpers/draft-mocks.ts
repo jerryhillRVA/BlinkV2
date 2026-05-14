@@ -53,7 +53,6 @@ export function approvedPostDetail(
     production: {
       productionStep: 'draft',
       brief: {
-        approved: true,
         canonicalType: 'auto',
       },
     },
@@ -73,7 +72,6 @@ export function approvedPostInPackaging(
     production: {
       productionStep: 'packaging',
       brief: {
-        approved: true,
         canonicalType: 'auto',
         publishingMode: 'ORGANIC',
       },
@@ -110,7 +108,6 @@ export function approvedPostInQA(o: ApprovedPostOptions): ContentItemContract {
     production: {
       productionStep: 'qa',
       brief: {
-        approved: true,
         canonicalType: 'auto',
         publishingMode: 'ORGANIC',
       },

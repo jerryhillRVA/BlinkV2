@@ -185,6 +185,18 @@ export class ContentItemsService {
 
     if (!this.fs.isConfigured()) {
       if (this.mockDataService?.isMockWorkspace(workspaceId)) {
+        // #126: persist the new item + index row + cascade in the mock
+        // override layer so subsequent GETs (and the pipeline view) reflect
+        // the create. Without this, mock-mode Move-to-Production silently
+        // dropped its writes.
+        this.mockDataService.setItemOverride(workspaceId, item.id, item);
+        const idx = await this.mockReadIndex(workspaceId);
+        idx.items.push(this.projectIndexEntry(item));
+        await this.mockWriteIndex(workspaceId, idx);
+        const parentId = this.resolveParentId(item);
+        if (parentId) {
+          await this.mockFlipParentToUsed(workspaceId, parentId);
+        }
         return item;
       }
       throw new NotFoundException(`Workspace not found: ${workspaceId}`);
@@ -467,6 +479,24 @@ export class ContentItemsService {
   ): Promise<{ deleted: true; id: string }> {
     if (!this.fs.isConfigured()) {
       if (this.mockDataService?.isMockWorkspace(workspaceId)) {
+        // #126: full mock-mode delete — remove the override (and mask any
+        // seed JSON for this id), strip the row from primary/archive index,
+        // and run the parent un-flip cascade so deleting the last child
+        // returns the parent to 'new'.
+        const existing = (await this.mockDataService.getItemFile(
+          workspaceId,
+          itemId,
+        )) as ContentItemContract | null;
+        this.mockDataService.deleteItemOverride(workspaceId, itemId);
+        const primary = await this.mockReadIndex(workspaceId);
+        primary.items = primary.items.filter((r) => r.id !== itemId);
+        await this.mockWriteIndex(workspaceId, primary);
+        const archive = await this.mockReadArchiveIndex(workspaceId);
+        archive.items = archive.items.filter((r) => r.id !== itemId);
+        await this.mockWriteArchiveIndex(workspaceId, archive);
+        if (existing) {
+          await this.mockMaybeUnflipParent(workspaceId, existing);
+        }
         return { deleted: true, id: itemId };
       }
       throw new NotFoundException(`Workspace not found: ${workspaceId}`);
@@ -519,10 +549,40 @@ export class ContentItemsService {
   ): Promise<SendConceptBackResponseContract> {
     if (!this.fs.isConfigured()) {
       if (this.mockDataService?.isMockWorkspace(workspaceId)) {
+        // #126: full mock-mode cascade — archive each live child post via
+        // setArchivedFlag (which handles override + index moves in the
+        // mock branch), then flip the concept's override to 'new'.
+        const concept = (await this.mockDataService.getItemFile(
+          workspaceId,
+          conceptId,
+        )) as ContentItemContract | null;
+        if (!concept) {
+          throw new NotFoundException(`Item not found: ${conceptId}`);
+        }
+        if (concept.stage !== 'concept') {
+          throw new BadRequestException(
+            `Item ${conceptId} is not a concept (stage=${concept.stage})`,
+          );
+        }
+        const primary = await this.mockReadIndex(workspaceId);
+        const archive = await this.mockReadArchiveIndex(workspaceId);
+        const liveChildren = primary.items.filter(
+          (r) =>
+            r.stage === 'post' && r.parentConceptId === conceptId && !r.archived,
+        );
+        const alreadyArchivedPostIds = archive.items
+          .filter((r) => r.stage === 'post' && r.parentConceptId === conceptId)
+          .map((r) => r.id);
+        const archivedPostIds: string[] = [];
+        for (const child of liveChildren) {
+          await this.setArchivedFlag(workspaceId, child.id, true);
+          archivedPostIds.push(child.id);
+        }
+        await this.mockFlipParentToNew(workspaceId, conceptId);
         return {
           conceptId,
-          archivedPostIds: [],
-          alreadyArchivedPostIds: [],
+          archivedPostIds,
+          alreadyArchivedPostIds,
           conceptStatus: 'new',
         };
       }
@@ -813,11 +873,37 @@ export class ContentItemsService {
           workspaceId,
           itemId,
         )) as ContentItemContract | null;
-        return {
-          ...(existing ?? ({ id: itemId } as ContentItemContract)),
+        if (!existing) {
+          throw new NotFoundException(`Item not found: ${itemId}`);
+        }
+        if (!!existing.archived === archived) {
+          return existing;
+        }
+        const updated: ContentItemContract = {
+          ...existing,
           archived,
           updatedAt: new Date().toISOString(),
-        } as ContentItemContract;
+        };
+        // #126: persist the override + move the row between primary and
+        // archive index in the mock layer, mirroring the AFS branch below.
+        this.mockDataService.setItemOverride(workspaceId, itemId, updated);
+        const primary = await this.mockReadIndex(workspaceId);
+        const archiveIdx = await this.mockReadArchiveIndex(workspaceId);
+        const row = this.projectIndexEntry(updated);
+        if (archived) {
+          primary.items = primary.items.filter((r) => r.id !== itemId);
+          const i = archiveIdx.items.findIndex((r) => r.id === itemId);
+          if (i === -1) archiveIdx.items.push(row);
+          else archiveIdx.items[i] = row;
+        } else {
+          archiveIdx.items = archiveIdx.items.filter((r) => r.id !== itemId);
+          const i = primary.items.findIndex((r) => r.id === itemId);
+          if (i === -1) primary.items.push(row);
+          else primary.items[i] = row;
+        }
+        await this.mockWriteIndex(workspaceId, primary);
+        await this.mockWriteArchiveIndex(workspaceId, archiveIdx);
+        return updated;
       }
       throw new NotFoundException(`Workspace not found: ${workspaceId}`);
     }
@@ -884,5 +970,178 @@ export class ContentItemsService {
       totalCount: 0,
       lastUpdated: new Date().toISOString(),
     };
+  }
+
+  // --- Internal: mock-mode helpers (ticket #126) ---
+  //
+  // These mirror the AFS helpers above but route through MockDataService's
+  // in-memory override layer. They exist so the mock branches of createItem,
+  // deleteItem, setArchivedFlag, and sendConceptBack produce a coherent
+  // index + cascade without touching the real filesystem. No-ops degrade
+  // gracefully when mockDataService is unavailable.
+
+  private async mockReadIndex(
+    workspaceId: string,
+  ): Promise<ContentItemsIndexContract> {
+    const data = (await this.mockDataService?.getNamespaceAggregate(
+      workspaceId,
+      NAMESPACE,
+      INDEX_FILE,
+    )) as ContentItemsIndexContract | null;
+    // Deep-clone so mutations don't bleed back into the seed JSON cache.
+    return data
+      ? (JSON.parse(JSON.stringify(data)) as ContentItemsIndexContract)
+      : this.emptyIndex();
+  }
+
+  private async mockReadArchiveIndex(
+    workspaceId: string,
+  ): Promise<ContentItemsArchiveIndexContract> {
+    const data = (await this.mockDataService?.getNamespaceAggregate(
+      workspaceId,
+      NAMESPACE,
+      ARCHIVE_INDEX_FILE,
+    )) as ContentItemsArchiveIndexContract | null;
+    return data
+      ? (JSON.parse(JSON.stringify(data)) as ContentItemsArchiveIndexContract)
+      : this.emptyIndex();
+  }
+
+  private async mockWriteIndex(
+    workspaceId: string,
+    idx: ContentItemsIndexContract,
+  ): Promise<void> {
+    if (!this.mockDataService) return;
+    idx.totalCount = idx.items.length;
+    idx.lastUpdated = new Date().toISOString();
+    this.mockDataService.setAggregateOverride(
+      workspaceId,
+      NAMESPACE,
+      INDEX_FILE,
+      idx,
+    );
+  }
+
+  private async mockWriteArchiveIndex(
+    workspaceId: string,
+    idx: ContentItemsArchiveIndexContract,
+  ): Promise<void> {
+    if (!this.mockDataService) return;
+    idx.totalCount = idx.items.length;
+    idx.lastUpdated = new Date().toISOString();
+    this.mockDataService.setAggregateOverride(
+      workspaceId,
+      NAMESPACE,
+      ARCHIVE_INDEX_FILE,
+      idx,
+    );
+  }
+
+  /**
+   * Mock-mode equivalent of {@link flipParentToUsed}. Reads the parent
+   * override (or seed), sets `status: 'used'` if not already, writes the
+   * patched override back, and patches the row in the matching index.
+   */
+  private async mockFlipParentToUsed(
+    workspaceId: string,
+    parentId: string,
+  ): Promise<void> {
+    if (!this.mockDataService) return;
+    const parent = (await this.mockDataService.getItemFile(
+      workspaceId,
+      parentId,
+    )) as ContentItemContract | null;
+    if (!parent) return;
+    if (parent.status === 'used') return;
+    const updated: ContentItemContract = {
+      ...parent,
+      status: 'used',
+      updatedAt: new Date().toISOString(),
+    };
+    this.mockDataService.setItemOverride(workspaceId, parentId, updated);
+    await this.mockReplaceIndexRow(workspaceId, updated);
+  }
+
+  /**
+   * Mock-mode equivalent of {@link flipParentToNew}.
+   */
+  private async mockFlipParentToNew(
+    workspaceId: string,
+    parentId: string,
+  ): Promise<void> {
+    if (!this.mockDataService) return;
+    const parent = (await this.mockDataService.getItemFile(
+      workspaceId,
+      parentId,
+    )) as ContentItemContract | null;
+    if (!parent) return;
+    if (parent.status === 'new') return;
+    const updated: ContentItemContract = {
+      ...parent,
+      status: 'new',
+      updatedAt: new Date().toISOString(),
+    };
+    this.mockDataService.setItemOverride(workspaceId, parentId, updated);
+    await this.mockReplaceIndexRow(workspaceId, updated);
+  }
+
+  /**
+   * Mock-mode equivalent of {@link maybeUnflipParent}. Counts remaining
+   * children of the removed item's parent across both mock indexes; if
+   * zero, flips the parent's override status back to `'new'`.
+   */
+  private async mockMaybeUnflipParent(
+    workspaceId: string,
+    removed: ContentItemContract,
+  ): Promise<void> {
+    let parentId: string | null = null;
+    let parentStage: 'idea' | 'concept' | null = null;
+    if (removed.stage === 'concept' && removed.parentIdeaId) {
+      parentId = removed.parentIdeaId;
+      parentStage = 'idea';
+    } else if (removed.stage === 'post' && removed.parentConceptId) {
+      parentId = removed.parentConceptId;
+      parentStage = 'concept';
+    }
+    if (!parentId || !parentStage) return;
+
+    const primary = await this.mockReadIndex(workspaceId);
+    const archive = await this.mockReadArchiveIndex(workspaceId);
+    const rows = [...primary.items, ...archive.items];
+    const remaining =
+      parentStage === 'idea'
+        ? rows.filter(
+            (r) => r.stage === 'concept' && r.parentIdeaId === parentId,
+          ).length
+        : rows.filter(
+            (r) => r.stage === 'post' && r.parentConceptId === parentId,
+          ).length;
+    if (remaining > 0) return;
+    await this.mockFlipParentToNew(workspaceId, parentId);
+  }
+
+  /**
+   * Find the row matching `item.id` in either the primary or archive mock
+   * index and replace it with a freshly-projected row. No-op if the row
+   * isn't present in either index.
+   */
+  private async mockReplaceIndexRow(
+    workspaceId: string,
+    item: ContentItemContract,
+  ): Promise<void> {
+    const row = this.projectIndexEntry(item);
+    const primary = await this.mockReadIndex(workspaceId);
+    const primaryIdx = primary.items.findIndex((r) => r.id === item.id);
+    if (primaryIdx !== -1) {
+      primary.items[primaryIdx] = row;
+      await this.mockWriteIndex(workspaceId, primary);
+      return;
+    }
+    const archive = await this.mockReadArchiveIndex(workspaceId);
+    const archiveIdx = archive.items.findIndex((r) => r.id === item.id);
+    if (archiveIdx !== -1) {
+      archive.items[archiveIdx] = row;
+      await this.mockWriteArchiveIndex(workspaceId, archive);
+    }
   }
 }

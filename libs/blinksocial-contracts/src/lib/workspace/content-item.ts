@@ -143,7 +143,6 @@ export interface ProductionBriefContract {
   platformRules?: ProductionBriefPlatformRulesContract;
   creativePlan?: ProductionBriefCreativePlanContract;
   compliance?: ProductionBriefComplianceContract;
-  approved?: boolean;
   canonicalType?: string;
   hasTalent?: boolean;
   hasMusic?: boolean;
