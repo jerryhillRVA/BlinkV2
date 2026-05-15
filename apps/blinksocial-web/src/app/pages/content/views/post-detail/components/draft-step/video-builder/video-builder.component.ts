@@ -4,12 +4,14 @@ import { FormsModule } from '@angular/forms';
 import type {
   AiAssistFieldContract,
   DraftShotItemContract,
+  DraftUploadedAssetContract,
 } from '@blinksocial/contracts';
 import { PostDetailStore } from '../../../post-detail.store';
 import { ContentStateService } from '../../../../../content-state.service';
 import { AiAssistApiService } from '../../../../../../../core/ai-assist/ai-assist.service';
 import { ToastService } from '../../../../../../../core/toast/toast.service';
 import { ShotListComponent } from '../_shared/shot-list/shot-list.component';
+import { UploadAssetsComponent } from '../_shared/upload-assets/upload-assets.component';
 import { SectionLabelComponent } from '../_shared/section-label/section-label.component';
 import { AiButtonComponent } from '../_shared/ai-button/ai-button.component';
 import {
@@ -31,6 +33,7 @@ const TARGET_DURATIONS: PillOption[] = [
   imports: [
     FormsModule,
     ShotListComponent,
+    UploadAssetsComponent,
     SectionLabelComponent,
     AiButtonComponent,
     PillGroupComponent,
@@ -69,6 +72,10 @@ export class VideoBuilderComponent {
 
   protected readonly shotsRequired = computed(() => this.shotCount() === 0);
 
+  protected readonly uploadedAssets = computed<ReadonlyArray<DraftUploadedAssetContract>>(
+    () => this.draft().uploadedAssets ?? [],
+  );
+
   // CTA Type comes from the (locked) brief — surfaced here as a helper line.
   protected readonly ctaTypeLabel = computed(() => {
     const ct = this.store.item()?.cta?.type;
@@ -101,8 +108,26 @@ export class VideoBuilderComponent {
     this.store.setVideoShotList(shots);
   }
 
-  protected onCoverAssetRefChange(v: string | undefined): void {
-    this.store.setVideoCoverAssetRef(v);
+  protected onAssetsAdded(newAssets: DraftUploadedAssetContract[]): void {
+    const pool = this.uploadedAssets();
+    this.store.setVideoUploadedAssets([...pool, ...newAssets]);
+  }
+
+  protected onAssetRemoved(id: string): void {
+    const pool = this.uploadedAssets().filter((a) => a.id !== id);
+    const shots = this.draft().shotList ?? [];
+    const hasCascade = shots.some((s) => s.assetRef === id);
+    if (hasCascade) {
+      // Atomic update — two sequential saveItem calls would race in
+      // async transport (the second call reads a pre-first-PUT cache
+      // and overwrites the pool back). See store comment.
+      const remappedShots = shots.map((s) =>
+        s.assetRef === id ? { ...s, assetRef: undefined } : s,
+      );
+      this.store.setVideoUploadedAssetsAndShotList(pool, remappedShots);
+    } else {
+      this.store.setVideoUploadedAssets(pool);
+    }
   }
 
   protected onHookBank(): void {

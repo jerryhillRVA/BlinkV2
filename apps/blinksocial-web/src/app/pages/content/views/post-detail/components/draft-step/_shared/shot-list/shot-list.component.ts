@@ -3,9 +3,13 @@ import { FormsModule } from '@angular/forms';
 import type {
   DraftShotItemContract,
   DraftShotItemTypeContract,
+  DraftUploadedAssetContract,
 } from '@blinksocial/contracts';
-import { SectionLabelComponent } from '../section-label/section-label.component';
 import { AiButtonComponent } from '../ai-button/ai-button.component';
+import {
+  DropdownComponent,
+  type DropdownOption,
+} from '../../../../../../../../shared/dropdown/dropdown.component';
 
 const SHOT_TYPES: DraftShotItemTypeContract[] = [
   'Shot',
@@ -30,17 +34,22 @@ const AI_GENERATED_SHOTS: ReadonlyArray<Pick<DraftShotItemContract, 'type' | 'de
 
 @Component({
   selector: 'app-shot-list',
-  imports: [FormsModule, SectionLabelComponent, AiButtonComponent],
+  imports: [FormsModule, AiButtonComponent, DropdownComponent],
   templateUrl: './shot-list.component.html',
   styleUrl: './shot-list.component.scss',
 })
 export class ShotListComponent {
   @Input() shots: DraftShotItemContract[] = [];
-  @Input() coverAssetRef: string | undefined = undefined;
+  /**
+   * #139: the shared asset pool (from
+   * `ProductionDraftVideoContract.uploadedAssets`). Each shot row's
+   * picker draws from this list. The same asset CAN be assigned to
+   * multiple shots — no filtering applied.
+   */
+  @Input() availableAssets: ReadonlyArray<DraftUploadedAssetContract> = [];
   @Input() disabled = false;
 
   @Output() shotsChange = new EventEmitter<DraftShotItemContract[]>();
-  @Output() coverAssetRefChange = new EventEmitter<string | undefined>();
 
   protected readonly shotTypes = SHOT_TYPES;
   /* v8 ignore next 1 — V8's function-call-throws branches on input()/signal() declarations are unreachable (Angular class-field init time; ESM exports not spy-able) */
@@ -49,6 +58,25 @@ export class ShotListComponent {
   protected get countLabel(): string {
     const n = this.shots.length;
     return n === 1 ? '1 shot' : `${n} shots`;
+  }
+
+  /** Lookup an asset by id for chip rendering on an assigned shot row. */
+  protected assetById(id: string | undefined): DraftUploadedAssetContract | null {
+    if (!id) return null;
+    return this.availableAssets.find((a) => a.id === id) ?? null;
+  }
+
+  protected isVideoMime(mimeType: string | undefined): boolean {
+    return !!mimeType && mimeType.startsWith('video/');
+  }
+
+  protected get poolEmpty(): boolean {
+    return this.availableAssets.length === 0;
+  }
+
+  /** Asset pool projected into the shape <app-dropdown> consumes. */
+  protected get pickerOptions(): DropdownOption[] {
+    return this.availableAssets.map((a) => ({ value: a.id, label: a.filename }));
   }
 
   protected onAddShot(): void {
@@ -119,37 +147,23 @@ export class ShotListComponent {
     this.patch(id, { duration: v });
   }
 
-  private patch(id: string, patch: Partial<DraftShotItemContract>): void {
-    this.shotsChange.emit(
-      this.shots.map((s) => (s.id === id ? { ...s, ...patch } : s)),
-    );
-  }
+  // ── Per-shot asset picker / clear ────────────────────────────────
+  // #139: filename-attach was replaced by a select-from-pool picker.
+  // The pool lives one level up on `ProductionDraftVideoContract`.
 
-  // ── Top-level cover-asset attach/clear ────────────────────────────
-
-  protected onCoverFile(e: Event): void {
+  protected onShotAssetPick(shotId: string, value: string): void {
     if (this.disabled) return;
-    const file = (e.target as HTMLInputElement).files?.[0];
-    if (!file) return;
-    this.coverAssetRefChange.emit(file.name);
-  }
-
-  protected onCoverClear(): void {
-    if (this.disabled) return;
-    this.coverAssetRefChange.emit(undefined);
-  }
-
-  // ── Per-shot asset attach/AI-create/clear ─────────────────────────
-
-  protected onShotFile(id: string, e: Event): void {
-    if (this.disabled) return;
-    const file = (e.target as HTMLInputElement).files?.[0];
-    if (!file) return;
-    this.patch(id, { assetRef: file.name });
+    this.patch(shotId, { assetRef: value || undefined });
   }
 
   protected onShotAssetClear(id: string): void {
     if (this.disabled) return;
     this.patch(id, { assetRef: undefined });
+  }
+
+  private patch(id: string, patch: Partial<DraftShotItemContract>): void {
+    this.shotsChange.emit(
+      this.shots.map((s) => (s.id === id ? { ...s, ...patch } : s)),
+    );
   }
 }

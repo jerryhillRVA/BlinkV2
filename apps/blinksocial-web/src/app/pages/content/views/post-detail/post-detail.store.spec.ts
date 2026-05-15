@@ -868,6 +868,46 @@ describe('PostDetailStore — production.draft (#114)', () => {
         shotList: [{ id: 's1', type: 'Shot', description: 'd', duration: '5s' }],
       });
     });
+
+    // #139: shared asset pool replaces the prior coverAssetRef slot.
+    it('#139: setVideoUploadedAssets persists when brief is approved', () => {
+      const { store } = setup(makeApprovedItem());
+      store.setVideoUploadedAssets([
+        { id: 'a1', filename: 'clip.mp4', mimeType: 'video/mp4', size: 1024 },
+      ]);
+      expect(store.videoDraft().uploadedAssets).toEqual([
+        { id: 'a1', filename: 'clip.mp4', mimeType: 'video/mp4', size: 1024 },
+      ]);
+    });
+
+    it('#139: setVideoUploadedAssets is a no-op when briefApproved=false', () => {
+      const { store } = setup(makeItem({ briefApproved: false }));
+      store.setVideoUploadedAssets([{ id: 'a1', filename: 'clip.mp4' }]);
+      expect(store.videoDraft().uploadedAssets).toBeUndefined();
+    });
+
+    it('#139: setVideoUploadedAssetsAndShotList persists both in one operation', () => {
+      const { store } = setup(makeApprovedItem());
+      store.setVideoUploadedAssetsAndShotList(
+        [{ id: 'a1', filename: 'clip.mp4' }],
+        [{ id: 's1', type: 'Shot', description: 'd', duration: '5s', assetRef: 'a1' }],
+      );
+      const v = store.videoDraft();
+      expect(v.uploadedAssets).toEqual([{ id: 'a1', filename: 'clip.mp4' }]);
+      expect(v.shotList).toEqual([
+        { id: 's1', type: 'Shot', description: 'd', duration: '5s', assetRef: 'a1' },
+      ]);
+    });
+
+    it('#139: setVideoUploadedAssetsAndShotList is a no-op when briefApproved=false', () => {
+      const { store } = setup(makeItem({ briefApproved: false }));
+      store.setVideoUploadedAssetsAndShotList(
+        [{ id: 'a1', filename: 'clip.mp4' }],
+        [{ id: 's1', type: 'Shot', description: '', duration: '5s' }],
+      );
+      expect(store.videoDraft().uploadedAssets).toBeUndefined();
+      expect(store.videoDraft().shotList).toBeUndefined();
+    });
   });
 
   describe('VIDEO_LONG setters', () => {

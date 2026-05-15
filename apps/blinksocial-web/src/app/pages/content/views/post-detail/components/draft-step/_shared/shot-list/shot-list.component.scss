@@ -8,40 +8,6 @@
   gap: 12px;
 }
 
-// ── Top-level asset slot ─────────────────────────────────────────────────────
-
-.asset-slot {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  padding: 12px;
-  background: var(--blink-surface);
-  border: 1px solid var(--blink-outline-variant);
-  border-radius: 8px;
-}
-
-.asset-slot-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  flex-wrap: wrap;
-}
-
-.asset-slot-actions {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  flex-wrap: wrap;
-}
-
-.asset-empty {
-  margin: 0;
-  font-size: var(--blink-body-small);
-  font-style: italic;
-  color: var(--blink-on-surface-faint, #6b7280);
-}
-
 // ── Add shot / utility ghost button ──────────────────────────────────────────
 
 .ghost-btn {
@@ -109,66 +75,67 @@
   border: 0;
 }
 
-// ── Attached-asset chip ──────────────────────────────────────────────
+// ── Attached-asset chip (selected file row) ─────────────────────────
+//
+// Prototype: a plain flex row INSIDE the dashed outer container — no
+// border / no background of its own. Thumb on the left, filename in
+// the middle (truncated, gray-700, weight 600), × on the right.
 
 .asset-chip {
-  display: inline-flex;
+  display: flex;
   align-items: center;
-  gap: 6px;
-  padding: 4px 6px 4px 10px;
-  background: #eff6ff; // blue-50
-  border: 1px solid #bfdbfe; // blue-200
-  border-radius: 999px;
-  color: #1d4ed8; // blue-700
+  gap: 8px;
+  width: 100%;
+  max-width: 100%;
+  background: transparent;
+  border: none;
+  padding: 0;
+  color: var(--blink-on-surface-secondary);
   font-size: var(--blink-label-small);
   font-weight: 600;
-  max-width: 100%;
 
   .asset-chip-name {
+    flex: 1 1 auto;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
-    max-width: 200px;
+    min-width: 0;
   }
 
   &--sm {
-    padding: 2px 4px 2px 8px;
-    font-size: 9px;
-    gap: 4px;
-
-    .asset-chip-name {
-      max-width: 160px;
-    }
+    gap: 8px;
   }
 }
 
+// Minimalist × on the right edge of the chip — just an icon, no
+// background. opacity 0.5 by default, 1 on hover; matches the
+// prototype's `opacity-50 hover:opacity-100`.
 .asset-chip-remove {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 16px;
-  height: 16px;
   background: transparent;
   border: none;
-  border-radius: 50%;
+  padding: 0;
   color: inherit;
   cursor: pointer;
-  opacity: 0.7;
-  transition: opacity 120ms ease, background-color 120ms ease;
+  opacity: 0.5;
+  flex-shrink: 0;
+  transition: opacity 120ms ease;
 
   &:hover:not(:disabled) {
     opacity: 1;
-    background: rgba(0, 0, 0, 0.06);
   }
 
   &:focus-visible {
     outline: 2px solid var(--blink-brand-primary);
     outline-offset: 1px;
+    opacity: 1;
   }
 
   &:disabled {
     cursor: not-allowed;
-    opacity: 0.4;
+    opacity: 0.25;
   }
 }
 
@@ -177,19 +144,20 @@
 .add-shot-row {
   display: flex;
   align-items: center;
+  gap: 8px;
 }
 
-// ── Per-shot asset zone (dropzone-style wrapper) ────────────────────
-//
-// Wraps the Attach-file button (or attached-asset chip) in a defined
-// region with its own border + padding. Matches the prototype's per-
-// shot asset slot:
-//
-//   - Empty: dashed gray-300 border on white. Reads as "this is a
-//     drop zone — drop or click to attach."
-//   - Attached: solid blue-200 border on blue-50. Reads as
-//     "something is here and lives in this slot."
+.add-shot-count {
+  margin-left: auto;
+  font-size: var(--blink-label-small);
+  color: var(--blink-on-surface-faint);
+}
 
+// ── Per-shot asset zone (#139: dashed-bordered picker/chip slot) ───
+//
+// Prototype keeps the same dashed-border + white-bg container in ALL
+// states — empty pool message, picker, AND assigned chip all live
+// INSIDE that same dashed box. Only the inner content swaps.
 .shot-asset-zone {
   display: flex;
   align-items: center;
@@ -197,17 +165,52 @@
   flex-wrap: wrap;
   padding: 8px;
   border-radius: 6px;
-  transition: background-color 120ms ease, border-color 120ms ease;
-}
-
-.shot-asset-zone--empty {
   background: var(--blink-surface);
-  border: 1px dashed #d1d5db; // gray-300
+  border: 1px dashed var(--blink-outline-dashed);
 }
 
+// Kept as a hook for state-specific tweaks; structural styling is
+// shared via `.shot-asset-zone` above.
+.shot-asset-zone--empty,
 .shot-asset-zone--attached {
-  background: #eff6ff; // blue-50
-  border: 1px solid #bfdbfe; // blue-200
+  /* shared chrome */
+}
+
+// #139 polish: per-shot picker now uses <app-dropdown>. The wrapper
+// stretches the dropdown to the full width of the asset zone and
+// applies a disabled overlay when the pool is empty.
+.shot-asset-picker {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.shot-asset-picker--disabled {
+  opacity: 0.55;
+  pointer-events: none;
+}
+
+.asset-chip-thumb {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 4px;
+  background: var(--blink-on-surface-strong);
+  color: var(--blink-on-surface-faint);
+  flex-shrink: 0;
+  overflow: hidden;
+  border: 1px solid var(--blink-outline-variant);
+}
+
+.asset-chip-video {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  pointer-events: none;
 }
 
 // ── Empty state ──────────────────────────────────────────────────────────────

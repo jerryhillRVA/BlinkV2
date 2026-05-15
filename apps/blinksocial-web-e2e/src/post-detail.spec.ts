@@ -476,6 +476,188 @@ test.describe('Production Draft (#114)', () => {
   });
 });
 
+// #139 — short-form VIDEO builder splits Upload Assets out of <app-shot-list>
+// into a sibling card. Pool entries are shared across all shot rows; each
+// shot row picks from the pool via an "Assign an asset…" select.
+test.describe('Upload Assets pool — split out of Shot List (#139)', () => {
+  async function openApprovedVideoDraft(
+    page: Page,
+    options: {
+      id: string;
+      title?: string;
+      uploadedAssets?: ReadonlyArray<{ id: string; filename: string; mimeType?: string }>;
+      shots?: ReadonlyArray<{ id: string; type: string; description: string; duration: string; assetRef?: string }>;
+    },
+  ): Promise<void> {
+    const entry = approvedPostEntry({
+      id: options.id,
+      title: options.title ?? 'Upload Assets test',
+      platform: 'instagram',
+      contentType: 'reel',
+    });
+    const baseDetail = approvedPostDetail({
+      id: options.id,
+      title: options.title ?? 'Upload Assets test',
+      platform: 'instagram',
+      contentType: 'reel',
+    });
+    // Inject the draft.mode='VIDEO' + shotList + uploadedAssets seed.
+    const detail = {
+      ...baseDetail,
+      production: {
+        ...baseDetail.production,
+        productionStep: 'draft' as const,
+        draft: {
+          mode: 'VIDEO' as const,
+          video: {
+            ...(options.uploadedAssets ? { uploadedAssets: [...options.uploadedAssets] } : {}),
+            ...(options.shots ? { shotList: [...options.shots] } : {}),
+          },
+        },
+      },
+    };
+    await mockHiveContent(page, {
+      indexItems: [entry],
+      details: { [options.id]: detail as never },
+    });
+    await page.goto(`/workspace/hive-collective/content/${options.id}`);
+    await expect(page.locator('app-post-detail')).toBeVisible();
+    await expect(page.locator('app-draft-step')).toBeVisible();
+    await expect(page.locator('app-video-builder')).toBeVisible();
+  }
+
+  test.beforeEach(async ({ page }) => {
+    await mockAuthenticatedUser(page);
+  });
+
+  test('TC-E2: cover-asset slot is gone; <app-upload-assets> is above <app-shot-list>', async ({ page }) => {
+    await openApprovedVideoDraft(page, { id: 'tc-e2', shots: [{ id: 's1', type: 'Shot', description: '', duration: '5s' }] });
+    // Old top-level cover-asset slot in shot-list is absent.
+    await expect(page.locator('app-shot-list .asset-slot')).toHaveCount(0);
+    await expect(page.locator('app-shot-list .asset-empty')).toHaveCount(0);
+    // New upload-assets card is present, and renders before shot-list.
+    await expect(page.locator('app-upload-assets')).toBeVisible();
+    const order = await page.evaluate(() => {
+      const upload = document.querySelector('app-upload-assets');
+      const shotList = document.querySelector('app-shot-list');
+      if (!upload || !shotList) return null;
+      return upload.compareDocumentPosition(shotList) & Node.DOCUMENT_POSITION_FOLLOWING ? 'before' : 'after';
+    });
+    expect(order).toBe('before');
+  });
+
+  test('TC-E1: upload an asset → warning + badge disappear → assign to shot → reload survives', async ({ page }) => {
+    await openApprovedVideoDraft(page, {
+      id: 'tc-e1',
+      shots: [{ id: 's1', type: 'Shot', description: '', duration: '5s' }],
+    });
+    // Empty state: warning copy + "1 asset required" badge are visible.
+    await expect(page.locator('app-upload-assets .upload-warning')).toContainText(
+      'Upload at least one asset before building your shot list.',
+    );
+    // Upload one file via the empty-state input.
+    await page
+      .locator('app-upload-assets .upload-btn input[type="file"]')
+      .setInputFiles({
+        name: 'clip.mp4',
+        mimeType: 'video/mp4',
+        buffer: Buffer.from('fake'),
+      });
+    // Filled state: warning gone, one thumbnail rendered.
+    await expect(page.locator('app-upload-assets .upload-warning')).toHaveCount(0);
+    await expect(page.locator('app-upload-assets .thumb')).toHaveCount(1);
+    await expect(page.locator('app-upload-assets .thumb-filename')).toContainText('clip.mp4');
+    // Shot 1's picker now lists clip.mp4. Open the dropdown and pick it.
+    const picker = page.locator('.shot-row .shot-asset-picker').first();
+    await expect(picker).not.toHaveClass(/shot-asset-picker--disabled/);
+    await picker.locator('.dropdown-trigger').click();
+    await picker.locator('.dropdown-option', { hasText: 'clip.mp4' }).click();
+    // The row flips to chip mode.
+    await expect(page.locator('.shot-row .asset-chip--sm')).toContainText('clip.mp4');
+    // Reload: pool + assigned shot ref survive (mock merges PUT body).
+    await page.reload();
+    await expect(page.locator('app-post-detail')).toBeVisible();
+    await expect(page.locator('app-upload-assets .thumb-filename')).toContainText('clip.mp4');
+    await expect(page.locator('.shot-row .asset-chip--sm')).toContainText('clip.mp4');
+  });
+
+  test('TC-E3: removing a referenced asset cascades to clear the shot.assetRef', async ({ page }) => {
+    await openApprovedVideoDraft(page, {
+      id: 'tc-e3',
+      uploadedAssets: [{ id: 'a1', filename: 'clip.mp4', mimeType: 'video/mp4' }],
+      shots: [{ id: 's1', type: 'Shot', description: '', duration: '5s', assetRef: 'a1' }],
+    });
+    await expect(page.locator('.shot-row .asset-chip--sm')).toContainText('clip.mp4');
+    // Click the × on the pool thumbnail.
+    await page.locator('app-upload-assets .thumb-remove').click();
+    // Pool empty, shot reverts to picker (disabled — pool is empty).
+    await expect(page.locator('app-upload-assets .thumb')).toHaveCount(0);
+    await expect(page.locator('.shot-row .asset-chip--sm')).toHaveCount(0);
+    const picker = page.locator('.shot-row .shot-asset-picker');
+    await expect(picker).toHaveClass(/shot-asset-picker--disabled/);
+    // Reload: state survives.
+    await page.reload();
+    await expect(page.locator('app-post-detail')).toBeVisible();
+    await expect(page.locator('app-upload-assets .thumb')).toHaveCount(0);
+    await expect(page.locator('.shot-row .shot-asset-picker')).toHaveClass(
+      /shot-asset-picker--disabled/,
+    );
+  });
+
+  test('TC-E4: the same pool asset can be assigned to two shots simultaneously', async ({ page }) => {
+    await openApprovedVideoDraft(page, {
+      id: 'tc-e4',
+      uploadedAssets: [{ id: 'a1', filename: 'clip.mp4', mimeType: 'video/mp4' }],
+      shots: [
+        { id: 's1', type: 'Shot', description: '', duration: '5s' },
+        { id: 's2', type: 'Shot', description: '', duration: '5s' },
+      ],
+    });
+    // Both shots show the picker initially.
+    await expect(page.locator('.shot-row .shot-asset-picker')).toHaveCount(2);
+    // After each assignment the picker for that row is replaced by a chip,
+    // so .shot-asset-picker shifts. Re-query the first remaining picker.
+    await page.locator('.shot-row .shot-asset-picker').first().locator('.dropdown-trigger').click();
+    await page
+      .locator('.shot-row .shot-asset-picker')
+      .first()
+      .locator('.dropdown-option', { hasText: 'clip.mp4' })
+      .click();
+    await page.locator('.shot-row .shot-asset-picker').first().locator('.dropdown-trigger').click();
+    await page
+      .locator('.shot-row .shot-asset-picker')
+      .first()
+      .locator('.dropdown-option', { hasText: 'clip.mp4' })
+      .click();
+    // After both assignments, both rows render the chip and the pool still
+    // has exactly one thumbnail (no duplication).
+    await expect(page.locator('.shot-row .asset-chip--sm')).toHaveCount(2);
+    await expect(page.locator('app-upload-assets .thumb')).toHaveCount(1);
+    // Reload survives.
+    await page.reload();
+    await expect(page.locator('app-post-detail')).toBeVisible();
+    await expect(page.locator('.shot-row .asset-chip--sm')).toHaveCount(2);
+  });
+
+  test('TC-E5: pool-empty picker is disabled but other shot controls stay editable (warning-only gating)', async ({ page }) => {
+    await openApprovedVideoDraft(page, {
+      id: 'tc-e5',
+      shots: [{ id: 's1', type: 'Shot', description: '', duration: '5s' }],
+    });
+    await expect(page.locator('.shot-row .shot-asset-picker')).toHaveClass(
+      /shot-asset-picker--disabled/,
+    );
+    // Description / duration / type stay editable.
+    await expect(page.locator('.shot-row .shot-description')).toBeEnabled();
+    await expect(page.locator('.shot-row .shot-duration')).toBeEnabled();
+    await expect(page.locator('.shot-row .shot-type')).toBeEnabled();
+    // Add Shot + AI Generate stay clickable.
+    await expect(
+      page.locator('app-shot-list .add-shot-row .ghost-btn', { hasText: 'Add shot' }),
+    ).toBeEnabled();
+  });
+});
+
 test.describe('Send back to Concept menu visibility (#121)', () => {
   test.beforeEach(async ({ page }) => {
     await mockAuthenticatedUser(page);

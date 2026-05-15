@@ -196,7 +196,35 @@ export interface DraftShotItemContract {
   type: DraftShotItemTypeContract;
   description: string;
   duration: string;
+  /**
+   * #139: now an id referencing an entry in
+   * `ProductionDraftVideoContract.uploadedAssets[]`. Prior to #139 this
+   * field held a filename; new code resolves the filename via the pool.
+   */
   assetRef?: string;
+}
+
+/**
+ * #139: a single uploaded asset in the short-form video draft's shared
+ * pool. Lives on `ProductionDraftVideoContract.uploadedAssets[]`. Shot
+ * rows reference entries by `id` (not filename) so renames don't break
+ * shot links. `mimeType` + `size` are optional metadata captured at
+ * upload time; the future AgenticFilesystem swap will populate them.
+ *
+ * `previewUrl` is a **transient** blob URL generated client-side via
+ * `URL.createObjectURL(file)` at upload time. It is NOT persisted by
+ * the API (the mock harness echoes it back in-memory, but it's a
+ * per-document handle that doesn't survive page reload). Once AFS is
+ * wired, a real `https://` URL replaces this field. Consumers must
+ * treat the field as best-effort: if it's missing, render the icon
+ * fallback.
+ */
+export interface DraftUploadedAssetContract {
+  id: string;
+  filename: string;
+  mimeType?: string;
+  size?: number;
+  previewUrl?: string;
 }
 
 export type DraftSequenceBlockTypeContract =
@@ -225,16 +253,17 @@ export interface ProductionDraftVideoContract {
   body?: string;
   cta?: string;
   hookBank?: string[];
-  /**
-   * Top-level "cover" / primary asset attached at the shot-list level
-   * (not tied to a specific shot). Filename or AgenticFilesystem URL.
-   * Distinct from each shot's per-shot `assetRef` on `shotList[].assetRef`.
-   */
-  coverAssetRef?: string;
   targetDuration?: string;
   bRollNotes?: string;
   voiceoverNotes?: string;
   shotList?: DraftShotItemContract[];
+  /**
+   * #139: shared pool of uploaded assets for this draft. Shot rows
+   * reference entries by id via `DraftShotItemContract.assetRef`. The
+   * pre-#139 `coverAssetRef` field was removed — cover-image selection
+   * lives in the Packaging step.
+   */
+  uploadedAssets?: DraftUploadedAssetContract[];
 }
 
 export interface ProductionDraftVideoLongContract {

@@ -1,5 +1,8 @@
 import { TestBed } from '@angular/core/testing';
-import type { DraftShotItemContract } from '@blinksocial/contracts';
+import type {
+  DraftShotItemContract,
+  DraftUploadedAssetContract,
+} from '@blinksocial/contracts';
 import { ShotListComponent } from './shot-list.component';
 
 function setup(initial: Partial<ShotListComponent> = {}) {
@@ -14,6 +17,11 @@ function setup(initial: Partial<ShotListComponent> = {}) {
 const SHOTS: DraftShotItemContract[] = [
   { id: 's1', type: 'Shot', description: 'first', duration: '5s' },
   { id: 's2', type: 'CTA', description: 'second', duration: '10s' },
+];
+
+const POOL: DraftUploadedAssetContract[] = [
+  { id: 'a1', filename: 'DolphinsVertical.mov', mimeType: 'video/quicktime' },
+  { id: 'a2', filename: 'GusVertical.mov', mimeType: 'video/quicktime' },
 ];
 
 describe('ShotListComponent', () => {
@@ -45,12 +53,10 @@ describe('ShotListComponent', () => {
     expect(btns[2].getAttribute('aria-label')).toBe('Remove shot 1');
   });
 
-  it('Add shot button (between asset slot and shot list) appends a new empty row', () => {
+  it('Add shot button appends a new empty row', () => {
     const fixture = setup({ shots: [] });
     const events: DraftShotItemContract[][] = [];
     fixture.componentInstance.shotsChange.subscribe((v) => events.push(v));
-    // The Add shot button lives in .add-shot-row, between the asset
-    // slot and the shot rows.
     const btn = fixture.nativeElement.querySelector(
       '.add-shot-row .ghost-btn',
     ) as HTMLButtonElement;
@@ -70,59 +76,110 @@ describe('ShotListComponent', () => {
     expect(empty.textContent).toContain('At least 1 shot is required');
   });
 
-  it('Asset slot shows "No asset attached yet" only when coverAssetRef is empty', () => {
-    const empty = setup({ shots: [], coverAssetRef: undefined });
-    expect(
-      empty.nativeElement.querySelector('.asset-empty'),
-    ).toBeTruthy();
-    expect(
-      empty.nativeElement.querySelector('.asset-slot .asset-chip'),
-    ).toBeNull();
-    const attached = setup({ shots: [], coverAssetRef: 'cover.png' });
-    expect(
-      attached.nativeElement.querySelector('.asset-empty'),
-    ).toBeNull();
-    const chip = attached.nativeElement.querySelector('.asset-slot .asset-chip');
-    expect(chip).toBeTruthy();
-    expect(chip.textContent).toContain('cover.png');
+  // #139: cover-asset slot is gone. The shot-list no longer renders any
+  // .asset-slot wrapper; uploads happen in the sibling <app-upload-assets>.
+  it('#139: top-level cover-asset slot is removed in all input combinations', () => {
+    const empty = setup({ shots: [], availableAssets: [] });
+    expect(empty.nativeElement.querySelector('.asset-slot')).toBeNull();
+    expect(empty.nativeElement.querySelector('.asset-empty')).toBeNull();
+
+    const withShots = setup({ shots: SHOTS, availableAssets: POOL });
+    expect(withShots.nativeElement.querySelector('.asset-slot')).toBeNull();
+    expect(withShots.nativeElement.querySelector('.asset-empty')).toBeNull();
   });
 
-  it('Top-level Attach file input emits coverAssetRefChange with the filename', () => {
-    const fixture = setup({ shots: [], coverAssetRef: undefined });
-    const events: (string | undefined)[] = [];
-    fixture.componentInstance.coverAssetRefChange.subscribe((v) => events.push(v));
-    const file = new File(['x'], 'cover.png', { type: 'image/png' });
-    const input = fixture.nativeElement.querySelector(
-      '.asset-slot input[type="file"]',
-    ) as HTMLInputElement;
-    Object.defineProperty(input, 'files', { value: [file] });
-    input.dispatchEvent(new Event('change'));
-    expect(events).toEqual(['cover.png']);
+  // #139: pool-from-shot picker (now built on <app-dropdown>).
+  it('#139: row with no assetRef renders the picker with placeholder + one option per pool asset', () => {
+    const fixture = setup({ shots: SHOTS, availableAssets: POOL });
+    const pickers = fixture.nativeElement.querySelectorAll('.shot-asset-picker');
+    expect(pickers.length).toBe(2);
+    // Click to open the first picker, then count rendered options.
+    const trigger = pickers[0].querySelector('.dropdown-trigger') as HTMLButtonElement;
+    trigger.click();
+    fixture.detectChanges();
+    const options = pickers[0].querySelectorAll('.dropdown-option');
+    expect(options.length).toBe(2);
+    expect(options[0].textContent?.trim()).toContain('DolphinsVertical.mov');
+    // Closed-state placeholder is the trigger's value text.
+    expect(pickers[0].querySelector('.dropdown-value')?.textContent?.trim()).toBe(
+      'Assign an asset…',
+    );
   });
 
-  it('Top-level chip Remove emits coverAssetRefChange(undefined)', () => {
-    const fixture = setup({ shots: [], coverAssetRef: 'cover.png' });
-    const events: (string | undefined)[] = [];
-    fixture.componentInstance.coverAssetRefChange.subscribe((v) => events.push(v));
-    const btn = fixture.nativeElement.querySelector(
-      '.asset-slot .asset-chip-remove',
-    ) as HTMLButtonElement;
-    btn.click();
-    expect(events).toEqual([undefined]);
-  });
-
-  it('Per-shot Attach file emits shotsChange with assetRef set', () => {
-    const fixture = setup({ shots: SHOTS });
+  it('#139: picker selection emits shotsChange with the selected asset id as assetRef', () => {
+    const fixture = setup({ shots: SHOTS, availableAssets: POOL });
     const events: DraftShotItemContract[][] = [];
     fixture.componentInstance.shotsChange.subscribe((v) => events.push(v));
-    const file = new File(['x'], 'first-shot.mp4', { type: 'video/mp4' });
-    const input = fixture.nativeElement.querySelector(
-      '.shot-row .shot-asset-zone input[type="file"]',
-    ) as HTMLInputElement;
-    Object.defineProperty(input, 'files', { value: [file] });
-    input.dispatchEvent(new Event('change'));
+    fixture.componentInstance['onShotAssetPick']('s1', 'a1');
     expect(events).toHaveLength(1);
-    expect(events[0][0].assetRef).toBe('first-shot.mp4');
+    expect(events[0][0].assetRef).toBe('a1');
+  });
+
+  it('#139: row with assetRef renders the chip (thumbnail + filename + clear), resolving via pool', () => {
+    const seeded: DraftShotItemContract[] = [
+      { id: 's1', type: 'Shot', description: 'first', duration: '5s', assetRef: 'a1' },
+    ];
+    const fixture = setup({ shots: seeded, availableAssets: POOL });
+    // The picker on the assigned row is replaced by the chip.
+    expect(fixture.nativeElement.querySelector('.shot-row .shot-asset-picker')).toBeNull();
+    const chip = fixture.nativeElement.querySelector('.shot-row .asset-chip--sm');
+    expect(chip).not.toBeNull();
+    expect(chip.textContent).toContain('DolphinsVertical.mov');
+    expect(chip.querySelector('.asset-chip-thumb')).not.toBeNull();
+  });
+
+  it('#139: chip × emits shotsChange with assetRef cleared', () => {
+    const seeded: DraftShotItemContract[] = [
+      { id: 's1', type: 'Shot', description: 'first', duration: '5s', assetRef: 'a1' },
+    ];
+    const fixture = setup({ shots: seeded, availableAssets: POOL });
+    const events: DraftShotItemContract[][] = [];
+    fixture.componentInstance.shotsChange.subscribe((v) => events.push(v));
+    const btn = fixture.nativeElement.querySelector(
+      '.shot-row .asset-chip-remove',
+    ) as HTMLButtonElement;
+    btn.click();
+    expect(events).toHaveLength(1);
+    expect(events[0][0].assetRef).toBeUndefined();
+  });
+
+  it('#139: pool-empty picker shows the disabled overlay + helper placeholder', () => {
+    const fixture = setup({ shots: SHOTS, availableAssets: [] });
+    const picker = fixture.nativeElement.querySelector(
+      '.shot-row .shot-asset-picker',
+    ) as HTMLElement;
+    expect(picker.classList.contains('shot-asset-picker--disabled')).toBe(true);
+    // Trigger renders the placeholder string.
+    expect(picker.querySelector('.dropdown-value')?.textContent?.trim()).toBe(
+      'Upload an asset first…',
+    );
+  });
+
+  it('#139: same pool asset can be assigned to multiple shots (no filter)', () => {
+    const seeded: DraftShotItemContract[] = [
+      { id: 's1', type: 'Shot', description: 'first', duration: '5s', assetRef: 'a1' },
+    ];
+    const fixture = setup({ shots: [seeded[0], SHOTS[1]], availableAssets: POOL });
+    // Shot 2 (no assetRef) renders a picker whose options include the asset
+    // already assigned to shot 1.
+    const picker = fixture.nativeElement.querySelectorAll('.shot-asset-picker')[0];
+    const trigger = picker.querySelector('.dropdown-trigger') as HTMLButtonElement;
+    trigger.click();
+    fixture.detectChanges();
+    const options = Array.from(picker.querySelectorAll('.dropdown-option'));
+    expect(options.map((o) => (o as HTMLElement).textContent?.trim())).toEqual([
+      'DolphinsVertical.mov',
+      'GusVertical.mov',
+    ]);
+  });
+
+  it('#139: chip falls back to the raw assetRef when the pool entry is missing', () => {
+    const seeded: DraftShotItemContract[] = [
+      { id: 's1', type: 'Shot', description: 'first', duration: '5s', assetRef: 'missing-id' },
+    ];
+    const fixture = setup({ shots: seeded, availableAssets: POOL });
+    const chip = fixture.nativeElement.querySelector('.shot-row .asset-chip--sm');
+    expect(chip.textContent).toContain('missing-id');
   });
 
   it('Remove emits the array minus that shot', () => {
@@ -190,29 +247,16 @@ describe('ShotListComponent', () => {
     expect(events).toEqual([]);
   });
 
-  it('per-row type / description / duration edits + per-shot file + clear are no-ops when disabled', () => {
-    const fixture = setup({ shots: SHOTS, disabled: true });
+  it('per-row type / description / duration edits + picker + clear are no-ops when disabled', () => {
+    const fixture = setup({ shots: SHOTS, availableAssets: POOL, disabled: true });
     const events: DraftShotItemContract[][] = [];
     fixture.componentInstance.shotsChange.subscribe((v) => events.push(v));
     const fakeEvent = (value: string) => ({ target: { value } } as unknown as Event);
     fixture.componentInstance['onTypeChange']('s1', fakeEvent('B-Roll'));
     fixture.componentInstance['onDescriptionChange']('s1', fakeEvent('x'));
     fixture.componentInstance['onDurationChange']('s1', fakeEvent('1s'));
-    const file = new File(['x'], 'p.png', { type: 'image/png' });
-    const fileEvt = { target: { files: [file] } } as unknown as Event;
-    fixture.componentInstance['onShotFile']('s1', fileEvt);
+    fixture.componentInstance['onShotAssetPick']('s1', 'a1');
     fixture.componentInstance['onShotAssetClear']('s1');
-    expect(events).toEqual([]);
-  });
-
-  it('cover file / cover clear are no-ops when disabled', () => {
-    const fixture = setup({ shots: SHOTS, coverAssetRef: 'c.png', disabled: true });
-    const events: (string | undefined)[] = [];
-    fixture.componentInstance.coverAssetRefChange.subscribe((v) => events.push(v));
-    const file = new File(['x'], 'c.png', { type: 'image/png' });
-    const fileEvt = { target: { files: [file] } } as unknown as Event;
-    fixture.componentInstance['onCoverFile'](fileEvt);
-    fixture.componentInstance['onCoverClear']();
     expect(events).toEqual([]);
   });
 
@@ -225,29 +269,20 @@ describe('ShotListComponent', () => {
     expect(events).toEqual([]);
   });
 
-  it('cover file with no selected file is a no-op', () => {
-    const fixture = setup({ shots: [], coverAssetRef: undefined });
-    const events: (string | undefined)[] = [];
-    fixture.componentInstance.coverAssetRefChange.subscribe((v) => events.push(v));
-    const fileEvt = { target: { files: [] } } as unknown as Event;
-    fixture.componentInstance['onCoverFile'](fileEvt);
-    expect(events).toEqual([]);
-  });
-
-  it('per-shot file with no selected file is a no-op', () => {
-    const fixture = setup({ shots: SHOTS });
+  it('per-shot picker called with empty value emits assetRef:undefined', () => {
+    const fixture = setup({ shots: SHOTS, availableAssets: POOL });
     const events: DraftShotItemContract[][] = [];
     fixture.componentInstance.shotsChange.subscribe((v) => events.push(v));
-    const fileEvt = { target: { files: [] } } as unknown as Event;
-    fixture.componentInstance['onShotFile']('s1', fileEvt);
-    expect(events).toEqual([]);
+    fixture.componentInstance['onShotAssetPick']('s1', '');
+    expect(events).toHaveLength(1);
+    expect(events[0][0].assetRef).toBeUndefined();
   });
 
   it('per-shot asset clear emits with assetRef:undefined', () => {
     const seeded: DraftShotItemContract[] = [
-      { id: 's1', type: 'Shot', description: 'first', duration: '5s', assetRef: 'cur.mp4' },
+      { id: 's1', type: 'Shot', description: 'first', duration: '5s', assetRef: 'a1' },
     ];
-    const fixture = setup({ shots: seeded });
+    const fixture = setup({ shots: seeded, availableAssets: POOL });
     const events: DraftShotItemContract[][] = [];
     fixture.componentInstance.shotsChange.subscribe((v) => events.push(v));
     fixture.componentInstance['onShotAssetClear']('s1');

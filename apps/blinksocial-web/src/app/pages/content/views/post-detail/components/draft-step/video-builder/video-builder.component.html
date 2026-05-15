@@ -123,7 +123,22 @@
       }
     </div>
 
-    <!-- ── SHOT LIST + ASSETS ── -->
+  </section>
+
+  <!-- ── UPLOAD ASSETS (shared pool, #139) ── -->
+  <section class="card upload-assets-card" aria-labelledby="upload-assets-heading">
+    <h3 id="upload-assets-heading" class="visually-hidden">Upload assets</h3>
+    <app-upload-assets
+      [assets]="uploadedAssets()"
+      [disabled]="disabled()"
+      (added)="onAssetsAdded($event)"
+      (removed)="onAssetRemoved($event)"
+    />
+  </section>
+
+  <!-- ── SHOT LIST + ASSETS (#139: cover slot removed, picker-from-pool per shot) ── -->
+  <section class="card shot-list-card" aria-labelledby="shot-list-heading">
+    <h3 id="shot-list-heading" class="visually-hidden">Shot list and assets</h3>
     <div class="card-section shot-list-section">
       <div class="shot-header">
         <app-section-label
@@ -135,10 +150,9 @@
       </div>
       <app-shot-list
         [shots]="draft().shotList ?? []"
-        [coverAssetRef]="draft().coverAssetRef"
+        [availableAssets]="uploadedAssets()"
         [disabled]="disabled()"
         (shotsChange)="onShotsChange($event)"
-        (coverAssetRefChange)="onCoverAssetRefChange($event)"
       />
     </div>
   </section>
