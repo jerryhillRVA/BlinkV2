@@ -5,7 +5,6 @@ import type {
   DraftShotItemTypeContract,
   DraftUploadedAssetContract,
 } from '@blinksocial/contracts';
-import { SectionLabelComponent } from '../section-label/section-label.component';
 import { AiButtonComponent } from '../ai-button/ai-button.component';
 import {
   DropdownComponent,
@@ -35,7 +34,7 @@ const AI_GENERATED_SHOTS: ReadonlyArray<Pick<DraftShotItemContract, 'type' | 'de
 
 @Component({
   selector: 'app-shot-list',
-  imports: [FormsModule, SectionLabelComponent, AiButtonComponent, DropdownComponent],
+  imports: [FormsModule, AiButtonComponent, DropdownComponent],
   templateUrl: './shot-list.component.html',
   styleUrl: './shot-list.component.scss',
 })
