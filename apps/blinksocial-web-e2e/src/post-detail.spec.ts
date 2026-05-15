@@ -567,10 +567,11 @@ test.describe('Upload Assets pool — split out of Shot List (#139)', () => {
     await expect(page.locator('app-upload-assets .upload-warning')).toHaveCount(0);
     await expect(page.locator('app-upload-assets .thumb')).toHaveCount(1);
     await expect(page.locator('app-upload-assets .thumb-filename')).toContainText('clip.mp4');
-    // Shot 1's picker now lists clip.mp4. Pick it.
+    // Shot 1's picker now lists clip.mp4. Open the dropdown and pick it.
     const picker = page.locator('.shot-row .shot-asset-picker').first();
-    await expect(picker).toBeEnabled();
-    await picker.selectOption({ label: 'clip.mp4' });
+    await expect(picker).not.toHaveClass(/shot-asset-picker--disabled/);
+    await picker.locator('.dropdown-trigger').click();
+    await picker.locator('.dropdown-option', { hasText: 'clip.mp4' }).click();
     // The row flips to chip mode.
     await expect(page.locator('.shot-row .asset-chip--sm')).toContainText('clip.mp4');
     // Reload: pool + assigned shot ref survive (mock merges PUT body).
@@ -593,12 +594,14 @@ test.describe('Upload Assets pool — split out of Shot List (#139)', () => {
     await expect(page.locator('app-upload-assets .thumb')).toHaveCount(0);
     await expect(page.locator('.shot-row .asset-chip--sm')).toHaveCount(0);
     const picker = page.locator('.shot-row .shot-asset-picker');
-    await expect(picker).toBeDisabled();
+    await expect(picker).toHaveClass(/shot-asset-picker--disabled/);
     // Reload: state survives.
     await page.reload();
     await expect(page.locator('app-post-detail')).toBeVisible();
     await expect(page.locator('app-upload-assets .thumb')).toHaveCount(0);
-    await expect(page.locator('.shot-row .shot-asset-picker')).toBeDisabled();
+    await expect(page.locator('.shot-row .shot-asset-picker')).toHaveClass(
+      /shot-asset-picker--disabled/,
+    );
   });
 
   test('TC-E4: the same pool asset can be assigned to two shots simultaneously', async ({ page }) => {
@@ -612,8 +615,20 @@ test.describe('Upload Assets pool — split out of Shot List (#139)', () => {
     });
     // Both shots show the picker initially.
     await expect(page.locator('.shot-row .shot-asset-picker')).toHaveCount(2);
-    await page.locator('.shot-row .shot-asset-picker').nth(0).selectOption({ label: 'clip.mp4' });
-    await page.locator('.shot-row .shot-asset-picker').nth(0).selectOption({ label: 'clip.mp4' });
+    // After each assignment the picker for that row is replaced by a chip,
+    // so .shot-asset-picker shifts. Re-query the first remaining picker.
+    await page.locator('.shot-row .shot-asset-picker').first().locator('.dropdown-trigger').click();
+    await page
+      .locator('.shot-row .shot-asset-picker')
+      .first()
+      .locator('.dropdown-option', { hasText: 'clip.mp4' })
+      .click();
+    await page.locator('.shot-row .shot-asset-picker').first().locator('.dropdown-trigger').click();
+    await page
+      .locator('.shot-row .shot-asset-picker')
+      .first()
+      .locator('.dropdown-option', { hasText: 'clip.mp4' })
+      .click();
     // After both assignments, both rows render the chip and the pool still
     // has exactly one thumbnail (no duplication).
     await expect(page.locator('.shot-row .asset-chip--sm')).toHaveCount(2);
@@ -629,7 +644,9 @@ test.describe('Upload Assets pool — split out of Shot List (#139)', () => {
       id: 'tc-e5',
       shots: [{ id: 's1', type: 'Shot', description: '', duration: '5s' }],
     });
-    await expect(page.locator('.shot-row .shot-asset-picker')).toBeDisabled();
+    await expect(page.locator('.shot-row .shot-asset-picker')).toHaveClass(
+      /shot-asset-picker--disabled/,
+    );
     // Description / duration / type stay editable.
     await expect(page.locator('.shot-row .shot-description')).toBeEnabled();
     await expect(page.locator('.shot-row .shot-duration')).toBeEnabled();

@@ -210,12 +210,21 @@ export interface DraftShotItemContract {
  * rows reference entries by `id` (not filename) so renames don't break
  * shot links. `mimeType` + `size` are optional metadata captured at
  * upload time; the future AgenticFilesystem swap will populate them.
+ *
+ * `previewUrl` is a **transient** blob URL generated client-side via
+ * `URL.createObjectURL(file)` at upload time. It is NOT persisted by
+ * the API (the mock harness echoes it back in-memory, but it's a
+ * per-document handle that doesn't survive page reload). Once AFS is
+ * wired, a real `https://` URL replaces this field. Consumers must
+ * treat the field as best-effort: if it's missing, render the icon
+ * fallback.
  */
 export interface DraftUploadedAssetContract {
   id: string;
   filename: string;
   mimeType?: string;
   size?: number;
+  previewUrl?: string;
 }
 
 export type DraftSequenceBlockTypeContract =

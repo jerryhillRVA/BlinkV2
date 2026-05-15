@@ -117,25 +117,35 @@
             [class.shot-asset-zone--attached]="!!shot.assetRef"
           >
             @if (!shot.assetRef) {
-              <select
+              <div
                 class="shot-asset-picker"
-                [disabled]="disabled || poolEmpty"
+                [class.shot-asset-picker--disabled]="disabled || poolEmpty"
                 [attr.aria-label]="'Assign an asset to shot ' + (i + 1)"
-                [value]="''"
-                (change)="onShotAssetSelect(shot.id, $event)"
               >
-                <option value="" disabled selected>
-                  {{ poolEmpty ? 'Upload an asset first…' : 'Assign an asset…' }}
-                </option>
-                @for (asset of availableAssets; track asset.id) {
-                  <option [value]="asset.id">{{ asset.filename }}</option>
-                }
-              </select>
+                <app-dropdown
+                  [options]="pickerOptions"
+                  [value]="''"
+                  size="sm"
+                  [fullWidth]="true"
+                  [placeholder]="poolEmpty ? 'Upload an asset first…' : 'Assign an asset…'"
+                  (valueChange)="onShotAssetPick(shot.id, $event)"
+                />
+              </div>
             } @else {
               @let assigned = assetById(shot.assetRef);
               <div class="asset-chip asset-chip--sm">
                 <span class="asset-chip-thumb" aria-hidden="true">
-                  @if (isVideoMime(assigned?.mimeType)) {
+                  @if (assigned?.previewUrl && isVideoMime(assigned?.mimeType)) {
+                    <video
+                      class="asset-chip-video"
+                      [src]="assigned!.previewUrl!"
+                      preload="metadata"
+                      muted
+                      playsinline
+                      disablePictureInPicture
+                      disableRemotePlayback
+                    ></video>
+                  } @else if (isVideoMime(assigned?.mimeType)) {
                     <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                       <path d="m22 8-6 4 6 4V8Z"/>
                       <rect width="14" height="12" x="2" y="6" rx="2" ry="2"/>

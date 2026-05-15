@@ -16,17 +16,19 @@ describe('SectionLabelComponent', () => {
     expect(fixture.nativeElement.querySelector('.label-text').textContent).toContain('hook');
   });
 
-  it('shows the info icon as a focusable trigger with aria-label = info text', () => {
+  it('shows the info icon as a focusable trigger via <app-tooltip>', () => {
     const fixture = setup({ info: 'The first line that stops the scroll.' });
-    const info = fixture.nativeElement.querySelector('.info');
-    expect(info).toBeTruthy();
-    expect(info.getAttribute('aria-label')).toBe('The first line that stops the scroll.');
-    expect(info.getAttribute('tabindex')).toBe('0');
+    const trigger = fixture.nativeElement.querySelector('app-tooltip .tooltip-trigger');
+    expect(trigger).toBeTruthy();
+    expect(trigger.getAttribute('aria-label')).toBe('More information');
+    // The actual tooltip text is delivered via the TooltipService portal on
+    // hover/focus; the <app-tooltip> hosts the trigger only.
+    expect(fixture.nativeElement.querySelector('app-tooltip')).toBeTruthy();
   });
 
   it('omits the info icon when no info is provided', () => {
     const fixture = setup({});
-    expect(fixture.nativeElement.querySelector('.info')).toBeNull();
+    expect(fixture.nativeElement.querySelector('app-tooltip')).toBeNull();
   });
 
   it('renders the required asterisk + screen-reader text when required=true', () => {
@@ -35,6 +37,29 @@ describe('SectionLabelComponent', () => {
     expect(aster).toBeTruthy();
     expect(aster.getAttribute('aria-hidden')).toBe('true');
     expect(fixture.nativeElement.querySelector('.visually-hidden').textContent).toBe('required');
+  });
+
+  it('places the required asterisk BETWEEN the label and the info tooltip', () => {
+    const fixture = setup({
+      required: true,
+      info: 'About this field',
+    });
+    const containers = Array.from(
+      fixture.nativeElement.querySelectorAll('.section-label > *'),
+    );
+    // Find the indices of label-text, required asterisk, and the tooltip host
+    const labelIdx = containers.findIndex((el) =>
+      (el as Element).classList.contains('label-text'),
+    );
+    const requiredIdx = containers.findIndex((el) =>
+      (el as Element).classList.contains('required'),
+    );
+    const tooltipIdx = containers.findIndex((el) =>
+      (el as Element).classList.contains('info-tooltip-host'),
+    );
+    expect(labelIdx).toBeGreaterThanOrEqual(0);
+    expect(requiredIdx).toBeGreaterThan(labelIdx);
+    expect(tooltipIdx).toBeGreaterThan(requiredIdx);
   });
 
   it('renders a badge with the right variant attribute', () => {

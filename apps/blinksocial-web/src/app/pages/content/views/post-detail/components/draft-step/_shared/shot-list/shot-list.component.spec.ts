@@ -88,28 +88,29 @@ describe('ShotListComponent', () => {
     expect(withShots.nativeElement.querySelector('.asset-empty')).toBeNull();
   });
 
-  // #139: pool-from-shot picker.
+  // #139: pool-from-shot picker (now built on <app-dropdown>).
   it('#139: row with no assetRef renders the picker with placeholder + one option per pool asset', () => {
     const fixture = setup({ shots: SHOTS, availableAssets: POOL });
     const pickers = fixture.nativeElement.querySelectorAll('.shot-asset-picker');
     expect(pickers.length).toBe(2);
-    const placeholder = pickers[0].querySelector('option[disabled]');
-    expect(placeholder?.textContent?.trim()).toBe('Assign an asset…');
-    const options = pickers[0].querySelectorAll('option:not([disabled])');
+    // Click to open the first picker, then count rendered options.
+    const trigger = pickers[0].querySelector('.dropdown-trigger') as HTMLButtonElement;
+    trigger.click();
+    fixture.detectChanges();
+    const options = pickers[0].querySelectorAll('.dropdown-option');
     expect(options.length).toBe(2);
-    expect(options[0].getAttribute('value')).toBe('a1');
-    expect(options[0].textContent?.trim()).toBe('DolphinsVertical.mov');
+    expect(options[0].textContent?.trim()).toContain('DolphinsVertical.mov');
+    // Closed-state placeholder is the trigger's value text.
+    expect(pickers[0].querySelector('.dropdown-value')?.textContent?.trim()).toBe(
+      'Assign an asset…',
+    );
   });
 
-  it('#139: picker change emits shotsChange with the selected asset id as assetRef', () => {
+  it('#139: picker selection emits shotsChange with the selected asset id as assetRef', () => {
     const fixture = setup({ shots: SHOTS, availableAssets: POOL });
     const events: DraftShotItemContract[][] = [];
     fixture.componentInstance.shotsChange.subscribe((v) => events.push(v));
-    const select = fixture.nativeElement.querySelector(
-      '.shot-row .shot-asset-picker',
-    ) as HTMLSelectElement;
-    select.value = 'a1';
-    select.dispatchEvent(new Event('change'));
+    fixture.componentInstance['onShotAssetPick']('s1', 'a1');
     expect(events).toHaveLength(1);
     expect(events[0][0].assetRef).toBe('a1');
   });
@@ -119,7 +120,8 @@ describe('ShotListComponent', () => {
       { id: 's1', type: 'Shot', description: 'first', duration: '5s', assetRef: 'a1' },
     ];
     const fixture = setup({ shots: seeded, availableAssets: POOL });
-    expect(fixture.nativeElement.querySelector('.shot-asset-picker')).toBeNull();
+    // The picker on the assigned row is replaced by the chip.
+    expect(fixture.nativeElement.querySelector('.shot-row .shot-asset-picker')).toBeNull();
     const chip = fixture.nativeElement.querySelector('.shot-row .asset-chip--sm');
     expect(chip).not.toBeNull();
     expect(chip.textContent).toContain('DolphinsVertical.mov');
@@ -141,13 +143,14 @@ describe('ShotListComponent', () => {
     expect(events[0][0].assetRef).toBeUndefined();
   });
 
-  it('#139: pool-empty picker is disabled and shows the helper placeholder', () => {
+  it('#139: pool-empty picker shows the disabled overlay + helper placeholder', () => {
     const fixture = setup({ shots: SHOTS, availableAssets: [] });
     const picker = fixture.nativeElement.querySelector(
       '.shot-row .shot-asset-picker',
-    ) as HTMLSelectElement;
-    expect(picker.disabled).toBe(true);
-    expect(picker.querySelector('option')?.textContent?.trim()).toBe(
+    ) as HTMLElement;
+    expect(picker.classList.contains('shot-asset-picker--disabled')).toBe(true);
+    // Trigger renders the placeholder string.
+    expect(picker.querySelector('.dropdown-value')?.textContent?.trim()).toBe(
       'Upload an asset first…',
     );
   });
@@ -159,9 +162,15 @@ describe('ShotListComponent', () => {
     const fixture = setup({ shots: [seeded[0], SHOTS[1]], availableAssets: POOL });
     // Shot 2 (no assetRef) renders a picker whose options include the asset
     // already assigned to shot 1.
-    const picker = fixture.nativeElement.querySelectorAll('.shot-asset-picker')[0] as HTMLSelectElement;
-    const options = Array.from(picker.querySelectorAll('option:not([disabled])'));
-    expect(options.map((o) => o.getAttribute('value'))).toEqual(['a1', 'a2']);
+    const picker = fixture.nativeElement.querySelectorAll('.shot-asset-picker')[0];
+    const trigger = picker.querySelector('.dropdown-trigger') as HTMLButtonElement;
+    trigger.click();
+    fixture.detectChanges();
+    const options = Array.from(picker.querySelectorAll('.dropdown-option'));
+    expect(options.map((o) => (o as HTMLElement).textContent?.trim())).toEqual([
+      'DolphinsVertical.mov',
+      'GusVertical.mov',
+    ]);
   });
 
   it('#139: chip falls back to the raw assetRef when the pool entry is missing', () => {
@@ -246,7 +255,7 @@ describe('ShotListComponent', () => {
     fixture.componentInstance['onTypeChange']('s1', fakeEvent('B-Roll'));
     fixture.componentInstance['onDescriptionChange']('s1', fakeEvent('x'));
     fixture.componentInstance['onDurationChange']('s1', fakeEvent('1s'));
-    fixture.componentInstance['onShotAssetSelect']('s1', fakeEvent('a1'));
+    fixture.componentInstance['onShotAssetPick']('s1', 'a1');
     fixture.componentInstance['onShotAssetClear']('s1');
     expect(events).toEqual([]);
   });
@@ -260,12 +269,11 @@ describe('ShotListComponent', () => {
     expect(events).toEqual([]);
   });
 
-  it('per-shot picker with no value selected emits assetRef:undefined', () => {
+  it('per-shot picker called with empty value emits assetRef:undefined', () => {
     const fixture = setup({ shots: SHOTS, availableAssets: POOL });
     const events: DraftShotItemContract[][] = [];
     fixture.componentInstance.shotsChange.subscribe((v) => events.push(v));
-    const fakeEvent = { target: { value: '' } } as unknown as Event;
-    fixture.componentInstance['onShotAssetSelect']('s1', fakeEvent);
+    fixture.componentInstance['onShotAssetPick']('s1', '');
     expect(events).toHaveLength(1);
     expect(events[0][0].assetRef).toBeUndefined();
   });

@@ -178,38 +178,40 @@
   border: 1px solid var(--blink-status-info-border);
 }
 
+// #139 polish: per-shot picker now uses <app-dropdown>. The wrapper
+// stretches the dropdown to the full width of the asset zone and
+// applies a disabled overlay when the pool is empty.
 .shot-asset-picker {
   flex: 1 1 auto;
   min-width: 0;
-  height: 32px;
-  padding: 0 10px;
-  border: 1px solid var(--blink-outline-variant);
-  border-radius: 6px;
-  background: var(--blink-surface);
-  font-size: var(--blink-body-small);
-  color: var(--blink-on-surface);
+}
 
-  &:disabled {
-    opacity: 0.55;
-    cursor: not-allowed;
-  }
-
-  &:focus-visible {
-    outline: 2px solid var(--blink-brand-primary);
-    outline-offset: 0;
-  }
+.shot-asset-picker--disabled {
+  opacity: 0.55;
+  pointer-events: none;
 }
 
 .asset-chip-thumb {
+  position: relative;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 22px;
-  height: 22px;
+  width: 28px;
+  height: 28px;
   border-radius: 4px;
-  background: var(--blink-surface-variant);
+  background: var(--blink-on-surface-strong);
   color: var(--blink-on-surface-faint);
   flex-shrink: 0;
+  overflow: hidden;
+}
+
+.asset-chip-video {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  pointer-events: none;
 }
 
 // ── Empty state ──────────────────────────────────────────────────────────────

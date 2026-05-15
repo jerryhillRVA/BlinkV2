@@ -16,7 +16,22 @@
       @for (asset of assets(); track asset.id) {
         <li class="thumb">
           <div class="thumb-image" aria-hidden="true">
-            @if (isVideoMime(asset.mimeType)) {
+            @if (asset.previewUrl && isVideoMime(asset.mimeType)) {
+              <video
+                class="thumb-video"
+                [src]="asset.previewUrl"
+                preload="metadata"
+                muted
+                playsinline
+                disablePictureInPicture
+                disableRemotePlayback
+              ></video>
+              <span class="thumb-play-overlay" aria-hidden="true">
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="currentColor" stroke="none">
+                  <path d="M8 5v14l11-7z"/>
+                </svg>
+              </span>
+            } @else if (isVideoMime(asset.mimeType)) {
               <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <path d="m22 8-6 4 6 4V8Z"/>
                 <rect width="14" height="12" x="2" y="6" rx="2" ry="2"/>

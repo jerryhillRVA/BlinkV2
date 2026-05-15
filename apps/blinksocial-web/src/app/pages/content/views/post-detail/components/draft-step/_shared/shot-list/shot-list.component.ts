@@ -7,6 +7,10 @@ import type {
 } from '@blinksocial/contracts';
 import { SectionLabelComponent } from '../section-label/section-label.component';
 import { AiButtonComponent } from '../ai-button/ai-button.component';
+import {
+  DropdownComponent,
+  type DropdownOption,
+} from '../../../../../../../../shared/dropdown/dropdown.component';
 
 const SHOT_TYPES: DraftShotItemTypeContract[] = [
   'Shot',
@@ -31,7 +35,7 @@ const AI_GENERATED_SHOTS: ReadonlyArray<Pick<DraftShotItemContract, 'type' | 'de
 
 @Component({
   selector: 'app-shot-list',
-  imports: [FormsModule, SectionLabelComponent, AiButtonComponent],
+  imports: [FormsModule, SectionLabelComponent, AiButtonComponent, DropdownComponent],
   templateUrl: './shot-list.component.html',
   styleUrl: './shot-list.component.scss',
 })
@@ -69,6 +73,11 @@ export class ShotListComponent {
 
   protected get poolEmpty(): boolean {
     return this.availableAssets.length === 0;
+  }
+
+  /** Asset pool projected into the shape <app-dropdown> consumes. */
+  protected get pickerOptions(): DropdownOption[] {
+    return this.availableAssets.map((a) => ({ value: a.id, label: a.filename }));
   }
 
   protected onAddShot(): void {
@@ -143,9 +152,8 @@ export class ShotListComponent {
   // #139: filename-attach was replaced by a select-from-pool picker.
   // The pool lives one level up on `ProductionDraftVideoContract`.
 
-  protected onShotAssetSelect(shotId: string, event: Event): void {
+  protected onShotAssetPick(shotId: string, value: string): void {
     if (this.disabled) return;
-    const value = (event.target as HTMLSelectElement | null)?.value ?? '';
     this.patch(shotId, { assetRef: value || undefined });
   }
 

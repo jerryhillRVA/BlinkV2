@@ -27,57 +27,18 @@
   letter-spacing: 0.06em;
 }
 
-.info {
-  position: relative;
+// Wraps <app-tooltip> so layout (gap, alignment) is consistent with
+// the other inline elements in the row. The tooltip itself portals its
+// popup to document.body via TooltipService, so no overflow clipping.
+.info-tooltip-host {
   display: inline-flex;
-  color: var(--blink-on-surface-faint, #6b7280);
-  cursor: help;
-  outline: none;
-
-  &:hover,
-  &:focus-visible {
-    color: var(--blink-on-surface-medium);
-
-    .info-tooltip {
-      opacity: 1;
-      transform: translateY(0);
-      pointer-events: auto;
-    }
-  }
-
-  &:focus-visible {
-    outline: 2px solid var(--blink-brand-primary);
-    outline-offset: 2px;
-    border-radius: 50%;
-  }
-}
-
-.info-tooltip {
-  position: absolute;
-  bottom: calc(100% + 8px);
-  left: 50%;
-  transform: translate(-50%, 4px);
-  width: max-content;
-  max-width: 240px;
-  padding: 6px 10px;
-  background: var(--blink-tooltip-bg);
-  color: var(--blink-tooltip-text);
-  font-size: var(--blink-body-small);
-  font-weight: 500;
-  letter-spacing: 0;
-  text-transform: none;
-  line-height: 1.4;
-  border-radius: 6px;
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity 120ms ease, transform 120ms ease;
-  z-index: 10;
+  align-items: center;
+  color: var(--blink-on-surface-faint);
 }
 
 .required {
-  color: #f87171;
+  color: var(--blink-status-danger);
   font-weight: 700;
-  margin-left: -2px;
 }
 
 .visually-hidden {
@@ -104,20 +65,14 @@
   border: 1px solid;
 
   &[data-variant='amber'] {
-    background: #fef3c7;
-    color: #b45309;
-    border-color: #fde68a;
+    background: var(--blink-status-warning-bg-strong);
+    color: var(--blink-status-warning-text);
+    border-color: var(--blink-status-warning-border);
   }
 
   &[data-variant='neutral'] {
     background: var(--blink-surface-container);
     color: var(--blink-on-surface-muted);
     border-color: var(--blink-outline-variant);
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .info-tooltip {
-    transition: none;
   }
 }

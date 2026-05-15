@@ -1,4 +1,12 @@
-import { Component, computed, input, output, signal } from '@angular/core';
+import {
+  Component,
+  DestroyRef,
+  computed,
+  inject,
+  input,
+  output,
+  signal,
+} from '@angular/core';
 import type { DraftUploadedAssetContract } from '@blinksocial/contracts';
 import { SectionLabelComponent } from '../section-label/section-label.component';
 
@@ -44,6 +52,27 @@ export class UploadAssetsComponent {
   /* v8 ignore next 1 — local signal, framework-init throws path unreachable */
   protected readonly rejectError = signal<string | null>(null);
 
+  /**
+   * Blob URLs we generated locally. Tracked here so we can revoke them
+   * on component destroy + on individual asset removal. Pre-existing
+   * URLs from a prior render of the parent (e.g. an AFS-served https://)
+   * are NOT revoked — only URLs we created via createObjectURL.
+   */
+  private readonly localBlobUrls = new Set<string>();
+
+  constructor() {
+    inject(DestroyRef).onDestroy(() => {
+      for (const url of this.localBlobUrls) {
+        try {
+          URL.revokeObjectURL(url);
+        } catch {
+          // ignore — page-unload races + browsers that already cleared
+        }
+      }
+      this.localBlobUrls.clear();
+    });
+  }
+
   protected readonly hasAssets = computed(() => this.assets().length > 0);
 
   protected readonly assetCountLabel = computed<string | null>(() => {
@@ -61,11 +90,23 @@ export class UploadAssetsComponent {
     const rejected: string[] = [];
     for (const file of files) {
       if (this.isAllowedMime(file.type)) {
+        // Generate a transient blob URL so the thumbnail can render a
+        // first-frame preview via <video>. Tracked for cleanup.
+        let previewUrl: string | undefined;
+        try {
+          previewUrl = URL.createObjectURL(file);
+          this.localBlobUrls.add(previewUrl);
+        } catch {
+          // URL.createObjectURL can throw if the runtime is unusual
+          // (older jsdom etc) — fall back to no preview.
+          previewUrl = undefined;
+        }
         accepted.push({
           id: newAssetId(),
           filename: file.name,
           mimeType: file.type || undefined,
           size: file.size,
+          previewUrl,
         });
       } else {
         rejected.push(file.name);
@@ -90,6 +131,18 @@ export class UploadAssetsComponent {
 
   protected onRemove(id: string): void {
     if (this.disabled()) return;
+    // Revoke the local blob URL if we created it. Parent will emit a
+    // new `assets` array without this entry on the next tick.
+    const target = this.assets().find((a) => a.id === id);
+    const url = target?.previewUrl;
+    if (url && this.localBlobUrls.has(url)) {
+      try {
+        URL.revokeObjectURL(url);
+      } catch {
+        // ignore
+      }
+      this.localBlobUrls.delete(url);
+    }
     this.removed.emit(id);
   }
 
