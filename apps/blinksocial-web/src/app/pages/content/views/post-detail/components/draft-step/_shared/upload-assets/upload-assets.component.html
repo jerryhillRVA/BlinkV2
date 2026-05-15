@@ -26,11 +26,6 @@
                 disablePictureInPicture
                 disableRemotePlayback
               ></video>
-              <span class="thumb-play-overlay" aria-hidden="true">
-                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="currentColor" stroke="none">
-                  <path d="M8 5v14l11-7z"/>
-                </svg>
-              </span>
             } @else if (isVideoMime(asset.mimeType)) {
               <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <path d="m22 8-6 4 6 4V8Z"/>
@@ -42,20 +37,20 @@
                 <polyline points="14 2 14 8 20 8"/>
               </svg>
             }
+            <span class="thumb-filename" [attr.title]="asset.filename">{{ asset.filename }}</span>
+            <button
+              type="button"
+              class="thumb-remove"
+              [disabled]="disabled()"
+              [attr.aria-label]="'Remove ' + asset.filename"
+              (click)="onRemove(asset.id)"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M18 6 6 18"/>
+                <path d="m6 6 12 12"/>
+              </svg>
+            </button>
           </div>
-          <span class="thumb-filename" [attr.title]="asset.filename">{{ asset.filename }}</span>
-          <button
-            type="button"
-            class="thumb-remove"
-            [disabled]="disabled()"
-            [attr.aria-label]="'Remove ' + asset.filename"
-            (click)="onRemove(asset.id)"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-              <path d="M18 6 6 18"/>
-              <path d="m6 6 12 12"/>
-            </svg>
-          </button>
         </li>
       }
     </ul>

@@ -79,10 +79,6 @@
 
 .thumb {
   position: relative;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 4px;
   width: 96px;
 }
 
@@ -110,46 +106,52 @@
   background: var(--blink-on-surface-strong);
 }
 
-.thumb-play-overlay {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: rgba(255, 255, 255, 0.85);
-  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.5);
-  pointer-events: none;
-}
-
+// Prototype: filename overlay sits at the bottom of the preview window
+// (inside the thumb-image), with a translucent dark gradient backing
+// and white truncated text — NOT a separate row below the thumb.
 .thumb-filename {
-  display: block;
-  width: 100%;
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  padding: 12px 6px 4px;
+  background: linear-gradient(
+    to bottom,
+    rgba(0, 0, 0, 0) 0%,
+    rgba(0, 0, 0, 0.6) 100%
+  );
+  color: var(--blink-on-brand);
   font-size: var(--blink-label-small);
-  color: var(--blink-on-surface-medium);
-  text-align: center;
+  font-weight: 500;
+  text-align: left;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  pointer-events: none;
 }
 
+// Prototype: remove button is centered in the preview window with a
+// gray circular background. Icon is gray by default, coral on hover.
 .thumb-remove {
   position: absolute;
-  top: 4px;
-  right: 4px;
-  width: 18px;
-  height: 18px;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 32px;
+  height: 32px;
   border-radius: 50%;
   border: none;
-  background: rgba(0, 0, 0, 0.55);
-  color: var(--blink-on-brand);
+  background: rgba(255, 255, 255, 0.85);
+  color: var(--blink-on-surface-medium);
   cursor: pointer;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  transition: background 120ms ease;
+  transition: background 120ms ease, color 120ms ease;
 
   &:hover:not(:disabled) {
-    background: var(--blink-destructive);
+    background: var(--blink-on-brand);
+    color: var(--blink-brand-primary);
   }
 
   &:disabled {

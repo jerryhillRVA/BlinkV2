@@ -75,36 +75,37 @@
   border: 0;
 }
 
-// ── Attached-asset chip ──────────────────────────────────────────────
+// ── Attached-asset chip (selected file row) ─────────────────────────
+//
+// Prototype: neutral light-gray rounded rectangle, NOT a pill. Small
+// video thumbnail on the left, filename in regular weight, × on right.
+// Sits inside the shot's asset zone and spans the full width.
 
 .asset-chip {
-  display: inline-flex;
+  display: flex;
   align-items: center;
-  gap: 6px;
-  padding: 4px 6px 4px 10px;
-  background: #eff6ff; // blue-50
-  border: 1px solid #bfdbfe; // blue-200
-  border-radius: 999px;
-  color: #1d4ed8; // blue-700
-  font-size: var(--blink-label-small);
-  font-weight: 600;
+  gap: 8px;
+  padding: 6px 8px 6px 8px;
+  background: var(--blink-surface);
+  border: 1px solid var(--blink-outline-variant);
+  border-radius: 6px;
+  color: var(--blink-on-surface);
+  font-size: var(--blink-body-small);
+  font-weight: 500;
+  width: 100%;
   max-width: 100%;
 
   .asset-chip-name {
+    flex: 1 1 auto;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
-    max-width: 200px;
+    min-width: 0;
   }
 
   &--sm {
-    padding: 2px 4px 2px 8px;
-    font-size: 9px;
-    gap: 4px;
-
-    .asset-chip-name {
-      max-width: 160px;
-    }
+    gap: 8px;
+    font-size: var(--blink-body-small);
   }
 }
 
@@ -173,9 +174,14 @@
   border: 1px dashed var(--blink-outline-dashed);
 }
 
+// Prototype: when a row has an assigned asset, the surrounding zone
+// has no extra chrome — the chip is its own surface. Drop the blue
+// tint and just give the row a tiny vertical padding so the chip
+// doesn't hug the description above.
 .shot-asset-zone--attached {
-  background: var(--blink-status-info-bg);
-  border: 1px solid var(--blink-status-info-border);
+  background: transparent;
+  border: none;
+  padding: 0;
 }
 
 // #139 polish: per-shot picker now uses <app-dropdown>. The wrapper
@@ -196,8 +202,8 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 28px;
-  height: 28px;
+  width: 32px;
+  height: 22px;
   border-radius: 4px;
   background: var(--blink-on-surface-strong);
   color: var(--blink-on-surface-faint);
