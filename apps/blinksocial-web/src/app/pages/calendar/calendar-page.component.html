@@ -530,11 +530,21 @@
         [severityLabel]="severityLabel(p)"
         (openItem)="openEvent($event)"
         (copyLink)="copyEventLink($event)"
-        (editDates)="closePeek()"
+        (editDates)="openQuickEdit($event)"
         (closed)="closePeek()"
         (peekEnter)="onPeekEnter()"
         (peekLeave)="onPeekLeave()"
       ></app-calendar-peek-card>
     }
+  }
+
+  @if (quickEditEvent(); as qe) {
+    <app-calendar-quick-edit-modal
+      [event]="qe"
+      [saving]="quickEditSaving()"
+      (save)="onQuickEditSave($event)"
+      (openItem)="onQuickEditOpenItem($event)"
+      (cancelEdit)="cancelQuickEdit()"
+    ></app-calendar-quick-edit-modal>
   }
 </div>

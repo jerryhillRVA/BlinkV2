@@ -6,8 +6,10 @@ import type {
   CalendarMilestoneContract,
   CalendarResponseContract,
 } from '@blinksocial/contracts';
-import { CalendarPageComponent } from './calendar-page.component';
+import { CalendarPageComponent, applyPatchToResponse } from './calendar-page.component';
 import { CalendarApiService } from './calendar-api.service';
+import { ContentItemsApiService } from '../content/content-items-api.service';
+import { ToastService } from '../../core/toast/toast.service';
 
 const REF_ISO = '2026-05-01T00:00:00.000Z';
 
@@ -75,8 +77,20 @@ function setupTestBed(
   getCalendar: () => GetCalendarReturn,
   paramMap: Record<string, string> = { id: 'hive-collective' },
   queryParams: Record<string, string> = {},
+  extras: {
+    updateItem?: ReturnType<typeof vi.fn>;
+    showError?: ReturnType<typeof vi.fn>;
+    showSuccess?: ReturnType<typeof vi.fn>;
+  } = {},
 ) {
   const router = { navigate: vi.fn() } as unknown as Router;
+  const itemsApi = {
+    updateItem: extras.updateItem ?? vi.fn(() => of({} as unknown)),
+  };
+  const toast = {
+    showError: extras.showError ?? vi.fn(),
+    showSuccess: extras.showSuccess ?? vi.fn(),
+  };
   TestBed.configureTestingModule({
     imports: [CalendarPageComponent],
     providers: [
@@ -89,9 +103,11 @@ function setupTestBed(
         },
       },
       { provide: CalendarApiService, useValue: { getCalendar } },
+      { provide: ContentItemsApiService, useValue: itemsApi },
+      { provide: ToastService, useValue: toast },
     ],
   });
-  return router;
+  return { router, itemsApi, toast };
 }
 
 describe('CalendarPageComponent', () => {
@@ -274,7 +290,7 @@ describe('CalendarPageComponent', () => {
   });
 
   it('opens the content detail page with the correct ?tab= query param for publish events', () => {
-    const router = setupTestBed(() => of(buildResponse()));
+    const { router } = setupTestBed(() => of(buildResponse()));
     const fixture = TestBed.createComponent(CalendarPageComponent);
     fixture.detectChanges();
     const publish = fixture.componentInstance
@@ -297,7 +313,7 @@ describe('CalendarPageComponent', () => {
   });
 
   it('opens the content detail with the tab derived from the milestone type', () => {
-    const router = setupTestBed(() => of(buildResponse()));
+    const { router } = setupTestBed(() => of(buildResponse()));
     const fixture = TestBed.createComponent(CalendarPageComponent);
     fixture.detectChanges();
     const milestone = fixture.componentInstance
@@ -376,7 +392,7 @@ describe('CalendarPageComponent', () => {
   });
 
   it('forwards the active view + cursor when opening an event after the user changes view', () => {
-    const router = setupTestBed(() => of(buildResponse()));
+    const { router } = setupTestBed(() => of(buildResponse()));
     const fixture = TestBed.createComponent(CalendarPageComponent);
     fixture.detectChanges();
     const c = fixture.componentInstance;
@@ -698,5 +714,221 @@ describe('CalendarPageComponent', () => {
     const fixture = TestBed.createComponent(CalendarPageComponent);
     fixture.detectChanges();
     expect(spy).not.toHaveBeenCalled();
+  });
+
+  describe('Quick Edit modal wiring (#134)', () => {
+    afterEach(() => {
+      document.body.style.overflow = '';
+      document
+        .querySelectorAll('[data-testid="quick-edit-overlay"]')
+        .forEach((el) => el.remove());
+    });
+
+    it('openQuickEdit closes the peek and stores the event', () => {
+      setupTestBed(() => of(buildResponse()));
+      const fixture = TestBed.createComponent(CalendarPageComponent);
+      fixture.detectChanges();
+      const c = fixture.componentInstance;
+      const ev = c.allEvents()[0];
+      c.peekEvent.set(ev);
+      c.openQuickEdit(ev);
+      expect(c.peekEvent()).toBeNull();
+      expect(c.quickEditEvent()).toBe(ev);
+    });
+
+    it('saves a publish-event patch optimistically and re-fetches on success', () => {
+      const updateItem = vi.fn(() => of({}));
+      const getCalendar = vi
+        .fn()
+        .mockReturnValueOnce(of(buildResponse()))
+        .mockReturnValueOnce(of(buildResponse()));
+      setupTestBed(getCalendar as never, undefined, undefined, { updateItem });
+      const fixture = TestBed.createComponent(CalendarPageComponent);
+      fixture.detectChanges();
+      const c = fixture.componentInstance;
+      const publish = c
+        .allEvents()
+        .find((e) => e.kind === 'publish' && e.contentId === 'item-1');
+      if (!publish || publish.kind !== 'publish') throw new Error('fixture missing publish event');
+
+      const newIso = '2026-05-18T15:00:00.000Z';
+      c.onQuickEditSave({
+        event: publish,
+        patch: { scheduledAt: newIso, scheduledDate: '2026-05-18' },
+      });
+
+      expect(updateItem).toHaveBeenCalledWith('hive-collective', 'item-1', {
+        scheduledAt: newIso,
+        scheduledDate: '2026-05-18',
+      });
+      // re-fetch on success — second getCalendar call
+      expect(getCalendar).toHaveBeenCalledTimes(2);
+      expect(c.quickEditEvent()).toBeNull();
+      expect(c.quickEditSaving()).toBe(false);
+    });
+
+    it('saves a milestone-event override patch with the right payload and re-fetches', () => {
+      const updateItem = vi.fn(() => of({}));
+      // Build a re-fetch response that reflects the new override so we can
+      // assert the post-save state. The actual server merge is exercised in
+      // content-items.service.spec.
+      const after = buildResponse();
+      const targetMilestone = after.milestones.find(
+        (m) => m.contentId === 'item-1' && m.milestoneType === 'draft_due',
+      );
+      if (targetMilestone) targetMilestone.dueAt = '2026-04-25T00:00:00.000Z';
+      const getCalendar = vi
+        .fn()
+        .mockReturnValueOnce(of(buildResponse()))
+        .mockReturnValueOnce(of(after));
+      setupTestBed(getCalendar as never, undefined, undefined, { updateItem });
+      const fixture = TestBed.createComponent(CalendarPageComponent);
+      fixture.detectChanges();
+      const c = fixture.componentInstance;
+      const milestone = c
+        .allEvents()
+        .find(
+          (e) => e.kind === 'milestone' && e.contentId === 'item-1',
+        );
+      if (!milestone || milestone.kind !== 'milestone')
+        throw new Error('fixture missing milestone event');
+
+      c.onQuickEditSave({
+        event: milestone,
+        patch: {
+          milestoneOverrides: {
+            draft_due: { dueAt: '2026-04-25T00:00:00.000Z' },
+          },
+        },
+      });
+      expect(updateItem).toHaveBeenCalledWith('hive-collective', 'item-1', {
+        milestoneOverrides: {
+          draft_due: { dueAt: '2026-04-25T00:00:00.000Z' },
+        },
+      });
+      expect(getCalendar).toHaveBeenCalledTimes(2);
+      const updated = c
+        .allEvents()
+        .find(
+          (e) =>
+            e.kind === 'milestone' && e.milestoneType === 'draft_due',
+        );
+      expect(updated?.date.toISOString()).toBe('2026-04-25T00:00:00.000Z');
+    });
+
+    it('reverts the in-memory response and surfaces a toast on save failure', () => {
+      const updateItem = vi.fn(() => throwError(() => new Error('500')));
+      const showError = vi.fn();
+      setupTestBed(() => of(buildResponse()), undefined, undefined, {
+        updateItem,
+        showError,
+      });
+      const fixture = TestBed.createComponent(CalendarPageComponent);
+      fixture.detectChanges();
+      const c = fixture.componentInstance;
+      const publish = c
+        .allEvents()
+        .find((e) => e.kind === 'publish' && e.contentId === 'item-1');
+      if (!publish || publish.kind !== 'publish') throw new Error('fixture missing publish event');
+      const originalIso = publish.item.scheduleAt;
+      c.onQuickEditSave({
+        event: publish,
+        patch: { scheduledAt: '2026-05-25T15:00:00.000Z', scheduledDate: '2026-05-25' },
+      });
+      expect(showError).toHaveBeenCalledWith(
+        expect.stringContaining("Couldn't save the new publish date"),
+      );
+      expect(c.quickEditEvent()).toBeNull();
+      expect(c.quickEditSaving()).toBe(false);
+      const reverted = c
+        .allEvents()
+        .find((e) => e.kind === 'publish' && e.contentId === 'item-1');
+      expect((reverted as { item: { scheduleAt: string } }).item.scheduleAt).toBe(
+        originalIso,
+      );
+    });
+
+    it('cancelQuickEdit clears the modal but is a no-op while saving', () => {
+      setupTestBed(() => of(buildResponse()));
+      const fixture = TestBed.createComponent(CalendarPageComponent);
+      fixture.detectChanges();
+      const c = fixture.componentInstance;
+      const ev = c.allEvents()[0];
+      c.quickEditEvent.set(ev);
+      c.quickEditSaving.set(true);
+      c.cancelQuickEdit();
+      expect(c.quickEditEvent()).toBe(ev);
+      c.quickEditSaving.set(false);
+      c.cancelQuickEdit();
+      expect(c.quickEditEvent()).toBeNull();
+    });
+
+    it('onQuickEditOpenItem closes the modal and routes via openEvent', () => {
+      const { router } = setupTestBed(() => of(buildResponse()));
+      const fixture = TestBed.createComponent(CalendarPageComponent);
+      fixture.detectChanges();
+      const c = fixture.componentInstance;
+      const ev = c.allEvents().find((e) => e.kind === 'publish');
+      if (!ev) throw new Error('fixture missing publish event');
+      c.quickEditEvent.set(ev);
+      c.onQuickEditOpenItem(ev);
+      expect(c.quickEditEvent()).toBeNull();
+      expect(router.navigate).toHaveBeenCalled();
+    });
+  });
+
+  describe('applyPatchToResponse (#134)', () => {
+    it('shifts a publish event and its milestones by the new scheduleAt delta', () => {
+      const res = buildResponse();
+      const ev = {
+        kind: 'publish' as const,
+        id: 'publish-item-1',
+        contentId: 'item-1',
+        date: new Date(res.items[0].scheduleAt as string),
+        item: res.items[0],
+        severity: null,
+      };
+      const next = applyPatchToResponse(res, ev, {
+        scheduledAt: '2026-05-08T15:00:00.000Z',
+        scheduledDate: '2026-05-08',
+      });
+      expect(next).not.toBeNull();
+      if (!next) return;
+      expect(next.items.find((i) => i.id === 'item-1')?.scheduleAt).toBe(
+        '2026-05-08T15:00:00.000Z',
+      );
+      // milestone shifted by +5 days from 2026-04-28 → 2026-05-03
+      const m = next.milestones.find((mm) => mm.contentId === 'item-1');
+      expect(m?.dueAt).toBe('2026-05-03T00:00:00.000Z');
+    });
+
+    it('shifts only the targeted milestone dueAt for milestone events', () => {
+      const res = buildResponse();
+      const target = res.milestones[0];
+      const ev = {
+        kind: 'milestone' as const,
+        id: `milestone-${target.milestoneId}`,
+        contentId: target.contentId,
+        milestoneId: target.milestoneId,
+        milestoneType: target.milestoneType,
+        date: new Date(target.dueAt),
+        item: res.items[0],
+        milestone: target,
+        severity: null,
+      };
+      const next = applyPatchToResponse(res, ev, {
+        milestoneOverrides: {
+          draft_due: { dueAt: '2026-04-20T00:00:00.000Z' },
+        },
+      });
+      expect(next).not.toBeNull();
+      if (!next) return;
+      const moved = next.milestones.find((m) => m.milestoneId === target.milestoneId);
+      expect(moved?.dueAt).toBe('2026-04-20T00:00:00.000Z');
+      // Publish-event date for the same item must be unchanged
+      expect(next.items.find((i) => i.id === 'item-1')?.scheduleAt).toBe(
+        '2026-05-03T15:00:00.000Z',
+      );
+    });
   });
 });

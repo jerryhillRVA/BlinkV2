@@ -1,6 +1,8 @@
 import { ContentItemsService } from './content-items.service';
 import { AgenticFilesystemService } from '../agentic-filesystem/agentic-filesystem.service';
+import { CalendarService } from '../calendar/calendar.service';
 import type {
+  CalendarSettingsContract,
   ContentItemContract,
   ProductionBriefContract,
   ProductionDraftContract,
@@ -379,5 +381,81 @@ function buildQA(): ProductionQAContract {
       await svc.deleteItem(TEST_TENANT, id);
     }
     await svc.deleteItem(TEST_TENANT, concept.id);
+  }, 60_000);
+
+  it('milestoneOverrides round-trips through AFS and is honored by CalendarService (#134)', async () => {
+    // Seed a deadline template so milestones materialize.
+    const settings: CalendarSettingsContract = {
+      enableDeadlineTemplates: true,
+      deadlineTemplates: {
+        VIDEO_SHORT_VERTICAL: {
+          milestones: [
+            { milestoneType: 'draft_due', offsetDays: -5, required: true },
+            { milestoneType: 'qa_due', offsetDays: -1, required: true },
+          ],
+          phases: [],
+        },
+      },
+      reminderSettings: {
+        milestone72h: false,
+        milestone24h: false,
+        milestoneOverdue: false,
+        publish24h: false,
+      },
+      autoCreateOnPublish: false,
+    };
+    await fs.uploadJsonFile(TEST_TENANT, 'settings', 'calendar.json', settings);
+
+    const post = await svc.createItem(TEST_TENANT, {
+      stage: 'post',
+      status: 'scheduled',
+      title: '#134 override post',
+      description: '',
+      pillarIds: [],
+      segmentIds: [],
+      platform: 'instagram',
+      contentType: 'reel',
+      scheduledAt: '2026-05-15T15:00:00.000Z',
+      scheduledDate: '2026-05-15',
+    });
+
+    // Seed a brief_due override first to verify the second patch deep-merges
+    // and preserves it (#134).
+    await svc.updateItem(TEST_TENANT, post.id, {
+      milestoneOverrides: { brief_due: { dueAt: '2026-04-30T00:00:00.000Z' } },
+    });
+
+    // Patch with a per-item milestone override that diverges from the template
+    // (template would put draft_due at 2026-05-10; override pushes it to 05-07).
+    const overrideIso = '2026-05-07T00:00:00.000Z';
+    await svc.updateItem(TEST_TENANT, post.id, {
+      milestoneOverrides: { draft_due: { dueAt: overrideIso } },
+    });
+
+    const fetched = await svc.getItem(TEST_TENANT, post.id);
+    expect(fetched.milestoneOverrides?.draft_due?.dueAt).toBe(overrideIso);
+    // Deep-merge: brief_due override seeded in the first patch must survive.
+    expect(fetched.milestoneOverrides?.brief_due?.dueAt).toBe(
+      '2026-04-30T00:00:00.000Z',
+    );
+
+    // CalendarService must surface the overridden dueAt.
+    const calendarSvc = new CalendarService(fs, null);
+    const projection = await calendarSvc.getCalendar(TEST_TENANT);
+    const draftMilestone = projection.milestones.find(
+      (m) => m.contentId === post.id && m.milestoneType === 'draft_due',
+    );
+    const qaMilestone = projection.milestones.find(
+      (m) => m.contentId === post.id && m.milestoneType === 'qa_due',
+    );
+    expect(draftMilestone?.dueAt).toBe(overrideIso);
+    // qa_due stays template-derived (-1 day from the calendar projection's
+    // anchor). The Calendar projects from the index entry's scheduledDate
+    // ('2026-05-15') at the default 14:00 UTC publish time, so qa_due lands
+    // one day earlier at 14:00.
+    expect(qaMilestone?.dueAt).toBe('2026-05-14T14:00:00.000Z');
+
+    // Cleanup
+    await svc.deleteItem(TEST_TENANT, post.id);
   }, 60_000);
 });

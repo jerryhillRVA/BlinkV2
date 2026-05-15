@@ -11,6 +11,8 @@ import type {
   PlatformContract,
 } from '@blinksocial/contracts';
 
+type MilestoneOverridesMap = ContentItemContract['milestoneOverrides'];
+
 const DEFAULT_PUBLISH_TIME_UTC = 'T14:00:00.000Z';
 
 const CONTENT_TYPE_TO_CANONICAL: Record<
@@ -100,19 +102,27 @@ export function deriveMilestonesForItem(
   canonicalType: CalendarCanonicalTypeContract,
   ownerLabel: string,
   settings: CalendarSettingsContract | null,
+  overrides?: MilestoneOverridesMap,
 ): CalendarMilestoneContract[] {
   if (!settings?.deadlineTemplates) return [];
   const template = settings.deadlineTemplates[canonicalType];
   if (!template?.milestones) return [];
   const anchor = new Date(scheduleAt);
   return template.milestones.map((m, idx) => {
-    const due = new Date(anchor);
-    due.setUTCDate(due.getUTCDate() + m.offsetDays);
+    const override = overrides?.[m.milestoneType];
+    let dueAt: string;
+    if (override?.dueAt) {
+      dueAt = override.dueAt;
+    } else {
+      const due = new Date(anchor);
+      due.setUTCDate(due.getUTCDate() + m.offsetDays);
+      dueAt = due.toISOString();
+    }
     return {
       milestoneId: `${contentId}-${m.milestoneType}-${idx}`,
       contentId,
       milestoneType: m.milestoneType,
-      dueAt: due.toISOString(),
+      dueAt,
       milestoneOwner: ownerLabel,
       isRequired: m.required,
     };

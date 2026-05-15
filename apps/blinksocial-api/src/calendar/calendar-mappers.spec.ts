@@ -201,5 +201,37 @@ describe('calendar-mappers', () => {
         ),
       ).toEqual([]);
     });
+
+    it('honors per-item milestoneOverrides over the template offset (#134)', () => {
+      const milestones = deriveMilestonesForItem(
+        'bk-pub1',
+        '2026-05-15T15:00:00.000Z',
+        'VIDEO_SHORT_VERTICAL',
+        'user-mara',
+        settings,
+        { draft_due: { dueAt: '2026-05-07T00:00:00.000Z' } },
+      );
+      expect(milestones).toHaveLength(2);
+      expect(milestones[0].dueAt).toBe('2026-05-07T00:00:00.000Z');
+      // unrelated milestone falls back to template
+      expect(milestones[1].milestoneType).toBe('qa_due');
+      expect(milestones[1].dueAt).toBe('2026-05-14T15:00:00.000Z');
+    });
+
+    it('ignores overrides for milestone types not present in the template (#134)', () => {
+      const milestones = deriveMilestonesForItem(
+        'bk-pub1',
+        '2026-05-15T15:00:00.000Z',
+        'VIDEO_SHORT_VERTICAL',
+        'user-mara',
+        settings,
+        { brief_due: { dueAt: '2026-05-01T00:00:00.000Z' } },
+      );
+      // brief_due is not in the template, so no phantom milestone is emitted
+      expect(milestones.map((m) => m.milestoneType)).toEqual([
+        'draft_due',
+        'qa_due',
+      ]);
+    });
   });
 });

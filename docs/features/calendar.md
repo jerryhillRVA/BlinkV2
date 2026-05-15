@@ -113,7 +113,10 @@ Each milestone type also maps to a Post-Detail tab via `MILESTONE_TAB_MAP` ([cal
 - Summary line — full date + time for publish events; "all day" + date for milestone events
 - Severity warning row — appears only when severity is non-null
 - Owner
-- Action buttons: **Edit Dates** · **Open Item** · **Copy Link**
+- Action buttons:
+  - **Edit Dates** — opens the Quick Edit modal (§ 9). For a publish event the modal edits `scheduleAt` (datetime); for a milestone event it edits that milestone's `dueAt` as a per-item override (date-only, midnight UTC). Save is optimistic — the pill moves immediately, the PUT runs in the background, and a failure reverts the move and surfaces a toast.
+  - **Open Item** — navigates to the Post Detail page with the right tab (see § 9 milestone tab map).
+  - **Copy Link** — copies the deep link to the content item to the clipboard.
 
 **Severity copy in the warning row:**
 
@@ -140,9 +143,9 @@ Defined in [`calendar.types.ts`](../../apps/blinksocial-web/src/app/pages/calend
 
 ## 9. Scheduling flow
 
-The Calendar is a **read-only projection**. The user does not create, drag-to-reschedule, or delete events from the Calendar surface itself.
+The Calendar surfaces two scheduling affordances: (a) the **Approve & Schedule** step of the Post Detail view (canonical entry point for new schedules), and (b) the **Quick Edit modal** on the peek card (in-place date adjustments for items already on the Calendar). Bulk create, drag-to-reschedule, and create-from-empty-day all remain out of scope.
 
-### Where `scheduleAt` is set
+### Where `scheduleAt` is set (initial schedule)
 
 `scheduleAt` is set on the **Approve & Schedule** step of the Post Detail view (`apps/blinksocial-web/src/app/pages/content/views/post-detail/approve-schedule-step/`):
 
@@ -150,11 +153,28 @@ The Calendar is a **read-only projection**. The user does not create, drag-to-re
 - On save, the post is persisted to AFS via the `ContentItemsService` flow finalized in #126.
 - The post's top-level `scheduledAt` is mirrored from `publishConfig.scheduleAt`; alternatively, `scheduledDate` (a date-only string) can be set, in which case the Calendar projects it at the default publish time of `14:00 UTC` ([`calendar-mappers.ts:14`](../../apps/blinksocial-api/src/calendar/calendar-mappers.ts#L14) `DEFAULT_PUBLISH_TIME_UTC`).
 
+### Quick Edit modal (in-place date adjustments, #134)
+
+[`quick-edit-modal/quick-edit-modal.component.ts`](../../apps/blinksocial-web/src/app/pages/calendar/quick-edit-modal/quick-edit-modal.component.ts)
+
+Opens from the peek card's **Edit Dates** button. Two variants:
+
+- **Publish-event variant** — single `datetime-local` input. Save emits `PUT /api/workspaces/:id/content-items/:itemId` with `{ scheduledAt: <ISO>, scheduledDate: <YYYY-MM-DD> }`. No status flip, no owner / notes edit — those still live on Post Detail.
+- **Milestone-event variant** — single `date` input. Save emits `PUT` with `{ milestoneOverrides: { [milestoneType]: { dueAt: '<YYYY-MM-DD>T00:00:00.000Z' } } }`, deep-merged onto the existing record. The workspace deadline template at `settings/calendar.json` is **not** mutated; only the per-item exception is persisted.
+
+**Optimistic UX**: `calendar-page.component` mutates the in-memory `response` signal first (via `applyPatchToResponse`) so the pill moves to its new cell immediately. The modal stays open with a busy Save button until the PUT settles. On `2xx`, the modal closes and the Calendar re-fetches `GET /api/calendar/<workspaceId>` to pick up authoritative state (cursor preserved). On non-`2xx`, the in-memory mutation reverts, the modal closes, and an error toast surfaces — `"Couldn't save the new publish date — please try again"` for publish edits, `"Couldn't save the milestone date — please try again"` for milestone edits.
+
+### `milestoneOverrides` data model
+
+`ContentItemContract.milestoneOverrides` is an optional `Partial<Record<MilestoneType, { dueAt: string }>>` on the per-item AFS record. Keyed by `milestoneType` rather than `milestoneId` because the latter is recomputed on every render and isn't stable across template changes. Absent overrides → `deriveMilestonesForItem` falls back to the template's `offsetDays` from `scheduleAt` (existing behavior). Override types not present in the active template are silently ignored — no phantom milestone is emitted.
+
+To honor the override server-side, `CalendarService.tryDeriveFromAfs` / `tryDeriveFromMockContent` now read the **full item file** (not just the index entry) for each non-archived item with `contentType`, parallelized via `Promise.all`. Same gate as today's milestone derivation, so the additional reads are bounded.
+
 ### How the Calendar reflects it
 
 On the next `GET /api/calendar/<workspaceId>`:
 
-- When `AGENTIC_FS_URL` is set → `CalendarService.tryDeriveFromAfs` reads `content-items/_content-items-index.json` from AFS and projects each non-archived entry through `mapContentItemToCalendarItem`.
+- When `AGENTIC_FS_URL` is set → `CalendarService.tryDeriveFromAfs` reads `content-items/_content-items-index.json` from AFS, fans out per-item reads to pick up `milestoneOverrides`, and projects each non-archived entry through `mapContentItemToCalendarItem` + `deriveMilestonesForItem`.
 - When unset → the existing 3-path mock logic runs (`tryLoadFixture` → `tryDeriveFromMockContent` → `generateSynthetic`).
 
 In both modes the response shape is identical, so the UI is invariant.
@@ -163,7 +183,9 @@ In both modes the response shape is identical, so the UI is invariant.
 
 - Drag-to-reschedule from the Calendar surface.
 - Create-event-from-empty-day on the Calendar surface.
-- Any in-place edit of `scheduleAt` from the peek card (the **Edit Dates** action emits an event and closes the peek; routing this to a real editor is a future ticket).
+- Bulk re-scheduling (multi-select, mass move).
+- Phase-window event editing (phase windows aren't rendered on the Calendar today; adding them is its own ticket).
+- Editing owner / notes / status from the Quick Edit modal — those flows remain on Post Detail.
 
 ## 10. Calendar settings tab
 

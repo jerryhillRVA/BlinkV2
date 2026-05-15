@@ -21,6 +21,7 @@ type FixtureMockDataService = {
     file: string,
   ) => Promise<unknown | null>;
   getSettings: (id: string, tab: string) => Promise<unknown | null>;
+  getItemFile: (id: string, itemId: string) => Promise<unknown | null>;
 };
 
 type FixtureFsService = {
@@ -147,6 +148,7 @@ async function buildService(
     isMockWorkspace: () => false,
     getNamespaceAggregate: async () => null,
     getSettings: async () => null,
+    getItemFile: async () => null,
     ...mock,
   };
   const defaultFs: FixtureFsService = {
