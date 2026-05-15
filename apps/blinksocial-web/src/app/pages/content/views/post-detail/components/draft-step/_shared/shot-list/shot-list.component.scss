@@ -77,23 +77,22 @@
 
 // ── Attached-asset chip (selected file row) ─────────────────────────
 //
-// Prototype: neutral light-gray rounded rectangle, NOT a pill. Small
-// video thumbnail on the left, filename in regular weight, × on right.
-// Sits inside the shot's asset zone and spans the full width.
+// Prototype: a plain flex row INSIDE the dashed outer container — no
+// border / no background of its own. Thumb on the left, filename in
+// the middle (truncated, gray-700, weight 600), × on the right.
 
 .asset-chip {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 6px 8px 6px 8px;
-  background: var(--blink-surface);
-  border: 1px solid var(--blink-outline-variant);
-  border-radius: 6px;
-  color: var(--blink-on-surface);
-  font-size: var(--blink-body-small);
-  font-weight: 500;
   width: 100%;
   max-width: 100%;
+  background: transparent;
+  border: none;
+  padding: 0;
+  color: var(--blink-on-surface-secondary);
+  font-size: var(--blink-label-small);
+  font-weight: 600;
 
   .asset-chip-name {
     flex: 1 1 auto;
@@ -105,37 +104,38 @@
 
   &--sm {
     gap: 8px;
-    font-size: var(--blink-body-small);
   }
 }
 
+// Minimalist × on the right edge of the chip — just an icon, no
+// background. opacity 0.5 by default, 1 on hover; matches the
+// prototype's `opacity-50 hover:opacity-100`.
 .asset-chip-remove {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 16px;
-  height: 16px;
   background: transparent;
   border: none;
-  border-radius: 50%;
+  padding: 0;
   color: inherit;
   cursor: pointer;
-  opacity: 0.7;
-  transition: opacity 120ms ease, background-color 120ms ease;
+  opacity: 0.5;
+  flex-shrink: 0;
+  transition: opacity 120ms ease;
 
   &:hover:not(:disabled) {
     opacity: 1;
-    background: rgba(0, 0, 0, 0.06);
   }
 
   &:focus-visible {
     outline: 2px solid var(--blink-brand-primary);
     outline-offset: 1px;
+    opacity: 1;
   }
 
   &:disabled {
     cursor: not-allowed;
-    opacity: 0.4;
+    opacity: 0.25;
   }
 }
 
@@ -153,12 +153,11 @@
   color: var(--blink-on-surface-faint);
 }
 
-// ── Per-shot asset zone (#139: now a picker/chip slot) ──────────────
+// ── Per-shot asset zone (#139: dashed-bordered picker/chip slot) ───
 //
-//   - Empty: native <select> with `Assign an asset…` placeholder.
-//     Background tinted to match the prototype's dashed-border slot.
-//   - Attached: chip with thumbnail + filename + clear.
-
+// Prototype keeps the same dashed-border + white-bg container in ALL
+// states — empty pool message, picker, AND assigned chip all live
+// INSIDE that same dashed box. Only the inner content swaps.
 .shot-asset-zone {
   display: flex;
   align-items: center;
@@ -166,22 +165,15 @@
   flex-wrap: wrap;
   padding: 8px;
   border-radius: 6px;
-  transition: background-color 120ms ease, border-color 120ms ease;
-}
-
-.shot-asset-zone--empty {
   background: var(--blink-surface);
   border: 1px dashed var(--blink-outline-dashed);
 }
 
-// Prototype: when a row has an assigned asset, the surrounding zone
-// has no extra chrome — the chip is its own surface. Drop the blue
-// tint and just give the row a tiny vertical padding so the chip
-// doesn't hug the description above.
+// Kept as a hook for state-specific tweaks; structural styling is
+// shared via `.shot-asset-zone` above.
+.shot-asset-zone--empty,
 .shot-asset-zone--attached {
-  background: transparent;
-  border: none;
-  padding: 0;
+  /* shared chrome */
 }
 
 // #139 polish: per-shot picker now uses <app-dropdown>. The wrapper
@@ -203,12 +195,13 @@
   align-items: center;
   justify-content: center;
   width: 32px;
-  height: 22px;
+  height: 32px;
   border-radius: 4px;
   background: var(--blink-on-surface-strong);
   color: var(--blink-on-surface-faint);
   flex-shrink: 0;
   overflow: hidden;
+  border: 1px solid var(--blink-outline-variant);
 }
 
 .asset-chip-video {

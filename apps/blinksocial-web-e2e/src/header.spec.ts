@@ -155,10 +155,16 @@ test.describe('Header — mobile layout (375×667)', () => {
 
   test('TC-7: dark-mode dropdown uses --blink-surface (no white flash)', async ({ page }) => {
     await expect(page.locator('.brand-text')).toBeVisible();
-    // force-click: at 375px the ws-selector-name can overlap the theme-toggle area
-    // (known out-of-scope crowding noted in the design). We're testing the dropdown's
-    // dark-mode computed color, not click ergonomics of the theme toggle.
-    await page.locator('.theme-toggle-btn').click({ force: true });
+    // At 375px the ws-selector-name can overlap the theme-toggle area
+    // (known out-of-scope crowding noted in the design). We're testing
+    // the dropdown's dark-mode computed color, not the click ergonomics
+    // of the theme toggle — so dispatch the click via the button's
+    // own .click() method to bypass pointer hit-testing entirely.
+    // `force: true` alone had flaked on webkit + firefox when the
+    // pointer landed on the overlapping ws-selector.
+    const themeBtn = page.locator('.theme-toggle-btn');
+    await expect(themeBtn).toBeVisible();
+    await themeBtn.evaluate((el) => (el as HTMLButtonElement).click());
     await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
     await page.locator('[data-testid="mobile-menu-btn"]').click();
     const menu = page.locator('[data-testid="mobile-menu"]');

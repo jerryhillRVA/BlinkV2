@@ -77,15 +77,20 @@
   gap: 12px;
 }
 
+// Prototype: 72×72 rounded preview tile with a gray background, a
+// solid dark filename strip at the bottom, and a hover overlay that
+// reveals a small centered remove button (white-bg, gray-X, red on
+// hover). The × is hidden until the thumb is hovered or focused.
 .thumb {
   position: relative;
-  width: 96px;
+  width: 72px;
+  height: 72px;
 }
 
 .thumb-image {
   position: relative;
-  width: 96px;
-  height: 96px;
+  width: 72px;
+  height: 72px;
   border-radius: 8px;
   border: 1px solid var(--blink-outline-variant);
   background: var(--blink-surface-variant);
@@ -106,23 +111,19 @@
   background: var(--blink-on-surface-strong);
 }
 
-// Prototype: filename overlay sits at the bottom of the preview window
-// (inside the thumb-image), with a translucent dark gradient backing
-// and white truncated text — NOT a separate row below the thumb.
+// Solid translucent-dark strip at the bottom of the preview tile;
+// white truncated filename inside. Matches the prototype's
+// `bg-black/50 text-white text-[8px]`.
 .thumb-filename {
   position: absolute;
   left: 0;
   right: 0;
   bottom: 0;
-  padding: 12px 6px 4px;
-  background: linear-gradient(
-    to bottom,
-    rgba(0, 0, 0, 0) 0%,
-    rgba(0, 0, 0, 0.6) 100%
-  );
+  padding: 2px 4px;
+  background: rgba(0, 0, 0, 0.5);
   color: var(--blink-on-brand);
-  font-size: var(--blink-label-small);
-  font-weight: 500;
+  font-size: 8px;
+  font-weight: 600;
   text-align: left;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -130,32 +131,56 @@
   pointer-events: none;
 }
 
-// Prototype: remove button is centered in the preview window with a
-// gray circular background. Icon is gray by default, coral on hover.
+// Hover overlay: a `bg-black/30` veil over the whole thumb plus a
+// centered white-circle remove button. Both are hidden when the user
+// isn't hovering the tile — matches the prototype's
+// `opacity-0 group-hover:opacity-100`. Keyboard parity: focus on the
+// button via Tab also reveals the overlay so the button can be
+// activated without a mouse.
+.thumb-image::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.3);
+  opacity: 0;
+  transition: opacity 120ms ease;
+  pointer-events: none;
+}
+
+.thumb-image:hover::after,
+.thumb-image:focus-within::after {
+  opacity: 1;
+}
+
 .thumb-remove {
   position: absolute;
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  width: 32px;
-  height: 32px;
+  width: 22px;
+  height: 22px;
   border-radius: 50%;
   border: none;
-  background: rgba(255, 255, 255, 0.85);
-  color: var(--blink-on-surface-medium);
+  background: rgba(255, 255, 255, 0.9);
+  color: var(--blink-on-surface-secondary);
   cursor: pointer;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  transition: background 120ms ease, color 120ms ease;
+  opacity: 0;
+  transition: opacity 120ms ease, color 120ms ease;
+  z-index: 1;
+
+  .thumb-image:hover &,
+  &:focus-visible {
+    opacity: 1;
+  }
 
   &:hover:not(:disabled) {
-    background: var(--blink-on-brand);
-    color: var(--blink-brand-primary);
+    color: var(--blink-status-danger);
   }
 
   &:disabled {
-    opacity: 0.5;
     cursor: not-allowed;
   }
 
