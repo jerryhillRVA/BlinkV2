@@ -1,0 +1,24 @@
+.quick-edit-dialog {
+  max-width: 28rem;
+}
+
+.quick-edit-milestone-label {
+  font-size: var(--blink-body-medium);
+  font-weight: 600;
+  color: var(--blink-on-surface-strong);
+}
+
+.quick-edit-error {
+  margin: 0;
+  font-size: var(--blink-body-small);
+  color: var(--blink-icon-orange, #d94e33);
+}
+
+.quick-edit-footer {
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.quick-edit-open {
+  margin-right: auto;
+}

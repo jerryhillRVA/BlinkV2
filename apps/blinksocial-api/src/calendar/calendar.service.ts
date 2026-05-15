@@ -13,6 +13,7 @@ import type {
   CalendarMilestoneTypeContract,
   CalendarResponseContract,
   CalendarSettingsContract,
+  ContentItemContract,
   ContentItemsIndexContract,
   PlatformContract,
 } from '@blinksocial/contracts';
@@ -178,15 +179,26 @@ export class CalendarService {
     const items: CalendarContentItemContract[] = [];
     const milestones: CalendarMilestoneContract[] = [];
     const entries = Array.isArray(index?.items) ? index.items : [];
-    for (const entry of entries) {
+    // Load full item files in parallel only for entries with contentType —
+    // the same gate that decides whether template milestones apply. The
+    // full record is needed so per-item `milestoneOverrides` (#134) can
+    // shadow the template-derived dueAt without touching the workspace
+    // deadline template.
+    const fullItems = await Promise.all(
+      entries.map((entry) =>
+        !entry.archived && entry.contentType
+          ? this.readAfsItem(workspaceId, entry.id)
+          : Promise.resolve(null),
+      ),
+    );
+    for (let i = 0; i < entries.length; i += 1) {
+      const entry = entries[i];
       if (entry.archived) continue;
       const calItem = mapContentItemToCalendarItem(entry);
       if (!calItem) continue;
       items.push(calItem);
-      // Mirror the mock-derived path: only generate milestones for items
-      // with an explicit contentType. Items that default to IMAGE_SINGLE
-      // because contentType is null must not inherit the template.
       if (entry.contentType) {
+        const full = fullItems[i];
         milestones.push(
           ...deriveMilestonesForItem(
             calItem.id,
@@ -194,6 +206,7 @@ export class CalendarService {
             calItem.canonicalType,
             calItem.owner,
             settings,
+            full?.milestoneOverrides,
           ),
         );
       }
@@ -204,6 +217,27 @@ export class CalendarService {
       items,
       milestones,
     };
+  }
+
+  private async readAfsItem(
+    workspaceId: string,
+    itemId: string,
+  ): Promise<ContentItemContract | null> {
+    let entries: Awaited<
+      ReturnType<AgenticFilesystemService['listDirectory']>
+    > = [];
+    try {
+      entries = await this.fs.listDirectory(workspaceId, CONTENT_ITEMS_NAMESPACE);
+    } catch {
+      return null;
+    }
+    const file = entries.find(
+      (e) => e.type === 'file' && e.name === `${itemId}.json`,
+    );
+    if (!file?.file_id) return null;
+    const files = await this.fs.batchRetrieve(workspaceId, [file.file_id]);
+    if (files.length === 0 || files[0].content_type === 'error') return null;
+    return files[0].content as ContentItemContract;
   }
 
   private async readAfsAggregate(
@@ -247,16 +281,25 @@ export class CalendarService {
     const items: CalendarContentItemContract[] = [];
     const milestones: CalendarMilestoneContract[] = [];
     const entries = Array.isArray(index?.items) ? index.items : [];
-    for (const entry of entries) {
+    // Same per-item read as the AFS branch (#134): full record needed so
+    // milestoneOverrides shadow the template-derived dueAt.
+    const fullItems = await Promise.all(
+      entries.map((entry) =>
+        !entry.archived && entry.contentType && this.mockDataService
+          ? (this.mockDataService.getItemFile(workspaceId, entry.id) as Promise<
+              ContentItemContract | null
+            >)
+          : Promise.resolve(null),
+      ),
+    );
+    for (let i = 0; i < entries.length; i += 1) {
+      const entry = entries[i];
       if (entry.archived) continue;
       const calItem = mapContentItemToCalendarItem(entry);
       if (!calItem) continue;
       items.push(calItem);
-      // Only apply deadline templates when the source item has an explicit
-      // contentType. Items with null contentType fall back to IMAGE_SINGLE
-      // for visual rendering, but we don't want that default to inherit
-      // IMAGE_SINGLE's milestone schedule.
       if (entry.contentType) {
+        const full = fullItems[i];
         milestones.push(
           ...deriveMilestonesForItem(
             calItem.id,
@@ -264,6 +307,7 @@ export class CalendarService {
             calItem.canonicalType,
             calItem.owner,
             settings,
+            full?.milestoneOverrides,
           ),
         );
       }

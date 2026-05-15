@@ -1,0 +1,115 @@
+<ng-template #dialogTpl>
+  <div
+    class="app-modal modal-overlay quick-edit-overlay"
+    role="presentation"
+    tabindex="-1"
+    (click)="onBackdropClick($event)"
+    (keyup.escape)="onEscape()"
+    data-testid="quick-edit-overlay"
+  >
+    <div
+      class="modal-dialog quick-edit-dialog"
+      role="dialog"
+      aria-labelledby="quick-edit-title"
+      aria-modal="true"
+      tabindex="-1"
+      (click)="stopEvent($event)"
+      (keyup.escape)="onEscape()"
+      data-testid="quick-edit-dialog"
+    >
+      <button
+        type="button"
+        class="modal-close"
+        (click)="onCancel()"
+        [disabled]="saving"
+        aria-label="Close"
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M18 6 6 18"/>
+          <path d="m6 6 12 12"/>
+        </svg>
+      </button>
+
+      <header class="modal-header">
+        <h2 id="quick-edit-title" class="modal-title">{{ title() }}</h2>
+        @if (eventSig(); as ev) {
+          <p class="modal-description">{{ ev.item.title }}</p>
+        }
+      </header>
+
+      <div class="modal-body">
+        @if (eventSig(); as ev) {
+          @if (ev.kind === 'publish') {
+            <div class="field">
+              <label class="field-label" for="quick-edit-datetime">Date &amp; time</label>
+              <input
+                #dateInput
+                id="quick-edit-datetime"
+                type="datetime-local"
+                class="field-input"
+                [value]="dateValue()"
+                (input)="onDateInput($event)"
+                (keyup.enter)="onSave()"
+                [disabled]="saving"
+                data-testid="quick-edit-datetime"
+              />
+            </div>
+          } @else {
+            <div class="field">
+              <span class="field-label">Milestone</span>
+              <span class="quick-edit-milestone-label">{{ milestoneLabel() }}</span>
+            </div>
+            <div class="field">
+              <label class="field-label" for="quick-edit-date">Due date</label>
+              <input
+                #dateInput
+                id="quick-edit-date"
+                type="date"
+                class="field-input"
+                [value]="dateValue()"
+                (input)="onDateInput($event)"
+                (keyup.enter)="onSave()"
+                [disabled]="saving"
+                data-testid="quick-edit-date"
+              />
+            </div>
+          }
+          @if (invalid()) {
+            <p class="quick-edit-error" role="alert">Pick a valid date.</p>
+          }
+        }
+      </div>
+
+      <div class="modal-footer quick-edit-footer">
+        <button
+          type="button"
+          class="btn-modal-cancel"
+          (click)="onCancel()"
+          [disabled]="saving"
+          data-testid="quick-edit-cancel"
+        >
+          Cancel
+        </button>
+        <button
+          type="button"
+          class="btn-modal-cancel quick-edit-open"
+          (click)="onOpenItem()"
+          [disabled]="saving"
+          data-testid="quick-edit-open"
+        >
+          Open Item
+        </button>
+        <button
+          type="button"
+          class="btn-modal-create quick-edit-save"
+          (click)="onSave()"
+          (keyup.enter)="onSave()"
+          [disabled]="invalid() || saving"
+          data-testid="quick-edit-save"
+        >
+          {{ saving ? 'Saving…' : 'Save Changes' }}
+        </button>
+      </div>
+    </div>
+  </div>
+</ng-template>

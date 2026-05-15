@@ -14,6 +14,7 @@ import { FormsModule } from '@angular/forms';
 import type {
   CalendarResponseContract,
   PlatformContract,
+  UpdateContentItemRequestContract,
 } from '@blinksocial/contracts';
 import { CalendarApiService } from './calendar-api.service';
 import {
@@ -28,6 +29,12 @@ import {
   EMPTY_FILTER_STATE,
 } from './calendar.types';
 import { CalendarPeekCardComponent } from './peek-card/peek-card.component';
+import {
+  CalendarQuickEditModalComponent,
+  type QuickEditSavePayload,
+} from './quick-edit-modal/quick-edit-modal.component';
+import { ContentItemsApiService } from '../content/content-items-api.service';
+import { ToastService } from '../../core/toast/toast.service';
 
 const MILESTONE_LABELS: Record<string, string> = {
   brief_due: 'Brief Due',
@@ -88,7 +95,13 @@ void _allViewModesCovered;
 
 @Component({
   selector: 'app-calendar-page',
-  imports: [CommonModule, FormsModule, DatePipe, CalendarPeekCardComponent],
+  imports: [
+    CommonModule,
+    FormsModule,
+    DatePipe,
+    CalendarPeekCardComponent,
+    CalendarQuickEditModalComponent,
+  ],
   templateUrl: './calendar-page.component.html',
   styleUrl: './calendar-page.component.scss',
 })
@@ -96,6 +109,8 @@ export class CalendarPageComponent implements OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly api = inject(CalendarApiService);
+  private readonly itemsApi = inject(ContentItemsApiService);
+  private readonly toast = inject(ToastService);
   private readonly destroyRef = inject(DestroyRef);
   // Defer fetches until the browser hydrates — see ContentStateService for
   // the why; same SSR-vs-Playwright-mocks coherence concern.
@@ -112,6 +127,8 @@ export class CalendarPageComponent implements OnInit {
   readonly filtersOpen = signal(false);
   readonly peekEvent = signal<CalendarEventView | null>(null);
   readonly peekAnchor = signal<{ x: number; y: number; width: number; height: number } | null>(null);
+  readonly quickEditEvent = signal<CalendarEventView | null>(null);
+  readonly quickEditSaving = signal(false);
   private peekCloseTimer: ReturnType<typeof setTimeout> | null = null;
   /* v8 ignore next 1 — V8's function-call-throws branches on input()/signal() declarations are unreachable (Angular class-field init time; ESM exports not spy-able) */
   readonly transitioning = signal(false);
@@ -541,6 +558,71 @@ export class CalendarPageComponent implements OnInit {
     this.peekAnchor.set(null);
   }
 
+  openQuickEdit(ev: CalendarEventView): void {
+    this.closePeek();
+    this.quickEditEvent.set(ev);
+  }
+
+  cancelQuickEdit(): void {
+    if (this.quickEditSaving()) return;
+    this.quickEditEvent.set(null);
+  }
+
+  onQuickEditOpenItem(ev: CalendarEventView): void {
+    this.quickEditEvent.set(null);
+    this.openEvent(ev);
+  }
+
+  /**
+   * Optimistic save: mutate the in-memory response so the pill moves
+   * immediately, fire PUT, then on 2xx re-fetch (authoritative) preserving
+   * the cursor. On error, revert the mutation, surface a toast, and close
+   * the modal.
+   */
+  onQuickEditSave({ event, patch }: QuickEditSavePayload): void {
+    const wsId = this.workspaceId();
+    if (!wsId) return;
+    const snapshot = this.response();
+    if (!snapshot) return;
+    const cursorBefore = this.cursorDate();
+    const optimistic = applyPatchToResponse(snapshot, event, patch);
+    if (optimistic) this.response.set(optimistic);
+    this.quickEditSaving.set(true);
+    this.itemsApi
+      .updateItem(wsId, event.contentId, patch)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: () => {
+          this.api
+            .getCalendar(wsId)
+            .pipe(takeUntilDestroyed(this.destroyRef))
+            .subscribe({
+              next: (fresh) => {
+                this.response.set(fresh);
+                this.cursorDate.set(cursorBefore);
+                this.quickEditSaving.set(false);
+                this.quickEditEvent.set(null);
+              },
+              error: () => {
+                this.quickEditSaving.set(false);
+                this.quickEditEvent.set(null);
+              },
+            });
+        },
+        error: () => {
+          this.response.set(snapshot);
+          this.cursorDate.set(cursorBefore);
+          this.quickEditSaving.set(false);
+          this.quickEditEvent.set(null);
+          this.toast.showError(
+            event.kind === 'publish'
+              ? "Couldn't save the new publish date — please try again"
+              : "Couldn't save the milestone date — please try again",
+          );
+        },
+      });
+  }
+
   copyEventLink(ev: CalendarEventView): void {
     const wsId = this.workspaceId();
     const url = `${typeof window !== 'undefined' ? window.location.origin : ''}/workspace/${wsId}/content/${ev.contentId}`;
@@ -591,4 +673,57 @@ export class CalendarPageComponent implements OnInit {
     if (kind === 'status') return f.statuses.includes(value);
     return f.owners.includes(value);
   }
+}
+
+/**
+ * Project a quick-edit patch onto the in-memory CalendarResponse so the
+ * UI moves the pill before the network round-trip completes. Returns a
+ * new response object (immutable patch) or null when nothing should change.
+ *
+ * - For publish events: shift the matching item's `scheduleAt` and
+ *   regenerate template-derived milestone `dueAt` values for that item
+ *   (so milestones move with the publish date, mirroring the server's
+ *   re-derivation on next GET).
+ * - For milestone events: shift only the matching milestone's `dueAt`;
+ *   the publish event for the same item stays put.
+ */
+export function applyPatchToResponse(
+  response: CalendarResponseContract,
+  event: CalendarEventView,
+  patch: UpdateContentItemRequestContract,
+): CalendarResponseContract | null {
+  if (event.kind === 'publish') {
+    const newScheduleAt = patch.scheduledAt;
+    if (!newScheduleAt) return null;
+    const itemId = event.contentId;
+    const original = response.items.find((i) => i.id === itemId);
+    if (!original?.scheduleAt) return null;
+    const oldAnchor = new Date(original.scheduleAt).getTime();
+    const newAnchor = new Date(newScheduleAt).getTime();
+    const deltaMs = newAnchor - oldAnchor;
+    return {
+      ...response,
+      items: response.items.map((i) =>
+        i.id === itemId ? { ...i, scheduleAt: newScheduleAt } : i,
+      ),
+      milestones: response.milestones.map((m) =>
+        m.contentId === itemId
+          ? { ...m, dueAt: new Date(new Date(m.dueAt).getTime() + deltaMs).toISOString() }
+          : m,
+      ),
+    };
+  }
+  // milestone
+  const overrides = patch.milestoneOverrides;
+  if (!overrides) return null;
+  const override = overrides[event.milestoneType];
+  if (!override?.dueAt) return null;
+  return {
+    ...response,
+    milestones: response.milestones.map((m) =>
+      m.contentId === event.contentId && m.milestoneType === event.milestoneType
+        ? { ...m, dueAt: override.dueAt }
+        : m,
+    ),
+  };
 }

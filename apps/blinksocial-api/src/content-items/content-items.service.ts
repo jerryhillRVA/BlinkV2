@@ -384,6 +384,13 @@ export class ContentItemsService {
           id: itemId,
           updatedAt: new Date().toISOString(),
         } as ContentItemContract;
+        // Ticket #134: same deep-merge for milestoneOverrides as the AFS branch.
+        if (patch.milestoneOverrides) {
+          merged.milestoneOverrides = {
+            ...(base.milestoneOverrides ?? {}),
+            ...patch.milestoneOverrides,
+          };
+        }
         // Persist in-memory so the next GET reflects this write — e.g.
         // advancing production.productionStep lands the user on the new
         // step on the next visit instead of reverting to the seed.
@@ -405,6 +412,14 @@ export class ContentItemsService {
         createdAt: existing.createdAt,
         updatedAt: new Date().toISOString(),
       };
+      // Ticket #134: deep-merge `milestoneOverrides` so a patch that only
+      // overrides one milestone type does not wipe other types' overrides.
+      if (patch.milestoneOverrides) {
+        updated.milestoneOverrides = {
+          ...(existing.milestoneOverrides ?? {}),
+          ...patch.milestoneOverrides,
+        };
+      }
 
       await this.upsertItemFile(workspaceId, updated);
 

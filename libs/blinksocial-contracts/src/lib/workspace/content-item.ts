@@ -1,3 +1,5 @@
+import type { MilestoneType } from './calendar-settings.js';
+
 export type ContentStageContract = 'idea' | 'concept' | 'post';
 
 export type IdeaConceptStatusContract = 'new' | 'used';
@@ -521,6 +523,11 @@ export interface ProductionContract {
   versions?: ProductionVersionContract[];
 }
 
+export interface MilestoneOverrideContract {
+  /** Full ISO timestamp. Stored as midnight UTC (T00:00:00.000Z) on the chosen date. */
+  dueAt: string;
+}
+
 export interface ContentItemContract {
   id: string;
   conceptId?: string;
@@ -553,6 +560,14 @@ export interface ContentItemContract {
   targetPublishWindow?: TargetPublishWindowContract;
   scheduledDate?: string | null;
   scheduledAt?: string;
+  /**
+   * Per-item milestone date overrides keyed by milestone type. Each entry
+   * is an exception to the workspace deadline template at
+   * `settings/calendar.json`. The template stays untouched; rendering code
+   * checks for an override first, then falls back to the template's
+   * `offsetDays` relative to `scheduledAt`.
+   */
+  milestoneOverrides?: Partial<Record<MilestoneType, MilestoneOverrideContract>>;
   production?: ProductionContract;
   archived?: boolean;
   tags?: string[];

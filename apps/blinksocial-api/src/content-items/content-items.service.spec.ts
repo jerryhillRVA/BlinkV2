@@ -199,6 +199,31 @@ describe('ContentItemsService', () => {
         service.updateItem('ws-1', 'c-missing', { title: 'x' }),
       ).rejects.toBeInstanceOf(NotFoundException);
     });
+
+    it('deep-merges milestoneOverrides so unrelated types are preserved (#134)', async () => {
+      const created = await service.createItem('ws-1', {
+        stage: 'post',
+        status: 'in-progress',
+        title: 'p1',
+      });
+      // First patch — seed two overrides
+      await service.updateItem('ws-1', created.id, {
+        milestoneOverrides: {
+          brief_due: { dueAt: '2026-05-01T00:00:00.000Z' },
+          draft_due: { dueAt: '2026-05-05T00:00:00.000Z' },
+        },
+      });
+      // Second patch — touch only draft_due. brief_due must survive.
+      const after = await service.updateItem('ws-1', created.id, {
+        milestoneOverrides: {
+          draft_due: { dueAt: '2026-05-07T00:00:00.000Z' },
+        },
+      });
+      expect(after.milestoneOverrides).toEqual({
+        brief_due: { dueAt: '2026-05-01T00:00:00.000Z' },
+        draft_due: { dueAt: '2026-05-07T00:00:00.000Z' },
+      });
+    });
   });
 
   describe('archiveItem / unarchiveItem', () => {
