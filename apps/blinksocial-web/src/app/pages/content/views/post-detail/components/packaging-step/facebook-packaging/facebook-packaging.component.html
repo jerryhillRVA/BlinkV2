@@ -57,15 +57,13 @@
     </div>
   }
 
-  <div class="field">
-    <span class="field-label">Audio</span>
-    <app-audio-picker
-      platform="facebook"
-      [track]="audio()"
-      [disabled]="disabled()"
-      (trackChange)="onAudioChange($event)"
-    />
-  </div>
+  <app-audio-planning-card
+    [platform]="platform"
+    [contentType]="contentType()"
+    [value]="audioPlanning()"
+    [disabled]="disabled()"
+    (valueChange)="onAudioPlanningChange($event)"
+  />
 
   <app-platform-controls
     platform="facebook"

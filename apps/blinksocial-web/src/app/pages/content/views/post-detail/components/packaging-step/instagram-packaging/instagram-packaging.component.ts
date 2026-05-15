@@ -3,7 +3,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import type {
   AiAssistFieldContract,
   ContentTypeContract,
-  PackagingAudioTrackContract,
+  PackagingAudioPlanningContract,
   PackagingInstagramContract,
   PackagingPlatformControlsContract,
   PackagingPlatformControlsIGContract,
@@ -21,6 +21,7 @@ import {
   extractHashtagsFromCaption,
   syncCaptionWithHashtags,
 } from '../_shared/caption-hashtag.utils';
+import { AudioPlanningCardComponent } from '../_shared/audio-planning-card/audio-planning-card.component';
 import { MediaSelectionsCardComponent } from '../_shared/media-selections-card/media-selections-card.component';
 import { PaidBoostedFieldsComponent } from '../_shared/paid-boosted-fields/paid-boosted-fields.component';
 import { PkgHashtagBankComponent, type HashtagBankGroup } from '../_shared/pkg-hashtag-bank/pkg-hashtag-bank.component';
@@ -64,6 +65,7 @@ const HASHTAG_BANK_GROUPS: HashtagBankGroup[] = [
   selector: 'app-instagram-packaging',
   imports: [
     AiButtonComponent,
+    AudioPlanningCardComponent,
     PkgHashtagBankComponent,
     UtmBuilderComponent,
     SlideOrderPickerComponent,
@@ -113,7 +115,8 @@ export class InstagramPackagingComponent {
   protected readonly link = computed(() => this.value()?.link ?? '');
   protected readonly utm = computed(() => this.value()?.utm);
   protected readonly slideOrder = computed(() => this.value()?.slideOrder?.order ?? []);
-  protected readonly audio = computed(() => this.value()?.audio);
+  protected readonly audioPlanning = computed(() => this.value()?.audioPlanning);
+  protected readonly platform = 'instagram' as const;
   protected readonly coverAsset = computed(() => this.value()?.coverAsset);
   protected readonly controls = computed(() => this.value()?.platformControls);
   protected readonly igControls = computed(() => this.value()?.platformControls?.ig);
@@ -244,8 +247,8 @@ export class InstagramPackagingComponent {
     this.patch({ slideOrder: next });
   }
 
-  protected onAudioChange(track: PackagingAudioTrackContract | undefined): void {
-    this.patch({ audio: track });
+  protected onAudioPlanningChange(audioPlanning: PackagingAudioPlanningContract): void {
+    this.patch({ audioPlanning });
   }
 
   protected onCoverAssetChange(coverAsset: string | undefined): void {

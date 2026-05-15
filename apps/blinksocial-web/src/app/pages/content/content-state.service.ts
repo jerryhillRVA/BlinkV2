@@ -60,9 +60,67 @@ function indexEntryToItem(entry: ContentItemsIndexEntryContract): ContentItem {
 // indexEntryToItem so the cache-wins branch of items() stays shape-compatible
 // with the projected index entry.
 function normalizeFullItem(item: ContentItem): ContentItem {
-  if (item.conceptId !== undefined) return item;
-  if (item.parentConceptId == null) return item;
-  return { ...item, conceptId: item.parentConceptId };
+  const conceptAliased =
+    item.conceptId === undefined && item.parentConceptId != null
+      ? { ...item, conceptId: item.parentConceptId }
+      : item;
+  return migrateLegacyAudio(conceptAliased);
+}
+
+/**
+ * #147 (PKG-1): legacy `audio?: PackagingAudioTrackContract` slot is
+ * gone from the contract. Persisted items written under the old shape
+ * carry that slot — project them into the new
+ * `audioPlanning?: PackagingAudioPlanningContract` field on read,
+ * preserving the `trackName` + `artistName` strings under the new
+ * `audioSongTitle` / `audioArtist` reserved fields, defaulting strategy
+ * to `'named'`. Idempotent — items already normalized pass through
+ * unchanged.
+ */
+function migrateLegacyAudio(item: ContentItem): ContentItem {
+  const pkg = item.production?.packaging;
+  if (!pkg) return item;
+  const legacy = (slot: unknown):
+    | { trackName?: string; artistName?: string }
+    | undefined => {
+    const s = slot as { audio?: { trackName?: string; artistName?: string } } | undefined;
+    return s?.audio;
+  };
+  const ig = pkg.instagram as { audio?: unknown; audioPlanning?: unknown } | undefined;
+  const tt = pkg.tiktok as { audio?: unknown; audioPlanning?: unknown } | undefined;
+  const fb = pkg.facebook as { audio?: unknown; audioPlanning?: unknown } | undefined;
+  const igHas = ig?.audio && !ig.audioPlanning;
+  const ttHas = tt?.audio && !tt.audioPlanning;
+  const fbHas = fb?.audio && !fb.audioPlanning;
+  if (!igHas && !ttHas && !fbHas && !ig?.audio && !tt?.audio && !fb?.audio) {
+    return item;
+  }
+  const project = (slot: typeof ig):
+    | undefined
+    | (Record<string, unknown> & { audioPlanning?: Record<string, unknown> }) => {
+    if (!slot) return slot;
+    const next: Record<string, unknown> = { ...(slot as Record<string, unknown>) };
+    const audio = legacy(slot);
+    if (audio && !slot.audioPlanning) {
+      next['audioPlanning'] = {
+        audioStrategy: 'named' as const,
+        ...(audio.trackName ? { audioSongTitle: audio.trackName } : {}),
+        ...(audio.artistName ? { audioArtist: audio.artistName } : {}),
+      };
+    }
+    delete next['audio'];
+    return next as Record<string, unknown> & { audioPlanning?: Record<string, unknown> };
+  };
+  const nextPackaging = {
+    ...pkg,
+    ...(ig?.audio || ig?.audioPlanning ? { instagram: project(ig) } : {}),
+    ...(tt?.audio || tt?.audioPlanning ? { tiktok: project(tt) } : {}),
+    ...(fb?.audio || fb?.audioPlanning ? { facebook: project(fb) } : {}),
+  };
+  return {
+    ...item,
+    production: { ...item.production, packaging: nextPackaging },
+  };
 }
 
 function itemToIndexEntry(

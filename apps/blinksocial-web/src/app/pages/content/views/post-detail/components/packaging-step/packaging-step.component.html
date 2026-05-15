@@ -21,6 +21,7 @@
       <app-tiktok-packaging
         [value]="store.tiktokPackaging()"
         [disabled]="disabled()"
+        [contentType]="store.item()?.contentType ?? null"
         (valueChange)="store.setTikTokPackaging($event)"
       />
     }
@@ -43,6 +44,7 @@
         [value]="store.facebookPackaging()"
         [disabled]="disabled()"
         [isCarousel]="store.draft()?.mode === 'CAROUSEL'"
+        [contentType]="store.item()?.contentType ?? null"
         (valueChange)="store.setFacebookPackaging($event)"
       />
     }

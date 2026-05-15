@@ -29,7 +29,6 @@ export class PostPreviewCardComponent {
   readonly handle = input<string>('@your_handle');
   readonly slides = input<ReadonlyArray<string>>([]);
   readonly coverAsset = input<string | undefined>(undefined);
-  readonly audioTrackName = input<string | undefined>(undefined);
   readonly expanded = model<boolean>(false);
   protected readonly slideIndex = signal(0);
 

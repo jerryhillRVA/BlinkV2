@@ -1,13 +1,14 @@
 import { Component, computed, input, output } from '@angular/core';
 import type {
-  PackagingAudioTrackContract,
+  ContentTypeContract,
+  PackagingAudioPlanningContract,
   PackagingFacebookContract,
   PackagingPlatformControlsContract,
   PackagingSlideOrderContract,
   PackagingUtmContract,
 } from '@blinksocial/contracts';
 import { HashtagInputComponent } from '../../draft-step/_shared/hashtag-input/hashtag-input.component';
-import { AudioPickerComponent } from '../_shared/audio-picker/audio-picker.component';
+import { AudioPlanningCardComponent } from '../_shared/audio-planning-card/audio-planning-card.component';
 import { PlatformControlsComponent } from '../_shared/platform-controls/platform-controls.component';
 import {
   SlideOrderPickerComponent,
@@ -24,15 +25,16 @@ const WARN_RATIO = 0.9;
     HashtagInputComponent,
     UtmBuilderComponent,
     SlideOrderPickerComponent,
-    AudioPickerComponent,
+    AudioPlanningCardComponent,
     PlatformControlsComponent,
   ],
   templateUrl: './facebook-packaging.component.html',
   styleUrl: './facebook-packaging.component.scss',
 })
 export class FacebookPackagingComponent {
-  /* v8 ignore next 4 — V8's function-call-throws branches on input()/signal() declarations are unreachable (Angular class-field init time; ESM exports not spy-able) */
+  /* v8 ignore next 5 — V8's function-call-throws branches on input()/signal() declarations are unreachable (Angular class-field init time; ESM exports not spy-able) */
   readonly value = input<PackagingFacebookContract | undefined>(undefined);
+  readonly contentType = input<ContentTypeContract | null | undefined>(undefined);
   readonly disabled = input(false);
   readonly isCarousel = input(false);
   readonly slides = input<ReadonlyArray<SlideOrderItem>>([]);
@@ -40,13 +42,14 @@ export class FacebookPackagingComponent {
   readonly valueChange = output<PackagingFacebookContract>();
 
   protected readonly captionMax = CAPTION_MAX;
+  protected readonly platform = 'facebook' as const;
 
   protected readonly caption = computed(() => this.value()?.caption ?? '');
   protected readonly hashtags = computed(() => this.value()?.hashtags ?? []);
   protected readonly link = computed(() => this.value()?.link ?? '');
   protected readonly utm = computed(() => this.value()?.utm);
   protected readonly slideOrder = computed(() => this.value()?.slideOrder?.order ?? []);
-  protected readonly audio = computed(() => this.value()?.audio);
+  protected readonly audioPlanning = computed(() => this.value()?.audioPlanning);
   protected readonly controls = computed(() => this.value()?.platformControls);
 
   protected readonly captionState = computed(() => {
@@ -77,8 +80,8 @@ export class FacebookPackagingComponent {
     this.patch({ slideOrder: next });
   }
 
-  protected onAudioChange(track: PackagingAudioTrackContract | undefined): void {
-    this.patch({ audio: track });
+  protected onAudioPlanningChange(audioPlanning: PackagingAudioPlanningContract): void {
+    this.patch({ audioPlanning });
   }
 
   protected onControlsChange(controls: PackagingPlatformControlsContract): void {

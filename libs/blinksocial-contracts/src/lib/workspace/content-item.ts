@@ -360,14 +360,34 @@ export interface PackagingUtmContract {
   term?: string;
 }
 
-export interface PackagingAudioTrackContract {
-  trackId: string;
-  trackName: string;
-  artistName: string;
-  /** 300x300 album art URL (e.g. iTunes mzstatic). Optional — UI falls back to a synthetic gradient. */
-  artworkUrl?: string;
-  previewUrl?: string;
-  source: 'trending' | 'search' | 'custom';
+/**
+ * #147 (PKG-1): replaces the prior `PackagingAudioTrackContract` model.
+ * Strategy + mood-driven planning, not a specific-track picker.
+ *
+ * - `audioStrategy` defaults to `'named'` on a fresh post.
+ * - `audioMood` is only meaningful when strategy is `'trending-platform'`;
+ *   the UI clears it on flip-back to `'named'`.
+ * - `audioSongTitle` / `audioArtist` are reserved (no input fields in
+ *   PKG-1) and used by the legacy-`audio` content-state normalizer to
+ *   preserve historical track + artist strings.
+ */
+export type AudioStrategyContract = 'named' | 'trending-platform';
+
+export type AudioMoodContract =
+  | 'energetic-pumped'
+  | 'relaxing-calm'
+  | 'happy-upbeat'
+  | 'sad-melancholy'
+  | 'romantic-sensual'
+  | 'mysterious-mystical'
+  | 'scary-spooky-suspense'
+  | 'confident-motivational';
+
+export interface PackagingAudioPlanningContract {
+  audioStrategy?: AudioStrategyContract;
+  audioMood?: AudioMoodContract;
+  audioSongTitle?: string;
+  audioArtist?: string;
 }
 
 export interface PackagingSlideOrderContract {
@@ -411,7 +431,12 @@ export interface PackagingInstagramContract {
   link?: string;
   utm?: PackagingUtmContract;
   slideOrder?: PackagingSlideOrderContract;
-  audio?: PackagingAudioTrackContract;
+  /**
+   * #147 (PKG-1): strategy + mood. Replaces the prior track-picker
+   * `audio?: PackagingAudioTrackContract` slot. Legacy data is
+   * projected into this shape at content-state normalization time.
+   */
+  audioPlanning?: PackagingAudioPlanningContract;
   /**
    * Cover image filename / placeholder reference. Today we capture the
    * chosen file's NAME (or a stub AI-generated reference) for visual
@@ -440,7 +465,8 @@ export interface PackagingTikTokContract {
   hashtags?: string[];
   link?: string;
   utm?: PackagingUtmContract;
-  audio?: PackagingAudioTrackContract;
+  /** #147: see PackagingAudioPlanningContract. */
+  audioPlanning?: PackagingAudioPlanningContract;
   platformControls?: PackagingPlatformControlsContract;
 }
 
@@ -467,7 +493,8 @@ export interface PackagingFacebookContract {
   link?: string;
   utm?: PackagingUtmContract;
   slideOrder?: PackagingSlideOrderContract;
-  audio?: PackagingAudioTrackContract;
+  /** #147: see PackagingAudioPlanningContract. */
+  audioPlanning?: PackagingAudioPlanningContract;
   platformControls?: PackagingPlatformControlsContract;
 }
 

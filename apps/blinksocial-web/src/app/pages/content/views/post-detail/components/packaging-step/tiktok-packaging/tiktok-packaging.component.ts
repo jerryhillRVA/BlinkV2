@@ -1,12 +1,13 @@
 import { Component, computed, input, output } from '@angular/core';
 import type {
-  PackagingAudioTrackContract,
+  ContentTypeContract,
+  PackagingAudioPlanningContract,
   PackagingPlatformControlsContract,
   PackagingTikTokContract,
   PackagingUtmContract,
 } from '@blinksocial/contracts';
 import { HashtagInputComponent } from '../../draft-step/_shared/hashtag-input/hashtag-input.component';
-import { AudioPickerComponent } from '../_shared/audio-picker/audio-picker.component';
+import { AudioPlanningCardComponent } from '../_shared/audio-planning-card/audio-planning-card.component';
 import { PlatformControlsComponent } from '../_shared/platform-controls/platform-controls.component';
 import { UtmBuilderComponent } from '../_shared/utm-builder/utm-builder.component';
 
@@ -18,26 +19,28 @@ const WARN_RATIO = 0.9;
   imports: [
     HashtagInputComponent,
     UtmBuilderComponent,
-    AudioPickerComponent,
+    AudioPlanningCardComponent,
     PlatformControlsComponent,
   ],
   templateUrl: './tiktok-packaging.component.html',
   styleUrl: './tiktok-packaging.component.scss',
 })
 export class TiktokPackagingComponent {
-  /* v8 ignore next 2 — V8's function-call-throws branches on input()/signal() declarations are unreachable (Angular class-field init time; ESM exports not spy-able) */
+  /* v8 ignore next 3 — V8's function-call-throws branches on input()/signal() declarations are unreachable (Angular class-field init time; ESM exports not spy-able) */
   readonly value = input<PackagingTikTokContract | undefined>(undefined);
+  readonly contentType = input<ContentTypeContract | null | undefined>(undefined);
   readonly disabled = input(false);
 
   readonly valueChange = output<PackagingTikTokContract>();
 
   protected readonly captionMax = CAPTION_MAX;
+  protected readonly platform = 'tiktok' as const;
 
   protected readonly caption = computed(() => this.value()?.caption ?? '');
   protected readonly hashtags = computed(() => this.value()?.hashtags ?? []);
   protected readonly link = computed(() => this.value()?.link ?? '');
   protected readonly utm = computed(() => this.value()?.utm);
-  protected readonly audio = computed(() => this.value()?.audio);
+  protected readonly audioPlanning = computed(() => this.value()?.audioPlanning);
   protected readonly controls = computed(() => this.value()?.platformControls);
 
   protected readonly captionState = computed(() => {
@@ -63,8 +66,8 @@ export class TiktokPackagingComponent {
     this.patch({ utm });
   }
 
-  protected onAudioChange(track: PackagingAudioTrackContract | undefined): void {
-    this.patch({ audio: track });
+  protected onAudioPlanningChange(audioPlanning: PackagingAudioPlanningContract): void {
+    this.patch({ audioPlanning });
   }
 
   protected onControlsChange(controls: PackagingPlatformControlsContract): void {

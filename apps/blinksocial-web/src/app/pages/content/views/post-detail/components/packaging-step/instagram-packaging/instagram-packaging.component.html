@@ -139,16 +139,25 @@
     </div>
   }
 
-  <!-- Media Selections — Cover Image + Audio Planning -->
+  <!-- Audio Planning (#147 PKG-1): strategy + mood. Renders only for
+       VIDEO_SHORT_* / STORY_FRAME_SET canonical types; otherwise hides
+       itself, so the card can mount unconditionally here. -->
+  <app-audio-planning-card
+    [platform]="platform"
+    [contentType]="contentType()"
+    [value]="audioPlanning()"
+    [disabled]="disabled()"
+    (valueChange)="onAudioPlanningChange($event)"
+  />
+
+  <!-- Media Selections — Cover Image only after #147. -->
   <div class="pkg-card pkg-card--snug">
     <app-media-selections-card
       platform="instagram"
       [coverAsset]="coverAsset()"
-      [audio]="audio()"
       [disabled]="disabled()"
       (coverAssetChange)="onCoverAssetChange($event)"
       (coverAssetUrlChange)="onCoverAssetUrlChange($event)"
-      (audioChange)="onAudioChange($event)"
     />
   </div>
 

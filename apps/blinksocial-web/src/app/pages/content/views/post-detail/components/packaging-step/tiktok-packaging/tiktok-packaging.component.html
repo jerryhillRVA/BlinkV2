@@ -44,15 +44,13 @@
 
   <app-utm-builder [utm]="utm()" [disabled]="disabled()" (utmChange)="onUtmChange($event)" />
 
-  <div class="field">
-    <span class="field-label">Audio</span>
-    <app-audio-picker
-      platform="tiktok"
-      [track]="audio()"
-      [disabled]="disabled()"
-      (trackChange)="onAudioChange($event)"
-    />
-  </div>
+  <app-audio-planning-card
+    [platform]="platform"
+    [contentType]="contentType()"
+    [value]="audioPlanning()"
+    [disabled]="disabled()"
+    (valueChange)="onAudioPlanningChange($event)"
+  />
 
   <app-platform-controls
     platform="tiktok"

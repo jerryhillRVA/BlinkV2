@@ -1,0 +1,119 @@
+:host {
+  display: block;
+}
+
+.audio-planning-card {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  background: var(--blink-surface);
+  border: 1px solid var(--blink-outline-variant);
+  border-radius: 10px;
+  padding: 16px;
+}
+
+.audio-planning-header {
+  display: flex;
+  align-items: center;
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.strategy-section {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.strategy-label {
+  font-size: var(--blink-body-small);
+  color: var(--blink-on-surface-medium);
+}
+
+// Two-option toggle. role="radiogroup". Each .strategy-option is a
+// role="radio" button; the visually-selected state is distinguishable
+// in greyscale (filled bg + thicker border + bolder label).
+.strategy-toggle {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.strategy-option {
+  appearance: none;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  padding: 10px 12px;
+  border: 1px solid var(--blink-outline-variant);
+  border-radius: 8px;
+  background: var(--blink-surface);
+  text-align: left;
+  transition: border-color 120ms ease, background 120ms ease;
+
+  &:focus-visible {
+    outline: 2px solid var(--blink-brand-primary);
+    outline-offset: 2px;
+  }
+
+  &:hover:not(:disabled) {
+    border-color: var(--blink-on-surface-tertiary);
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+}
+
+.strategy-option--selected {
+  background: var(--blink-input-bg-dark);
+  border-color: var(--blink-on-surface-strong);
+  border-width: 2px;
+  // Compensate for thicker border so the layout doesn't shift on toggle.
+  padding: 9px 11px;
+
+  .strategy-option-label {
+    color: var(--blink-on-surface-strong);
+  }
+}
+
+.strategy-option-label {
+  font-size: var(--blink-body-medium);
+  font-weight: 600;
+  color: var(--blink-on-surface);
+}
+
+.strategy-option-sublabel {
+  font-size: var(--blink-label-small);
+  color: var(--blink-on-surface-faint);
+}
+
+.mood-region {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.mood-label {
+  font-size: var(--blink-body-small);
+  color: var(--blink-on-surface-medium);
+}
+
+.mood-help {
+  margin: 0 0 6px;
+  font-size: var(--blink-label-small);
+  color: var(--blink-on-surface-faint);
+}

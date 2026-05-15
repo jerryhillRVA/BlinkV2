@@ -9,7 +9,6 @@ interface SetupOptions {
   handle?: string;
   slides?: string[];
   coverAsset?: string;
-  audioTrackName?: string;
 }
 
 function setup(opts: SetupOptions = {}): ComponentFixture<PostPreviewCardComponent> {
@@ -22,7 +21,6 @@ function setup(opts: SetupOptions = {}): ComponentFixture<PostPreviewCardCompone
   fixture.componentRef.setInput('handle', opts.handle ?? '@your_handle');
   fixture.componentRef.setInput('slides', opts.slides ?? []);
   fixture.componentRef.setInput('coverAsset', opts.coverAsset);
-  fixture.componentRef.setInput('audioTrackName', opts.audioTrackName);
   fixture.detectChanges();
   return fixture;
 }
@@ -153,18 +151,11 @@ describe('PostPreviewCardComponent', () => {
     expect(img.src).toContain('a.jpg');
   });
 
-  it('TikTok: sound bar uses audioTrackName when provided, else "Original audio"', () => {
-    const named = setup({ platform: 'tiktok', audioTrackName: 'My Song' });
-    expand(named);
-    expect(
-      named.nativeElement.querySelector('.pp-tt-sound-name')?.textContent?.trim(),
-    ).toBe('My Song');
-
-    const fallback = setup({ platform: 'tiktok' });
-    expand(fallback);
-    expect(
-      fallback.nativeElement.querySelector('.pp-tt-sound-name')?.textContent?.trim(),
-    ).toBe('Original audio');
+  it('#147: TikTok preview no longer renders the audio sound bar (audio track name was removed)', () => {
+    const fixture = setup({ platform: 'tiktok' });
+    expand(fixture);
+    expect(fixture.nativeElement.querySelector('.pp-tt-sound')).toBeNull();
+    expect(fixture.nativeElement.querySelector('.pp-tt-sound-name')).toBeNull();
   });
 
   it('TikTok: handle + caption render in the bottom-left overlay', () => {

@@ -1383,3 +1383,157 @@ test.describe('Pipeline lane sync (#129)', () => {
     await expect(postBuilderCol.locator('.content-card', { hasText: title })).toHaveCount(0);
   });
 });
+
+// #147 (PKG-1): Audio Planning replaces the prior track-picker UI with
+// a Strategy Mode toggle + conditional Video Vibe & Pace dropdown.
+test.describe('Audio Planning — strategy + mood (#147)', () => {
+  async function openApprovedPackaging(
+    page: Page,
+    options: { id: string; platform: string; contentType: string; title?: string },
+  ): Promise<void> {
+    const entry = approvedPostEntry({
+      id: options.id,
+      title: options.title ?? 'Audio planning test',
+      platform: options.platform as never,
+      contentType: options.contentType as never,
+    });
+    const detail = approvedPostInPackaging({
+      id: options.id,
+      title: options.title ?? 'Audio planning test',
+      platform: options.platform as never,
+      contentType: options.contentType as never,
+    });
+    await mockHiveContent(page, {
+      indexItems: [entry],
+      details: { [options.id]: detail },
+    });
+    await page.goto(`/workspace/hive-collective/content/${options.id}`);
+    await expect(page.locator('app-post-detail')).toBeVisible();
+    await expect(page.locator('app-packaging-step')).toBeVisible();
+  }
+
+  test.beforeEach(async ({ page }) => {
+    await mockAuthenticatedUser(page);
+  });
+
+  test('TC-E1: card renders for IG Reel and defaults to Named Audio', async ({ page }) => {
+    await openApprovedPackaging(page, {
+      id: 'audio-tc-e1',
+      platform: 'instagram',
+      contentType: 'reel',
+    });
+    await expect(page.locator('app-audio-planning-card .audio-planning-card')).toBeVisible();
+    const options = page.locator('app-audio-planning-card .strategy-option');
+    await expect(options).toHaveCount(2);
+    await expect(options.nth(0)).toHaveAttribute('aria-checked', 'true');
+    await expect(options.nth(1)).toHaveAttribute('aria-checked', 'false');
+    await expect(page.locator('app-audio-planning-card .mood-region')).toHaveCount(0);
+  });
+
+  test('TC-E2: clicking Trending/Platform reveals the mood dropdown and persists', async ({ page }) => {
+    await openApprovedPackaging(page, {
+      id: 'audio-tc-e2',
+      platform: 'instagram',
+      contentType: 'reel',
+    });
+    const trendingOption = page.locator('app-audio-planning-card .strategy-option').nth(1);
+    await trendingOption.click();
+    await expect(trendingOption).toHaveAttribute('aria-checked', 'true');
+    await expect(page.locator('app-audio-planning-card .mood-region')).toBeVisible();
+    // Placeholder reads "Select a mood..."
+    await expect(
+      page.locator('app-audio-planning-card .mood-region .dropdown-value'),
+    ).toHaveText(/Select a mood/);
+    // Reload — selection persists, dropdown remains visible.
+    await page.reload();
+    await expect(page.locator('app-post-detail')).toBeVisible();
+    await expect(
+      page.locator('app-audio-planning-card .strategy-option').nth(1),
+    ).toHaveAttribute('aria-checked', 'true');
+    await expect(page.locator('app-audio-planning-card .mood-region')).toBeVisible();
+  });
+
+  test('TC-E3: picking a mood persists the id and label', async ({ page }) => {
+    await openApprovedPackaging(page, {
+      id: 'audio-tc-e3',
+      platform: 'instagram',
+      contentType: 'reel',
+    });
+    await page.locator('app-audio-planning-card .strategy-option').nth(1).click();
+    const trigger = page.locator('app-audio-planning-card app-dropdown .dropdown-trigger');
+    await trigger.click();
+    await page
+      .locator('app-audio-planning-card .dropdown-option', {
+        hasText: 'Energetic / Pumped',
+      })
+      .click();
+    await expect(
+      page.locator('app-audio-planning-card .mood-region .dropdown-value'),
+    ).toContainText('Energetic / Pumped');
+    await page.reload();
+    await expect(page.locator('app-post-detail')).toBeVisible();
+    await expect(
+      page.locator('app-audio-planning-card .mood-region .dropdown-value'),
+    ).toContainText('Energetic / Pumped');
+  });
+
+  test('TC-E4: flipping back to Named Audio clears the mood', async ({ page }) => {
+    await openApprovedPackaging(page, {
+      id: 'audio-tc-e4',
+      platform: 'instagram',
+      contentType: 'reel',
+    });
+    // Set up: choose trending + a mood.
+    await page.locator('app-audio-planning-card .strategy-option').nth(1).click();
+    await page.locator('app-audio-planning-card app-dropdown .dropdown-trigger').click();
+    await page
+      .locator('app-audio-planning-card .dropdown-option', {
+        hasText: 'Happy / Upbeat',
+      })
+      .click();
+    // Now flip back.
+    await page.locator('app-audio-planning-card .strategy-option').nth(0).click();
+    await expect(
+      page.locator('app-audio-planning-card .strategy-option').nth(0),
+    ).toHaveAttribute('aria-checked', 'true');
+    await expect(page.locator('app-audio-planning-card .mood-region')).toHaveCount(0);
+    // Reload — Named remains selected, no mood region.
+    await page.reload();
+    await expect(page.locator('app-post-detail')).toBeVisible();
+    await expect(
+      page.locator('app-audio-planning-card .strategy-option').nth(0),
+    ).toHaveAttribute('aria-checked', 'true');
+    await expect(page.locator('app-audio-planning-card .mood-region')).toHaveCount(0);
+  });
+
+  test('TC-E5: card hides for ineligible content types (IG feed-post, IG carousel)', async ({ page }) => {
+    await openApprovedPackaging(page, {
+      id: 'audio-tc-e5-feed',
+      platform: 'instagram',
+      contentType: 'feed-post',
+    });
+    await expect(page.locator('app-audio-planning-card .audio-planning-card')).toHaveCount(0);
+
+    await openApprovedPackaging(page, {
+      id: 'audio-tc-e5-carousel',
+      platform: 'instagram',
+      contentType: 'carousel',
+    });
+    await expect(page.locator('app-audio-planning-card .audio-planning-card')).toHaveCount(0);
+  });
+
+  test('TC-E7: keyboard-only — arrow keys flip the strategy toggle', async ({ page }) => {
+    await openApprovedPackaging(page, {
+      id: 'audio-tc-e7',
+      platform: 'instagram',
+      contentType: 'reel',
+    });
+    const namedOption = page.locator('app-audio-planning-card .strategy-option').nth(0);
+    await namedOption.focus();
+    await page.keyboard.press('ArrowRight');
+    await expect(
+      page.locator('app-audio-planning-card .strategy-option').nth(1),
+    ).toHaveAttribute('aria-checked', 'true');
+    await expect(page.locator('app-audio-planning-card .mood-region')).toBeVisible();
+  });
+});
