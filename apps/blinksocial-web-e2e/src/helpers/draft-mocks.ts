@@ -30,6 +30,7 @@ export function approvedPostEntry(
     parentIdeaId: null,
     parentConceptId: null,
     scheduledDate: null,
+    scheduledAt: null,
     archived: false,
     createdAt: NOW,
     updatedAt: NOW,

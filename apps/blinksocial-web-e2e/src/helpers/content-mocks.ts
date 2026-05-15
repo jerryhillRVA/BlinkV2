@@ -53,6 +53,7 @@ export const IDEA_ENTRY = {
   parentIdeaId: null,
   parentConceptId: null,
   scheduledDate: null,
+  scheduledAt: null,
   archived: false,
   createdAt: NOW,
   updatedAt: NOW,
@@ -74,6 +75,7 @@ export const CONCEPT_ENTRY = {
   parentIdeaId: null,
   parentConceptId: null,
   scheduledDate: null,
+  scheduledAt: null,
   archived: false,
   createdAt: NOW,
   updatedAt: NOW,
@@ -92,6 +94,7 @@ const POST_ENTRY = {
   parentIdeaId: null,
   parentConceptId: 'concept1',
   scheduledDate: null,
+  scheduledAt: null,
   archived: false,
   createdAt: NOW,
   updatedAt: NOW,
@@ -248,6 +251,8 @@ export const mockHiveContent = async (
       next.scheduledDate === undefined
         ? prev.scheduledDate
         : next.scheduledDate,
+    scheduledAt:
+      next.scheduledAt === undefined ? prev.scheduledAt : next.scheduledAt,
     archived: next.archived ?? prev.archived,
     updatedAt: next.updatedAt ?? prev.updatedAt,
   });

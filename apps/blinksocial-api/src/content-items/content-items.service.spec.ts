@@ -91,6 +91,9 @@ function buildFakeFs() {
     async deleteFile(_tenant: string, fileId: string) {
       delete files[fileId];
     },
+    async listTenants(): Promise<string[]> {
+      return [];
+    },
   };
 }
 
@@ -135,11 +138,27 @@ describe('ContentItemsService', () => {
         platform: null,
         contentType: null,
         scheduledDate: null,
+        scheduledAt: null,
         parentIdeaId: null,
         parentConceptId: null,
       });
       expect((entry as Record<string, unknown>).description).toBeUndefined();
       expect((entry as Record<string, unknown>).production).toBeUndefined();
+    });
+
+    // Ticket #135: scheduledAt projects into the index entry so the
+    // Calendar can derive the publish cell from a single read of the
+    // index aggregate (no per-item file fetch needed for unblocked posts).
+    it('projects top-level scheduledAt onto the index entry', () => {
+      const item = buildItem({
+        id: 'c-2',
+        title: 'Scheduled',
+        scheduledAt: '2026-06-01T15:00:00.000Z',
+        scheduledDate: '2026-06-01',
+      });
+      const entry = service.projectIndexEntry(item);
+      expect(entry.scheduledAt).toBe('2026-06-01T15:00:00.000Z');
+      expect(entry.scheduledDate).toBe('2026-06-01');
     });
   });
 
@@ -1048,6 +1067,354 @@ describe('ContentItemsService', () => {
       // Concept stays `used` because the flip never landed.
       const refreshedConcept = await service.getItem('w1', concept.id);
       expect(refreshedConcept.status).toBe('used');
+    });
+  });
+
+  // Ticket #135: bootstrap reconciliation that backfills top-level
+  // scheduledAt / scheduledDate / status for legacy items that only have
+  // publishConfig.scheduleAt set. Tests cover happy path, idempotency,
+  // skip conditions, and resilience to per-tenant failures.
+  describe('reconcileScheduledPosts (ticket #135)', () => {
+    function seedIndexRow(
+      tenant: string,
+      row: Record<string, unknown>,
+    ): void {
+      const indexFile = `_content-items-index.json`;
+      const existing = Object.entries(fs.files).find(
+        ([, f]) => f.filename === indexFile,
+      );
+      const index = existing
+        ? (existing[1].content as { items: unknown[]; totalCount: number })
+        : { items: [], totalCount: 0, lastUpdated: 'now' };
+      index.items.push(row);
+      index.totalCount = index.items.length;
+      if (existing) {
+        fs.files[existing[0]] = { filename: indexFile, content: index };
+      } else {
+        // Use the namespace prefix-agnostic filename — the buildFakeFs
+        // listDirectory matches by name only, so this is sufficient.
+        const fileId = `f-${Object.keys(fs.files).length + 1000}`;
+        fs.files[fileId] = { filename: indexFile, content: index };
+      }
+      // mark tenant so listTenants returns it
+      tenants.add(tenant);
+    }
+
+    function seedItemFile(item: Record<string, unknown>): void {
+      const fileId = `f-item-${(item.id as string).replace(/[^a-z0-9]/gi, '')}`;
+      fs.files[fileId] = {
+        filename: `${item.id}.json`,
+        content: item,
+      };
+    }
+
+    let tenants: Set<string>;
+
+    beforeEach(() => {
+      tenants = new Set<string>();
+      (fs as unknown as { listTenants: () => Promise<string[]> }).listTenants =
+        async () => Array.from(tenants);
+    });
+
+    it('reconciles a drifted item: publishConfig.scheduleAt + scheduledAt missing', async () => {
+      seedIndexRow('w-a', {
+        id: 'c-99',
+        stage: 'post',
+        status: 'review',
+        title: 'Drifted',
+        platform: 'instagram',
+        contentType: 'reel',
+        pillarIds: [],
+        segmentIds: [],
+        owner: null,
+        parentIdeaId: null,
+        parentConceptId: null,
+        scheduledDate: null,
+        scheduledAt: null,
+        archived: false,
+        createdAt: '2026-04-01T00:00:00.000Z',
+        updatedAt: '2026-04-01T00:00:00.000Z',
+      });
+      seedItemFile({
+        id: 'c-99',
+        stage: 'post',
+        status: 'review',
+        title: 'Drifted',
+        description: '',
+        pillarIds: [],
+        segmentIds: [],
+        archived: false,
+        production: {
+          qa: {
+            publishConfig: {
+              publishAction: 'schedule',
+              scheduleAt: '2026-06-15T10:00',
+            },
+          },
+        },
+        createdAt: '2026-04-01T00:00:00.000Z',
+        updatedAt: '2026-04-01T00:00:00.000Z',
+      });
+
+      const result = await service.reconcileScheduledPosts();
+
+      expect(result).toEqual({ workspacesScanned: 1, itemsReconciled: 1 });
+      const updated = await service.getItem('w-a', 'c-99');
+      expect(updated.scheduledAt).toBe('2026-06-15T10:00:00.000Z');
+      expect(updated.scheduledDate).toBe('2026-06-15');
+      expect(updated.status).toBe('scheduled');
+    });
+
+    it('is idempotent: second run reconciles zero items', async () => {
+      seedIndexRow('w-a', {
+        id: 'c-99',
+        stage: 'post',
+        status: 'review',
+        title: 'Drifted',
+        scheduledDate: null,
+        scheduledAt: null,
+        archived: false,
+        platform: null,
+        contentType: null,
+        pillarIds: [],
+        segmentIds: [],
+        owner: null,
+        parentIdeaId: null,
+        parentConceptId: null,
+        createdAt: '2026-04-01T00:00:00.000Z',
+        updatedAt: '2026-04-01T00:00:00.000Z',
+      });
+      seedItemFile({
+        id: 'c-99',
+        stage: 'post',
+        status: 'review',
+        title: 'Drifted',
+        description: '',
+        pillarIds: [],
+        segmentIds: [],
+        archived: false,
+        production: {
+          qa: {
+            publishConfig: {
+              publishAction: 'schedule',
+              scheduleAt: '2026-06-15T10:00',
+            },
+          },
+        },
+        createdAt: '2026-04-01T00:00:00.000Z',
+        updatedAt: '2026-04-01T00:00:00.000Z',
+      });
+
+      const first = await service.reconcileScheduledPosts();
+      const second = await service.reconcileScheduledPosts();
+
+      expect(first.itemsReconciled).toBe(1);
+      expect(second.itemsReconciled).toBe(0);
+    });
+
+    it('skips entries with scheduledAt already set, archived, wrong publishAction, missing/malformed scheduleAt', async () => {
+      // Already in sync — skipped by `entry.scheduledAt` guard.
+      seedIndexRow('w-a', {
+        id: 'c-already',
+        stage: 'post',
+        status: 'scheduled',
+        title: 'Synced',
+        scheduledDate: '2026-06-01',
+        scheduledAt: '2026-06-01T15:00:00.000Z',
+        archived: false,
+        platform: null,
+        contentType: null,
+        pillarIds: [],
+        segmentIds: [],
+        owner: null,
+        parentIdeaId: null,
+        parentConceptId: null,
+        createdAt: '2026-04-01T00:00:00.000Z',
+        updatedAt: '2026-04-01T00:00:00.000Z',
+      });
+      // Archived — skipped by `entry.archived` guard.
+      seedIndexRow('w-a', {
+        id: 'c-archived',
+        stage: 'post',
+        status: 'review',
+        title: 'Archived',
+        scheduledDate: null,
+        scheduledAt: null,
+        archived: true,
+        platform: null,
+        contentType: null,
+        pillarIds: [],
+        segmentIds: [],
+        owner: null,
+        parentIdeaId: null,
+        parentConceptId: null,
+        createdAt: '2026-04-01T00:00:00.000Z',
+        updatedAt: '2026-04-01T00:00:00.000Z',
+      });
+      // publishAction is 'save-draft' — skipped.
+      seedIndexRow('w-a', {
+        id: 'c-draft',
+        stage: 'post',
+        status: 'review',
+        title: 'Draft action',
+        scheduledDate: null,
+        scheduledAt: null,
+        archived: false,
+        platform: null,
+        contentType: null,
+        pillarIds: [],
+        segmentIds: [],
+        owner: null,
+        parentIdeaId: null,
+        parentConceptId: null,
+        createdAt: '2026-04-01T00:00:00.000Z',
+        updatedAt: '2026-04-01T00:00:00.000Z',
+      });
+      seedItemFile({
+        id: 'c-draft',
+        stage: 'post',
+        status: 'review',
+        title: 'Draft action',
+        description: '',
+        pillarIds: [],
+        segmentIds: [],
+        archived: false,
+        production: {
+          qa: {
+            publishConfig: {
+              publishAction: 'save-draft',
+              scheduleAt: '2026-06-15T10:00',
+            },
+          },
+        },
+        createdAt: '2026-04-01T00:00:00.000Z',
+        updatedAt: '2026-04-01T00:00:00.000Z',
+      });
+      // Malformed scheduleAt — skipped.
+      seedIndexRow('w-a', {
+        id: 'c-bad',
+        stage: 'post',
+        status: 'review',
+        title: 'Bad date',
+        scheduledDate: null,
+        scheduledAt: null,
+        archived: false,
+        platform: null,
+        contentType: null,
+        pillarIds: [],
+        segmentIds: [],
+        owner: null,
+        parentIdeaId: null,
+        parentConceptId: null,
+        createdAt: '2026-04-01T00:00:00.000Z',
+        updatedAt: '2026-04-01T00:00:00.000Z',
+      });
+      seedItemFile({
+        id: 'c-bad',
+        stage: 'post',
+        status: 'review',
+        title: 'Bad date',
+        description: '',
+        pillarIds: [],
+        segmentIds: [],
+        archived: false,
+        production: {
+          qa: {
+            publishConfig: {
+              publishAction: 'schedule',
+              scheduleAt: 'not-a-date',
+            },
+          },
+        },
+        createdAt: '2026-04-01T00:00:00.000Z',
+        updatedAt: '2026-04-01T00:00:00.000Z',
+      });
+
+      const result = await service.reconcileScheduledPosts();
+
+      expect(result.itemsReconciled).toBe(0);
+    });
+
+    it('continues to remaining tenants when one tenant throws', async () => {
+      // Override listTenants to return two tenants; one explodes on readIndex.
+      (fs as unknown as {
+        listTenants: () => Promise<string[]>;
+      }).listTenants = async () => ['w-bad', 'w-ok'];
+      const realListDirectory = fs.listDirectory.bind(fs);
+      (fs as unknown as {
+        listDirectory: typeof fs.listDirectory;
+      }).listDirectory = async (tenant: string, namespace: string) => {
+        if (tenant === 'w-bad') throw new Error('AFS down for w-bad');
+        return realListDirectory(tenant, namespace);
+      };
+      seedIndexRow('w-ok', {
+        id: 'c-ok',
+        stage: 'post',
+        status: 'review',
+        title: 'OK',
+        scheduledDate: null,
+        scheduledAt: null,
+        archived: false,
+        platform: null,
+        contentType: null,
+        pillarIds: [],
+        segmentIds: [],
+        owner: null,
+        parentIdeaId: null,
+        parentConceptId: null,
+        createdAt: '2026-04-01T00:00:00.000Z',
+        updatedAt: '2026-04-01T00:00:00.000Z',
+      });
+      seedItemFile({
+        id: 'c-ok',
+        stage: 'post',
+        status: 'review',
+        title: 'OK',
+        description: '',
+        pillarIds: [],
+        segmentIds: [],
+        archived: false,
+        production: {
+          qa: {
+            publishConfig: {
+              publishAction: 'schedule',
+              scheduleAt: '2026-07-01T08:00',
+            },
+          },
+        },
+        createdAt: '2026-04-01T00:00:00.000Z',
+        updatedAt: '2026-04-01T00:00:00.000Z',
+      });
+
+      const result = await service.reconcileScheduledPosts();
+
+      expect(result.workspacesScanned).toBe(2);
+      expect(result.itemsReconciled).toBe(1);
+    });
+
+    it('returns zero when fs is not configured', async () => {
+      fs.setConfigured(false);
+      const result = await service.reconcileScheduledPosts();
+      expect(result).toEqual({ workspacesScanned: 0, itemsReconciled: 0 });
+    });
+
+    it('returns zero and logs when listTenants itself throws', async () => {
+      (fs as unknown as {
+        listTenants: () => Promise<string[]>;
+      }).listTenants = async () => {
+        throw new Error('tenants endpoint down');
+      };
+      const result = await service.reconcileScheduledPosts();
+      expect(result).toEqual({ workspacesScanned: 0, itemsReconciled: 0 });
+    });
+
+    it('onModuleInit never throws even when reconciliation rejects', async () => {
+      (fs as unknown as {
+        listTenants: () => Promise<string[]>;
+      }).listTenants = async () => {
+        throw new Error('boom');
+      };
+      await expect(service.onModuleInit()).resolves.toBeUndefined();
     });
   });
 });

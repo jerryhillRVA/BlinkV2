@@ -450,12 +450,68 @@ function buildQA(): ProductionQAContract {
     );
     expect(draftMilestone?.dueAt).toBe(overrideIso);
     // qa_due stays template-derived (-1 day from the calendar projection's
-    // anchor). The Calendar projects from the index entry's scheduledDate
-    // ('2026-05-15') at the default 14:00 UTC publish time, so qa_due lands
-    // one day earlier at 14:00.
-    expect(qaMilestone?.dueAt).toBe('2026-05-14T14:00:00.000Z');
+    // anchor). As of #135 the index entry carries top-level `scheduledAt`
+    // (`2026-05-15T15:00:00.000Z`), so the anchor reflects the actual
+    // publish time and qa_due lands one day earlier at the same hour.
+    expect(qaMilestone?.dueAt).toBe('2026-05-14T15:00:00.000Z');
 
     // Cleanup
+    await svc.deleteItem(TEST_TENANT, post.id);
+  }, 60_000);
+
+  // Ticket #135 — Approve & Schedule live-sync round-trip
+  it('A&S live-sync writes top-level scheduledAt + projects onto index entry + Calendar renders pill', async () => {
+    const post = await svc.createItem(TEST_TENANT, {
+      stage: 'post',
+      status: 'review',
+      title: '#135 schedule round-trip',
+      description: '',
+      pillarIds: [],
+      segmentIds: [],
+      platform: 'instagram',
+      contentType: 'reel',
+      briefApproved: true,
+      briefApprovedAt: '2026-04-01T00:00:00.000Z',
+      briefApprovedBy: 'user-jerry',
+    });
+
+    // Simulate the A&S live-sync write shape: top-level scheduledAt /
+    // scheduledDate / status: 'scheduled' alongside production.qa.publishConfig.
+    await svc.updateItem(TEST_TENANT, post.id, {
+      status: 'scheduled',
+      scheduledAt: '2026-06-01T15:00:00.000Z',
+      scheduledDate: '2026-06-01',
+      production: {
+        qa: {
+          publishConfig: {
+            publishAction: 'schedule',
+            scheduleAt: '2026-06-01T15:00',
+          },
+        },
+      },
+    });
+
+    // Full item file persists scheduledAt at top level.
+    const fetched = await svc.getItem(TEST_TENANT, post.id);
+    expect(fetched.scheduledAt).toBe('2026-06-01T15:00:00.000Z');
+    expect(fetched.scheduledDate).toBe('2026-06-01');
+    expect(fetched.status).toBe('scheduled');
+
+    // Index entry carries the scheduledAt projection so Calendar sees it
+    // from the lean read, without needing the full item file.
+    const index = await svc.getIndex(TEST_TENANT);
+    const entry = index.items.find((r) => r.id === post.id);
+    expect(entry?.scheduledAt).toBe('2026-06-01T15:00:00.000Z');
+    expect(entry?.scheduledDate).toBe('2026-06-01');
+
+    // Calendar projects the publish event at the chosen ISO.
+    const calendarSvc = new CalendarService(fs, null);
+    const projection = await calendarSvc.getCalendar(TEST_TENANT);
+    const item = projection.items.find((i) => i.id === post.id);
+    expect(item).toBeDefined();
+    expect(item?.scheduleAt).toBe('2026-06-01T15:00:00.000Z');
+    expect(item?.status).toBe('scheduled');
+
     await svc.deleteItem(TEST_TENANT, post.id);
   }, 60_000);
 });
