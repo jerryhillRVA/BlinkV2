@@ -75,12 +75,113 @@ test.describe('Idea detail page', () => {
     expect(uniqueTitle).not.toBe(originalText);
   });
 
-  test('Generate Concept Options reveals 6 option cards after loading', async ({ page }) => {
+  test('Generate Concept Options POSTs to the API and reveals 6 valid option cards', async ({ page }) => {
+    const stubOptions = Array.from({ length: 6 }, (_, i) => ({
+      id: `opt-${i + 1}`,
+      angle: `Angle ${i + 1} — strategic frame`,
+      description: `Description for option ${i + 1}.`,
+      objectiveAlignment: 'Grow engaged community following',
+      objective: 'awareness',
+      pillarIds: [],
+      segmentIds: [],
+      targetPlatforms: [{ platform: 'instagram', contentType: 'reel', postId: null }],
+      cta: { type: 'comment', text: `CTA ${i + 1}` },
+      suggestedFormatLabel: 'Reel',
+    }));
+
+    let requestBody: { workspaceId?: string; refId?: string } | null = null;
+    await page.route('**/api/idea-concept-options', async (route) => {
+      requestBody = JSON.parse(route.request().postData() ?? '{}') as {
+        workspaceId?: string;
+        refId?: string;
+      };
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ options: stubOptions }),
+      });
+    });
+
     await page.locator('.kanban-column').first().locator('.content-card').first().click();
     await expect(page.locator('app-concept-options-panel')).toBeVisible();
     await page.locator('app-concept-options-panel .btn-generate button').click();
-    await expect(page.locator('app-concept-options-panel .options-skeleton')).toHaveCount(6);
+
     await expect(page.locator('app-concept-option-card')).toHaveCount(6, { timeout: 10_000 });
+    expect(requestBody?.workspaceId).toBeTruthy();
+    expect(requestBody?.refId).toBeTruthy();
+
+    // Per-card structural validity — no assertion on literal SEEDS string content.
+    const cards = page.locator('app-concept-option-card');
+    for (let i = 0; i < 6; i++) {
+      const card = cards.nth(i);
+      await expect(card).toBeVisible();
+      const text = (await card.innerText()).trim();
+      expect(text.length).toBeGreaterThan(0);
+      expect(/Format/i.test(text)).toBe(true);
+      expect(/CTA/i.test(text)).toBe(true);
+    }
+  });
+
+  test('Regenerate options re-fires the API and re-renders 6 cards', async ({ page }) => {
+    const stubOptions = Array.from({ length: 6 }, (_, i) => ({
+      id: `opt-${i + 1}`,
+      angle: `Angle ${i + 1}`,
+      description: `Description ${i + 1}`,
+      objectiveAlignment: 'Grow engaged community following',
+      objective: 'awareness',
+      pillarIds: [],
+      segmentIds: [],
+      targetPlatforms: [{ platform: 'instagram', contentType: 'reel', postId: null }],
+      cta: { type: 'comment', text: `CTA ${i + 1}` },
+      suggestedFormatLabel: 'Reel',
+    }));
+
+    let callCount = 0;
+    await page.route('**/api/idea-concept-options', async (route) => {
+      callCount++;
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ options: stubOptions }),
+      });
+    });
+
+    await page.locator('.kanban-column').first().locator('.content-card').first().click();
+    await page.locator('app-concept-options-panel .btn-generate button').click();
+    await expect(page.locator('app-concept-option-card')).toHaveCount(6, { timeout: 10_000 });
+    expect(callCount).toBe(1);
+
+    const regenerate = page.locator('app-concept-options-panel .options-panel-regenerate');
+    await expect(regenerate).toBeVisible();
+    await regenerate.click();
+    await expect(page.locator('app-concept-option-card')).toHaveCount(6, { timeout: 10_000 });
+    expect(callCount).toBe(2);
+  });
+
+  test('Generate concept options error path: 502 → toast, panel returns to empty state', async ({ page }) => {
+    let attempts = 0;
+    await page.route('**/api/idea-concept-options', async (route) => {
+      attempts++;
+      await route.fulfill({
+        status: 502,
+        contentType: 'application/json',
+        body: JSON.stringify({ message: 'AI generation failed.' }),
+      });
+    });
+
+    await page.locator('.kanban-column').first().locator('.content-card').first().click();
+    await page.locator('app-concept-options-panel .btn-generate button').click();
+
+    // Don't rely on `waitForResponse` — firefox doesn't always surface a
+    // response event for synthetic `route.fulfill` responses, so the wait
+    // can time out even though the request fired and the FE handled the
+    // error. The UI state is the load-bearing assertion: panel returns to
+    // empty (Generate button visible, no skeletons, no rendered cards).
+    await expect(page.locator('app-concept-options-panel .btn-generate'))
+      .toBeVisible({ timeout: 10_000 });
+    await expect(page.locator('app-concept-option-card')).toHaveCount(0);
+    await expect(page.locator('app-concept-options-panel .options-skeleton')).toHaveCount(0);
+    expect(attempts).toBeGreaterThanOrEqual(1);
   });
 
   test('Concept CTA navigates to the Concept detail page', async ({ page }) => {

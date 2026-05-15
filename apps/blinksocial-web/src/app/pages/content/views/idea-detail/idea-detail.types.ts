@@ -1,30 +1,12 @@
 import type {
-  ContentCta,
-  ContentObjective,
-  ContentType,
-  Platform,
-} from '../../content.types';
-
-export interface ConceptTargetPlatform {
-  platform: Platform;
-  contentType: ContentType;
-  postId?: string | null;
-}
+  ConceptOptionContract,
+  ConceptTargetPlatformContract,
+} from '@blinksocial/contracts';
 
 /**
- * Shape returned by the simulated "Generate Concept Options" flow on the
- * Idea detail screen. Picking one of these options seeds the new concept's
- * fields when the user clicks "Concept →".
+ * UI-facing aliases for the contract types. The shape mirrors what the
+ * server returns from `POST /api/idea-concept-options`. Imports across the
+ * idea-detail screen prefer these aliases to keep the call sites readable.
  */
-export interface ConceptOption {
-  id: string;
-  angle: string; // becomes the concept's hook
-  description: string;
-  objectiveAlignment: string; // display-only label (e.g. a business goal)
-  objective: ContentObjective;
-  pillarIds: string[];
-  segmentIds: string[];
-  targetPlatforms: ConceptTargetPlatform[];
-  cta: ContentCta;
-  suggestedFormatLabel: string;
-}
+export type ConceptOption = ConceptOptionContract;
+export type ConceptTargetPlatform = ConceptTargetPlatformContract;
