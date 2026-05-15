@@ -23,7 +23,7 @@ function buildItem(
     canonicalType: 'IMAGE_SINGLE',
     status: 'in-progress',
     owner: 'Ava Chen',
-    scheduleAt: '2026-05-03T15:00:00.000Z',
+    scheduledAt: '2026-05-03T15:00:00.000Z',
     blockers: [],
     ...overrides,
   };
@@ -56,7 +56,7 @@ function buildResponse(): CalendarResponseContract {
         canonicalType: 'VIDEO_LONG_HORIZONTAL',
         status: 'approved',
         owner: 'Marcus Lee',
-        scheduleAt: '2026-05-10T12:00:00.000Z',
+        scheduledAt: '2026-05-10T12:00:00.000Z',
       }),
     ],
     milestones: [
@@ -441,7 +441,7 @@ describe('CalendarPageComponent', () => {
       buildItem({
         id: `bulk-${i}`,
         title: `Item ${i}`,
-        scheduleAt: '2026-05-03T15:00:00.000Z',
+        scheduledAt: '2026-05-03T15:00:00.000Z',
       }),
     );
     setupTestBed(() =>
@@ -594,7 +594,7 @@ describe('CalendarPageComponent', () => {
         items: [
           buildItem({
             id: 'no-date',
-            scheduleAt: null as unknown as string,
+            scheduledAt: null as unknown as string,
             status: 'in-progress',
           }),
         ],
@@ -754,12 +754,11 @@ describe('CalendarPageComponent', () => {
       const newIso = '2026-05-18T15:00:00.000Z';
       c.onQuickEditSave({
         event: publish,
-        patch: { scheduledAt: newIso, scheduledDate: '2026-05-18' },
+        patch: { scheduledAt: newIso },
       });
 
       expect(updateItem).toHaveBeenCalledWith('hive-collective', 'item-1', {
         scheduledAt: newIso,
-        scheduledDate: '2026-05-18',
       });
       // re-fetch on success — second getCalendar call
       expect(getCalendar).toHaveBeenCalledTimes(2);
@@ -830,10 +829,10 @@ describe('CalendarPageComponent', () => {
         .allEvents()
         .find((e) => e.kind === 'publish' && e.contentId === 'item-1');
       if (!publish || publish.kind !== 'publish') throw new Error('fixture missing publish event');
-      const originalIso = publish.item.scheduleAt;
+      const originalIso = publish.item.scheduledAt;
       c.onQuickEditSave({
         event: publish,
-        patch: { scheduledAt: '2026-05-25T15:00:00.000Z', scheduledDate: '2026-05-25' },
+        patch: { scheduledAt: '2026-05-25T15:00:00.000Z' },
       });
       expect(showError).toHaveBeenCalledWith(
         expect.stringContaining("Couldn't save the new publish date"),
@@ -843,7 +842,7 @@ describe('CalendarPageComponent', () => {
       const reverted = c
         .allEvents()
         .find((e) => e.kind === 'publish' && e.contentId === 'item-1');
-      expect((reverted as { item: { scheduleAt: string } }).item.scheduleAt).toBe(
+      expect((reverted as { item: { scheduledAt: string } }).item.scheduledAt).toBe(
         originalIso,
       );
     });
@@ -878,23 +877,22 @@ describe('CalendarPageComponent', () => {
   });
 
   describe('applyPatchToResponse (#134)', () => {
-    it('shifts a publish event and its milestones by the new scheduleAt delta', () => {
+    it('shifts a publish event and its milestones by the new scheduledAt delta', () => {
       const res = buildResponse();
       const ev = {
         kind: 'publish' as const,
         id: 'publish-item-1',
         contentId: 'item-1',
-        date: new Date(res.items[0].scheduleAt as string),
+        date: new Date(res.items[0].scheduledAt as string),
         item: res.items[0],
         severity: null,
       };
       const next = applyPatchToResponse(res, ev, {
         scheduledAt: '2026-05-08T15:00:00.000Z',
-        scheduledDate: '2026-05-08',
       });
       expect(next).not.toBeNull();
       if (!next) return;
-      expect(next.items.find((i) => i.id === 'item-1')?.scheduleAt).toBe(
+      expect(next.items.find((i) => i.id === 'item-1')?.scheduledAt).toBe(
         '2026-05-08T15:00:00.000Z',
       );
       // milestone shifted by +5 days from 2026-04-28 → 2026-05-03
@@ -926,7 +924,7 @@ describe('CalendarPageComponent', () => {
       const moved = next.milestones.find((m) => m.milestoneId === target.milestoneId);
       expect(moved?.dueAt).toBe('2026-04-20T00:00:00.000Z');
       // Publish-event date for the same item must be unchanged
-      expect(next.items.find((i) => i.id === 'item-1')?.scheduleAt).toBe(
+      expect(next.items.find((i) => i.id === 'item-1')?.scheduledAt).toBe(
         '2026-05-03T15:00:00.000Z',
       );
     });

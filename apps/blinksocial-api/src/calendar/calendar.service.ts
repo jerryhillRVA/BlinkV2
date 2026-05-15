@@ -202,7 +202,7 @@ export class CalendarService {
         milestones.push(
           ...deriveMilestonesForItem(
             calItem.id,
-            calItem.scheduleAt as string,
+            calItem.scheduledAt as string,
             calItem.canonicalType,
             calItem.owner,
             settings,
@@ -303,7 +303,7 @@ export class CalendarService {
         milestones.push(
           ...deriveMilestonesForItem(
             calItem.id,
-            calItem.scheduleAt as string,
+            calItem.scheduledAt as string,
             calItem.canonicalType,
             calItem.owner,
             settings,
@@ -356,7 +356,7 @@ export class CalendarService {
         status === 'published' ||
         status === 'approved' ||
         rand() > 0.3;
-      const scheduleAt = hasSchedule ? addDays(REFERENCE_DATE, offset) : null;
+      const scheduledAt = hasSchedule ? addDays(REFERENCE_DATE, offset) : null;
       const item: CalendarContentItemContract = {
         id,
         title: pick(TITLE_POOL),
@@ -364,7 +364,7 @@ export class CalendarService {
         canonicalType: pick(CANONICAL_TYPES),
         status,
         owner: pick(OWNER_POOL),
-        scheduleAt,
+        scheduledAt,
         flags: {
           hasClaims: rand() < 0.15,
           hasTalent: rand() < 0.2,
@@ -377,7 +377,7 @@ export class CalendarService {
       const milestoneCount = 1 + Math.floor(rand() * 3);
       for (let m = 0; m < milestoneCount; m += 1) {
         const milestoneType = pick(MILESTONE_TYPES);
-        const anchor = scheduleAt ?? addDays(REFERENCE_DATE, offset);
+        const anchor = scheduledAt ?? addDays(REFERENCE_DATE, offset);
         const dueOffset = -(1 + Math.floor(rand() * 10));
         milestones.push({
           milestoneId: `${id}-${milestoneType}-${m}`,

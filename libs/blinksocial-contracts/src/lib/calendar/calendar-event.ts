@@ -5,7 +5,7 @@ export type CalendarEventKindContract = 'publish' | 'milestone';
 export interface CalendarPublishEventContract {
   kind: 'publish';
   contentId: string;
-  scheduleAt: string;
+  scheduledAt: string;
 }
 
 export interface CalendarMilestoneEventContract {

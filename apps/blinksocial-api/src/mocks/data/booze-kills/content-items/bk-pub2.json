@@ -24,7 +24,6 @@
   "contentType": "long-form",
   "keyMessage": "Cravings are predictable neurochemistry, not personal failure.",
   "tonePreset": "authoritative",
-  "scheduledDate": "2026-02-10",
   "scheduledAt": "2026-02-10T15:00:00Z",
   "claimsFlag": true,
   "sourceLinks": [
@@ -32,7 +31,10 @@
     "https://example.com/research/naltrexone-meta-analysis"
   ],
   "riskLevel": "medium",
-  "cta": { "type": "subscribe", "text": "Subscribe for the rest of the neuroscience series" },
+  "cta": {
+    "type": "subscribe",
+    "text": "Subscribe for the rest of the neuroscience series"
+  },
   "briefApproved": true,
   "briefApprovedAt": "2026-01-28T10:00:00Z",
   "briefApprovedBy": "user-mara",
@@ -43,8 +45,13 @@
     "brief": {
       "strategy": {
         "objective": "education",
-        "audienceSegmentIds": ["bk-s2", "bk-s3"],
-        "pillarIds": ["bk-p1"],
+        "audienceSegmentIds": [
+          "bk-s2",
+          "bk-s3"
+        ],
+        "pillarIds": [
+          "bk-p1"
+        ],
         "keyMessage": "Cravings are predictable neurochemistry, not personal failure.",
         "ctaType": "subscribe",
         "ctaText": "Subscribe for the rest of the neuroscience series",
@@ -71,12 +78,42 @@
       "videoLong": {
         "hook": "If you've ever felt like a 4 p.m. craving was bigger than your willpower — your brain isn't broken. In the next 14 minutes I'll walk you through what's actually happening neurologically, and three evidence-based tools that change the math.",
         "sequenceBlocks": [
-          { "id": "sb-1", "type": "Hook", "description": "Cold open: timestamp on a clock reading 4:00. VO establishes the universal experience. State the promise: mechanism + 3 tools.", "duration": "0:00–1:00" },
-          { "id": "sb-2", "type": "Section", "description": "Section 1: Dopamine + conditioned cues. Animation of the reward loop. Lower-third citations on every claim.", "duration": "1:00–4:30" },
-          { "id": "sb-3", "type": "Section", "description": "Section 2: Tool #1 — Urge surfing. Walk through the technique on-camera with a stopwatch.", "duration": "4:30–7:30" },
-          { "id": "sb-4", "type": "Section", "description": "Section 3: Tool #2 — HALT framework. Define each letter; show real diary examples on screen.", "duration": "7:30–10:00" },
-          { "id": "sb-5", "type": "Section", "description": "Section 4: Tool #3 — Pharmacotherapy primer (NAC, naltrexone). Heavy disclaimer copy on screen. Frame as 'talk to a clinician,' not advice.", "duration": "10:00–13:00" },
-          { "id": "sb-6", "type": "CTA", "description": "Recap the three tools as bulletpoints; subscribe pitch tied to the next episode (relapse psychology).", "duration": "13:00–14:00" }
+          {
+            "id": "sb-1",
+            "type": "Hook",
+            "description": "Cold open: timestamp on a clock reading 4:00. VO establishes the universal experience. State the promise: mechanism + 3 tools.",
+            "duration": "0:00–1:00"
+          },
+          {
+            "id": "sb-2",
+            "type": "Section",
+            "description": "Section 1: Dopamine + conditioned cues. Animation of the reward loop. Lower-third citations on every claim.",
+            "duration": "1:00–4:30"
+          },
+          {
+            "id": "sb-3",
+            "type": "Section",
+            "description": "Section 2: Tool #1 — Urge surfing. Walk through the technique on-camera with a stopwatch.",
+            "duration": "4:30–7:30"
+          },
+          {
+            "id": "sb-4",
+            "type": "Section",
+            "description": "Section 3: Tool #2 — HALT framework. Define each letter; show real diary examples on screen.",
+            "duration": "7:30–10:00"
+          },
+          {
+            "id": "sb-5",
+            "type": "Section",
+            "description": "Section 4: Tool #3 — Pharmacotherapy primer (NAC, naltrexone). Heavy disclaimer copy on screen. Frame as 'talk to a clinician,' not advice.",
+            "duration": "10:00–13:00"
+          },
+          {
+            "id": "sb-6",
+            "type": "CTA",
+            "description": "Recap the three tools as bulletpoints; subscribe pitch tied to the next episode (relapse psychology).",
+            "duration": "13:00–14:00"
+          }
         ],
         "targetDuration": "15m",
         "voiceoverNotes": "Calm, neutral, low register. No 'YOU CAN DO IT' energy. Read the disclaimers slowly and at full volume — they're a feature, not a footnote."

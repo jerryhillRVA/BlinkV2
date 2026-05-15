@@ -1069,7 +1069,7 @@ test.describe('Approve & Schedule (#124)', () => {
     await expect(page.locator('#schedule-at-input')).toBeVisible();
   });
 
-  test('TC-8: past-date scheduleAt renders the inline error', async ({ page }) => {
+  test('TC-8: past-date scheduledAt renders the inline error', async ({ page }) => {
     await openApprovedPostInQA(page, {
       id: 'qa-tc8',
       platform: 'instagram',
@@ -1199,7 +1199,7 @@ test.describe('Approve & Schedule (#124)', () => {
     await page.reload();
     await expect(page.locator('app-post-detail')).toBeVisible();
     await expect(page.locator('app-approve-schedule-step')).toBeVisible();
-    // After reload: approval + scheduleAt persist via the mock's merge-on-PUT.
+    // After reload: approval + scheduledAt persist via the mock's merge-on-PUT.
     await expect(page.locator('.status-pill--approved')).toBeVisible();
     await expect(page.locator('#schedule-at-input')).toHaveValue('2099-01-01T10:00');
   });

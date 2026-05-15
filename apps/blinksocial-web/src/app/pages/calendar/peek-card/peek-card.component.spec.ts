@@ -20,7 +20,7 @@ function buildEvent(overrides: Partial<CalendarEventView> = {}): CalendarEventVi
       canonicalType: 'IMAGE_SINGLE',
       status: 'in-progress',
       owner: 'Ava Chen',
-      scheduleAt: '2026-05-12T15:00:00.000Z',
+      scheduledAt: '2026-05-12T15:00:00.000Z',
       blockers: [],
     },
     severity: null,

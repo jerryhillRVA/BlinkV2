@@ -18,10 +18,10 @@
       "owner": null,
       "parentIdeaId": null,
       "parentConceptId": null,
-      "scheduledDate": null,
       "archived": false,
       "createdAt": "2026-02-28T09:00:00Z",
-      "updatedAt": "2026-02-28T09:00:00Z"
+      "updatedAt": "2026-02-28T09:00:00Z",
+      "scheduledAt": null
     },
     {
       "id": "concept1",
@@ -40,10 +40,10 @@
       "owner": "user-sarah",
       "parentIdeaId": "idea1",
       "parentConceptId": null,
-      "scheduledDate": null,
       "archived": false,
       "createdAt": "2026-02-25T10:00:00Z",
-      "updatedAt": "2026-03-05T14:00:00Z"
+      "updatedAt": "2026-03-05T14:00:00Z",
+      "scheduledAt": null
     },
     {
       "id": "idea2",
@@ -62,10 +62,10 @@
       "owner": null,
       "parentIdeaId": null,
       "parentConceptId": null,
-      "scheduledDate": null,
       "archived": false,
       "createdAt": "2026-02-15T09:00:00Z",
-      "updatedAt": "2026-02-15T09:00:00Z"
+      "updatedAt": "2026-02-15T09:00:00Z",
+      "scheduledAt": null
     },
     {
       "id": "idea3",
@@ -85,10 +85,10 @@
       "owner": null,
       "parentIdeaId": null,
       "parentConceptId": null,
-      "scheduledDate": null,
       "archived": false,
       "createdAt": "2026-03-20T10:00:00Z",
-      "updatedAt": "2026-03-20T10:00:00Z"
+      "updatedAt": "2026-03-20T10:00:00Z",
+      "scheduledAt": null
     },
     {
       "id": "concept2",
@@ -106,10 +106,10 @@
       "owner": "user-brett",
       "parentIdeaId": "idea2",
       "parentConceptId": null,
-      "scheduledDate": null,
       "archived": false,
       "createdAt": "2026-02-18T08:00:00Z",
-      "updatedAt": "2026-02-19T14:00:00Z"
+      "updatedAt": "2026-02-19T14:00:00Z",
+      "scheduledAt": null
     },
     {
       "id": "concept3",
@@ -128,10 +128,10 @@
       "owner": "user-sarah",
       "parentIdeaId": "idea3",
       "parentConceptId": null,
-      "scheduledDate": null,
       "archived": false,
       "createdAt": "2026-03-25T10:00:00Z",
-      "updatedAt": "2026-04-02T11:00:00Z"
+      "updatedAt": "2026-04-02T11:00:00Z",
+      "scheduledAt": null
     },
     {
       "id": "concept4",
@@ -149,10 +149,10 @@
       "owner": "user-brett",
       "parentIdeaId": "idea1",
       "parentConceptId": null,
-      "scheduledDate": null,
       "archived": false,
       "createdAt": "2026-04-10T10:00:00Z",
-      "updatedAt": "2026-04-15T09:00:00Z"
+      "updatedAt": "2026-04-15T09:00:00Z",
+      "scheduledAt": null
     },
     {
       "id": "post1",
@@ -170,10 +170,10 @@
       "owner": "user-brett",
       "parentIdeaId": null,
       "parentConceptId": "concept2",
-      "scheduledDate": "2026-03-12",
       "archived": false,
       "createdAt": "2026-02-20T07:00:00Z",
-      "updatedAt": "2026-03-08T16:00:00Z"
+      "updatedAt": "2026-03-08T16:00:00Z",
+      "scheduledAt": "2026-03-12T00:00:00.000Z"
     },
     {
       "id": "post2",
@@ -192,10 +192,10 @@
       "owner": "user-sarah",
       "parentIdeaId": null,
       "parentConceptId": "concept1",
-      "scheduledDate": "2026-05-04",
       "archived": false,
       "createdAt": "2026-04-12T09:00:00Z",
-      "updatedAt": "2026-04-22T11:00:00Z"
+      "updatedAt": "2026-04-22T11:00:00Z",
+      "scheduledAt": "2026-05-04T00:00:00.000Z"
     },
     {
       "id": "post3",
@@ -214,10 +214,10 @@
       "owner": "user-sarah",
       "parentIdeaId": null,
       "parentConceptId": "concept3",
-      "scheduledDate": "2026-05-19",
       "archived": false,
       "createdAt": "2026-04-05T10:00:00Z",
-      "updatedAt": "2026-04-21T14:00:00Z"
+      "updatedAt": "2026-04-21T14:00:00Z",
+      "scheduledAt": "2026-05-19T00:00:00.000Z"
     },
     {
       "id": "post4",
@@ -235,10 +235,10 @@
       "owner": "user-brett",
       "parentIdeaId": null,
       "parentConceptId": "concept2",
-      "scheduledDate": "2026-04-29",
       "archived": false,
       "createdAt": "2026-04-01T08:00:00Z",
-      "updatedAt": "2026-04-20T09:00:00Z"
+      "updatedAt": "2026-04-20T09:00:00Z",
+      "scheduledAt": "2026-04-29T00:00:00.000Z"
     },
     {
       "id": "post5",
@@ -256,10 +256,10 @@
       "owner": "user-sarah",
       "parentIdeaId": null,
       "parentConceptId": "concept3",
-      "scheduledDate": "2026-04-22",
       "archived": false,
       "createdAt": "2026-03-25T11:00:00Z",
-      "updatedAt": "2026-04-22T19:30:00Z"
+      "updatedAt": "2026-04-22T19:30:00Z",
+      "scheduledAt": "2026-04-22T00:00:00.000Z"
     },
     {
       "id": "post6",
@@ -277,10 +277,10 @@
       "owner": "user-brett",
       "parentIdeaId": null,
       "parentConceptId": "concept4",
-      "scheduledDate": "2026-05-12",
       "archived": false,
       "createdAt": "2026-04-18T10:00:00Z",
-      "updatedAt": "2026-04-24T16:00:00Z"
+      "updatedAt": "2026-04-24T16:00:00Z",
+      "scheduledAt": "2026-05-12T00:00:00.000Z"
     },
     {
       "id": "post7",
@@ -298,10 +298,10 @@
       "owner": "user-sarah",
       "parentIdeaId": null,
       "parentConceptId": "concept4",
-      "scheduledDate": "2026-05-22",
       "archived": false,
       "createdAt": "2026-04-25T09:00:00Z",
-      "updatedAt": "2026-05-02T14:00:00Z"
+      "updatedAt": "2026-05-02T14:00:00Z",
+      "scheduledAt": "2026-05-22T00:00:00.000Z"
     },
     {
       "id": "post8",
@@ -310,15 +310,19 @@
       "title": "Wellness Wednesday: 3 micro-habits for desk warriors",
       "platform": "facebook",
       "contentType": "fb-feed-post",
-      "pillarIds": ["p1"],
-      "segmentIds": ["s4"],
+      "pillarIds": [
+        "p1"
+      ],
+      "segmentIds": [
+        "s4"
+      ],
       "owner": "user-brett",
       "parentIdeaId": null,
       "parentConceptId": "concept2",
-      "scheduledDate": "2026-05-28",
       "archived": false,
       "createdAt": "2026-04-28T09:00:00Z",
-      "updatedAt": "2026-05-04T14:00:00Z"
+      "updatedAt": "2026-05-04T14:00:00Z",
+      "scheduledAt": "2026-05-28T00:00:00.000Z"
     },
     {
       "id": "post9",
@@ -327,15 +331,19 @@
       "title": "The hardest part of training nervous system",
       "platform": "x",
       "contentType": "tweet",
-      "pillarIds": ["p2"],
-      "segmentIds": ["s5"],
+      "pillarIds": [
+        "p2"
+      ],
+      "segmentIds": [
+        "s5"
+      ],
       "owner": "user-sarah",
       "parentIdeaId": null,
       "parentConceptId": "concept3",
-      "scheduledDate": "2026-05-30",
       "archived": false,
       "createdAt": "2026-04-30T09:00:00Z",
-      "updatedAt": "2026-05-04T14:30:00Z"
+      "updatedAt": "2026-05-04T14:30:00Z",
+      "scheduledAt": "2026-05-30T00:00:00.000Z"
     }
   ],
   "totalCount": 14,

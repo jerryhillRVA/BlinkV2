@@ -4,20 +4,30 @@
   "status": "scheduled",
   "title": "Saturday morning at six months",
   "description": "Single image feed post — quiet portrait of a community member six months into sobriety, captioned with one specific moment that captures what changed.",
-  "pillarIds": ["bk-p3"],
-  "segmentIds": ["bk-s1"],
-  "tags": ["six-months", "saturday-mornings", "feed-post"],
+  "pillarIds": [
+    "bk-p3"
+  ],
+  "segmentIds": [
+    "bk-s1"
+  ],
+  "tags": [
+    "six-months",
+    "saturday-mornings",
+    "feed-post"
+  ],
   "owner": "user-jordan",
   "hook": "Saturday mornings used to be the worst day of the week.",
   "objective": "community",
   "platform": "instagram",
   "contentType": "feed-post",
-  "cta": { "type": "comment", "text": "Drop the most surprising 'small thing' that changed for you" },
+  "cta": {
+    "type": "comment",
+    "text": "Drop the most surprising 'small thing' that changed for you"
+  },
   "keyMessage": "The wins of sobriety look small from the outside.",
   "tonePreset": "casual",
   "claimsFlag": false,
   "riskLevel": "low",
-  "scheduledDate": "2026-05-17",
   "scheduledAt": "2026-05-17T15:00:00Z",
   "briefApproved": true,
   "briefApprovedAt": "2026-05-01T10:00:00Z",
@@ -31,8 +41,12 @@
     "brief": {
       "strategy": {
         "objective": "community",
-        "audienceSegmentIds": ["bk-s1"],
-        "pillarIds": ["bk-p3"],
+        "audienceSegmentIds": [
+          "bk-s1"
+        ],
+        "pillarIds": [
+          "bk-p3"
+        ],
         "keyMessage": "The wins of sobriety look small from the outside.",
         "ctaType": "comment",
         "ctaText": "Drop the most surprising 'small thing' that changed for you",
@@ -42,7 +56,10 @@
         "hook": "Saturday mornings used to be the worst day of the week.",
         "storyArc": "image-with-reflective-caption"
       },
-      "compliance": { "containsClaims": false, "disclosureNeeded": false },
+      "compliance": {
+        "containsClaims": false,
+        "disclosureNeeded": false
+      },
       "approved": true,
       "canonicalType": "IMAGE_SINGLE",
       "hasTalent": true,
@@ -56,7 +73,13 @@
         "creativeDirectionNotes": "Natural light, kitchen, weekday morning energy. Subject (Marcus, 6 months sober) in pajamas, drinking coffee, laptop closed, phone face-down. We want quiet, not posed. Shot in his actual apartment.",
         "imageRef": "marcus-saturday-morning.jpg",
         "altText": "A man in his late 30s in pajamas, sitting at a kitchen counter holding a coffee mug, staring out a window with morning light on his face.",
-        "hashtags": ["#sixmonthssober", "#realsober", "#sobersaturday", "#dryishlife", "#boozekills"]
+        "hashtags": [
+          "#sixmonthssober",
+          "#realsober",
+          "#sobersaturday",
+          "#dryishlife",
+          "#boozekills"
+        ]
       }
     },
     "sources": [],

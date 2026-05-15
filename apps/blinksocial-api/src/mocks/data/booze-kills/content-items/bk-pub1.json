@@ -24,14 +24,16 @@
   "contentType": "reel",
   "keyMessage": "Aggregated community data shows consistent improvements after 30 alcohol-free days.",
   "tonePreset": "inspiring",
-  "scheduledDate": "2026-02-15",
   "scheduledAt": "2026-02-15T14:00:00Z",
   "claimsFlag": true,
   "sourceLinks": [
     "https://example.com/community-survey/dry-jan-2026"
   ],
   "riskLevel": "low",
-  "cta": { "type": "follow", "text": "Follow for the next challenge" },
+  "cta": {
+    "type": "follow",
+    "text": "Follow for the next challenge"
+  },
   "briefApproved": true,
   "briefApprovedAt": "2026-02-08T10:00:00Z",
   "briefApprovedBy": "user-mara",
@@ -42,8 +44,14 @@
     "brief": {
       "strategy": {
         "objective": "awareness",
-        "audienceSegmentIds": ["bk-s1", "bk-s3"],
-        "pillarIds": ["bk-p2", "bk-p1"],
+        "audienceSegmentIds": [
+          "bk-s1",
+          "bk-s3"
+        ],
+        "pillarIds": [
+          "bk-p2",
+          "bk-p1"
+        ],
         "keyMessage": "Aggregated community data shows consistent improvements after 30 alcohol-free days.",
         "ctaType": "follow",
         "ctaText": "Follow for the next challenge"
@@ -53,7 +61,10 @@
         "storyArc": "hook-data-three-takeaways-cta",
         "musicNotes": "Synth-pop, mid-tempo, no vocals"
       },
-      "compliance": { "containsClaims": true, "disclosureNeeded": true },
+      "compliance": {
+        "containsClaims": true,
+        "disclosureNeeded": true
+      },
       "approved": true,
       "canonicalType": "VIDEO_SHORT_VERTICAL",
       "hasTalent": true,
@@ -76,11 +87,36 @@
         "bRollNotes": "Cut to b-roll of the survey results overlay (charts) on every stat. Speed-ramp through the numbers; slow down on the time-reclaimed punchline.",
         "voiceoverNotes": "Energetic but matter-of-fact. Don't oversell. Let the numbers speak.",
         "shotList": [
-          { "id": "sl-1", "type": "Shot", "description": "Hook delivered to camera, kitchen lighting", "duration": "5s" },
-          { "id": "sl-2", "type": "B-Roll", "description": "Sleep-quality bar chart overlay (38% up)", "duration": "10s" },
-          { "id": "sl-3", "type": "B-Roll", "description": "Energy + cravings stats stacked, animated", "duration": "15s" },
-          { "id": "sl-4", "type": "Shot", "description": "Pivot to the time-reclaimed insight", "duration": "15s" },
-          { "id": "sl-5", "type": "Shot", "description": "CTA delivered with the 🌑 emoji visible", "duration": "15s" }
+          {
+            "id": "sl-1",
+            "type": "Shot",
+            "description": "Hook delivered to camera, kitchen lighting",
+            "duration": "5s"
+          },
+          {
+            "id": "sl-2",
+            "type": "B-Roll",
+            "description": "Sleep-quality bar chart overlay (38% up)",
+            "duration": "10s"
+          },
+          {
+            "id": "sl-3",
+            "type": "B-Roll",
+            "description": "Energy + cravings stats stacked, animated",
+            "duration": "15s"
+          },
+          {
+            "id": "sl-4",
+            "type": "Shot",
+            "description": "Pivot to the time-reclaimed insight",
+            "duration": "15s"
+          },
+          {
+            "id": "sl-5",
+            "type": "Shot",
+            "description": "CTA delivered with the 🌑 emoji visible",
+            "duration": "15s"
+          }
         ]
       }
     },

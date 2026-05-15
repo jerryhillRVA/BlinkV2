@@ -59,4 +59,8 @@ export class ApproveScheduleStepComponent {
   protected onPublishConfigChange(patch: Partial<PublishConfigContract>): void {
     this.store.setPublishConfig(patch);
   }
+
+  protected onScheduledAtChange(localValue: string | undefined): void {
+    this.store.setPublishScheduledAt(localValue);
+  }
 }

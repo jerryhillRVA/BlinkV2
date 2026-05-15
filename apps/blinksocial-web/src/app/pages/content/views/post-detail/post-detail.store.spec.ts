@@ -1565,7 +1565,6 @@ describe('PostDetailStore — Approve & Schedule slot', () => {
             qa: {
               publishConfig: {
                 publishAction: 'schedule',
-                scheduleAt: '2099-01-01T10:00',
                 deliveryMethod: 'manual',
                 notifyTeam: true,
               },
@@ -1697,10 +1696,11 @@ describe('PostDetailStore — Approve & Schedule slot', () => {
     });
   });
 
-  it('persistence round-trip: setApprovalStatus + setPublishConfig + markApproved survives reload', () => {
+  it('persistence round-trip: setApprovalStatus + setPublishConfig + setPublishScheduledAt + markApproved survives reload', () => {
     const { store, state } = setup(approvedItem());
     store.setApprovalStatus('brand-reviewer', 'approved');
-    store.setPublishConfig({ publishAction: 'schedule', scheduleAt: '2099-01-01T10:00' });
+    store.setPublishConfig({ publishAction: 'schedule' });
+    store.setPublishScheduledAt('2099-01-01T10:00');
     store.markApproved();
 
     // Simulate reload: rebuild a new store against the same persisted state.
@@ -1710,7 +1710,7 @@ describe('PostDetailStore — Approve & Schedule slot', () => {
     const saved = state.items().find((i) => i.id === 'post-1');
     expect(saved?.production?.qa?.approvals?.[0].status).toBe('approved');
     expect(saved?.production?.qa?.publishConfig?.publishAction).toBe('schedule');
-    expect(saved?.production?.qa?.publishConfig?.scheduleAt).toBe('2099-01-01T10:00');
+    expect(saved?.scheduledAt).toBe('2099-01-01T10:00:00.000Z');
     expect(saved?.production?.qa?.approved).toBe(true);
   });
 });
@@ -1728,28 +1728,29 @@ describe('PostDetailStore — schedule live-sync (#135)', () => {
   }
 
   describe('schedule write path (review → scheduled)', () => {
-    it('stamps top-level scheduledAt/scheduledDate/status when publishAction=schedule and scheduleAt is set', () => {
+    function scheduleVia(
+      store: PostDetailStore,
+      localValue: string,
+      action: 'schedule' | 'save-draft' | 'publish-now' = 'schedule',
+    ): void {
+      store.setPublishConfig({ publishAction: action });
+      store.setPublishScheduledAt(localValue);
+    }
+
+    it('stamps top-level scheduledAt + flips status when publishAction=schedule and a datetime is picked', () => {
       const { store, state } = setup(approvedItem());
-      store.setPublishConfig({
-        publishAction: 'schedule',
-        scheduleAt: '2026-06-01T15:00',
-      });
+      scheduleVia(store, '2026-06-01T15:00');
       const saved = state.items().find((i) => i.id === 'post-1');
       expect(saved?.status).toBe('scheduled');
       expect(saved?.scheduledAt).toBe('2026-06-01T15:00:00.000Z');
-      expect(saved?.scheduledDate).toBe('2026-06-01');
+      expect(saved).not.toHaveProperty('scheduledDate');
       expect(saved?.production?.qa?.publishConfig?.publishAction).toBe('schedule');
-      expect(saved?.production?.qa?.publishConfig?.scheduleAt).toBe('2026-06-01T15:00');
+      expect(saved?.production?.qa?.publishConfig).not.toHaveProperty('scheduledAt');
     });
 
     it('does NOT promote status when current is in-progress', () => {
-      const { store, state } = setup(
-        approvedItem({ status: 'in-progress' }),
-      );
-      store.setPublishConfig({
-        publishAction: 'schedule',
-        scheduleAt: '2026-06-01T15:00',
-      });
+      const { store, state } = setup(approvedItem({ status: 'in-progress' }));
+      scheduleVia(store, '2026-06-01T15:00');
       const saved = state.items().find((i) => i.id === 'post-1');
       expect(saved?.status).toBe('in-progress');
       expect(saved?.scheduledAt).toBe('2026-06-01T15:00:00.000Z');
@@ -1757,10 +1758,7 @@ describe('PostDetailStore — schedule live-sync (#135)', () => {
 
     it('does NOT downgrade a published post but still updates scheduledAt', () => {
       const { store, state } = setup(approvedItem({ status: 'published' }));
-      store.setPublishConfig({
-        publishAction: 'schedule',
-        scheduleAt: '2026-06-01T15:00',
-      });
+      scheduleVia(store, '2026-06-01T15:00');
       const saved = state.items().find((i) => i.id === 'post-1');
       expect(saved?.status).toBe('published');
       expect(saved?.scheduledAt).toBe('2026-06-01T15:00:00.000Z');
@@ -1768,45 +1766,38 @@ describe('PostDetailStore — schedule live-sync (#135)', () => {
 
     it('does NOT promote a draft post (status not in the allowlist)', () => {
       const { store, state } = setup(approvedItem({ status: 'draft' }));
-      store.setPublishConfig({
-        publishAction: 'schedule',
-        scheduleAt: '2026-06-01T15:00',
-      });
+      scheduleVia(store, '2026-06-01T15:00');
       const saved = state.items().find((i) => i.id === 'post-1');
       expect(saved?.status).toBe('draft');
       expect(saved?.scheduledAt).toBe('2026-06-01T15:00:00.000Z');
     });
 
-    it('does NOT write top-level fields when scheduleAt is empty', () => {
+    it('clears scheduledAt and demotes back to review when setPublishScheduledAt receives an empty value', () => {
       const { store, state } = setup(approvedItem());
-      store.setPublishConfig({ publishAction: 'schedule', scheduleAt: '' });
+      scheduleVia(store, '2026-06-01T15:00');
+      // Now clear it.
+      store.setPublishScheduledAt('');
       const saved = state.items().find((i) => i.id === 'post-1');
       expect(saved?.scheduledAt).toBeNull();
-      expect(saved?.scheduledDate).toBeNull();
       expect(saved?.status).toBe('review');
     });
 
-    it('does NOT write top-level fields when scheduleAt is malformed', () => {
+    it('clears scheduledAt when setPublishScheduledAt receives a malformed value', () => {
       const { store, state } = setup(approvedItem());
-      store.setPublishConfig({
-        publishAction: 'schedule',
-        scheduleAt: 'not-a-date',
-      });
+      scheduleVia(store, '2026-06-01T15:00');
+      store.setPublishScheduledAt('not-a-date');
       const saved = state.items().find((i) => i.id === 'post-1');
       expect(saved?.scheduledAt).toBeNull();
-      expect(saved?.scheduledDate).toBeNull();
       expect(saved?.status).toBe('review');
     });
 
     it('does NOT promote status when publishAction is not "schedule"', () => {
       const { store, state } = setup(approvedItem());
-      store.setPublishConfig({
-        publishAction: 'publish-now',
-        scheduleAt: '2026-06-01T15:00',
-      });
+      store.setPublishConfig({ publishAction: 'publish-now' });
+      store.setPublishScheduledAt('2026-06-01T15:00');
       const saved = state.items().find((i) => i.id === 'post-1');
       expect(saved?.status).toBe('review');
-      expect(saved?.scheduledAt).toBeNull();
+      expect(saved?.scheduledAt).toBe('2026-06-01T15:00:00.000Z');
     });
   });
 
@@ -1815,25 +1806,19 @@ describe('PostDetailStore — schedule live-sync (#135)', () => {
       return approvedItem({
         status: 'scheduled',
         scheduledAt: '2026-06-01T15:00:00.000Z',
-        scheduledDate: '2026-06-01',
         production: {
           qa: {
-            publishConfig: {
-              publishAction: 'schedule',
-              scheduleAt: '2026-06-01T15:00',
-            },
+            publishConfig: { publishAction: 'schedule' },
           },
         },
       });
     }
 
-    it('clears top-level fields and reverts status to review when publishAction flips away from schedule', () => {
+    it('reverts status to review when publishAction flips away from schedule', () => {
       const { store, state } = setup(scheduledItem());
       store.setPublishConfig({ publishAction: 'save-draft' });
       const saved = state.items().find((i) => i.id === 'post-1');
       expect(saved?.status).toBe('review');
-      expect(saved?.scheduledAt).toBeNull();
-      expect(saved?.scheduledDate).toBeNull();
       expect(saved?.production?.qa?.publishConfig?.publishAction).toBe('save-draft');
     });
 
@@ -1842,7 +1827,6 @@ describe('PostDetailStore — schedule live-sync (#135)', () => {
         approvedItem({
           status: 'published',
           scheduledAt: '2026-06-01T15:00:00.000Z',
-          scheduledDate: '2026-06-01',
         }),
       );
       store.setPublishConfig({ publishAction: 'save-draft' });
@@ -1852,64 +1836,51 @@ describe('PostDetailStore — schedule live-sync (#135)', () => {
 
     it('round-trip: schedule → save-draft → schedule with the same date matches a fresh schedule', () => {
       const { store, state } = setup(approvedItem());
-      store.setPublishConfig({
-        publishAction: 'schedule',
-        scheduleAt: '2026-06-01T15:00',
-      });
+      store.setPublishConfig({ publishAction: 'schedule' });
+      store.setPublishScheduledAt('2026-06-01T15:00');
       store.setPublishConfig({ publishAction: 'save-draft' });
-      store.setPublishConfig({
-        publishAction: 'schedule',
-        scheduleAt: '2026-06-01T15:00',
-      });
+      store.setPublishConfig({ publishAction: 'schedule' });
       const saved = state.items().find((i) => i.id === 'post-1');
       expect(saved?.status).toBe('scheduled');
       expect(saved?.scheduledAt).toBe('2026-06-01T15:00:00.000Z');
-      expect(saved?.scheduledDate).toBe('2026-06-01');
     });
   });
 
-  describe('defensive hydration from top-level scheduledAt', () => {
-    it('hydrates publishConfig.scheduleAt + publishAction from item.scheduledAt when persisted publishConfig is empty', () => {
+  describe('publishScheduledAtLocal derivation', () => {
+    it('formats top-level scheduledAt as a datetime-local string', () => {
       const { store } = setup(
-        approvedItem({
-          scheduledAt: '2026-06-01T15:00:00.000Z',
-        }),
+        approvedItem({ scheduledAt: '2026-06-01T15:00:00.000Z' }),
       );
-      const cfg = store.publishConfig();
-      expect(cfg.scheduleAt).toBe('2026-06-01T15:00');
-      expect(cfg.publishAction).toBe('schedule');
+      expect(store.publishScheduledAtLocal()).toBe('2026-06-01T15:00');
     });
 
-    it('does NOT override a persisted publishConfig.scheduleAt with the top-level value', () => {
+    it('returns empty string when scheduledAt is unset', () => {
+      const { store } = setup(approvedItem());
+      expect(store.publishScheduledAtLocal()).toBe('');
+    });
+
+    it('surfaces publishAction=schedule on the publishConfig view when a top-level scheduledAt exists but persisted action is default', () => {
       const { store } = setup(
-        approvedItem({
-          scheduledAt: '2026-06-01T15:00:00.000Z',
-          production: {
-            qa: {
-              publishConfig: {
-                publishAction: 'schedule',
-                scheduleAt: '2026-07-15T10:00',
-              },
-            },
-          },
-        }),
+        approvedItem({ scheduledAt: '2026-06-01T15:00:00.000Z' }),
       );
-      const cfg = store.publishConfig();
-      expect(cfg.scheduleAt).toBe('2026-07-15T10:00');
+      expect(store.publishConfig().publishAction).toBe('schedule');
     });
   });
 
   describe('brief-approval guard', () => {
-    it('setPublishConfig is a no-op when briefApproved is false (matches persistQA)', () => {
+    it('setPublishConfig is a no-op when briefApproved is false', () => {
       const { store, state } = setup(makeItem({ status: 'review' }));
-      store.setPublishConfig({
-        publishAction: 'schedule',
-        scheduleAt: '2026-06-01T15:00',
-      });
+      store.setPublishConfig({ publishAction: 'schedule' });
       const saved = state.items().find((i) => i.id === 'post-1');
-      expect(saved?.scheduledAt).toBeUndefined();
       expect(saved?.status).toBe('review');
       expect(saved?.production?.qa).toBeUndefined();
+    });
+
+    it('setPublishScheduledAt is a no-op when briefApproved is false', () => {
+      const { store, state } = setup(makeItem({ status: 'review' }));
+      store.setPublishScheduledAt('2026-06-01T15:00');
+      const saved = state.items().find((i) => i.id === 'post-1');
+      expect(saved?.scheduledAt).toBeUndefined();
     });
   });
 });

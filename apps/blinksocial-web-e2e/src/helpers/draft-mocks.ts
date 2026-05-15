@@ -29,7 +29,6 @@ export function approvedPostEntry(
     owner: 'user-brett',
     parentIdeaId: null,
     parentConceptId: null,
-    scheduledDate: null,
     scheduledAt: null,
     archived: false,
     createdAt: NOW,

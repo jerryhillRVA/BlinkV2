@@ -22,7 +22,6 @@ function indexRow(
     owner: overrides.owner ?? null,
     parentIdeaId: overrides.parentIdeaId ?? null,
     parentConceptId: overrides.parentConceptId ?? null,
-    scheduledDate: overrides.scheduledDate ?? null,
     scheduledAt: overrides.scheduledAt ?? null,
     archived: overrides.archived ?? false,
     createdAt: overrides.createdAt ?? '2026-04-21T00:00:00Z',
@@ -1063,7 +1062,7 @@ describe('ContentStateService', () => {
       expect(item?.parentIdeaId).toBeUndefined();
       expect(item?.parentConceptId).toBeUndefined();
       expect(item?.conceptId).toBeUndefined();
-      expect(item?.scheduledDate).toBeUndefined();
+      expect(item?.scheduledAt).toBeUndefined();
       expect(item?.archived).toBe(false);
     });
 

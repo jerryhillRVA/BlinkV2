@@ -28,7 +28,7 @@ function buildPublishEvent(
       canonicalType: 'IMAGE_SINGLE',
       status: 'scheduled',
       owner: 'Ava Chen',
-      scheduleAt: '2026-05-12T15:00:00.000Z',
+      scheduledAt: '2026-05-12T15:00:00.000Z',
       blockers: [],
     },
     severity: null,
@@ -53,7 +53,7 @@ function buildMilestoneEvent(
       canonicalType: 'IMAGE_SINGLE',
       status: 'in-progress',
       owner: 'Ava Chen',
-      scheduleAt: '2026-05-20T14:00:00.000Z',
+      scheduledAt: '2026-05-20T14:00:00.000Z',
       blockers: [],
     },
     milestone: {
@@ -113,7 +113,7 @@ describe('CalendarQuickEditModalComponent', () => {
     return fixture;
   }
 
-  it('publish variant — initial value mirrors item.scheduleAt and Save emits {scheduledAt, scheduledDate}', () => {
+  it('publish variant — initial value mirrors item.scheduledAt and Save emits {scheduledAt}', () => {
     const fixture = mountWith(buildPublishEvent());
     const dialog = document.querySelector(
       '[data-testid="quick-edit-dialog"]',
@@ -135,7 +135,7 @@ describe('CalendarQuickEditModalComponent', () => {
 
     expect(payloads).toHaveLength(1);
     expect(payloads[0].patch.scheduledAt).toBe('2026-05-18T10:30:00.000Z');
-    expect(payloads[0].patch.scheduledDate).toBe('2026-05-18');
+    expect(payloads[0].patch).not.toHaveProperty('scheduledDate');
   });
 
   it('milestone variant — Save emits milestoneOverrides with midnight-UTC ISO (server-side deep-merges)', () => {

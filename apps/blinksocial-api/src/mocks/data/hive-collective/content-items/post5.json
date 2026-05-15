@@ -4,20 +4,30 @@
   "status": "published",
   "title": "Walking Meditations: A 7-Day Reset",
   "description": "Story frame set of seven prompts, one per day, framed for evening cooldowns.",
-  "pillarIds": ["p2"],
-  "segmentIds": ["s4"],
-  "tags": ["meditation", "story", "evening"],
+  "pillarIds": [
+    "p2"
+  ],
+  "segmentIds": [
+    "s4"
+  ],
+  "tags": [
+    "meditation",
+    "story",
+    "evening"
+  ],
   "owner": "user-sarah",
   "hook": "Seven evenings. Seven prompts. One reset.",
   "objective": "community",
   "platform": "instagram",
   "contentType": "story",
-  "cta": { "type": "other", "text": "Tap to start the 7-day reset" },
+  "cta": {
+    "type": "other",
+    "text": "Tap to start the 7-day reset"
+  },
   "keyMessage": "Walking meditation is the lowest-friction practice that actually sticks.",
   "tonePreset": "inspiring",
   "claimsFlag": false,
   "riskLevel": "low",
-  "scheduledDate": "2026-04-22",
   "scheduledAt": "2026-04-22T19:00:00Z",
   "briefApproved": true,
   "briefApprovedAt": "2026-04-08T15:00:00Z",
@@ -31,8 +41,12 @@
     "brief": {
       "strategy": {
         "objective": "community",
-        "audienceSegmentIds": ["s4"],
-        "pillarIds": ["p2"],
+        "audienceSegmentIds": [
+          "s4"
+        ],
+        "pillarIds": [
+          "p2"
+        ],
         "keyMessage": "Walking meditation is the lowest-friction practice that actually sticks.",
         "ctaType": "other",
         "ctaText": "Tap to start the 7-day reset",
@@ -43,7 +57,10 @@
         "storyArc": "daily-prompt-series",
         "musicNotes": "Ambient outdoor sounds, no music"
       },
-      "compliance": { "containsClaims": false, "disclosureNeeded": false },
+      "compliance": {
+        "containsClaims": false,
+        "disclosureNeeded": false
+      },
       "approved": true,
       "canonicalType": "STORY_FRAME_SET",
       "hasTalent": false,

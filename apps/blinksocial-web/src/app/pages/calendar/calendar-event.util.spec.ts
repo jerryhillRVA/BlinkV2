@@ -25,7 +25,7 @@ function buildItem(
     canonicalType: 'IMAGE_SINGLE',
     status: 'in-progress',
     owner: 'Ava Chen',
-    scheduleAt: null,
+    scheduledAt: null,
     blockers: [],
     ...overrides,
   };
@@ -73,34 +73,34 @@ describe('deriveMilestoneSeverity', () => {
 });
 
 describe('derivePublishSeverity', () => {
-  it('returns null when no scheduleAt', () => {
-    const item = buildItem({ scheduleAt: null });
+  it('returns null when no scheduledAt', () => {
+    const item = buildItem({ scheduledAt: null });
     expect(derivePublishSeverity(item, REF)).toBe(null);
   });
   it('returns at-risk when within 7 days and not approved/scheduled/published', () => {
     const item = buildItem({
-      scheduleAt: '2026-05-03T00:00:00.000Z',
+      scheduledAt: '2026-05-03T00:00:00.000Z',
       status: 'in-progress',
     });
     expect(derivePublishSeverity(item, REF)).toBe('at-risk');
   });
   it('returns null when within 7 days but status is approved', () => {
     const item = buildItem({
-      scheduleAt: '2026-05-03T00:00:00.000Z',
+      scheduledAt: '2026-05-03T00:00:00.000Z',
       status: 'approved',
     });
     expect(derivePublishSeverity(item, REF)).toBe(null);
   });
   it('returns null when beyond 7-day window', () => {
     const item = buildItem({
-      scheduleAt: '2026-05-20T00:00:00.000Z',
+      scheduledAt: '2026-05-20T00:00:00.000Z',
       status: 'in-progress',
     });
     expect(derivePublishSeverity(item, REF)).toBe(null);
   });
   it('returns blocked when item has blockers regardless of schedule', () => {
     const item = buildItem({
-      scheduleAt: '2026-05-03T00:00:00.000Z',
+      scheduledAt: '2026-05-03T00:00:00.000Z',
       blockers: ['No assets'],
     });
     expect(derivePublishSeverity(item, REF)).toBe('blocked');
@@ -111,13 +111,13 @@ function buildResponse(): CalendarResponseContract {
   const items: CalendarContentItemContract[] = [
     buildItem({
       id: 'a',
-      scheduleAt: '2026-05-03T00:00:00.000Z',
+      scheduledAt: '2026-05-03T00:00:00.000Z',
       status: 'in-progress',
     }),
     buildItem({
       id: 'b',
       platform: 'youtube',
-      scheduleAt: '2026-05-20T12:00:00.000Z',
+      scheduledAt: '2026-05-20T12:00:00.000Z',
       status: 'approved',
       owner: 'Marcus Lee',
     }),
@@ -173,9 +173,9 @@ describe('buildEvents', () => {
     expect(events.find((e) => e.id === 'milestone-orphan')).toBeUndefined();
   });
 
-  it('skips publish events for items without scheduleAt', () => {
+  it('skips publish events for items without scheduledAt', () => {
     const response = buildResponse();
-    response.items.push(buildItem({ id: 'c', scheduleAt: null }));
+    response.items.push(buildItem({ id: 'c', scheduledAt: null }));
     const events = buildEvents(response);
     expect(events.find((e) => e.contentId === 'c' && e.kind === 'publish')).toBeUndefined();
   });

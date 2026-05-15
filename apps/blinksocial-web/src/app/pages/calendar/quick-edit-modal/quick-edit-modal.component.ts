@@ -98,7 +98,7 @@ export class CalendarQuickEditModalComponent implements AfterViewInit, OnDestroy
   set event(value: CalendarEventView) {
     this.eventSig.set(value);
     if (value.kind === 'publish') {
-      const iso = value.item.scheduleAt;
+      const iso = value.item.scheduledAt;
       this.dateValue.set(iso ? isoToDatetimeLocal(iso) : '');
     } else {
       this.dateValue.set(isoToDateOnly(value.date.toISOString()));
@@ -209,7 +209,6 @@ export class CalendarQuickEditModalComponent implements AfterViewInit, OnDestroy
         event: ev,
         patch: {
           scheduledAt: iso,
-          scheduledDate: v.slice(0, 10),
         },
       });
     } else {

@@ -11,6 +11,7 @@ import {
 
 interface SetupInputs {
   publishConfig?: PublishConfigContract;
+  scheduledAtLocal?: string;
   contentType?: ContentTypeContract | null;
   isVideoLong?: boolean;
   connectedAccounts?: ReadonlyArray<ConnectedAccountOption>;
@@ -28,6 +29,9 @@ function setup(
     'publishConfig',
     inputs.publishConfig ?? ({ publishAction: 'save-draft', deliveryMethod: 'auto' } as PublishConfigContract),
   );
+  if (inputs.scheduledAtLocal !== undefined) {
+    fixture.componentRef.setInput('scheduledAtLocal', inputs.scheduledAtLocal);
+  }
   if (inputs.contentType !== undefined) {
     fixture.componentRef.setInput('contentType', inputs.contentType);
   }
@@ -71,35 +75,37 @@ describe('PublishConfigBlockComponent', () => {
     expect(scheduled.nativeElement.querySelector('#schedule-at-input')).not.toBeNull();
   });
 
-  it('renders the "Must be a future date/time" error when scheduleAt is in the past', () => {
+  it('renders the "Must be a future date/time" error when scheduledAtLocal is in the past', () => {
     const past = new Date(Date.now() - 86400000).toISOString().slice(0, 16);
     const fixture = setup({
-      publishConfig: { publishAction: 'schedule', scheduleAt: past },
+      publishConfig: { publishAction: 'schedule' },
+      scheduledAtLocal: past,
     });
     const err = fixture.nativeElement.querySelector('.field-error');
     expect(err?.textContent).toContain('Must be a future date/time');
   });
 
-  it('does NOT render the past-date error when scheduleAt is in the future', () => {
+  it('does NOT render the past-date error when scheduledAtLocal is in the future', () => {
     const future = new Date(Date.now() + 86400000).toISOString().slice(0, 16);
     const fixture = setup({
-      publishConfig: { publishAction: 'schedule', scheduleAt: future },
+      publishConfig: { publishAction: 'schedule' },
+      scheduledAtLocal: future,
     });
     expect(fixture.nativeElement.querySelector('.field-error')).toBeNull();
   });
 
-  it('emits scheduleAt patch on datetime input', () => {
+  it('emits scheduledAtChange (datetime-local string) on datetime input', () => {
     const fixture = setup({
       publishConfig: { publishAction: 'schedule' },
     });
-    const emitted: Array<Partial<PublishConfigContract>> = [];
-    fixture.componentInstance.configChange.subscribe((p) => emitted.push(p));
+    const emitted: Array<string | undefined> = [];
+    fixture.componentInstance.scheduledAtChange.subscribe((v) => emitted.push(v));
     const input = fixture.nativeElement.querySelector(
       '#schedule-at-input',
     ) as HTMLInputElement;
     input.value = '2099-01-01T10:00';
     input.dispatchEvent(new Event('input'));
-    expect(emitted).toEqual([{ scheduleAt: '2099-01-01T10:00' }]);
+    expect(emitted).toEqual(['2099-01-01T10:00']);
   });
 
   it('does NOT render visibility or Made for Kids when isVideoLong is false', () => {

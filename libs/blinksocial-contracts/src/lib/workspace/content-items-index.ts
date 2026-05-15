@@ -18,7 +18,6 @@ export interface ContentItemsIndexEntryContract {
   owner: string | null;
   parentIdeaId: string | null;
   parentConceptId: string | null;
-  scheduledDate: string | null;
   scheduledAt: string | null;
   archived: boolean;
   createdAt: string;

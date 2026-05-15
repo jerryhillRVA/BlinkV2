@@ -3,7 +3,7 @@
   "stage": "post",
   "status": "in-progress",
   "title": "How Alcohol Affects Your Gut Microbiome",
-  "description": "Long-form YouTube explainer (8\u201310 min) on the relationship between alcohol consumption and gut health: dysbiosis, intestinal permeability, downstream inflammation. Animated diagrams over a host narration.",
+  "description": "Long-form YouTube explainer (8–10 min) on the relationship between alcohol consumption and gut health: dysbiosis, intestinal permeability, downstream inflammation. Animated diagrams over a host narration.",
   "pillarIds": [
     "bk-p1"
   ],
@@ -28,9 +28,11 @@
     "https://example.com/research/intestinal-permeability"
   ],
   "riskLevel": "medium",
-  "scheduledDate": "2026-05-15",
   "scheduledAt": "2026-05-15T15:00:00Z",
-  "cta": { "type": "subscribe", "text": "Subscribe for the rest of the gut-health series" },
+  "cta": {
+    "type": "subscribe",
+    "text": "Subscribe for the rest of the gut-health series"
+  },
   "briefApproved": true,
   "briefApprovedAt": "2026-02-22T11:00:00Z",
   "briefApprovedBy": "user-mara",
@@ -91,12 +93,42 @@
       "videoLong": {
         "hook": "Your gut bacteria are begging you to read this. Even moderate drinking — what your doctor would call 'within guidelines' — measurably reshapes your microbiome. In 9 minutes I'll walk you through what changes, why it matters, and what reverses.",
         "sequenceBlocks": [
-          { "id": "sb-1", "type": "Hook", "description": "Cold open: animated petri dish; VO sets up the misalignment between 'moderate' guidelines and what the studies actually show.", "duration": "0:00–0:45" },
-          { "id": "sb-2", "type": "Section", "description": "Section 1: What the microbiome does (1-min refresher). Animated explainer of bacterial diversity, immune signaling, neurotransmitter production.", "duration": "0:45–2:00" },
-          { "id": "sb-3", "type": "Section", "description": "Section 2: The mechanism. Show 2024 study graph: bacterial-diversity drops measurable from one drink. Lower-third citation.", "duration": "2:00–4:30" },
-          { "id": "sb-4", "type": "Section", "description": "Section 3: Downstream effects. Inflammation, leaky gut, mood. Pace this slow — most viewers will be hearing this for the first time.", "duration": "4:30–6:30" },
-          { "id": "sb-5", "type": "Section", "description": "Section 4: What reverses. Timeline of recovery in studies of dry-30 participants.", "duration": "6:30–8:30" },
-          { "id": "sb-6", "type": "CTA", "description": "Recap. Subscribe pitch tied to the next episode (sleep + gut crossover).", "duration": "8:30–9:00" }
+          {
+            "id": "sb-1",
+            "type": "Hook",
+            "description": "Cold open: animated petri dish; VO sets up the misalignment between 'moderate' guidelines and what the studies actually show.",
+            "duration": "0:00–0:45"
+          },
+          {
+            "id": "sb-2",
+            "type": "Section",
+            "description": "Section 1: What the microbiome does (1-min refresher). Animated explainer of bacterial diversity, immune signaling, neurotransmitter production.",
+            "duration": "0:45–2:00"
+          },
+          {
+            "id": "sb-3",
+            "type": "Section",
+            "description": "Section 2: The mechanism. Show 2024 study graph: bacterial-diversity drops measurable from one drink. Lower-third citation.",
+            "duration": "2:00–4:30"
+          },
+          {
+            "id": "sb-4",
+            "type": "Section",
+            "description": "Section 3: Downstream effects. Inflammation, leaky gut, mood. Pace this slow — most viewers will be hearing this for the first time.",
+            "duration": "4:30–6:30"
+          },
+          {
+            "id": "sb-5",
+            "type": "Section",
+            "description": "Section 4: What reverses. Timeline of recovery in studies of dry-30 participants.",
+            "duration": "6:30–8:30"
+          },
+          {
+            "id": "sb-6",
+            "type": "CTA",
+            "description": "Recap. Subscribe pitch tied to the next episode (sleep + gut crossover).",
+            "duration": "8:30–9:00"
+          }
         ],
         "targetDuration": "10m",
         "voiceoverNotes": "Authoritative but not preachy. Stress every citation. Avoid the word 'should' — let the data do the moralising."

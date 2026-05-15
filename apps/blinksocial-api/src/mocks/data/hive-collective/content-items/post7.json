@@ -4,20 +4,30 @@
   "status": "in-progress",
   "title": "What teaching yoga taught me about reading rooms",
   "description": "LinkedIn text post on the surprising leadership skill yoga teachers develop — reading collective state from body language — and how it translates to better team meetings.",
-  "pillarIds": ["p3"],
-  "segmentIds": ["s4"],
-  "tags": ["leadership", "linkedin", "long-form-text"],
+  "pillarIds": [
+    "p3"
+  ],
+  "segmentIds": [
+    "s4"
+  ],
+  "tags": [
+    "leadership",
+    "linkedin",
+    "long-form-text"
+  ],
   "owner": "user-sarah",
   "hook": "Yoga teachers get one skill wrong-way-round from corporate leaders.",
   "objective": "community",
   "platform": "linkedin",
   "contentType": "ln-text-post",
-  "cta": { "type": "comment", "text": "What's a skill from outside work that quietly improved your meetings?" },
+  "cta": {
+    "type": "comment",
+    "text": "What's a skill from outside work that quietly improved your meetings?"
+  },
   "keyMessage": "Reading collective state is a teachable skill, not an innate one.",
   "tonePreset": "professional",
   "claimsFlag": false,
   "riskLevel": "low",
-  "scheduledDate": "2026-05-22",
   "scheduledAt": "2026-05-22T13:00:00Z",
   "briefApproved": true,
   "briefApprovedAt": "2026-04-30T10:00:00Z",
@@ -31,8 +41,12 @@
     "brief": {
       "strategy": {
         "objective": "community",
-        "audienceSegmentIds": ["s4"],
-        "pillarIds": ["p3"],
+        "audienceSegmentIds": [
+          "s4"
+        ],
+        "pillarIds": [
+          "p3"
+        ],
         "keyMessage": "Reading collective state is a teachable skill, not an innate one.",
         "ctaType": "comment",
         "ctaText": "What's a skill from outside work that quietly improved your meetings?",
@@ -42,7 +56,10 @@
         "hook": "Yoga teachers get one skill wrong-way-round from corporate leaders.",
         "storyArc": "personal-anecdote-then-lesson-then-question"
       },
-      "compliance": { "containsClaims": false, "disclosureNeeded": false },
+      "compliance": {
+        "containsClaims": false,
+        "disclosureNeeded": false
+      },
       "approved": true,
       "canonicalType": "TEXT_POST",
       "hasTalent": false,
@@ -53,7 +70,12 @@
       "mode": "TEXT",
       "text": {
         "caption": "Yoga teachers get one skill wrong-way-round from corporate leaders.\n\nIn a room of 30 people, I'm not asked to lead — I'm asked to follow.\n\nMy job is to read what the room actually wants today. Not what I planned. Not what I'd prefer to teach. What 30 different bodies, who showed up tired, anxious, sore, hopeful — what they collectively need.\n\nThe practice is sequenced from those signals. If half the room arrives shoulders-up-by-their-ears, we don't open with backbends.\n\nFor 14 years, that's been my job: read state, then design.\n\nLast year I started running our team's weekly planning meeting differently. Same skill, transposed.\n\n— First five minutes: nothing on the agenda. Just talk. Watch.\n— Open the meeting from what the room actually has bandwidth for, not what the doc says we should cover.\n— Notice when energy shifts and name it. \"You all look like that hit harder than the doc let on. Should we sit with it?\"\n\nThe leadership books call this \"emotional intelligence\" and treat it like a personality trait. It isn't. It's a teachable practice. I learned it standing barefoot at the front of a 6 a.m. class.\n\nWhat's a skill from outside work that quietly improved your meetings?",
-        "hashtags": ["#leadership", "#management", "#emotionalintelligence", "#worklife"]
+        "hashtags": [
+          "#leadership",
+          "#management",
+          "#emotionalintelligence",
+          "#worklife"
+        ]
       }
     },
     "sources": [],

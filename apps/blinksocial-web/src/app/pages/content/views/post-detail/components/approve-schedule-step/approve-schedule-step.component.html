@@ -21,10 +21,12 @@
 
     <app-publish-config-block
       [publishConfig]="store.publishConfig()"
+      [scheduledAtLocal]="store.publishScheduledAtLocal()"
       [contentType]="contentType()"
       [isVideoLong]="isVideoLong()"
       [connectedAccounts]="connectedAccounts"
       (configChange)="onPublishConfigChange($event)"
+      (scheduledAtChange)="onScheduledAtChange($event)"
     />
   } @else {
     <p class="locked-empty">

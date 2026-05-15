@@ -48,10 +48,10 @@ export function derivePublishSeverity(
   if (item.blockers && item.blockers.length > 0) {
     return 'blocked';
   }
-  if (!item.scheduleAt) {
+  if (!item.scheduledAt) {
     return null;
   }
-  const schedule = new Date(item.scheduleAt);
+  const schedule = new Date(item.scheduledAt);
   const days = daysBetween(schedule, referenceDate);
   if (days >= 0 && days <= AT_RISK_WINDOW_DAYS) {
     if (!AT_RISK_BLOCKING_STATUSES.has(item.status)) {
@@ -73,12 +73,12 @@ export function buildEvents(
   const events: CalendarEventView[] = [];
 
   for (const item of response.items) {
-    if (item.scheduleAt) {
+    if (item.scheduledAt) {
       const ev: CalendarPublishEventView = {
         kind: 'publish',
         id: `publish-${item.id}`,
         contentId: item.id,
-        date: new Date(item.scheduleAt),
+        date: new Date(item.scheduledAt),
         item,
         severity: derivePublishSeverity(item, referenceDate),
       };

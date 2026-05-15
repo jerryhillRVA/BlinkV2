@@ -5,7 +5,6 @@ import {
   Logger,
   BadRequestException,
   NotFoundException,
-  OnModuleInit,
   ServiceUnavailableException,
 } from '@nestjs/common';
 import { randomUUID } from 'crypto';
@@ -26,7 +25,7 @@ const INDEX_FILE = '_content-items-index.json';
 const ARCHIVE_INDEX_FILE = '_content-items-archive-index.json';
 
 @Injectable()
-export class ContentItemsService implements OnModuleInit {
+export class ContentItemsService {
   private readonly logger = new Logger(ContentItemsService.name);
 
   /**
@@ -42,74 +41,6 @@ export class ContentItemsService implements OnModuleInit {
     @Inject('MOCK_DATA_SERVICE') @Optional()
     private readonly mockDataService: MockDataService | null,
   ) {}
-
-  // Ticket #135: one-shot reconciliation on boot. Fire-and-forget so cold
-  // start isn't blocked; per-tenant errors are logged and the pass continues.
-  async onModuleInit(): Promise<void> {
-    void this.reconcileScheduledPosts().catch((err) => {
-      this.logger.error('Bootstrap reconciliation failed', err);
-    });
-  }
-
-  /**
-   * Ticket #135: walk every AFS workspace and fix index entries that have
-   * `production.qa.publishConfig.publishAction === 'schedule'` +
-   * `publishConfig.scheduleAt` set but no top-level `scheduledAt`. The
-   * Approve & Schedule write path (post #135) stamps top-level fields
-   * directly, so this pass is only needed for legacy data written before
-   * the live-sync landed. Idempotent — entries with `scheduledAt` already
-   * set are skipped on subsequent runs.
-   */
-  async reconcileScheduledPosts(): Promise<{
-    workspacesScanned: number;
-    itemsReconciled: number;
-  }> {
-    if (!this.fs.isConfigured()) {
-      return { workspacesScanned: 0, itemsReconciled: 0 };
-    }
-    let tenants: string[] = [];
-    try {
-      tenants = await this.fs.listTenants();
-    } catch (err) {
-      this.logger.error('Reconcile failed to list tenants', err);
-      return { workspacesScanned: 0, itemsReconciled: 0 };
-    }
-    let itemsReconciled = 0;
-    for (const tenant of tenants) {
-      try {
-        const index = await this.readIndex(tenant);
-        for (const entry of index.items) {
-          if (entry.archived) continue;
-          if (entry.scheduledAt) continue;
-          const full = await this.readItem(tenant, entry.id);
-          if (!full) continue;
-          const pcAction = full.production?.qa?.publishConfig?.publishAction;
-          const pcAt = full.production?.qa?.publishConfig?.scheduleAt;
-          if (pcAction !== 'schedule' || !pcAt) continue;
-          // Mirror the web-side `datetimeLocalToIso`: treat the
-          // 16-char `YYYY-MM-DDTHH:mm` form as UTC so server-side and
-          // browser-side persistence stay deterministic regardless of the
-          // API host's TZ.
-          const utcStr = pcAt.length === 16 ? `${pcAt}:00.000Z` : pcAt;
-          const parsed = new Date(utcStr);
-          if (Number.isNaN(parsed.getTime())) continue;
-          const iso = parsed.toISOString();
-          await this.updateItem(tenant, entry.id, {
-            scheduledAt: iso,
-            scheduledDate: iso.slice(0, 10),
-            status: full.status === 'review' ? 'scheduled' : full.status,
-          });
-          itemsReconciled += 1;
-        }
-      } catch (err) {
-        this.logger.error(`Reconcile failed for tenant ${tenant}`, err);
-      }
-    }
-    this.logger.log(
-      `Reconciled ${itemsReconciled} scheduled post(s) across ${tenants.length} workspace(s)`,
-    );
-    return { workspacesScanned: tenants.length, itemsReconciled };
-  }
 
   private withIndexLock<T>(
     workspaceId: string,
@@ -142,7 +73,6 @@ export class ContentItemsService implements OnModuleInit {
       owner: item.owner ?? null,
       parentIdeaId: item.parentIdeaId ?? null,
       parentConceptId: item.parentConceptId ?? null,
-      scheduledDate: item.scheduledDate ?? null,
       scheduledAt: item.scheduledAt ?? null,
       archived: item.archived ?? false,
       createdAt: item.createdAt,

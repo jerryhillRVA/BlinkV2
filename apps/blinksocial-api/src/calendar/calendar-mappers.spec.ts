@@ -10,7 +10,6 @@ import {
   mapContentItemToCalendarItem,
   mapContentStatusToCalendarStatus,
   mapContentTypeToCanonical,
-  resolveScheduleAt,
 } from './calendar-mappers';
 
 describe('calendar-mappers', () => {
@@ -62,23 +61,6 @@ describe('calendar-mappers', () => {
     });
   });
 
-  describe('resolveScheduleAt', () => {
-    it('prefers scheduledAt when present', () => {
-      const got = resolveScheduleAt({
-        scheduledAt: '2026-05-10T18:00:00.000Z',
-        scheduledDate: '2026-05-10',
-      });
-      expect(got).toBe('2026-05-10T18:00:00.000Z');
-    });
-    it('synthesizes ISO from scheduledDate when only date is set', () => {
-      const got = resolveScheduleAt({ scheduledDate: '2026-05-10' });
-      expect(got).toBe('2026-05-10T14:00:00.000Z');
-    });
-    it('returns null when neither field is set', () => {
-      expect(resolveScheduleAt({})).toBeNull();
-    });
-  });
-
   describe('mapContentItemToCalendarItem', () => {
     const baseItem: ContentItemContract = {
       id: 'bk-pub1',
@@ -90,7 +72,6 @@ describe('calendar-mappers', () => {
       segmentIds: [],
       platform: 'instagram',
       contentType: 'reel',
-      scheduledDate: '2026-02-15',
       scheduledAt: '2026-02-15T14:00:00Z',
       owner: 'user-mara',
       createdAt: '2026-02-01T08:00:00Z',
@@ -105,12 +86,12 @@ describe('calendar-mappers', () => {
         canonicalType: 'VIDEO_SHORT_VERTICAL',
         status: 'published',
         owner: 'user-mara',
-        scheduleAt: '2026-02-15T14:00:00Z',
+        scheduledAt: '2026-02-15T14:00:00Z',
         blockers: [],
       });
     });
-    it('returns null when neither scheduledAt nor scheduledDate is set', () => {
-      const item = { ...baseItem, scheduledAt: undefined, scheduledDate: undefined };
+    it('returns null when scheduledAt is not set', () => {
+      const item = { ...baseItem, scheduledAt: null };
       expect(mapContentItemToCalendarItem(item)).toBeNull();
     });
     it('defaults platform to "tbd" and owner to "Unassigned" when missing', () => {
@@ -126,8 +107,7 @@ describe('calendar-mappers', () => {
         owner: null,
         parentIdeaId: null,
         parentConceptId: null,
-        scheduledDate: '2026-05-04',
-        scheduledAt: null,
+        scheduledAt: '2026-05-04T00:00:00.000Z',
         archived: false,
         createdAt: '2026-04-01T08:00:00Z',
         updatedAt: '2026-04-10T08:00:00Z',
@@ -138,13 +118,7 @@ describe('calendar-mappers', () => {
       expect(result?.canonicalType).toBe('IMAGE_SINGLE');
     });
 
-    // Ticket #135 regression: before #135, an index entry whose only
-    // scheduling info lived in `scheduledAt` (Calendar Quick-Edit case,
-    // or live-sync from Approve & Schedule) was filtered out because
-    // `scheduledAt` wasn't on the projection. The contract now carries
-    // both `scheduledAt` and `scheduledDate`; this asserts the mapper
-    // surfaces a calendar item from `scheduledAt` alone.
-    it('produces a calendar item when only scheduledAt is set on the index entry', () => {
+    it('produces a calendar item from a scheduledAt-only index entry', () => {
       const indexEntry: ContentItemsIndexEntryContract = {
         id: 'sched-only',
         stage: 'post',
@@ -157,7 +131,6 @@ describe('calendar-mappers', () => {
         owner: 'user-jerry',
         parentIdeaId: null,
         parentConceptId: null,
-        scheduledDate: null,
         scheduledAt: '2026-06-01T15:00:00.000Z',
         archived: false,
         createdAt: '2026-05-01T08:00:00Z',
@@ -165,7 +138,7 @@ describe('calendar-mappers', () => {
       };
       const result = mapContentItemToCalendarItem(indexEntry);
       expect(result).not.toBeNull();
-      expect(result?.scheduleAt).toBe('2026-06-01T15:00:00.000Z');
+      expect(result?.scheduledAt).toBe('2026-06-01T15:00:00.000Z');
       expect(result?.status).toBe('scheduled');
     });
   });
@@ -191,7 +164,7 @@ describe('calendar-mappers', () => {
       autoCreateOnPublish: false,
     };
 
-    it('derives one milestone per template entry, anchored to scheduleAt', () => {
+    it('derives one milestone per template entry, anchored to scheduledAt', () => {
       const milestones = deriveMilestonesForItem(
         'bk-pub1',
         '2026-05-15T15:00:00.000Z',
