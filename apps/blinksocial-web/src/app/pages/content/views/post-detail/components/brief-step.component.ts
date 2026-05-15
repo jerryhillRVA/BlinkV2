@@ -1,8 +1,12 @@
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, DestroyRef, computed, inject, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { TooltipComponent } from '../../../../../shared/tooltip/tooltip.component';
 import { PostDetailStore } from '../post-detail.store';
+import { ContentStateService } from '../../../content-state.service';
+import { AiAssistApiService } from '../../../../../core/ai-assist/ai-assist.service';
+import { ToastService } from '../../../../../core/toast/toast.service';
 import {
   CTA_TYPES,
   KEY_MESSAGE_MAX_CHARS,
@@ -21,6 +25,10 @@ import type { PrimaryCtaContract } from '@blinksocial/contracts';
 })
 export class BriefStepComponent {
   protected readonly store = inject(PostDetailStore);
+  private readonly contentState = inject(ContentStateService);
+  private readonly aiAssist = inject(AiAssistApiService);
+  private readonly toast = inject(ToastService);
+  private readonly destroyRef = inject(DestroyRef);
 
   protected readonly keyMessageMax = KEY_MESSAGE_MAX_CHARS;
   protected readonly ctaOptions = CTA_TYPES;
@@ -28,6 +36,8 @@ export class BriefStepComponent {
   protected readonly teamMembers: readonly TeamMemberStub[] = TEAM_MEMBERS_STUB;
   /* v8 ignore next 1 — V8's function-call-throws branches on input()/signal() declarations are unreachable (Angular class-field init time; ESM exports not spy-able) */
   protected readonly newRefLink = signal('');
+  /* v8 ignore next 1 — V8's function-call-throws branches on input()/signal() declarations are unreachable (Angular class-field init time; ESM exports not spy-able) */
+  protected readonly keyMessageAssisting = signal(false);
 
   protected readonly locked = computed(() => !!this.store.item()?.briefApproved);
 
@@ -55,10 +65,30 @@ export class BriefStepComponent {
   }
 
   protected onKeyMessageAssist(): void {
-    if (this.locked()) return;
-    this.store.setKeyMessage(
-      'This campaign focuses on empowering users to take control of their workflows with seamless, intuitive tools.',
-    );
+    if (this.locked() || this.keyMessageAssisting()) return;
+    const item = this.store.item();
+    const workspaceId = this.contentState.workspaceId();
+    if (!item || !workspaceId) return;
+    this.keyMessageAssisting.set(true);
+    this.aiAssist
+      .assist({
+        scope: 'content-item',
+        workspaceId,
+        refId: item.id,
+        field: 'post-key-message',
+      })
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (res) => {
+          const v = res.values[0]?.trim();
+          if (v) this.store.setKeyMessage(v);
+          this.keyMessageAssisting.set(false);
+        },
+        error: () => {
+          this.toast.showError('AI Assist failed. Please try again.');
+          this.keyMessageAssisting.set(false);
+        },
+      });
   }
 
   // ── Reference Links ─────────────────────────────────────────────────

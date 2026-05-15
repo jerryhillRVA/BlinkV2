@@ -1,9 +1,13 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { of, throwError } from 'rxjs';
 import { VideoBuilderComponent } from './video-builder.component';
 import { PostDetailStore } from '../../../post-detail.store';
 import { ContentStateService } from '../../../../../content-state.service';
 import { provideContentItemsApiStubs } from '../../../../../content-items-api.test-util';
+import { AiAssistApiService } from '../../../../../../../core/ai-assist/ai-assist.service';
+import { ToastService } from '../../../../../../../core/toast/toast.service';
 import type { ContentItem } from '../../../../../content.types';
+import type { AiAssistRequestContract } from '@blinksocial/contracts';
 
 function makeApprovedItem(partial: Partial<ContentItem> = {}): ContentItem {
   const now = new Date().toISOString();
@@ -27,25 +31,60 @@ function makeApprovedItem(partial: Partial<ContentItem> = {}): ContentItem {
   };
 }
 
-function setup(item: ContentItem = makeApprovedItem()): {
+interface AiResponses {
+  'post-script-hook'?: string[];
+  'post-script-body'?: string[];
+  'post-script-cta'?: string[];
+}
+
+function setup(
+  item: ContentItem = makeApprovedItem(),
+  options: { responses?: AiResponses; error?: boolean } = {},
+): {
   fixture: ComponentFixture<VideoBuilderComponent>;
   store: PostDetailStore;
+  aiCalls: AiAssistRequestContract[];
+  toastErrors: string[];
 } {
+  const aiCalls: AiAssistRequestContract[] = [];
+  const toastErrors: string[] = [];
+  const defaultResponses: Required<AiResponses> = {
+    'post-script-hook': ['Hook A', 'Hook B', 'Hook C'],
+    'post-script-body': ['Body draft.'],
+    'post-script-cta': ['Call to action.'],
+  };
+  const aiStub = {
+    assist: vi.fn((req: AiAssistRequestContract) => {
+      aiCalls.push(req);
+      if (options.error) return throwError(() => new Error('boom'));
+      const values =
+        options.responses?.[req.field as keyof AiResponses] ??
+        defaultResponses[req.field as keyof AiResponses];
+      return of({ values });
+    }),
+  };
+  const toastStub = {
+    showError: (m: string) => toastErrors.push(m),
+    showSuccess: () => undefined,
+  };
   TestBed.configureTestingModule({
     imports: [VideoBuilderComponent],
     providers: [
       ...provideContentItemsApiStubs(),
       ContentStateService,
       PostDetailStore,
+      { provide: AiAssistApiService, useValue: aiStub },
+      { provide: ToastService, useValue: toastStub },
     ],
   });
   const state = TestBed.inject(ContentStateService);
+  state.workspaceId.set('test-ws');
   state.setItems([item]);
   const store = TestBed.inject(PostDetailStore);
   store.setItemId(item.id);
   const fixture = TestBed.createComponent(VideoBuilderComponent);
   fixture.detectChanges();
-  return { fixture, store };
+  return { fixture, store, aiCalls, toastErrors };
 }
 
 describe('VideoBuilderComponent', () => {
@@ -75,40 +114,37 @@ describe('VideoBuilderComponent', () => {
     expect(store.videoDraft().cta).toBe('C');
   });
 
-  it('Body assist eventually fills the body', () => {
-    vi.useFakeTimers();
-    const { store, fixture } = setup();
+  it('Body assist calls the API with post-script-body and fills the body', () => {
+    const { store, fixture, aiCalls } = setup(makeApprovedItem(), {
+      responses: { 'post-script-body': ['Body from API.'] },
+    });
     fixture.componentInstance['onBodyAssist']();
-    vi.advanceTimersByTime(700);
-    expect(store.videoDraft().body?.length ?? 0).toBeGreaterThan(0);
-    vi.useRealTimers();
+    expect(aiCalls[0]).toMatchObject({ field: 'post-script-body' });
+    expect(aiCalls[0].count).toBeUndefined();
+    expect(store.videoDraft().body).toBe('Body from API.');
   });
 
-  it('CTA assist eventually fills the cta', () => {
-    vi.useFakeTimers();
-    const { store, fixture } = setup();
+  it('CTA assist calls the API with post-script-cta and fills the cta', () => {
+    const { store, fixture, aiCalls } = setup(makeApprovedItem(), {
+      responses: { 'post-script-cta': ['CTA from API.'] },
+    });
     fixture.componentInstance['onCtaAssist']();
-    vi.advanceTimersByTime(700);
-    expect(store.videoDraft().cta?.length ?? 0).toBeGreaterThan(0);
-    vi.useRealTimers();
+    expect(aiCalls[0]).toMatchObject({ field: 'post-script-cta' });
+    expect(store.videoDraft().cta).toBe('CTA from API.');
   });
 
-  it('Hook bank fills the hookBank and opens the panel', () => {
-    vi.useFakeTimers();
-    const { fixture, store } = setup();
+  it('Hook bank calls the API with count=3 and opens the picker', () => {
+    const { fixture, store, aiCalls } = setup();
     fixture.componentInstance['onHookBank']();
-    vi.advanceTimersByTime(700);
     fixture.detectChanges();
-    expect(store.videoDraft().hookBank?.length ?? 0).toBeGreaterThan(0);
+    expect(aiCalls[0]).toMatchObject({ field: 'post-script-hook', count: 3 });
+    expect(store.videoDraft().hookBank).toEqual(['Hook A', 'Hook B', 'Hook C']);
     expect(fixture.nativeElement.querySelector('.hook-bank')).toBeTruthy();
-    vi.useRealTimers();
   });
 
   it('Apply hook from bank routes to setVideoHook', () => {
-    vi.useFakeTimers();
     const { fixture, store } = setup();
     fixture.componentInstance['onHookBank']();
-    vi.advanceTimersByTime(700);
     fixture.detectChanges();
     const pick = fixture.nativeElement.querySelector(
       '.bank-pick',
@@ -116,7 +152,20 @@ describe('VideoBuilderComponent', () => {
     const text = pick.textContent?.trim() ?? '';
     pick.click();
     expect(store.videoDraft().hook).toBe(text);
-    vi.useRealTimers();
+  });
+
+  it('AI Assist toast on error, fields unchanged', () => {
+    const { fixture, store, toastErrors } = setup(makeApprovedItem(), { error: true });
+    fixture.componentInstance['onBodyAssist']();
+    expect(toastErrors).toHaveLength(1);
+    expect(store.videoDraft().body).toBeUndefined();
+  });
+
+  it('script textareas carry the expected ids for E2E selectors', () => {
+    const { fixture } = setup();
+    expect(fixture.nativeElement.querySelector('textarea#post-script-hook')).not.toBeNull();
+    expect(fixture.nativeElement.querySelector('textarea#post-script-body')).not.toBeNull();
+    expect(fixture.nativeElement.querySelector('textarea#post-script-cta')).not.toBeNull();
   });
 
   it('Target duration renders as a radio-group of pills with the default 30s active', () => {
@@ -166,16 +215,14 @@ describe('VideoBuilderComponent', () => {
   });
 
   it('onHookBank / onBodyAssist / onCtaAssist are no-ops while disabled', () => {
-    vi.useFakeTimers();
-    const { fixture, store } = setup(makeApprovedItem({ briefApproved: false }));
+    const { fixture, store, aiCalls } = setup(makeApprovedItem({ briefApproved: false }));
     fixture.componentInstance['onHookBank']();
     fixture.componentInstance['onBodyAssist']();
     fixture.componentInstance['onCtaAssist']();
-    vi.advanceTimersByTime(1000);
+    expect(aiCalls).toHaveLength(0);
     expect(store.videoDraft().hookBank).toBeUndefined();
     expect(store.videoDraft().body).toBeUndefined();
     expect(store.videoDraft().cta).toBeUndefined();
-    vi.useRealTimers();
   });
 
   it('B-roll + Voiceover textareas route to their setters', () => {
@@ -199,16 +246,13 @@ describe('VideoBuilderComponent', () => {
   });
 
   it('hide-bank button closes the hook-bank panel', () => {
-    vi.useFakeTimers();
     const { fixture } = setup();
     fixture.componentInstance['onHookBank']();
-    vi.advanceTimersByTime(700);
     fixture.detectChanges();
     expect(fixture.nativeElement.querySelector('.hook-bank')).toBeTruthy();
     fixture.componentInstance['onHideBank']();
     fixture.detectChanges();
     expect(fixture.nativeElement.querySelector('.hook-bank')).toBeNull();
-    vi.useRealTimers();
   });
 
   it('cover asset ref change routes to setVideoCoverAssetRef', () => {

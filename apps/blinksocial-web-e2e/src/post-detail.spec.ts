@@ -601,11 +601,11 @@ test.describe('Production Packaging (#116)', () => {
       contentType: 'reel',
     });
     // Type caption.
-    await page.locator('#ig-caption').fill('Hello world');
-    await expect(page.locator('#ig-caption')).toHaveValue('Hello world');
+    await page.locator('#post-caption').fill('Hello world');
+    await expect(page.locator('#post-caption')).toHaveValue('Hello world');
     // Typing a #tag in the caption should produce a chip via the
     // caption-is-source-of-truth model (extractHashtagsFromCaption).
-    await page.locator('#ig-caption').fill('Hello world #wellness');
+    await page.locator('#post-caption').fill('Hello world #wellness');
     await expect(page.locator('app-pkg-hashtag-bank')).toContainText('#wellness');
     // Continue should be enabled once caption is non-empty.
     const continueBtn = page.locator('app-step-action-bar .continue-btn');
@@ -703,10 +703,10 @@ test.describe('Production Packaging (#116)', () => {
     const continueBtn = page.locator('app-step-action-bar .continue-btn');
     // Empty caption → Continue disabled (per canContinueFromPackaging).
     await expect(continueBtn).toBeDisabled();
-    await page.locator('#ig-caption').fill('A caption');
+    await page.locator('#post-caption').fill('A caption');
     await expect(continueBtn).toBeEnabled();
     // Clearing the caption flips it back to disabled.
-    await page.locator('#ig-caption').fill('');
+    await page.locator('#post-caption').fill('');
     await expect(continueBtn).toBeDisabled();
   });
 
@@ -719,8 +719,8 @@ test.describe('Production Packaging (#116)', () => {
     // Populate the caption via fill() — Playwright's keyboard.type is
     // unreliable in Firefox when focus traversal is asynchronous. The
     // important keyboard-activation assertion (Enter on Continue) follows.
-    await page.locator('#ig-caption').fill('Hello keyboard');
-    await expect(page.locator('#ig-caption')).toHaveValue('Hello keyboard');
+    await page.locator('#post-caption').fill('Hello keyboard');
+    await expect(page.locator('#post-caption')).toHaveValue('Hello keyboard');
     const continueBtn = page.locator('app-step-action-bar .continue-btn');
     await expect(continueBtn).toBeEnabled();
     // Focus Continue and press Enter — proves the button is keyboard-
@@ -737,7 +737,7 @@ test.describe('Production Packaging (#116)', () => {
       platform: 'instagram',
       contentType: 'reel',
     });
-    await page.locator('#ig-caption').fill('Persisted caption #stays');
+    await page.locator('#post-caption').fill('Persisted caption #stays');
     // Allow the debounced PUT to fire and the mock to merge it.
     await expect(page.locator('app-pkg-hashtag-bank')).toContainText('#stays');
     await page.reload();
@@ -745,7 +745,7 @@ test.describe('Production Packaging (#116)', () => {
     await expect(page.locator('app-packaging-step')).toBeVisible();
     // After reload, caption + chip should still be present from the merged
     // PUT body (content-mocks helper persists writes into the in-memory map).
-    await expect(page.locator('#ig-caption')).toHaveValue('Persisted caption #stays');
+    await expect(page.locator('#post-caption')).toHaveValue('Persisted caption #stays');
     await expect(page.locator('app-pkg-hashtag-bank')).toContainText('#stays');
   });
 });
@@ -1062,7 +1062,7 @@ test.describe('Pipeline lane sync (#129)', () => {
     await expect(page.locator('app-packaging-step')).toBeVisible();
 
     // Caption the Instagram packaging slot so canContinueFromPackaging flips true.
-    await page.locator('#ig-caption').fill('Hello world');
+    await page.locator('#post-caption').fill('Hello world');
 
     const continueBtn = page.locator('app-step-action-bar .continue-btn');
     await expect(continueBtn).toBeEnabled();
@@ -1102,7 +1102,7 @@ test.describe('Pipeline lane sync (#129)', () => {
 
     await page.goto(`/workspace/hive-collective/content/${id}`);
     await expect(page.locator('app-packaging-step')).toBeVisible();
-    await page.locator('#ig-caption').fill('Caption for reload');
+    await page.locator('#post-caption').fill('Caption for reload');
 
     const continueBtn = page.locator('app-step-action-bar .continue-btn');
     await expect(continueBtn).toBeEnabled();

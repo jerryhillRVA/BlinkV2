@@ -1,13 +1,17 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { of, throwError } from 'rxjs';
 import { BriefStepComponent } from './brief-step.component';
 import { PostDetailStore } from '../post-detail.store';
 import { ContentStateService } from '../../../content-state.service';
 import { provideContentItemsApiStubs } from '../../../content-items-api.test-util';
+import { AiAssistApiService } from '../../../../../core/ai-assist/ai-assist.service';
+import { ToastService } from '../../../../../core/toast/toast.service';
 import type {
   AudienceSegment,
   ContentItem,
   ContentPillar,
 } from '../../../content.types';
+import type { AiAssistRequestContract } from '@blinksocial/contracts';
 
 const PILLARS: ContentPillar[] = [
   { id: 'p1', name: 'Alpha', description: '', color: '#111' },
@@ -37,16 +41,41 @@ function makeItem(partial: Partial<ContentItem> = {}): ContentItem {
   };
 }
 
-function setup(item: ContentItem = makeItem()): {
+function setup(
+  item: ContentItem = makeItem(),
+  options: { aiResponse?: { values: string[] }; aiError?: boolean } = {},
+): {
   fixture: ComponentFixture<BriefStepComponent>;
   state: ContentStateService;
   store: PostDetailStore;
+  aiCalls: AiAssistRequestContract[];
+  toastErrors: string[];
 } {
+  const aiCalls: AiAssistRequestContract[] = [];
+  const toastErrors: string[] = [];
+  const aiStub = {
+    assist: vi.fn((req: AiAssistRequestContract) => {
+      aiCalls.push(req);
+      if (options.aiError) return throwError(() => new Error('boom'));
+      return of(options.aiResponse ?? { values: ['Generated key message.'] });
+    }),
+  };
+  const toastStub = {
+    showError: (m: string) => toastErrors.push(m),
+    showSuccess: () => undefined,
+  };
   TestBed.configureTestingModule({
     imports: [BriefStepComponent],
-    providers: [...provideContentItemsApiStubs(), ContentStateService, PostDetailStore],
+    providers: [
+      ...provideContentItemsApiStubs(),
+      ContentStateService,
+      PostDetailStore,
+      { provide: AiAssistApiService, useValue: aiStub },
+      { provide: ToastService, useValue: toastStub },
+    ],
   });
   const state = TestBed.inject(ContentStateService);
+  state.workspaceId.set('test-ws');
   state.setItems([item]);
   state.pillars.set(PILLARS);
   state.segments.set(SEGMENTS);
@@ -54,7 +83,7 @@ function setup(item: ContentItem = makeItem()): {
   store.setItemId(item.id);
   const fixture = TestBed.createComponent(BriefStepComponent);
   fixture.detectChanges();
-  return { fixture, state, store };
+  return { fixture, state, store, aiCalls, toastErrors };
 }
 
 describe('BriefStepComponent — composition', () => {
@@ -296,11 +325,36 @@ describe('BriefStepComponent — Key Message handlers', () => {
     expect(store.item()?.keyMessage).toBe('Updated message text');
   });
 
-  it('AI Assist click writes the canned suggestion when not locked', () => {
-    const { fixture, store } = setup(makeItem({ keyMessage: '' }));
+  it('AI Assist click calls the API and writes values[0] to keyMessage', () => {
+    const { fixture, store, aiCalls } = setup(makeItem({ keyMessage: '' }), {
+      aiResponse: { values: ['Stay focused on momentum.'] },
+    });
     const assist = fixture.nativeElement.querySelector('.assist-btn') as HTMLButtonElement;
     assist.click();
-    expect(store.item()?.keyMessage).toContain('empowering users');
+    expect(aiCalls[0]).toMatchObject({
+      scope: 'content-item',
+      workspaceId: 'test-ws',
+      refId: 'post-1',
+      field: 'post-key-message',
+    });
+    expect(store.item()?.keyMessage).toBe('Stay focused on momentum.');
+  });
+
+  it('AI Assist toast on error, keyMessage unchanged', () => {
+    const original = 'untouched';
+    const { fixture, store, toastErrors } = setup(makeItem({ keyMessage: original }), {
+      aiError: true,
+    });
+    const assist = fixture.nativeElement.querySelector('.assist-btn') as HTMLButtonElement;
+    assist.click();
+    expect(toastErrors).toHaveLength(1);
+    expect(store.item()?.keyMessage).toBe(original);
+  });
+
+  it('textarea has id="post-key-message" for E2E selector parity', () => {
+    const { fixture } = setup();
+    const ta = fixture.nativeElement.querySelector('textarea#post-key-message');
+    expect(ta).not.toBeNull();
   });
 
   it('AI Assist click is a no-op once the brief is approved (locked branch)', () => {

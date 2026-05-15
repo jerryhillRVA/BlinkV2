@@ -1,7 +1,7 @@
 import { DestroyRef, Injectable, computed, inject, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ContentStateService } from '../../content-state.service';
 import {
-  AI_ASSIST_DELAY_MS,
   CTA_TEXT_MAX_CHARS,
   DESCRIPTION_MAX_CHARS,
   DESCRIPTION_MIN_CHARS,
@@ -14,10 +14,12 @@ import type {
   CtaType,
   Platform,
 } from '../../content.types';
-import { generateId, safeTimeout, toggleArrayItem } from '../../content.utils';
-import { assistDescriptionFor, assistHookFor } from './concept-detail.ai';
+import { generateId, toggleArrayItem } from '../../content.utils';
+import { AiAssistApiService } from '../../../../core/ai-assist/ai-assist.service';
+import { ToastService } from '../../../../core/toast/toast.service';
 import type { TargetPlatform } from './concept-detail.types';
 import type {
+  AiAssistFieldContract,
   ProductionBriefContract,
   RiskLevelContract,
   TargetPublishWindowContract,
@@ -31,6 +33,8 @@ import type {
 export class ConceptDetailStore {
   private readonly state = inject(ContentStateService);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly aiAssist = inject(AiAssistApiService);
+  private readonly toast = inject(ToastService);
   /* v8 ignore next 1 — V8's function-call-throws branches on input()/signal() declarations are unreachable (Angular class-field init time; ESM exports not spy-able) */
   private readonly _itemId = signal<string | null>(null);
 
@@ -158,35 +162,46 @@ export class ConceptDetailStore {
 
   // ── AI actions ──────────────────────────────────────────────────────
   assistDescription(): void {
-    const item = this.item();
-    if (!item || this.isAssistingDescription()) return;
-    this.isAssistingDescription.set(true);
-    safeTimeout(
-      () => {
-        this.persist({
-          description: assistDescriptionFor(item.title, item.objective ?? ''),
-        });
-        this.isAssistingDescription.set(false);
-      },
-      AI_ASSIST_DELAY_MS,
-      this.destroyRef,
+    this.runFieldAssist('concept-description', this.isAssistingDescription, (value) =>
+      this.persist({ description: value }),
     );
   }
 
   assistHook(): void {
-    const item = this.item();
-    if (!item || this.isAssistingHook()) return;
-    this.isAssistingHook.set(true);
-    safeTimeout(
-      () => {
-        this.persist({
-          hook: assistHookFor(item.title, item.objective ?? ''),
-        });
-        this.isAssistingHook.set(false);
-      },
-      AI_ASSIST_DELAY_MS,
-      this.destroyRef,
+    this.runFieldAssist('concept-hook-angle', this.isAssistingHook, (value) =>
+      this.persist({ hook: value }),
     );
+  }
+
+  private runFieldAssist(
+    field: AiAssistFieldContract,
+    loading: ReturnType<typeof signal<boolean>>,
+    apply: (value: string) => void,
+  ): void {
+    const item = this.item();
+    if (!item || loading()) return;
+    const workspaceId = this.state.workspaceId();
+    if (!workspaceId) return;
+    loading.set(true);
+    this.aiAssist
+      .assist({
+        scope: 'content-item',
+        workspaceId,
+        refId: item.id,
+        field,
+      })
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (res) => {
+          const v = res.values[0]?.trim();
+          if (v) apply(v);
+          loading.set(false);
+        },
+        error: () => {
+          this.toast.showError('AI Assist failed. Please try again.');
+          loading.set(false);
+        },
+      });
   }
 
   // ── validation ──────────────────────────────────────────────────────
