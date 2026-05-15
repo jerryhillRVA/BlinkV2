@@ -151,9 +151,10 @@ export class PostDetailStore {
    *
    * Pipeline-lane sync (#129): advancing into `'qa'` from `status: 'in-progress'`
    * also flips top-level `status` to `'review'` so the post moves from the
-   * Post Builder swim lane into Review & Schedule on the pipeline board. The
-   * flip is conditional on the current status being `'in-progress'` to avoid
-   * downgrading posts that have already reached `'scheduled'` or `'published'`.
+   * Post Builder swim lane into Scheduled on the pipeline board (column id
+   * is still `'review'`; label was renamed in #141). The flip is conditional
+   * on the current status being `'in-progress'` to avoid downgrading posts
+   * that have already reached `'scheduled'` or `'published'`.
    */
   advanceProductionStep(step: ProductionStep): void {
     this.activeStep.set(step);

@@ -286,7 +286,7 @@ Element inventories below enumerate every interactive surface. Use them as scan 
 | 1 | `ideas` | `Ideas (<n>)` | ✓ `Add Ideas` | stage=idea, status=draft |
 | 2 | `concepts` | `Concepts (<n>)` | ✓ `Add Concepts` | stage=concept, status=draft |
 | 3 | `in-production` | `Posts in Production (<n>)` | ✓ `Add Posts in Production` | status=in-progress |
-| 4 | `review` | `Review & Schedule (<n>)` | ✗ | status=review OR scheduled |
+| 4 | `review` | `Scheduled (<n>)` | ✗ | status=review OR scheduled |
 | 5 | `published` | `Published (<n>)` | ✗ | status=published |
 
 **Kanban card elements:** pillar badges (top), content-type badge + platform icon (if set), title, hook/description snippet, date (Feb 28, Apr 21, etc.). Entire card is clickable — opens detail page.
@@ -1032,7 +1032,7 @@ fetch fuzzee-coffee content-items _content-items-index.json | jq '.items | map(.
 
 **Expected Results.**
 - [ ] Third column heading reads `Posts in Production` (count suffix `(<n>)` ok)
-- [ ] Other columns: `Ideas`, `Concepts`, `Review & Schedule`, `Published`
+- [ ] Other columns: `Ideas`, `Concepts`, `Scheduled`, `Published`
 
 **Source check.**
 ```bash

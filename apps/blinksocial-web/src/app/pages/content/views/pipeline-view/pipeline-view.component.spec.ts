@@ -246,6 +246,24 @@ describe('PipelineViewComponent', () => {
     expect(titles[4].textContent).toContain('Published');
   });
 
+  it('TC-U1 (#141): renders the fourth column header as "Scheduled (n)"', () => {
+    const titles = fixture.nativeElement.querySelectorAll('.column-title');
+    // Column index 3 = the renamed Scheduled column (id stays 'review').
+    expect(titles[3].textContent?.trim() ?? '').toMatch(/^Scheduled \(\d+\)$/);
+    // Make sure the old label is gone from the entire board.
+    titles.forEach((t: HTMLElement) => {
+      expect(t.textContent ?? '').not.toContain('Review & Schedule');
+    });
+  });
+
+  it('TC-U2 (#141): the other four column labels are unchanged after the rename', () => {
+    const titles = fixture.nativeElement.querySelectorAll('.column-title');
+    expect(titles[0].textContent?.trim() ?? '').toMatch(/^Ideas \(\d+\)$/);
+    expect(titles[1].textContent?.trim() ?? '').toMatch(/^Concepts \(\d+\)$/);
+    expect(titles[2].textContent?.trim() ?? '').toMatch(/^Post Builder \(\d+\)$/);
+    expect(titles[4].textContent?.trim() ?? '').toMatch(/^Published \(\d+\)$/);
+  });
+
   it('should render content cards', () => {
     const cards = fixture.nativeElement.querySelectorAll('.content-card');
     expect(cards.length).toBeGreaterThan(0);
