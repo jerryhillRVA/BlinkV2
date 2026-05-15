@@ -1,26 +1,33 @@
 import type {
-  AudienceSegment,
-  ContentObjective,
-  ContentPillar,
-} from '../../content.types';
-import { generateId } from '../../content.utils';
-import type { ConceptOption, ConceptTargetPlatform } from './idea-detail.types';
+  ConceptOptionContract,
+  ConceptTargetPlatformContract,
+  ContentObjectiveContract,
+  CtaTypeContract,
+} from '@blinksocial/contracts';
+import { IDEA_CONCEPT_OPTIONS_COUNT } from '@blinksocial/contracts';
+
+interface PillarLite {
+  id: string;
+}
+
+interface SegmentLite {
+  id: string;
+}
 
 interface Seed {
   angle: string;
   description: string;
   objectiveAlignment: string;
-  objective: ContentObjective;
-  targets: Omit<ConceptTargetPlatform, 'postId'>[];
-  ctaType: ConceptOption['cta']['type'];
+  objective: ContentObjectiveContract;
+  targets: Omit<ConceptTargetPlatformContract, 'postId'>[];
+  ctaType: CtaTypeContract;
   ctaText: string;
   suggestedFormatLabel: string;
 }
 
-const SEEDS: Seed[] = [
+const SEEDS: readonly Seed[] = [
   {
-    angle:
-      'Community Growth — Build belonging through shared practice',
+    angle: 'Community Growth — Build belonging through shared practice',
     description:
       'A warm, inviting tutorial that positions the idea as a shared ritual. Lead with the communal hook — viewers doing this together is the draw.',
     objectiveAlignment: 'Grow engaged community following',
@@ -99,35 +106,32 @@ const SEEDS: Seed[] = [
   },
 ];
 
-/**
- * Returns 6 deterministic-in-shape concept options.
- * Pillars are assigned round-robin from the available workspace pillars,
- * segments from the available segments. If no pillars/segments exist the
- * corresponding arrays are empty.
- */
-export function generateConceptOptions(
-  pillars: readonly ContentPillar[],
-  segments: readonly AudienceSegment[],
-): ConceptOption[] {
-  return SEEDS.map((seed, i) => {
-    const pillarIds = pickPillarIds(pillars, i);
-    const segmentIds = pickSegmentIds(segments, i);
-    return {
-      id: generateId('opt'),
-      angle: seed.angle,
-      description: seed.description,
-      objectiveAlignment: seed.objectiveAlignment,
-      objective: seed.objective,
-      pillarIds,
-      segmentIds,
-      targetPlatforms: seed.targets.map((t) => ({ ...t, postId: null })),
-      cta: { type: seed.ctaType, text: seed.ctaText },
-      suggestedFormatLabel: seed.suggestedFormatLabel,
-    };
-  });
+if (SEEDS.length !== IDEA_CONCEPT_OPTIONS_COUNT) {
+  throw new Error(
+    `idea-concept-options SEEDS length (${SEEDS.length}) must equal IDEA_CONCEPT_OPTIONS_COUNT (${IDEA_CONCEPT_OPTIONS_COUNT})`,
+  );
 }
 
-function pickPillarIds(pillars: readonly ContentPillar[], index: number): string[] {
+export function buildStubOptions(
+  pillars: readonly PillarLite[],
+  segments: readonly SegmentLite[],
+  idFactory: () => string,
+): ConceptOptionContract[] {
+  return SEEDS.map((seed, i) => ({
+    id: idFactory(),
+    angle: seed.angle,
+    description: seed.description,
+    objectiveAlignment: seed.objectiveAlignment,
+    objective: seed.objective,
+    pillarIds: pickPillarIds(pillars, i),
+    segmentIds: pickSegmentIds(segments, i),
+    targetPlatforms: seed.targets.map((t) => ({ ...t, postId: null })),
+    cta: { type: seed.ctaType, text: seed.ctaText },
+    suggestedFormatLabel: seed.suggestedFormatLabel,
+  }));
+}
+
+function pickPillarIds(pillars: readonly PillarLite[], index: number): string[] {
   if (pillars.length === 0) return [];
   if (pillars.length === 1) return [pillars[0].id];
   const first = pillars[index % pillars.length];
@@ -136,7 +140,7 @@ function pickPillarIds(pillars: readonly ContentPillar[], index: number): string
 }
 
 function pickSegmentIds(
-  segments: readonly AudienceSegment[],
+  segments: readonly SegmentLite[],
   index: number,
 ): string[] {
   if (segments.length === 0) return [];

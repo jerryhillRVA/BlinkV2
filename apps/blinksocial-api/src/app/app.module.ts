@@ -13,6 +13,7 @@ import { ContentItemsModule } from '../content-items/content-items.module';
 import { CalendarModule } from '../calendar/calendar.module';
 import { WizardAiModule } from '../wizard-ai/wizard-ai.module';
 import { AiAssistModule } from '../ai-assist/ai-assist.module';
+import { IdeaConceptOptionsModule } from '../idea-concept-options/idea-concept-options.module';
 import { AngularSsrModule } from '../angular-ssr/angular-ssr.module';
 
 @Module({
@@ -29,6 +30,7 @@ import { AngularSsrModule } from '../angular-ssr/angular-ssr.module';
     CalendarModule,
     WizardAiModule,
     AiAssistModule,
+    IdeaConceptOptionsModule,
     // AngularSsrModule must be last — it registers a catch-all middleware
     AngularSsrModule,
   ],

@@ -22,8 +22,13 @@ import { HealthResponse } from '@blinksocial/contracts';
 import { formatTimestamp } from '@blinksocial/core';
 ```
 
-### Common Commands 
+### Common Commands
 !! Always use nvm "nvm use" to manage npm versions (may be in ~/.nvm)
+
+> **For agents running in Claude Code:** the harness's shell snapshot bakes a PATH where `~/.nvm/versions/node/v0.12.2/bin` comes before `v20.20.2/bin`. Sourcing nvm + `nvm use` fixes PATH for the current shell, but the **long-lived `nx` daemon** captures whatever env was active at its first spawn — if that was a broken-PATH shell, every later `npx nx …` invocation hands work to the poisoned daemon and children get v0.12.2. Two reliable workarounds:
+>
+> 1. Export `NX_DAEMON=false` for any nx invocation (bypasses the daemon entirely — slower per call, immune to env leak). Preferred for E2E runs.
+> 2. Or run `npx nx reset` once **after** `nvm use` to relaunch the daemon under the corrected env, then `NX_DAEMON=true` (default) is fine for the rest of the session.
 
 ```bash
 npm start                                          # Serve API + web concurrently
