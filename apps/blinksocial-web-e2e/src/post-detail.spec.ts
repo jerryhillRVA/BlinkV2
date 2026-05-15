@@ -1026,19 +1026,20 @@ test.describe('Approve & Schedule (#124)', () => {
 // ─────────────────────────────────────────────────────────────────────────
 // Pipeline-lane sync (#129) — advancing into Approve & Schedule from
 // in-progress flips top-level status to 'review' so the post moves from
-// the Post Builder lane to Review & Schedule. The pipeline view reads
-// from the cache-merged items() signal, so the swap is observable both
-// immediately after Continue and across a reload.
+// the Post Builder lane to Scheduled (column id is still 'review', label
+// was renamed in #141). The pipeline view reads from the cache-merged
+// items() signal, so the swap is observable both immediately after
+// Continue and across a reload.
 // ─────────────────────────────────────────────────────────────────────────
 test.describe('Pipeline lane sync (#129)', () => {
   const POST_BUILDER_COL = 2; // 0=Ideas, 1=Concepts, 2=Post Builder
-  const REVIEW_COL = 3; // 3=Review & Schedule, 4=Published
+  const REVIEW_COL = 3; // 3=Scheduled (column id is still 'review'), 4=Published
 
   test.beforeEach(async ({ page }) => {
     await mockAuthenticatedUser(page);
   });
 
-  test('TC-1: Continue from Packaging swaps post from Post Builder to Review & Schedule lane', async ({
+  test('TC-1: Continue from Packaging swaps post from Post Builder to Scheduled lane', async ({
     page,
   }) => {
     const id = 'lane-tc1';
@@ -1075,7 +1076,7 @@ test.describe('Pipeline lane sync (#129)', () => {
     await expect(page.locator('app-pipeline-view')).toBeVisible();
 
     const reviewCol = page.locator('.kanban-column').nth(REVIEW_COL);
-    await expect(reviewCol.locator('.column-title')).toContainText('Review & Schedule');
+    await expect(reviewCol.locator('.column-title')).toContainText('Scheduled');
     await expect(reviewCol.locator('.content-card', { hasText: title })).toBeVisible();
 
     const postBuilderCol = page.locator('.kanban-column').nth(POST_BUILDER_COL);
@@ -1123,7 +1124,7 @@ test.describe('Pipeline lane sync (#129)', () => {
     await expect(page.locator('app-pipeline-view')).toBeVisible();
 
     const reviewCol = page.locator('.kanban-column').nth(REVIEW_COL);
-    await expect(reviewCol.locator('.column-title')).toContainText('Review & Schedule');
+    await expect(reviewCol.locator('.column-title')).toContainText('Scheduled');
     await expect(reviewCol.locator('.content-card', { hasText: title })).toBeVisible();
 
     const postBuilderCol = page.locator('.kanban-column').nth(POST_BUILDER_COL);
@@ -1190,7 +1191,7 @@ test.describe('Pipeline lane sync (#129)', () => {
     // No writes at all — tab-clicks are UI-only.
     expect(writeCount).toBe(0);
 
-    // Lane membership unchanged: still in Review & Schedule, absent from Post Builder.
+    // Lane membership unchanged: still in Scheduled, absent from Post Builder.
     await page.locator('app-post-detail-header .detail-back').click();
     await expect(page.locator('app-pipeline-view')).toBeVisible();
 

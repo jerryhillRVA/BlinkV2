@@ -324,7 +324,7 @@ export const PIPELINE_COLUMNS: PipelineColumn[] = [
   },
   {
     id: 'review',
-    label: 'Review & Schedule',
+    label: 'Scheduled',
     stage: null,
     statuses: ['review', 'scheduled'],
     colorClass: 'column-review',

@@ -109,3 +109,36 @@ test.describe('Content Page — type picker + drawer', () => {
     await expect(page.getByText('Posts in Production')).toHaveCount(0);
   });
 });
+
+// Pipeline column rename — #141: "Review & Schedule" → "Scheduled". The
+// column id, statuses, and SCSS class remain unchanged; only the visible
+// header label flips. These TCs exercise the public surface of that change.
+test.describe('Pipeline column rename to "Scheduled" (#141)', () => {
+  test.beforeEach(async ({ page }) => {
+    await mockAuthenticatedUser(page);
+    await page.goto('/workspace/hive-collective/content');
+    await expect(page.locator('app-pipeline-view')).toBeVisible();
+  });
+
+  test('TC-E1: fourth column header renders "Scheduled (n)"; old label gone from the board', async ({ page }) => {
+    const fourthColumnTitle = page.locator('.kanban-column').nth(3).locator('.column-title');
+    await expect(fourthColumnTitle).toHaveText(/^Scheduled \(\d+\)$/);
+    await expect(page.getByText('Review & Schedule')).toHaveCount(0);
+  });
+
+  test('TC-E2: column membership is unchanged (review + scheduled statuses still surface)', async ({ page }) => {
+    // The default hive-collective seed includes post1 (status: scheduled).
+    // Confirm post1's card lives in the fourth column, not the Post Builder
+    // column (index 2). What matters is the rename did not change which
+    // items land in this lane.
+    const fourthColumn = page.locator('.kanban-column').nth(3);
+    const postBuilderColumn = page.locator('.kanban-column').nth(2);
+    await expect(fourthColumn).toContainText('60-Second Morning Mobility Flow');
+    await expect(postBuilderColumn).not.toContainText('60-Second Morning Mobility Flow');
+  });
+
+  test('TC-E5: renamed column has no add-button (read-only lane)', async ({ page }) => {
+    const fourthColumn = page.locator('.kanban-column').nth(3);
+    await expect(fourthColumn.locator('.column-add-btn')).toHaveCount(0);
+  });
+});
