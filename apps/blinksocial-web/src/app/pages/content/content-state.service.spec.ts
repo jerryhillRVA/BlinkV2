@@ -23,6 +23,7 @@ function indexRow(
     parentIdeaId: overrides.parentIdeaId ?? null,
     parentConceptId: overrides.parentConceptId ?? null,
     scheduledDate: overrides.scheduledDate ?? null,
+    scheduledAt: overrides.scheduledAt ?? null,
     archived: overrides.archived ?? false,
     createdAt: overrides.createdAt ?? '2026-04-21T00:00:00Z',
     updatedAt: overrides.updatedAt ?? '2026-04-21T00:00:00Z',

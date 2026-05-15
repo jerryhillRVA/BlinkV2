@@ -127,6 +127,7 @@ describe('calendar-mappers', () => {
         parentIdeaId: null,
         parentConceptId: null,
         scheduledDate: '2026-05-04',
+        scheduledAt: null,
         archived: false,
         createdAt: '2026-04-01T08:00:00Z',
         updatedAt: '2026-04-10T08:00:00Z',
@@ -135,6 +136,37 @@ describe('calendar-mappers', () => {
       expect(result?.platform).toBe('tbd');
       expect(result?.owner).toBe('Unassigned');
       expect(result?.canonicalType).toBe('IMAGE_SINGLE');
+    });
+
+    // Ticket #135 regression: before #135, an index entry whose only
+    // scheduling info lived in `scheduledAt` (Calendar Quick-Edit case,
+    // or live-sync from Approve & Schedule) was filtered out because
+    // `scheduledAt` wasn't on the projection. The contract now carries
+    // both `scheduledAt` and `scheduledDate`; this asserts the mapper
+    // surfaces a calendar item from `scheduledAt` alone.
+    it('produces a calendar item when only scheduledAt is set on the index entry', () => {
+      const indexEntry: ContentItemsIndexEntryContract = {
+        id: 'sched-only',
+        stage: 'post',
+        status: 'scheduled',
+        title: 'Live-synced post',
+        platform: 'instagram',
+        contentType: 'reel',
+        pillarIds: [],
+        segmentIds: [],
+        owner: 'user-jerry',
+        parentIdeaId: null,
+        parentConceptId: null,
+        scheduledDate: null,
+        scheduledAt: '2026-06-01T15:00:00.000Z',
+        archived: false,
+        createdAt: '2026-05-01T08:00:00Z',
+        updatedAt: '2026-05-14T08:00:00Z',
+      };
+      const result = mapContentItemToCalendarItem(indexEntry);
+      expect(result).not.toBeNull();
+      expect(result?.scheduleAt).toBe('2026-06-01T15:00:00.000Z');
+      expect(result?.status).toBe('scheduled');
     });
   });
 

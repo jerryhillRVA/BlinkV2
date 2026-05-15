@@ -559,7 +559,7 @@ export interface ContentItemContract {
   riskLevel?: RiskLevelContract;
   targetPublishWindow?: TargetPublishWindowContract;
   scheduledDate?: string | null;
-  scheduledAt?: string;
+  scheduledAt?: string | null;
   /**
    * Per-item milestone date overrides keyed by milestone type. Each entry
    * is an exception to the workspace deadline template at

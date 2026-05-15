@@ -21,6 +21,7 @@ export class ContentItemsIndexEntry implements ContentItemsIndexEntryContract {
   parentIdeaId!: string | null;
   parentConceptId!: string | null;
   scheduledDate!: string | null;
+  scheduledAt!: string | null;
   archived!: boolean;
   createdAt!: string;
   updatedAt!: string;

@@ -81,6 +81,7 @@ function itemToIndexEntry(
     parentIdeaId: item.parentIdeaId ?? null,
     parentConceptId: item.parentConceptId ?? null,
     scheduledDate: item.scheduledDate ?? null,
+    scheduledAt: item.scheduledAt ?? null,
     archived: item.archived ?? false,
     createdAt: item.createdAt,
     updatedAt: item.updatedAt,
