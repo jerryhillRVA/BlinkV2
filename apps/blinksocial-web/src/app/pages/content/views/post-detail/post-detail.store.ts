@@ -1082,9 +1082,29 @@ export class PostDetailStore {
     return DEFAULT_APPROVAL_WORKFLOW.map((entry) => ({ ...entry }));
   });
 
-  readonly publishConfig = computed<PublishConfigContract>(
-    () => this.qa()?.publishConfig ?? DEFAULT_PUBLISH_CONFIG,
-  );
+  /**
+   * Ticket #135: defensively hydrate from top-level `item.scheduledAt` when
+   * the persisted `publishConfig.scheduleAt` is empty. This covers the
+   * Calendar Quick-Edit path (#134) which writes only top-level fields —
+   * without this, the Approve & Schedule datetime input would render blank
+   * for a post that was scheduled exclusively from the Calendar. Read-only
+   * derivation; the next `setPublishConfig` write pins both layers in sync.
+   */
+  readonly publishConfig = computed<PublishConfigContract>(() => {
+    const persisted = this.qa()?.publishConfig ?? DEFAULT_PUBLISH_CONFIG;
+    const top = this.item()?.scheduledAt;
+    if (top && !persisted.scheduleAt) {
+      return {
+        ...persisted,
+        scheduleAt: isoToDatetimeLocal(top),
+        publishAction:
+          !persisted.publishAction || persisted.publishAction === 'save-draft'
+            ? 'schedule'
+            : persisted.publishAction,
+      };
+    }
+    return persisted;
+  });
 
   readonly qaApproved = computed<boolean>(() => !!this.qa()?.approved);
 
@@ -1129,10 +1149,53 @@ export class PostDetailStore {
     this.persistQA({ approvals: next });
   }
 
-  /** Merge a partial PublishConfig into the persisted publishConfig. */
+  /**
+   * Ticket #135: single-seam writer for everything tied to the publish
+   * config. Derives top-level `scheduledAt` / `scheduledDate` / `status`
+   * from the merged config and persists everything in one `saveItem` —
+   * bypassing `persistQA`, which only owns the `qa` slot. Status flips are
+   * guarded: promote only from `'review'`, demote only from `'scheduled'`;
+   * `'draft'` / `'in-progress'` / `'published'` stay where they are. The
+   * `briefApproved` guard matches `persistQA` exactly.
+   */
   setPublishConfig(patch: Partial<PublishConfigContract>): void {
-    const current = this.publishConfig();
-    this.persistQA({ publishConfig: { ...current, ...patch } });
+    const item = this.item();
+    if (!item) return;
+    if (!item.briefApproved) return;
+
+    const currentConfig = this.qa()?.publishConfig ?? DEFAULT_PUBLISH_CONFIG;
+    const nextConfig: PublishConfigContract = { ...currentConfig, ...patch };
+
+    const iso = datetimeLocalToIso(nextConfig.scheduleAt ?? '');
+    const isScheduledIntent =
+      nextConfig.publishAction === 'schedule' && iso !== null;
+
+    const nextScheduledAt: string | null = isScheduledIntent ? iso : null;
+    const nextScheduledDate: string | null = isScheduledIntent
+      ? (iso as string).slice(0, 10)
+      : null;
+
+    let nextStatus = item.status;
+    if (isScheduledIntent && item.status === 'review') {
+      nextStatus = 'scheduled';
+    } else if (!isScheduledIntent && item.status === 'scheduled') {
+      nextStatus = 'review';
+    }
+
+    const currentQA: ProductionQAContract = item.production?.qa ?? {};
+    const nextQA: ProductionQAContract = {
+      ...currentQA,
+      publishConfig: nextConfig,
+    };
+    const next: ContentItem = {
+      ...item,
+      status: nextStatus,
+      scheduledAt: nextScheduledAt,
+      scheduledDate: nextScheduledDate,
+      production: { ...item.production, qa: nextQA },
+      updatedAt: new Date().toISOString(),
+    };
+    this.state.saveItem(next);
   }
 
   /**
@@ -1182,3 +1245,28 @@ const DEFAULT_PUBLISH_CONFIG: PublishConfigContract = {
   publishAction: 'save-draft',
   deliveryMethod: 'auto',
 };
+
+/**
+ * Convert an HTML `datetime-local` string (`YYYY-MM-DDTHH:mm`) to a UTC ISO
+ * timestamp. Treats the input as UTC so the conversion is TZ-independent
+ * and deterministic — matches the prototype's "raw string, no TZ math"
+ * persistence model and keeps unit tests free of TZ shims. Returns `null`
+ * for empty / unparseable input.
+ */
+function datetimeLocalToIso(s: string): string | null {
+  const trimmed = s?.trim();
+  if (!trimmed) return null;
+  // Append seconds + Z so the Date constructor parses as UTC.
+  const padded = trimmed.length === 16 ? `${trimmed}:00.000Z` : trimmed;
+  const d = new Date(padded);
+  return Number.isNaN(d.getTime()) ? null : d.toISOString();
+}
+
+/**
+ * Reverse of {@link datetimeLocalToIso}. Slices the ISO string to the
+ * 16-char `YYYY-MM-DDTHH:mm` prefix so the value drops straight into a
+ * `datetime-local` input.
+ */
+function isoToDatetimeLocal(iso: string): string {
+  return iso.slice(0, 16);
+}

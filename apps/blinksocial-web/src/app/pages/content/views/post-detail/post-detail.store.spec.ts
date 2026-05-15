@@ -1674,3 +1674,202 @@ describe('PostDetailStore — Approve & Schedule slot', () => {
     expect(saved?.production?.qa?.approved).toBe(true);
   });
 });
+
+// Ticket #135 — Approve & Schedule live-sync to top-level scheduledAt + status
+describe('PostDetailStore — schedule live-sync (#135)', () => {
+  function approvedItem(partial: Partial<ContentItem> = {}): ContentItem {
+    return makeItem({
+      status: 'review',
+      briefApproved: true,
+      briefApprovedAt: '2026-04-01T00:00:00.000Z',
+      briefApprovedBy: 'You',
+      ...partial,
+    });
+  }
+
+  describe('schedule write path (review → scheduled)', () => {
+    it('stamps top-level scheduledAt/scheduledDate/status when publishAction=schedule and scheduleAt is set', () => {
+      const { store, state } = setup(approvedItem());
+      store.setPublishConfig({
+        publishAction: 'schedule',
+        scheduleAt: '2026-06-01T15:00',
+      });
+      const saved = state.items().find((i) => i.id === 'post-1');
+      expect(saved?.status).toBe('scheduled');
+      expect(saved?.scheduledAt).toBe('2026-06-01T15:00:00.000Z');
+      expect(saved?.scheduledDate).toBe('2026-06-01');
+      expect(saved?.production?.qa?.publishConfig?.publishAction).toBe('schedule');
+      expect(saved?.production?.qa?.publishConfig?.scheduleAt).toBe('2026-06-01T15:00');
+    });
+
+    it('does NOT promote status when current is in-progress', () => {
+      const { store, state } = setup(
+        approvedItem({ status: 'in-progress' }),
+      );
+      store.setPublishConfig({
+        publishAction: 'schedule',
+        scheduleAt: '2026-06-01T15:00',
+      });
+      const saved = state.items().find((i) => i.id === 'post-1');
+      expect(saved?.status).toBe('in-progress');
+      expect(saved?.scheduledAt).toBe('2026-06-01T15:00:00.000Z');
+    });
+
+    it('does NOT downgrade a published post but still updates scheduledAt', () => {
+      const { store, state } = setup(approvedItem({ status: 'published' }));
+      store.setPublishConfig({
+        publishAction: 'schedule',
+        scheduleAt: '2026-06-01T15:00',
+      });
+      const saved = state.items().find((i) => i.id === 'post-1');
+      expect(saved?.status).toBe('published');
+      expect(saved?.scheduledAt).toBe('2026-06-01T15:00:00.000Z');
+    });
+
+    it('does NOT promote a draft post (status not in the allowlist)', () => {
+      const { store, state } = setup(approvedItem({ status: 'draft' }));
+      store.setPublishConfig({
+        publishAction: 'schedule',
+        scheduleAt: '2026-06-01T15:00',
+      });
+      const saved = state.items().find((i) => i.id === 'post-1');
+      expect(saved?.status).toBe('draft');
+      expect(saved?.scheduledAt).toBe('2026-06-01T15:00:00.000Z');
+    });
+
+    it('does NOT write top-level fields when scheduleAt is empty', () => {
+      const { store, state } = setup(approvedItem());
+      store.setPublishConfig({ publishAction: 'schedule', scheduleAt: '' });
+      const saved = state.items().find((i) => i.id === 'post-1');
+      expect(saved?.scheduledAt).toBeNull();
+      expect(saved?.scheduledDate).toBeNull();
+      expect(saved?.status).toBe('review');
+    });
+
+    it('does NOT write top-level fields when scheduleAt is malformed', () => {
+      const { store, state } = setup(approvedItem());
+      store.setPublishConfig({
+        publishAction: 'schedule',
+        scheduleAt: 'not-a-date',
+      });
+      const saved = state.items().find((i) => i.id === 'post-1');
+      expect(saved?.scheduledAt).toBeNull();
+      expect(saved?.scheduledDate).toBeNull();
+      expect(saved?.status).toBe('review');
+    });
+
+    it('does NOT promote status when publishAction is not "schedule"', () => {
+      const { store, state } = setup(approvedItem());
+      store.setPublishConfig({
+        publishAction: 'publish-now',
+        scheduleAt: '2026-06-01T15:00',
+      });
+      const saved = state.items().find((i) => i.id === 'post-1');
+      expect(saved?.status).toBe('review');
+      expect(saved?.scheduledAt).toBeNull();
+    });
+  });
+
+  describe('unschedule write path (scheduled → review)', () => {
+    function scheduledItem(): ContentItem {
+      return approvedItem({
+        status: 'scheduled',
+        scheduledAt: '2026-06-01T15:00:00.000Z',
+        scheduledDate: '2026-06-01',
+        production: {
+          qa: {
+            publishConfig: {
+              publishAction: 'schedule',
+              scheduleAt: '2026-06-01T15:00',
+            },
+          },
+        },
+      });
+    }
+
+    it('clears top-level fields and reverts status to review when publishAction flips away from schedule', () => {
+      const { store, state } = setup(scheduledItem());
+      store.setPublishConfig({ publishAction: 'save-draft' });
+      const saved = state.items().find((i) => i.id === 'post-1');
+      expect(saved?.status).toBe('review');
+      expect(saved?.scheduledAt).toBeNull();
+      expect(saved?.scheduledDate).toBeNull();
+      expect(saved?.production?.qa?.publishConfig?.publishAction).toBe('save-draft');
+    });
+
+    it('does NOT downgrade a published post on unschedule', () => {
+      const { store, state } = setup(
+        approvedItem({
+          status: 'published',
+          scheduledAt: '2026-06-01T15:00:00.000Z',
+          scheduledDate: '2026-06-01',
+        }),
+      );
+      store.setPublishConfig({ publishAction: 'save-draft' });
+      const saved = state.items().find((i) => i.id === 'post-1');
+      expect(saved?.status).toBe('published');
+    });
+
+    it('round-trip: schedule → save-draft → schedule with the same date matches a fresh schedule', () => {
+      const { store, state } = setup(approvedItem());
+      store.setPublishConfig({
+        publishAction: 'schedule',
+        scheduleAt: '2026-06-01T15:00',
+      });
+      store.setPublishConfig({ publishAction: 'save-draft' });
+      store.setPublishConfig({
+        publishAction: 'schedule',
+        scheduleAt: '2026-06-01T15:00',
+      });
+      const saved = state.items().find((i) => i.id === 'post-1');
+      expect(saved?.status).toBe('scheduled');
+      expect(saved?.scheduledAt).toBe('2026-06-01T15:00:00.000Z');
+      expect(saved?.scheduledDate).toBe('2026-06-01');
+    });
+  });
+
+  describe('defensive hydration from top-level scheduledAt', () => {
+    it('hydrates publishConfig.scheduleAt + publishAction from item.scheduledAt when persisted publishConfig is empty', () => {
+      const { store } = setup(
+        approvedItem({
+          scheduledAt: '2026-06-01T15:00:00.000Z',
+        }),
+      );
+      const cfg = store.publishConfig();
+      expect(cfg.scheduleAt).toBe('2026-06-01T15:00');
+      expect(cfg.publishAction).toBe('schedule');
+    });
+
+    it('does NOT override a persisted publishConfig.scheduleAt with the top-level value', () => {
+      const { store } = setup(
+        approvedItem({
+          scheduledAt: '2026-06-01T15:00:00.000Z',
+          production: {
+            qa: {
+              publishConfig: {
+                publishAction: 'schedule',
+                scheduleAt: '2026-07-15T10:00',
+              },
+            },
+          },
+        }),
+      );
+      const cfg = store.publishConfig();
+      expect(cfg.scheduleAt).toBe('2026-07-15T10:00');
+    });
+  });
+
+  describe('brief-approval guard', () => {
+    it('setPublishConfig is a no-op when briefApproved is false (matches persistQA)', () => {
+      const { store, state } = setup(makeItem({ status: 'review' }));
+      store.setPublishConfig({
+        publishAction: 'schedule',
+        scheduleAt: '2026-06-01T15:00',
+      });
+      const saved = state.items().find((i) => i.id === 'post-1');
+      expect(saved?.scheduledAt).toBeUndefined();
+      expect(saved?.status).toBe('review');
+      expect(saved?.production?.qa).toBeUndefined();
+    });
+  });
+});

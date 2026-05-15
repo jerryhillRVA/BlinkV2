@@ -35,6 +35,11 @@ export default defineConfig({
   workers: process.env['CI'] ? 1 : 2,
   // SSR routes can take >30s to first-paint under concurrent load.
   timeout: 60_000,
+  // One retry to absorb documented parallel-webkit flakiness (see
+  // 08f2e42 "harden under parallel webkit"). The existing `trace:
+  // 'on-first-retry'` setting implied retries were intended but was
+  // dead at retries=0.
+  retries: 1,
   /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
   use: {
     baseURL,
