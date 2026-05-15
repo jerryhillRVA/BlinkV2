@@ -57,12 +57,13 @@
     </div>
   }
 
-  <app-audio-planning-card
-    [platform]="platform"
+  <app-media-selections-card
+    platform="facebook"
     [contentType]="contentType()"
-    [value]="audioPlanning()"
+    [audioPlanning]="audioPlanning()"
+    [showCover]="false"
     [disabled]="disabled()"
-    (valueChange)="onAudioPlanningChange($event)"
+    (audioPlanningChange)="onAudioPlanningChange($event)"
   />
 
   <app-platform-controls

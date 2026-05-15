@@ -1,6 +1,7 @@
 <section class="media-selections" aria-label="Media selections">
   <span class="card-label">Media Selections</span>
 
+  @if (showCover()) {
   <!-- Cover Image -->
   <div class="field-group">
     <div class="field-header">
@@ -74,5 +75,16 @@
       }
     }
   </div>
+  }
 
+  <!-- Audio Planning sub-section (#147 / PKG-1): hides itself when the
+       canonical content type isn't VIDEO_SHORT_* or STORY_FRAME_SET,
+       so this can mount unconditionally inside the card. -->
+  <app-audio-planning-section
+    [platform]="platform()"
+    [contentType]="contentType()"
+    [value]="audioPlanning()"
+    [disabled]="disabled()"
+    (valueChange)="onAudioPlanningChange($event)"
+  />
 </section>

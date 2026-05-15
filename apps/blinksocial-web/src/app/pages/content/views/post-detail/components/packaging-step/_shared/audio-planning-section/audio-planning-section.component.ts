@@ -6,11 +6,7 @@ import type {
   PackagingAudioPlanningContract,
   PlatformContract,
 } from '@blinksocial/contracts';
-import {
-  DropdownComponent,
-  type DropdownOption,
-} from '../../../../../../../../shared/dropdown/dropdown.component';
-import { SectionLabelComponent } from '../../../draft-step/_shared/section-label/section-label.component';
+import { TooltipComponent } from '../../../../../../../../shared/tooltip/tooltip.component';
 import { getCanonicalType } from '../../../draft-step/draft-canonical.utils';
 import {
   AUDIO_PLANNING_CANONICAL_TYPES,
@@ -20,26 +16,23 @@ import {
 } from './audio-planning.constants';
 
 /**
- * #147 (PKG-1): Audio Planning card.
+ * #147 (PKG-1): Audio Planning sub-section. Mounts INSIDE
+ * `<app-media-selections-card>` (matches prototype layout, not its own
+ * card). Header + Strategy Mode segmented toggle + conditional Video
+ * Vibe & Pace native dropdown.
  *
- * Replaces the prior "Browse Trending Sounds / Use Original" UI. Two
- * fields:
- *   1. Strategy Mode toggle — Named Audio (default) vs Trending/Platform.
- *   2. Video Vibe & Pace mood dropdown — only renders when strategy is
- *      Trending/Platform Audio; cleared when the user flips back.
- *
- * The card renders only for canonical content types in
+ * Renders only for canonical content types in
  * `AUDIO_PLANNING_CANONICAL_TYPES` (VIDEO_SHORT_VERTICAL,
- * VIDEO_SHORT_HORIZONTAL, STORY_FRAME_SET). The parent doesn't need to
- * gate — the card hides itself when ineligible.
+ * VIDEO_SHORT_HORIZONTAL, STORY_FRAME_SET); hides itself otherwise so
+ * the parent doesn't need its own gate.
  */
 @Component({
-  selector: 'app-audio-planning-card',
-  imports: [DropdownComponent, SectionLabelComponent],
-  templateUrl: './audio-planning-card.component.html',
-  styleUrl: './audio-planning-card.component.scss',
+  selector: 'app-audio-planning-section',
+  imports: [TooltipComponent],
+  templateUrl: './audio-planning-section.component.html',
+  styleUrl: './audio-planning-section.component.scss',
 })
-export class AudioPlanningCardComponent {
+export class AudioPlanningSectionComponent {
   /* v8 ignore next 4 — V8's function-call-throws branches on input() declarations are unreachable (Angular class-field init time; ESM exports not spy-able) */
   readonly value = input<PackagingAudioPlanningContract | undefined>(undefined);
   readonly platform = input.required<PlatformContract>();
@@ -52,11 +45,6 @@ export class AudioPlanningCardComponent {
   protected readonly moodOptions = MOOD_OPTIONS;
   protected readonly audioTooltip = AUDIO_TOOLTIP;
 
-  /**
-   * Canonical type derived from the (platform, contentType) pair.
-   * Returns undefined when no mapping exists for the combo, which
-   * collapses the card to hidden.
-   */
   protected readonly canonicalType = computed(() =>
     getCanonicalType(this.platform(), this.contentType()),
   );
@@ -80,22 +68,13 @@ export class AudioPlanningCardComponent {
     () => this.strategy() === 'trending-platform',
   );
 
-  /** Dropdown options projected from MOOD_OPTIONS. */
-  protected readonly moodDropdownOptions = computed<DropdownOption[]>(() =>
-    this.moodOptions.map((m) => ({
-      value: m.value,
-      label: `${m.label} — ${m.description}`,
-    })),
-  );
-
   protected onStrategyClick(next: AudioStrategyContract): void {
     if (this.disabled()) return;
     if (this.strategy() === next) return;
     const base: PackagingAudioPlanningContract = this.value() ?? {};
     if (next === 'named') {
-      // Flipping back to Named — clear any mood we'd captured under
-      // Trending/Platform so it can't reappear silently if the user
-      // flips again.
+      // Flipping back to Named — clear audioMood so it can't reappear
+      // silently if the user flips again.
       this.valueChange.emit({
         ...base,
         audioStrategy: next,
@@ -107,9 +86,8 @@ export class AudioPlanningCardComponent {
   }
 
   /**
-   * Keyboard handler for the strategy toggle's `role="radio"` buttons:
-   * Left/Up moves to the previous option, Right/Down to the next.
-   * Space/Enter is left to native button activation.
+   * Arrow keys on the segmented toggle: Left/Up → previous, Right/Down → next.
+   * Space/Enter is native button activation.
    */
   protected onStrategyKeydown(event: KeyboardEvent): void {
     if (this.disabled()) return;
@@ -137,8 +115,9 @@ export class AudioPlanningCardComponent {
     if (next) this.onStrategyClick(next.value);
   }
 
-  protected onMoodChange(value: string): void {
+  protected onMoodChange(event: Event): void {
     if (this.disabled()) return;
+    const value = (event.target as HTMLSelectElement | null)?.value ?? '';
     const base: PackagingAudioPlanningContract = this.value() ?? {};
     this.valueChange.emit({
       ...base,

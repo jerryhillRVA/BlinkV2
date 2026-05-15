@@ -21,7 +21,6 @@ import {
   extractHashtagsFromCaption,
   syncCaptionWithHashtags,
 } from '../_shared/caption-hashtag.utils';
-import { AudioPlanningCardComponent } from '../_shared/audio-planning-card/audio-planning-card.component';
 import { MediaSelectionsCardComponent } from '../_shared/media-selections-card/media-selections-card.component';
 import { PaidBoostedFieldsComponent } from '../_shared/paid-boosted-fields/paid-boosted-fields.component';
 import { PkgHashtagBankComponent, type HashtagBankGroup } from '../_shared/pkg-hashtag-bank/pkg-hashtag-bank.component';
@@ -65,7 +64,6 @@ const HASHTAG_BANK_GROUPS: HashtagBankGroup[] = [
   selector: 'app-instagram-packaging',
   imports: [
     AiButtonComponent,
-    AudioPlanningCardComponent,
     PkgHashtagBankComponent,
     UtmBuilderComponent,
     SlideOrderPickerComponent,

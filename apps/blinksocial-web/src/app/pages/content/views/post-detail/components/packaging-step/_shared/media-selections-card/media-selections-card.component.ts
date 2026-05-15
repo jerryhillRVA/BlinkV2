@@ -1,7 +1,12 @@
 import { Component, computed, input, output, signal } from '@angular/core';
-import type { PlatformContract } from '@blinksocial/contracts';
+import type {
+  ContentTypeContract,
+  PackagingAudioPlanningContract,
+  PlatformContract,
+} from '@blinksocial/contracts';
 import { TooltipComponent } from '../../../../../../../../shared/tooltip/tooltip.component';
 import { AiButtonComponent } from '../../../draft-step/_shared/ai-button/ai-button.component';
+import { AudioPlanningSectionComponent } from '../audio-planning-section/audio-planning-section.component';
 
 const AI_DELAY_MS = 2500;
 const STUB_COVER_REF = 'AI Generated Cover.png';
@@ -11,9 +16,9 @@ const COVER_TOOLTIP =
 
 /**
  * "Media Selections" card from the prototype's PackagingStudio. Hosts
- * the Cover image sub-section (filename input + Upload button + AI
- * Generate). The Audio Planning sub-section was removed in #147 (PKG-1)
- * and now lives in its own `<app-audio-planning-card>` sibling.
+ * the Cover image sub-section + (when content type is eligible) the
+ * Audio Planning sub-section beneath it. Matches the prototype's
+ * combined single-Card layout (PackagingStudio.tsx:2142-2350).
  *
  * Cover-asset persistence: real file upload is a follow-up epic. The
  * Upload control captures the chosen file's filename so the user sees
@@ -21,18 +26,22 @@ const COVER_TOOLTIP =
  */
 @Component({
   selector: 'app-media-selections-card',
-  imports: [AiButtonComponent, TooltipComponent],
+  imports: [AiButtonComponent, AudioPlanningSectionComponent, TooltipComponent],
   templateUrl: './media-selections-card.component.html',
   styleUrl: './media-selections-card.component.scss',
 })
 export class MediaSelectionsCardComponent {
-  /* v8 ignore next 4 — V8's function-call-throws branches on input()/signal() declarations are unreachable (Angular class-field init time; ESM exports not spy-able) */
+  /* v8 ignore next 7 — V8's function-call-throws branches on input()/signal() declarations are unreachable (Angular class-field init time; ESM exports not spy-able) */
   readonly platform = input.required<PlatformContract>();
   readonly coverAsset = input<string | undefined>(undefined);
+  readonly contentType = input<ContentTypeContract | null | undefined>(undefined);
+  readonly audioPlanning = input<PackagingAudioPlanningContract | undefined>(undefined);
+  readonly showCover = input<boolean>(true);
   readonly disabled = input(false);
   readonly thumbnailMode = input(false);
 
   readonly coverAssetChange = output<string | undefined>();
+  readonly audioPlanningChange = output<PackagingAudioPlanningContract>();
   /**
    * Resolvable URL for the cover image. Emitted alongside coverAssetChange
    * when the user uploads a file (FileReader → data: URL). Real
@@ -56,6 +65,10 @@ export class MediaSelectionsCardComponent {
   );
 
   protected readonly coverTooltip = COVER_TOOLTIP;
+
+  protected onAudioPlanningChange(audioPlanning: PackagingAudioPlanningContract): void {
+    this.audioPlanningChange.emit(audioPlanning);
+  }
 
   protected onCoverInput(e: Event): void {
     const v = (e.target as HTMLInputElement).value ?? '';

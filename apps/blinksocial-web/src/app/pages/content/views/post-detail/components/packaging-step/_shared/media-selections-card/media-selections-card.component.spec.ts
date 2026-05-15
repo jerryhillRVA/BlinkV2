@@ -21,10 +21,10 @@ function setup(opts: SetupOptions = {}): ComponentFixture<MediaSelectionsCardCom
   return fixture;
 }
 
-// #147 (PKG-1): audio planning was extracted to <app-audio-planning-card>.
+// #147 (PKG-1): audio planning was extracted to <app-audio-planning-section>.
 // `<app-media-selections-card>` is COVER-ONLY now; the iTunes service,
 // audio-picker, Browse Trending panel, and Use Original button are all
-// gone. Audio behavior tests live in `audio-planning-card.component.spec.ts`.
+// gone. Audio behavior tests live in `audio-planning-section.component.spec.ts`.
 
 describe('MediaSelectionsCardComponent', () => {
   it('renders the "Media Selections" card label', () => {

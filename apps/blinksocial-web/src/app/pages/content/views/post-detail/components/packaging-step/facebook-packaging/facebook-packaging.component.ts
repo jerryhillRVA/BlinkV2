@@ -8,7 +8,7 @@ import type {
   PackagingUtmContract,
 } from '@blinksocial/contracts';
 import { HashtagInputComponent } from '../../draft-step/_shared/hashtag-input/hashtag-input.component';
-import { AudioPlanningCardComponent } from '../_shared/audio-planning-card/audio-planning-card.component';
+import { MediaSelectionsCardComponent } from '../_shared/media-selections-card/media-selections-card.component';
 import { PlatformControlsComponent } from '../_shared/platform-controls/platform-controls.component';
 import {
   SlideOrderPickerComponent,
@@ -25,7 +25,7 @@ const WARN_RATIO = 0.9;
     HashtagInputComponent,
     UtmBuilderComponent,
     SlideOrderPickerComponent,
-    AudioPlanningCardComponent,
+    MediaSelectionsCardComponent,
     PlatformControlsComponent,
   ],
   templateUrl: './facebook-packaging.component.html',

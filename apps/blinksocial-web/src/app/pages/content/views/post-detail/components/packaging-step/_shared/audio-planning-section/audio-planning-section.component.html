@@ -1,0 +1,58 @@
+@if (visible()) {
+  <div class="audio-planning-section" aria-labelledby="audio-planning-heading">
+    <div class="audio-planning-header">
+      <span id="audio-planning-heading" class="audio-planning-eyebrow">
+        Audio Planning
+      </span>
+      <app-tooltip [text]="audioTooltip" />
+    </div>
+
+    <div class="strategy-block">
+      <span id="strategy-label" class="field-label">Strategy Mode</span>
+      <div
+        class="segmented-toggle"
+        role="radiogroup"
+        aria-labelledby="strategy-label"
+      >
+        @for (option of strategyOptions; track option.value) {
+          <button
+            type="button"
+            class="segmented-option"
+            [class.segmented-option--selected]="strategy() === option.value"
+            role="radio"
+            [attr.aria-checked]="strategy() === option.value"
+            [tabindex]="strategy() === option.value ? 0 : -1"
+            [disabled]="disabled()"
+            (click)="onStrategyClick(option.value)"
+            (keydown)="onStrategyKeydown($event)"
+          >
+            {{ option.label }}
+          </button>
+        }
+      </div>
+    </div>
+
+    @if (moodVisible()) {
+      <div class="mood-region" role="region" aria-live="polite">
+        <label for="audio-mood-trigger" class="field-label">Video Vibe &amp; Pace</label>
+        <p id="audio-mood-help" class="mood-help">
+          What is the emotional energy of your video?
+        </p>
+        <select
+          id="audio-mood-trigger"
+          class="mood-select"
+          [disabled]="disabled()"
+          aria-describedby="audio-mood-help"
+          (change)="onMoodChange($event)"
+        >
+          <option value="" [selected]="!mood()">Select a mood...</option>
+          @for (option of moodOptions; track option.value) {
+            <option [value]="option.value" [selected]="mood() === option.value">
+              {{ option.label }} — {{ option.description }}
+            </option>
+          }
+        </select>
+      </div>
+    }
+  </div>
+}

@@ -29,8 +29,8 @@ describe('FacebookPackagingComponent', () => {
     expect(fixture.nativeElement.querySelector('app-hashtag-input')).not.toBeNull();
     expect(fixture.nativeElement.querySelector('#fb-link')).not.toBeNull();
     expect(fixture.nativeElement.querySelector('app-utm-builder')).not.toBeNull();
-    expect(fixture.nativeElement.querySelector('app-audio-planning-card')).not.toBeNull();
-    expect(fixture.nativeElement.querySelector('.audio-planning-card')).not.toBeNull();
+    expect(fixture.nativeElement.querySelector('app-audio-planning-section')).not.toBeNull();
+    expect(fixture.nativeElement.querySelector('.audio-planning-section')).not.toBeNull();
     expect(fixture.nativeElement.querySelector('app-platform-controls')).not.toBeNull();
   });
 

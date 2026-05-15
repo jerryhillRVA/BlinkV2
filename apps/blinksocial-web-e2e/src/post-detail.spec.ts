@@ -1422,12 +1422,12 @@ test.describe('Audio Planning — strategy + mood (#147)', () => {
       platform: 'instagram',
       contentType: 'reel',
     });
-    await expect(page.locator('app-audio-planning-card .audio-planning-card')).toBeVisible();
-    const options = page.locator('app-audio-planning-card .strategy-option');
+    await expect(page.locator('app-audio-planning-section .audio-planning-section')).toBeVisible();
+    const options = page.locator('app-audio-planning-section .segmented-option');
     await expect(options).toHaveCount(2);
     await expect(options.nth(0)).toHaveAttribute('aria-checked', 'true');
     await expect(options.nth(1)).toHaveAttribute('aria-checked', 'false');
-    await expect(page.locator('app-audio-planning-card .mood-region')).toHaveCount(0);
+    await expect(page.locator('app-audio-planning-section .mood-region')).toHaveCount(0);
   });
 
   test('TC-E2: clicking Trending/Platform reveals the mood dropdown and persists', async ({ page }) => {
@@ -1436,21 +1436,21 @@ test.describe('Audio Planning — strategy + mood (#147)', () => {
       platform: 'instagram',
       contentType: 'reel',
     });
-    const trendingOption = page.locator('app-audio-planning-card .strategy-option').nth(1);
+    const trendingOption = page.locator('app-audio-planning-section .segmented-option').nth(1);
     await trendingOption.click();
     await expect(trendingOption).toHaveAttribute('aria-checked', 'true');
-    await expect(page.locator('app-audio-planning-card .mood-region')).toBeVisible();
-    // Placeholder reads "Select a mood..."
+    await expect(page.locator('app-audio-planning-section .mood-region')).toBeVisible();
+    // Native <select> placeholder is the value-less first <option>.
     await expect(
-      page.locator('app-audio-planning-card .mood-region .dropdown-value'),
-    ).toHaveText(/Select a mood/);
+      page.locator('app-audio-planning-section select.mood-select'),
+    ).toHaveValue('');
     // Reload — selection persists, dropdown remains visible.
     await page.reload();
     await expect(page.locator('app-post-detail')).toBeVisible();
     await expect(
-      page.locator('app-audio-planning-card .strategy-option').nth(1),
+      page.locator('app-audio-planning-section .segmented-option').nth(1),
     ).toHaveAttribute('aria-checked', 'true');
-    await expect(page.locator('app-audio-planning-card .mood-region')).toBeVisible();
+    await expect(page.locator('app-audio-planning-section .mood-region')).toBeVisible();
   });
 
   test('TC-E3: picking a mood persists the id and label', async ({ page }) => {
@@ -1459,22 +1459,18 @@ test.describe('Audio Planning — strategy + mood (#147)', () => {
       platform: 'instagram',
       contentType: 'reel',
     });
-    await page.locator('app-audio-planning-card .strategy-option').nth(1).click();
-    const trigger = page.locator('app-audio-planning-card app-dropdown .dropdown-trigger');
-    await trigger.click();
-    await page
-      .locator('app-audio-planning-card .dropdown-option', {
-        hasText: 'Energetic / Pumped',
-      })
-      .click();
-    await expect(
-      page.locator('app-audio-planning-card .mood-region .dropdown-value'),
-    ).toContainText('Energetic / Pumped');
+    await page.locator('app-audio-planning-section .segmented-option').nth(1).click();
+    const select = page.locator('app-audio-planning-section select.mood-select');
+    await select.selectOption('energetic-pumped');
+    await expect(select).toHaveValue('energetic-pumped');
+    // The packaging slot persists via an HTTP PUT; let it flush before
+    // reload. Same pattern post-detail-persistence.spec.ts uses (#126).
+    await page.waitForTimeout(150);
     await page.reload();
     await expect(page.locator('app-post-detail')).toBeVisible();
     await expect(
-      page.locator('app-audio-planning-card .mood-region .dropdown-value'),
-    ).toContainText('Energetic / Pumped');
+      page.locator('app-audio-planning-section select.mood-select'),
+    ).toHaveValue('energetic-pumped');
   });
 
   test('TC-E4: flipping back to Named Audio clears the mood', async ({ page }) => {
@@ -1484,26 +1480,23 @@ test.describe('Audio Planning — strategy + mood (#147)', () => {
       contentType: 'reel',
     });
     // Set up: choose trending + a mood.
-    await page.locator('app-audio-planning-card .strategy-option').nth(1).click();
-    await page.locator('app-audio-planning-card app-dropdown .dropdown-trigger').click();
+    await page.locator('app-audio-planning-section .segmented-option').nth(1).click();
     await page
-      .locator('app-audio-planning-card .dropdown-option', {
-        hasText: 'Happy / Upbeat',
-      })
-      .click();
+      .locator('app-audio-planning-section select.mood-select')
+      .selectOption('happy-upbeat');
     // Now flip back.
-    await page.locator('app-audio-planning-card .strategy-option').nth(0).click();
+    await page.locator('app-audio-planning-section .segmented-option').nth(0).click();
     await expect(
-      page.locator('app-audio-planning-card .strategy-option').nth(0),
+      page.locator('app-audio-planning-section .segmented-option').nth(0),
     ).toHaveAttribute('aria-checked', 'true');
-    await expect(page.locator('app-audio-planning-card .mood-region')).toHaveCount(0);
+    await expect(page.locator('app-audio-planning-section .mood-region')).toHaveCount(0);
     // Reload — Named remains selected, no mood region.
     await page.reload();
     await expect(page.locator('app-post-detail')).toBeVisible();
     await expect(
-      page.locator('app-audio-planning-card .strategy-option').nth(0),
+      page.locator('app-audio-planning-section .segmented-option').nth(0),
     ).toHaveAttribute('aria-checked', 'true');
-    await expect(page.locator('app-audio-planning-card .mood-region')).toHaveCount(0);
+    await expect(page.locator('app-audio-planning-section .mood-region')).toHaveCount(0);
   });
 
   test('TC-E5: card hides for ineligible content types (IG feed-post, IG carousel)', async ({ page }) => {
@@ -1512,14 +1505,14 @@ test.describe('Audio Planning — strategy + mood (#147)', () => {
       platform: 'instagram',
       contentType: 'feed-post',
     });
-    await expect(page.locator('app-audio-planning-card .audio-planning-card')).toHaveCount(0);
+    await expect(page.locator('app-audio-planning-section .audio-planning-section')).toHaveCount(0);
 
     await openApprovedPackaging(page, {
       id: 'audio-tc-e5-carousel',
       platform: 'instagram',
       contentType: 'carousel',
     });
-    await expect(page.locator('app-audio-planning-card .audio-planning-card')).toHaveCount(0);
+    await expect(page.locator('app-audio-planning-section .audio-planning-section')).toHaveCount(0);
   });
 
   test('TC-E7: keyboard-only — arrow keys flip the strategy toggle', async ({ page }) => {
@@ -1528,12 +1521,12 @@ test.describe('Audio Planning — strategy + mood (#147)', () => {
       platform: 'instagram',
       contentType: 'reel',
     });
-    const namedOption = page.locator('app-audio-planning-card .strategy-option').nth(0);
+    const namedOption = page.locator('app-audio-planning-section .segmented-option').nth(0);
     await namedOption.focus();
     await page.keyboard.press('ArrowRight');
     await expect(
-      page.locator('app-audio-planning-card .strategy-option').nth(1),
+      page.locator('app-audio-planning-section .segmented-option').nth(1),
     ).toHaveAttribute('aria-checked', 'true');
-    await expect(page.locator('app-audio-planning-card .mood-region')).toBeVisible();
+    await expect(page.locator('app-audio-planning-section .mood-region')).toBeVisible();
   });
 });
