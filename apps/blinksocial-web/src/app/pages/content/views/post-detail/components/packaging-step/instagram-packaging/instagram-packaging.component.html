@@ -55,7 +55,7 @@
     <div class="field-group">
       <div class="field-header">
         <span class="field-label-row">
-          <label class="field-label" for="ig-caption">Caption</label>
+          <label class="field-label" for="post-caption">Caption</label>
           <app-tooltip
             text="First written here — not carried from Draft. Lead with your hook angle, deliver value, end with a CTA. AI Generate pulls from your Brief, Concept, and script as context."
           />
@@ -69,7 +69,7 @@
         />
       </div>
       <textarea
-        id="ig-caption"
+        id="post-caption"
         class="caption-area"
         rows="5"
         [value]="caption()"
@@ -94,6 +94,7 @@
 
     <!-- Hashtags (packaging-bank layout — distinct from draft step) -->
     <app-pkg-hashtag-bank
+      id="post-hashtags"
       [hashtags]="hashtags()"
       [disabled]="disabled()"
       [aiSuggesting]="aiSuggestingHashtags()"

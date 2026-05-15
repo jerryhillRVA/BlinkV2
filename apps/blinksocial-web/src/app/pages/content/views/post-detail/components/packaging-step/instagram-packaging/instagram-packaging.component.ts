@@ -1,5 +1,7 @@
-import { Component, computed, input, output, signal } from '@angular/core';
+import { Component, DestroyRef, computed, inject, input, output, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import type {
+  AiAssistFieldContract,
   ContentTypeContract,
   PackagingAudioTrackContract,
   PackagingInstagramContract,
@@ -11,6 +13,10 @@ import type {
 } from '@blinksocial/contracts';
 import { TooltipComponent } from '../../../../../../../shared/tooltip/tooltip.component';
 import { AiButtonComponent } from '../../draft-step/_shared/ai-button/ai-button.component';
+import { ContentStateService } from '../../../../../content-state.service';
+import { PostDetailStore } from '../../../post-detail.store';
+import { AiAssistApiService } from '../../../../../../../core/ai-assist/ai-assist.service';
+import { ToastService } from '../../../../../../../core/toast/toast.service';
 import {
   extractHashtagsFromCaption,
   syncCaptionWithHashtags,
@@ -30,10 +36,6 @@ import { UtmBuilderComponent } from '../_shared/utm-builder/utm-builder.componen
 
 const CAPTION_MAX = 2200;
 const WARN_RATIO = 0.9;
-const STUB_CAPTION =
-  'Stop scrolling — this 60-second mobility flow is what your body needs every morning. Save this for tomorrow. 💪 #MorningRoutine #Wellness';
-const STUB_HASHTAGS = ['#mobility', '#morningroutine', '#wellness', '#stretching', '#dailyhabits'];
-const AI_DELAY_MS = 2500;
 
 /**
  * Instagram packaging builder scaffold. Caption + hashtags + link + UTM
@@ -74,6 +76,12 @@ const HASHTAG_BANK_GROUPS: HashtagBankGroup[] = [
   styleUrl: './instagram-packaging.component.scss',
 })
 export class InstagramPackagingComponent {
+  private readonly contentState = inject(ContentStateService);
+  private readonly postStore = inject(PostDetailStore);
+  private readonly aiAssist = inject(AiAssistApiService);
+  private readonly toast = inject(ToastService);
+  private readonly destroyRef = inject(DestroyRef);
+
   /* v8 ignore next 9 — Angular's signal-input default-value branches are
      structurally unreachable from TestBed (path 1 of each `input(default)`
      declaration never increments regardless of test setup). */
@@ -124,27 +132,61 @@ export class InstagramPackagingComponent {
 
   protected onGenerateCaption(): void {
     if (this.aiGeneratingCaption() || this.disabled()) return;
-    this.aiGeneratingCaption.set(true);
-    setTimeout(() => {
-      this.applyCaption(STUB_CAPTION);
-      this.aiGeneratingCaption.set(false);
-    }, AI_DELAY_MS);
+    this.runAssist('post-caption', this.aiGeneratingCaption, undefined, (values) => {
+      const v = values[0]?.trim();
+      if (v) this.applyCaption(v);
+    });
   }
 
   protected onSuggestHashtags(): void {
     if (this.aiSuggestingHashtags() || this.disabled()) return;
-    this.aiSuggestingHashtags.set(true);
-    setTimeout(() => {
-      // Appending each new tag to the caption flows through the
-      // caption-is-source-of-truth model: chips re-derive from the
-      // updated caption automatically.
-      const merged = [...this.hashtags()];
-      for (const tag of STUB_HASHTAGS) {
-        if (!merged.includes(tag)) merged.push(tag);
+    this.runAssist('post-hashtags', this.aiSuggestingHashtags, undefined, (values) => {
+      // Append-merge with the current chip list, case-insensitive dedupe.
+      // The caption stays the source of truth — onHashtagsChange routes
+      // through syncCaptionWithHashtags + applyCaption to keep them aligned.
+      const existing = this.hashtags();
+      const lowerSet = new Set(existing.map((t) => t.toLowerCase()));
+      const merged = [...existing];
+      for (const tag of values) {
+        const clean = tag.trim();
+        if (!clean) continue;
+        if (lowerSet.has(clean.toLowerCase())) continue;
+        merged.push(clean);
+        lowerSet.add(clean.toLowerCase());
       }
       this.onHashtagsChange(merged);
-      this.aiSuggestingHashtags.set(false);
-    }, AI_DELAY_MS);
+    });
+  }
+
+  private runAssist(
+    field: AiAssistFieldContract,
+    loading: ReturnType<typeof signal<boolean>>,
+    count: number | undefined,
+    apply: (values: string[]) => void,
+  ): void {
+    const item = this.postStore.item();
+    const workspaceId = this.contentState.workspaceId();
+    if (!item || !workspaceId) return;
+    loading.set(true);
+    this.aiAssist
+      .assist({
+        scope: 'content-item',
+        workspaceId,
+        refId: item.id,
+        field,
+        ...(count !== undefined ? { count } : {}),
+      })
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (res) => {
+          apply(res.values);
+          loading.set(false);
+        },
+        error: () => {
+          this.toast.showError('AI Assist failed. Please try again.');
+          loading.set(false);
+        },
+      });
   }
 
   protected toggleBank(): void {

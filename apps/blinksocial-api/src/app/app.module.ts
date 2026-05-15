@@ -12,6 +12,7 @@ import { OnboardingModule } from '../onboarding/onboarding.module';
 import { ContentItemsModule } from '../content-items/content-items.module';
 import { CalendarModule } from '../calendar/calendar.module';
 import { WizardAiModule } from '../wizard-ai/wizard-ai.module';
+import { AiAssistModule } from '../ai-assist/ai-assist.module';
 import { AngularSsrModule } from '../angular-ssr/angular-ssr.module';
 
 @Module({
@@ -27,6 +28,7 @@ import { AngularSsrModule } from '../angular-ssr/angular-ssr.module';
     ContentItemsModule,
     CalendarModule,
     WizardAiModule,
+    AiAssistModule,
     // AngularSsrModule must be last — it registers a catch-all middleware
     AngularSsrModule,
   ],

@@ -1,13 +1,47 @@
 import { TestBed } from '@angular/core/testing';
+import { Observable, of, throwError } from 'rxjs';
 import { ConceptDetailStore } from './concept-detail.store';
 import { ContentStateService } from '../../content-state.service';
 import { provideContentItemsApiStubs } from '../../content-items-api.test-util';
-import { AI_ASSIST_DELAY_MS } from '../../content.constants';
+import { AiAssistApiService } from '../../../../core/ai-assist/ai-assist.service';
+import { ToastService } from '../../../../core/toast/toast.service';
 import type {
   AudienceSegment,
   ContentItem,
   ContentPillar,
 } from '../../content.types';
+import type { AiAssistRequestContract } from '@blinksocial/contracts';
+
+interface AiAssistStub {
+  assist: ReturnType<typeof vi.fn>;
+  next: (values: string[]) => void;
+  error: () => void;
+  calls: AiAssistRequestContract[];
+}
+
+function buildAiAssistStub(): AiAssistStub {
+  const stub: AiAssistStub = {
+    assist: vi.fn(),
+    next: () => undefined,
+    error: () => undefined,
+    calls: [],
+  };
+  stub.assist.mockImplementation((req: AiAssistRequestContract) => {
+    stub.calls.push(req);
+    return of({ values: ['Generated value for ' + req.field] });
+  });
+  stub.next = (values: string[]) =>
+    stub.assist.mockImplementation((req: AiAssistRequestContract) => {
+      stub.calls.push(req);
+      return of({ values });
+    });
+  stub.error = () =>
+    stub.assist.mockImplementation((req: AiAssistRequestContract) => {
+      stub.calls.push(req);
+      return throwError(() => new Error('boom'));
+    });
+  return stub;
+}
 
 const PILLARS: ContentPillar[] = [
   { id: 'p1', name: 'P1', description: '', color: '#111' },
@@ -42,15 +76,29 @@ function makeItem(partial: Partial<ContentItem> = {}): ContentItem {
 function setup(item: ContentItem = makeItem()): {
   store: ConceptDetailStore;
   state: ContentStateService;
+  ai: AiAssistStub;
+  toastErrors: string[];
 } {
-  TestBed.configureTestingModule({ providers: [...provideContentItemsApiStubs(), ContentStateService, ConceptDetailStore] });
+  const ai = buildAiAssistStub();
+  const toastErrors: string[] = [];
+  const toastStub = { showError: (m: string) => toastErrors.push(m), showSuccess: () => undefined };
+  TestBed.configureTestingModule({
+    providers: [
+      ...provideContentItemsApiStubs(),
+      ContentStateService,
+      ConceptDetailStore,
+      { provide: AiAssistApiService, useValue: ai },
+      { provide: ToastService, useValue: toastStub },
+    ],
+  });
   const state = TestBed.inject(ContentStateService);
+  state.workspaceId.set('test-ws');
   state.setItems([item]);
   state.pillars.set(PILLARS);
   state.segments.set(SEGMENTS);
   const store = TestBed.inject(ConceptDetailStore);
   store.setItemId(item.id);
-  return { store, state };
+  return { store, state, ai, toastErrors };
 }
 
 describe('ConceptDetailStore — item resolution', () => {
@@ -186,42 +234,78 @@ describe('ConceptDetailStore — field mutations', () => {
 });
 
 describe('ConceptDetailStore — AI', () => {
-  beforeEach(() => vi.useFakeTimers());
-  afterEach(() => vi.useRealTimers());
+  it('assistDescription calls API and persists values[0] on success', () => {
+    const { store, ai } = setup();
+    ai.next(['Brand-shaped description.']);
+    store.assistDescription();
+    expect(ai.calls[0]).toMatchObject({
+      scope: 'content-item',
+      workspaceId: 'test-ws',
+      refId: 'c-1',
+      field: 'concept-description',
+    });
+    expect(store.isAssistingDescription()).toBe(false);
+    expect(store.item()?.description).toBe('Brand-shaped description.');
+  });
 
-  it('assistDescription flips flag, resolves with concept-shaped copy', () => {
-    const { store } = setup();
+  it('assistHook calls API with concept-hook-angle and persists', () => {
+    const { store, ai } = setup();
+    ai.next(['Catchy hook here.']);
+    store.assistHook();
+    expect(ai.calls[0]).toMatchObject({ field: 'concept-hook-angle' });
+    expect(store.isAssistingHook()).toBe(false);
+    expect(store.item()?.hook).toBe('Catchy hook here.');
+  });
+
+  it('shows toast and leaves field unchanged on HTTP error', () => {
+    const item = makeItem({ description: 'original-desc', hook: 'original-hook' });
+    const { store, ai, toastErrors } = setup(item);
+    ai.error();
+    store.assistDescription();
+    expect(toastErrors).toHaveLength(1);
+    expect(toastErrors[0]).toMatch(/AI Assist failed/i);
+    expect(store.isAssistingDescription()).toBe(false);
+    expect(store.item()?.description).toBe('original-desc');
+  });
+
+  it('is idempotent while in-flight', () => {
+    const { store, ai } = setup();
+    // First call leaves the observable un-emitted to simulate in-flight state.
+    let resolve: ((v: { values: string[] }) => void) | null = null;
+    ai.assist.mockImplementationOnce(
+      () =>
+        new Observable<{ values: string[] }>((sub) => {
+          resolve = (v) => {
+            sub.next(v);
+            sub.complete();
+          };
+          return () => undefined;
+        }),
+    );
     store.assistDescription();
     expect(store.isAssistingDescription()).toBe(true);
-    vi.advanceTimersByTime(AI_ASSIST_DELAY_MS);
-    expect(store.isAssistingDescription()).toBe(false);
-    expect(store.item()?.description.length).toBeGreaterThan(0);
-  });
-
-  it('assistHook flips flag, resolves', () => {
-    const { store } = setup();
-    store.assistHook();
-    expect(store.isAssistingHook()).toBe(true);
-    vi.advanceTimersByTime(AI_ASSIST_DELAY_MS);
-    expect(store.isAssistingHook()).toBe(false);
-    expect(store.item()?.hook).toBeTruthy();
-  });
-
-  it('assist is idempotent while in-flight', () => {
-    const { store } = setup();
     store.assistDescription();
-    store.assistDescription();
-    vi.advanceTimersByTime(AI_ASSIST_DELAY_MS);
+    expect(ai.assist).toHaveBeenCalledTimes(1);
+    resolve!({ values: ['done'] });
     expect(store.isAssistingDescription()).toBe(false);
   });
 
-  it('assist is a no-op when item is null', () => {
-    const { store } = setup();
+  it('is a no-op when item is null', () => {
+    const { store, ai } = setup();
     store.setItemId('missing');
     store.assistDescription();
     store.assistHook();
+    expect(ai.assist).not.toHaveBeenCalled();
     expect(store.isAssistingDescription()).toBe(false);
     expect(store.isAssistingHook()).toBe(false);
+  });
+
+  it('is a no-op when workspaceId is empty', () => {
+    const { store, state, ai } = setup();
+    state.workspaceId.set('');
+    store.assistDescription();
+    expect(ai.assist).not.toHaveBeenCalled();
+    expect(store.isAssistingDescription()).toBe(false);
   });
 });
 
@@ -667,24 +751,17 @@ describe('ConceptDetailStore \u2014 nullish-fallback branches', () => {
     expect(store.hasTargets()).toBe(false);
   });
 
-  it('assistDescription: handles item with missing objective (?? "" fallback)', () => {
+  it('assistDescription: works when item has no objective', () => {
     const { store } = setup(
       makeItem({ objective: undefined, title: 'Test', description: 'd'.repeat(60) }),
     );
-    vi.useFakeTimers();
     store.assistDescription();
-    vi.runAllTimers();
-    // Should complete without throwing
     expect(store.isAssistingDescription()).toBe(false);
-    vi.useRealTimers();
   });
 
-  it('assistHook: handles item with missing objective (?? "" fallback)', () => {
+  it('assistHook: works when item has no objective', () => {
     const { store } = setup(makeItem({ objective: undefined, title: 'Test' }));
-    vi.useFakeTimers();
     store.assistHook();
-    vi.runAllTimers();
     expect(store.isAssistingHook()).toBe(false);
-    vi.useRealTimers();
   });
 });

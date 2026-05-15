@@ -1,7 +1,14 @@
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, DestroyRef, computed, inject, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
-import type { DraftShotItemContract } from '@blinksocial/contracts';
+import type {
+  AiAssistFieldContract,
+  DraftShotItemContract,
+} from '@blinksocial/contracts';
 import { PostDetailStore } from '../../../post-detail.store';
+import { ContentStateService } from '../../../../../content-state.service';
+import { AiAssistApiService } from '../../../../../../../core/ai-assist/ai-assist.service';
+import { ToastService } from '../../../../../../../core/toast/toast.service';
 import { ShotListComponent } from '../_shared/shot-list/shot-list.component';
 import { SectionLabelComponent } from '../_shared/section-label/section-label.component';
 import { AiButtonComponent } from '../_shared/ai-button/ai-button.component';
@@ -19,12 +26,6 @@ const TARGET_DURATIONS: PillOption[] = [
   { value: '3m', label: '3m' },
 ];
 
-const HOOK_BANK_STUB = [
-  'Most people get this completely wrong — here\'s what actually works.',
-  'If you\'ve ever felt stuck on this, you\'re not alone — and the fix is simpler than you think.',
-  'Stop scrolling. This 30-second tip will change how you approach this forever.',
-];
-
 @Component({
   selector: 'app-video-builder',
   imports: [
@@ -39,6 +40,10 @@ const HOOK_BANK_STUB = [
 })
 export class VideoBuilderComponent {
   protected readonly store = inject(PostDetailStore);
+  private readonly contentState = inject(ContentStateService);
+  private readonly aiAssist = inject(AiAssistApiService);
+  private readonly toast = inject(ToastService);
+  private readonly destroyRef = inject(DestroyRef);
 
   protected readonly draft = this.store.videoDraft;
   protected readonly disabled = computed(
@@ -101,15 +106,11 @@ export class VideoBuilderComponent {
   }
 
   protected onHookBank(): void {
-    if (this.disabled()) return;
-    this.hookBankLoading.set(true);
-    // Simulate the prototype's mock-AI delay so the loading state is visible
-    // and the focus/state stays predictable.
-    setTimeout(() => {
-      this.store.setVideoHookBank(HOOK_BANK_STUB);
+    if (this.disabled() || this.hookBankLoading()) return;
+    this.runAssist('post-script-hook', this.hookBankLoading, 3, (values) => {
+      this.store.setVideoHookBank(values);
       this.hookBankOpen.set(true);
-      this.hookBankLoading.set(false);
-    }, 600);
+    });
   }
 
   protected onApplyHookFromBank(hook: string): void {
@@ -121,23 +122,50 @@ export class VideoBuilderComponent {
   }
 
   protected onBodyAssist(): void {
-    if (this.disabled()) return;
-    this.bodyAiLoading.set(true);
-    setTimeout(() => {
-      this.store.setVideoBody(
-        'Step 1: Start with the core principle — it’s simpler than you think.\n\nStep 2: Apply it consistently for at least 14 days before judging the results.\n\nStep 3: Track your progress and adjust as you learn what works.',
-      );
-      this.bodyAiLoading.set(false);
-    }, 600);
+    if (this.disabled() || this.bodyAiLoading()) return;
+    this.runAssist('post-script-body', this.bodyAiLoading, undefined, (values) => {
+      const v = values[0]?.trim();
+      if (v) this.store.setVideoBody(v);
+    });
   }
 
   protected onCtaAssist(): void {
-    if (this.disabled()) return;
-    this.ctaAiLoading.set(true);
-    setTimeout(() => {
-      this.store.setVideoCta('Save this for later and share it with someone who needs it. 👇');
-      this.ctaAiLoading.set(false);
-    }, 600);
+    if (this.disabled() || this.ctaAiLoading()) return;
+    this.runAssist('post-script-cta', this.ctaAiLoading, undefined, (values) => {
+      const v = values[0]?.trim();
+      if (v) this.store.setVideoCta(v);
+    });
+  }
+
+  private runAssist(
+    field: AiAssistFieldContract,
+    loading: ReturnType<typeof signal<boolean>>,
+    count: number | undefined,
+    apply: (values: string[]) => void,
+  ): void {
+    const item = this.store.item();
+    const workspaceId = this.contentState.workspaceId();
+    if (!item || !workspaceId) return;
+    loading.set(true);
+    this.aiAssist
+      .assist({
+        scope: 'content-item',
+        workspaceId,
+        refId: item.id,
+        field,
+        ...(count !== undefined ? { count } : {}),
+      })
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (res) => {
+          apply(res.values);
+          loading.set(false);
+        },
+        error: () => {
+          this.toast.showError('AI Assist failed. Please try again.');
+          loading.set(false);
+        },
+      });
   }
 
   protected toggleBRoll(): void {
