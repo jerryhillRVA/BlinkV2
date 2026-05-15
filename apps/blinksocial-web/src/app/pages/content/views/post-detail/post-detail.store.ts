@@ -20,6 +20,7 @@ import type {
   DraftCarouselSlideContract,
   DraftSequenceBlockContract,
   DraftShotItemContract,
+  DraftUploadedAssetContract,
   PackagingFacebookContract,
   PackagingInstagramContract,
   PackagingLinkedInContract,
@@ -504,8 +505,22 @@ export class PostDetailStore {
   setVideoShotList(v: DraftShotItemContract[]): void {
     this.persistVideoDraft({ shotList: v });
   }
-  setVideoCoverAssetRef(v: string | undefined): void {
-    this.persistVideoDraft({ coverAssetRef: v });
+  setVideoUploadedAssets(v: DraftUploadedAssetContract[]): void {
+    this.persistVideoDraft({ uploadedAssets: v });
+  }
+  /**
+   * #139: atomic update of the upload pool AND the shot list in a
+   * single saveItem call. Used by the cascade-on-remove flow in
+   * `<app-video-builder>`: when an asset is removed from the pool, any
+   * shot referencing it must be cleared in the SAME persist op,
+   * otherwise the async PUTs race and the second one reads a stale
+   * cache snapshot that re-introduces the removed asset.
+   */
+  setVideoUploadedAssetsAndShotList(
+    assets: DraftUploadedAssetContract[],
+    shots: DraftShotItemContract[],
+  ): void {
+    this.persistVideoDraft({ uploadedAssets: assets, shotList: shots });
   }
 
   // VIDEO_LONG setters

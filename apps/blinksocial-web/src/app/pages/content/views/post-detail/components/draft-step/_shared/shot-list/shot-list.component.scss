@@ -8,40 +8,6 @@
   gap: 12px;
 }
 
-// ── Top-level asset slot ─────────────────────────────────────────────────────
-
-.asset-slot {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  padding: 12px;
-  background: var(--blink-surface);
-  border: 1px solid var(--blink-outline-variant);
-  border-radius: 8px;
-}
-
-.asset-slot-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  flex-wrap: wrap;
-}
-
-.asset-slot-actions {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  flex-wrap: wrap;
-}
-
-.asset-empty {
-  margin: 0;
-  font-size: var(--blink-body-small);
-  font-style: italic;
-  color: var(--blink-on-surface-faint, #6b7280);
-}
-
 // ── Add shot / utility ghost button ──────────────────────────────────────────
 
 .ghost-btn {
@@ -177,18 +143,20 @@
 .add-shot-row {
   display: flex;
   align-items: center;
+  gap: 8px;
 }
 
-// ── Per-shot asset zone (dropzone-style wrapper) ────────────────────
+.add-shot-count {
+  margin-left: auto;
+  font-size: var(--blink-label-small);
+  color: var(--blink-on-surface-faint);
+}
+
+// ── Per-shot asset zone (#139: now a picker/chip slot) ──────────────
 //
-// Wraps the Attach-file button (or attached-asset chip) in a defined
-// region with its own border + padding. Matches the prototype's per-
-// shot asset slot:
-//
-//   - Empty: dashed gray-300 border on white. Reads as "this is a
-//     drop zone — drop or click to attach."
-//   - Attached: solid blue-200 border on blue-50. Reads as
-//     "something is here and lives in this slot."
+//   - Empty: native <select> with `Assign an asset…` placeholder.
+//     Background tinted to match the prototype's dashed-border slot.
+//   - Attached: chip with thumbnail + filename + clear.
 
 .shot-asset-zone {
   display: flex;
@@ -202,12 +170,46 @@
 
 .shot-asset-zone--empty {
   background: var(--blink-surface);
-  border: 1px dashed #d1d5db; // gray-300
+  border: 1px dashed var(--blink-outline-dashed);
 }
 
 .shot-asset-zone--attached {
-  background: #eff6ff; // blue-50
-  border: 1px solid #bfdbfe; // blue-200
+  background: var(--blink-status-info-bg);
+  border: 1px solid var(--blink-status-info-border);
+}
+
+.shot-asset-picker {
+  flex: 1 1 auto;
+  min-width: 0;
+  height: 32px;
+  padding: 0 10px;
+  border: 1px solid var(--blink-outline-variant);
+  border-radius: 6px;
+  background: var(--blink-surface);
+  font-size: var(--blink-body-small);
+  color: var(--blink-on-surface);
+
+  &:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--blink-brand-primary);
+    outline-offset: 0;
+  }
+}
+
+.asset-chip-thumb {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 4px;
+  background: var(--blink-surface-variant);
+  color: var(--blink-on-surface-faint);
+  flex-shrink: 0;
 }
 
 // ── Empty state ──────────────────────────────────────────────────────────────

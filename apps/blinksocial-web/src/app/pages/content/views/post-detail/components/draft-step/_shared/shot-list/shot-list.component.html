@@ -1,60 +1,8 @@
 <div class="shot-list">
-  <!-- Top-level Asset slot. When empty: "Attach file" + "AI Generate
-       Shot List" buttons + "No asset attached yet" placeholder. When
-       attached: filename chip + remove button. The cover asset is
-       independent from each shot's per-shot assetRef. -->
-  <div class="asset-slot">
-    <div class="asset-slot-row">
-      <app-section-label label="Asset" />
-      @if (!coverAssetRef) {
-        <div class="asset-slot-actions">
-          <label class="ghost-btn" [class.is-disabled]="disabled">
-            <input
-              type="file"
-              class="visually-hidden"
-              [disabled]="disabled"
-              (change)="onCoverFile($event)"
-            />
-            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-              <path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l8.57-8.57A4 4 0 1 1 17.99 8.8L9.41 17.37a2 2 0 0 1-2.83-2.83l8.49-8.48"/>
-            </svg>
-            <span>Attach file</span>
-          </label>
-          <app-ai-button
-            label="AI Generate Shot List"
-            loadingLabel="Generating…"
-            [loading]="aiLoading()"
-            [disabled]="disabled"
-            (activate)="onAiGenerate()"
-          />
-        </div>
-      } @else {
-        <div class="asset-chip">
-          <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-            <path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l8.57-8.57A4 4 0 1 1 17.99 8.8L9.41 17.37a2 2 0 0 1-2.83-2.83l8.49-8.48"/>
-          </svg>
-          <span class="asset-chip-name">{{ coverAssetRef }}</span>
-          <button
-            type="button"
-            class="asset-chip-remove"
-            [disabled]="disabled"
-            aria-label="Remove attached asset"
-            (click)="onCoverClear()"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-              <path d="M18 6 6 18"/>
-              <path d="m6 6 12 12"/>
-            </svg>
-          </button>
-        </div>
-      }
-    </div>
-    @if (!coverAssetRef) {
-      <p class="asset-empty">No asset attached yet</p>
-    }
-  </div>
-
-  <!-- Add Shot button lives BETWEEN the asset slot and the shot rows. -->
+  <!-- #139: top-level cover-asset slot removed. Add Shot + AI Generate
+       Shot List now live in a single row at the top. Asset uploads happen
+       in the sibling <app-upload-assets> card; each shot row's picker
+       draws from that shared pool. -->
   <div class="add-shot-row">
     <button
       type="button"
@@ -67,6 +15,14 @@
       </svg>
       <span>Add shot</span>
     </button>
+    <app-ai-button
+      label="AI Generate Shot List"
+      loadingLabel="Generating…"
+      [loading]="aiLoading()"
+      [disabled]="disabled"
+      (activate)="onAiGenerate()"
+    />
+    <span class="add-shot-count" aria-hidden="true">{{ countLabel }}</span>
   </div>
 
   @if (shots.length === 0) {
@@ -150,35 +106,48 @@
             (input)="onDescriptionChange(shot.id, $event)"
           ></textarea>
 
-          <!-- Per-shot asset sub-row, wrapped in a dropzone-style
-               container: dashed border + soft padding when empty
-               (matches the prototype's `border-dashed border-gray-300`
-               attach-zone), solid blue-tinted background when
-               attached. -->
+          <!-- #139: per-shot asset picker. Pulls from the shared
+               pool (availableAssets). Same asset can be assigned to
+               multiple shots — picker does NOT filter out used ones.
+               Pool-empty → select rendered disabled; shot stays
+               editable (warning-only gating from <app-upload-assets>). -->
           <div
             class="shot-asset-zone"
             [class.shot-asset-zone--empty]="!shot.assetRef"
             [class.shot-asset-zone--attached]="!!shot.assetRef"
           >
             @if (!shot.assetRef) {
-              <label class="ghost-btn ghost-btn--sm" [class.is-disabled]="disabled">
-                <input
-                  type="file"
-                  class="visually-hidden"
-                  [disabled]="disabled"
-                  (change)="onShotFile(shot.id, $event)"
-                />
-                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                  <path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l8.57-8.57A4 4 0 1 1 17.99 8.8L9.41 17.37a2 2 0 0 1-2.83-2.83l8.49-8.48"/>
-                </svg>
-                <span>Attach file</span>
-              </label>
+              <select
+                class="shot-asset-picker"
+                [disabled]="disabled || poolEmpty"
+                [attr.aria-label]="'Assign an asset to shot ' + (i + 1)"
+                [value]="''"
+                (change)="onShotAssetSelect(shot.id, $event)"
+              >
+                <option value="" disabled selected>
+                  {{ poolEmpty ? 'Upload an asset first…' : 'Assign an asset…' }}
+                </option>
+                @for (asset of availableAssets; track asset.id) {
+                  <option [value]="asset.id">{{ asset.filename }}</option>
+                }
+              </select>
             } @else {
+              @let assigned = assetById(shot.assetRef);
               <div class="asset-chip asset-chip--sm">
-                <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                  <path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l8.57-8.57A4 4 0 1 1 17.99 8.8L9.41 17.37a2 2 0 0 1-2.83-2.83l8.49-8.48"/>
-                </svg>
-                <span class="asset-chip-name">{{ shot.assetRef }}</span>
+                <span class="asset-chip-thumb" aria-hidden="true">
+                  @if (isVideoMime(assigned?.mimeType)) {
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="m22 8-6 4 6 4V8Z"/>
+                      <rect width="14" height="12" x="2" y="6" rx="2" ry="2"/>
+                    </svg>
+                  } @else {
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/>
+                      <polyline points="14 2 14 8 20 8"/>
+                    </svg>
+                  }
+                </span>
+                <span class="asset-chip-name">{{ assigned?.filename ?? shot.assetRef }}</span>
                 <button
                   type="button"
                   class="asset-chip-remove"

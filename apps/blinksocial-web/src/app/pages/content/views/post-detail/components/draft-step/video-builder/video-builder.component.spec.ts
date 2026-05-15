@@ -255,12 +255,72 @@ describe('VideoBuilderComponent', () => {
     expect(fixture.nativeElement.querySelector('.hook-bank')).toBeNull();
   });
 
-  it('cover asset ref change routes to setVideoCoverAssetRef', () => {
+  // ── #139: Upload Assets pool + cascade-clear on remove ──────────────
+
+  it('#139: <app-upload-assets> mounts above <app-shot-list>', () => {
+    const { fixture } = setup();
+    const upload = fixture.nativeElement.querySelector('app-upload-assets');
+    const shotList = fixture.nativeElement.querySelector('app-shot-list');
+    expect(upload).not.toBeNull();
+    expect(shotList).not.toBeNull();
+    // documentPosition: upload comes before shotList in the DOM.
+    expect(
+      upload.compareDocumentPosition(shotList) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+  });
+
+  it('#139: onAssetsAdded appends to the pool', () => {
     const { fixture, store } = setup();
-    fixture.componentInstance['onCoverAssetRefChange']('cover.png');
-    expect(store.videoDraft().coverAssetRef).toBe('cover.png');
-    fixture.componentInstance['onCoverAssetRefChange'](undefined);
-    expect(store.videoDraft().coverAssetRef).toBeUndefined();
+    expect(store.videoDraft().uploadedAssets ?? []).toEqual([]);
+    fixture.componentInstance['onAssetsAdded']([
+      { id: 'a1', filename: 'clip.mp4', mimeType: 'video/mp4' },
+    ]);
+    expect(store.videoDraft().uploadedAssets).toEqual([
+      { id: 'a1', filename: 'clip.mp4', mimeType: 'video/mp4' },
+    ]);
+    fixture.componentInstance['onAssetsAdded']([
+      { id: 'a2', filename: 'cut.mov', mimeType: 'video/quicktime' },
+    ]);
+    expect(store.videoDraft().uploadedAssets?.map((a) => a.id)).toEqual([
+      'a1',
+      'a2',
+    ]);
+  });
+
+  it('#139: onAssetRemoved drops from the pool AND clears matching shot refs (atomic)', () => {
+    const { fixture, store } = setup();
+    // Seed: pool of 2 assets, 2 shots each referencing a different asset.
+    store.setVideoUploadedAssetsAndShotList(
+      [
+        { id: 'a1', filename: 'a.mp4', mimeType: 'video/mp4' },
+        { id: 'a2', filename: 'b.mov', mimeType: 'video/quicktime' },
+      ],
+      [
+        { id: 's1', type: 'Shot', description: '', duration: '5s', assetRef: 'a1' },
+        { id: 's2', type: 'Shot', description: '', duration: '5s', assetRef: 'a2' },
+      ],
+    );
+    fixture.componentInstance['onAssetRemoved']('a1');
+    expect(store.videoDraft().uploadedAssets?.map((a) => a.id)).toEqual(['a2']);
+    const shots = store.videoDraft().shotList ?? [];
+    expect(shots[0].assetRef).toBeUndefined();
+    expect(shots[1].assetRef).toBe('a2');
+  });
+
+  it('#139: onAssetRemoved skips the shot-clear when no shot referenced the removed asset', () => {
+    const { fixture, store } = setup();
+    store.setVideoUploadedAssets([
+      { id: 'a1', filename: 'a.mp4', mimeType: 'video/mp4' },
+      { id: 'a2', filename: 'b.mov', mimeType: 'video/quicktime' },
+    ]);
+    store.setVideoShotList([
+      { id: 's1', type: 'Shot', description: '', duration: '5s', assetRef: 'a1' },
+    ]);
+    const shotListBefore = store.videoDraft().shotList;
+    fixture.componentInstance['onAssetRemoved']('a2');
+    expect(store.videoDraft().uploadedAssets?.map((a) => a.id)).toEqual(['a1']);
+    // Shot list reference identity is unchanged (no re-emit happened).
+    expect(store.videoDraft().shotList).toBe(shotListBefore);
   });
 
   it('ctaTypeLabel formats the brief CTA type to upper-kebab-removed form', () => {
