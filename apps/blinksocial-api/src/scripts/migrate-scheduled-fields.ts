@@ -118,8 +118,15 @@ export function migrateContentItem(
     delete nextEntry.scheduledDate;
     changed = true;
   }
-  if (nextEntry.scheduledAt !== nextItem.scheduledAt) {
-    nextEntry.scheduledAt = nextItem.scheduledAt ?? null;
+  // Coalesce both sides to `null` for the comparison so a `scheduledAt: null`
+  // entry paired with a missing `scheduledAt` key on the item file (the common
+  // pre-#150 shape for non-scheduled items) doesn't keep tripping `changed`
+  // every time — the canonical absence is `null`, regardless of whether the
+  // original was a missing key or an explicit `null`.
+  const desiredScheduledAt = nextItem.scheduledAt ?? null;
+  const currentScheduledAt = nextEntry.scheduledAt ?? null;
+  if (currentScheduledAt !== desiredScheduledAt) {
+    nextEntry.scheduledAt = desiredScheduledAt;
     changed = true;
   }
   if (nextEntry.status !== nextItem.status && nextItem.status !== undefined) {
