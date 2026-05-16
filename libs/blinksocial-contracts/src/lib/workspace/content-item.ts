@@ -615,6 +615,32 @@ export interface ContentItemContract {
   targetPublishWindow?: TargetPublishWindowContract;
   scheduledAt?: string | null;
   /**
+   * #140 (Publish Flow): ISO 8601 timestamp set when a post transitions
+   * to `status: 'published'`. Source paths:
+   *  - Publish Now → set at Finish click.
+   *  - Export Packet (no date) → set at Finish click.
+   *  - Auto-transition → set to the transition timestamp when a
+   *    `scheduled` post crosses its `scheduledAt`.
+   *
+   * Stays unset on a `published` legacy item; the Calendar silently
+   * skips events for such items (no fallback).
+   */
+  publishedAt?: string;
+  /**
+   * #140: `true` when the post was finished via the Export Packet
+   * action. Drives the gray "Exported" pill on pipeline cards,
+   * card detail screen, and calendar events. Preserved across the
+   * Scheduled → Published auto-transition.
+   */
+  isExported?: boolean;
+  /**
+   * #140: Live URL of the published post. Auto-set to a mock URL on
+   * Publish Now (pattern: `https://www.<platform>.com/p/mock-<id>/`).
+   * Stays unset on Export Packet finish until the user pastes the real
+   * URL in the Published-detail screen (delivered in #146).
+   */
+  livePostUrl?: string;
+  /**
    * Per-item milestone date overrides keyed by milestone type. Each entry
    * is an exception to the workspace deadline template at
    * `settings/calendar.json`. The template stays untouched; rendering code

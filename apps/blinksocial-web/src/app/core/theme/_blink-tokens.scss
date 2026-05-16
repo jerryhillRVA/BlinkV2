@@ -220,6 +220,24 @@
   --blink-pill-status-published-bg: #d1fae5;
   --blink-pill-status-published-text: #065f46;
   --blink-pill-status-published-border: #a7f3d0;
+
+  // #140 Publish Flow — Scheduled card (light blue tint).
+  --blink-scheduled-card-bg: #eff6ff;
+  --blink-scheduled-card-border: #dbeafe;
+  --blink-scheduled-card-accent: #2563eb;
+  --blink-scheduled-pill-bg: #dbeafe;
+  --blink-scheduled-pill-text: #1d4ed8;
+
+  // #140 Publish Flow — Published card (faint green tint).
+  --blink-published-card-bg: #f0fdf4;
+  --blink-published-card-border: #bbf7d0;
+  --blink-published-card-accent: #15803d;
+  --blink-published-pill-bg: #d1fae5;
+  --blink-published-pill-text: #065f46;
+
+  // #140 Publish Flow — Exported pill (neutral gray; both variants).
+  --blink-exported-pill-bg: #f3f4f6;
+  --blink-exported-pill-text: #4b5563;
 }
 
 @mixin dark-tokens {
@@ -415,4 +433,22 @@
   --blink-pill-status-published-bg: rgba(16, 185, 129, 0.18);
   --blink-pill-status-published-text: #6ee7b7;
   --blink-pill-status-published-border: rgba(16, 185, 129, 0.4);
+
+  // #140 Publish Flow — Scheduled card (dark mode).
+  --blink-scheduled-card-bg: rgba(59, 130, 246, 0.10);
+  --blink-scheduled-card-border: rgba(59, 130, 246, 0.30);
+  --blink-scheduled-card-accent: #93c5fd;
+  --blink-scheduled-pill-bg: rgba(59, 130, 246, 0.18);
+  --blink-scheduled-pill-text: #bfdbfe;
+
+  // #140 Publish Flow — Published card (dark mode).
+  --blink-published-card-bg: rgba(16, 185, 129, 0.10);
+  --blink-published-card-border: rgba(16, 185, 129, 0.30);
+  --blink-published-card-accent: #86efac;
+  --blink-published-pill-bg: rgba(16, 185, 129, 0.20);
+  --blink-published-pill-text: #6ee7b7;
+
+  // #140 Publish Flow — Exported pill (dark mode).
+  --blink-exported-pill-bg: rgba(255, 255, 255, 0.10);
+  --blink-exported-pill-text: #d1d5db;
 }

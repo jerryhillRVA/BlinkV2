@@ -38,6 +38,12 @@ export interface CalendarContentItemContract {
   status: CalendarItemStatusContract;
   owner: string;
   scheduledAt: string | null;
+  /** #140: set when status='published'. Calendar derives its event date
+   *  from this field for published items (not `scheduledAt`). */
+  publishedAt?: string;
+  /** #140: true when the post was finished via Export Packet. Calendar
+   *  renders an additional gray Exported badge alongside the event. */
+  isExported?: boolean;
   flags?: CalendarItemFlagsContract;
   blockers?: string[];
 }

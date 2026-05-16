@@ -45,6 +45,9 @@ export class ContentItem implements ContentItemContract {
   riskLevel?: RiskLevelContract;
   targetPublishWindow?: TargetPublishWindowContract;
   scheduledAt?: string;
+  publishedAt?: string;
+  isExported?: boolean;
+  livePostUrl?: string;
   production?: ProductionContract;
   archived?: boolean;
   tags?: string[];
