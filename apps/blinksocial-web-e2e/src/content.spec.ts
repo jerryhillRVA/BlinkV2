@@ -1,5 +1,6 @@
 import { test, expect } from '@playwright/test';
 import { mockAuthenticatedUser } from './helpers/login';
+import { mockHiveContent } from './helpers/content-mocks';
 
 test.describe('Content Page — type picker + drawer', () => {
   test.beforeEach(async ({ page }) => {
@@ -116,6 +117,9 @@ test.describe('Content Page — type picker + drawer', () => {
 test.describe('Pipeline column rename to "Scheduled" (#141)', () => {
   test.beforeEach(async ({ page }) => {
     await mockAuthenticatedUser(page);
+    // TC-E2 relies on the Scheduled lane containing the seed's prod2 entry
+    // (status: scheduled), so install the hive fixture before navigation.
+    await mockHiveContent(page);
     await page.goto('/workspace/hive-collective/content');
     await expect(page.locator('app-pipeline-view')).toBeVisible();
   });
