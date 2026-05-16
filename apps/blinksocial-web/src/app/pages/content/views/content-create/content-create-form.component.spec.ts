@@ -1,5 +1,8 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { of } from 'rxjs';
 import { ContentCreateFormComponent } from './content-create-form.component';
+import { GeneratedIdeasApiService } from '../../../../core/generated-ideas/generated-ideas.service';
+import { ToastService } from '../../../../core/toast/toast.service';
 import type {
   AudienceSegment,
   ContentCreatePayload,
@@ -7,6 +10,20 @@ import type {
   IdeaPayload,
 } from '../../content.types';
 import { AI_SIMULATION_DELAY_MS } from '../../content.constants';
+
+function ideaApiMock() {
+  return {
+    provide: GeneratedIdeasApiService,
+    useValue: { generate: vi.fn().mockReturnValue(of({ ideas: [] })) },
+  };
+}
+
+function toastMock() {
+  return {
+    provide: ToastService,
+    useValue: { showError: vi.fn(), showSuccess: vi.fn() },
+  };
+}
 
 const PILLARS: ContentPillar[] = [
   { id: 'p1', name: 'Alpha', description: '', color: '#111' },
@@ -17,7 +34,10 @@ const SEGMENTS: AudienceSegment[] = [
 ];
 
 function make(): ComponentFixture<ContentCreateFormComponent> {
-  TestBed.configureTestingModule({ imports: [ContentCreateFormComponent] });
+  TestBed.configureTestingModule({
+    imports: [ContentCreateFormComponent],
+    providers: [ideaApiMock(), toastMock()],
+  });
   const fixture = TestBed.createComponent(ContentCreateFormComponent);
   fixture.componentRef.setInput('pillars', PILLARS);
   fixture.componentRef.setInput('segments', SEGMENTS);
@@ -27,7 +47,10 @@ function make(): ComponentFixture<ContentCreateFormComponent> {
 
 describe('ContentCreateFormComponent', () => {
   it('applies initialType=concept when provided and renders Concept form on open', () => {
-    TestBed.configureTestingModule({ imports: [ContentCreateFormComponent] });
+    TestBed.configureTestingModule({
+      imports: [ContentCreateFormComponent],
+      providers: [ideaApiMock(), toastMock()],
+    });
     const fixture = TestBed.createComponent(ContentCreateFormComponent);
     fixture.componentRef.setInput('pillars', PILLARS);
     fixture.componentRef.setInput('segments', SEGMENTS);
@@ -42,7 +65,10 @@ describe('ContentCreateFormComponent', () => {
   });
 
   it('applies initialType=production-brief when provided', () => {
-    TestBed.configureTestingModule({ imports: [ContentCreateFormComponent] });
+    TestBed.configureTestingModule({
+      imports: [ContentCreateFormComponent],
+      providers: [ideaApiMock(), toastMock()],
+    });
     const fixture = TestBed.createComponent(ContentCreateFormComponent);
     fixture.componentRef.setInput('pillars', PILLARS);
     fixture.componentRef.setInput('segments', SEGMENTS);

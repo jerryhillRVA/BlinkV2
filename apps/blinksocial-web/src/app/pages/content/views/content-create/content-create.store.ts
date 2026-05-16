@@ -1,4 +1,7 @@
 import { DestroyRef, Injectable, computed, inject, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { GeneratedIdeasApiService } from '../../../../core/generated-ideas/generated-ideas.service';
+import { ToastService } from '../../../../core/toast/toast.service';
 import type {
   AudienceSegment,
   BriefPayload,
@@ -31,7 +34,6 @@ import {
   assistDescriptionFor,
   assistHookFor,
   generateConceptFromObjective,
-  seedGeneratedIdeas,
 } from './content-create.ai';
 
 export interface FormState {
@@ -95,10 +97,13 @@ export const INITIAL_FORM_STATE: FormState = {
 @Injectable()
 export class ContentCreateStore {
   private readonly destroyRef = inject(DestroyRef);
-  /* v8 ignore next 3 — V8's function-call-throws branches on input()/signal() declarations are unreachable (Angular class-field init time; ESM exports not spy-able) */
+  private readonly generatedIdeasApi = inject(GeneratedIdeasApiService);
+  private readonly toast = inject(ToastService);
+  /* v8 ignore next 4 — V8's function-call-throws branches on input()/signal() declarations are unreachable (Angular class-field init time; ESM exports not spy-able) */
   private readonly _state = signal<FormState>({ ...INITIAL_FORM_STATE });
   private readonly _pillars = signal<ContentPillar[]>([]);
   private readonly _segments = signal<AudienceSegment[]>([]);
+  private readonly _workspaceId = signal<string | null>(null);
 
   readonly state = this._state.asReadonly();
   readonly pillars = this._pillars.asReadonly();
@@ -108,6 +113,10 @@ export class ContentCreateStore {
   setContext(pillars: ContentPillar[], segments: AudienceSegment[]): void {
     this._pillars.set(pillars);
     this._segments.set(segments);
+  }
+
+  setWorkspaceId(id: string | null): void {
+    this._workspaceId.set(id);
   }
 
   patch(partial: Partial<FormState>): void {
@@ -316,19 +325,35 @@ export class ContentCreateStore {
   }
 
   generateIdeas(): void {
+    const workspaceId = this._workspaceId();
+    if (!workspaceId) return;
     const s = this._state();
-    if (s.generatePillarIds.length === 0) return;
-    this.patch({ isGeneratingIdeas: true });
-    safeTimeout(
-      () => {
-        this.patch({
-          generatedIdeas: seedGeneratedIdeas(s.generatePillarIds),
-          isGeneratingIdeas: false,
-        });
-      },
-      AI_SIMULATION_DELAY_MS,
-      this.destroyRef,
-    );
+    if (s.isGeneratingIdeas || s.generatePillarIds.length === 0) return;
+    this.patch({
+      isGeneratingIdeas: true,
+      generatedIdeas: [],
+      selectedGeneratedIds: [],
+    });
+    this.generatedIdeasApi
+      .generate({ workspaceId, pillarIds: [...s.generatePillarIds] })
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (res) => {
+          this.patch({
+            generatedIdeas: res.ideas,
+            isGeneratingIdeas: false,
+          });
+        },
+        error: () => {
+          this.toast.showError(
+            'AI generation failed. Please try again in a moment.',
+          );
+          this.patch({
+            generatedIdeas: [],
+            isGeneratingIdeas: false,
+          });
+        },
+      });
   }
 
   // --- payload builders ----------------------------------------------------

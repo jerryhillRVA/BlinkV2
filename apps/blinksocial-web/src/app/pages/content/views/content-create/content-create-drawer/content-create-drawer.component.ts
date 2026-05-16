@@ -32,6 +32,7 @@ export class ContentCreateDrawerComponent implements AfterViewInit {
   private readonly vcr = inject(ViewContainerRef);
   private readonly destroyRef = inject(DestroyRef);
 
+  @Input() workspaceId = '';
   @Input({ required: true }) pillars: ContentPillar[] = [];
   @Input({ required: true }) segments: AudienceSegment[] = [];
   @Input() initialType?: ContentItemType;

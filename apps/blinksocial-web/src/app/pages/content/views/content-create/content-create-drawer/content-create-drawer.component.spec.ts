@@ -1,10 +1,24 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { of } from 'rxjs';
 import { ContentCreateDrawerComponent } from './content-create-drawer.component';
+import { GeneratedIdeasApiService } from '../../../../../core/generated-ideas/generated-ideas.service';
+import { ToastService } from '../../../../../core/toast/toast.service';
 import type {
   AudienceSegment,
   ContentPillar,
   IdeaPayload,
 } from '../../../content.types';
+
+const STORE_DEPS = [
+  {
+    provide: GeneratedIdeasApiService,
+    useValue: { generate: vi.fn().mockReturnValue(of({ ideas: [] })) },
+  },
+  {
+    provide: ToastService,
+    useValue: { showError: vi.fn(), showSuccess: vi.fn() },
+  },
+];
 
 const PILLARS: ContentPillar[] = [
   { id: 'p1', name: 'Alpha', description: '', color: '#111' },
@@ -14,7 +28,10 @@ const SEGMENTS: AudienceSegment[] = [
 ];
 
 function make(): ComponentFixture<ContentCreateDrawerComponent> {
-  TestBed.configureTestingModule({ imports: [ContentCreateDrawerComponent] });
+  TestBed.configureTestingModule({
+    imports: [ContentCreateDrawerComponent],
+    providers: STORE_DEPS,
+  });
   const fixture = TestBed.createComponent(ContentCreateDrawerComponent);
   fixture.componentRef.setInput('pillars', PILLARS);
   fixture.componentRef.setInput('segments', SEGMENTS);
@@ -163,6 +180,7 @@ describe('ContentCreateDrawerComponent', () => {
   it('renders the inner ContentCreateFormComponent and forwards initialType', () => {
     TestBed.configureTestingModule({
       imports: [ContentCreateDrawerComponent],
+      providers: STORE_DEPS,
     });
     const fixture = TestBed.createComponent(ContentCreateDrawerComponent);
     fixture.componentRef.setInput('pillars', PILLARS);

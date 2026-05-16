@@ -2,7 +2,6 @@ import {
   assistDescriptionFor,
   assistHookFor,
   generateConceptFromObjective,
-  seedGeneratedIdeas,
 } from './content-create.ai';
 import type { AudienceSegment, ContentObjective } from '../../content.types';
 
@@ -85,22 +84,3 @@ describe('assistHookFor', () => {
   });
 });
 
-describe('seedGeneratedIdeas', () => {
-  it('returns empty when no pillars provided', () => {
-    expect(seedGeneratedIdeas([])).toEqual([]);
-  });
-
-  it('returns 6 ideas round-robined across pillars', () => {
-    const ideas = seedGeneratedIdeas(['p1', 'p2']);
-    expect(ideas).toHaveLength(6);
-    expect(ideas[0].pillarId).toBe('p1');
-    expect(ideas[1].pillarId).toBe('p2');
-    expect(ideas[2].pillarId).toBe('p1');
-  });
-
-  it('generates unique ids for each idea', () => {
-    const ideas = seedGeneratedIdeas(['p1']);
-    const ids = new Set(ideas.map((i) => i.id));
-    expect(ids.size).toBe(ideas.length);
-  });
-});

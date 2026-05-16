@@ -11,3 +11,4 @@ export * from './calendar/index.js';
 export * from './wizard-ai/index.js';
 export * from './ai-assist/index.js';
 export * from './idea-concept-options/index.js';
+export * from './generated-ideas/index.js';

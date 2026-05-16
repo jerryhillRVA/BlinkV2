@@ -1,4 +1,14 @@
-import { Component, EventEmitter, Input, Output, effect, inject, OnInit } from '@angular/core';
+import {
+  Component,
+  EventEmitter,
+  Input,
+  Output,
+  effect,
+  inject,
+  OnChanges,
+  OnInit,
+  SimpleChanges,
+} from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { DropdownComponent, DropdownOption } from '../../../../shared/dropdown/dropdown.component';
 import { ContentCreateStore } from './content-create.store';
@@ -27,9 +37,10 @@ import type {
   templateUrl: './content-create-form.component.html',
   styleUrl: './content-create-form.component.scss',
 })
-export class ContentCreateFormComponent implements OnInit {
+export class ContentCreateFormComponent implements OnInit, OnChanges {
   protected readonly store = inject(ContentCreateStore);
 
+  @Input() workspaceId = '';
   @Input({ required: true }) set pillars(value: ContentPillar[]) {
     this._pillars = value;
     this.store.setContext(this._pillars, this._segments);
@@ -45,6 +56,13 @@ export class ContentCreateFormComponent implements OnInit {
   ngOnInit(): void {
     if (this.initialType) {
       this.store.setType(this.initialType);
+    }
+    this.store.setWorkspaceId(this.workspaceId || null);
+  }
+
+  ngOnChanges(changes: SimpleChanges): void {
+    if (changes['workspaceId']) {
+      this.store.setWorkspaceId(this.workspaceId || null);
     }
   }
 

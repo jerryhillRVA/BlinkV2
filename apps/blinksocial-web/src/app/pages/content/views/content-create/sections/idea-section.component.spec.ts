@@ -1,7 +1,12 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { of } from 'rxjs';
+import type {
+  GenerateIdeasResponseContract,
+} from '@blinksocial/contracts';
 import { IdeaSectionComponent } from './idea-section.component';
 import { ContentCreateStore } from '../content-create.store';
-import { AI_SIMULATION_DELAY_MS } from '../../../content.constants';
+import { GeneratedIdeasApiService } from '../../../../../core/generated-ideas/generated-ideas.service';
+import { ToastService } from '../../../../../core/toast/toast.service';
 import type { ContentPillar, AudienceSegment } from '../../../content.types';
 
 const PILLARS: ContentPillar[] = [
@@ -14,14 +19,32 @@ const SEGMENTS: AudienceSegment[] = [];
 describe('IdeaSectionComponent', () => {
   let fixture: ComponentFixture<IdeaSectionComponent>;
   let store: ContentCreateStore;
+  let apiMock: { generate: ReturnType<typeof vi.fn> };
 
   beforeEach(() => {
+    apiMock = {
+      generate: vi.fn().mockReturnValue(
+        of<GenerateIdeasResponseContract>({
+          ideas: new Array(6).fill(0).map((_, i) => ({
+            id: `gi-${i}`,
+            title: `title ${i}`,
+            rationale: `rationale ${i}`,
+            pillarId: 'p1',
+          })),
+        }),
+      ),
+    };
     TestBed.configureTestingModule({
       imports: [IdeaSectionComponent],
-      providers: [ContentCreateStore],
+      providers: [
+        ContentCreateStore,
+        { provide: GeneratedIdeasApiService, useValue: apiMock },
+        { provide: ToastService, useValue: { showError: vi.fn(), showSuccess: vi.fn() } },
+      ],
     });
     store = TestBed.inject(ContentCreateStore);
     store.setContext(PILLARS, SEGMENTS);
+    store.setWorkspaceId('w1');
     fixture = TestBed.createComponent(IdeaSectionComponent);
     fixture.detectChanges();
   });
@@ -68,23 +91,19 @@ describe('IdeaSectionComponent', () => {
     expect(btn.disabled).toBe(true);
   });
 
-  it('clicking generate triggers AI and shows spinner, then ideas render', () => {
-    vi.useFakeTimers();
-    try {
-      store.setIdeaMode('generate');
-      store.patch({ generatePillarIds: ['p1'] });
-      fixture.detectChanges();
-      const btn: HTMLButtonElement = fixture.nativeElement.querySelector('.btn-generate');
-      btn.click();
-      fixture.detectChanges();
-      expect(fixture.nativeElement.querySelector('.spinner')).not.toBeNull();
-      vi.advanceTimersByTime(AI_SIMULATION_DELAY_MS);
-      fixture.detectChanges();
-      const cards = fixture.nativeElement.querySelectorAll('.idea-card');
-      expect(cards.length).toBe(6);
-    } finally {
-      vi.useRealTimers();
-    }
+  it('clicking generate posts to the API and renders 6 cards', () => {
+    store.setIdeaMode('generate');
+    store.patch({ generatePillarIds: ['p1'] });
+    fixture.detectChanges();
+    const btn: HTMLButtonElement = fixture.nativeElement.querySelector('.btn-generate');
+    btn.click();
+    fixture.detectChanges();
+    expect(apiMock.generate).toHaveBeenCalledWith({
+      workspaceId: 'w1',
+      pillarIds: ['p1'],
+    });
+    const cards = fixture.nativeElement.querySelectorAll('.idea-card');
+    expect(cards.length).toBe(6);
   });
 
   it('clicking an idea card toggles selection', () => {
