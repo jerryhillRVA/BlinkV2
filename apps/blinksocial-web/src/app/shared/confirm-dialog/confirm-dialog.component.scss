@@ -1,0 +1,108 @@
+:host {
+  display: contents;
+}
+
+.cd-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  background: rgba(0, 0, 0, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  animation: cd-fade-in 120ms ease-out;
+}
+
+.cd-dialog {
+  background: var(--blink-surface);
+  border-radius: 12px;
+  box-shadow: var(--blink-shadow-lg);
+  border: 1px solid var(--blink-outline-variant);
+  padding: 20px 20px 16px;
+  width: 100%;
+  max-width: 420px;
+  animation: cd-pop-in 160ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.cd-title {
+  margin: 0 0 8px;
+  font-size: var(--blink-title-medium);
+  font-weight: 600;
+  color: var(--blink-on-surface-strong);
+}
+
+.cd-body {
+  margin: 0 0 18px;
+  font-size: var(--blink-body-medium);
+  color: var(--blink-on-surface);
+  line-height: 1.45;
+}
+
+.cd-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.cd-btn {
+  appearance: none;
+  cursor: pointer;
+  padding: 8px 14px;
+  font-family: inherit;
+  font-size: var(--blink-body-medium);
+  font-weight: 600;
+  border-radius: 8px;
+  border: 1px solid transparent;
+  transition: background 120ms ease, border-color 120ms ease;
+
+  &:focus-visible {
+    outline: 2px solid var(--blink-brand-primary);
+    outline-offset: 2px;
+  }
+}
+
+.cd-btn--secondary {
+  background: var(--blink-surface);
+  color: var(--blink-on-surface-strong);
+  border-color: var(--blink-outline-variant);
+
+  &:hover {
+    background: var(--blink-surface-hover);
+  }
+}
+
+.cd-btn--primary {
+  background: var(--blink-brand-primary);
+  color: white;
+
+  &:hover {
+    background: var(--blink-brand-primary-active, var(--blink-brand-primary));
+  }
+}
+
+.cd-btn--destructive {
+  background: var(--blink-status-danger);
+  color: white;
+
+  &:hover {
+    background: var(--blink-status-danger-text);
+  }
+}
+
+@keyframes cd-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes cd-pop-in {
+  from { opacity: 0; transform: scale(0.96); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cd-backdrop,
+  .cd-dialog {
+    animation: none;
+  }
+}

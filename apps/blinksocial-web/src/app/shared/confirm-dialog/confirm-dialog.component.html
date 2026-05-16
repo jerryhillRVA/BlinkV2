@@ -1,0 +1,41 @@
+@if (open()) {
+  <div
+    class="cd-backdrop"
+    role="presentation"
+    (click)="onBackdropClick($event)"
+  >
+    <div
+      class="cd-dialog"
+      role="dialog"
+      aria-modal="true"
+      [attr.aria-labelledby]="'cd-title'"
+      [attr.aria-describedby]="body() ? 'cd-body' : null"
+      cdkTrapFocus
+      [cdkTrapFocusAutoCapture]="true"
+    >
+      <h2 id="cd-title" class="cd-title">{{ title() }}</h2>
+      @if (body(); as bodyText) {
+        <p id="cd-body" class="cd-body">{{ bodyText }}</p>
+      }
+      <div class="cd-actions">
+        <button
+          type="button"
+          class="cd-btn cd-btn--secondary"
+          (click)="onCancelClick()"
+        >
+          {{ cancelLabel() }}
+        </button>
+        <button
+          #confirmBtn
+          type="button"
+          class="cd-btn"
+          [class.cd-btn--destructive]="tone() === 'destructive'"
+          [class.cd-btn--primary]="tone() !== 'destructive'"
+          (click)="onConfirmClick()"
+        >
+          {{ confirmLabel() }}
+        </button>
+      </div>
+    </div>
+  </div>
+}
