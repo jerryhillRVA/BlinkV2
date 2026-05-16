@@ -92,4 +92,35 @@ describe('AiAssistController', () => {
     expect(res).toEqual({ values: ['ok'] });
     expect(service.assist).toHaveBeenCalled();
   });
+
+  it('delegates draft-scope requests to AiAssistService', async () => {
+    process.env['AGENTIC_FS_URL'] = 'http://afs.test';
+    const body = {
+      scope: 'draft' as const,
+      workspaceId: 'w1',
+      field: 'concept-description' as const,
+      draft: {
+        title: 'Morning mobility flow',
+        objective: 'engagement' as const,
+        pillarIds: [],
+        segmentIds: [],
+      },
+    };
+    const res = await controller.assist(buildReq(userWith('w1')), body);
+    expect(res).toEqual({ values: ['ok'] });
+    expect(service.assist).toHaveBeenCalledWith(body);
+  });
+
+  it('rejects draft-scope with 403 when production user lacks role on the target workspace', async () => {
+    process.env['AGENTIC_FS_URL'] = 'http://afs.test';
+    await expect(
+      controller.assist(buildReq(userWith('other-ws')), {
+        scope: 'draft',
+        workspaceId: 'w1',
+        field: 'concept-description',
+        draft: { title: 'X', pillarIds: [], segmentIds: [] },
+      }),
+    ).rejects.toBeInstanceOf(ForbiddenException);
+    expect(service.assist).not.toHaveBeenCalled();
+  });
 });

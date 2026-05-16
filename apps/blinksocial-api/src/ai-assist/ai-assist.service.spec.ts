@@ -480,4 +480,201 @@ describe('AiAssistService', () => {
       contentType: 'short-video',
     });
   });
+
+  // ─── draft scope ─────────────────────────────────────────────────
+
+  describe('draft scope', () => {
+    const validDraft = {
+      title: 'Morning mobility flow',
+      objective: 'engagement' as const,
+      pillarIds: ['p-1'],
+      segmentIds: ['s-1'],
+    };
+
+    it('accepts scope: draft and returns a stub when LLM is not configured', async () => {
+      const res = await service.assist({
+        scope: 'draft',
+        workspaceId: 'w',
+        field: 'concept-description',
+        draft: validDraft,
+      });
+      expect(res.values).toHaveLength(1);
+      expect(res.values[0]).toContain('Morning mobility flow');
+      expect(contentItems.getItem).not.toHaveBeenCalled();
+      expect(skillRunner.run).not.toHaveBeenCalled();
+    });
+
+    it('accepts scope: draft for concept-hook-angle', async () => {
+      const res = await service.assist({
+        scope: 'draft',
+        workspaceId: 'w',
+        field: 'concept-hook-angle',
+        draft: validDraft,
+      });
+      expect(res.values).toHaveLength(1);
+      expect(res.values[0]).toContain('Morning mobility flow');
+      expect(contentItems.getItem).not.toHaveBeenCalled();
+    });
+
+    it.each([
+      'post-key-message',
+      'post-script-hook',
+      'post-script-body',
+      'post-script-cta',
+      'post-caption',
+      'post-hashtags',
+    ] as const)('rejects post-* field %s on draft scope', async (field) => {
+      await expect(
+        service.assist({
+          scope: 'draft',
+          workspaceId: 'w',
+          field: field as never,
+          draft: validDraft,
+        }),
+      ).rejects.toMatchObject({
+        message: expect.stringContaining(`Field ${field} is not allowed on scope 'draft'`),
+      });
+    });
+
+    it('rejects draft scope with an unknown field', async () => {
+      await expect(
+        service.assist({
+          scope: 'draft',
+          workspaceId: 'w',
+          field: 'bogus' as never,
+          draft: validDraft,
+        }),
+      ).rejects.toBeInstanceOf(BadRequestException);
+    });
+
+    it('rejects draft scope with empty title', async () => {
+      await expect(
+        service.assist({
+          scope: 'draft',
+          workspaceId: 'w',
+          field: 'concept-description',
+          draft: { ...validDraft, title: '   ' },
+        }),
+      ).rejects.toBeInstanceOf(BadRequestException);
+    });
+
+    it('rejects draft scope when pillarIds is not an array', async () => {
+      await expect(
+        service.assist({
+          scope: 'draft',
+          workspaceId: 'w',
+          field: 'concept-description',
+          draft: { ...validDraft, pillarIds: undefined as never },
+        }),
+      ).rejects.toBeInstanceOf(BadRequestException);
+    });
+
+    it('rejects draft scope when segmentIds is not an array', async () => {
+      await expect(
+        service.assist({
+          scope: 'draft',
+          workspaceId: 'w',
+          field: 'concept-description',
+          draft: { ...validDraft, segmentIds: null as never },
+        }),
+      ).rejects.toBeInstanceOf(BadRequestException);
+    });
+
+    it('rejects draft scope with empty workspaceId', async () => {
+      await expect(
+        service.assist({
+          scope: 'draft',
+          workspaceId: '',
+          field: 'concept-description',
+          draft: validDraft,
+        }),
+      ).rejects.toBeInstanceOf(BadRequestException);
+    });
+
+    it.each([0, 11, 1.5, NaN])('rejects draft scope with count out of range (%s)', async (count) => {
+      await expect(
+        service.assist({
+          scope: 'draft',
+          workspaceId: 'w',
+          field: 'concept-description',
+          draft: validDraft,
+          count: count as number,
+        }),
+      ).rejects.toBeInstanceOf(BadRequestException);
+    });
+
+    it('loads brand voice + positioning + selected pillars/segments via workspaceId', async () => {
+      llm.isConfigured.mockReturnValue(true);
+      workspaces.getSettings.mockImplementation(async (_w: string, tab: string) =>
+        tab === 'brand-voice'
+          ? { brandVoiceDescription: 'Warm and direct.', toneTags: ['friendly'] }
+          : tab === 'brand-positioning'
+            ? { positioningStatement: 'We make X simple.' }
+            : null,
+      );
+      workspaces.getNamespaceEntities.mockImplementation(async (_w: string, ns: string) =>
+        ns === 'content-pillars'
+          ? [{ id: 'p-1', name: 'Wellness' }, { id: 'p-2', name: 'Career' }]
+          : [{ id: 's-1', name: 'Women 40+' }, { id: 's-2', name: 'Men 30+' }],
+      );
+      skillRunner.run.mockResolvedValue({
+        content: '',
+        parsed: { values: ['ok'] },
+        usage: { inputTokens: 1, outputTokens: 1 },
+        stopReason: 'tool_use',
+      });
+
+      await service.assist({
+        scope: 'draft',
+        workspaceId: 'w',
+        field: 'concept-description',
+        draft: validDraft,
+      });
+
+      expect(contentItems.getItem).not.toHaveBeenCalled();
+      const userTurn = JSON.parse(skillRunner.run.mock.calls[0][0].conversationHistory[0].content);
+      expect(userTurn.context.workspace.brandVoice).toBe('Warm and direct.');
+      expect(userTurn.context.workspace.positioningStatement).toBe('We make X simple.');
+      expect(userTurn.context.pillars).toEqual([{ id: 'p-1', name: 'Wellness' }]);
+      expect(userTurn.context.segments).toEqual([{ id: 's-1', name: 'Women 40+' }]);
+      expect(userTurn.context.parentConcept).toBeNull();
+    });
+
+    it('does not leak a synthetic item id into the prompt', async () => {
+      llm.isConfigured.mockReturnValue(true);
+      skillRunner.run.mockResolvedValue({
+        content: '',
+        parsed: { values: ['ok'] },
+        usage: { inputTokens: 1, outputTokens: 1 },
+        stopReason: 'tool_use',
+      });
+      await service.assist({
+        scope: 'draft',
+        workspaceId: 'w',
+        field: 'concept-description',
+        draft: validDraft,
+      });
+      const userTurn = JSON.parse(skillRunner.run.mock.calls[0][0].conversationHistory[0].content);
+      expect(userTurn.context.item.id).toBeUndefined();
+      expect(userTurn.context.item.title).toBe('Morning mobility flow');
+      expect(userTurn.context.item.stage).toBe('concept');
+    });
+
+    it('uses the matching skill id for draft fields', async () => {
+      llm.isConfigured.mockReturnValue(true);
+      skillRunner.run.mockResolvedValue({
+        content: '',
+        parsed: { values: ['ok'] },
+        usage: { inputTokens: 1, outputTokens: 1 },
+        stopReason: 'tool_use',
+      });
+      await service.assist({
+        scope: 'draft',
+        workspaceId: 'w',
+        field: 'concept-hook-angle',
+        draft: validDraft,
+      });
+      expect(skillRunner.run.mock.calls[0][0].skillId).toBe('field-assist-concept-hook-angle');
+    });
+  });
 });

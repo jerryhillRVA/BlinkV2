@@ -6,6 +6,8 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import type {
+  AiAssistDraftFieldContract,
+  AiAssistDraftSnapshot,
   AiAssistFieldContract,
   AiAssistRequestContract,
   AiAssistResponseContract,
@@ -13,6 +15,7 @@ import type {
 } from '@blinksocial/contracts';
 import {
   AI_ASSIST_DEFAULT_COUNT,
+  AI_ASSIST_DRAFT_FIELDS,
   AI_ASSIST_MAX_COUNT,
   AI_ASSIST_MIN_COUNT,
   AI_ASSIST_FIELDS,
@@ -65,12 +68,15 @@ export class AiAssistService {
     const field = req.field;
     const count = this.resolveCount(req);
 
-    const item = await this.loadItem(req.workspaceId, req.refId);
-    this.assertStageMatches(field, item);
+    const item: ContentItemContract =
+      req.scope === 'draft'
+        ? this.buildSyntheticDraftItem(req.draft)
+        : await this.loadItemAndAssertStage(req.workspaceId, req.refId, field);
 
     if (!this.llm.isConfigured()) {
+      const ref = req.scope === 'draft' ? 'draft' : req.refId;
       this.logger.debug(
-        `LLM not configured — returning stub values for ${field} on ${req.refId}`,
+        `LLM not configured — returning stub values for ${field} on ${ref}`,
       );
       return { values: buildStubValues(field, count, item) };
     }
@@ -80,23 +86,54 @@ export class AiAssistService {
     return { values };
   }
 
+  private async loadItemAndAssertStage(
+    workspaceId: string,
+    refId: string,
+    field: AiAssistFieldContract,
+  ): Promise<ContentItemContract> {
+    const item = await this.loadItem(workspaceId, refId);
+    this.assertStageMatches(field, item);
+    return item;
+  }
+
+  private buildSyntheticDraftItem(draft: AiAssistDraftSnapshot): ContentItemContract {
+    const now = new Date().toISOString();
+    return {
+      id: '',
+      stage: 'concept',
+      status: 'new',
+      title: draft.title,
+      description: draft.description ?? '',
+      hook: draft.hook,
+      objective: draft.objective,
+      pillarIds: [...draft.pillarIds],
+      segmentIds: [...draft.segmentIds],
+      createdAt: now,
+      updatedAt: now,
+    };
+  }
+
   // ── validation ───────────────────────────────────────────────────────
 
   private validateRequest(req: AiAssistRequestContract): void {
     if (!req || typeof req !== 'object') {
       throw new BadRequestException('Request body is required.');
     }
-    if (req.scope !== 'content-item') {
+    if (req.scope !== 'content-item' && req.scope !== 'draft') {
       throw new BadRequestException(`Unsupported scope: ${String(req.scope)}`);
     }
     if (!req.workspaceId || typeof req.workspaceId !== 'string') {
       throw new BadRequestException('workspaceId is required.');
     }
-    if (!req.refId || typeof req.refId !== 'string') {
-      throw new BadRequestException('refId is required.');
-    }
-    if (!AI_ASSIST_FIELDS.includes(req.field)) {
-      throw new BadRequestException(`Unknown field: ${String(req.field)}`);
+    if (req.scope === 'content-item') {
+      if (!req.refId || typeof req.refId !== 'string') {
+        throw new BadRequestException('refId is required.');
+      }
+      if (!AI_ASSIST_FIELDS.includes(req.field)) {
+        throw new BadRequestException(`Unknown field: ${String(req.field)}`);
+      }
+    } else {
+      this.validateDraftRequest(req);
     }
     if (req.count !== undefined) {
       if (
@@ -110,6 +147,32 @@ export class AiAssistService {
           `count must be an integer in [${AI_ASSIST_MIN_COUNT}, ${AI_ASSIST_MAX_COUNT}]`,
         );
       }
+    }
+  }
+
+  private validateDraftRequest(
+    req: Extract<AiAssistRequestContract, { scope: 'draft' }>,
+  ): void {
+    if (!AI_ASSIST_FIELDS.includes(req.field)) {
+      throw new BadRequestException(`Unknown field: ${String(req.field)}`);
+    }
+    if (!AI_ASSIST_DRAFT_FIELDS.includes(req.field as AiAssistDraftFieldContract)) {
+      throw new BadRequestException(
+        `Field ${req.field} is not allowed on scope 'draft'`,
+      );
+    }
+    const draft = req.draft;
+    if (!draft || typeof draft !== 'object') {
+      throw new BadRequestException('draft is required.');
+    }
+    if (typeof draft.title !== 'string' || draft.title.trim() === '') {
+      throw new BadRequestException('draft.title is required.');
+    }
+    if (!Array.isArray(draft.pillarIds)) {
+      throw new BadRequestException('draft.pillarIds must be an array.');
+    }
+    if (!Array.isArray(draft.segmentIds)) {
+      throw new BadRequestException('draft.segmentIds must be an array.');
     }
   }
 
