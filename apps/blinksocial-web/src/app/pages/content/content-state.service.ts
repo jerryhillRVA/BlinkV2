@@ -64,7 +64,26 @@ function normalizeFullItem(item: ContentItem): ContentItem {
     item.conceptId === undefined && item.parentConceptId != null
       ? { ...item, conceptId: item.parentConceptId }
       : item;
-  return migrateLegacyAudio(conceptAliased);
+  return downgradeOrphanedScheduled(migrateLegacyAudio(conceptAliased));
+}
+
+/**
+ * #140 (Publish Flow): the old implicit `review ↔ scheduled` auto-flip
+ * in `PostDetailStore.setPublishConfig` is removed — only `finishPost`
+ * sets `status: 'scheduled'` now. Any pre-existing item still in
+ * `status: 'scheduled'` from the old auto-flip whose QA config never
+ * actually selected `publishAction='schedule'` (and isn't an Exported-
+ * scheduled post) gets downgraded back to `review` on read, so it
+ * surfaces in Post Builder rather than Scheduled until the user
+ * explicitly Finishes it. Idempotent.
+ */
+function downgradeOrphanedScheduled(item: ContentItem): ContentItem {
+  if (item.status !== 'scheduled') return item;
+  const action = item.production?.qa?.publishConfig?.publishAction;
+  // Valid scheduled paths: an explicit Schedule action, OR an
+  // Export Packet that landed on a future date (#140 §3.2 export branch).
+  if (action === 'schedule' || item.isExported) return item;
+  return { ...item, status: 'review' };
 }
 
 /**
@@ -615,12 +634,14 @@ export class ContentStateService {
 
   /**
    * Test convenience: seed the materialized item list. Populates the full-item
-   * cache so `items()` returns exactly the given list. Intended for specs that
-   * need to pre-load the state without going through the API.
+   * cache so `items()` returns exactly the given list. Runs the same
+   * `normalizeFullItem` pass the API-load path runs, so seeded items
+   * reflect the normalized shape (legacy `audio` migration, orphaned
+   * scheduled downgrade, etc.).
    */
   setItems(items: ContentItem[]): void {
     this.fullItemCacheSignal.set(
-      Object.fromEntries(items.map((i) => [i.id, i])),
+      Object.fromEntries(items.map((i) => [i.id, normalizeFullItem(i)])),
     );
     this.indexEntries.set([]);
     this.archiveIndexEntries.set([]);

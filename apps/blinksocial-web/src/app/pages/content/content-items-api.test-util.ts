@@ -77,6 +77,9 @@ export function provideContentItemsApiStubs() {
     showError: (_msg: string): void => {
       /* swallow in tests; per-spec overrides verify error toasts */
     },
+    showSuccess: (_msg: string): void => {
+      /* swallow; tests assert state changes rather than toast text */
+    },
     show: (_msg: string): void => {
       /* swallow */
     },
