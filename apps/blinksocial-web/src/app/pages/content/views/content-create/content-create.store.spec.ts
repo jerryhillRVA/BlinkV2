@@ -1,5 +1,12 @@
 import { TestBed } from '@angular/core/testing';
+import { Observable, of, throwError } from 'rxjs';
+import type {
+  GenerateIdeasRequestContract,
+  GenerateIdeasResponseContract,
+} from '@blinksocial/contracts';
 import { ContentCreateStore } from './content-create.store';
+import { GeneratedIdeasApiService } from '../../../../core/generated-ideas/generated-ideas.service';
+import { ToastService } from '../../../../core/toast/toast.service';
 import type {
   AudienceSegment,
   ContentPillar,
@@ -25,11 +32,41 @@ const SEGMENTS: AudienceSegment[] = [
   { id: 's3', name: 'Seg 3', description: '' },
 ];
 
-function setup(): ContentCreateStore {
-  TestBed.configureTestingModule({ providers: [ContentCreateStore] });
+interface SetupHandles {
+  store: ContentCreateStore;
+  api: { generate: ReturnType<typeof vi.fn> };
+  toast: { showError: ReturnType<typeof vi.fn>; showSuccess: ReturnType<typeof vi.fn> };
+}
+
+function setup(workspaceId: string | null = 'w1'): ContentCreateStore {
+  return setupWithHandles(workspaceId).store;
+}
+
+function setupWithHandles(workspaceId: string | null = 'w1'): SetupHandles {
+  const api = {
+    generate: vi.fn().mockReturnValue(
+      of<GenerateIdeasResponseContract>({
+        ideas: new Array(6).fill(0).map((_, i) => ({
+          id: `gi-${i}`,
+          title: `title ${i}`,
+          rationale: `rationale ${i}`,
+          pillarId: i % 2 === 0 ? 'p1' : 'p2',
+        })),
+      }),
+    ),
+  };
+  const toast = { showError: vi.fn(), showSuccess: vi.fn() };
+  TestBed.configureTestingModule({
+    providers: [
+      ContentCreateStore,
+      { provide: GeneratedIdeasApiService, useValue: api },
+      { provide: ToastService, useValue: toast },
+    ],
+  });
   const store = TestBed.inject(ContentCreateStore);
   store.setContext(PILLARS, SEGMENTS);
-  return store;
+  store.setWorkspaceId(workspaceId);
+  return { store, api, toast };
 }
 
 describe('ContentCreateStore — basic mutations', () => {
@@ -389,17 +426,71 @@ describe('ContentCreateStore — AI actions (fake timers)', () => {
   });
 
   it('generateIdeas no-op without focus pillars', () => {
-    const store = setup();
+    const { store, api } = setupWithHandles();
     store.generateIdeas();
+    expect(store.state().isGeneratingIdeas).toBe(false);
+    expect(api.generate).not.toHaveBeenCalled();
+  });
+
+  it('generateIdeas no-op when workspaceId is null', () => {
+    const { store, api } = setupWithHandles(null);
+    store.patch({ generatePillarIds: ['p1', 'p2'] });
+    store.generateIdeas();
+    expect(store.state().isGeneratingIdeas).toBe(false);
+    expect(api.generate).not.toHaveBeenCalled();
+  });
+
+  it('generateIdeas posts to the API and populates 6 cards on success', () => {
+    const { store, api } = setupWithHandles();
+    store.patch({ generatePillarIds: ['p1', 'p2'] });
+    store.generateIdeas();
+    expect(api.generate).toHaveBeenCalledWith({
+      workspaceId: 'w1',
+      pillarIds: ['p1', 'p2'],
+    } satisfies GenerateIdeasRequestContract);
+    expect(store.state().generatedIdeas).toHaveLength(6);
     expect(store.state().isGeneratingIdeas).toBe(false);
   });
 
-  it('generateIdeas populates 6 cards', () => {
-    const store = setup();
-    store.patch({ generatePillarIds: ['p1', 'p2'] });
+  it('generateIdeas clears generatedIdeas and selectedGeneratedIds before the call', () => {
+    const { store } = setupWithHandles();
+    store.patch({
+      generatedIdeas: [{ id: 'old', title: 'x', rationale: 'y', pillarId: 'p1' }],
+      selectedGeneratedIds: ['old'],
+      generatePillarIds: ['p1'],
+    });
     store.generateIdeas();
-    vi.advanceTimersByTime(AI_SIMULATION_DELAY_MS);
-    expect(store.state().generatedIdeas).toHaveLength(6);
+    expect(store.state().selectedGeneratedIds).toEqual([]);
+    // generatedIdeas is repopulated by the mock response, but the old
+    // entry is gone.
+    expect(store.state().generatedIdeas.some((i) => i.id === 'old')).toBe(false);
+  });
+
+  it('generateIdeas shows toast and clears flag on HTTP error', () => {
+    const { store, api, toast } = setupWithHandles();
+    api.generate.mockReturnValue(throwError(() => new Error('502')));
+    store.patch({ generatePillarIds: ['p1'] });
+    store.generateIdeas();
+    expect(store.state().isGeneratingIdeas).toBe(false);
+    expect(store.state().generatedIdeas).toEqual([]);
+    expect(toast.showError).toHaveBeenCalledWith(
+      'AI generation failed. Please try again in a moment.',
+    );
+  });
+
+  it('generateIdeas double-click guard: second call while in-flight is a no-op', () => {
+    const { store, api } = setupWithHandles();
+    // Non-emitting observable keeps the store in the "in-flight" state.
+    let calls = 0;
+    api.generate.mockImplementation(() => {
+      calls++;
+      return new Observable<GenerateIdeasResponseContract>(() => undefined);
+    });
+    store.patch({ generatePillarIds: ['p1'] });
+    store.generateIdeas();
+    expect(store.state().isGeneratingIdeas).toBe(true);
+    store.generateIdeas();
+    expect(calls).toBe(1);
   });
 });
 

@@ -30,8 +30,8 @@ export class ContentComponent {
   private readonly router = inject(Router);
   private readonly destroyRef = inject(DestroyRef);
   protected readonly stateService = inject(ContentStateService);
-  workspaceId = '';
-  /* v8 ignore next 4 — V8's function-call-throws branches on input()/signal() declarations are unreachable (Angular class-field init time; ESM exports not spy-able) */
+  /* v8 ignore next 5 — V8's function-call-throws branches on input()/signal() declarations are unreachable (Angular class-field init time; ESM exports not spy-able) */
+  readonly workspaceId = signal<string>('');
   readonly activeView = signal<ContentView>('overview');
   readonly transitioning = signal(false);
   readonly showCreate = signal(false);
@@ -43,8 +43,8 @@ export class ContentComponent {
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((params) => {
         const id = params.get('id') ?? '';
-        if (id !== this.workspaceId) {
-          this.workspaceId = id;
+        if (id !== this.workspaceId()) {
+          this.workspaceId.set(id);
           this.activeView.set('overview');
 
           if (isFirst) {
@@ -65,7 +65,7 @@ export class ContentComponent {
 
   setActiveView(view: ContentView): void {
     if (view === 'strategy') {
-      this.router.navigate(['/workspace', this.workspaceId, 'strategy']);
+      this.router.navigate(['/workspace', this.workspaceId(), 'strategy']);
       return;
     }
     this.activeView.set(view);

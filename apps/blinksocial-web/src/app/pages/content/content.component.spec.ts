@@ -74,7 +74,7 @@ describe('ContentComponent', () => {
   });
 
   it('should set workspace ID from route', () => {
-    expect(component.workspaceId).toBe('test-workspace');
+    expect(component.workspaceId()).toBe('test-workspace');
   });
 
   it('should default to overview view', () => {
@@ -199,14 +199,14 @@ describe('ContentComponent', () => {
     vi.useRealTimers();
     f.detectChanges();
     expect(mockStateService.loadAll).toHaveBeenCalledWith('ws-2');
-    expect(f.componentInstance.workspaceId).toBe('ws-2');
+    expect(f.componentInstance.workspaceId()).toBe('ws-2');
     expect(f.componentInstance.transitioning()).toBe(false);
   });
 
   it('should not reload when same workspace ID emits', () => {
     mockStateService.loadAll.mockClear();
     // Emit same workspace ID again — should not trigger a reload
-    const currentId = component.workspaceId;
+    const currentId = component.workspaceId();
     expect(currentId).toBe('test-workspace');
     // loadAll already called once on init; clear and verify no second call
     expect(mockStateService.loadAll).not.toHaveBeenCalled();
@@ -377,14 +377,14 @@ describe('ContentComponent', () => {
         .compileComponents();
       const f = TestBed.createComponent(ContentComponent);
       f.detectChanges();
-      expect(f.componentInstance.workspaceId).toBe('ws-1');
+      expect(f.componentInstance.workspaceId()).toBe('ws-1');
       // Now emit a paramMap with NO id — ?? '' kicks in
       vi.useFakeTimers();
       paramMap$.next(convertToParamMap({}));
       vi.runAllTimers();
       vi.useRealTimers();
       f.detectChanges();
-      expect(f.componentInstance.workspaceId).toBe('');
+      expect(f.componentInstance.workspaceId()).toBe('');
       expect(mockStateService.loadAll).toHaveBeenCalledWith('');
     });
   });

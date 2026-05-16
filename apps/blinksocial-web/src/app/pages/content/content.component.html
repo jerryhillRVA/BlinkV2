@@ -37,6 +37,7 @@
 
   @if (showCreate()) {
     <app-content-create-drawer
+      [workspaceId]="workspaceId()"
       [pillars]="stateService.pillars()"
       [segments]="stateService.segments()"
       [initialType]="createInitialType()"

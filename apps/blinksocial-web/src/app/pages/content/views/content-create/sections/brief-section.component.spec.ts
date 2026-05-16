@@ -1,6 +1,9 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { of } from 'rxjs';
 import { BriefSectionComponent } from './brief-section.component';
 import { ContentCreateStore } from '../content-create.store';
+import { GeneratedIdeasApiService } from '../../../../../core/generated-ideas/generated-ideas.service';
+import { ToastService } from '../../../../../core/toast/toast.service';
 import type { AudienceSegment, ContentPillar } from '../../../content.types';
 
 const PILLARS: ContentPillar[] = [
@@ -18,7 +21,17 @@ describe('BriefSectionComponent', () => {
   beforeEach(() => {
     TestBed.configureTestingModule({
       imports: [BriefSectionComponent],
-      providers: [ContentCreateStore],
+      providers: [
+        ContentCreateStore,
+        {
+          provide: GeneratedIdeasApiService,
+          useValue: { generate: vi.fn().mockReturnValue(of({ ideas: [] })) },
+        },
+        {
+          provide: ToastService,
+          useValue: { showError: vi.fn(), showSuccess: vi.fn() },
+        },
+      ],
     });
     store = TestBed.inject(ContentCreateStore);
     store.setContext(PILLARS, SEGMENTS);

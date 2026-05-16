@@ -1,10 +1,8 @@
 import type {
   ContentObjective,
   ContentCta,
-  GeneratedIdea,
   AudienceSegment,
 } from '../../content.types';
-import { generateId } from '../../content.utils';
 
 const DESCRIPTION_BY_OBJECTIVE: Record<ContentObjective, string> = {
   awareness:
@@ -71,33 +69,6 @@ const CTA_TEXT_BY_OBJECTIVE: Partial<Record<ContentObjective, string>> = {
   leads: 'Book a free call — link in bio',
   conversion: 'Shop now — link in bio',
 };
-
-const IDEA_SEEDS: { title: string; rationale: string }[] = [
-  {
-    title: '5 morning rituals that take under 2 minutes',
-    rationale: 'Short-form quick wins outperform in scarce-attention feeds.',
-  },
-  {
-    title: 'The one stretch everyone over 40 should be doing',
-    rationale: 'Audience-specific targeting with an immediately actionable move.',
-  },
-  {
-    title: 'What changes when you cut sugar for 7 days',
-    rationale: 'Curiosity framing invites the audience to self-experiment and share.',
-  },
-  {
-    title: 'Why sleep quality matters more than duration',
-    rationale: 'Counters a common assumption — reliably earns saves and shares.',
-  },
-  {
-    title: 'Three grocery swaps that upgrade your protein intake',
-    rationale: 'Practical list format that converts for nutrition-focused pillars.',
-  },
-  {
-    title: 'The mindset shift that makes workouts stick',
-    rationale: 'Identity-level framing drives deeper engagement than tactics alone.',
-  },
-];
 
 export interface ConceptAiResult {
   description: string;
@@ -179,12 +150,3 @@ export function assistHookFor(
   return by[key];
 }
 
-export function seedGeneratedIdeas(pillarIds: readonly string[]): GeneratedIdea[] {
-  if (pillarIds.length === 0) return [];
-  return IDEA_SEEDS.map((seed, i) => ({
-    id: generateId('gi'),
-    title: seed.title,
-    rationale: seed.rationale,
-    pillarId: pillarIds[i % pillarIds.length],
-  }));
-}

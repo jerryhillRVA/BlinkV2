@@ -1,5 +1,6 @@
 import { test, expect } from '@playwright/test';
 import { mockAuthenticatedUser } from './helpers/login';
+import { mockHiveContent } from './helpers/content-mocks';
 
 test.describe('Content Page — type picker + drawer', () => {
   test.beforeEach(async ({ page }) => {
@@ -116,6 +117,9 @@ test.describe('Content Page — type picker + drawer', () => {
 test.describe('Pipeline column rename to "Scheduled" (#141)', () => {
   test.beforeEach(async ({ page }) => {
     await mockAuthenticatedUser(page);
+    // TC-E2 relies on the Scheduled lane containing the seed's prod2 entry
+    // (status: scheduled), so install the hive fixture before navigation.
+    await mockHiveContent(page);
     await page.goto('/workspace/hive-collective/content');
     await expect(page.locator('app-pipeline-view')).toBeVisible();
   });
@@ -127,14 +131,16 @@ test.describe('Pipeline column rename to "Scheduled" (#141)', () => {
   });
 
   test('TC-E2: column membership is unchanged (review + scheduled statuses still surface)', async ({ page }) => {
-    // The default hive-collective seed includes post1 (status: scheduled).
-    // Confirm post1's card lives in the fourth column, not the Post Builder
-    // column (index 2). What matters is the rename did not change which
-    // items land in this lane.
+    // The default hive-collective seed includes prod2 (status: scheduled).
+    // Confirm prod2's card lives in the fourth column, not the Post Builder
+    // column (index 2). Asserting on a unique-to-prod2 substring ("Evening
+    // Reset") keeps this test stable against future copy edits to other
+    // seed titles, and avoids collision with prod1 ("Morning Mobility") in
+    // the Post Builder column.
     const fourthColumn = page.locator('.kanban-column').nth(3);
     const postBuilderColumn = page.locator('.kanban-column').nth(2);
-    await expect(fourthColumn).toContainText('60-Second Morning Mobility Flow');
-    await expect(postBuilderColumn).not.toContainText('60-Second Morning Mobility Flow');
+    await expect(fourthColumn).toContainText('Evening Reset');
+    await expect(postBuilderColumn).not.toContainText('Evening Reset');
   });
 
   test('TC-E5: renamed column has no add-button (read-only lane)', async ({ page }) => {

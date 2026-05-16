@@ -97,6 +97,28 @@ const POST_ENTRY = {
   updatedAt: NOW,
 } satisfies ContentItemsIndexEntryContract;
 
+// A second post fixture in the Scheduled lane so pipeline-column membership
+// assertions for the renamed "Scheduled" column (#141) have something to
+// verify. Title uses an "Evening Reset" substring that no other seed item
+// shares, so tests can assert membership without colliding with prod1.
+const SCHEDULED_POST_ENTRY = {
+  id: 'prod2',
+  stage: 'post',
+  status: 'scheduled',
+  title: 'Evening Reset Stretch',
+  platform: 'instagram',
+  contentType: 'reel',
+  pillarIds: ['p1'],
+  segmentIds: ['s4'],
+  owner: 'user-brett',
+  parentIdeaId: null,
+  parentConceptId: 'concept1',
+  scheduledAt: '2026-06-01T15:00:00Z',
+  archived: false,
+  createdAt: NOW,
+  updatedAt: NOW,
+} satisfies ContentItemsIndexEntryContract;
+
 const IDEA_DETAIL = {
   ...IDEA_ENTRY,
   description: 'A short yoga flow for the morning.',
@@ -213,7 +235,7 @@ export const mockHiveContent = async (
   // PUT lands so subsequent /index GETs reflect the change — faithful to a
   // real backend that would project the persisted item back into the index.
   const indexItems: ContentItemsIndexEntryContract[] = [
-    ...(options.indexItems ?? [IDEA_ENTRY, CONCEPT_ENTRY, POST_ENTRY]),
+    ...(options.indexItems ?? [IDEA_ENTRY, CONCEPT_ENTRY, POST_ENTRY, SCHEDULED_POST_ENTRY]),
   ];
   const details: Record<string, ContentItemContract> = {
     ...BASE_DETAILS,
