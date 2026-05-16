@@ -244,8 +244,8 @@ export class CalendarPageComponent implements OnInit {
     const start = ref;
     const end = new Date(ref.getTime() + 7 * DAY_MS);
     const next7 = r.items.filter((it) => {
-      if (!it.scheduleAt) return false;
-      const d = new Date(it.scheduleAt);
+      if (!it.scheduledAt) return false;
+      const d = new Date(it.scheduledAt);
       return d >= start && d <= end;
     });
     if (next7.length === 0) {
@@ -256,7 +256,7 @@ export class CalendarPageComponent implements OnInit {
       });
     }
     const noDate = r.items.filter(
-      (it) => !it.scheduleAt && it.status !== 'published',
+      (it) => !it.scheduledAt && it.status !== 'published',
     );
     if (noDate.length > 0) {
       warnings.push({
@@ -680,7 +680,7 @@ export class CalendarPageComponent implements OnInit {
  * UI moves the pill before the network round-trip completes. Returns a
  * new response object (immutable patch) or null when nothing should change.
  *
- * - For publish events: shift the matching item's `scheduleAt` and
+ * - For publish events: shift the matching item's `scheduledAt` and
  *   regenerate template-derived milestone `dueAt` values for that item
  *   (so milestones move with the publish date, mirroring the server's
  *   re-derivation on next GET).
@@ -693,18 +693,18 @@ export function applyPatchToResponse(
   patch: UpdateContentItemRequestContract,
 ): CalendarResponseContract | null {
   if (event.kind === 'publish') {
-    const newScheduleAt = patch.scheduledAt;
-    if (!newScheduleAt) return null;
+    const newScheduledAt = patch.scheduledAt;
+    if (!newScheduledAt) return null;
     const itemId = event.contentId;
     const original = response.items.find((i) => i.id === itemId);
-    if (!original?.scheduleAt) return null;
-    const oldAnchor = new Date(original.scheduleAt).getTime();
-    const newAnchor = new Date(newScheduleAt).getTime();
+    if (!original?.scheduledAt) return null;
+    const oldAnchor = new Date(original.scheduledAt).getTime();
+    const newAnchor = new Date(newScheduledAt).getTime();
     const deltaMs = newAnchor - oldAnchor;
     return {
       ...response,
       items: response.items.map((i) =>
-        i.id === itemId ? { ...i, scheduleAt: newScheduleAt } : i,
+        i.id === itemId ? { ...i, scheduledAt: newScheduledAt } : i,
       ),
       milestones: response.milestones.map((m) =>
         m.contentId === itemId

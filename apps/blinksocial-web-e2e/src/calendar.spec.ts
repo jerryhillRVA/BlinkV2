@@ -15,7 +15,7 @@ const CALENDAR_PAYLOAD = {
       canonicalType: 'IMAGE_SINGLE',
       status: 'in-progress',
       owner: 'Ava Chen',
-      scheduleAt: '2026-05-03T15:00:00.000Z',
+      scheduledAt: '2026-05-03T15:00:00.000Z',
       blockers: [],
     },
     {
@@ -25,7 +25,7 @@ const CALENDAR_PAYLOAD = {
       canonicalType: 'VIDEO_LONG_HORIZONTAL',
       status: 'approved',
       owner: 'Marcus Lee',
-      scheduleAt: '2026-05-10T18:00:00.000Z',
+      scheduledAt: '2026-05-10T18:00:00.000Z',
       blockers: [],
     },
   ],
@@ -240,7 +240,7 @@ const SATURDAY_PEEK_PAYLOAD = {
       canonicalType: 'IMAGE_SINGLE',
       status: 'in-progress',
       owner: 'Ava Chen',
-      scheduleAt: '2026-05-02T15:00:00.000Z',
+      scheduledAt: '2026-05-02T15:00:00.000Z',
       blockers: [],
     },
     {
@@ -250,7 +250,7 @@ const SATURDAY_PEEK_PAYLOAD = {
       canonicalType: 'IMAGE_SINGLE',
       status: 'approved',
       owner: 'Ava Chen',
-      scheduleAt: '2026-05-30T15:00:00.000Z',
+      scheduledAt: '2026-05-30T15:00:00.000Z',
       blockers: [],
     },
     {
@@ -260,7 +260,7 @@ const SATURDAY_PEEK_PAYLOAD = {
       canonicalType: 'VIDEO_LONG_HORIZONTAL',
       status: 'approved',
       owner: 'Marcus Lee',
-      scheduleAt: '2026-05-13T15:00:00.000Z',
+      scheduledAt: '2026-05-13T15:00:00.000Z',
       blockers: [],
     },
   ],
@@ -365,7 +365,7 @@ type RoundTripFixture = {
   workspace: string;
   contentId: string;
   title: string;
-  scheduleAt: string;
+  scheduledAt: string;
   platform: 'instagram' | 'youtube';
   canonicalType: 'IMAGE_SINGLE' | 'VIDEO_SHORT_VERTICAL' | 'VIDEO_LONG_HORIZONTAL';
   contentType: 'reel' | 'long-form' | 'feed-post';
@@ -376,7 +376,7 @@ const ROUND_TRIP_FIXTURES: RoundTripFixture[] = [
     workspace: 'booze-kills',
     contentId: 'bk-pub1',
     title: 'Dry January Results: What We Learned',
-    scheduleAt: '2026-05-04T14:00:00.000Z',
+    scheduledAt: '2026-05-04T14:00:00.000Z',
     platform: 'instagram',
     canonicalType: 'VIDEO_SHORT_VERTICAL',
     contentType: 'reel',
@@ -385,7 +385,7 @@ const ROUND_TRIP_FIXTURES: RoundTripFixture[] = [
     workspace: 'hive-collective',
     contentId: 'post1',
     title: '60-Second Morning Mobility Flow',
-    scheduleAt: '2026-05-12T14:00:00.000Z',
+    scheduledAt: '2026-05-12T14:00:00.000Z',
     platform: 'instagram',
     canonicalType: 'VIDEO_SHORT_VERTICAL',
     contentType: 'reel',
@@ -422,7 +422,7 @@ test.describe('Calendar — content round-trip in mock mode', () => {
                   canonicalType: fx.canonicalType,
                   status: 'scheduled',
                   owner: 'Ava Chen',
-                  scheduleAt: fx.scheduleAt,
+                  scheduledAt: fx.scheduledAt,
                   blockers: [],
                 },
               ],
@@ -443,8 +443,7 @@ test.describe('Calendar — content round-trip in mock mode', () => {
         owner: null,
         parentIdeaId: null,
         parentConceptId: null,
-        scheduledDate: fx.scheduleAt.slice(0, 10),
-        scheduledAt: fx.scheduleAt,
+        scheduledAt: fx.scheduledAt,
         archived: false,
         createdAt: '2026-04-01T08:00:00Z',
         updatedAt: '2026-04-20T08:00:00Z',
@@ -506,7 +505,7 @@ test.describe('Calendar — content round-trip in mock mode', () => {
                 canonicalType: fx.canonicalType,
                 status: 'scheduled',
                 owner: 'Ava Chen',
-                scheduleAt: fx.scheduleAt,
+                scheduledAt: fx.scheduledAt,
                 blockers: [],
               },
             ],
@@ -524,8 +523,7 @@ test.describe('Calendar — content round-trip in mock mode', () => {
       segmentIds: [],
       platform: fx.platform,
       contentType: fx.contentType,
-      scheduledDate: fx.scheduleAt.slice(0, 10),
-      scheduledAt: fx.scheduleAt,
+      scheduledAt: fx.scheduledAt,
       createdAt: '2026-04-01T08:00:00Z',
       updatedAt: '2026-04-20T08:00:00Z',
     };
@@ -549,7 +547,7 @@ test.describe('Calendar — content round-trip in mock mode', () => {
                 owner: null,
                 parentIdeaId: null,
                 parentConceptId: null,
-                scheduledDate: itemPayload.scheduledDate,
+                scheduledAt: itemPayload.scheduledAt,
                 archived: false,
                 createdAt: itemPayload.createdAt,
                 updatedAt: itemPayload.updatedAt,
@@ -640,7 +638,7 @@ test.describe('Calendar — content round-trip in mock mode', () => {
       canonicalType: 'VIDEO_SHORT_VERTICAL' as const,
       status: 'scheduled' as const,
       owner: 'AFS Owner',
-      scheduleAt: '2026-05-20T14:00:00.000Z',
+      scheduledAt: '2026-05-20T14:00:00.000Z',
       blockers: [],
     };
     await mockAuthenticatedUser(page);

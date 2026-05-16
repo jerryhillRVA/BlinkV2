@@ -23,8 +23,10 @@
   "contentType": "short-video",
   "keyMessage": "The NA beer category is finally good enough to recommend without caveats.",
   "tonePreset": "playful",
-  "cta": { "type": "follow", "text": "Follow for the full mocktail + NA series" },
-  "scheduledDate": "2026-04-30",
+  "cta": {
+    "type": "follow",
+    "text": "Follow for the full mocktail + NA series"
+  },
   "scheduledAt": "2026-04-30T17:00:00Z",
   "claimsFlag": false,
   "riskLevel": "low",
@@ -38,8 +40,12 @@
     "brief": {
       "strategy": {
         "objective": "engagement",
-        "audienceSegmentIds": ["bk-s1"],
-        "pillarIds": ["bk-p4"],
+        "audienceSegmentIds": [
+          "bk-s1"
+        ],
+        "pillarIds": [
+          "bk-p4"
+        ],
         "keyMessage": "The NA beer category is finally good enough to recommend without caveats.",
         "ctaType": "follow",
         "ctaText": "Follow for the full mocktail + NA series",
@@ -55,7 +61,10 @@
         "hookType": "outcome-first",
         "loopEnding": true
       },
-      "compliance": { "containsClaims": false, "disclosureNeeded": false },
+      "compliance": {
+        "containsClaims": false,
+        "disclosureNeeded": false
+      },
       "approved": true,
       "canonicalType": "VIDEO_SHORT_VERTICAL",
       "hasTalent": true,
@@ -81,13 +90,48 @@
         "bRollNotes": "Quick cuts on each pour. Tight on faces during first sip. On-screen ranking jumps on every cut. End on a tight close-up of the #1 can.",
         "voiceoverNotes": "Playful, fast-paced. Mara hosts. Jordan reacts off-camera. No script reads — let the reactions carry it.",
         "shotList": [
-          { "id": "sl-1", "type": "Shot", "description": "Hook shot — 20 cans lined up on bar, camera dolly past", "duration": "5s" },
-          { "id": "sl-2", "type": "B-Roll", "description": "Pour + first sip + reaction for #5", "duration": "13s" },
-          { "id": "sl-3", "type": "B-Roll", "description": "Pour + sip + reaction for #4", "duration": "10s" },
-          { "id": "sl-4", "type": "B-Roll", "description": "Pour + sip + reaction for #3", "duration": "10s" },
-          { "id": "sl-5", "type": "B-Roll", "description": "Pour + sip + reaction for #2", "duration": "10s" },
-          { "id": "sl-6", "type": "Shot", "description": "Reveal #1, cans clinking, all three on camera", "duration": "7s" },
-          { "id": "sl-7", "type": "CTA", "description": "Mara delivers follow CTA, hold on logo", "duration": "5s" }
+          {
+            "id": "sl-1",
+            "type": "Shot",
+            "description": "Hook shot — 20 cans lined up on bar, camera dolly past",
+            "duration": "5s"
+          },
+          {
+            "id": "sl-2",
+            "type": "B-Roll",
+            "description": "Pour + first sip + reaction for #5",
+            "duration": "13s"
+          },
+          {
+            "id": "sl-3",
+            "type": "B-Roll",
+            "description": "Pour + sip + reaction for #4",
+            "duration": "10s"
+          },
+          {
+            "id": "sl-4",
+            "type": "B-Roll",
+            "description": "Pour + sip + reaction for #3",
+            "duration": "10s"
+          },
+          {
+            "id": "sl-5",
+            "type": "B-Roll",
+            "description": "Pour + sip + reaction for #2",
+            "duration": "10s"
+          },
+          {
+            "id": "sl-6",
+            "type": "Shot",
+            "description": "Reveal #1, cans clinking, all three on camera",
+            "duration": "7s"
+          },
+          {
+            "id": "sl-7",
+            "type": "CTA",
+            "description": "Mara delivers follow CTA, hold on logo",
+            "duration": "5s"
+          }
         ]
       }
     }

@@ -48,7 +48,7 @@ function indexEntryToItem(entry: ContentItemsIndexEntryContract): ContentItem {
     // The two fields are kept in sync; conceptId is the field consuming
     // components read.
     conceptId: entry.parentConceptId ?? undefined,
-    scheduledDate: entry.scheduledDate ?? undefined,
+    scheduledAt: entry.scheduledAt ?? undefined,
     archived: entry.archived ?? false,
     createdAt: entry.createdAt,
     updatedAt: entry.updatedAt,
@@ -138,7 +138,6 @@ function itemToIndexEntry(
     owner: item.owner ?? null,
     parentIdeaId: item.parentIdeaId ?? null,
     parentConceptId: item.parentConceptId ?? null,
-    scheduledDate: item.scheduledDate ?? null,
     scheduledAt: item.scheduledAt ?? null,
     archived: item.archived ?? false,
     createdAt: item.createdAt,

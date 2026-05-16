@@ -34,11 +34,11 @@
         id="schedule-at-input"
         type="datetime-local"
         class="text-input"
-        [value]="scheduleAt()"
+        [value]="scheduledAtLocal()"
         [attr.min]="minDateTime()"
         (input)="onScheduleAt($event)"
       />
-      @if (scheduleAtIsPast()) {
+      @if (scheduledAtIsPast()) {
         <p class="field-error" role="alert">Must be a future date/time</p>
       }
     </div>

@@ -65,13 +65,15 @@ const LIVE_CONTENT_TYPES: ReadonlyArray<ContentTypeContract> = [
   styleUrl: './publish-config-block.component.scss',
 })
 export class PublishConfigBlockComponent {
-  /* v8 ignore next 4 — V8's function-call-throws branches on input() declarations are unreachable (Angular class-field init time; ESM exports not spy-able) */
+  /* v8 ignore next 5 — V8's function-call-throws branches on input() declarations are unreachable (Angular class-field init time; ESM exports not spy-able) */
   readonly publishConfig = input.required<PublishConfigContract>();
+  readonly scheduledAtLocal = input<string>('');
   readonly contentType = input<ContentTypeContract | null | undefined>(undefined);
   readonly isVideoLong = input<boolean>(false);
   readonly connectedAccounts = input<ReadonlyArray<ConnectedAccountOption>>([]);
 
   readonly configChange = output<Partial<PublishConfigContract>>();
+  readonly scheduledAtChange = output<string | undefined>();
 
   protected readonly publishActions = PUBLISH_ACTIONS;
   protected readonly deliveryMethods = DELIVERY_METHODS;
@@ -79,10 +81,6 @@ export class PublishConfigBlockComponent {
 
   protected readonly publishAction = computed<PublishActionContract>(
     () => this.publishConfig().publishAction ?? 'save-draft',
-  );
-
-  protected readonly scheduleAt = computed<string>(
-    () => this.publishConfig().scheduleAt ?? '',
   );
 
   protected readonly visibility = computed<PublishVisibilityContract>(
@@ -122,8 +120,8 @@ export class PublishConfigBlockComponent {
     new Date().toISOString().slice(0, 16),
   );
 
-  protected readonly scheduleAtIsPast = computed<boolean>(() => {
-    const v = this.scheduleAt();
+  protected readonly scheduledAtIsPast = computed<boolean>(() => {
+    const v = this.scheduledAtLocal();
     if (!v) return false;
     const date = new Date(v);
     if (Number.isNaN(date.getTime())) return false;
@@ -140,7 +138,7 @@ export class PublishConfigBlockComponent {
 
   protected onScheduleAt(event: Event): void {
     const value = (event.target as HTMLInputElement).value;
-    this.configChange.emit({ scheduleAt: value || undefined });
+    this.scheduledAtChange.emit(value || undefined);
   }
 
   protected onVisibility(event: Event): void {

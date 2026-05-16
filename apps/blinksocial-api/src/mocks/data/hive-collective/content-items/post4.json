@@ -4,20 +4,30 @@
   "status": "review",
   "title": "5-Minute Desk Stretch Routine",
   "description": "Reel format reset routine for office workers, demonstrated standing at a desk.",
-  "pillarIds": ["p1"],
-  "segmentIds": ["s2"],
-  "tags": ["mobility", "office", "reel"],
+  "pillarIds": [
+    "p1"
+  ],
+  "segmentIds": [
+    "s2"
+  ],
+  "tags": [
+    "mobility",
+    "office",
+    "reel"
+  ],
   "owner": "user-brett",
   "hook": "Five minutes here, eight hours undone.",
   "objective": "engagement",
   "platform": "tiktok",
   "contentType": "short-video",
-  "cta": { "type": "follow", "text": "Follow for desk-friendly resets" },
+  "cta": {
+    "type": "follow",
+    "text": "Follow for desk-friendly resets"
+  },
   "keyMessage": "Five minutes can undo eight hours of sitting.",
   "tonePreset": "casual",
   "claimsFlag": false,
   "riskLevel": "low",
-  "scheduledDate": "2026-04-29",
   "scheduledAt": "2026-04-29T17:00:00Z",
   "briefApproved": true,
   "briefApprovedAt": "2026-04-08T10:00:00Z",
@@ -31,8 +41,12 @@
     "brief": {
       "strategy": {
         "objective": "engagement",
-        "audienceSegmentIds": ["s2"],
-        "pillarIds": ["p1"],
+        "audienceSegmentIds": [
+          "s2"
+        ],
+        "pillarIds": [
+          "p1"
+        ],
         "keyMessage": "Five minutes can undo eight hours of sitting.",
         "ctaType": "follow",
         "ctaText": "Follow for desk-friendly resets",
@@ -43,7 +57,10 @@
         "storyArc": "hook-five-resets-cta",
         "musicNotes": "Up-tempo lo-fi"
       },
-      "compliance": { "containsClaims": false, "disclosureNeeded": false },
+      "compliance": {
+        "containsClaims": false,
+        "disclosureNeeded": false
+      },
       "approved": true,
       "canonicalType": "VIDEO_SHORT_VERTICAL",
       "hasTalent": true,
@@ -66,12 +83,42 @@
         "bRollNotes": "Capture from waist up at the desk; cut to feet for ankle circles. Avoid showing the screen.",
         "voiceoverNotes": "Conversational, like coaching a friend through it. Pause after each cue.",
         "shotList": [
-          { "id": "sl-1", "type": "Shot", "description": "Hook delivered to camera, stood at the desk", "duration": "5s" },
-          { "id": "sl-2", "type": "Shot", "description": "Neck rolls — three slow each direction", "duration": "15s" },
-          { "id": "sl-3", "type": "Shot", "description": "Shoulder shrugs into thoracic openers", "duration": "15s" },
-          { "id": "sl-4", "type": "Shot", "description": "Standing forward fold with bent knees", "duration": "10s" },
-          { "id": "sl-5", "type": "Shot", "description": "Ankle circles, each direction", "duration": "10s" },
-          { "id": "sl-6", "type": "CTA", "description": "Hold final pose, deliver follow CTA", "duration": "5s" }
+          {
+            "id": "sl-1",
+            "type": "Shot",
+            "description": "Hook delivered to camera, stood at the desk",
+            "duration": "5s"
+          },
+          {
+            "id": "sl-2",
+            "type": "Shot",
+            "description": "Neck rolls — three slow each direction",
+            "duration": "15s"
+          },
+          {
+            "id": "sl-3",
+            "type": "Shot",
+            "description": "Shoulder shrugs into thoracic openers",
+            "duration": "15s"
+          },
+          {
+            "id": "sl-4",
+            "type": "Shot",
+            "description": "Standing forward fold with bent knees",
+            "duration": "10s"
+          },
+          {
+            "id": "sl-5",
+            "type": "Shot",
+            "description": "Ankle circles, each direction",
+            "duration": "10s"
+          },
+          {
+            "id": "sl-6",
+            "type": "CTA",
+            "description": "Hold final pose, deliver follow CTA",
+            "duration": "5s"
+          }
         ]
       }
     },

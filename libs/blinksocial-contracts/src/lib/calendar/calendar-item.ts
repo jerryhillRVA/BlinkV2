@@ -37,7 +37,7 @@ export interface CalendarContentItemContract {
   canonicalType: CalendarCanonicalTypeContract;
   status: CalendarItemStatusContract;
   owner: string;
-  scheduleAt: string | null;
+  scheduledAt: string | null;
   flags?: CalendarItemFlagsContract;
   blockers?: string[];
 }

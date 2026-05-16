@@ -148,7 +148,7 @@ function buildQA(): ProductionQAContract {
     qaApprovedBy: undefined,
     publishConfig: {
       publishAction: 'schedule',
-      scheduleAt: '2026-05-20T10:00:00.000Z',
+      scheduledAt: '2026-05-20T10:00:00.000Z',
       visibility: 'public',
       madeForKids: false,
       accountId: 'acct-1',
@@ -247,7 +247,7 @@ function buildQA(): ProductionQAContract {
         start: '2026-03-10T00:00:00Z',
         end: '2026-03-14T23:59:59Z',
       },
-      scheduledDate: '2026-03-12',
+      scheduledAt: '2026-03-12T14:00:00.000Z',
       production: {
         productionStep: 'qa',
         brief,
@@ -416,7 +416,6 @@ function buildQA(): ProductionQAContract {
       platform: 'instagram',
       contentType: 'reel',
       scheduledAt: '2026-05-15T15:00:00.000Z',
-      scheduledDate: '2026-05-15',
     });
 
     // Seed a brief_due override first to verify the second patch deep-merges
@@ -475,18 +474,14 @@ function buildQA(): ProductionQAContract {
       briefApprovedBy: 'user-jerry',
     });
 
-    // Simulate the A&S live-sync write shape: top-level scheduledAt /
-    // scheduledDate / status: 'scheduled' alongside production.qa.publishConfig.
+    // Simulate the Approve & Schedule write shape after #150: top-level
+    // scheduledAt + status; publishConfig carries action only.
     await svc.updateItem(TEST_TENANT, post.id, {
       status: 'scheduled',
       scheduledAt: '2026-06-01T15:00:00.000Z',
-      scheduledDate: '2026-06-01',
       production: {
         qa: {
-          publishConfig: {
-            publishAction: 'schedule',
-            scheduleAt: '2026-06-01T15:00',
-          },
+          publishConfig: { publishAction: 'schedule' },
         },
       },
     });
@@ -494,7 +489,7 @@ function buildQA(): ProductionQAContract {
     // Full item file persists scheduledAt at top level.
     const fetched = await svc.getItem(TEST_TENANT, post.id);
     expect(fetched.scheduledAt).toBe('2026-06-01T15:00:00.000Z');
-    expect(fetched.scheduledDate).toBe('2026-06-01');
+    expect(fetched).not.toHaveProperty('scheduledDate');
     expect(fetched.status).toBe('scheduled');
 
     // Index entry carries the scheduledAt projection so Calendar sees it
@@ -502,14 +497,14 @@ function buildQA(): ProductionQAContract {
     const index = await svc.getIndex(TEST_TENANT);
     const entry = index.items.find((r) => r.id === post.id);
     expect(entry?.scheduledAt).toBe('2026-06-01T15:00:00.000Z');
-    expect(entry?.scheduledDate).toBe('2026-06-01');
+    expect(entry).not.toHaveProperty('scheduledDate');
 
     // Calendar projects the publish event at the chosen ISO.
     const calendarSvc = new CalendarService(fs, null);
     const projection = await calendarSvc.getCalendar(TEST_TENANT);
     const item = projection.items.find((i) => i.id === post.id);
     expect(item).toBeDefined();
-    expect(item?.scheduleAt).toBe('2026-06-01T15:00:00.000Z');
+    expect(item?.scheduledAt).toBe('2026-06-01T15:00:00.000Z');
     expect(item?.status).toBe('scheduled');
 
     await svc.deleteItem(TEST_TENANT, post.id);

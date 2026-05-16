@@ -106,7 +106,7 @@ const TC4_TENANT = `__test_cal_tc4_${AFS_SUFFIX}__`;
         platform: 'instagram',
         contentType: 'reel',
         owner: 'Test Owner',
-        scheduledDate: '2026-05-20',
+        scheduledAt: '2026-05-20T14:00:00.000Z',
       } as unknown as Parameters<ContentItemsService['createItem']>[1]);
 
       const response = await calendarSvc.getCalendar(TC2_TENANT);
@@ -119,7 +119,7 @@ const TC4_TENANT = `__test_cal_tc4_${AFS_SUFFIX}__`;
         canonicalType: 'VIDEO_SHORT_VERTICAL',
         status: 'scheduled',
         owner: 'Test Owner',
-        scheduleAt: '2026-05-20T14:00:00.000Z',
+        scheduledAt: '2026-05-20T14:00:00.000Z',
         blockers: [],
       });
       // No settings written → no milestones for this item.
@@ -166,7 +166,7 @@ const TC4_TENANT = `__test_cal_tc4_${AFS_SUFFIX}__`;
         platform: 'instagram',
         contentType: 'reel',
         owner: 'Owner-TC3',
-        scheduledDate: '2026-06-01',
+        scheduledAt: '2026-06-01T14:00:00.000Z',
       } as unknown as Parameters<ContentItemsService['createItem']>[1]);
 
       const response = await calendarSvc.getCalendar(TC3_TENANT);

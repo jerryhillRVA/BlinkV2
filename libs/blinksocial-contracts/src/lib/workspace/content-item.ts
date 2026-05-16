@@ -549,7 +549,6 @@ export type DeliveryMethodContract = 'auto' | 'manual';
 
 export interface PublishConfigContract {
   publishAction?: PublishActionContract;
-  scheduleAt?: string;
   visibility?: PublishVisibilityContract;
   madeForKids?: boolean;
   accountId?: string;
@@ -614,7 +613,6 @@ export interface ContentItemContract {
   sourceLinks?: string[];
   riskLevel?: RiskLevelContract;
   targetPublishWindow?: TargetPublishWindowContract;
-  scheduledDate?: string | null;
   scheduledAt?: string | null;
   /**
    * Per-item milestone date overrides keyed by milestone type. Each entry

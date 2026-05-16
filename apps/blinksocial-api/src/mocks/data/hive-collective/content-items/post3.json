@@ -4,20 +4,31 @@
   "status": "in-progress",
   "title": "Why Your Sleep Is Out of Sync (And the Fix)",
   "description": "Long-form YouTube explainer connecting circadian disruption with hormonal imbalance, with three practical resets.",
-  "pillarIds": ["p1", "p4"],
-  "segmentIds": ["s5"],
-  "tags": ["sleep", "circadian", "hormones"],
+  "pillarIds": [
+    "p1",
+    "p4"
+  ],
+  "segmentIds": [
+    "s5"
+  ],
+  "tags": [
+    "sleep",
+    "circadian",
+    "hormones"
+  ],
   "owner": "user-sarah",
   "hook": "Your sleep didn't break — your hormones did.",
   "objective": "education",
   "platform": "youtube",
   "contentType": "long-form",
-  "cta": { "type": "subscribe", "text": "Subscribe for the rest of the sleep series" },
+  "cta": {
+    "type": "subscribe",
+    "text": "Subscribe for the rest of the sleep series"
+  },
   "keyMessage": "Most sleep problems are circadian, not behavioral.",
   "tonePreset": "authoritative",
   "claimsFlag": true,
   "riskLevel": "medium",
-  "scheduledDate": "2026-05-19",
   "scheduledAt": "2026-05-19T15:00:00Z",
   "briefApproved": true,
   "briefApprovedAt": "2026-04-12T09:00:00Z",
@@ -31,8 +42,13 @@
     "brief": {
       "strategy": {
         "objective": "education",
-        "audienceSegmentIds": ["s5"],
-        "pillarIds": ["p1", "p4"],
+        "audienceSegmentIds": [
+          "s5"
+        ],
+        "pillarIds": [
+          "p1",
+          "p4"
+        ],
         "keyMessage": "Most sleep problems are circadian, not behavioral.",
         "ctaType": "subscribe",
         "ctaText": "Subscribe for the rest of the sleep series",
@@ -43,7 +59,10 @@
         "storyArc": "hook-mechanism-three-fixes-cta",
         "musicNotes": "Sparse synth bed under voiceover; silence under research overlays"
       },
-      "compliance": { "containsClaims": true, "disclosureNeeded": true },
+      "compliance": {
+        "containsClaims": true,
+        "disclosureNeeded": true
+      },
       "approved": true,
       "canonicalType": "VIDEO_LONG_HORIZONTAL",
       "hasTalent": true,

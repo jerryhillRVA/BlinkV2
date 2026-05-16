@@ -17,10 +17,10 @@
       "owner": null,
       "parentIdeaId": null,
       "parentConceptId": null,
-      "scheduledDate": null,
       "archived": false,
       "createdAt": "2026-03-01T09:00:00Z",
-      "updatedAt": "2026-03-01T09:00:00Z"
+      "updatedAt": "2026-03-01T09:00:00Z",
+      "scheduledAt": null
     },
     {
       "id": "bk-idea2",
@@ -38,10 +38,10 @@
       "owner": null,
       "parentIdeaId": null,
       "parentConceptId": null,
-      "scheduledDate": null,
       "archived": false,
       "createdAt": "2026-03-02T10:00:00Z",
-      "updatedAt": "2026-03-02T10:00:00Z"
+      "updatedAt": "2026-03-02T10:00:00Z",
+      "scheduledAt": null
     },
     {
       "id": "bk-idea3",
@@ -60,10 +60,10 @@
       "owner": null,
       "parentIdeaId": null,
       "parentConceptId": null,
-      "scheduledDate": null,
       "archived": false,
       "createdAt": "2026-03-03T08:00:00Z",
-      "updatedAt": "2026-03-03T08:00:00Z"
+      "updatedAt": "2026-03-03T08:00:00Z",
+      "scheduledAt": null
     },
     {
       "id": "bk-concept1",
@@ -82,10 +82,10 @@
       "owner": null,
       "parentIdeaId": null,
       "parentConceptId": null,
-      "scheduledDate": null,
       "archived": false,
       "createdAt": "2026-02-25T11:00:00Z",
-      "updatedAt": "2026-02-28T15:00:00Z"
+      "updatedAt": "2026-02-28T15:00:00Z",
+      "scheduledAt": null
     },
     {
       "id": "bk-concept2",
@@ -103,10 +103,10 @@
       "owner": null,
       "parentIdeaId": null,
       "parentConceptId": null,
-      "scheduledDate": null,
       "archived": false,
       "createdAt": "2026-02-20T14:00:00Z",
-      "updatedAt": "2026-02-27T10:00:00Z"
+      "updatedAt": "2026-02-27T10:00:00Z",
+      "scheduledAt": null
     },
     {
       "id": "bk-prod1",
@@ -124,10 +124,10 @@
       "owner": null,
       "parentIdeaId": null,
       "parentConceptId": "bk-concept1",
-      "scheduledDate": "2026-05-15",
       "archived": false,
       "createdAt": "2026-02-15T09:00:00Z",
-      "updatedAt": "2026-03-01T16:00:00Z"
+      "updatedAt": "2026-03-01T16:00:00Z",
+      "scheduledAt": "2026-05-15T00:00:00.000Z"
     },
     {
       "id": "bk-idea4",
@@ -146,10 +146,10 @@
       "owner": null,
       "parentIdeaId": null,
       "parentConceptId": null,
-      "scheduledDate": null,
       "archived": false,
       "createdAt": "2026-04-15T09:00:00Z",
-      "updatedAt": "2026-04-15T09:00:00Z"
+      "updatedAt": "2026-04-15T09:00:00Z",
+      "scheduledAt": null
     },
     {
       "id": "bk-concept3",
@@ -168,10 +168,10 @@
       "owner": "user-mara",
       "parentIdeaId": "bk-idea1",
       "parentConceptId": null,
-      "scheduledDate": null,
       "archived": false,
       "createdAt": "2026-03-12T10:00:00Z",
-      "updatedAt": "2026-03-20T11:00:00Z"
+      "updatedAt": "2026-03-20T11:00:00Z",
+      "scheduledAt": null
     },
     {
       "id": "bk-concept4",
@@ -190,10 +190,10 @@
       "owner": "user-jordan",
       "parentIdeaId": "bk-idea4",
       "parentConceptId": null,
-      "scheduledDate": null,
       "archived": false,
       "createdAt": "2026-04-18T10:00:00Z",
-      "updatedAt": "2026-04-22T09:00:00Z"
+      "updatedAt": "2026-04-22T09:00:00Z",
+      "scheduledAt": null
     },
     {
       "id": "bk-review1",
@@ -211,10 +211,10 @@
       "owner": null,
       "parentIdeaId": null,
       "parentConceptId": "bk-concept4",
-      "scheduledDate": "2026-05-08",
       "archived": false,
       "createdAt": "2026-02-10T12:00:00Z",
-      "updatedAt": "2026-02-28T14:00:00Z"
+      "updatedAt": "2026-02-28T14:00:00Z",
+      "scheduledAt": "2026-05-08T00:00:00.000Z"
     },
     {
       "id": "bk-sched1",
@@ -232,10 +232,10 @@
       "owner": null,
       "parentIdeaId": null,
       "parentConceptId": "bk-concept2",
-      "scheduledDate": "2026-04-30",
       "archived": false,
       "createdAt": "2026-02-05T10:00:00Z",
-      "updatedAt": "2026-02-25T11:00:00Z"
+      "updatedAt": "2026-02-25T11:00:00Z",
+      "scheduledAt": "2026-04-30T00:00:00.000Z"
     },
     {
       "id": "bk-pub1",
@@ -255,10 +255,10 @@
       "owner": null,
       "parentIdeaId": null,
       "parentConceptId": "bk-concept2",
-      "scheduledDate": "2026-02-15",
       "archived": false,
       "createdAt": "2026-02-01T08:00:00Z",
-      "updatedAt": "2026-02-15T10:00:00Z"
+      "updatedAt": "2026-02-15T10:00:00Z",
+      "scheduledAt": "2026-02-15T00:00:00.000Z"
     },
     {
       "id": "bk-pub2",
@@ -277,10 +277,10 @@
       "owner": null,
       "parentIdeaId": null,
       "parentConceptId": "bk-concept3",
-      "scheduledDate": "2026-02-10",
       "archived": false,
       "createdAt": "2026-01-20T09:00:00Z",
-      "updatedAt": "2026-02-10T14:00:00Z"
+      "updatedAt": "2026-02-10T14:00:00Z",
+      "scheduledAt": "2026-02-10T00:00:00.000Z"
     },
     {
       "id": "bk-img1",
@@ -298,10 +298,10 @@
       "owner": "user-jordan",
       "parentIdeaId": null,
       "parentConceptId": "bk-concept4",
-      "scheduledDate": "2026-05-17",
       "archived": false,
       "createdAt": "2026-04-26T09:00:00Z",
-      "updatedAt": "2026-05-03T11:00:00Z"
+      "updatedAt": "2026-05-03T11:00:00Z",
+      "scheduledAt": "2026-05-17T00:00:00.000Z"
     },
     {
       "id": "bk-text1",
@@ -320,10 +320,10 @@
       "owner": "user-jordan",
       "parentIdeaId": null,
       "parentConceptId": "bk-concept4",
-      "scheduledDate": "2026-05-20",
       "archived": false,
       "createdAt": "2026-04-22T09:00:00Z",
-      "updatedAt": "2026-04-30T14:00:00Z"
+      "updatedAt": "2026-04-30T14:00:00Z",
+      "scheduledAt": "2026-05-20T00:00:00.000Z"
     },
     {
       "id": "bk-story1",
@@ -341,10 +341,10 @@
       "owner": "user-jordan",
       "parentIdeaId": null,
       "parentConceptId": "bk-concept4",
-      "scheduledDate": "2026-05-23",
       "archived": false,
       "createdAt": "2026-04-30T09:00:00Z",
-      "updatedAt": "2026-05-05T11:00:00Z"
+      "updatedAt": "2026-05-05T11:00:00Z",
+      "scheduledAt": "2026-05-23T00:00:00.000Z"
     }
   ],
   "totalCount": 16,

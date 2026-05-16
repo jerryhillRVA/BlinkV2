@@ -4,20 +4,31 @@
   "status": "scheduled",
   "title": "Anti-Inflammatory Breakfast Bowl Walkthrough",
   "description": "Step-by-step photo carousel showing how to build a hormone-friendly breakfast bowl in under five minutes.",
-  "pillarIds": ["p4"],
-  "segmentIds": ["s1", "s5"],
-  "tags": ["breakfast", "anti-inflammatory", "carousel"],
+  "pillarIds": [
+    "p4"
+  ],
+  "segmentIds": [
+    "s1",
+    "s5"
+  ],
+  "tags": [
+    "breakfast",
+    "anti-inflammatory",
+    "carousel"
+  ],
   "owner": "user-sarah",
   "hook": "Five ingredients. Five minutes. Five days of better mornings.",
   "objective": "education",
   "platform": "instagram",
   "contentType": "carousel",
-  "cta": { "type": "other", "text": "Save this for tomorrow's grocery run" },
+  "cta": {
+    "type": "other",
+    "text": "Save this for tomorrow's grocery run"
+  },
   "keyMessage": "A balanced breakfast can be fast and ingredient-light.",
   "tonePreset": "friendly",
   "claimsFlag": false,
   "riskLevel": "low",
-  "scheduledDate": "2026-05-04",
   "scheduledAt": "2026-05-04T13:00:00Z",
   "briefApproved": true,
   "briefApprovedAt": "2026-04-15T11:00:00Z",
@@ -31,8 +42,13 @@
     "brief": {
       "strategy": {
         "objective": "education",
-        "audienceSegmentIds": ["s1", "s5"],
-        "pillarIds": ["p4"],
+        "audienceSegmentIds": [
+          "s1",
+          "s5"
+        ],
+        "pillarIds": [
+          "p4"
+        ],
         "keyMessage": "A balanced breakfast can be fast and ingredient-light.",
         "ctaType": "other",
         "ctaText": "Save this for tomorrow's grocery run",
@@ -43,7 +59,10 @@
         "storyArc": "promise-five-recipes-cta",
         "musicNotes": "n/a — visual-only carousel"
       },
-      "compliance": { "containsClaims": false, "disclosureNeeded": false },
+      "compliance": {
+        "containsClaims": false,
+        "disclosureNeeded": false
+      },
       "approved": true,
       "canonicalType": "IMAGE_CAROUSEL",
       "hasTalent": false,
@@ -91,7 +110,13 @@
             "altText": "A close-up of a hand bookmarking the post in the Instagram interface."
           }
         ],
-        "hashtags": ["#antiinflammatory", "#hormonebalance", "#breakfastrecipes", "#womenshealth", "#perimenopause"]
+        "hashtags": [
+          "#antiinflammatory",
+          "#hormonebalance",
+          "#breakfastrecipes",
+          "#womenshealth",
+          "#perimenopause"
+        ]
       }
     },
     "sources": [],

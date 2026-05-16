@@ -22,7 +22,7 @@
           "owner": { "type": ["string", "null"] },
           "parentIdeaId": { "type": ["string", "null"] },
           "parentConceptId": { "type": ["string", "null"] },
-          "scheduledDate": { "type": ["string", "null"], "format": "date" },
+          "scheduledAt": { "type": ["string", "null"], "format": "date-time" },
           "archived": { "const": true },
           "createdAt": { "type": "string", "format": "date-time" },
           "updatedAt": { "type": "string", "format": "date-time" }

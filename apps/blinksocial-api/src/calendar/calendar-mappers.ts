@@ -13,8 +13,6 @@ import type {
 
 type MilestoneOverridesMap = ContentItemContract['milestoneOverrides'];
 
-const DEFAULT_PUBLISH_TIME_UTC = 'T14:00:00.000Z';
-
 const CONTENT_TYPE_TO_CANONICAL: Record<
   ContentTypeContract,
   CalendarCanonicalTypeContract
@@ -70,19 +68,11 @@ export function mapContentStatusToCalendarStatus(
   return CONTENT_STATUS_TO_CALENDAR_STATUS[status] ?? 'intake';
 }
 
-export function resolveScheduleAt(
-  item: Pick<ContentItemContract, 'scheduledAt' | 'scheduledDate'>,
-): string | null {
-  if (item.scheduledAt) return item.scheduledAt;
-  if (item.scheduledDate) return `${item.scheduledDate}${DEFAULT_PUBLISH_TIME_UTC}`;
-  return null;
-}
-
 export function mapContentItemToCalendarItem(
   item: ContentItemContract | ContentItemsIndexEntryContract,
 ): CalendarContentItemContract | null {
-  const scheduleAt = resolveScheduleAt(item);
-  if (!scheduleAt) return null;
+  const scheduledAt = item.scheduledAt ?? null;
+  if (!scheduledAt) return null;
   const platform: PlatformContract = item.platform ?? 'tbd';
   return {
     id: item.id,
@@ -91,14 +81,14 @@ export function mapContentItemToCalendarItem(
     canonicalType: mapContentTypeToCanonical(item.contentType ?? null),
     status: mapContentStatusToCalendarStatus(item.status),
     owner: item.owner ?? 'Unassigned',
-    scheduleAt,
+    scheduledAt,
     blockers: [],
   };
 }
 
 export function deriveMilestonesForItem(
   contentId: string,
-  scheduleAt: string,
+  scheduledAt: string,
   canonicalType: CalendarCanonicalTypeContract,
   ownerLabel: string,
   settings: CalendarSettingsContract | null,
@@ -107,7 +97,7 @@ export function deriveMilestonesForItem(
   if (!settings?.deadlineTemplates) return [];
   const template = settings.deadlineTemplates[canonicalType];
   if (!template?.milestones) return [];
-  const anchor = new Date(scheduleAt);
+  const anchor = new Date(scheduledAt);
   return template.milestones.map((m, idx) => {
     const override = overrides?.[m.milestoneType];
     let dueAt: string;

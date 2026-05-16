@@ -17,6 +17,7 @@ import type {
 import type {
   ApprovalEntryContract,
   ApprovalStatusContract,
+  ContentStatusContract,
   DraftCarouselSlideContract,
   DraftSequenceBlockContract,
   DraftShotItemContract,
@@ -38,6 +39,7 @@ import type {
   ProductionDraftVideoLongContract,
   ProductionPackagingContract,
   ProductionQAContract,
+  PublishActionContract,
   PublishConfigContract,
   PublishingModeContract,
 } from '@blinksocial/contracts';
@@ -1099,27 +1101,27 @@ export class PostDetailStore {
   });
 
   /**
-   * Ticket #135: defensively hydrate from top-level `item.scheduledAt` when
-   * the persisted `publishConfig.scheduleAt` is empty. This covers the
-   * Calendar Quick-Edit path (#134) which writes only top-level fields —
-   * without this, the Approve & Schedule datetime input would render blank
-   * for a post that was scheduled exclusively from the Calendar. Read-only
-   * derivation; the next `setPublishConfig` write pins both layers in sync.
+   * Returns the persisted publish config (action, visibility, account,
+   * delivery flags). The scheduling timestamp lives on top-level
+   * `item.scheduledAt` — derive its picker representation via
+   * {@link publishScheduledAtLocal}, not from this object.
    */
   readonly publishConfig = computed<PublishConfigContract>(() => {
     const persisted = this.qa()?.publishConfig ?? DEFAULT_PUBLISH_CONFIG;
+    // When a top-level scheduledAt exists but the persisted publishAction
+    // is missing or still defaulted to 'save-draft', surface 'schedule' as
+    // the implied action so the UI reflects the actual state of the item.
     const top = this.item()?.scheduledAt;
-    if (top && !persisted.scheduleAt) {
-      return {
-        ...persisted,
-        scheduleAt: isoToDatetimeLocal(top),
-        publishAction:
-          !persisted.publishAction || persisted.publishAction === 'save-draft'
-            ? 'schedule'
-            : persisted.publishAction,
-      };
+    if (top && (!persisted.publishAction || persisted.publishAction === 'save-draft')) {
+      return { ...persisted, publishAction: 'schedule' };
     }
     return persisted;
+  });
+
+  /** Datetime-local-formatted view of the top-level `scheduledAt` for the picker. */
+  readonly publishScheduledAtLocal = computed<string>(() => {
+    const top = this.item()?.scheduledAt;
+    return top ? isoToDatetimeLocal(top) : '';
   });
 
   readonly qaApproved = computed<boolean>(() => !!this.qa()?.approved);
@@ -1166,13 +1168,13 @@ export class PostDetailStore {
   }
 
   /**
-   * Ticket #135: single-seam writer for everything tied to the publish
-   * config. Derives top-level `scheduledAt` / `scheduledDate` / `status`
-   * from the merged config and persists everything in one `saveItem` —
-   * bypassing `persistQA`, which only owns the `qa` slot. Status flips are
-   * guarded: promote only from `'review'`, demote only from `'scheduled'`;
-   * `'draft'` / `'in-progress'` / `'published'` stay where they are. The
-   * `briefApproved` guard matches `persistQA` exactly.
+   * Writer for publishConfig fields (action / visibility / account /
+   * delivery / notify flags). The scheduling timestamp is held on
+   * top-level `item.scheduledAt` — use {@link setPublishScheduledAt} for
+   * datetime changes. Status flips happen when the combined post-write
+   * state implies a schedule:
+   *   publishAction === 'schedule' AND scheduledAt is set → status 'scheduled'
+   *   otherwise → status 'review' (only flips down from 'scheduled')
    */
   setPublishConfig(patch: Partial<PublishConfigContract>): void {
     const item = this.item();
@@ -1182,21 +1184,11 @@ export class PostDetailStore {
     const currentConfig = this.qa()?.publishConfig ?? DEFAULT_PUBLISH_CONFIG;
     const nextConfig: PublishConfigContract = { ...currentConfig, ...patch };
 
-    const iso = datetimeLocalToIso(nextConfig.scheduleAt ?? '');
-    const isScheduledIntent =
-      nextConfig.publishAction === 'schedule' && iso !== null;
-
-    const nextScheduledAt: string | null = isScheduledIntent ? iso : null;
-    const nextScheduledDate: string | null = isScheduledIntent
-      ? (iso as string).slice(0, 10)
-      : null;
-
-    let nextStatus = item.status;
-    if (isScheduledIntent && item.status === 'review') {
-      nextStatus = 'scheduled';
-    } else if (!isScheduledIntent && item.status === 'scheduled') {
-      nextStatus = 'review';
-    }
+    const nextStatus = this.resolveScheduledStatus(
+      item.status,
+      nextConfig.publishAction,
+      item.scheduledAt ?? null,
+    );
 
     const currentQA: ProductionQAContract = item.production?.qa ?? {};
     const nextQA: ProductionQAContract = {
@@ -1206,12 +1198,56 @@ export class PostDetailStore {
     const next: ContentItem = {
       ...item,
       status: nextStatus,
-      scheduledAt: nextScheduledAt,
-      scheduledDate: nextScheduledDate,
       production: { ...item.production, qa: nextQA },
       updatedAt: new Date().toISOString(),
     };
     this.state.saveItem(next);
+  }
+
+  /**
+   * Writer for the scheduling timestamp. Accepts a datetime-local string
+   * (the format emitted by `<input type="datetime-local">`), converts it
+   * to ISO, and persists to top-level `item.scheduledAt`. Triggers the
+   * same status flip rule as {@link setPublishConfig}: review → scheduled
+   * once both publishAction === 'schedule' AND a valid timestamp exist.
+   * Passing `undefined` (or an unparseable string) clears the timestamp
+   * and demotes from 'scheduled' back to 'review'.
+   */
+  setPublishScheduledAt(localValue: string | undefined): void {
+    const item = this.item();
+    if (!item) return;
+    if (!item.briefApproved) return;
+
+    const iso = localValue ? datetimeLocalToIso(localValue) : null;
+    const currentConfig = this.qa()?.publishConfig ?? DEFAULT_PUBLISH_CONFIG;
+    const nextStatus = this.resolveScheduledStatus(
+      item.status,
+      currentConfig.publishAction,
+      iso,
+    );
+
+    const next: ContentItem = {
+      ...item,
+      status: nextStatus,
+      scheduledAt: iso,
+      updatedAt: new Date().toISOString(),
+    };
+    this.state.saveItem(next);
+  }
+
+  private resolveScheduledStatus(
+    currentStatus: ContentStatusContract,
+    publishAction: PublishActionContract | undefined,
+    scheduledAt: string | null,
+  ): ContentStatusContract {
+    const isScheduledIntent = publishAction === 'schedule' && scheduledAt !== null;
+    if (isScheduledIntent && currentStatus === 'review') {
+      return 'scheduled';
+    }
+    if (!isScheduledIntent && currentStatus === 'scheduled') {
+      return 'review';
+    }
+    return currentStatus;
   }
 
   /**

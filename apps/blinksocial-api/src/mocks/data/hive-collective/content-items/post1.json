@@ -35,7 +35,6 @@
   "keyMessage": "A 60-second flow can transform your mornings",
   "claimsFlag": false,
   "riskLevel": "low",
-  "scheduledDate": "2026-03-12",
   "targetPublishWindow": {
     "start": "2026-03-10T00:00:00Z",
     "end": "2026-03-14T23:59:59Z"
@@ -116,12 +115,42 @@
         "bRollNotes": "B-roll: feet planted, slow zoom on hip rotation. Window light, no harsh shadows.",
         "voiceoverNotes": "Soft, warm tone. Pause after each cue so viewers can match form.",
         "shotList": [
-          { "id": "sl-1", "type": "Shot", "description": "Hook on camera, eye-level", "duration": "3s" },
-          { "id": "sl-2", "type": "Shot", "description": "Cat-Cow stretch — three reps", "duration": "12s" },
-          { "id": "sl-3", "type": "Shot", "description": "Thoracic rotation, each side", "duration": "15s" },
-          { "id": "sl-4", "type": "Shot", "description": "Hip circles, each direction", "duration": "15s" },
-          { "id": "sl-5", "type": "Shot", "description": "Standing reach + fold", "duration": "10s" },
-          { "id": "sl-6", "type": "CTA", "description": "Hold final pose, deliver CTA", "duration": "5s" }
+          {
+            "id": "sl-1",
+            "type": "Shot",
+            "description": "Hook on camera, eye-level",
+            "duration": "3s"
+          },
+          {
+            "id": "sl-2",
+            "type": "Shot",
+            "description": "Cat-Cow stretch — three reps",
+            "duration": "12s"
+          },
+          {
+            "id": "sl-3",
+            "type": "Shot",
+            "description": "Thoracic rotation, each side",
+            "duration": "15s"
+          },
+          {
+            "id": "sl-4",
+            "type": "Shot",
+            "description": "Hip circles, each direction",
+            "duration": "15s"
+          },
+          {
+            "id": "sl-5",
+            "type": "Shot",
+            "description": "Standing reach + fold",
+            "duration": "10s"
+          },
+          {
+            "id": "sl-6",
+            "type": "CTA",
+            "description": "Hold final pose, deliver CTA",
+            "duration": "5s"
+          }
         ]
       }
     },
@@ -227,7 +256,6 @@
       "packagingData": {
         "publishAction": "schedule",
         "visibility": "public",
-        "scheduleAt": "2026-03-12T12:00:00Z",
         "title": "60-Second Morning Mobility Flow",
         "packagedCopy": "Morning mobility in 60 seconds. No equipment needed.\n\nYour joints will thank you. Save this for tomorrow morning.",
         "keywords": [
@@ -381,7 +409,7 @@
             "id": "ev-5",
             "type": "qa",
             "actor": "user-sarah",
-            "message": "QA checklist completed \u2014 all passed",
+            "message": "QA checklist completed — all passed",
             "timestamp": "2026-03-07T14:00:00Z",
             "important": true,
             "tab": "qa"
@@ -400,7 +428,7 @@
           {
             "id": "dl-1",
             "title": "Hook selection",
-            "note": "Went with 'Your body shouldn't feel 80' \u2014 tested best in focus group",
+            "note": "Went with 'Your body shouldn't feel 80' — tested best in focus group",
             "scope": "draft",
             "actor": "user-sarah",
             "timestamp": "2026-02-24T15:00:00Z"
@@ -486,5 +514,6 @@
         "savedAt": "2026-03-08T10:00:00Z"
       }
     ]
-  }
+  },
+  "scheduledAt": "2026-03-12T00:00:00.000Z"
 }

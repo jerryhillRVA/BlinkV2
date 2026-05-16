@@ -74,8 +74,7 @@
     },
     "collaborators": { "type": "array", "items": { "type": "string" } },
 
-    "scheduledDate": { "type": "string", "format": "date" },
-    "scheduledTime": { "type": "string", "pattern": "^\\d{2}:\\d{2}$" },
+    "scheduledAt": { "type": ["string", "null"], "format": "date-time" },
     "approvedBy": { "type": "string" },
     "approvedAt": { "type": "string", "format": "date-time" },
     "reviewNotes": { "type": "string" },
@@ -441,7 +440,6 @@
       "properties": {
         "publishAction": { "$ref": "enums.schema.json#/$defs/PublishAction" },
         "visibility": { "$ref": "enums.schema.json#/$defs/Visibility" },
-        "scheduleAt": { "type": "string", "format": "date-time" },
         "title": { "type": "string" },
         "packagedCopy": { "type": "string" },
         "description": { "type": "string" },

@@ -4,20 +4,29 @@
   "status": "scheduled",
   "title": "Member Spotlight: Three Months In",
   "description": "Single image post highlighting a community member's story and progress, paired with a short caption.",
-  "pillarIds": ["p3"],
-  "segmentIds": ["s4"],
-  "tags": ["community", "spotlight"],
+  "pillarIds": [
+    "p3"
+  ],
+  "segmentIds": [
+    "s4"
+  ],
+  "tags": [
+    "community",
+    "spotlight"
+  ],
   "owner": "user-brett",
   "hook": "Three months in: here's what changed first.",
   "objective": "community",
   "platform": "instagram",
   "contentType": "feed-post",
-  "cta": { "type": "comment", "text": "Comment a 🌱 if you remember your day-one self" },
+  "cta": {
+    "type": "comment",
+    "text": "Comment a 🌱 if you remember your day-one self"
+  },
   "keyMessage": "Real progress looks ordinary. That's the win.",
   "tonePreset": "friendly",
   "claimsFlag": false,
   "riskLevel": "low",
-  "scheduledDate": "2026-05-12",
   "scheduledAt": "2026-05-12T14:00:00Z",
   "briefApproved": true,
   "briefApprovedAt": "2026-04-22T11:00:00Z",
@@ -31,8 +40,12 @@
     "brief": {
       "strategy": {
         "objective": "community",
-        "audienceSegmentIds": ["s4"],
-        "pillarIds": ["p3"],
+        "audienceSegmentIds": [
+          "s4"
+        ],
+        "pillarIds": [
+          "p3"
+        ],
         "keyMessage": "Real progress looks ordinary. That's the win.",
         "ctaType": "comment",
         "ctaText": "Comment a 🌱 if you remember your day-one self",
@@ -43,7 +56,10 @@
         "storyArc": "candid-portrait-with-reflection",
         "musicNotes": "n/a — feed post"
       },
-      "compliance": { "containsClaims": false, "disclosureNeeded": false },
+      "compliance": {
+        "containsClaims": false,
+        "disclosureNeeded": false
+      },
       "approved": true,
       "canonicalType": "IMAGE_SINGLE",
       "hasTalent": true,
@@ -57,7 +73,13 @@
         "creativeDirectionNotes": "Natural light, mid-morning. Member at home — kitchen, living room, or porch. No studio polish. Looking off-camera, not posing. Candid > posed.",
         "imageRef": "member-spotlight-may.jpg",
         "altText": "A woman in her 40s laughing while standing in a sunlit kitchen, holding a mug, no makeup, hair pulled back.",
-        "hashtags": ["#hivecollective", "#womenover40", "#realprogress", "#wellnessjourney", "#communityspotlight"]
+        "hashtags": [
+          "#hivecollective",
+          "#womenover40",
+          "#realprogress",
+          "#wellnessjourney",
+          "#communityspotlight"
+        ]
       }
     },
     "sources": [],
