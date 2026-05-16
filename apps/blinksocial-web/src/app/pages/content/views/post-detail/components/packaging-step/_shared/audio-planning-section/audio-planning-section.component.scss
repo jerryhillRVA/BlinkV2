@@ -60,6 +60,10 @@
   font-weight: 500;
   color: var(--blink-on-surface-faint);
   transition: background 120ms ease, color 120ms ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
 
   &:hover:not(:disabled):not(.segmented-option--selected) {
     color: var(--blink-on-surface-medium);
@@ -75,6 +79,14 @@
     cursor: not-allowed;
     opacity: 0.5;
   }
+}
+
+.segmented-option-icon {
+  flex-shrink: 0;
+  // Keep the icon a half-shade dim under the unselected text color so
+  // it doesn't visually outweigh the label. Selected state inherits
+  // currentColor like the rest of the button.
+  color: inherit;
 }
 
 .segmented-option--selected {
@@ -95,29 +107,8 @@
   color: var(--blink-on-surface-faint);
 }
 
-.mood-select {
-  appearance: none;
-  width: 100%;
-  height: 32px;
-  padding: 0 28px 0 10px;
-  border: 1px solid transparent;
-  border-radius: 6px;
-  background: var(--blink-input-bg-dark);
-  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><polyline points='6 9 12 15 18 9'/></svg>");
-  background-repeat: no-repeat;
-  background-position: right 8px center;
-  background-size: 12px 12px;
-  font-size: var(--blink-body-small);
-  color: var(--blink-on-surface);
-
-  &:focus-visible {
-    outline: 2px solid var(--blink-brand-primary);
-    outline-offset: 0;
-    background-color: var(--blink-input-bg-focus);
-  }
-
-  &:disabled {
-    cursor: not-allowed;
-    opacity: 0.5;
-  }
+// `<app-dropdown filled fullWidth size="sm">` provides the bg-dark
+// chip + chevron; this rule is just a hook for future overrides.
+.mood-dropdown {
+  display: block;
 }

@@ -6,6 +6,8 @@ import type {
   PackagingAudioPlanningContract,
   PlatformContract,
 } from '@blinksocial/contracts';
+import { DropdownComponent, type DropdownOption } from '../../../../../../../../shared/dropdown/dropdown.component';
+import { IconComponent } from '../../../../../../../../shared/icons/icon.component';
 import { TooltipComponent } from '../../../../../../../../shared/tooltip/tooltip.component';
 import { getCanonicalType } from '../../../draft-step/draft-canonical.utils';
 import {
@@ -28,7 +30,7 @@ import {
  */
 @Component({
   selector: 'app-audio-planning-section',
-  imports: [TooltipComponent],
+  imports: [DropdownComponent, IconComponent, TooltipComponent],
   templateUrl: './audio-planning-section.component.html',
   styleUrl: './audio-planning-section.component.scss',
 })
@@ -44,6 +46,18 @@ export class AudioPlanningSectionComponent {
   protected readonly strategyOptions = STRATEGY_OPTIONS;
   protected readonly moodOptions = MOOD_OPTIONS;
   protected readonly audioTooltip = AUDIO_TOOLTIP;
+  protected readonly moodPlaceholder = 'Select a mood…';
+
+  /**
+   * Dropdown options pre-shaped for `<app-dropdown>`. The label is the
+   * mood label + a thin em-dash + the description, mirroring the
+   * prototype's `Energetic / Pumped — High-intensity rhythm…` rendering.
+   */
+  protected readonly moodDropdownOptions: DropdownOption[] = MOOD_OPTIONS.map((m) => ({
+    value: m.value,
+    label: `${m.label} — ${m.description}`,
+    iconName: m.iconName,
+  }));
 
   protected readonly canonicalType = computed(() =>
     getCanonicalType(this.platform(), this.contentType()),
@@ -115,14 +129,20 @@ export class AudioPlanningSectionComponent {
     if (next) this.onStrategyClick(next.value);
   }
 
-  protected onMoodChange(event: Event): void {
+  /**
+   * `<app-dropdown>` emits the raw `value` string. Empty string would
+   * represent the placeholder, which the dropdown can't surface
+   * (the dropdown never echoes the placeholder back through valueChange),
+   * but we still defensively clear `audioMood` on a falsy emit so the
+   * branch is reachable from tests.
+   */
+  protected onMoodSelect(next: string): void {
     if (this.disabled()) return;
-    const value = (event.target as HTMLSelectElement | null)?.value ?? '';
     const base: PackagingAudioPlanningContract = this.value() ?? {};
     this.valueChange.emit({
       ...base,
       audioStrategy: 'trending-platform',
-      audioMood: (value || undefined) as AudioMoodContract | undefined,
+      audioMood: (next || undefined) as AudioMoodContract | undefined,
     });
   }
 }

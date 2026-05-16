@@ -1,4 +1,6 @@
 import { Component, ElementRef, HostBinding, HostListener, inject, input, output, signal, computed } from '@angular/core';
+import { IconComponent } from '../icons/icon.component';
+import type { IconName } from '../icons/icons';
 import { PlatformIconComponent, type PlatformName } from '../platform-icon/platform-icon.component';
 
 export interface DropdownOption {
@@ -8,11 +10,15 @@ export interface DropdownOption {
   iconPaths?: string[];
   iconColor?: string;
   platformIcon?: PlatformName;
+  // Reference into the centralized icon registry. Preferred over
+  // `iconPaths` for new callers — supports the full primitive set
+  // (circle, polyline, line, rect, path) and stays in sync with Lucide.
+  iconName?: IconName;
 }
 
 @Component({
   selector: 'app-dropdown',
-  imports: [PlatformIconComponent],
+  imports: [PlatformIconComponent, IconComponent],
   templateUrl: './dropdown.component.html',
   styleUrl: './dropdown.component.scss',
 })
@@ -49,6 +55,8 @@ export class DropdownComponent {
   selectedIconColor = computed(() => this.selectedOption()?.iconColor ?? null);
 
   selectedPlatformIcon = computed(() => this.selectedOption()?.platformIcon ?? null);
+
+  selectedIconName = computed(() => this.selectedOption()?.iconName ?? null);
 
   isPlaceholder = computed(() => !this.value());
 

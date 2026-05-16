@@ -218,6 +218,107 @@ export const ICONS = {
       { kind: 'path', d: 'M3 15h18' },
     ],
   },
+  // 'flame' — Trending/Platform Audio strategy (#147)
+  flame: {
+    viewBox: '0 0 24 24',
+    primitives: [
+      {
+        kind: 'path',
+        d: 'M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z',
+      },
+    ],
+  },
+  // 'zap' — Energetic / Pumped mood (#147)
+  zap: {
+    viewBox: '0 0 24 24',
+    primitives: [
+      {
+        kind: 'path',
+        d: 'M4 14a1 1 0 0 1-.78-1.63l9.9-10.2a.5.5 0 0 1 .86.46l-1.92 6.02A1 1 0 0 0 13 10h7a1 1 0 0 1 .78 1.63l-9.9 10.2a.5.5 0 0 1-.86-.46l1.92-6.02A1 1 0 0 0 11 14z',
+      },
+    ],
+  },
+  // 'leaf' — Relaxing / Calm mood (#147)
+  leaf: {
+    viewBox: '0 0 24 24',
+    primitives: [
+      {
+        kind: 'path',
+        d: 'M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19.2 2.96a1 1 0 0 1 1.8.86C20.16 16.78 14.6 21 11 20Z',
+      },
+      { kind: 'path', d: 'M2 21c0-3 1.85-5.36 5.08-6' },
+    ],
+  },
+  // 'sun' — Happy / Upbeat mood (#147)
+  sun: {
+    viewBox: '0 0 24 24',
+    primitives: [
+      { kind: 'circle', cx: '12', cy: '12', r: '4' },
+      { kind: 'path', d: 'M12 2v2' },
+      { kind: 'path', d: 'M12 20v2' },
+      { kind: 'path', d: 'm4.93 4.93 1.41 1.41' },
+      { kind: 'path', d: 'm17.66 17.66 1.41 1.41' },
+      { kind: 'path', d: 'M2 12h2' },
+      { kind: 'path', d: 'M20 12h2' },
+      { kind: 'path', d: 'm6.34 17.66-1.41 1.41' },
+      { kind: 'path', d: 'm19.07 4.93-1.41 1.41' },
+    ],
+  },
+  // 'cloud-rain' — Sad / Melancholy mood (#147)
+  'cloud-rain': {
+    viewBox: '0 0 24 24',
+    primitives: [
+      { kind: 'path', d: 'M16 14v6' },
+      { kind: 'path', d: 'M8 14v6' },
+      { kind: 'path', d: 'M12 16v6' },
+      {
+        kind: 'path',
+        d: 'M20 16.58A5 5 0 0 0 18 7h-1.26A8 8 0 1 0 4 15.25',
+      },
+    ],
+  },
+  // 'heart' — Romantic / Sensual mood (#147)
+  heart: {
+    viewBox: '0 0 24 24',
+    primitives: [
+      {
+        kind: 'path',
+        d: 'M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.29 1.51 4.04 3 5.5l7 7Z',
+      },
+    ],
+  },
+  // 'moon' — Mysterious / Mystical mood (#147)
+  moon: {
+    viewBox: '0 0 24 24',
+    primitives: [
+      {
+        kind: 'path',
+        d: 'M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z',
+      },
+    ],
+  },
+  // 'ghost' — Scary / Spooky / Suspense mood (#147). The two .01-length
+  // dashes render as round dots (eyes) thanks to stroke-linecap="round".
+  ghost: {
+    viewBox: '0 0 24 24',
+    primitives: [
+      { kind: 'path', d: 'M9 10h.01' },
+      { kind: 'path', d: 'M15 10h.01' },
+      {
+        kind: 'path',
+        d: 'M12 2a8 8 0 0 0-8 8v12l3-3 2.5 2.5L12 19l2.5 2.5L17 19l3 3V10a8 8 0 0 0-8-8z',
+      },
+    ],
+  },
+  // 'target' — Confident / Motivational mood (#147)
+  target: {
+    viewBox: '0 0 24 24',
+    primitives: [
+      { kind: 'circle', cx: '12', cy: '12', r: '10' },
+      { kind: 'circle', cx: '12', cy: '12', r: '6' },
+      { kind: 'circle', cx: '12', cy: '12', r: '2' },
+    ],
+  },
 } as const satisfies Record<string, IconDef>;
 
 export type IconName = keyof typeof ICONS;

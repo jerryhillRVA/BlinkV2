@@ -173,53 +173,76 @@ describe('AudioPlanningSectionComponent', () => {
     expect((options[1] as HTMLElement).getAttribute('role')).toBe('radio');
   });
 
-  it('mood select renders 8 MOOD_OPTIONS in order, no emoji', () => {
+  it('mood dropdown renders 8 MOOD_OPTIONS in order, no emoji, each carries an icon', () => {
     const fixture = setup({ value: { audioStrategy: 'trending-platform' } });
-    const select = fixture.nativeElement.querySelector('select.mood-select') as HTMLSelectElement;
-    expect(select).not.toBeNull();
-    const options = Array.from(select.querySelectorAll('option'));
-    // First is the placeholder "Select a mood..." with empty value.
-    expect(options[0].value).toBe('');
-    expect(options[0].textContent?.trim()).toBe('Select a mood...');
-    const moodOptions = options.slice(1);
-    expect(moodOptions.length).toBe(8);
+    // Open the dropdown so the option list mounts.
+    const trigger = fixture.nativeElement.querySelector(
+      'app-dropdown .dropdown-trigger',
+    ) as HTMLButtonElement;
+    expect(trigger).not.toBeNull();
+    trigger.click();
+    fixture.detectChanges();
+    const options = Array.from(
+      fixture.nativeElement.querySelectorAll('app-dropdown .dropdown-option'),
+    );
+    expect(options.length).toBe(8);
     const emojiRe = /[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}]/u;
-    moodOptions.forEach((el, i) => {
-      const text = (el as HTMLOptionElement).textContent?.trim() ?? '';
+    options.forEach((el, i) => {
+      const text = (el as HTMLElement).textContent?.trim() ?? '';
       expect(text).toContain(MOOD_OPTIONS[i].label);
       expect(text).toContain(MOOD_OPTIONS[i].description);
       expect(emojiRe.test(text)).toBe(false);
+      // Every option renders an SVG icon from the registry.
+      expect((el as HTMLElement).querySelector('app-icon svg')).not.toBeNull();
     });
   });
 
-  it('label and helper text appear and are wired via for/id', () => {
+  it('label, helper text, and placeholder appear in the mood region', () => {
     const fixture = setup({ value: { audioStrategy: 'trending-platform' } });
-    const label = fixture.nativeElement.querySelector(
-      'label[for="audio-mood-trigger"]',
-    ) as HTMLLabelElement;
-    expect(label.textContent?.trim()).toContain('Video Vibe & Pace');
+    const label = fixture.nativeElement.querySelector('#audio-mood-label');
+    expect(label?.textContent?.trim()).toContain('Video Vibe & Pace');
     const help = fixture.nativeElement.querySelector('#audio-mood-help');
     expect(help?.textContent?.trim()).toBe('What is the emotional energy of your video?');
-    const select = fixture.nativeElement.querySelector(
-      'select.mood-select',
-    ) as HTMLSelectElement;
-    expect(select.getAttribute('aria-describedby')).toBe('audio-mood-help');
+    // Placeholder text comes through the dropdown trigger.
+    const valueLabel = fixture.nativeElement.querySelector(
+      'app-dropdown .dropdown-value',
+    ) as HTMLElement;
+    expect(valueLabel.textContent?.trim()).toContain('Select a mood');
   });
 
   it('selecting a mood emits valueChange with audioMood id and strategy preserved', () => {
     const fixture = setup({ value: { audioStrategy: 'trending-platform' } });
     const emitted: PackagingAudioPlanningContract[] = [];
     fixture.componentInstance.valueChange.subscribe((v) => emitted.push(v));
-    const select = fixture.nativeElement.querySelector(
-      'select.mood-select',
-    ) as HTMLSelectElement;
-    select.value = 'happy-upbeat';
-    select.dispatchEvent(new Event('change'));
+    (fixture.nativeElement.querySelector(
+      'app-dropdown .dropdown-trigger',
+    ) as HTMLButtonElement).click();
+    fixture.detectChanges();
+    // Click the third option (happy-upbeat).
+    const happy = Array.from(
+      fixture.nativeElement.querySelectorAll('app-dropdown .dropdown-option'),
+    )[2] as HTMLButtonElement;
+    happy.click();
     expect(emitted).toEqual([
       {
         audioStrategy: 'trending-platform',
         audioMood: 'happy-upbeat',
       },
+    ]);
+  });
+
+  it('clearing the mood (falsy emit from dropdown) drops audioMood while keeping strategy', () => {
+    const fixture = setup({
+      value: { audioStrategy: 'trending-platform', audioMood: 'happy-upbeat' },
+    });
+    const emitted: PackagingAudioPlanningContract[] = [];
+    fixture.componentInstance.valueChange.subscribe((v) => emitted.push(v));
+    // The dropdown itself never echoes the placeholder back, but the
+    // handler defensively normalizes an empty emit to `audioMood:
+    // undefined`. Exercise that branch directly so it's covered.
+    fixture.componentInstance['onMoodSelect']('');
+    expect(emitted).toEqual([
+      { audioStrategy: 'trending-platform', audioMood: undefined },
     ]);
   });
 
@@ -239,13 +262,19 @@ describe('AudioPlanningSectionComponent', () => {
     });
     const emitted: PackagingAudioPlanningContract[] = [];
     fixture.componentInstance.valueChange.subscribe((v) => emitted.push(v));
-    const select = fixture.nativeElement.querySelector(
-      'select.mood-select',
-    ) as HTMLSelectElement;
-    expect(select.disabled).toBe(true);
-    select.value = 'happy-upbeat';
-    select.dispatchEvent(new Event('change'));
+    // Direct handler invocation bypasses the dropdown's open/close UX so
+    // this stays a pure unit test of the disabled-gate.
+    fixture.componentInstance['onMoodSelect']('happy-upbeat');
     expect(emitted).toEqual([]);
+  });
+
+  it('strategy buttons render their registry icons (music + flame)', () => {
+    const fixture = setup();
+    const buttons = fixture.nativeElement.querySelectorAll('.segmented-option');
+    // app-icon renders an inline <svg>, so finding one inside each
+    // strategy button is enough to confirm the icon mounted.
+    expect(buttons[0].querySelector('.segmented-option-icon svg')).not.toBeNull();
+    expect(buttons[1].querySelector('.segmented-option-icon svg')).not.toBeNull();
   });
 
   it('selected strategy option carries the --selected class', () => {

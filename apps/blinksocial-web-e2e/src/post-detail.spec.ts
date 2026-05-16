@@ -1440,10 +1440,10 @@ test.describe('Audio Planning — strategy + mood (#147)', () => {
     await trendingOption.click();
     await expect(trendingOption).toHaveAttribute('aria-checked', 'true');
     await expect(page.locator('app-audio-planning-section .mood-region')).toBeVisible();
-    // Native <select> placeholder is the value-less first <option>.
+    // The dropdown shows its placeholder until a mood is picked.
     await expect(
-      page.locator('app-audio-planning-section select.mood-select'),
-    ).toHaveValue('');
+      page.locator('app-audio-planning-section app-dropdown .dropdown-value'),
+    ).toContainText('Select a mood');
     // Reload — selection persists, dropdown remains visible.
     await page.reload();
     await expect(page.locator('app-post-detail')).toBeVisible();
@@ -1460,17 +1460,20 @@ test.describe('Audio Planning — strategy + mood (#147)', () => {
       contentType: 'reel',
     });
     await page.locator('app-audio-planning-section .segmented-option').nth(1).click();
-    const select = page.locator('app-audio-planning-section select.mood-select');
-    await select.selectOption('energetic-pumped');
-    await expect(select).toHaveValue('energetic-pumped');
+    const dropdown = page.locator('app-audio-planning-section app-dropdown');
+    await dropdown.locator('.dropdown-trigger').click();
+    await dropdown
+      .locator('.dropdown-option', { hasText: 'Energetic / Pumped' })
+      .click();
+    await expect(dropdown.locator('.dropdown-value')).toContainText('Energetic / Pumped');
     // The packaging slot persists via an HTTP PUT; let it flush before
     // reload. Same pattern post-detail-persistence.spec.ts uses (#126).
     await page.waitForTimeout(150);
     await page.reload();
     await expect(page.locator('app-post-detail')).toBeVisible();
     await expect(
-      page.locator('app-audio-planning-section select.mood-select'),
-    ).toHaveValue('energetic-pumped');
+      page.locator('app-audio-planning-section app-dropdown .dropdown-value'),
+    ).toContainText('Energetic / Pumped');
   });
 
   test('TC-E4: flipping back to Named Audio clears the mood', async ({ page }) => {
@@ -1481,9 +1484,11 @@ test.describe('Audio Planning — strategy + mood (#147)', () => {
     });
     // Set up: choose trending + a mood.
     await page.locator('app-audio-planning-section .segmented-option').nth(1).click();
-    await page
-      .locator('app-audio-planning-section select.mood-select')
-      .selectOption('happy-upbeat');
+    const dropdown = page.locator('app-audio-planning-section app-dropdown');
+    await dropdown.locator('.dropdown-trigger').click();
+    await dropdown
+      .locator('.dropdown-option', { hasText: 'Happy / Upbeat' })
+      .click();
     // Now flip back.
     await page.locator('app-audio-planning-section .segmented-option').nth(0).click();
     await expect(
