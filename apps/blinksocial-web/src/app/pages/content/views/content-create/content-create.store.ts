@@ -293,20 +293,27 @@ export class ContentCreateStore {
   }
 
   assistDescription(): void {
-    this.runDraftAssist('concept-description', 'isAssistingDescription', (v) =>
-      this.patch({ description: v }),
+    this.runDraftAssist(
+      'concept-description',
+      'isAssistingDescription',
+      { min: DESCRIPTION_MIN_CHARS, max: DESCRIPTION_MAX_CHARS },
+      (v) => this.patch({ description: v }),
     );
   }
 
   assistHook(): void {
-    this.runDraftAssist('concept-hook-angle', 'isAssistingHook', (v) =>
-      this.patch({ hook: v }),
+    this.runDraftAssist(
+      'concept-hook-angle',
+      'isAssistingHook',
+      { max: HOOK_MAX_CHARS },
+      (v) => this.patch({ hook: v }),
     );
   }
 
   private runDraftAssist(
     field: AiAssistDraftFieldContract,
     loadingKey: 'isAssistingDescription' | 'isAssistingHook',
+    length: { min?: number; max?: number },
     apply: (value: string) => void,
   ): void {
     const s = this._state();
@@ -320,6 +327,7 @@ export class ContentCreateStore {
         scope: 'draft',
         workspaceId,
         field,
+        length,
         draft: {
           title: s.title,
           description: s.description || undefined,

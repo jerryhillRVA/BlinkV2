@@ -25,6 +25,18 @@ export interface AiAssistDraftSnapshot {
   segmentIds: string[];
 }
 
+/**
+ * Field length bounds (in characters) passed from the frontend so the
+ * skill prompt targets the same limits the form validator enforces.
+ * Keeping the source of truth in the UI avoids drift between the
+ * displayed `n/max characters` counter and what the LLM is told to
+ * produce.
+ */
+export interface AiAssistFieldLengthContract {
+  min?: number;
+  max?: number;
+}
+
 export type AiAssistRequestContract =
   | {
       scope: 'content-item';
@@ -32,6 +44,7 @@ export type AiAssistRequestContract =
       refId: string;
       field: AiAssistFieldContract;
       count?: number;
+      length?: AiAssistFieldLengthContract;
     }
   | {
       scope: 'draft';
@@ -39,6 +52,7 @@ export type AiAssistRequestContract =
       draft: AiAssistDraftSnapshot;
       field: AiAssistDraftFieldContract;
       count?: number;
+      length?: AiAssistFieldLengthContract;
     };
 
 export interface AiAssistResponseContract {

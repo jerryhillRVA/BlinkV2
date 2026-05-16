@@ -677,4 +677,150 @@ describe('AiAssistService', () => {
       expect(skillRunner.run.mock.calls[0][0].skillId).toBe('field-assist-concept-hook-angle');
     });
   });
+
+  // ─── field length bounds ─────────────────────────────────────────
+
+  describe('field length bounds', () => {
+    const validDraft = {
+      title: 'Morning mobility flow',
+      objective: 'engagement' as const,
+      pillarIds: [],
+      segmentIds: [],
+    };
+
+    it.each([
+      { min: 0 },
+      { max: 0 },
+      { min: 10001 },
+      { max: 10001 },
+      { min: 1.5 },
+      { max: 1.5 },
+      { min: NaN },
+      { max: NaN },
+      { min: 'fifty' as unknown as number },
+      { max: 'four hundred' as unknown as number },
+    ])('rejects length out of range / wrong type: %o', async (length) => {
+      await expect(
+        service.assist({
+          scope: 'draft',
+          workspaceId: 'w',
+          field: 'concept-description',
+          draft: validDraft,
+          length,
+        }),
+      ).rejects.toBeInstanceOf(BadRequestException);
+    });
+
+    it('rejects length.min > length.max', async () => {
+      await expect(
+        service.assist({
+          scope: 'draft',
+          workspaceId: 'w',
+          field: 'concept-description',
+          draft: validDraft,
+          length: { min: 400, max: 50 },
+        }),
+      ).rejects.toBeInstanceOf(BadRequestException);
+    });
+
+    it('threads length into the user-turn JSON as context.field', async () => {
+      llm.isConfigured.mockReturnValue(true);
+      skillRunner.run.mockResolvedValue({
+        content: '',
+        parsed: { values: ['ok'] },
+        usage: { inputTokens: 1, outputTokens: 1 },
+        stopReason: 'tool_use',
+      });
+      await service.assist({
+        scope: 'draft',
+        workspaceId: 'w',
+        field: 'concept-description',
+        draft: validDraft,
+        length: { min: 50, max: 400 },
+      });
+      const userTurn = JSON.parse(skillRunner.run.mock.calls[0][0].conversationHistory[0].content);
+      expect(userTurn.context.field).toEqual({
+        name: 'concept-description',
+        minLength: 50,
+        maxLength: 400,
+      });
+    });
+
+    it('omits min/max when caller did not supply them', async () => {
+      llm.isConfigured.mockReturnValue(true);
+      skillRunner.run.mockResolvedValue({
+        content: '',
+        parsed: { values: ['ok'] },
+        usage: { inputTokens: 1, outputTokens: 1 },
+        stopReason: 'tool_use',
+      });
+      await service.assist({
+        scope: 'draft',
+        workspaceId: 'w',
+        field: 'concept-hook-angle',
+        draft: validDraft,
+      });
+      const userTurn = JSON.parse(skillRunner.run.mock.calls[0][0].conversationHistory[0].content);
+      expect(userTurn.context.field).toEqual({
+        name: 'concept-hook-angle',
+        minLength: undefined,
+        maxLength: undefined,
+      });
+    });
+
+    it('truncates LLM values that exceed length.max', async () => {
+      llm.isConfigured.mockReturnValue(true);
+      const longValue = 'x'.repeat(420);
+      skillRunner.run.mockResolvedValue({
+        content: '',
+        parsed: { values: [longValue] },
+        usage: { inputTokens: 1, outputTokens: 1 },
+        stopReason: 'tool_use',
+      });
+      const res = await service.assist({
+        scope: 'draft',
+        workspaceId: 'w',
+        field: 'concept-description',
+        draft: validDraft,
+        length: { min: 50, max: 400 },
+      });
+      expect(res.values).toHaveLength(1);
+      expect(res.values[0].length).toBeLessThanOrEqual(400);
+    });
+
+    it('truncates stub values that exceed length.max (LLM not configured)', async () => {
+      const res = await service.assist({
+        scope: 'draft',
+        workspaceId: 'w',
+        field: 'concept-description',
+        draft: validDraft,
+        length: { max: 30 },
+      });
+      expect(res.values[0].length).toBeLessThanOrEqual(30);
+    });
+
+    it('passes content-item scope length through unchanged', async () => {
+      llm.isConfigured.mockReturnValue(true);
+      contentItems.getItem.mockResolvedValue(buildConcept());
+      skillRunner.run.mockResolvedValue({
+        content: '',
+        parsed: { values: ['ok'] },
+        usage: { inputTokens: 1, outputTokens: 1 },
+        stopReason: 'tool_use',
+      });
+      await service.assist({
+        scope: 'content-item',
+        workspaceId: 'w',
+        refId: 'c-1',
+        field: 'concept-description',
+        length: { min: 50, max: 400 },
+      });
+      const userTurn = JSON.parse(skillRunner.run.mock.calls[0][0].conversationHistory[0].content);
+      expect(userTurn.context.field).toEqual({
+        name: 'concept-description',
+        minLength: 50,
+        maxLength: 400,
+      });
+    });
+  });
 });

@@ -66,4 +66,32 @@ describe('POST /api/ai-assist (draft scope)', () => {
       expect(error.response.status).toBe(400);
     }
   });
+
+  it('honors length.max — stub output is truncated to the cap', async () => {
+    const res = await axios.post('/api/ai-assist', {
+      scope: 'draft',
+      workspaceId,
+      field: 'concept-description',
+      draft: validDraft,
+      length: { min: 10, max: 50 },
+    });
+    expect(res.status).toBe(201);
+    expect(res.data.values[0].length).toBeLessThanOrEqual(50);
+  });
+
+  it('returns 400 when length.min > length.max', async () => {
+    try {
+      await axios.post('/api/ai-assist', {
+        scope: 'draft',
+        workspaceId,
+        field: 'concept-description',
+        draft: validDraft,
+        length: { min: 400, max: 50 },
+      });
+      fail('Expected 400');
+    } catch (e) {
+      const error = e as { response: { status: number } };
+      expect(error.response.status).toBe(400);
+    }
+  });
 });

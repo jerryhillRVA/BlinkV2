@@ -9,6 +9,7 @@ import type {
   AiAssistDraftFieldContract,
   AiAssistDraftSnapshot,
   AiAssistFieldContract,
+  AiAssistFieldLengthContract,
   AiAssistRequestContract,
   AiAssistResponseContract,
   ContentItemContract,
@@ -67,6 +68,7 @@ export class AiAssistService {
     this.validateRequest(req);
     const field = req.field;
     const count = this.resolveCount(req);
+    const length = req.length;
 
     const item: ContentItemContract =
       req.scope === 'draft'
@@ -78,12 +80,25 @@ export class AiAssistService {
       this.logger.debug(
         `LLM not configured — returning stub values for ${field} on ${ref}`,
       );
-      return { values: buildStubValues(field, count, item) };
+      return { values: this.enforceLength(buildStubValues(field, count, item), length) };
     }
 
-    const context = await this.buildContext(req.workspaceId, item);
+    const context = await this.buildContext(req.workspaceId, item, field, length);
     const values = await this.runSkill(field, count, context);
-    return { values };
+    return { values: this.enforceLength(values, length) };
+  }
+
+  /**
+   * Belt-and-suspenders: even if the prompt is instructed to honor the
+   * length bounds, the LLM can still overshoot. Truncate any string that
+   * exceeds `length.max` so the caller is never handed a value the form
+   * would immediately reject. We do not pad to `length.min` — that would
+   * fabricate content.
+   */
+  private enforceLength(values: string[], length: AiAssistFieldLengthContract | undefined): string[] {
+    if (!length || typeof length.max !== 'number') return values;
+    const max = length.max;
+    return values.map((v) => (typeof v === 'string' && v.length > max ? v.slice(0, max).trimEnd() : v));
   }
 
   private async loadItemAndAssertStage(
@@ -147,6 +162,38 @@ export class AiAssistService {
           `count must be an integer in [${AI_ASSIST_MIN_COUNT}, ${AI_ASSIST_MAX_COUNT}]`,
         );
       }
+    }
+    this.validateLength(req.length);
+  }
+
+  private validateLength(length: AiAssistFieldLengthContract | undefined): void {
+    if (length === undefined) return;
+    if (typeof length !== 'object' || length === null) {
+      throw new BadRequestException('length must be an object.');
+    }
+    const check = (key: 'min' | 'max') => {
+      const v = length[key];
+      if (v === undefined) return;
+      if (
+        typeof v !== 'number' ||
+        !Number.isFinite(v) ||
+        !Number.isInteger(v) ||
+        v < 1 ||
+        v > 10000
+      ) {
+        throw new BadRequestException(
+          `length.${key} must be an integer in [1, 10000]`,
+        );
+      }
+    };
+    check('min');
+    check('max');
+    if (
+      typeof length.min === 'number' &&
+      typeof length.max === 'number' &&
+      length.min > length.max
+    ) {
+      throw new BadRequestException('length.min must be <= length.max');
     }
   }
 
@@ -214,6 +261,8 @@ export class AiAssistService {
   private async buildContext(
     workspaceId: string,
     item: ContentItemContract,
+    field: AiAssistFieldContract,
+    length: AiAssistFieldLengthContract | undefined,
   ): Promise<Record<string, unknown>> {
     const [parentConcept, brandVoice, brandPositioning, pillars, segments] =
       await Promise.all([
@@ -240,6 +289,11 @@ export class AiAssistService {
       pillars,
       segments,
       targetPlatform: this.projectTargetPlatform(item),
+      field: {
+        name: field,
+        minLength: length?.min,
+        maxLength: length?.max,
+      },
     };
   }
 

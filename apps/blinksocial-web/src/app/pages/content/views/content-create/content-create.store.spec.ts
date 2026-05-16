@@ -481,7 +481,7 @@ describe('ContentCreateStore — AI actions (fake timers)', () => {
 });
 
 describe('ContentCreateStore — assistDescription / assistHook (real API)', () => {
-  it('assistDescription posts draft snapshot and applies returned value', () => {
+  it('assistDescription posts draft snapshot with description length bounds and applies returned value', () => {
     const { store, aiAssist } = setupWithHandles();
     aiAssist.assist.mockReturnValue(of({ values: ['Generated description.'] }));
     store.patch({
@@ -495,6 +495,7 @@ describe('ContentCreateStore — assistDescription / assistHook (real API)', () 
       scope: 'draft',
       workspaceId: 'w1',
       field: 'concept-description',
+      length: { min: 50, max: 400 },
       draft: {
         title: 'Morning mobility flow',
         description: undefined,
@@ -508,7 +509,7 @@ describe('ContentCreateStore — assistDescription / assistHook (real API)', () 
     expect(store.state().isAssistingDescription).toBe(false);
   });
 
-  it('assistHook posts draft snapshot and applies returned value', () => {
+  it('assistHook posts draft snapshot with hook max length and applies returned value', () => {
     const { store, aiAssist } = setupWithHandles();
     aiAssist.assist.mockReturnValue(of({ values: ['Catchy hook.'] }));
     store.patch({ title: 'X', objective: 'leads' });
@@ -516,6 +517,7 @@ describe('ContentCreateStore — assistDescription / assistHook (real API)', () 
     const callArg = aiAssist.assist.mock.calls[0][0];
     expect(callArg.scope).toBe('draft');
     expect(callArg.field).toBe('concept-hook-angle');
+    expect(callArg.length).toEqual({ max: 120 });
     expect(store.state().hook).toBe('Catchy hook.');
     expect(store.state().isAssistingHook).toBe(false);
   });
