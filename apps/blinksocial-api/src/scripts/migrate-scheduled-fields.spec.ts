@@ -178,4 +178,25 @@ describe('migrateContentItem (transform)', () => {
     const second = migrateContentItem(first.item!, first.indexEntry!);
     expect(second.changed).toBe(false);
   });
+
+  it('is idempotent for "used" items where the item has no scheduledAt key and the entry has scheduledAt: null', () => {
+    // Pre-#150 index entries projected scheduledAt as null for non-scheduled
+    // items; the item file itself had no scheduledAt key. Naive `!==` between
+    // null and undefined keeps tripping changed=true forever.
+    const item: LegacyContentItem = { status: 'used' };
+    const entry: LegacyIndexEntry = {
+      id: 'c-used',
+      status: 'used',
+      scheduledAt: null,
+      scheduledDate: null,
+    };
+
+    const first = migrateContentItem(item, entry);
+    expect(first.changed).toBe(true);
+    expect(first.indexEntry).not.toHaveProperty('scheduledDate');
+    expect(first.indexEntry?.scheduledAt).toBeNull();
+
+    const second = migrateContentItem(first.item!, first.indexEntry!);
+    expect(second.changed).toBe(false);
+  });
 });
