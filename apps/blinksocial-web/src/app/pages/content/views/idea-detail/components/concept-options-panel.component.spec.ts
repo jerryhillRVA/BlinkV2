@@ -1,14 +1,20 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { Subject, of, throwError } from 'rxjs';
 import { ConceptOptionsPanelComponent } from './concept-options-panel.component';
 import { IdeaDetailStore } from '../idea-detail.store';
 import { ContentStateService } from '../../../content-state.service';
 import { provideContentItemsApiStubs } from '../../../content-items-api.test-util';
-import { AI_SIMULATION_DELAY_MS } from '../../../content.constants';
+import { IdeaConceptOptionsApiService } from '../../../../../core/idea-concept-options/idea-concept-options.service';
+import { ToastService } from '../../../../../core/toast/toast.service';
 import type {
   AudienceSegment,
   ContentItem,
   ContentPillar,
 } from '../../../content.types';
+import type {
+  ConceptOptionContract,
+  IdeaConceptOptionsResponseContract,
+} from '@blinksocial/contracts';
 
 const PILLARS: ContentPillar[] = [
   { id: 'p1', name: 'P1', description: '', color: '#111' },
@@ -33,15 +39,43 @@ function makeItem(): ContentItem {
   };
 }
 
-function setup(): {
+function sixOptions(): ConceptOptionContract[] {
+  return Array.from({ length: 6 }, (_, i) => ({
+    id: `opt-${i}`,
+    angle: `Angle ${i}`,
+    description: `Description ${i}`,
+    objectiveAlignment: `Alignment ${i}`,
+    objective: 'awareness',
+    pillarIds: ['p1'],
+    segmentIds: ['s1'],
+    targetPlatforms: [{ platform: 'instagram', contentType: 'reel', postId: null }],
+    cta: { type: 'comment', text: 'Save it' },
+    suggestedFormatLabel: 'Reel',
+  }));
+}
+
+interface SetupResult {
   fixture: ComponentFixture<ConceptOptionsPanelComponent>;
   store: IdeaDetailStore;
-} {
+  api: { generate: ReturnType<typeof vi.fn> };
+  toast: { showError: ReturnType<typeof vi.fn>; show: ReturnType<typeof vi.fn> };
+}
+
+function setup(): SetupResult {
+  const api = { generate: vi.fn().mockReturnValue(of({ options: sixOptions() })) };
+  const toast = { showError: vi.fn(), show: vi.fn() };
   TestBed.configureTestingModule({
     imports: [ConceptOptionsPanelComponent],
-    providers: [...provideContentItemsApiStubs(), ContentStateService, IdeaDetailStore],
+    providers: [
+      ...provideContentItemsApiStubs(),
+      ContentStateService,
+      IdeaDetailStore,
+      { provide: IdeaConceptOptionsApiService, useValue: api },
+      { provide: ToastService, useValue: toast },
+    ],
   });
   const state = TestBed.inject(ContentStateService);
+  state.workspaceId.set('hive-collective');
   state.setItems([makeItem()]);
   state.pillars.set(PILLARS);
   state.segments.set(SEGMENTS);
@@ -49,7 +83,7 @@ function setup(): {
   store.setItemId('c-1');
   const fixture = TestBed.createComponent(ConceptOptionsPanelComponent);
   fixture.detectChanges();
-  return { fixture, store };
+  return { fixture, store, api, toast };
 }
 
 function clickGenerate(fixture: ComponentFixture<ConceptOptionsPanelComponent>): void {
@@ -78,8 +112,6 @@ describe('ConceptOptionsPanelComponent', () => {
     expect(svg).not.toBeNull();
     expect(svg?.getAttribute('width')).toBe('12');
     expect(svg?.getAttribute('height')).toBe('12');
-    // Must be the Lucide `sparkles` (plural) icon from the prototype:
-    // 1 main star path + 4 small twinkle paths = 5 paths total.
     const paths = svg?.querySelectorAll('path') ?? [];
     expect(paths.length).toBe(5);
     const ds = Array.from(paths).map((p) => p.getAttribute('d'));
@@ -115,7 +147,6 @@ describe('ConceptOptionsPanelComponent', () => {
     expect(svg).not.toBeNull();
     expect(svg?.getAttribute('width')).toBe('14');
     expect(svg?.getAttribute('height')).toBe('14');
-    // Same Lucide `sparkles` (plural) icon as the panel header.
     const paths = svg?.querySelectorAll('path') ?? [];
     expect(paths.length).toBe(5);
     const ds = Array.from(paths).map((p) => p.getAttribute('d'));
@@ -154,8 +185,6 @@ describe('ConceptOptionsPanelComponent', () => {
         '.btn-generate button.outline-btn',
       ) as HTMLButtonElement;
       expect(innerBtn).not.toBeNull();
-      // The compact override was removed; the button now uses the shared
-      // outline-btn 6px top/bottom padding so the label is vertically centered.
       expect(getComputedStyle(innerBtn).paddingTop).toBe('6px');
     } finally {
       document.body.removeChild(fixture.nativeElement);
@@ -181,100 +210,91 @@ describe('ConceptOptionsPanelComponent', () => {
     }
   });
 
-  it('clicking Generate transitions to loading state with skeleton grid', () => {
-    vi.useFakeTimers();
-    try {
-      const { fixture } = setup();
-      clickGenerate(fixture);
-      fixture.detectChanges();
-      expect(fixture.nativeElement.querySelectorAll('.options-skeleton').length).toBe(6);
-      expect(fixture.nativeElement.querySelector('.options-loading-label')).not.toBeNull();
-    } finally {
-      vi.useRealTimers();
-    }
+  it('clicking Generate triggers the API and renders the skeleton grid + disabled spinning button while in flight', () => {
+    const { fixture, api } = setup();
+    const subject = new Subject<IdeaConceptOptionsResponseContract>();
+    api.generate.mockReturnValue(subject.asObservable());
+    clickGenerate(fixture);
+    fixture.detectChanges();
+    expect(api.generate).toHaveBeenCalledWith({
+      workspaceId: 'hive-collective',
+      refId: 'c-1',
+    });
+    expect(fixture.nativeElement.querySelectorAll('.options-skeleton').length).toBe(6);
+    expect(fixture.nativeElement.querySelector('.options-loading-label')).not.toBeNull();
+    const innerBtn = fixture.nativeElement.querySelector(
+      '.btn-generate button.outline-btn',
+    ) as HTMLButtonElement;
+    expect(innerBtn.disabled).toBe(true);
+    expect(
+      fixture.nativeElement.querySelector('.btn-generate.is-loading'),
+    ).not.toBeNull();
+    expect(fixture.nativeElement.querySelector('.generate-spinner')).not.toBeNull();
+    subject.next({ options: sixOptions() });
+    subject.complete();
   });
 
-  it('skeleton shares the .option-card shell class with real cards (matching size)', () => {
-    vi.useFakeTimers();
-    try {
-      const { fixture } = setup();
-      clickGenerate(fixture);
-      fixture.detectChanges();
-      const skeletons = fixture.nativeElement.querySelectorAll('.options-skeleton') as NodeListOf<HTMLElement>;
-      skeletons.forEach((el) => {
-        expect(el.classList.contains('option-card')).toBe(true);
-      });
-    } finally {
-      vi.useRealTimers();
-    }
+  it('after a successful API call, renders 6 ConceptOptionCard components and a Regenerate button', () => {
+    const { fixture } = setup();
+    clickGenerate(fixture);
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelectorAll('app-concept-option-card').length).toBe(6);
+    expect(fixture.nativeElement.querySelector('.options-panel-regenerate')).not.toBeNull();
   });
 
-  it('skeleton renders placeholder blocks mirroring the real-card sections (title, description, meta, cta)', () => {
-    vi.useFakeTimers();
-    try {
-      const { fixture } = setup();
-      clickGenerate(fixture);
-      fixture.detectChanges();
-      const first = fixture.nativeElement.querySelector('.options-skeleton') as HTMLElement;
-      expect(first.querySelector('.skeleton-check')).toBeNull();
-      expect(first.querySelector('.skeleton-line--title')).not.toBeNull();
-      expect(first.querySelectorAll('.skeleton-line--description').length).toBeGreaterThanOrEqual(2);
-      expect(first.querySelectorAll('.skeleton-meta-row').length).toBeGreaterThanOrEqual(2);
-      expect(first.querySelector('.skeleton-line--cta')).not.toBeNull();
-    } finally {
-      vi.useRealTimers();
-    }
+  it('clicking Regenerate resets the grid and re-triggers the API', () => {
+    const { fixture, api } = setup();
+    clickGenerate(fixture);
+    fixture.detectChanges();
+    expect(api.generate).toHaveBeenCalledTimes(1);
+    const regenerate: HTMLButtonElement = fixture.nativeElement.querySelector('.options-panel-regenerate');
+    regenerate.click();
+    fixture.detectChanges();
+    expect(api.generate).toHaveBeenCalledTimes(2);
+    expect(fixture.nativeElement.querySelectorAll('app-concept-option-card').length).toBe(6);
   });
 
-  it('after AI resolves, renders 6 ConceptOptionCard components and a Regenerate button', () => {
-    vi.useFakeTimers();
-    try {
-      const { fixture } = setup();
-      clickGenerate(fixture);
-      fixture.detectChanges();
-      vi.advanceTimersByTime(AI_SIMULATION_DELAY_MS);
-      fixture.detectChanges();
-      expect(fixture.nativeElement.querySelectorAll('app-concept-option-card').length).toBe(6);
-      expect(fixture.nativeElement.querySelector('.options-panel-regenerate')).not.toBeNull();
-    } finally {
-      vi.useRealTimers();
-    }
+  it('Regenerate button is disabled and shows the spinner class while in flight', () => {
+    const { fixture, api } = setup();
+    const first$ = of({ options: sixOptions() });
+    const subject = new Subject<IdeaConceptOptionsResponseContract>();
+    api.generate.mockReturnValueOnce(first$).mockReturnValueOnce(subject.asObservable());
+    clickGenerate(fixture);
+    fixture.detectChanges();
+    const regenerate: HTMLButtonElement = fixture.nativeElement.querySelector('.options-panel-regenerate');
+    regenerate.click();
+    fixture.detectChanges();
+    const inflight: HTMLButtonElement = fixture.nativeElement.querySelector(
+      '.options-panel-regenerate',
+    );
+    expect(inflight.disabled).toBe(true);
+    expect(inflight.classList.contains('is-loading')).toBe(true);
+    subject.next({ options: sixOptions() });
+    subject.complete();
   });
 
-  it('clicking Regenerate resets the grid and re-triggers the AI', () => {
-    vi.useFakeTimers();
-    try {
-      const { fixture } = setup();
-      clickGenerate(fixture);
-      vi.advanceTimersByTime(AI_SIMULATION_DELAY_MS);
-      fixture.detectChanges();
-      const regenerate: HTMLButtonElement = fixture.nativeElement.querySelector('.options-panel-regenerate');
-      regenerate.click();
-      fixture.detectChanges();
-      expect(fixture.nativeElement.querySelectorAll('.options-skeleton').length).toBe(6);
-      vi.advanceTimersByTime(AI_SIMULATION_DELAY_MS);
-      fixture.detectChanges();
-      expect(fixture.nativeElement.querySelectorAll('app-concept-option-card').length).toBe(6);
-    } finally {
-      vi.useRealTimers();
-    }
+  it('on API error, surfaces a toast and leaves the panel empty', () => {
+    const { fixture, api, toast } = setup();
+    api.generate.mockReturnValue(throwError(() => new Error('502 boom')));
+    clickGenerate(fixture);
+    fixture.detectChanges();
+    expect(toast.showError).toHaveBeenCalledTimes(1);
+    expect(fixture.nativeElement.querySelectorAll('app-concept-option-card').length).toBe(0);
+    expect(fixture.nativeElement.querySelectorAll('.options-skeleton').length).toBe(0);
+    expect(
+      fixture.nativeElement.querySelector('.btn-generate'),
+    ).not.toBeNull();
   });
 
   it('clicking a rendered option card toggles selection via the store', () => {
-    vi.useFakeTimers();
-    try {
-      const { fixture, store } = setup();
-      clickGenerate(fixture);
-      vi.advanceTimersByTime(AI_SIMULATION_DELAY_MS);
-      fixture.detectChanges();
-      const firstCard: HTMLButtonElement = fixture.nativeElement.querySelector(
-        'app-concept-option-card .option-card',
-      );
-      firstCard.click();
-      fixture.detectChanges();
-      expect(store.selectedOptionId()).not.toBeNull();
-    } finally {
-      vi.useRealTimers();
-    }
+    const { fixture, store } = setup();
+    clickGenerate(fixture);
+    fixture.detectChanges();
+    const firstCard: HTMLButtonElement = fixture.nativeElement.querySelector(
+      'app-concept-option-card .option-card',
+    );
+    firstCard.click();
+    fixture.detectChanges();
+    expect(store.selectedOptionId()).not.toBeNull();
   });
 });

@@ -1,14 +1,17 @@
 import { TestBed } from '@angular/core/testing';
+import { Subject, of, throwError } from 'rxjs';
 import { IdeaDetailStore } from './idea-detail.store';
 import { ContentStateService } from '../../content-state.service';
 import { provideContentItemsApiStubs } from '../../content-items-api.test-util';
-import { AI_SIMULATION_DELAY_MS } from '../../content.constants';
+import { IdeaConceptOptionsApiService } from '../../../../core/idea-concept-options/idea-concept-options.service';
+import { ToastService } from '../../../../core/toast/toast.service';
 import type {
   AudienceSegment,
   ContentItem,
   ContentPillar,
 } from '../../content.types';
 import type { ConceptOption } from './idea-detail.types';
+import type { IdeaConceptOptionsResponseContract } from '@blinksocial/contracts';
 
 const PILLARS: ContentPillar[] = [
   { id: 'p1', name: 'P1', description: '', color: '#111' },
@@ -37,15 +40,53 @@ function makeItem(partial: Partial<ContentItem> = {}): ContentItem {
   };
 }
 
-function setup(item: ContentItem): { store: IdeaDetailStore; state: ContentStateService } {
-  TestBed.configureTestingModule({ providers: [...provideContentItemsApiStubs(), ContentStateService, IdeaDetailStore] });
+function makeOption(i: number, overrides: Partial<ConceptOption> = {}): ConceptOption {
+  return {
+    id: `opt-${i}`,
+    angle: `Angle ${i}`,
+    description: `Description ${i}`,
+    objectiveAlignment: `Alignment ${i}`,
+    objective: 'awareness',
+    pillarIds: i % 2 === 0 ? ['p1'] : ['p2'],
+    segmentIds: ['s1'],
+    targetPlatforms: [{ platform: 'instagram', contentType: 'reel', postId: null }],
+    cta: { type: 'comment', text: `CTA ${i}` },
+    suggestedFormatLabel: 'Reel',
+    ...overrides,
+  };
+}
+
+function sixOptions(): ConceptOption[] {
+  return Array.from({ length: 6 }, (_, i) => makeOption(i));
+}
+
+interface SetupResult {
+  store: IdeaDetailStore;
+  state: ContentStateService;
+  api: { generate: ReturnType<typeof vi.fn> };
+  toast: { showError: ReturnType<typeof vi.fn>; show: ReturnType<typeof vi.fn> };
+}
+
+function setup(item: ContentItem): SetupResult {
+  const api = { generate: vi.fn().mockReturnValue(of({ options: sixOptions() })) };
+  const toast = { showError: vi.fn(), show: vi.fn() };
+  TestBed.configureTestingModule({
+    providers: [
+      ...provideContentItemsApiStubs(),
+      ContentStateService,
+      IdeaDetailStore,
+      { provide: IdeaConceptOptionsApiService, useValue: api },
+      { provide: ToastService, useValue: toast },
+    ],
+  });
   const state = TestBed.inject(ContentStateService);
+  state.workspaceId.set('hive-collective');
   state.setItems([item]);
   state.pillars.set(PILLARS);
   state.segments.set(SEGMENTS);
   const store = TestBed.inject(IdeaDetailStore);
   store.setItemId(item.id);
-  return { store, state };
+  return { store, state, api, toast };
 }
 
 describe('IdeaDetailStore — item resolution', () => {
@@ -156,43 +197,87 @@ describe('IdeaDetailStore — field mutations', () => {
 });
 
 describe('IdeaDetailStore — AI flow', () => {
-  beforeEach(() => vi.useFakeTimers());
-  afterEach(() => vi.useRealTimers());
-
-  it('generateOptions flips loading flag, resolves with 6 options', () => {
-    const { store } = setup(makeItem());
+  it('generateOptions calls the API and persists 6 returned options', () => {
+    const { store, api } = setup(makeItem());
     store.generateOptions();
-    expect(store.isGeneratingOptions()).toBe(true);
-    vi.advanceTimersByTime(AI_SIMULATION_DELAY_MS);
+    expect(api.generate).toHaveBeenCalledWith({
+      workspaceId: 'hive-collective',
+      refId: 'c-1',
+    });
     expect(store.isGeneratingOptions()).toBe(false);
     expect(store.conceptOptions()?.length).toBe(6);
   });
 
-  it('generateOptions is idempotent while in flight', () => {
-    const { store } = setup(makeItem());
+  it('flips isGeneratingOptions true → false around the call', () => {
+    const { store, api } = setup(makeItem());
+    const subject = new Subject<IdeaConceptOptionsResponseContract>();
+    api.generate.mockReturnValue(subject.asObservable());
     store.generateOptions();
-    store.generateOptions(); // ignored — still one in-flight
-    vi.advanceTimersByTime(AI_SIMULATION_DELAY_MS);
+    expect(store.isGeneratingOptions()).toBe(true);
+    subject.next({ options: sixOptions() });
+    subject.complete();
+    expect(store.isGeneratingOptions()).toBe(false);
     expect(store.conceptOptions()?.length).toBe(6);
   });
 
-  it('regenerate resets and re-triggers', () => {
-    const { store } = setup(makeItem());
+  it('is idempotent while a generation is in flight', () => {
+    const { store, api } = setup(makeItem());
+    const subject = new Subject<IdeaConceptOptionsResponseContract>();
+    api.generate.mockReturnValue(subject.asObservable());
     store.generateOptions();
-    vi.advanceTimersByTime(AI_SIMULATION_DELAY_MS);
-    const first = store.conceptOptions();
-    store.regenerate();
+    store.generateOptions(); // second click ignored
+    expect(api.generate).toHaveBeenCalledTimes(1);
+    subject.next({ options: sixOptions() });
+    subject.complete();
+  });
+
+  it('does nothing when the item is unresolvable', () => {
+    const { store, api } = setup(makeItem());
+    store.setItemId('missing');
+    store.generateOptions();
+    expect(api.generate).not.toHaveBeenCalled();
+    expect(store.isGeneratingOptions()).toBe(false);
+  });
+
+  it('does nothing when workspaceId is empty', () => {
+    const { store, state, api } = setup(makeItem());
+    state.workspaceId.set('');
+    store.generateOptions();
+    expect(api.generate).not.toHaveBeenCalled();
+  });
+
+  it('on error shows a toast, leaves panel empty, and clears the loading flag', () => {
+    const { store, api, toast } = setup(makeItem());
+    api.generate.mockReturnValue(throwError(() => new Error('502 boom')));
+    store.generateOptions();
     expect(store.conceptOptions()).toBeNull();
-    expect(store.isGeneratingOptions()).toBe(true);
-    vi.advanceTimersByTime(AI_SIMULATION_DELAY_MS);
+    expect(store.isGeneratingOptions()).toBe(false);
+    expect(toast.showError).toHaveBeenCalledTimes(1);
+  });
+
+  it('regenerate clears state and triggers a second API call', () => {
+    const { store, api } = setup(makeItem());
+    store.generateOptions();
     expect(store.conceptOptions()?.length).toBe(6);
-    expect(store.conceptOptions()).not.toBe(first); // new array
+    store.regenerate();
+    expect(api.generate).toHaveBeenCalledTimes(2);
+    expect(store.conceptOptions()?.length).toBe(6);
+  });
+
+  it('regenerate is a no-op when a call is already in flight', () => {
+    const { store, api } = setup(makeItem());
+    const subject = new Subject<IdeaConceptOptionsResponseContract>();
+    api.generate.mockReturnValue(subject.asObservable());
+    store.generateOptions();
+    store.regenerate();
+    expect(api.generate).toHaveBeenCalledTimes(1);
+    subject.next({ options: sixOptions() });
+    subject.complete();
   });
 
   it('selectOption toggles and selectedOption computes the matching card', () => {
     const { store } = setup(makeItem());
     store.generateOptions();
-    vi.advanceTimersByTime(AI_SIMULATION_DELAY_MS);
     const firstId = store.conceptOptions()![0].id;
     store.selectOption(firstId);
     expect(store.selectedOptionId()).toBe(firstId);
@@ -203,9 +288,6 @@ describe('IdeaDetailStore — AI flow', () => {
 });
 
 describe('IdeaDetailStore — advanceToConcept', () => {
-  beforeEach(() => vi.useFakeTimers());
-  afterEach(() => vi.useRealTimers());
-
   it('without a selected option, creates a new concept linked to the idea via parentIdeaId; idea itself stays as idea and flips to `used` while the new concept is `new`', () => {
     const { store } = setup(makeItem());
     const save$ = store.advanceToConcept();
@@ -225,7 +307,6 @@ describe('IdeaDetailStore — advanceToConcept', () => {
   it('with a selected option, new concept merges hook/description/cta/objective + targetPlatforms from the option', () => {
     const { store } = setup(makeItem({ pillarIds: ['p1'] }));
     store.generateOptions();
-    vi.advanceTimersByTime(AI_SIMULATION_DELAY_MS);
     const opt = store.conceptOptions()![0];
     store.selectOption(opt.id);
     let concept!: ContentItem;
@@ -246,7 +327,6 @@ describe('IdeaDetailStore — advanceToConcept', () => {
   it('advancing to concept merges idea + option pillars without an upper-bound cap', () => {
     const { store } = setup(makeItem({ pillarIds: ['p1', 'p2', 'p3'] }));
     store.generateOptions();
-    vi.advanceTimersByTime(AI_SIMULATION_DELAY_MS);
     const opt = store.conceptOptions()![0];
     store.selectOption(opt.id);
     let concept!: ContentItem;

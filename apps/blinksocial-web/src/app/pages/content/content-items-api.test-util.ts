@@ -1,11 +1,14 @@
 import { of } from 'rxjs';
 import type {
   ContentItemContract,
+  IdeaConceptOptionsResponseContract,
   UpdateContentItemRequestContract,
   CreateContentItemRequestContract,
 } from '@blinksocial/contracts';
 import { ContentItemsApiService } from './content-items-api.service';
 import { WorkspaceSettingsApiService } from '../workspace-settings/workspace-settings-api.service';
+import { IdeaConceptOptionsApiService } from '../../core/idea-concept-options/idea-concept-options.service';
+import { ToastService } from '../../core/toast/toast.service';
 
 /**
  * Test-only stubs for the HTTP-backed services that `ContentStateService`
@@ -66,8 +69,23 @@ export function provideContentItemsApiStubs() {
     saveNamespaceAggregate: (_id: string, _path: string, data: unknown) => of(data),
   };
 
+  const emptyOptionsResponse: IdeaConceptOptionsResponseContract = { options: [] };
+  const ideaConceptOptionsStub = {
+    generate: () => of(emptyOptionsResponse),
+  };
+  const toastStub = {
+    showError: (_msg: string): void => {
+      /* swallow in tests; per-spec overrides verify error toasts */
+    },
+    show: (_msg: string): void => {
+      /* swallow */
+    },
+  };
+
   return [
     { provide: ContentItemsApiService, useValue: contentItemsStub },
     { provide: WorkspaceSettingsApiService, useValue: workspaceStub },
+    { provide: IdeaConceptOptionsApiService, useValue: ideaConceptOptionsStub },
+    { provide: ToastService, useValue: toastStub },
   ];
 }

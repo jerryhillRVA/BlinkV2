@@ -1,10 +1,10 @@
-import { DestroyRef, Injectable, computed, inject, signal } from '@angular/core';
+import { Injectable, computed, inject, signal } from '@angular/core';
 import type { Observable } from 'rxjs';
 import { ContentStateService } from '../../content-state.service';
-import { AI_SIMULATION_DELAY_MS } from '../../content.constants';
 import type { ContentItem, ContentObjective } from '../../content.types';
-import { generateId, safeTimeout, toggleArrayItem } from '../../content.utils';
-import { generateConceptOptions } from './idea-detail.ai';
+import { generateId, toggleArrayItem } from '../../content.utils';
+import { IdeaConceptOptionsApiService } from '../../../../core/idea-concept-options/idea-concept-options.service';
+import { ToastService } from '../../../../core/toast/toast.service';
 import type { ConceptOption } from './idea-detail.types';
 
 /**
@@ -14,7 +14,8 @@ import type { ConceptOption } from './idea-detail.types';
 @Injectable()
 export class IdeaDetailStore {
   private readonly state = inject(ContentStateService);
-  private readonly destroyRef = inject(DestroyRef);
+  private readonly api = inject(IdeaConceptOptionsApiService);
+  private readonly toast = inject(ToastService);
   /* v8 ignore next 1 — V8's function-call-throws branches on input()/signal() declarations are unreachable (Angular class-field init time; ESM exports not spy-able) */
   private readonly _itemId = signal<string | null>(null);
 
@@ -96,20 +97,28 @@ export class IdeaDetailStore {
   // ── AI actions ──────────────────────────────────────────────────────
   generateOptions(): void {
     if (this.isGeneratingOptions()) return;
+    const item = this.item();
+    if (!item) return;
+    const workspaceId = this.state.workspaceId();
+    if (!workspaceId) return;
     this.conceptOptions.set(null);
     this.selectedOptionId.set(null);
     this.isGeneratingOptions.set(true);
-    safeTimeout(
-      () => {
-        this.conceptOptions.set(generateConceptOptions(this.pillars(), this.segments()));
+    this.api.generate({ workspaceId, refId: item.id }).subscribe({
+      next: (res) => {
+        this.conceptOptions.set(res.options);
         this.isGeneratingOptions.set(false);
       },
-      AI_SIMULATION_DELAY_MS,
-      this.destroyRef,
-    );
+      error: () => {
+        this.conceptOptions.set(null);
+        this.isGeneratingOptions.set(false);
+        this.toast.showError('Could not generate concept options. Please try again.');
+      },
+    });
   }
 
   regenerate(): void {
+    if (this.isGeneratingOptions()) return;
     this.conceptOptions.set(null);
     this.selectedOptionId.set(null);
     this.generateOptions();
