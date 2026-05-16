@@ -1,5 +1,7 @@
 import { DestroyRef, Injectable, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import type { AiAssistDraftFieldContract } from '@blinksocial/contracts';
+import { AiAssistApiService } from '../../../../core/ai-assist/ai-assist.service';
 import { GeneratedIdeasApiService } from '../../../../core/generated-ideas/generated-ideas.service';
 import { ToastService } from '../../../../core/toast/toast.service';
 import type {
@@ -20,7 +22,6 @@ import type {
   TonePreset,
 } from '../../content.types';
 import {
-  AI_ASSIST_DELAY_MS,
   AI_SIMULATION_DELAY_MS,
   DESCRIPTION_MAX_CHARS,
   DESCRIPTION_MIN_CHARS,
@@ -30,11 +31,7 @@ import {
   MAX_PILLARS_PER_ITEM,
 } from '../../content.constants';
 import { safeTimeout, toggleArrayItem } from '../../content.utils';
-import {
-  assistDescriptionFor,
-  assistHookFor,
-  generateConceptFromObjective,
-} from './content-create.ai';
+import { generateConceptFromObjective } from './content-create.ai';
 
 export interface FormState {
   type: ContentItemType;
@@ -98,6 +95,7 @@ export const INITIAL_FORM_STATE: FormState = {
 export class ContentCreateStore {
   private readonly destroyRef = inject(DestroyRef);
   private readonly generatedIdeasApi = inject(GeneratedIdeasApiService);
+  private readonly aiAssist = inject(AiAssistApiService);
   private readonly toast = inject(ToastService);
   /* v8 ignore next 4 — V8's function-call-throws branches on input()/signal() declarations are unreachable (Angular class-field init time; ESM exports not spy-able) */
   private readonly _state = signal<FormState>({ ...INITIAL_FORM_STATE });
@@ -295,33 +293,54 @@ export class ContentCreateStore {
   }
 
   assistDescription(): void {
-    const s = this._state();
-    this.patch({ isAssistingDescription: true });
-    safeTimeout(
-      () => {
-        this.patch({
-          description: assistDescriptionFor(s.title, s.objective),
-          isAssistingDescription: false,
-        });
-      },
-      AI_ASSIST_DELAY_MS,
-      this.destroyRef,
+    this.runDraftAssist('concept-description', 'isAssistingDescription', (v) =>
+      this.patch({ description: v }),
     );
   }
 
   assistHook(): void {
-    const s = this._state();
-    this.patch({ isAssistingHook: true });
-    safeTimeout(
-      () => {
-        this.patch({
-          hook: assistHookFor(s.title, s.objective),
-          isAssistingHook: false,
-        });
-      },
-      AI_ASSIST_DELAY_MS,
-      this.destroyRef,
+    this.runDraftAssist('concept-hook-angle', 'isAssistingHook', (v) =>
+      this.patch({ hook: v }),
     );
+  }
+
+  private runDraftAssist(
+    field: AiAssistDraftFieldContract,
+    loadingKey: 'isAssistingDescription' | 'isAssistingHook',
+    apply: (value: string) => void,
+  ): void {
+    const s = this._state();
+    if (s[loadingKey]) return;
+    const workspaceId = this._workspaceId();
+    if (!workspaceId) return;
+    if (!s.title.trim()) return;
+    this.patch({ [loadingKey]: true } as Partial<FormState>);
+    this.aiAssist
+      .assist({
+        scope: 'draft',
+        workspaceId,
+        field,
+        draft: {
+          title: s.title,
+          description: s.description || undefined,
+          hook: s.hook || undefined,
+          objective: (s.objective || undefined) as ContentObjective | undefined,
+          pillarIds: [...s.pillarIds],
+          segmentIds: [...s.segmentIds],
+        },
+      })
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (res) => {
+          const v = res.values[0]?.trim();
+          if (v) apply(v);
+          this.patch({ [loadingKey]: false } as Partial<FormState>);
+        },
+        error: () => {
+          this.toast.showError('AI Assist failed. Please try again.');
+          this.patch({ [loadingKey]: false } as Partial<FormState>);
+        },
+      });
   }
 
   generateIdeas(): void {

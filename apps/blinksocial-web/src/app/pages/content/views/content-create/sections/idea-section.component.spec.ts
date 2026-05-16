@@ -5,6 +5,7 @@ import type {
 } from '@blinksocial/contracts';
 import { IdeaSectionComponent } from './idea-section.component';
 import { ContentCreateStore } from '../content-create.store';
+import { AiAssistApiService } from '../../../../../core/ai-assist/ai-assist.service';
 import { GeneratedIdeasApiService } from '../../../../../core/generated-ideas/generated-ideas.service';
 import { ToastService } from '../../../../../core/toast/toast.service';
 import type { ContentPillar, AudienceSegment } from '../../../content.types';
@@ -39,6 +40,10 @@ describe('IdeaSectionComponent', () => {
       providers: [
         ContentCreateStore,
         { provide: GeneratedIdeasApiService, useValue: apiMock },
+        {
+          provide: AiAssistApiService,
+          useValue: { assist: vi.fn().mockReturnValue(of({ values: ['stub'] })) },
+        },
         { provide: ToastService, useValue: { showError: vi.fn(), showSuccess: vi.fn() } },
       ],
     });

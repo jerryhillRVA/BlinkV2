@@ -2,6 +2,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { of } from 'rxjs';
 import { BriefSectionComponent } from './brief-section.component';
 import { ContentCreateStore } from '../content-create.store';
+import { AiAssistApiService } from '../../../../../core/ai-assist/ai-assist.service';
 import { GeneratedIdeasApiService } from '../../../../../core/generated-ideas/generated-ideas.service';
 import { ToastService } from '../../../../../core/toast/toast.service';
 import type { AudienceSegment, ContentPillar } from '../../../content.types';
@@ -26,6 +27,10 @@ describe('BriefSectionComponent', () => {
         {
           provide: GeneratedIdeasApiService,
           useValue: { generate: vi.fn().mockReturnValue(of({ ideas: [] })) },
+        },
+        {
+          provide: AiAssistApiService,
+          useValue: { assist: vi.fn().mockReturnValue(of({ values: ['stub'] })) },
         },
         {
           provide: ToastService,

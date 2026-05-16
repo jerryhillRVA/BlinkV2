@@ -1,10 +1,13 @@
 import { TestBed } from '@angular/core/testing';
-import { Observable, of, throwError } from 'rxjs';
+import { Observable, Subject, of, throwError } from 'rxjs';
 import type {
+  AiAssistRequestContract,
+  AiAssistResponseContract,
   GenerateIdeasRequestContract,
   GenerateIdeasResponseContract,
 } from '@blinksocial/contracts';
 import { ContentCreateStore } from './content-create.store';
+import { AiAssistApiService } from '../../../../core/ai-assist/ai-assist.service';
 import { GeneratedIdeasApiService } from '../../../../core/generated-ideas/generated-ideas.service';
 import { ToastService } from '../../../../core/toast/toast.service';
 import type {
@@ -15,10 +18,7 @@ import type {
   ProductionConceptPayload,
   BriefPayload,
 } from '../../content.types';
-import {
-  AI_ASSIST_DELAY_MS,
-  AI_SIMULATION_DELAY_MS,
-} from '../../content.constants';
+import { AI_SIMULATION_DELAY_MS } from '../../content.constants';
 
 const PILLARS: ContentPillar[] = [
   { id: 'p1', name: 'Pillar One', description: '', color: '#fff' },
@@ -35,6 +35,7 @@ const SEGMENTS: AudienceSegment[] = [
 interface SetupHandles {
   store: ContentCreateStore;
   api: { generate: ReturnType<typeof vi.fn> };
+  aiAssist: { assist: ReturnType<typeof vi.fn> };
   toast: { showError: ReturnType<typeof vi.fn>; showSuccess: ReturnType<typeof vi.fn> };
 }
 
@@ -55,18 +56,22 @@ function setupWithHandles(workspaceId: string | null = 'w1'): SetupHandles {
       }),
     ),
   };
+  const aiAssist = {
+    assist: vi.fn().mockReturnValue(of<AiAssistResponseContract>({ values: ['stub'] })),
+  };
   const toast = { showError: vi.fn(), showSuccess: vi.fn() };
   TestBed.configureTestingModule({
     providers: [
       ContentCreateStore,
       { provide: GeneratedIdeasApiService, useValue: api },
+      { provide: AiAssistApiService, useValue: aiAssist },
       { provide: ToastService, useValue: toast },
     ],
   });
   const store = TestBed.inject(ContentCreateStore);
   store.setContext(PILLARS, SEGMENTS);
   store.setWorkspaceId(workspaceId);
-  return { store, api, toast };
+  return { store, api, aiAssist, toast };
 }
 
 describe('ContentCreateStore — basic mutations', () => {
@@ -405,25 +410,6 @@ describe('ContentCreateStore — AI actions (fake timers)', () => {
     expect(store.state().segmentIds).toEqual(['s1', 's2']);
   });
 
-  it('assistDescription flips flag and resolves', () => {
-    const store = setup();
-    store.patch({ title: 'Hello', objective: 'trust' });
-    store.assistDescription();
-    expect(store.state().isAssistingDescription).toBe(true);
-    vi.advanceTimersByTime(AI_ASSIST_DELAY_MS);
-    expect(store.state().isAssistingDescription).toBe(false);
-    expect(store.state().description).toContain('Hello');
-  });
-
-  it('assistHook flips flag and resolves', () => {
-    const store = setup();
-    store.patch({ title: 'Hi', objective: 'leads' });
-    store.assistHook();
-    expect(store.state().isAssistingHook).toBe(true);
-    vi.advanceTimersByTime(AI_ASSIST_DELAY_MS);
-    expect(store.state().isAssistingHook).toBe(false);
-    expect(store.state().hook).toContain('Hi');
-  });
 
   it('generateIdeas no-op without focus pillars', () => {
     const { store, api } = setupWithHandles();
@@ -491,6 +477,91 @@ describe('ContentCreateStore — AI actions (fake timers)', () => {
     expect(store.state().isGeneratingIdeas).toBe(true);
     store.generateIdeas();
     expect(calls).toBe(1);
+  });
+});
+
+describe('ContentCreateStore — assistDescription / assistHook (real API)', () => {
+  it('assistDescription posts draft snapshot and applies returned value', () => {
+    const { store, aiAssist } = setupWithHandles();
+    aiAssist.assist.mockReturnValue(of({ values: ['Generated description.'] }));
+    store.patch({
+      title: 'Morning mobility flow',
+      objective: 'engagement',
+      pillarIds: ['p1'],
+      segmentIds: ['s1'],
+    });
+    store.assistDescription();
+    expect(aiAssist.assist).toHaveBeenCalledWith({
+      scope: 'draft',
+      workspaceId: 'w1',
+      field: 'concept-description',
+      draft: {
+        title: 'Morning mobility flow',
+        description: undefined,
+        hook: undefined,
+        objective: 'engagement',
+        pillarIds: ['p1'],
+        segmentIds: ['s1'],
+      },
+    } satisfies AiAssistRequestContract);
+    expect(store.state().description).toBe('Generated description.');
+    expect(store.state().isAssistingDescription).toBe(false);
+  });
+
+  it('assistHook posts draft snapshot and applies returned value', () => {
+    const { store, aiAssist } = setupWithHandles();
+    aiAssist.assist.mockReturnValue(of({ values: ['Catchy hook.'] }));
+    store.patch({ title: 'X', objective: 'leads' });
+    store.assistHook();
+    const callArg = aiAssist.assist.mock.calls[0][0];
+    expect(callArg.scope).toBe('draft');
+    expect(callArg.field).toBe('concept-hook-angle');
+    expect(store.state().hook).toBe('Catchy hook.');
+    expect(store.state().isAssistingHook).toBe(false);
+  });
+
+  it('is a no-op when workspaceId is unset', () => {
+    const { store, aiAssist } = setupWithHandles(null);
+    store.patch({ title: 'X' });
+    store.assistDescription();
+    expect(aiAssist.assist).not.toHaveBeenCalled();
+    expect(store.state().isAssistingDescription).toBe(false);
+  });
+
+  it('is a no-op when title is empty / whitespace', () => {
+    const { store, aiAssist } = setupWithHandles();
+    store.patch({ title: '   ' });
+    store.assistDescription();
+    expect(aiAssist.assist).not.toHaveBeenCalled();
+    expect(store.state().isAssistingDescription).toBe(false);
+  });
+
+  it('double-click guard: second call while in-flight is a no-op', () => {
+    const { store, aiAssist } = setupWithHandles();
+    aiAssist.assist.mockReturnValue(new Subject<AiAssistResponseContract>());
+    store.patch({ title: 'X' });
+    store.assistDescription();
+    expect(store.state().isAssistingDescription).toBe(true);
+    store.assistDescription();
+    expect(aiAssist.assist).toHaveBeenCalledTimes(1);
+  });
+
+  it('error path shows toast and clears loading flag', () => {
+    const { store, aiAssist, toast } = setupWithHandles();
+    aiAssist.assist.mockReturnValue(throwError(() => new Error('boom')));
+    store.patch({ title: 'X' });
+    store.assistDescription();
+    expect(toast.showError).toHaveBeenCalledWith('AI Assist failed. Please try again.');
+    expect(store.state().isAssistingDescription).toBe(false);
+  });
+
+  it('empty / whitespace returned value does not overwrite the field; loading clears', () => {
+    const { store, aiAssist } = setupWithHandles();
+    aiAssist.assist.mockReturnValue(of({ values: ['   '] }));
+    store.patch({ title: 'X', description: 'existing' });
+    store.assistDescription();
+    expect(store.state().description).toBe('existing');
+    expect(store.state().isAssistingDescription).toBe(false);
   });
 });
 
