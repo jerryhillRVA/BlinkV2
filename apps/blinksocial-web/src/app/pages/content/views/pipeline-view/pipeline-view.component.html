@@ -239,33 +239,51 @@
             </div>
             <div class="column-cards">
               @for (item of getColumnItems(column.id); track item.id) {
-                <button class="content-card" (click)="openItem(item)">
-                  @if (item.platform) {
-                    <span class="card-platform-icon" [ngClass]="'platform-' + item.platform">
-                      <app-platform-icon [platform]="item.platform" [size]="14" />
-                    </span>
+                @switch (column.id) {
+                  @case ('scheduled') {
+                    <app-pipeline-card-scheduled
+                      [item]="item"
+                      [pillarNames]="pillars()"
+                      (opened)="openItem(item)"
+                    />
                   }
-                  <div class="card-pillars">
-                    @for (pillarId of item.pillarIds; track pillarId) {
-                      @let pillarName = getPillarName(pillarId);
-                      @if (pillarName) {
-                        <span class="pillar-badge">{{ pillarName }}</span>
+                  @case ('published') {
+                    <app-pipeline-card-published
+                      [item]="item"
+                      [pillarNames]="pillars()"
+                      (opened)="openItem(item)"
+                    />
+                  }
+                  @default {
+                    <button class="content-card" (click)="openItem(item)">
+                      @if (item.platform) {
+                        <span class="card-platform-icon" [ngClass]="'platform-' + item.platform">
+                          <app-platform-icon [platform]="item.platform" [size]="14" />
+                        </span>
                       }
-                    }
-                    @if (item.contentType) {
-                      <span class="type-badge">{{ item.contentType }}</span>
-                    }
-                  </div>
-                  <h4 class="card-title">{{ item.title }}</h4>
-                  @if (item.hook) {
-                    <p class="card-hook">"{{ item.hook }}"</p>
-                  } @else {
-                    <p class="card-description">{{ item.description }}</p>
+                      <div class="card-pillars">
+                        @for (pillarId of item.pillarIds; track pillarId) {
+                          @let pillarName = getPillarName(pillarId);
+                          @if (pillarName) {
+                            <span class="pillar-badge">{{ pillarName }}</span>
+                          }
+                        }
+                        @if (item.contentType) {
+                          <span class="type-badge">{{ item.contentType }}</span>
+                        }
+                      </div>
+                      <h4 class="card-title">{{ item.title }}</h4>
+                      @if (item.hook) {
+                        <p class="card-hook">"{{ item.hook }}"</p>
+                      } @else {
+                        <p class="card-description">{{ item.description }}</p>
+                      }
+                      <div class="card-footer">
+                        <span class="card-date">{{ formatDate(item.updatedAt) }}</span>
+                      </div>
+                    </button>
                   }
-                  <div class="card-footer">
-                    <span class="card-date">{{ formatDate(item.updatedAt) }}</span>
-                  </div>
-                </button>
+                }
               }
               @if (getColumnItems(column.id).length === 0) {
                 <div class="empty-column">

@@ -5,6 +5,8 @@ import { PlatformIconComponent } from '../../../../shared/platform-icon/platform
 import { expandPanel } from '../../../../core/animations/expand-panel.animation';
 import { ContentStateService } from '../../content-state.service';
 import { ContentTypePickerComponent } from '../content-create/content-type-picker/content-type-picker.component';
+import { PipelineCardPublishedComponent } from './cards/pipeline-card-published.component';
+import { PipelineCardScheduledComponent } from './cards/pipeline-card-scheduled.component';
 import type { ContentItem, ContentPillar, ContentView, ViewMode, SortField, SortOrder, PipelineColumn, ContentItemType } from '../../content.types';
 import { PIPELINE_COLUMNS, STAGE_CONFIG, STATUS_CONFIG } from '../../content.constants';
 
@@ -28,7 +30,13 @@ function matchesColumn(item: ContentItem, col: PipelineColumn): boolean {
 
 @Component({
   selector: 'app-pipeline-view',
-  imports: [CommonModule, PlatformIconComponent, ContentTypePickerComponent],
+  imports: [
+    CommonModule,
+    PlatformIconComponent,
+    ContentTypePickerComponent,
+    PipelineCardScheduledComponent,
+    PipelineCardPublishedComponent,
+  ],
   animations: [expandPanel],
   templateUrl: './pipeline-view.component.html',
   styleUrl: './pipeline-view.component.scss',

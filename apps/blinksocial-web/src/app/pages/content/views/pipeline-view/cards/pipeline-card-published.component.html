@@ -1,0 +1,50 @@
+<button
+  class="card-published content-card"
+  type="button"
+  (click)="onCardClick()"
+>
+  <div class="pc-header">
+    <div class="pc-pills">
+      <span class="pill pill-status-published" data-pill="published">
+        <app-icon name="check-circle" size="12" />
+        Published
+      </span>
+      @if (item().isExported) {
+        <span class="pill pill-exported" data-pill="exported">Exported</span>
+      }
+    </div>
+    @if (item().platform) {
+      <span class="pc-platform">
+        <app-platform-icon [platform]="item().platform!" [size]="14" />
+        <span class="pc-platform-label">{{ item().platform }}</span>
+        @if (item().contentType; as ct) {
+          <span class="pc-content-type">· {{ ct }}</span>
+        }
+      </span>
+    }
+  </div>
+
+  <h4 class="pc-title">{{ item().title }}</h4>
+
+  @if (publishedLabel(); as label) {
+    <div class="pc-meta">
+      <app-icon name="check-circle" size="12" class="pc-meta-icon" />
+      <span class="pc-meta-label">{{ label }}</span>
+    </div>
+  }
+
+  @if (pillarsForItem().length > 0) {
+    <div class="pc-pillars">
+      @for (name of pillarsForItem().slice(0, 2); track name) {
+        <span class="pillar-badge">{{ name }}</span>
+      }
+    </div>
+  }
+
+  <!-- Performance teaser — placeholder values until #146 wires `metrics`. -->
+  <div class="pc-metrics" aria-label="Performance">
+    <span class="pc-metric">— views</span>
+    <span class="pc-metric">— likes</span>
+    <span class="pc-metric">— comments</span>
+  </div>
+</button>

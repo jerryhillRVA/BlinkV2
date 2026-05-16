@@ -1,0 +1,131 @@
+:host {
+  display: block;
+}
+
+.card-published {
+  appearance: none;
+  cursor: pointer;
+  text-align: left;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px;
+  background: var(--blink-published-card-bg);
+  border: 1px solid var(--blink-published-card-border);
+  border-left: 3px solid var(--blink-published-card-accent);
+  border-radius: 8px;
+  color: var(--blink-on-surface);
+  font-family: inherit;
+  transition: box-shadow 120ms ease, background 120ms ease;
+
+  &:hover {
+    box-shadow: var(--blink-shadow-sm);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--blink-brand-primary);
+    outline-offset: 2px;
+  }
+}
+
+.pc-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.pc-pills {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  font-size: var(--blink-label-small);
+  font-weight: 600;
+  border-radius: 999px;
+}
+
+.pill-status-published {
+  background: var(--blink-published-pill-bg);
+  color: var(--blink-published-pill-text);
+}
+
+.pill-exported {
+  background: var(--blink-exported-pill-bg);
+  color: var(--blink-exported-pill-text);
+}
+
+.pc-platform {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: var(--blink-label-small);
+  color: var(--blink-on-surface-faint);
+}
+
+.pc-platform-label {
+  text-transform: capitalize;
+}
+
+.pc-content-type {
+  text-transform: capitalize;
+}
+
+.pc-title {
+  margin: 0;
+  font-size: var(--blink-title-small);
+  font-weight: 600;
+  color: var(--blink-on-surface-strong);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.pc-meta {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--blink-body-small);
+  font-weight: 600;
+  color: var(--blink-published-card-accent);
+}
+
+.pc-meta-icon {
+  color: var(--blink-published-card-accent);
+}
+
+.pc-pillars {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.pillar-badge {
+  padding: 2px 8px;
+  font-size: var(--blink-label-small);
+  background: var(--blink-surface-container);
+  color: var(--blink-on-surface-faint);
+  border-radius: 999px;
+}
+
+.pc-metrics {
+  display: flex;
+  gap: 12px;
+  padding-top: 4px;
+  border-top: 1px dashed var(--blink-outline-variant);
+  font-size: var(--blink-label-small);
+  color: var(--blink-on-surface-faint);
+}
+
+.pc-metric {
+  flex: 0 0 auto;
+}

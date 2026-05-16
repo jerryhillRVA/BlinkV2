@@ -1,0 +1,45 @@
+<button
+  class="card-scheduled content-card"
+  type="button"
+  (click)="onCardClick()"
+>
+  <div class="sc-header">
+    <div class="sc-pills">
+      <span class="pill pill-status-scheduled" data-pill="scheduled">
+        <app-icon name="clock" size="12" />
+        Scheduled
+      </span>
+      @if (item().isExported) {
+        <span class="pill pill-exported" data-pill="exported">Exported</span>
+      }
+    </div>
+    @if (item().platform) {
+      <span class="sc-platform">
+        <app-platform-icon [platform]="item().platform!" [size]="14" />
+        <span class="sc-platform-label">{{ item().platform }}</span>
+        @if (item().contentType; as ct) {
+          <span class="sc-content-type">· {{ ct }}</span>
+        }
+      </span>
+    }
+  </div>
+
+  <h4 class="sc-title">{{ item().title }}</h4>
+
+  <div class="sc-meta">
+    <app-icon name="clock" size="12" class="sc-meta-icon" />
+    <span class="sc-meta-label">{{ scheduledLabel() }}</span>
+  </div>
+
+  @if (pillarsForItem().length > 0) {
+    <div class="sc-pillars">
+      @for (name of pillarsForItem().slice(0, 2); track name) {
+        <span class="pillar-badge">{{ name }}</span>
+      }
+    </div>
+  }
+
+  <div class="sc-footer">
+    <span class="sc-ready">Ready to publish</span>
+  </div>
+</button>
