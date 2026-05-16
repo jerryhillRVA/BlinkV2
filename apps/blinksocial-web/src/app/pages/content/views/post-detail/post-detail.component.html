@@ -210,7 +210,23 @@
       }
     </div>
 
-    <app-step-action-bar (backToList)="onBack()" />
+    <app-step-action-bar
+      (backToList)="onBack()"
+      (finished)="onFinish()"
+    />
+
+    <!-- #140 Publish Flow — Export Packet confirmation. Mounted at the
+         post-detail level so it overlays any step content. -->
+    <app-confirm-dialog
+      [open]="exportConfirmOpen()"
+      title="Download Export Packet"
+      body="Your export packet is ready. Click Download to save it to your device."
+      confirmLabel="Download"
+      cancelLabel="Cancel"
+      tone="primary"
+      (confirm)="onExportConfirmed()"
+      (cancelled)="onExportCancelled()"
+    />
     <!-- Sentinel for the step-action-bar's pinned/floating detection.
          Lives OUTSIDE the bar's sticky-positioned host so it stays at
          its natural position in .post-detail's flex flow. When the

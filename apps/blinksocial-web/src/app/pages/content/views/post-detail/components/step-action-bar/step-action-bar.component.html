@@ -14,9 +14,14 @@
     [class.continue-btn--ready]="continueEnabled()"
     [disabled]="!continueEnabled()"
     [attr.aria-disabled]="!continueEnabled() ? 'true' : null"
+    [attr.aria-describedby]="activeStep() === 'qa' && !continueEnabled() ? 'finish-disabled-hint' : null"
+    [attr.title]="activeStep() === 'qa' && !continueEnabled() ? finishDisabledHint : null"
     (click)="onContinue()"
   >
     <span>{{ continueLabel() }}</span>
     <app-icon name="arrow-right" size="14" />
   </button>
+  @if (activeStep() === 'qa' && !continueEnabled()) {
+    <span id="finish-disabled-hint" class="sr-only">{{ finishDisabledHint }}</span>
+  }
 </nav>

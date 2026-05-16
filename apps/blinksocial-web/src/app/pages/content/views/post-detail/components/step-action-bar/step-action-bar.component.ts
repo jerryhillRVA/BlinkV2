@@ -50,6 +50,9 @@ export class StepActionBarComponent implements AfterViewInit, OnDestroy {
   /** Emitted when Back is clicked on the Brief step (no previous step). */
   @Output() backToList = new EventEmitter<void>();
 
+  /** #140: emitted when the qa-step "Finish" button is activated. */
+  @Output() finished = new EventEmitter<void>();
+
   /**
    * The visual state of the bar, driven by an IntersectionObserver on a
    * sentinel positioned just below the bar:
@@ -121,11 +124,17 @@ export class StepActionBarComponent implements AfterViewInit, OnDestroy {
       case 'packaging':
         return this.store.canContinueFromPackaging();
       case 'qa':
-        // Approve & Schedule is the terminal step — its Continue button is
-        // the "Finish" action which a future ticket will wire up.
-        return false;
+        // #140: Finish action — enabled once the post is fully approved.
+        return this.store.canApproveAndPublish();
     }
   });
+
+  /**
+   * #140: the Finish button's disabled-state tooltip. Returned even when
+   * the button is enabled so `aria-describedby` can stay statically wired
+   * — screen readers only announce it when the button is disabled.
+   */
+  protected readonly finishDisabledHint = 'Post must be approved before finishing.';
 
   protected onBack(): void {
     const prev = this.previousStep();
@@ -141,7 +150,12 @@ export class StepActionBarComponent implements AfterViewInit, OnDestroy {
   protected onContinue(): void {
     if (!this.continueEnabled()) return;
     const next = this.nextStep();
-    if (next) this.store.advanceProductionStep(next);
+    if (next) {
+      this.store.advanceProductionStep(next);
+    } else {
+      // Terminal step — Continue IS the Finish action (#140).
+      this.finished.emit();
+    }
   }
 
   // ── pinned / floating detection via IntersectionObserver ───────────────
