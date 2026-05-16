@@ -173,7 +173,7 @@ describe('InstagramPackagingComponent', () => {
     expect(label).not.toBeNull();
   });
 
-  it('hashtagsChange / linkInput / utm / order / audio / controls all emit patched value', () => {
+  it('hashtagsChange / linkInput / utm / order / audioPlanning / controls all emit patched value', () => {
     const { fixture } = setup({ value: { caption: 'pre' } });
     const emitted: PackagingInstagramContract[] = [];
     fixture.componentInstance.valueChange.subscribe((v) => emitted.push(v));
@@ -181,8 +181,9 @@ describe('InstagramPackagingComponent', () => {
     fixture.componentInstance['onLinkInput']({ target: { value: 'https://x' } } as unknown as Event);
     fixture.componentInstance['onUtmChange']({ source: 's' });
     fixture.componentInstance['onOrderChange']([1, 0]);
-    fixture.componentInstance['onAudioChange']({
-      trackId: 't', trackName: 'n', artistName: 'a', source: 'trending',
+    fixture.componentInstance['onAudioPlanningChange']({
+      audioStrategy: 'trending-platform',
+      audioMood: 'energetic-pumped',
     });
     fixture.componentInstance['onControlsChange']({ visibility: 'private' });
     expect(emitted.length).toBe(6);
@@ -193,6 +194,13 @@ describe('InstagramPackagingComponent', () => {
     expect(emitted[1]).toEqual({ caption: 'pre', link: 'https://x' });
     expect(emitted[2]).toEqual({ caption: 'pre', utm: { source: 's' } });
     expect(emitted[3]).toEqual({ caption: 'pre', slideOrder: { order: [1, 0] } });
+    expect(emitted[4]).toEqual({
+      caption: 'pre',
+      audioPlanning: {
+        audioStrategy: 'trending-platform',
+        audioMood: 'energetic-pumped',
+      },
+    });
     expect(emitted[5]).toEqual({ caption: 'pre', platformControls: { visibility: 'private' } });
   });
 
@@ -217,15 +225,18 @@ describe('InstagramPackagingComponent', () => {
     expect(emitted[0]?.hashtags).toEqual([]);
   });
 
-  it('onCoverAssetChange + onAudioChange + onOrderChange route through patch', () => {
+  it('onCoverAssetChange + onAudioPlanningChange + onOrderChange route through patch', () => {
     const { fixture } = setup({ value: { caption: 'pre' } });
     const emitted: PackagingInstagramContract[] = [];
     fixture.componentInstance.valueChange.subscribe((v) => emitted.push(v));
     fixture.componentInstance['onCoverAssetChange']('cover.png');
-    fixture.componentInstance['onAudioChange'](undefined);
+    fixture.componentInstance['onAudioPlanningChange']({ audioStrategy: 'named' });
     fixture.componentInstance['onOrderChange']([2, 1, 0]);
     expect(emitted[0]).toEqual({ caption: 'pre', coverAsset: 'cover.png' });
-    expect(emitted[1]).toEqual({ caption: 'pre', audio: undefined });
+    expect(emitted[1]).toEqual({
+      caption: 'pre',
+      audioPlanning: { audioStrategy: 'named' },
+    });
     expect(emitted[2]).toEqual({ caption: 'pre', slideOrder: { order: [2, 1, 0] } });
   });
 
@@ -288,7 +299,7 @@ describe('InstagramPackagingComponent', () => {
     expect(fixture.componentInstance['link']()).toBe('');
     expect(fixture.componentInstance['utm']()).toBeUndefined();
     expect(fixture.componentInstance['slideOrder']()).toEqual([]);
-    expect(fixture.componentInstance['audio']()).toBeUndefined();
+    expect(fixture.componentInstance['audioPlanning']()).toBeUndefined();
     expect(fixture.componentInstance['controls']()).toBeUndefined();
     expect(fixture.componentInstance['captionState']()).toBe('ok');
   });
@@ -401,7 +412,10 @@ describe('InstagramPackagingComponent', () => {
         caption: 'c', hashtags: ['#h'], link: 'https://x',
         utm: { source: 's' },
         slideOrder: { order: [1, 0] },
-        audio: { trackId: 't', trackName: 'n', artistName: 'a', source: 'trending' },
+        audioPlanning: {
+          audioStrategy: 'trending-platform',
+          audioMood: 'energetic-pumped',
+        },
         platformControls: { allowComments: false },
       },
     });
@@ -410,7 +424,8 @@ describe('InstagramPackagingComponent', () => {
     expect(fixture.componentInstance['link']()).toBe('https://x');
     expect(fixture.componentInstance['utm']()).toEqual({ source: 's' });
     expect(fixture.componentInstance['slideOrder']()).toEqual([1, 0]);
-    expect(fixture.componentInstance['audio']()?.trackId).toBe('t');
+    expect(fixture.componentInstance['audioPlanning']()?.audioStrategy).toBe('trending-platform');
+    expect(fixture.componentInstance['audioPlanning']()?.audioMood).toBe('energetic-pumped');
     expect(fixture.componentInstance['controls']()?.allowComments).toBe(false);
   });
 

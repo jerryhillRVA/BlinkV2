@@ -1,0 +1,59 @@
+@if (visible()) {
+  <div class="audio-planning-section" aria-labelledby="audio-planning-heading">
+    <div class="audio-planning-header">
+      <span id="audio-planning-heading" class="audio-planning-eyebrow">
+        Audio Planning
+      </span>
+      <app-tooltip [text]="audioTooltip" />
+    </div>
+
+    <div class="strategy-block">
+      <span id="strategy-label" class="field-label">Strategy Mode</span>
+      <div
+        class="segmented-toggle"
+        role="radiogroup"
+        aria-labelledby="strategy-label"
+      >
+        @for (option of strategyOptions; track option.value) {
+          <button
+            type="button"
+            class="segmented-option"
+            [class.segmented-option--selected]="strategy() === option.value"
+            role="radio"
+            [attr.aria-checked]="strategy() === option.value"
+            [tabindex]="strategy() === option.value ? 0 : -1"
+            [disabled]="disabled()"
+            (click)="onStrategyClick(option.value)"
+            (keydown)="onStrategyKeydown($event)"
+          >
+            <app-icon
+              class="segmented-option-icon"
+              [name]="option.iconName"
+              [size]="14"
+            />
+            {{ option.label }}
+          </button>
+        }
+      </div>
+    </div>
+
+    @if (moodVisible()) {
+      <div class="mood-region" role="region" aria-live="polite">
+        <span id="audio-mood-label" class="field-label">Video Vibe &amp; Pace</span>
+        <p id="audio-mood-help" class="mood-help">
+          What is the emotional energy of your video?
+        </p>
+        <app-dropdown
+          class="mood-dropdown"
+          [options]="moodDropdownOptions"
+          [value]="mood() ?? ''"
+          [placeholder]="moodPlaceholder"
+          [fullWidth]="true"
+          [filled]="true"
+          size="sm"
+          (valueChange)="onMoodSelect($event)"
+        />
+      </div>
+    }
+  </div>
+}

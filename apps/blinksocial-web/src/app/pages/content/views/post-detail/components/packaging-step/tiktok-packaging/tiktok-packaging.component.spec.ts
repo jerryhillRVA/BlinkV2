@@ -4,6 +4,7 @@ import { TiktokPackagingComponent } from './tiktok-packaging.component';
 
 interface SetupOptions {
   value?: PackagingTikTokContract | undefined;
+  contentType?: string;
   disabled?: boolean;
 }
 
@@ -12,19 +13,23 @@ function setup(opts: SetupOptions = {}): ComponentFixture<TiktokPackagingCompone
   TestBed.configureTestingModule({ imports: [TiktokPackagingComponent] });
   const fixture = TestBed.createComponent(TiktokPackagingComponent);
   fixture.componentRef.setInput('value', opts.value);
+  // Default to short-video so the audio-planning card renders. Override
+  // when a test wants to assert the hidden state.
+  fixture.componentRef.setInput('contentType', opts.contentType ?? 'short-video');
   fixture.componentRef.setInput('disabled', opts.disabled ?? false);
   fixture.detectChanges();
   return fixture;
 }
 
 describe('TiktokPackagingComponent', () => {
-  it('renders caption, hashtags, link, UTM, audio, platform-controls', () => {
+  it('renders caption, hashtags, link, UTM, audio-planning, platform-controls', () => {
     const fixture = setup();
     expect(fixture.nativeElement.querySelector('#tt-caption')).not.toBeNull();
     expect(fixture.nativeElement.querySelector('app-hashtag-input')).not.toBeNull();
     expect(fixture.nativeElement.querySelector('#tt-link')).not.toBeNull();
     expect(fixture.nativeElement.querySelector('app-utm-builder')).not.toBeNull();
-    expect(fixture.nativeElement.querySelector('app-audio-picker')).not.toBeNull();
+    expect(fixture.nativeElement.querySelector('app-audio-planning-section')).not.toBeNull();
+    expect(fixture.nativeElement.querySelector('.audio-planning-section')).not.toBeNull();
     expect(fixture.nativeElement.querySelector('app-platform-controls')).not.toBeNull();
   });
 
@@ -55,20 +60,19 @@ describe('TiktokPackagingComponent', () => {
     expect(fixture.nativeElement.querySelector('label[for="tt-caption"]')).not.toBeNull();
   });
 
-  it('hashtags / link / utm / audio / controls handlers emit patched value', () => {
+  it('hashtags / link / utm / audioPlanning / controls handlers emit patched value', () => {
     const fixture = setup();
     const emitted: PackagingTikTokContract[] = [];
     fixture.componentInstance.valueChange.subscribe((v) => emitted.push(v));
     fixture.componentInstance['onHashtagsChange'](['#a']);
     fixture.componentInstance['onLinkInput']({ target: { value: 'https://x' } } as unknown as Event);
     fixture.componentInstance['onUtmChange']({ source: 's' });
-    fixture.componentInstance['onAudioChange']({
-      trackId: 't', trackName: 'n', artistName: 'a', source: 'trending',
-    });
+    fixture.componentInstance['onAudioPlanningChange']({ audioStrategy: 'named' });
     fixture.componentInstance['onControlsChange']({ allowDuetStitch: true });
     expect(emitted.length).toBe(5);
     expect(emitted[0]).toEqual({ hashtags: ['#a'] });
     expect(emitted[2]).toEqual({ utm: { source: 's' } });
+    expect(emitted[3]).toEqual({ audioPlanning: { audioStrategy: 'named' } });
   });
 
   it('caption marks fail class at or above the cap', () => {
@@ -83,7 +87,7 @@ describe('TiktokPackagingComponent', () => {
     expect(fixture.componentInstance['hashtags']()).toEqual([]);
     expect(fixture.componentInstance['link']()).toBe('');
     expect(fixture.componentInstance['utm']()).toBeUndefined();
-    expect(fixture.componentInstance['audio']()).toBeUndefined();
+    expect(fixture.componentInstance['audioPlanning']()).toBeUndefined();
     expect(fixture.componentInstance['controls']()).toBeUndefined();
     expect(fixture.componentInstance['captionState']()).toBe('ok');
   });
@@ -93,14 +97,14 @@ describe('TiktokPackagingComponent', () => {
       value: {
         caption: 'c', hashtags: ['#h'], link: 'https://x',
         utm: { source: 's' },
-        audio: { trackId: 't', trackName: 'n', artistName: 'a', source: 'trending' },
+        audioPlanning: { audioStrategy: 'trending-platform', audioMood: 'happy-upbeat' },
         platformControls: { allowDuetStitch: true },
       },
     });
     expect(fixture.componentInstance['caption']()).toBe('c');
     expect(fixture.componentInstance['hashtags']()).toEqual(['#h']);
     expect(fixture.componentInstance['utm']()).toEqual({ source: 's' });
-    expect(fixture.componentInstance['audio']()?.trackId).toBe('t');
+    expect(fixture.componentInstance['audioPlanning']()?.audioMood).toBe('happy-upbeat');
   });
 
   it('builds with all defaults (exercises signal-input default-value branches)', () => {
@@ -112,7 +116,7 @@ describe('TiktokPackagingComponent', () => {
     expect(fixture.componentInstance['hashtags']()).toEqual([]);
     expect(fixture.componentInstance['link']()).toBe('');
     expect(fixture.componentInstance['utm']()).toBeUndefined();
-    expect(fixture.componentInstance['audio']()).toBeUndefined();
+    expect(fixture.componentInstance['audioPlanning']()).toBeUndefined();
     expect(fixture.componentInstance['controls']()).toBeUndefined();
   });
 });

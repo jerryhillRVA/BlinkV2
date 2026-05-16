@@ -3,7 +3,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import type {
   AiAssistFieldContract,
   ContentTypeContract,
-  PackagingAudioTrackContract,
+  PackagingAudioPlanningContract,
   PackagingInstagramContract,
   PackagingPlatformControlsContract,
   PackagingPlatformControlsIGContract,
@@ -113,7 +113,8 @@ export class InstagramPackagingComponent {
   protected readonly link = computed(() => this.value()?.link ?? '');
   protected readonly utm = computed(() => this.value()?.utm);
   protected readonly slideOrder = computed(() => this.value()?.slideOrder?.order ?? []);
-  protected readonly audio = computed(() => this.value()?.audio);
+  protected readonly audioPlanning = computed(() => this.value()?.audioPlanning);
+  protected readonly platform = 'instagram' as const;
   protected readonly coverAsset = computed(() => this.value()?.coverAsset);
   protected readonly controls = computed(() => this.value()?.platformControls);
   protected readonly igControls = computed(() => this.value()?.platformControls?.ig);
@@ -244,8 +245,8 @@ export class InstagramPackagingComponent {
     this.patch({ slideOrder: next });
   }
 
-  protected onAudioChange(track: PackagingAudioTrackContract | undefined): void {
-    this.patch({ audio: track });
+  protected onAudioPlanningChange(audioPlanning: PackagingAudioPlanningContract): void {
+    this.patch({ audioPlanning });
   }
 
   protected onCoverAssetChange(coverAsset: string | undefined): void {

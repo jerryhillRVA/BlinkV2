@@ -466,59 +466,7 @@ describe('PostDetailComponent — actions', () => {
     expect(comp.previewCoverAsset()).toBeUndefined();
   });
 
-  it('previewAudioTrackName reads from IG audio slot', () => {
-    const item = makeItem({
-      platform: 'instagram',
-      production: {
-        packaging: {
-          instagram: {
-            audio: {
-              trackId: 't1',
-              trackName: 'IG track',
-              artistName: 'a',
-              source: 'trending',
-            },
-          },
-        },
-      },
-    });
-    const { fixture } = setup(item);
-    const comp = fixture.componentInstance as unknown as {
-      previewAudioTrackName: () => string | undefined;
-    };
-    expect(comp.previewAudioTrackName()).toBe('IG track');
-  });
-
-  it('previewAudioTrackName reads from TT audio slot', () => {
-    const item = makeItem({
-      platform: 'tiktok',
-      contentType: 'short-video',
-      production: {
-        packaging: {
-          tiktok: {
-            audio: {
-              trackId: 't2',
-              trackName: 'TT track',
-              artistName: 'b',
-              source: 'trending',
-            },
-          },
-        },
-      },
-    });
-    const { fixture } = setup(item);
-    const comp = fixture.componentInstance as unknown as {
-      previewAudioTrackName: () => string | undefined;
-    };
-    expect(comp.previewAudioTrackName()).toBe('TT track');
-  });
-
-  it('previewAudioTrackName returns undefined for non-IG/TT platforms', () => {
-    const item = makeItem({ platform: 'youtube', contentType: 'long-form' });
-    const { fixture } = setup(item);
-    const comp = fixture.componentInstance as unknown as {
-      previewAudioTrackName: () => string | undefined;
-    };
-    expect(comp.previewAudioTrackName()).toBeUndefined();
-  });
+  // #147: previewAudioTrackName + the post-preview-card audio surface
+  // were removed. Audio mood/strategy is captured via PackagingAudioPlanningContract
+  // but is not surfaced in the preview yet (separate follow-up).
 });

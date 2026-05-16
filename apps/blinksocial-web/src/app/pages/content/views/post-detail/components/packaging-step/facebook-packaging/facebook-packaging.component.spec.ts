@@ -4,6 +4,7 @@ import { FacebookPackagingComponent } from './facebook-packaging.component';
 
 interface SetupOptions {
   value?: PackagingFacebookContract | undefined;
+  contentType?: string;
   disabled?: boolean;
   isCarousel?: boolean;
 }
@@ -13,6 +14,8 @@ function setup(opts: SetupOptions = {}): ComponentFixture<FacebookPackagingCompo
   TestBed.configureTestingModule({ imports: [FacebookPackagingComponent] });
   const fixture = TestBed.createComponent(FacebookPackagingComponent);
   fixture.componentRef.setInput('value', opts.value);
+  // Default to fb-reel so the audio-planning card renders.
+  fixture.componentRef.setInput('contentType', opts.contentType ?? 'fb-reel');
   fixture.componentRef.setInput('disabled', opts.disabled ?? false);
   fixture.componentRef.setInput('isCarousel', opts.isCarousel ?? false);
   fixture.detectChanges();
@@ -20,13 +23,14 @@ function setup(opts: SetupOptions = {}): ComponentFixture<FacebookPackagingCompo
 }
 
 describe('FacebookPackagingComponent', () => {
-  it('renders caption, hashtags, link, UTM, audio, platform-controls', () => {
+  it('renders caption, hashtags, link, UTM, audio-planning, platform-controls', () => {
     const fixture = setup();
     expect(fixture.nativeElement.querySelector('#fb-caption')).not.toBeNull();
     expect(fixture.nativeElement.querySelector('app-hashtag-input')).not.toBeNull();
     expect(fixture.nativeElement.querySelector('#fb-link')).not.toBeNull();
     expect(fixture.nativeElement.querySelector('app-utm-builder')).not.toBeNull();
-    expect(fixture.nativeElement.querySelector('app-audio-picker')).not.toBeNull();
+    expect(fixture.nativeElement.querySelector('app-audio-planning-section')).not.toBeNull();
+    expect(fixture.nativeElement.querySelector('.audio-planning-section')).not.toBeNull();
     expect(fixture.nativeElement.querySelector('app-platform-controls')).not.toBeNull();
   });
 
@@ -58,7 +62,7 @@ describe('FacebookPackagingComponent', () => {
     expect(fixture.nativeElement.querySelector('label[for="fb-caption"]')).not.toBeNull();
   });
 
-  it('hashtags / link / utm / order / audio / controls handlers emit patched value', () => {
+  it('hashtags / link / utm / order / audioPlanning / controls handlers emit patched value', () => {
     const fixture = setup();
     const emitted: PackagingFacebookContract[] = [];
     fixture.componentInstance.valueChange.subscribe((v) => emitted.push(v));
@@ -66,12 +70,11 @@ describe('FacebookPackagingComponent', () => {
     fixture.componentInstance['onLinkInput']({ target: { value: 'https://x' } } as unknown as Event);
     fixture.componentInstance['onUtmChange']({ medium: 'social' });
     fixture.componentInstance['onOrderChange']([2, 0, 1]);
-    fixture.componentInstance['onAudioChange']({
-      trackId: 't', trackName: 'n', artistName: 'a', source: 'trending',
-    });
+    fixture.componentInstance['onAudioPlanningChange']({ audioStrategy: 'named' });
     fixture.componentInstance['onControlsChange']({ boostEnabled: true });
     expect(emitted.length).toBe(6);
     expect(emitted[3]).toEqual({ slideOrder: { order: [2, 0, 1] } });
+    expect(emitted[4]).toEqual({ audioPlanning: { audioStrategy: 'named' } });
   });
 
   it('caption above 90% triggers warn class', () => {
@@ -87,7 +90,7 @@ describe('FacebookPackagingComponent', () => {
     expect(fixture.componentInstance['link']()).toBe('');
     expect(fixture.componentInstance['utm']()).toBeUndefined();
     expect(fixture.componentInstance['slideOrder']()).toEqual([]);
-    expect(fixture.componentInstance['audio']()).toBeUndefined();
+    expect(fixture.componentInstance['audioPlanning']()).toBeUndefined();
     expect(fixture.componentInstance['controls']()).toBeUndefined();
     expect(fixture.componentInstance['captionState']()).toBe('ok');
   });
@@ -108,13 +111,13 @@ describe('FacebookPackagingComponent', () => {
         caption: 'c', hashtags: ['#h'], link: 'https://x',
         utm: { medium: 'm' },
         slideOrder: { order: [2, 1, 0] },
-        audio: { trackId: 't', trackName: 'n', artistName: 'a', source: 'trending' },
+        audioPlanning: { audioStrategy: 'trending-platform', audioMood: 'sad-melancholy' },
         platformControls: { boostEnabled: true },
       },
     });
     expect(fixture.componentInstance['caption']()).toBe('c');
     expect(fixture.componentInstance['slideOrder']()).toEqual([2, 1, 0]);
-    expect(fixture.componentInstance['audio']()?.trackId).toBe('t');
+    expect(fixture.componentInstance['audioPlanning']()?.audioMood).toBe('sad-melancholy');
     expect(fixture.componentInstance['controls']()?.boostEnabled).toBe(true);
   });
 
@@ -128,7 +131,7 @@ describe('FacebookPackagingComponent', () => {
     expect(fixture.componentInstance['link']()).toBe('');
     expect(fixture.componentInstance['utm']()).toBeUndefined();
     expect(fixture.componentInstance['slideOrder']()).toEqual([]);
-    expect(fixture.componentInstance['audio']()).toBeUndefined();
+    expect(fixture.componentInstance['audioPlanning']()).toBeUndefined();
     expect(fixture.componentInstance['controls']()).toBeUndefined();
   });
 });

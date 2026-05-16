@@ -87,13 +87,6 @@ export class PostDetailComponent {
     return undefined;
   });
 
-  protected readonly previewAudioTrackName = computed<string | undefined>(() => {
-    const platform = this.store.item()?.platform;
-    if (platform === 'instagram') return this.store.instagramPackaging()?.audio?.trackName;
-    if (platform === 'tiktok') return this.store.tiktokPackaging()?.audio?.trackName;
-    return undefined;
-  });
-
   /**
    * Expand/collapse state for `<app-post-preview-card>`. Lives on the
    * parent so it survives the `@switch` transition between Packaging
