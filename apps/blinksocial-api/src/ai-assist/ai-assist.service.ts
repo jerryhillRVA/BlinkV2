@@ -6,13 +6,17 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import type {
+  AiAssistDraftFieldContract,
+  AiAssistDraftSnapshot,
   AiAssistFieldContract,
+  AiAssistFieldLengthContract,
   AiAssistRequestContract,
   AiAssistResponseContract,
   ContentItemContract,
 } from '@blinksocial/contracts';
 import {
   AI_ASSIST_DEFAULT_COUNT,
+  AI_ASSIST_DRAFT_FIELDS,
   AI_ASSIST_MAX_COUNT,
   AI_ASSIST_MIN_COUNT,
   AI_ASSIST_FIELDS,
@@ -64,20 +68,64 @@ export class AiAssistService {
     this.validateRequest(req);
     const field = req.field;
     const count = this.resolveCount(req);
+    const length = req.length;
 
-    const item = await this.loadItem(req.workspaceId, req.refId);
-    this.assertStageMatches(field, item);
+    const item: ContentItemContract =
+      req.scope === 'draft'
+        ? this.buildSyntheticDraftItem(req.draft)
+        : await this.loadItemAndAssertStage(req.workspaceId, req.refId, field);
 
     if (!this.llm.isConfigured()) {
+      const ref = req.scope === 'draft' ? 'draft' : req.refId;
       this.logger.debug(
-        `LLM not configured — returning stub values for ${field} on ${req.refId}`,
+        `LLM not configured — returning stub values for ${field} on ${ref}`,
       );
-      return { values: buildStubValues(field, count, item) };
+      return { values: this.enforceLength(buildStubValues(field, count, item), length) };
     }
 
-    const context = await this.buildContext(req.workspaceId, item);
+    const context = await this.buildContext(req.workspaceId, item, field, length);
     const values = await this.runSkill(field, count, context);
-    return { values };
+    return { values: this.enforceLength(values, length) };
+  }
+
+  /**
+   * Belt-and-suspenders: even if the prompt is instructed to honor the
+   * length bounds, the LLM can still overshoot. Truncate any string that
+   * exceeds `length.max` so the caller is never handed a value the form
+   * would immediately reject. We do not pad to `length.min` — that would
+   * fabricate content.
+   */
+  private enforceLength(values: string[], length: AiAssistFieldLengthContract | undefined): string[] {
+    if (!length || typeof length.max !== 'number') return values;
+    const max = length.max;
+    return values.map((v) => (typeof v === 'string' && v.length > max ? v.slice(0, max).trimEnd() : v));
+  }
+
+  private async loadItemAndAssertStage(
+    workspaceId: string,
+    refId: string,
+    field: AiAssistFieldContract,
+  ): Promise<ContentItemContract> {
+    const item = await this.loadItem(workspaceId, refId);
+    this.assertStageMatches(field, item);
+    return item;
+  }
+
+  private buildSyntheticDraftItem(draft: AiAssistDraftSnapshot): ContentItemContract {
+    const now = new Date().toISOString();
+    return {
+      id: '',
+      stage: 'concept',
+      status: 'new',
+      title: draft.title,
+      description: draft.description ?? '',
+      hook: draft.hook,
+      objective: draft.objective,
+      pillarIds: [...draft.pillarIds],
+      segmentIds: [...draft.segmentIds],
+      createdAt: now,
+      updatedAt: now,
+    };
   }
 
   // ── validation ───────────────────────────────────────────────────────
@@ -86,17 +134,21 @@ export class AiAssistService {
     if (!req || typeof req !== 'object') {
       throw new BadRequestException('Request body is required.');
     }
-    if (req.scope !== 'content-item') {
+    if (req.scope !== 'content-item' && req.scope !== 'draft') {
       throw new BadRequestException(`Unsupported scope: ${String(req.scope)}`);
     }
     if (!req.workspaceId || typeof req.workspaceId !== 'string') {
       throw new BadRequestException('workspaceId is required.');
     }
-    if (!req.refId || typeof req.refId !== 'string') {
-      throw new BadRequestException('refId is required.');
-    }
-    if (!AI_ASSIST_FIELDS.includes(req.field)) {
-      throw new BadRequestException(`Unknown field: ${String(req.field)}`);
+    if (req.scope === 'content-item') {
+      if (!req.refId || typeof req.refId !== 'string') {
+        throw new BadRequestException('refId is required.');
+      }
+      if (!AI_ASSIST_FIELDS.includes(req.field)) {
+        throw new BadRequestException(`Unknown field: ${String(req.field)}`);
+      }
+    } else {
+      this.validateDraftRequest(req);
     }
     if (req.count !== undefined) {
       if (
@@ -110,6 +162,64 @@ export class AiAssistService {
           `count must be an integer in [${AI_ASSIST_MIN_COUNT}, ${AI_ASSIST_MAX_COUNT}]`,
         );
       }
+    }
+    this.validateLength(req.length);
+  }
+
+  private validateLength(length: AiAssistFieldLengthContract | undefined): void {
+    if (length === undefined) return;
+    if (typeof length !== 'object' || length === null) {
+      throw new BadRequestException('length must be an object.');
+    }
+    const check = (key: 'min' | 'max') => {
+      const v = length[key];
+      if (v === undefined) return;
+      if (
+        typeof v !== 'number' ||
+        !Number.isFinite(v) ||
+        !Number.isInteger(v) ||
+        v < 1 ||
+        v > 10000
+      ) {
+        throw new BadRequestException(
+          `length.${key} must be an integer in [1, 10000]`,
+        );
+      }
+    };
+    check('min');
+    check('max');
+    if (
+      typeof length.min === 'number' &&
+      typeof length.max === 'number' &&
+      length.min > length.max
+    ) {
+      throw new BadRequestException('length.min must be <= length.max');
+    }
+  }
+
+  private validateDraftRequest(
+    req: Extract<AiAssistRequestContract, { scope: 'draft' }>,
+  ): void {
+    if (!AI_ASSIST_FIELDS.includes(req.field)) {
+      throw new BadRequestException(`Unknown field: ${String(req.field)}`);
+    }
+    if (!AI_ASSIST_DRAFT_FIELDS.includes(req.field as AiAssistDraftFieldContract)) {
+      throw new BadRequestException(
+        `Field ${req.field} is not allowed on scope 'draft'`,
+      );
+    }
+    const draft = req.draft;
+    if (!draft || typeof draft !== 'object') {
+      throw new BadRequestException('draft is required.');
+    }
+    if (typeof draft.title !== 'string' || draft.title.trim() === '') {
+      throw new BadRequestException('draft.title is required.');
+    }
+    if (!Array.isArray(draft.pillarIds)) {
+      throw new BadRequestException('draft.pillarIds must be an array.');
+    }
+    if (!Array.isArray(draft.segmentIds)) {
+      throw new BadRequestException('draft.segmentIds must be an array.');
     }
   }
 
@@ -151,6 +261,8 @@ export class AiAssistService {
   private async buildContext(
     workspaceId: string,
     item: ContentItemContract,
+    field: AiAssistFieldContract,
+    length: AiAssistFieldLengthContract | undefined,
   ): Promise<Record<string, unknown>> {
     const [parentConcept, brandVoice, brandPositioning, pillars, segments] =
       await Promise.all([
@@ -177,6 +289,11 @@ export class AiAssistService {
       pillars,
       segments,
       targetPlatform: this.projectTargetPlatform(item),
+      field: {
+        name: field,
+        minLength: length?.min,
+        maxLength: length?.max,
+      },
     };
   }
 

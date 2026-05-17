@@ -1,6 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { of } from 'rxjs';
 import { ContentCreateFormComponent } from './content-create-form.component';
+import { AiAssistApiService } from '../../../../core/ai-assist/ai-assist.service';
 import { GeneratedIdeasApiService } from '../../../../core/generated-ideas/generated-ideas.service';
 import { ToastService } from '../../../../core/toast/toast.service';
 import type {
@@ -15,6 +16,13 @@ function ideaApiMock() {
   return {
     provide: GeneratedIdeasApiService,
     useValue: { generate: vi.fn().mockReturnValue(of({ ideas: [] })) },
+  };
+}
+
+function aiAssistMock() {
+  return {
+    provide: AiAssistApiService,
+    useValue: { assist: vi.fn().mockReturnValue(of({ values: ['stub'] })) },
   };
 }
 
@@ -36,7 +44,7 @@ const SEGMENTS: AudienceSegment[] = [
 function make(): ComponentFixture<ContentCreateFormComponent> {
   TestBed.configureTestingModule({
     imports: [ContentCreateFormComponent],
-    providers: [ideaApiMock(), toastMock()],
+    providers: [ideaApiMock(), aiAssistMock(), toastMock()],
   });
   const fixture = TestBed.createComponent(ContentCreateFormComponent);
   fixture.componentRef.setInput('pillars', PILLARS);
@@ -49,7 +57,7 @@ describe('ContentCreateFormComponent', () => {
   it('applies initialType=concept when provided and renders Concept form on open', () => {
     TestBed.configureTestingModule({
       imports: [ContentCreateFormComponent],
-      providers: [ideaApiMock(), toastMock()],
+      providers: [ideaApiMock(), aiAssistMock(), toastMock()],
     });
     const fixture = TestBed.createComponent(ContentCreateFormComponent);
     fixture.componentRef.setInput('pillars', PILLARS);
@@ -67,7 +75,7 @@ describe('ContentCreateFormComponent', () => {
   it('applies initialType=production-brief when provided', () => {
     TestBed.configureTestingModule({
       imports: [ContentCreateFormComponent],
-      providers: [ideaApiMock(), toastMock()],
+      providers: [ideaApiMock(), aiAssistMock(), toastMock()],
     });
     const fixture = TestBed.createComponent(ContentCreateFormComponent);
     fixture.componentRef.setInput('pillars', PILLARS);

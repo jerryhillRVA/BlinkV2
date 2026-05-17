@@ -1,8 +1,4 @@
-import {
-  assistDescriptionFor,
-  assistHookFor,
-  generateConceptFromObjective,
-} from './content-create.ai';
+import { generateConceptFromObjective } from './content-create.ai';
 import type { AudienceSegment, ContentObjective } from '../../content.types';
 
 const PILLARS = [{ id: 'p1' }, { id: 'p2' }];
@@ -48,39 +44,6 @@ describe('generateConceptFromObjective', () => {
     const result = generateConceptFromObjective('community', [], PILLARS, SEGMENTS, []);
     expect(result.cta).toBeUndefined();
     expect(result.description.length).toBeGreaterThan(0);
-  });
-});
-
-describe('assistDescriptionFor', () => {
-  it('includes the title reference when title provided', () => {
-    expect(assistDescriptionFor('My Post', 'awareness')).toContain('My Post');
-  });
-
-  it('truncates long titles at 30 chars + ellipsis', () => {
-    const long = 'x'.repeat(50);
-    expect(assistDescriptionFor(long, 'engagement')).toContain(`${'x'.repeat(30)}…`);
-  });
-
-  it('falls back to "this topic" for empty title', () => {
-    expect(assistDescriptionFor('   ', 'trust')).toContain('this topic');
-  });
-
-  it('falls back to awareness copy for empty objective', () => {
-    const empty = assistDescriptionFor('Hello', '');
-    const aware = assistDescriptionFor('Hello', 'awareness');
-    expect(empty).toEqual(aware);
-  });
-});
-
-describe('assistHookFor', () => {
-  it('includes title reference', () => {
-    expect(assistHookFor('Title', 'leads')).toContain('Title');
-  });
-
-  it('varies copy per objective', () => {
-    const a = assistHookFor('x', 'awareness');
-    const b = assistHookFor('x', 'conversion');
-    expect(a).not.toEqual(b);
   });
 });
 

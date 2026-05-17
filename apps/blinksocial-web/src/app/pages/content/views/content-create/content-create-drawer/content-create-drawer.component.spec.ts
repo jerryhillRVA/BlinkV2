@@ -1,6 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { of } from 'rxjs';
 import { ContentCreateDrawerComponent } from './content-create-drawer.component';
+import { AiAssistApiService } from '../../../../../core/ai-assist/ai-assist.service';
 import { GeneratedIdeasApiService } from '../../../../../core/generated-ideas/generated-ideas.service';
 import { ToastService } from '../../../../../core/toast/toast.service';
 import type {
@@ -13,6 +14,10 @@ const STORE_DEPS = [
   {
     provide: GeneratedIdeasApiService,
     useValue: { generate: vi.fn().mockReturnValue(of({ ideas: [] })) },
+  },
+  {
+    provide: AiAssistApiService,
+    useValue: { assist: vi.fn().mockReturnValue(of({ values: ['stub'] })) },
   },
   {
     provide: ToastService,

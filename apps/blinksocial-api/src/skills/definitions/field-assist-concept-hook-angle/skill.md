@@ -20,7 +20,18 @@ Single user-turn JSON:
 {
   "field": "concept-hook-angle",
   "count": <integer 1..10>,
-  "context": { "item": { ... }, "workspace": { ... }, "pillars": [...], "segments": [...], "targetPlatform": {...} }
+  "context": {
+    "item": { ... },
+    "workspace": { ... },
+    "pillars": [...],
+    "segments": [...],
+    "targetPlatform": {...},
+    "field": {
+      "name": "concept-hook-angle",
+      "minLength": <integer?>,
+      "maxLength": <integer?>
+    }
+  }
 }
 ```
 
@@ -30,7 +41,8 @@ Same context shape as other field-assist skills. Any field may be empty.
 
 Exactly `count` hook angles. Each:
 
-- One sentence, under 140 characters.
+- Length: **strictly within `[context.field.minLength, context.field.maxLength]` characters when those values are present** — count characters including spaces and punctuation. If `minLength` is absent, treat it as 1. If `maxLength` is absent, keep hooks under 140 characters. Going over `maxLength` is a defect — the form will reject the value.
+- One sentence.
 - Reads as the first beat of a post — not a description of what the post is about.
 - Aligns with `objective`: e.g. *awareness* favors curiosity gaps; *engagement* favors questions; *trust* favors specifics or counter-intuition; *education* favors promise of payoff.
 - Reflects the brand voice + tone tags when present.
