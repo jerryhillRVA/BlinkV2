@@ -19,6 +19,11 @@ export interface ContentItemsIndexEntryContract {
   parentIdeaId: string | null;
   parentConceptId: string | null;
   scheduledAt: string | null;
+  /** #140: surfaced on the lite entry so Scheduled/Published cards
+   *  render correctly without needing the full item cache. */
+  publishedAt?: string;
+  /** #140: drives the Exported pill on Scheduled + Published cards. */
+  isExported?: boolean;
   archived: boolean;
   createdAt: string;
   updatedAt: string;

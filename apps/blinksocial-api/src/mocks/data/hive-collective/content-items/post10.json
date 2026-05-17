@@ -1,0 +1,93 @@
+{
+  "id": "post10",
+  "stage": "post",
+  "status": "scheduled",
+  "title": "Sleep Tracker Walkthrough",
+  "description": "Cross-posted Reel/TikTok walking through three free sleep-tracking apps for women in perimenopause, with the export-packet path because creator will publish manually from Instagram-native scheduler.",
+  "pillarIds": [
+    "p2"
+  ],
+  "segmentIds": [
+    "s2",
+    "s5"
+  ],
+  "tags": [
+    "sleep",
+    "perimenopause",
+    "tools-comparison"
+  ],
+  "owner": "user-sarah",
+  "hook": "Three sleep apps. Honest take. No affiliate links.",
+  "objective": "engagement",
+  "platform": "instagram",
+  "contentType": "reel",
+  "cta": {
+    "type": "follow",
+    "text": "Follow for the next tools-comparison teardown"
+  },
+  "keyMessage": "Sleep-tracker accuracy is good enough for trends, not diagnosis.",
+  "tonePreset": "friendly",
+  "claimsFlag": false,
+  "riskLevel": "low",
+  "scheduledAt": "2026-06-08T14:00:00Z",
+  "isExported": true,
+  "briefApproved": true,
+  "briefApprovedAt": "2026-05-10T11:00:00Z",
+  "briefApprovedBy": "user-sarah",
+  "createdAt": "2026-05-05T09:00:00Z",
+  "updatedAt": "2026-05-15T14:00:00Z",
+  "conceptId": "concept3",
+  "parentConceptId": "concept3",
+  "production": {
+    "productionStep": "qa",
+    "brief": {
+      "strategy": {
+        "objective": "engagement",
+        "audienceSegmentIds": ["s2", "s5"],
+        "pillarIds": ["p2"],
+        "keyMessage": "Sleep-tracker accuracy is good enough for trends, not diagnosis.",
+        "ctaType": "follow",
+        "ctaText": "Follow for the next tools-comparison teardown",
+        "tonePreset": "friendly"
+      },
+      "creativePlan": {
+        "hook": "Three sleep apps. Honest take. No affiliate links.",
+        "storyArc": "three-tool-teardown",
+        "musicNotes": "Low-key trending audio; ducks during voiceover"
+      },
+      "compliance": {
+        "containsClaims": false,
+        "disclosureNeeded": false
+      },
+      "approved": true,
+      "canonicalType": "VIDEO_SHORT_VERTICAL",
+      "hasTalent": true,
+      "hasMusic": true,
+      "needsAccessibility": true
+    },
+    "sources": [],
+    "outputs": {},
+    "assets": [],
+    "tasks": [],
+    "versions": [],
+    "qa": {
+      "approved": true,
+      "qaApprovedAt": "2026-05-15T13:30:00Z",
+      "qaApprovedBy": "user-sarah",
+      "publishConfig": {
+        "publishAction": "export-packet",
+        "deliveryMethod": "auto",
+        "visibility": "public"
+      },
+      "approvals": [
+        {
+          "role": "brand-reviewer",
+          "label": "Brand Reviewer",
+          "required": true,
+          "status": "approved",
+          "timestamp": "2026-05-15T13:30:00Z"
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,52 @@
+{
+  "id": "bk-concept5",
+  "stage": "concept",
+  "status": "new",
+  "parentIdeaId": null,
+  "title": "Five-Phrase Sober Toolkit for Weddings",
+  "description": "A short, practical Reel that arms sober-curious folks with five specific phrases for declining drinks at weddings (the highest-pressure social environment in the alcohol calendar). Lead with the phrase that works for the toast. No moralising; no shaming. Spin off three follow-up posts: birthdays, brunches, work events.",
+  "pillarIds": [
+    "bk-p2"
+  ],
+  "segmentIds": [
+    "bk-s1",
+    "bk-s3"
+  ],
+  "tags": [
+    "sober-curious",
+    "social-scripts",
+    "weddings",
+    "series-anchor"
+  ],
+  "owner": "user-mara",
+  "createdAt": "2026-05-14T13:00:00Z",
+  "updatedAt": "2026-05-14T13:00:00Z",
+  "targetPlatforms": [
+    {
+      "platform": "instagram",
+      "contentType": "reel",
+      "postId": null
+    },
+    {
+      "platform": "tiktok",
+      "contentType": "short-video",
+      "postId": null
+    }
+  ],
+  "hook": "Five things to say at the wedding bar without making it weird.",
+  "objective": "engagement",
+  "cta": {
+    "type": "save",
+    "text": "Save for the next wedding on your calendar"
+  },
+  "keyMessage": "You don't need a story; you need a sentence. We've got five.",
+  "angle": "Practicality over philosophy — the playbook, not the argument.",
+  "formatNotes": [
+    "captions-required",
+    "text-overlays-per-phrase"
+  ],
+  "claimsFlag": false,
+  "riskLevel": "low",
+  "platform": "instagram",
+  "contentType": "reel"
+}

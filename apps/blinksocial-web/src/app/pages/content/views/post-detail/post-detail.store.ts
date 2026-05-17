@@ -1,4 +1,5 @@
 import { Injectable, computed, effect, inject, signal } from '@angular/core';
+import { ToastService } from '../../../../core/toast/toast.service';
 import { ContentStateService } from '../../content-state.service';
 import {
   CTA_TEXT_MAX_CHARS,
@@ -17,7 +18,6 @@ import type {
 import type {
   ApprovalEntryContract,
   ApprovalStatusContract,
-  ContentStatusContract,
   DraftCarouselSlideContract,
   DraftSequenceBlockContract,
   DraftShotItemContract,
@@ -39,7 +39,6 @@ import type {
   ProductionDraftVideoLongContract,
   ProductionPackagingContract,
   ProductionQAContract,
-  PublishActionContract,
   PublishConfigContract,
   PublishingModeContract,
 } from '@blinksocial/contracts';
@@ -56,6 +55,7 @@ import type {
 @Injectable()
 export class PostDetailStore {
   private readonly state = inject(ContentStateService);
+  private readonly toast = inject(ToastService);
   /* v8 ignore next 1 — V8's function-call-throws branches on input()/signal() declarations are unreachable (Angular class-field init time; ESM exports not spy-able) */
   private readonly _itemId = signal<string | null>(null);
 
@@ -1184,12 +1184,6 @@ export class PostDetailStore {
     const currentConfig = this.qa()?.publishConfig ?? DEFAULT_PUBLISH_CONFIG;
     const nextConfig: PublishConfigContract = { ...currentConfig, ...patch };
 
-    const nextStatus = this.resolveScheduledStatus(
-      item.status,
-      nextConfig.publishAction,
-      item.scheduledAt ?? null,
-    );
-
     const currentQA: ProductionQAContract = item.production?.qa ?? {};
     const nextQA: ProductionQAContract = {
       ...currentQA,
@@ -1197,7 +1191,6 @@ export class PostDetailStore {
     };
     const next: ContentItem = {
       ...item,
-      status: nextStatus,
       production: { ...item.production, qa: nextQA },
       updatedAt: new Date().toISOString(),
     };
@@ -1206,12 +1199,9 @@ export class PostDetailStore {
 
   /**
    * Writer for the scheduling timestamp. Accepts a datetime-local string
-   * (the format emitted by `<input type="datetime-local">`), converts it
-   * to ISO, and persists to top-level `item.scheduledAt`. Triggers the
-   * same status flip rule as {@link setPublishConfig}: review → scheduled
-   * once both publishAction === 'schedule' AND a valid timestamp exist.
-   * Passing `undefined` (or an unparseable string) clears the timestamp
-   * and demotes from 'scheduled' back to 'review'.
+   * and persists to top-level `item.scheduledAt`. Does NOT change
+   * `status` — #140 removes the implicit auto-flip; status changes only
+   * happen via {@link finishPost}.
    */
   setPublishScheduledAt(localValue: string | undefined): void {
     const item = this.item();
@@ -1219,35 +1209,99 @@ export class PostDetailStore {
     if (!item.briefApproved) return;
 
     const iso = localValue ? datetimeLocalToIso(localValue) : null;
-    const currentConfig = this.qa()?.publishConfig ?? DEFAULT_PUBLISH_CONFIG;
-    const nextStatus = this.resolveScheduledStatus(
-      item.status,
-      currentConfig.publishAction,
-      iso,
-    );
 
     const next: ContentItem = {
       ...item,
-      status: nextStatus,
       scheduledAt: iso,
       updatedAt: new Date().toISOString(),
     };
     this.state.saveItem(next);
   }
 
-  private resolveScheduledStatus(
-    currentStatus: ContentStatusContract,
-    publishAction: PublishActionContract | undefined,
-    scheduledAt: string | null,
-  ): ContentStatusContract {
-    const isScheduledIntent = publishAction === 'schedule' && scheduledAt !== null;
-    if (isScheduledIntent && currentStatus === 'review') {
-      return 'scheduled';
+  /**
+   * #140 (Publish Flow): the single gate that moves a post out of Post
+   * Builder. Reads `qa.publishConfig.publishAction` + `item.scheduledAt`
+   * and routes to one of five branches per spec §3.2:
+   *  - save-draft → no status change, "Draft saved." toast
+   *  - schedule → status='scheduled', `scheduledAt` persisted
+   *  - publish-now → status='published', `publishedAt` set, mock `livePostUrl`
+   *  - export-packet (future date) → status='scheduled', `isExported=true`
+   *  - export-packet (no date) → status='published', `publishedAt` set, `isExported=true`
+   *
+   * Caller is responsible for showing the Export Packet confirmation
+   * dialog *before* invoking this method for the export branch; when
+   * `finishPost()` is called for export-packet the user has already
+   * clicked Download.
+   *
+   * Gates: briefApproved + canApproveAndPublish. Bails silently
+   * otherwise — the trigger button's disabled state already prevents
+   * the unsafe call, this is belt-and-suspenders.
+   */
+  finishPost(): void {
+    const item = this.item();
+    if (!item) return;
+    if (!item.briefApproved) return;
+    if (!this.canApproveAndPublish()) return;
+
+    const config = this.publishConfig();
+    const scheduledAt = item.scheduledAt ?? null;
+    const platform = item.platform ?? 'instagram';
+    const nowIso = new Date().toISOString();
+
+    switch (config.publishAction) {
+      case 'save-draft':
+        this.toast.showSuccess('Draft saved.');
+        return;
+
+      case 'schedule':
+        this.commitPublishPatch({ status: 'scheduled', scheduledAt });
+        this.toast.showSuccess(
+          `Post scheduled for ${formatScheduledAt(scheduledAt)}.`,
+        );
+        return;
+
+      case 'publish-now':
+        this.commitPublishPatch({
+          status: 'published',
+          publishedAt: nowIso,
+          livePostUrl: buildMockPostUrl(platform, item.id),
+        });
+        this.toast.showSuccess('Post published.');
+        return;
+
+      case 'export-packet': {
+        const future = scheduledAt && new Date(scheduledAt).getTime() > Date.now();
+        if (future) {
+          this.commitPublishPatch({
+            status: 'scheduled',
+            scheduledAt,
+            isExported: true,
+          });
+          this.toast.showSuccess(
+            `Export downloaded — post scheduled for ${formatScheduledAt(scheduledAt)}.`,
+          );
+        } else {
+          this.commitPublishPatch({
+            status: 'published',
+            publishedAt: nowIso,
+            isExported: true,
+          });
+          this.toast.showSuccess('Export downloaded — post marked as published.');
+        }
+        return;
+      }
     }
-    if (!isScheduledIntent && currentStatus === 'scheduled') {
-      return 'review';
-    }
-    return currentStatus;
+  }
+
+  private commitPublishPatch(patch: Partial<ContentItem>): void {
+    const item = this.item();
+    if (!item) return;
+    const next: ContentItem = {
+      ...item,
+      ...patch,
+      updatedAt: new Date().toISOString(),
+    };
+    this.state.saveItem(next);
   }
 
   /**
@@ -1297,6 +1351,42 @@ const DEFAULT_PUBLISH_CONFIG: PublishConfigContract = {
   publishAction: 'save-draft',
   deliveryMethod: 'auto',
 };
+
+/**
+ * Human-friendly "Fri, May 15 · 2:30 PM" format used in Finish toasts.
+ * Falls back to the raw ISO when the input is null/invalid.
+ */
+function formatScheduledAt(iso: string | null): string {
+  if (!iso) return 'a future date';
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return iso;
+  return d.toLocaleString(undefined, {
+    weekday: 'short',
+    month: 'short',
+    day: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+    hour12: true,
+  });
+}
+
+/**
+ * #140: mock live-post URL set on Publish Now. Pattern is intentionally
+ * obvious so users see this is a placeholder until the real platform-API
+ * integration lands (see spec §8 Open Items).
+ */
+function buildMockPostUrl(platform: PlatformContract, id: string): string {
+  const slug = id.slice(0, 8);
+  switch (platform) {
+    case 'instagram': return `https://www.instagram.com/p/mock-${slug}/`;
+    case 'tiktok':    return `https://www.tiktok.com/@mock/video/mock-${slug}`;
+    case 'youtube':   return `https://www.youtube.com/watch?v=mock-${slug}`;
+    case 'facebook':  return `https://www.facebook.com/mock/posts/mock-${slug}`;
+    case 'linkedin':  return `https://www.linkedin.com/posts/mock-${slug}`;
+    case 'x':         return `https://x.com/mock/status/mock-${slug}`;
+    default:          return `https://example.com/mock/${slug}`;
+  }
+}
 
 /**
  * Convert an HTML `datetime-local` string (`YYYY-MM-DDTHH:mm`) to a UTC ISO

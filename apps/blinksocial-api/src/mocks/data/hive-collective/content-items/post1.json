@@ -513,7 +513,26 @@
         "label": "Scheduled",
         "savedAt": "2026-03-08T10:00:00Z"
       }
-    ]
+    ],
+    "qa": {
+      "approved": true,
+      "qaApprovedAt": "2026-03-07T14:00:00Z",
+      "qaApprovedBy": "user-sarah",
+      "publishConfig": {
+        "publishAction": "schedule",
+        "deliveryMethod": "auto",
+        "visibility": "public"
+      },
+      "approvals": [
+        {
+          "role": "brand-reviewer",
+          "label": "Brand Reviewer",
+          "required": true,
+          "status": "approved",
+          "timestamp": "2026-03-07T14:00:00Z"
+        }
+      ]
+    }
   },
   "scheduledAt": "2026-03-12T00:00:00.000Z"
 }

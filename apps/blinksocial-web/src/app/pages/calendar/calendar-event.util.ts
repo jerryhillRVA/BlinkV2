@@ -73,6 +73,41 @@ export function buildEvents(
   const events: CalendarEventView[] = [];
 
   for (const item of response.items) {
+    // #140: per-status tone. Published items use publishedAt; if it's
+    // missing on a published item (legacy data), the event is silently
+    // skipped — no fallback to scheduledAt.
+    if (item.status === 'published') {
+      if (!item.publishedAt) continue;
+      const ev: CalendarPublishEventView = {
+        kind: 'publish',
+        id: `publish-${item.id}`,
+        contentId: item.id,
+        date: new Date(item.publishedAt),
+        item,
+        severity: null,
+        tone: 'published',
+        isExported: item.isExported,
+      };
+      events.push(ev);
+      continue;
+    }
+    if (item.status === 'scheduled') {
+      if (!item.scheduledAt) continue;
+      const ev: CalendarPublishEventView = {
+        kind: 'publish',
+        id: `publish-${item.id}`,
+        contentId: item.id,
+        date: new Date(item.scheduledAt),
+        item,
+        severity: derivePublishSeverity(item, referenceDate),
+        tone: 'scheduled',
+        isExported: item.isExported,
+      };
+      events.push(ev);
+      continue;
+    }
+    // Non-terminal status with a scheduledAt — legacy intent-to-schedule
+    // event preserved so the Calendar still shows it pre-Finish.
     if (item.scheduledAt) {
       const ev: CalendarPublishEventView = {
         kind: 'publish',
@@ -81,6 +116,7 @@ export function buildEvents(
         date: new Date(item.scheduledAt),
         item,
         severity: derivePublishSeverity(item, referenceDate),
+        tone: 'intent',
       };
       events.push(ev);
     }

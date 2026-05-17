@@ -10,6 +10,14 @@ export type CalendarViewMode = 'month' | 'week' | 'day' | 'list';
 
 export type CalendarEventKind = 'publish' | 'milestone';
 
+/**
+ * #140: per-status tone — drives the icon + color of the calendar
+ * event. `scheduled` uses Clock + blue tokens; `published` uses
+ * CheckCircle + green tokens. `intent` is the legacy "post has a date
+ * but isn't yet scheduled" case (status not 'scheduled' or 'published').
+ */
+export type CalendarPublishTone = 'scheduled' | 'published' | 'intent';
+
 export interface CalendarPublishEventView {
   kind: 'publish';
   id: string;
@@ -17,6 +25,9 @@ export interface CalendarPublishEventView {
   date: Date;
   item: CalendarContentItemContract;
   severity: CalendarSeverityContract;
+  /** #140 — defaults to 'intent' when undefined (legacy fixtures). */
+  tone?: CalendarPublishTone;
+  isExported?: boolean;
 }
 
 export interface CalendarMilestoneEventView {

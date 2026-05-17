@@ -310,7 +310,9 @@ export const PIPELINE_COLUMNS: PipelineColumn[] = [
     id: 'in-production',
     label: 'Post Builder',
     stage: null,
-    statuses: ['in-progress'],
+    // #140: `review` posts now render in Post Builder, not Scheduled —
+    // the Scheduled column accepts only `status='scheduled'`.
+    statuses: ['in-progress', 'review'],
     colorClass: 'column-production',
     iconColor: '#eab308',
     addType: 'production-brief',
@@ -323,16 +325,19 @@ export const PIPELINE_COLUMNS: PipelineColumn[] = [
     ],
   },
   {
-    id: 'review',
+    // #140: id renamed from 'review' → 'scheduled' to reflect what the
+    // column actually holds. Iconography swapped from ShieldCheck (QA)
+    // to Clock (waiting-for-publish).
+    id: 'scheduled',
     label: 'Scheduled',
     stage: null,
-    statuses: ['review', 'scheduled'],
-    colorClass: 'column-review',
-    iconColor: '#ec4899',
-    // Lucide ShieldCheck
+    statuses: ['scheduled'],
+    colorClass: 'column-scheduled',
+    iconColor: '#2563eb',
+    // Lucide Clock
     iconPaths: [
-      'M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z',
-      'M9 12l2 2 4-4',
+      'M12 22a10 10 0 1 1 0-20 10 10 0 0 1 0 20z',
+      'M12 6v6l4 2',
     ],
   },
   {

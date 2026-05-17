@@ -20,6 +20,7 @@ import { PackagingStepComponent } from './components/packaging-step/packaging-st
 import { PostPreviewCardComponent } from './components/post-preview-card.component';
 import { StepActionBarComponent } from './components/step-action-bar/step-action-bar.component';
 import { ApproveScheduleStepComponent } from './components/approve-schedule-step/approve-schedule-step.component';
+import { ConfirmDialogComponent } from '../../../../shared/confirm-dialog/confirm-dialog.component';
 import { DetailBackButtonComponent } from '../_shared/detail-back-button/detail-back-button.component';
 import { ContentJourneyComponent } from '../idea-detail/components/content-journey.component';
 import type { ContentItem } from '../../content.types';
@@ -37,6 +38,7 @@ import type { ContentItem } from '../../content.types';
     StepActionBarComponent,
     ContentJourneyComponent,
     ApproveScheduleStepComponent,
+    ConfirmDialogComponent,
     DetailBackButtonComponent,
   ],
   providers: [PostDetailStore],
@@ -108,9 +110,45 @@ export class PostDetailComponent {
     });
   }
 
+  /**
+   * #140: open state for the Export Packet confirmation dialog.
+   * Toggled by `onFinish` when the publishAction is `export-packet`;
+   * confirm → `store.finishPost()`, cancel → reset.
+   */
+  /* v8 ignore next 1 — V8's function-call-throws branches on signal() declarations are unreachable */
+  protected readonly exportConfirmOpen = signal(false);
+
   // ── Handlers ────────────────────────────────────────────────────────
   protected onBack(): void {
     this.back.emit();
+  }
+
+  /**
+   * #140 Finish action. Routes to the confirm-dialog for export-packet,
+   * direct-fires `store.finishPost()` otherwise. After a non-Draft
+   * action lands the post in a terminal state, navigate back to the
+   * pipeline view so the user sees the card in its new column.
+   */
+  protected onFinish(): void {
+    const action = this.store.publishConfig().publishAction;
+    if (action === 'export-packet') {
+      this.exportConfirmOpen.set(true);
+      return;
+    }
+    this.store.finishPost();
+    if (action !== 'save-draft') {
+      this.back.emit();
+    }
+  }
+
+  protected onExportConfirmed(): void {
+    this.exportConfirmOpen.set(false);
+    this.store.finishPost();
+    this.back.emit();
+  }
+
+  protected onExportCancelled(): void {
+    this.exportConfirmOpen.set(false);
   }
 
   protected onTitleChange(v: string): void {

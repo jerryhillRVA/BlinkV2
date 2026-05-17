@@ -123,6 +123,25 @@
     "outputs": {},
     "assets": [],
     "tasks": [],
-    "versions": []
+    "versions": [],
+    "qa": {
+      "approved": true,
+      "qaApprovedAt": "2026-04-25T16:00:00Z",
+      "qaApprovedBy": "user-sarah",
+      "publishConfig": {
+        "publishAction": "schedule",
+        "deliveryMethod": "auto",
+        "visibility": "public"
+      },
+      "approvals": [
+        {
+          "role": "brand-reviewer",
+          "label": "Brand Reviewer",
+          "required": true,
+          "status": "approved",
+          "timestamp": "2026-04-25T16:00:00Z"
+        }
+      ]
+    }
   }
 }
