@@ -1,3 +1,5 @@
+import type { ContentObjectiveContract } from '../workspace/content-item.js';
+
 export type AiAssistFieldContract =
   | 'concept-description'
   | 'concept-hook-angle'
@@ -8,15 +10,50 @@ export type AiAssistFieldContract =
   | 'post-caption'
   | 'post-hashtags';
 
-export type AiAssistScopeContract = 'content-item';
+export type AiAssistDraftFieldContract =
+  | 'concept-description'
+  | 'concept-hook-angle';
 
-export interface AiAssistRequestContract {
-  scope: AiAssistScopeContract;
-  workspaceId: string;
-  refId: string;
-  field: AiAssistFieldContract;
-  count?: number;
+export type AiAssistScopeContract = 'content-item' | 'draft';
+
+export interface AiAssistDraftSnapshot {
+  title: string;
+  description?: string;
+  hook?: string;
+  objective?: ContentObjectiveContract;
+  pillarIds: string[];
+  segmentIds: string[];
 }
+
+/**
+ * Field length bounds (in characters) passed from the frontend so the
+ * skill prompt targets the same limits the form validator enforces.
+ * Keeping the source of truth in the UI avoids drift between the
+ * displayed `n/max characters` counter and what the LLM is told to
+ * produce.
+ */
+export interface AiAssistFieldLengthContract {
+  min?: number;
+  max?: number;
+}
+
+export type AiAssistRequestContract =
+  | {
+      scope: 'content-item';
+      workspaceId: string;
+      refId: string;
+      field: AiAssistFieldContract;
+      count?: number;
+      length?: AiAssistFieldLengthContract;
+    }
+  | {
+      scope: 'draft';
+      workspaceId: string;
+      draft: AiAssistDraftSnapshot;
+      field: AiAssistDraftFieldContract;
+      count?: number;
+      length?: AiAssistFieldLengthContract;
+    };
 
 export interface AiAssistResponseContract {
   values: string[];
@@ -31,6 +68,11 @@ export const AI_ASSIST_FIELDS: readonly AiAssistFieldContract[] = [
   'post-script-cta',
   'post-caption',
   'post-hashtags',
+] as const;
+
+export const AI_ASSIST_DRAFT_FIELDS: readonly AiAssistDraftFieldContract[] = [
+  'concept-description',
+  'concept-hook-angle',
 ] as const;
 
 export const AI_ASSIST_DEFAULT_COUNT: Readonly<Record<AiAssistFieldContract, number>> = {

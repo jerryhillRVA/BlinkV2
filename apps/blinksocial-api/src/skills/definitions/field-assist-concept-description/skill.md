@@ -41,7 +41,12 @@ You receive a single user-turn JSON object:
     },
     "pillars":  [ /* full pillar objects already on the item */ ],
     "segments": [ /* full audience segment objects */ ],
-    "targetPlatform": { "platform": "...", "contentType": "..." }
+    "targetPlatform": { "platform": "...", "contentType": "..." },
+    "field": {
+      "name": "concept-description",
+      "minLength": <integer?>,
+      "maxLength": <integer?>
+    }
   }
 }
 ```
@@ -52,7 +57,8 @@ Any field may be missing or empty. Use whatever is present; do not refer to miss
 
 Exactly `count` distinct, polished concept descriptions. Each:
 
-- 2–4 sentences, under 600 characters.
+- Length: **strictly within `[context.field.minLength, context.field.maxLength]` characters when those values are present** — count characters including spaces and punctuation. If `minLength` is absent, treat it as 1. If `maxLength` is absent, keep descriptions under 600 characters. Going over `maxLength` is a defect — the form will reject the value.
+- 2–4 sentences when the cap allows; trim to fewer sentences if needed to fit `maxLength`.
 - Reflects the brand voice + tone guidelines when given.
 - Anchors on the title + objective; if a positioning statement is present, the description is *consistent with* it rather than restating it.
 - When the count is > 1, each variant takes a genuinely different angle (e.g. proof-led vs. story-led vs. data-led). No near-duplicates.

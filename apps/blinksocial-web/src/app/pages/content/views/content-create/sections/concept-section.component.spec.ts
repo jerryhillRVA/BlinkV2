@@ -2,9 +2,10 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { of } from 'rxjs';
 import { ConceptSectionComponent } from './concept-section.component';
 import { ContentCreateStore } from '../content-create.store';
+import { AiAssistApiService } from '../../../../../core/ai-assist/ai-assist.service';
 import { GeneratedIdeasApiService } from '../../../../../core/generated-ideas/generated-ideas.service';
 import { ToastService } from '../../../../../core/toast/toast.service';
-import { AI_ASSIST_DELAY_MS, AI_SIMULATION_DELAY_MS } from '../../../content.constants';
+import { AI_SIMULATION_DELAY_MS } from '../../../content.constants';
 import type { AudienceSegment, ContentPillar } from '../../../content.types';
 
 const PILLARS: ContentPillar[] = [
@@ -32,6 +33,10 @@ describe('ConceptSectionComponent', () => {
           useValue: { generate: vi.fn().mockReturnValue(of({ ideas: [] })) },
         },
         {
+          provide: AiAssistApiService,
+          useValue: { assist: vi.fn().mockReturnValue(of({ values: ['AI: $1'] })) },
+        },
+        {
           provide: ToastService,
           useValue: { showError: vi.fn(), showSuccess: vi.fn() },
         },
@@ -39,6 +44,7 @@ describe('ConceptSectionComponent', () => {
     });
     store = TestBed.inject(ContentCreateStore);
     store.setContext(PILLARS, SEGMENTS);
+    store.setWorkspaceId('w1');
     store.setType('concept');
     fixture = TestBed.createComponent(ConceptSectionComponent);
     fixture.detectChanges();
@@ -115,24 +121,21 @@ describe('ConceptSectionComponent', () => {
     expect(counter.textContent).toContain('120');
   });
 
-  it('AI assist hook flips loading flag and resolves', () => {
-    vi.useFakeTimers();
-    try {
-      store.patch({ conceptAiGenerated: true, title: 'Hi', objective: 'leads' });
-      fixture.detectChanges();
-      const assistBtns: NodeListOf<HTMLButtonElement> =
-        fixture.nativeElement.querySelectorAll('.assist-btn');
-      // second assist button is hook (first is description)
-      assistBtns[1].click();
-      fixture.detectChanges();
-      expect(store.state().isAssistingHook).toBe(true);
-      vi.advanceTimersByTime(AI_ASSIST_DELAY_MS);
-      fixture.detectChanges();
-      expect(store.state().isAssistingHook).toBe(false);
-      expect(store.state().hook).toContain('Hi');
-    } finally {
-      vi.useRealTimers();
-    }
+  it('AI assist hook clicks call the assist endpoint and apply the returned value', () => {
+    const aiAssist = TestBed.inject(AiAssistApiService) as unknown as {
+      assist: ReturnType<typeof vi.fn>;
+    };
+    aiAssist.assist.mockReturnValue(of({ values: ['AI hook for Hi.'] }));
+    store.patch({ conceptAiGenerated: true, title: 'Hi', objective: 'leads' });
+    fixture.detectChanges();
+    const assistBtns: NodeListOf<HTMLButtonElement> =
+      fixture.nativeElement.querySelectorAll('.assist-btn');
+    // second assist button is hook (first is description)
+    assistBtns[1].click();
+    fixture.detectChanges();
+    expect(aiAssist.assist).toHaveBeenCalled();
+    expect(store.state().isAssistingHook).toBe(false);
+    expect(store.state().hook).toBe('AI hook for Hi.');
   });
 
   it('Back button returns to pre-generation phase', () => {
@@ -215,21 +218,19 @@ describe('ConceptSectionComponent', () => {
     expect(store.state().contentType).toBe('reel');
   });
 
-  it('AI assist description resolves and writes into the description field', () => {
-    vi.useFakeTimers();
-    try {
-      store.patch({ conceptAiGenerated: true, title: 'Hi', objective: 'engagement' });
-      fixture.detectChanges();
-      const comp = fixture.componentInstance as unknown as { assistDescription: () => void };
-      comp.assistDescription();
-      expect(store.state().isAssistingDescription).toBe(true);
-      vi.advanceTimersByTime(AI_ASSIST_DELAY_MS);
-      fixture.detectChanges();
-      expect(store.state().isAssistingDescription).toBe(false);
-      expect(store.state().description).toContain('Hi');
-    } finally {
-      vi.useRealTimers();
-    }
+  it('AI assist description writes the returned value into the description field', () => {
+    const aiAssist = TestBed.inject(AiAssistApiService) as unknown as {
+      assist: ReturnType<typeof vi.fn>;
+    };
+    aiAssist.assist.mockReturnValue(of({ values: ['AI description for Hi.'] }));
+    store.patch({ conceptAiGenerated: true, title: 'Hi', objective: 'engagement' });
+    fixture.detectChanges();
+    const comp = fixture.componentInstance as unknown as { assistDescription: () => void };
+    comp.assistDescription();
+    fixture.detectChanges();
+    expect(aiAssist.assist).toHaveBeenCalled();
+    expect(store.state().isAssistingDescription).toBe(false);
+    expect(store.state().description).toBe('AI description for Hi.');
   });
 
   it('onHookChange caps input at HOOK_MAX', () => {

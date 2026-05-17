@@ -1,6 +1,5 @@
 import type {
   AiAssistFieldContract,
-  ContentItemContract,
   ContentObjectiveContract,
 } from '@blinksocial/contracts';
 
@@ -81,7 +80,7 @@ const HASHTAG_STUBS: readonly string[] = [
 export function buildStubValues(
   field: AiAssistFieldContract,
   count: number,
-  item: ContentItemContract,
+  item: { title?: string; objective?: ContentObjectiveContract },
 ): string[] {
   switch (field) {
     case 'concept-description':
