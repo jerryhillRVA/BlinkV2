@@ -2,6 +2,8 @@ import type { Page } from '@playwright/test';
 import type {
   AudienceSegmentContract,
   BusinessObjectiveContract,
+  ConceptDraftContract,
+  ConceptDraftRequestContract,
   ContentItemContract,
   ContentItemsArchiveIndexContract,
   ContentItemsIndexEntryContract,
@@ -378,4 +380,63 @@ export const mockHiveContent = async (
         body: JSON.stringify(objectives),
       }),
   );
+
+  // Default deterministic mock for the new POST /api/concept-draft endpoint
+  // (ticket #156). Specs that need to assert request bodies or simulate
+  // failures should call mockConceptDraftEndpoint() with their own options
+  // *after* mockHiveContent — the most-recently-registered route wins.
+  await mockConceptDraftEndpoint(page);
+};
+
+export interface ConceptDraftMockOptions {
+  /** Override the draft returned on success. Defaults to the engagement-stub shape. */
+  draft?: ConceptDraftContract;
+  /** When set, fulfil with this HTTP status + a JSON error body. */
+  errorStatus?: number;
+  /** Captures every request body seen by the route, in order. */
+  captured?: ConceptDraftRequestContract[];
+}
+
+const DEFAULT_CONCEPT_DRAFT: ConceptDraftContract = {
+  description:
+    'Spark conversation and reactions from your existing audience. Invite them to share thoughts and stories below.',
+  hook:
+    "Quick question: which camp are you actually in? Drop your answer in the comments — we're reading every one.",
+  cta: { type: 'comment', text: 'Drop your thoughts in the comments below' },
+  pillarIdFallback: 'p1',
+  segmentIdsFallback: ['s1', 's4'],
+};
+
+/**
+ * Install a deterministic JSON mock for POST /api/concept-draft. Called
+ * automatically by mockHiveContent so any spec touching the Create Concept
+ * drawer gets a consistent response. Re-call from the spec to capture
+ * request bodies or to simulate the server-error path (TC-4).
+ */
+export const mockConceptDraftEndpoint = async (
+  page: Page,
+  options: ConceptDraftMockOptions = {},
+) => {
+  await page.route('**/api/concept-draft', async (route) => {
+    if (options.captured) {
+      try {
+        const raw = route.request().postData();
+        if (raw) options.captured.push(JSON.parse(raw) as ConceptDraftRequestContract);
+      } catch {
+        // ignore parse errors; tests can still assert via raw post body
+      }
+    }
+    if (options.errorStatus) {
+      return route.fulfill({
+        status: options.errorStatus,
+        contentType: 'application/json',
+        body: JSON.stringify({ message: 'Internal Server Error' }),
+      });
+    }
+    return route.fulfill({
+      status: 201,
+      contentType: 'application/json',
+      body: JSON.stringify({ draft: options.draft ?? DEFAULT_CONCEPT_DRAFT }),
+    });
+  });
 };
