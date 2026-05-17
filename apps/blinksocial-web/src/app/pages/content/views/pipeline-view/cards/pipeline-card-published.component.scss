@@ -129,3 +129,31 @@
 .pc-metric {
   flex: 0 0 auto;
 }
+
+// #146: yellow AlertTriangle when Export-Packet item has no livePostUrl yet.
+.pc-warning {
+  display: inline-flex;
+  align-items: center;
+  color: var(--blink-status-warning-text);
+  background: var(--blink-status-warning-bg);
+  border: 1px solid var(--blink-status-warning-border);
+  border-radius: 999px;
+  padding: 2px 4px;
+  cursor: help;
+}
+
+// #146: thumbnail in top-right; doesn't displace card metadata.
+.pc-thumb {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 56px;
+  height: 56px;
+  object-fit: cover;
+  border-radius: 6px;
+  border: 1px solid var(--blink-outline-variant);
+}
+
+.card-published {
+  position: relative;
+}

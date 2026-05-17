@@ -41,6 +41,27 @@
     color: #c2410c; // orange-700
     border-color: #fed7aa; // orange-200
   }
+
+  // #146: Scheduled-state header badge (blue Clock).
+  &.stage-scheduled {
+    background: var(--blink-scheduled-pill-bg);
+    color: var(--blink-scheduled-pill-text);
+    border-color: var(--blink-scheduled-card-border);
+  }
+
+  // #146: Published-state header badge (green CheckCircle).
+  &.stage-published {
+    background: var(--blink-published-pill-bg);
+    color: var(--blink-published-pill-text);
+    border-color: var(--blink-published-card-border);
+  }
+
+  // #146: Secondary Exported chip (gray, additive to Published).
+  &.stage-exported {
+    background: var(--blink-exported-pill-bg);
+    color: var(--blink-exported-pill-text);
+    border-color: var(--blink-outline-variant);
+  }
 }
 
 .detail-title-wrap {

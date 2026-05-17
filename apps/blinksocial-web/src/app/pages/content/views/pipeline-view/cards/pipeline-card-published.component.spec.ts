@@ -81,4 +81,46 @@ describe('PipelineCardPublishedComponent', () => {
     fixture.detectChanges();
     expect(count).toBe(1);
   });
+
+  // #146 — warning indicator + thumbnail
+  it('renders the AlertTriangle warning when isExported && !livePostUrl', () => {
+    const fixture = setup(makeItem({ isExported: true, livePostUrl: undefined }));
+    const warning = fixture.nativeElement.querySelector('[data-pill="warning"]') as HTMLElement;
+    expect(warning).not.toBeNull();
+    expect(warning.getAttribute('aria-label')).toBe(
+      'Add post link to enable performance tracking.',
+    );
+  });
+
+  it('does NOT render warning when isExported && livePostUrl set', () => {
+    const fixture = setup(
+      makeItem({ isExported: true, livePostUrl: 'https://www.instagram.com/p/abc' }),
+    );
+    expect(fixture.nativeElement.querySelector('[data-pill="warning"]')).toBeNull();
+  });
+
+  it('does NOT render warning when isExported is false', () => {
+    const fixture = setup(makeItem({ isExported: false }));
+    expect(fixture.nativeElement.querySelector('[data-pill="warning"]')).toBeNull();
+  });
+
+  it('renders a thumbnail when packaging.<platform>.coverAssetUrl is set', () => {
+    const fixture = setup(
+      makeItem({
+        production: {
+          packaging: {
+            instagram: { coverAssetUrl: 'blob:https://example.com/abc' },
+          },
+        },
+      } as Parameters<typeof makeItem>[0]),
+    );
+    const thumb = fixture.nativeElement.querySelector('.pc-thumb') as HTMLImageElement;
+    expect(thumb).not.toBeNull();
+    expect(thumb.src).toContain('blob:');
+  });
+
+  it('omits the thumbnail when no cover is set', () => {
+    const fixture = setup(makeItem());
+    expect(fixture.nativeElement.querySelector('.pc-thumb')).toBeNull();
+  });
 });

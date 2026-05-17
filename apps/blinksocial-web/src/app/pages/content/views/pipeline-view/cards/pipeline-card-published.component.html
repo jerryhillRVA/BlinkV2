@@ -3,6 +3,9 @@
   type="button"
   (click)="onCardClick()"
 >
+  @if (thumbnailUrl(); as src) {
+    <img class="pc-thumb" [src]="src" alt="" aria-hidden="true" loading="lazy" />
+  }
   <div class="pc-header">
     <div class="pc-pills">
       <span class="pill pill-status-published" data-pill="published">
@@ -11,6 +14,16 @@
       </span>
       @if (item().isExported) {
         <span class="pill pill-exported" data-pill="exported">Exported</span>
+      }
+      @if (showWarning()) {
+        <span
+          class="pc-warning"
+          data-pill="warning"
+          [attr.aria-label]="warningTooltip"
+          [attr.title]="warningTooltip"
+        >
+          <app-icon name="alert-triangle" size="12" />
+        </span>
       }
     </div>
     @if (item().platform) {

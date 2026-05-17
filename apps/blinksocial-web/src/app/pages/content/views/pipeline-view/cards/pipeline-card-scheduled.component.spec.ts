@@ -100,4 +100,20 @@ describe('PipelineCardScheduledComponent', () => {
     const fixture = setup(makeItem({ platform: undefined }));
     expect(fixture.nativeElement.querySelector('.sc-platform')).toBeNull();
   });
+
+  // #146 — warning indicator on Export-Packet-scheduled items
+  it('renders the AlertTriangle warning when isExported && !livePostUrl', () => {
+    const fixture = setup(makeItem({ isExported: true, livePostUrl: undefined }));
+    expect(fixture.nativeElement.querySelector('[data-pill="warning"]')).not.toBeNull();
+  });
+
+  it('does NOT render warning when livePostUrl is set', () => {
+    const fixture = setup(makeItem({ isExported: true, livePostUrl: 'https://x' }));
+    expect(fixture.nativeElement.querySelector('[data-pill="warning"]')).toBeNull();
+  });
+
+  it('does NOT render warning when isExported is false', () => {
+    const fixture = setup(makeItem({ isExported: false }));
+    expect(fixture.nativeElement.querySelector('[data-pill="warning"]')).toBeNull();
+  });
 });

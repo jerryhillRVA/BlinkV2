@@ -44,6 +44,12 @@ export class PipelineCardScheduledComponent {
     return ids.map((id) => map.get(id)).filter((n): n is string => !!n);
   });
 
+  /** #146: warning for Export-Packet-scheduled items still missing a URL. */
+  protected readonly showWarning = computed<boolean>(
+    () => !!this.item().isExported && !this.item().livePostUrl,
+  );
+  protected readonly warningTooltip = 'Add post link to enable performance tracking.';
+
   protected onCardClick(): void {
     this.opened.emit();
   }

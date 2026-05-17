@@ -125,3 +125,15 @@
 .sc-ready {
   font-style: italic;
 }
+
+// #146: warning indicator on Export-Packet-scheduled items without a URL.
+.sc-warning {
+  display: inline-flex;
+  align-items: center;
+  color: var(--blink-status-warning-text);
+  background: var(--blink-status-warning-bg);
+  border: 1px solid var(--blink-status-warning-border);
+  border-radius: 999px;
+  padding: 2px 4px;
+  cursor: help;
+}

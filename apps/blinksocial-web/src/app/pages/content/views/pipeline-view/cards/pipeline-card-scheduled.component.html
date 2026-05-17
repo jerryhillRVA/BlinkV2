@@ -12,6 +12,16 @@
       @if (item().isExported) {
         <span class="pill pill-exported" data-pill="exported">Exported</span>
       }
+      @if (showWarning()) {
+        <span
+          class="sc-warning"
+          data-pill="warning"
+          [attr.aria-label]="warningTooltip"
+          [attr.title]="warningTooltip"
+        >
+          <app-icon name="alert-triangle" size="12" />
+        </span>
+      }
     </div>
     @if (item().platform) {
       <span class="sc-platform">
