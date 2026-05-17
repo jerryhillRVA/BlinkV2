@@ -583,6 +583,25 @@ export interface MilestoneOverrideContract {
   dueAt: string;
 }
 
+/**
+ * #146: post-publish performance metrics. All fields optional. The
+ * Performance card on the Published detail screen renders only the
+ * rows applicable to the post's platform (per spec §6 table).
+ */
+export interface ContentMetricsContract {
+  views?: number;
+  likes?: number;
+  comments?: number;
+  shares?: number;
+  saves?: number;
+  /** 0..1 fractional engagement rate; rendered as a percentage. */
+  engagementRate?: number;
+  reach?: number;
+  impressions?: number;
+  /** Seconds — only meaningful for YouTube long-form. */
+  watchTime?: number;
+}
+
 export interface ContentItemContract {
   id: string;
   conceptId?: string;
@@ -640,6 +659,14 @@ export interface ContentItemContract {
    * URL in the Published-detail screen (delivered in #146).
    */
   livePostUrl?: string;
+  /**
+   * #146: per-platform performance metrics surfaced on the Published
+   * detail screen's Performance card. All fields optional; the card
+   * renders `0` for explicit-zero values and the empty-state copy
+   * when the entire object is undefined. Future work wires real
+   * platform-API pulls (see #146 spec §6 Open Items).
+   */
+  metrics?: ContentMetricsContract;
   /**
    * Per-item milestone date overrides keyed by milestone type. Each entry
    * is an exception to the workspace deadline template at

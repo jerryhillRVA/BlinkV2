@@ -1,5 +1,6 @@
 import type {
   ContentItemContract,
+  ContentMetricsContract,
   ContentStageContract,
   ContentStatusContract,
   PlatformContract,
@@ -48,6 +49,7 @@ export class ContentItem implements ContentItemContract {
   publishedAt?: string;
   isExported?: boolean;
   livePostUrl?: string;
+  metrics?: ContentMetricsContract;
   production?: ProductionContract;
   archived?: boolean;
   tags?: string[];
