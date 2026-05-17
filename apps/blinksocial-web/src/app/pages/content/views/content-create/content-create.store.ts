@@ -262,12 +262,16 @@ export class ContentCreateStore {
     if (!workspaceId) return;
     this.patch({ isGeneratingConcept: true });
     this.conceptDraftApi
-      .generate(workspaceId, {
-        title: s.title.trim(),
-        objective: s.objective as ContentObjective,
-        pillarIds: [...s.pillarIds],
-        segmentIds: [...s.segmentIds],
-      })
+      .generate(
+        workspaceId,
+        {
+          title: s.title.trim(),
+          objective: s.objective as ContentObjective,
+          pillarIds: [...s.pillarIds],
+          segmentIds: [...s.segmentIds],
+        },
+        { descriptionMax: DESCRIPTION_MAX_CHARS, hookMax: HOOK_MAX_CHARS },
+      )
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: (draft) => {

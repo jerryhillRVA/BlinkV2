@@ -26,6 +26,10 @@ You receive a single user-turn JSON object:
     "pillarIds":  ["..."],   // currently-selected; may be empty
     "segmentIds": ["..."]    // currently-selected; may be empty
   },
+  "bounds": {
+    "descriptionMax": 400,   // optional — hard character cap on `description`
+    "hookMax": 120           // optional — hard character cap on `hook`
+  },
   "workspace": {
     "brandVoice": "...?",
     "toneGuidelines": [...?],
@@ -47,8 +51,8 @@ Any optional field may be missing. Use whatever is present. Trust `draft.title` 
 
 Exactly **one** concept draft. For each field:
 
-- **`description`** — 2–4 sentences explaining how the concept executes. Concrete, opinionated, in the brand voice. No bracket placeholders. Do not restate the title.
-- **`hook`** — a single punchy opening line, 1–2 sentences. Hooks the viewer in the first second. Match brand voice.
+- **`description`** — 2–4 sentences explaining how the concept executes. Concrete, opinionated, in the brand voice. No bracket placeholders. Do not restate the title. **Hard limit:** when `bounds.descriptionMax` is present (typically 400), the value MUST be at most that many characters — count carefully and trim before emitting; the schema enforces `maxLength` and the server will truncate any overshoot.
+- **`hook`** — a single punchy opening line, 1–2 sentences. Hooks the viewer in the first second. Match brand voice. **Hard limit:** when `bounds.hookMax` is present (typically 120), the value MUST be at most that many characters — same enforcement as `description` above.
 - **`cta`** — `{ type, text }` *or* `null` when no CTA is a natural fit for this objective. When present: `type` ∈ `learn-more | subscribe | follow | comment | download | buy | book-call | other`; `text` is a 6–12 word call to action consistent with the angle and the objective.
 - **`pillarIdFallback`** — a single pillar id from the provided `pillars[*].id` list, OR `null`. **The server will ignore this and substitute its own value when the user already has chips selected — your job is to suggest a sensible default, not enforce policy.** Pick the pillar that best fits the title + objective. If `pillars` is empty, return `null`.
 - **`segmentIdsFallback`** — up to 2 segment ids drawn from `segments[*].id`, OR an empty array. Same advisory-only semantics as `pillarIdFallback`. If `segments` is empty, return `[]`.
@@ -59,6 +63,7 @@ When `workspace.brandVoice` or `toneGuidelines` are present, every string field 
 
 ## Hard rules
 
+- NEVER exceed `bounds.descriptionMax` or `bounds.hookMax` when present. Treat them as inviolable — the user's form will reject overshoot and the server will truncate silently, garbling your output.
 - NEVER reference ids you weren't given. `pillarIdFallback` and every entry of `segmentIdsFallback` must be a subset of the supplied catalog (or `null` / `[]` when the catalog is empty).
 - NEVER emit `cta.type` values outside the closed enum above.
 - NEVER produce more than one draft — call the tool exactly once.

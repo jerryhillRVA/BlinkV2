@@ -5,6 +5,7 @@ import {
   Logger,
 } from '@nestjs/common';
 import type {
+  ConceptDraftBoundsContract,
   ConceptDraftContract,
   ConceptDraftRequestContract,
   ConceptDraftResponseContract,
@@ -86,7 +87,7 @@ export class ConceptDraftService {
     req: ConceptDraftRequestContract,
   ): Promise<ConceptDraftResponseContract> {
     this.validateRequest(req);
-    const { workspaceId, draft } = req;
+    const { workspaceId, draft, bounds } = req;
 
     const [brandVoice, brandPositioning, pillars, segments] = await Promise.all([
       this.loadBrandVoice(workspaceId),
@@ -107,11 +108,14 @@ export class ConceptDraftService {
         `LLM not configured — returning stub concept draft for objective=${draft.objective}`,
       );
       return {
-        draft: buildStubDraft({
-          objective: draft.objective,
-          pillarIdFallback,
-          segmentIdsFallback,
-        }),
+        draft: enforceBounds(
+          buildStubDraft({
+            objective: draft.objective,
+            pillarIdFallback,
+            segmentIdsFallback,
+          }),
+          bounds,
+        ),
       };
     }
 
@@ -121,17 +125,21 @@ export class ConceptDraftService {
       brandPositioning,
       pillars,
       segments,
+      bounds,
     );
-    const llmDraft = await this.runSkillWithRetry(context, pillars, segments);
+    const llmDraft = await this.runSkillWithRetry(context, pillars, segments, bounds);
     return {
-      draft: {
-        ...llmDraft,
-        // Override the skill's fallback values with our server-computed
-        // ones — the model is advisory on these two fields, never
-        // authoritative.
-        pillarIdFallback,
-        segmentIdsFallback,
-      },
+      draft: enforceBounds(
+        {
+          ...llmDraft,
+          // Override the skill's fallback values with our server-computed
+          // ones — the model is advisory on these two fields, never
+          // authoritative.
+          pillarIdFallback,
+          segmentIdsFallback,
+        },
+        bounds,
+      ),
     };
   }
 
@@ -165,6 +173,31 @@ export class ConceptDraftService {
     if (!Array.isArray(draft.segmentIds)) {
       throw new BadRequestException('draft.segmentIds must be an array.');
     }
+    this.validateBounds(req.bounds);
+  }
+
+  private validateBounds(bounds: ConceptDraftBoundsContract | undefined): void {
+    if (bounds === undefined) return;
+    if (typeof bounds !== 'object' || bounds === null) {
+      throw new BadRequestException('bounds must be an object.');
+    }
+    const check = (key: 'descriptionMax' | 'hookMax') => {
+      const v = bounds[key];
+      if (v === undefined) return;
+      if (
+        typeof v !== 'number' ||
+        !Number.isFinite(v) ||
+        !Number.isInteger(v) ||
+        v < 1 ||
+        v > 10000
+      ) {
+        throw new BadRequestException(
+          `bounds.${key} must be an integer in [1, 10000].`,
+        );
+      }
+    };
+    check('descriptionMax');
+    check('hookMax');
   }
 
   // ── context loaders (failures degrade to null/[]) ────────────────────
@@ -263,6 +296,7 @@ export class ConceptDraftService {
     brandPositioning: BrandPositioning | null,
     pillars: readonly PillarLite[],
     segments: readonly SegmentLite[],
+    bounds: ConceptDraftBoundsContract | undefined,
   ): Record<string, unknown> {
     return {
       draft: removeEmpty({
@@ -270,6 +304,10 @@ export class ConceptDraftService {
         objective: draft.objective,
         pillarIds: draft.pillarIds,
         segmentIds: draft.segmentIds,
+      }),
+      bounds: removeEmpty({
+        descriptionMax: bounds?.descriptionMax,
+        hookMax: bounds?.hookMax,
       }),
       workspace: removeEmpty({
         brandVoice: brandVoice?.brandVoiceDescription,
@@ -292,8 +330,9 @@ export class ConceptDraftService {
     context: Record<string, unknown>,
     pillars: readonly PillarLite[],
     segments: readonly SegmentLite[],
+    bounds: ConceptDraftBoundsContract | undefined,
   ): Promise<ConceptDraftContract> {
-    const inputSchema = this.toolInputSchema(pillars, segments);
+    const inputSchema = this.toolInputSchema(pillars, segments, bounds);
 
     for (let attempt = 1; attempt <= 2; attempt++) {
       try {
@@ -401,6 +440,7 @@ export class ConceptDraftService {
   private toolInputSchema(
     pillars: readonly PillarLite[],
     segments: readonly SegmentLite[],
+    bounds: ConceptDraftBoundsContract | undefined,
   ): Record<string, unknown> {
     const pillarIdsEnum = pillars.map((p) => p.id);
     const segmentIdsEnum = segments.map((s) => s.id);
@@ -419,11 +459,20 @@ export class ConceptDraftService {
         ? { type: 'string', enum: segmentIdsEnum }
         : { type: 'string' };
 
+    const descriptionSchema: Record<string, unknown> = { type: 'string', minLength: 1 };
+    if (typeof bounds?.descriptionMax === 'number') {
+      descriptionSchema['maxLength'] = bounds.descriptionMax;
+    }
+    const hookSchema: Record<string, unknown> = { type: 'string', minLength: 1 };
+    if (typeof bounds?.hookMax === 'number') {
+      hookSchema['maxLength'] = bounds.hookMax;
+    }
+
     return {
       type: 'object',
       properties: {
-        description: { type: 'string', minLength: 1 },
-        hook: { type: 'string', minLength: 1 },
+        description: descriptionSchema,
+        hook: hookSchema,
         cta: {
           oneOf: [
             { type: 'null' },
@@ -458,4 +507,26 @@ function removeEmpty<T extends Record<string, unknown>>(obj: T): T {
     out[k] = v;
   }
   return out as T;
+}
+
+/**
+ * Belt-and-suspenders: even with `maxLength` on the forced-tool schema
+ * and explicit budgets in the skill prompt, LLMs can still overshoot.
+ * Truncate any string that exceeds its bound so the caller is never
+ * handed a value the form would immediately reject. Mirrors the pattern
+ * from `AiAssistService.enforceLength` (#155).
+ */
+function enforceBounds(
+  draft: ConceptDraftContract,
+  bounds: ConceptDraftBoundsContract | undefined,
+): ConceptDraftContract {
+  if (!bounds) return draft;
+  const out: ConceptDraftContract = { ...draft };
+  if (typeof bounds.descriptionMax === 'number' && out.description.length > bounds.descriptionMax) {
+    out.description = out.description.slice(0, bounds.descriptionMax).trimEnd();
+  }
+  if (typeof bounds.hookMax === 'number' && out.hook.length > bounds.hookMax) {
+    out.hook = out.hook.slice(0, bounds.hookMax).trimEnd();
+  }
+  return out;
 }

@@ -73,7 +73,9 @@ test.describe('Content Page — Create Concept Generate with AI (#156)', () => {
       page.locator(`${DRAWER} .chip.is-active`).filter({ hasText: 'Fitness Beginners' }),
     ).toBeVisible();
 
-    // Exactly one POST /api/concept-draft was issued with the expected body.
+    // Exactly one POST /api/concept-draft was issued with the expected body
+    // — including the bounds the store passes from DESCRIPTION_MAX_CHARS /
+    // HOOK_MAX_CHARS so the LLM honors the field validators.
     expect(captured).toHaveLength(1);
     expect(captured[0]).toEqual({
       workspaceId: 'hive-collective',
@@ -83,6 +85,7 @@ test.describe('Content Page — Create Concept Generate with AI (#156)', () => {
         pillarIds: [],
         segmentIds: [],
       },
+      bounds: { descriptionMax: 400, hookMax: 120 },
     });
   });
 

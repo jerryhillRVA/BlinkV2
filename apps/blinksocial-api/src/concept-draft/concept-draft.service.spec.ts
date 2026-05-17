@@ -128,6 +128,29 @@ describe('ConceptDraftService', () => {
         ),
       ).rejects.toBeInstanceOf(BadRequestException);
     });
+
+    it('rejects non-integer bounds.descriptionMax', async () => {
+      await expect(
+        service.generate({
+          ...validBody(),
+          bounds: { descriptionMax: 12.5 as unknown as number },
+        }),
+      ).rejects.toBeInstanceOf(BadRequestException);
+    });
+
+    it('rejects out-of-range bounds.hookMax', async () => {
+      await expect(
+        service.generate({ ...validBody(), bounds: { hookMax: 0 } }),
+      ).rejects.toBeInstanceOf(BadRequestException);
+      await expect(
+        service.generate({ ...validBody(), bounds: { hookMax: 999999 } }),
+      ).rejects.toBeInstanceOf(BadRequestException);
+    });
+
+    it('accepts omitted bounds (treats request as unbounded)', async () => {
+      const res = await service.generate(validBody());
+      expect(res.draft).toBeDefined();
+    });
   });
 
   // ── stub mode (LLM not configured) ───────────────────────────────────
@@ -329,6 +352,57 @@ describe('ConceptDraftService', () => {
       // No pillars/segments available → fallbacks degrade
       expect(res.draft.pillarIdFallback).toBeNull();
       expect(res.draft.segmentIdsFallback).toEqual([]);
+    });
+
+    it('forwards bounds into the skill JSON context and the forced-tool maxLength', async () => {
+      skillRunner.run.mockResolvedValue({ parsed: validLlmDraft(), stopReason: 'tool_use' });
+      await service.generate({
+        ...validBody(),
+        bounds: { descriptionMax: 400, hookMax: 120 },
+      });
+      const call = skillRunner.run.mock.calls[0][0];
+      const userMsg = JSON.parse(call.conversationHistory[0].content);
+      expect(userMsg.bounds).toEqual({ descriptionMax: 400, hookMax: 120 });
+      const schema = call.tool.inputSchema as Record<string, Record<string, unknown>>;
+      expect((schema['properties'] as Record<string, Record<string, unknown>>)['description']['maxLength']).toBe(400);
+      expect((schema['properties'] as Record<string, Record<string, unknown>>)['hook']['maxLength']).toBe(120);
+    });
+
+    it('truncates over-length LLM description + hook back to bounds (belt-and-suspenders)', async () => {
+      const longDesc = 'a'.repeat(800);
+      const longHook = 'b'.repeat(300);
+      skillRunner.run.mockResolvedValue({
+        parsed: validLlmDraft({ description: longDesc, hook: longHook }),
+        stopReason: 'tool_use',
+      });
+      const res = await service.generate({
+        ...validBody(),
+        bounds: { descriptionMax: 400, hookMax: 120 },
+      });
+      expect(res.draft.description.length).toBeLessThanOrEqual(400);
+      expect(res.draft.hook.length).toBeLessThanOrEqual(120);
+    });
+
+    it('leaves LLM output untouched when bounds omitted', async () => {
+      const longDesc = 'a'.repeat(800);
+      skillRunner.run.mockResolvedValue({
+        parsed: validLlmDraft({ description: longDesc }),
+        stopReason: 'tool_use',
+      });
+      const res = await service.generate(validBody());
+      expect(res.draft.description.length).toBe(800);
+    });
+  });
+
+  describe('stub mode bounds enforcement', () => {
+    beforeEach(() => llm.isConfigured.mockReturnValue(false));
+
+    it('truncates ported stub description when descriptionMax is smaller than the stub', async () => {
+      const res = await service.generate({
+        ...validBody({ objective: 'engagement' }),
+        bounds: { descriptionMax: 20 },
+      });
+      expect(res.draft.description.length).toBeLessThanOrEqual(20);
     });
   });
 });

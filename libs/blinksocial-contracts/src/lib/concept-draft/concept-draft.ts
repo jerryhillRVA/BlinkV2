@@ -17,9 +17,23 @@ export interface ConceptDraftSnapshotContract {
   segmentIds: string[];
 }
 
+/**
+ * Field length bounds (in characters) passed from the frontend so the
+ * skill prompt and the forced-tool schema target the same limits the
+ * Create Concept form validator enforces. Mirrors the pattern from
+ * `AiAssistFieldLengthContract` (#155). Without this the LLM cheerfully
+ * overshoots the validators and the user can't click Save without
+ * manually trimming.
+ */
+export interface ConceptDraftBoundsContract {
+  descriptionMax?: number;
+  hookMax?: number;
+}
+
 export interface ConceptDraftRequestContract {
   workspaceId: string;
   draft: ConceptDraftSnapshotContract;
+  bounds?: ConceptDraftBoundsContract;
 }
 
 /**

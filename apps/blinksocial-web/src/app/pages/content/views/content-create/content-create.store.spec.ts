@@ -436,12 +436,16 @@ describe('ContentCreateStore — generateConcept', () => {
       segmentIds: [],
     });
     store.generateConcept();
-    expect(conceptDraft.generate).toHaveBeenCalledWith('w1', {
-      title: 'Why teams need rituals',
-      objective: 'engagement',
-      pillarIds: [],
-      segmentIds: [],
-    } satisfies ConceptDraftSnapshotContract);
+    expect(conceptDraft.generate).toHaveBeenCalledWith(
+      'w1',
+      {
+        title: 'Why teams need rituals',
+        objective: 'engagement',
+        pillarIds: [],
+        segmentIds: [],
+      } satisfies ConceptDraftSnapshotContract,
+      { descriptionMax: 400, hookMax: 120 },
+    );
     expect(store.state().description).toBe(STUB_DRAFT.description);
     expect(store.state().hook).toBe(STUB_DRAFT.hook);
     expect(store.state().ctaType).toBe('comment');

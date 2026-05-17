@@ -79,4 +79,22 @@ describe('ConceptDraftApiService', () => {
     req.flush({ message: 'nope' }, { status: 502, statusText: 'Bad Gateway' });
     expect(error).toBeTruthy();
   });
+
+  it('includes bounds in the request body when provided', () => {
+    service.generate('w1', SNAPSHOT, { descriptionMax: 400, hookMax: 120 }).subscribe();
+    const req = httpMock.expectOne('/api/concept-draft');
+    expect(req.request.body).toEqual({
+      workspaceId: 'w1',
+      draft: SNAPSHOT,
+      bounds: { descriptionMax: 400, hookMax: 120 },
+    });
+    req.flush({ draft: { description: 'd', hook: 'h', cta: null, pillarIdFallback: null, segmentIdsFallback: [] } });
+  });
+
+  it('omits bounds from the request body when not provided', () => {
+    service.generate('w1', SNAPSHOT).subscribe();
+    const req = httpMock.expectOne('/api/concept-draft');
+    expect(req.request.body).toEqual({ workspaceId: 'w1', draft: SNAPSHOT });
+    req.flush({ draft: { description: 'd', hook: 'h', cta: null, pillarIdFallback: null, segmentIdsFallback: [] } });
+  });
 });
