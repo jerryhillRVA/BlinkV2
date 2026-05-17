@@ -1,4 +1,24 @@
 @if (store.item(); as item) {
+  @switch (item.status) {
+    @case ('scheduled') {
+      <app-post-detail-scheduled
+        [backLabel]="backLabel"
+        [parentConcept]="parentConcept()"
+        [previewCaption]="previewCaption()"
+        [previewCoverAsset]="previewCoverAsset()"
+        (back)="onBack()"
+      />
+    }
+    @case ('published') {
+      <app-post-detail-published
+        [backLabel]="backLabel"
+        [parentConcept]="parentConcept()"
+        [previewCaption]="previewCaption()"
+        [previewCoverAsset]="previewCoverAsset()"
+        (back)="onBack()"
+      />
+    }
+    @default {
   <div class="post-detail">
     <app-post-detail-header
       [item]="item"
@@ -235,4 +255,6 @@
          transitions to its "floating card" look. -->
     <div class="step-action-bar-sentinel" aria-hidden="true"></div>
   </div>
+    }
+  }
 }

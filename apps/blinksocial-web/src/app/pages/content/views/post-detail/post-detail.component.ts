@@ -21,6 +21,8 @@ import { PostPreviewCardComponent } from './components/post-preview-card.compone
 import { StepActionBarComponent } from './components/step-action-bar/step-action-bar.component';
 import { ApproveScheduleStepComponent } from './components/approve-schedule-step/approve-schedule-step.component';
 import { ConfirmDialogComponent } from '../../../../shared/confirm-dialog/confirm-dialog.component';
+import { PostDetailScheduledComponent } from './components/terminal/post-detail-scheduled.component';
+import { PostDetailPublishedComponent } from './components/terminal/post-detail-published.component';
 import { DetailBackButtonComponent } from '../_shared/detail-back-button/detail-back-button.component';
 import { ContentJourneyComponent } from '../idea-detail/components/content-journey.component';
 import type { ContentItem } from '../../content.types';
@@ -39,6 +41,8 @@ import type { ContentItem } from '../../content.types';
     ContentJourneyComponent,
     ApproveScheduleStepComponent,
     ConfirmDialogComponent,
+    PostDetailScheduledComponent,
+    PostDetailPublishedComponent,
     DetailBackButtonComponent,
   ],
   providers: [PostDetailStore],

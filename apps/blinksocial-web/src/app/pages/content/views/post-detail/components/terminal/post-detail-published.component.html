@@ -1,0 +1,98 @@
+@if (item(); as it) {
+  <div class="post-detail">
+    <app-post-detail-header
+      [item]="it"
+      variant="published"
+      (archive)="onArchive()"
+      (viewLivePost)="onViewLivePost()"
+      (downloadExport)="onDownloadExport()"
+    >
+      <app-detail-back-button [ariaLabel]="backLabel" (back)="onBack()" />
+    </app-post-detail-header>
+
+    <div class="post-body">
+      <div class="brief-grid">
+        <div class="brief-main">
+          @if (it.hook) {
+            <section class="panel side-card terminal-display-card">
+              <span class="card-eyebrow">Hook</span>
+              <p class="terminal-display-text">"{{ it.hook }}"</p>
+            </section>
+          }
+          @if (it.description) {
+            <section class="panel side-card terminal-display-card">
+              <span class="card-eyebrow">Description</span>
+              <p class="terminal-display-text">{{ it.description }}</p>
+            </section>
+          }
+
+          <app-live-post-link-card
+            [url]="it.livePostUrl"
+            [isExported]="!!it.isExported"
+            [publishedAt]="it.publishedAt"
+            (urlChange)="onLivePostUrlChange($event)"
+          />
+
+          <app-performance-card
+            [metrics]="it.metrics"
+            [platform]="it.platform"
+            (refresh)="onPerformanceRefresh()"
+          />
+        </div>
+
+        <aside class="brief-side">
+          <app-post-preview-card
+            [platform]="it.platform"
+            [contentType]="it.contentType"
+            [caption]="previewCaption"
+            [coverAsset]="previewCoverAsset"
+            [(expanded)]="previewExpanded"
+          />
+
+          <app-brief-content-concept
+            [concept]="parentConcept"
+            [pillars]="store.pillars()"
+            [segments]="store.segments()"
+            [objectives]="businessObjectives()"
+          />
+
+          <section class="panel side-card published-date-card" aria-labelledby="published-date-title">
+            <span id="published-date-title" class="card-eyebrow">Published Date</span>
+            <p class="published-date-value">{{ formatPublishedAt(it.publishedAt) }}</p>
+            @if (it.scheduledAt) {
+              <p class="published-date-scheduled">Scheduled {{ formatDate(it.scheduledAt) }}</p>
+            }
+          </section>
+
+          <section class="panel panel-journey side-card">
+            <h3 class="side-card-title">Content Journey</h3>
+            <app-content-journey [stage]="it.stage" />
+          </section>
+
+          <section class="panel timestamps-panel side-card">
+            <div class="timestamp-row">
+              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <circle cx="12" cy="12" r="10"/>
+                <polyline points="12 6 12 12 16 14"/>
+              </svg>
+              <div class="timestamp-content">
+                <span class="timestamp-label">Created</span>
+                <span class="timestamp-value">{{ formatDate(it.createdAt) }}</span>
+              </div>
+            </div>
+            <div class="timestamp-row">
+              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <circle cx="12" cy="12" r="10"/>
+                <polyline points="12 6 12 12 16 14"/>
+              </svg>
+              <div class="timestamp-content">
+                <span class="timestamp-label">Last Updated</span>
+                <span class="timestamp-value">{{ formatDate(it.updatedAt) }}</span>
+              </div>
+            </div>
+          </section>
+        </aside>
+      </div>
+    </div>
+  </div>
+}
