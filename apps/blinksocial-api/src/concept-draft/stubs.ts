@@ -1,10 +1,19 @@
 import type {
-  ContentObjective,
-  ContentCta,
-  AudienceSegment,
-} from '../../content.types';
+  ContentCtaContract,
+  ContentObjectiveContract,
+  CtaTypeContract,
+} from '@blinksocial/contracts';
+import type { ConceptDraftContract } from '@blinksocial/contracts';
 
-const DESCRIPTION_BY_OBJECTIVE: Record<ContentObjective, string> = {
+/**
+ * Verbatim port of the four objective-keyed lookup tables that used to
+ * live in `apps/blinksocial-web/src/app/pages/content/views/content-create/content-create.ai.ts`.
+ * Used only when `LlmService.isConfigured()` is false (dev/CI/local
+ * without `ANTHROPIC_API_KEY`) so existing fixtures and E2E behaviour
+ * remain bit-for-bit identical to before ticket #156.
+ */
+
+const DESCRIPTION_BY_OBJECTIVE: Record<ContentObjectiveContract, string> = {
   awareness:
     'Reach new audiences discovering your category for the first time. Focus on name recognition and memorability.',
   engagement:
@@ -29,7 +38,7 @@ const DESCRIPTION_BY_OBJECTIVE: Record<ContentObjective, string> = {
     'Teach one concrete thing well. Lead with the payoff, then deliver a clear, stepwise walk-through.',
 };
 
-const HOOK_BY_OBJECTIVE: Record<ContentObjective, string> = {
+const HOOK_BY_OBJECTIVE: Record<ContentObjectiveContract, string> = {
   awareness:
     'The thing nobody tells you about getting started — and why that quiet gap matters more than you think.',
   engagement:
@@ -54,7 +63,7 @@ const HOOK_BY_OBJECTIVE: Record<ContentObjective, string> = {
     "The 90-second version of something people usually overcomplicate. Save this one.",
 };
 
-const CTA_TYPE_BY_OBJECTIVE: Partial<Record<ContentObjective, ContentCta['type']>> = {
+const CTA_TYPE_BY_OBJECTIVE: Partial<Record<ContentObjectiveContract, CtaTypeContract>> = {
   awareness: 'learn-more',
   engagement: 'comment',
   trust: 'learn-more',
@@ -62,7 +71,7 @@ const CTA_TYPE_BY_OBJECTIVE: Partial<Record<ContentObjective, ContentCta['type']
   conversion: 'buy',
 };
 
-const CTA_TEXT_BY_OBJECTIVE: Partial<Record<ContentObjective, string>> = {
+const CTA_TEXT_BY_OBJECTIVE: Partial<Record<ContentObjectiveContract, string>> = {
   awareness: 'Learn more about this in our bio link',
   engagement: 'Drop your thoughts in the comments below',
   trust: 'See the full breakdown at the link in bio',
@@ -70,33 +79,22 @@ const CTA_TEXT_BY_OBJECTIVE: Partial<Record<ContentObjective, string>> = {
   conversion: 'Shop now — link in bio',
 };
 
-export interface ConceptAiResult {
-  description: string;
-  hook: string;
-  cta?: ContentCta;
+export interface StubDraftInput {
+  objective: ContentObjectiveContract;
   pillarIdFallback: string | null;
   segmentIdsFallback: string[];
 }
 
-export function generateConceptFromObjective(
-  objective: ContentObjective,
-  existingPillarIds: readonly string[],
-  pillars: readonly { id: string }[],
-  segments: readonly AudienceSegment[],
-  existingSegmentIds: readonly string[],
-): ConceptAiResult {
-  const ctaType = CTA_TYPE_BY_OBJECTIVE[objective];
-  const ctaText = CTA_TEXT_BY_OBJECTIVE[objective];
+export function buildStubDraft(input: StubDraftInput): ConceptDraftContract {
+  const ctaType = CTA_TYPE_BY_OBJECTIVE[input.objective];
+  const ctaText = CTA_TEXT_BY_OBJECTIVE[input.objective];
+  const cta: ContentCtaContract | null =
+    ctaType && ctaText ? { type: ctaType, text: ctaText } : null;
   return {
-    description: DESCRIPTION_BY_OBJECTIVE[objective],
-    hook: HOOK_BY_OBJECTIVE[objective],
-    cta: ctaType && ctaText ? { type: ctaType, text: ctaText } : undefined,
-    pillarIdFallback:
-      existingPillarIds.length === 0 && pillars.length > 0 ? pillars[0].id : null,
-    segmentIdsFallback:
-      existingSegmentIds.length === 0
-        ? segments.slice(0, 2).map((s) => s.id)
-        : [],
+    description: DESCRIPTION_BY_OBJECTIVE[input.objective],
+    hook: HOOK_BY_OBJECTIVE[input.objective],
+    cta,
+    pillarIdFallback: input.pillarIdFallback,
+    segmentIdsFallback: input.segmentIdsFallback,
   };
 }
-

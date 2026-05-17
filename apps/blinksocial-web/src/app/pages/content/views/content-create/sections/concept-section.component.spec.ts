@@ -1,12 +1,23 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { of } from 'rxjs';
+import type { ConceptDraftContract } from '@blinksocial/contracts';
 import { ConceptSectionComponent } from './concept-section.component';
 import { ContentCreateStore } from '../content-create.store';
 import { AiAssistApiService } from '../../../../../core/ai-assist/ai-assist.service';
+import { ConceptDraftApiService } from '../../../../../core/concept-draft/concept-draft-api.service';
 import { GeneratedIdeasApiService } from '../../../../../core/generated-ideas/generated-ideas.service';
 import { ToastService } from '../../../../../core/toast/toast.service';
-import { AI_SIMULATION_DELAY_MS } from '../../../content.constants';
 import type { AudienceSegment, ContentPillar } from '../../../content.types';
+
+const STUB_DRAFT: ConceptDraftContract = {
+  // Description must be ≥ DESCRIPTION_MIN_CHARS (50) for conceptValid to pass.
+  description:
+    'AI description text that is comfortably above the fifty-character validation floor.',
+  hook: 'AI hook line.',
+  cta: { type: 'learn-more', text: 'Tap to learn more' },
+  pillarIdFallback: 'p1',
+  segmentIdsFallback: ['s1'],
+};
 
 const PILLARS: ContentPillar[] = [
   { id: 'p1', name: 'Alpha', description: '', color: '#111' },
@@ -35,6 +46,10 @@ describe('ConceptSectionComponent', () => {
         {
           provide: AiAssistApiService,
           useValue: { assist: vi.fn().mockReturnValue(of({ values: ['AI: $1'] })) },
+        },
+        {
+          provide: ConceptDraftApiService,
+          useValue: { generate: vi.fn().mockReturnValue(of(STUB_DRAFT)) },
         },
         {
           provide: ToastService,
@@ -78,22 +93,16 @@ describe('ConceptSectionComponent', () => {
     expect(fixture.nativeElement.querySelector('#concept-title-m')).not.toBeNull();
   });
 
-  it('clicking Generate with AI shows spinner, then reveals form with AI-filled fields', () => {
-    vi.useFakeTimers();
-    try {
-      store.patch({ title: 'T', objective: 'trust' });
-      fixture.detectChanges();
-      const btn: HTMLButtonElement = fixture.nativeElement.querySelector('.btn-generate');
-      btn.click();
-      fixture.detectChanges();
-      expect(fixture.nativeElement.querySelector('.spinner')).not.toBeNull();
-      vi.advanceTimersByTime(AI_SIMULATION_DELAY_MS);
-      fixture.detectChanges();
-      expect(store.state().conceptAiGenerated).toBe(true);
-      expect(fixture.nativeElement.querySelector('#concept-title-m')).not.toBeNull();
-    } finally {
-      vi.useRealTimers();
-    }
+  it('clicking Generate with AI invokes the API and reveals the post-generation form', () => {
+    store.patch({ title: 'T', objective: 'trust' });
+    fixture.detectChanges();
+    const btn: HTMLButtonElement = fixture.nativeElement.querySelector('.btn-generate');
+    btn.click();
+    fixture.detectChanges();
+    // Mock returns synchronously via `of(...)`, so by the time we re-render
+    // the store has flipped `conceptAiGenerated` and the post-gen form is on.
+    expect(store.state().conceptAiGenerated).toBe(true);
+    expect(fixture.nativeElement.querySelector('#concept-title-m')).not.toBeNull();
   });
 
   it('enforces max 3 pillars selection in manual mode', () => {
@@ -338,21 +347,15 @@ describe('ConceptSectionComponent', () => {
       fillManually: () => void;
       backToPregen: () => void;
     };
-    vi.useFakeTimers();
-    try {
-      comp.generateConcept();
-      expect(store.state().isGeneratingConcept).toBe(true);
-      vi.runAllTimers();
-      comp.assistHook();
-      vi.runAllTimers();
-      comp.assistDescription();
-      vi.runAllTimers();
-      comp.fillManually();
-      expect(store.state().conceptAiGenerated).toBe(true);
-      comp.backToPregen();
-      expect(store.state().conceptAiGenerated).toBe(false);
-    } finally {
-      vi.useRealTimers();
-    }
+    comp.generateConcept();
+    // ConceptDraftApiService mock emits synchronously via `of(...)`, so the
+    // store has already flipped to the post-AI form by the next line.
+    expect(store.state().conceptAiGenerated).toBe(true);
+    comp.assistHook();
+    comp.assistDescription();
+    comp.fillManually();
+    expect(store.state().conceptAiGenerated).toBe(true);
+    comp.backToPregen();
+    expect(store.state().conceptAiGenerated).toBe(false);
   });
 });

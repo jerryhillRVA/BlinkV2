@@ -1,7 +1,9 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { of } from 'rxjs';
+import type { ConceptDraftContract } from '@blinksocial/contracts';
 import { ContentCreateFormComponent } from './content-create-form.component';
 import { AiAssistApiService } from '../../../../core/ai-assist/ai-assist.service';
+import { ConceptDraftApiService } from '../../../../core/concept-draft/concept-draft-api.service';
 import { GeneratedIdeasApiService } from '../../../../core/generated-ideas/generated-ideas.service';
 import { ToastService } from '../../../../core/toast/toast.service';
 import type {
@@ -10,7 +12,16 @@ import type {
   ContentPillar,
   IdeaPayload,
 } from '../../content.types';
-import { AI_SIMULATION_DELAY_MS } from '../../content.constants';
+
+const STUB_DRAFT: ConceptDraftContract = {
+  // Description must be ≥ DESCRIPTION_MIN_CHARS (50) for conceptValid to pass.
+  description:
+    'Generated description that is comfortably above the fifty-character validation floor.',
+  hook: 'Generated hook.',
+  cta: { type: 'learn-more', text: 'Tap to learn more' },
+  pillarIdFallback: 'p1',
+  segmentIdsFallback: ['s1'],
+};
 
 function ideaApiMock() {
   return {
@@ -23,6 +34,13 @@ function aiAssistMock() {
   return {
     provide: AiAssistApiService,
     useValue: { assist: vi.fn().mockReturnValue(of({ values: ['stub'] })) },
+  };
+}
+
+function conceptDraftMock() {
+  return {
+    provide: ConceptDraftApiService,
+    useValue: { generate: vi.fn().mockReturnValue(of(STUB_DRAFT)) },
   };
 }
 
@@ -44,11 +62,14 @@ const SEGMENTS: AudienceSegment[] = [
 function make(): ComponentFixture<ContentCreateFormComponent> {
   TestBed.configureTestingModule({
     imports: [ContentCreateFormComponent],
-    providers: [ideaApiMock(), aiAssistMock(), toastMock()],
+    providers: [ideaApiMock(), aiAssistMock(), conceptDraftMock(), toastMock()],
   });
   const fixture = TestBed.createComponent(ContentCreateFormComponent);
   fixture.componentRef.setInput('pillars', PILLARS);
   fixture.componentRef.setInput('segments', SEGMENTS);
+  // `generateConcept` and the AI Assist buttons short-circuit when
+  // workspaceId is null — set one so the AI flow is exercised.
+  fixture.componentRef.setInput('workspaceId', 'w1');
   fixture.detectChanges();
   return fixture;
 }
@@ -57,7 +78,7 @@ describe('ContentCreateFormComponent', () => {
   it('applies initialType=concept when provided and renders Concept form on open', () => {
     TestBed.configureTestingModule({
       imports: [ContentCreateFormComponent],
-      providers: [ideaApiMock(), aiAssistMock(), toastMock()],
+      providers: [ideaApiMock(), aiAssistMock(), conceptDraftMock(), toastMock()],
     });
     const fixture = TestBed.createComponent(ContentCreateFormComponent);
     fixture.componentRef.setInput('pillars', PILLARS);
@@ -75,7 +96,7 @@ describe('ContentCreateFormComponent', () => {
   it('applies initialType=production-brief when provided', () => {
     TestBed.configureTestingModule({
       imports: [ContentCreateFormComponent],
-      providers: [ideaApiMock(), aiAssistMock(), toastMock()],
+      providers: [ideaApiMock(), aiAssistMock(), conceptDraftMock(), toastMock()],
     });
     const fixture = TestBed.createComponent(ContentCreateFormComponent);
     fixture.componentRef.setInput('pillars', PILLARS);
@@ -183,38 +204,34 @@ describe('ContentCreateFormComponent', () => {
   });
 
   it('concept + AI generated shows Move to Production + Save Concept in footer', () => {
-    vi.useFakeTimers();
-    try {
-      const fixture = make();
-      const comp = fixture.componentInstance;
-      (comp as unknown as { setType: (v: string) => void }).setType('concept');
-      fixture.detectChanges();
+    const fixture = make();
+    const comp = fixture.componentInstance;
+    (comp as unknown as { setType: (v: string) => void }).setType('concept');
+    fixture.detectChanges();
 
-      // Pre-fill + trigger AI generation to expose full form
-      const titleInput: HTMLInputElement = fixture.nativeElement.querySelector('#concept-title');
-      titleInput.value = 'T';
-      titleInput.dispatchEvent(new Event('input'));
-      fixture.detectChanges();
+    // Pre-fill + trigger AI generation to expose full form
+    const titleInput: HTMLInputElement = fixture.nativeElement.querySelector('#concept-title');
+    titleInput.value = 'T';
+    titleInput.dispatchEvent(new Event('input'));
+    fixture.detectChanges();
 
-      const objButtons: NodeListOf<HTMLButtonElement> =
-        fixture.nativeElement.querySelectorAll('.objective-btn');
-      objButtons[0].click(); // awareness
-      fixture.detectChanges();
+    const objButtons: NodeListOf<HTMLButtonElement> =
+      fixture.nativeElement.querySelectorAll('.objective-btn');
+    objButtons[0].click(); // awareness
+    fixture.detectChanges();
 
-      const generateBtn: HTMLButtonElement = fixture.nativeElement.querySelector('.btn-generate');
-      generateBtn.click();
-      fixture.detectChanges();
-      vi.advanceTimersByTime(AI_SIMULATION_DELAY_MS);
-      fixture.detectChanges();
+    const generateBtn: HTMLButtonElement = fixture.nativeElement.querySelector('.btn-generate');
+    generateBtn.click();
+    // ConceptDraftApiService mock returns synchronously via `of(...)`, so the
+    // store's `conceptAiGenerated` flag is already set by the time we run
+    // change detection again.
+    fixture.detectChanges();
 
-      const footerBtns: NodeListOf<HTMLButtonElement> =
-        fixture.nativeElement.querySelectorAll('.modal-footer button');
-      const texts = Array.from(footerBtns).map((b) => b.textContent?.trim() ?? '');
-      expect(texts.some((t) => t.includes('Save Concept'))).toBe(true);
-      expect(texts.some((t) => t.includes('Move to Production'))).toBe(true);
-    } finally {
-      vi.useRealTimers();
-    }
+    const footerBtns: NodeListOf<HTMLButtonElement> =
+      fixture.nativeElement.querySelectorAll('.modal-footer button');
+    const texts = Array.from(footerBtns).map((b) => b.textContent?.trim() ?? '');
+    expect(texts.some((t) => t.includes('Save Concept'))).toBe(true);
+    expect(texts.some((t) => t.includes('Move to Production'))).toBe(true);
   });
 
   it('save button label is "Complete Production" when in production mode', () => {

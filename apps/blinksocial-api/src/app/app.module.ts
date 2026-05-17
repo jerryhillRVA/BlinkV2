@@ -14,6 +14,7 @@ import { CalendarModule } from '../calendar/calendar.module';
 import { WizardAiModule } from '../wizard-ai/wizard-ai.module';
 import { AiAssistModule } from '../ai-assist/ai-assist.module';
 import { IdeaConceptOptionsModule } from '../idea-concept-options/idea-concept-options.module';
+import { ConceptDraftModule } from '../concept-draft/concept-draft.module';
 import { GeneratedIdeasModule } from '../generated-ideas/generated-ideas.module';
 import { AngularSsrModule } from '../angular-ssr/angular-ssr.module';
 
@@ -32,6 +33,7 @@ import { AngularSsrModule } from '../angular-ssr/angular-ssr.module';
     WizardAiModule,
     AiAssistModule,
     IdeaConceptOptionsModule,
+    ConceptDraftModule,
     GeneratedIdeasModule,
     // AngularSsrModule must be last — it registers a catch-all middleware
     AngularSsrModule,
