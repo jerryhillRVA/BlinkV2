@@ -27,6 +27,15 @@
   "scheduledAt": "2026-02-15T14:00:00Z",
   "publishedAt": "2026-02-15T14:00:00Z",
   "livePostUrl": "https://www.instagram.com/p/mock-bkpub1/",
+  "metrics": {
+    "views": 28119,
+    "likes": 1842,
+    "comments": 247,
+    "shares": 312,
+    "saves": 891,
+    "engagementRate": 0.061,
+    "reach": 23047
+  },
   "claimsFlag": true,
   "sourceLinks": [
     "https://example.com/community-survey/dry-jan-2026"

@@ -1772,3 +1772,235 @@ test.describe('Publish Flow — Finish action (#140)', () => {
   });
 });
 
+// #146: Scheduled / Published detail screens — terminal-state shells
+// extracted from app-post-detail's outer status @switch.
+test.describe('Scheduled / Published detail (#146)', () => {
+  test.beforeEach(async ({ page }) => {
+    await mockAuthenticatedUser(page);
+  });
+
+  async function openScheduled(
+    page: Page,
+    options: { id: string; scheduledAt?: string; isExported?: boolean },
+  ): Promise<string> {
+    const title = `Detail capture ${options.id}`;
+    const entry = {
+      ...approvedPostEntry({
+        id: options.id,
+        title,
+        platform: 'instagram',
+        contentType: 'reel',
+      }),
+      status: 'scheduled' as const,
+    };
+    const baseDetail = approvedPostInQA({
+      id: options.id,
+      title,
+      platform: 'instagram',
+      contentType: 'reel',
+    });
+    const detail = {
+      ...baseDetail,
+      status: 'scheduled' as const,
+      scheduledAt: options.scheduledAt ?? '2099-06-01T15:00:00.000Z',
+      ...(options.isExported ? { isExported: true } : {}),
+      production: {
+        ...baseDetail.production,
+        qa: {
+          approved: true,
+          publishConfig: {
+            publishAction: options.isExported ? ('export-packet' as const) : ('schedule' as const),
+            deliveryMethod: 'auto' as const,
+          },
+          approvals: [
+            {
+              role: 'brand-reviewer',
+              label: 'Brand Reviewer',
+              required: true,
+              status: 'approved' as const,
+              timestamp: new Date().toISOString(),
+            },
+          ],
+        },
+      },
+    };
+    await mockHiveContent(page, { indexItems: [entry], details: { [options.id]: detail } });
+    await page.goto(`/workspace/hive-collective/content/${options.id}`);
+    await expect(page.locator('app-post-detail-scheduled')).toBeVisible();
+    return title;
+  }
+
+  async function openPublished(
+    page: Page,
+    options: {
+      id: string;
+      isExported?: boolean;
+      livePostUrl?: string;
+      publishedAt?: string;
+      metrics?: Record<string, number>;
+    },
+  ): Promise<string> {
+    const title = `Detail capture ${options.id}`;
+    const entry = {
+      ...approvedPostEntry({
+        id: options.id,
+        title,
+        platform: 'instagram',
+        contentType: 'reel',
+      }),
+      status: 'published' as const,
+    };
+    const baseDetail = approvedPostInQA({
+      id: options.id,
+      title,
+      platform: 'instagram',
+      contentType: 'reel',
+    });
+    const detail = {
+      ...baseDetail,
+      status: 'published' as const,
+      publishedAt: options.publishedAt ?? '2026-05-15T15:00:00.000Z',
+      ...(options.isExported ? { isExported: true } : {}),
+      ...(options.livePostUrl ? { livePostUrl: options.livePostUrl } : {}),
+      ...(options.metrics ? { metrics: options.metrics } : {}),
+    };
+    await mockHiveContent(page, { indexItems: [entry], details: { [options.id]: detail } });
+    await page.goto(`/workspace/hive-collective/content/${options.id}`);
+    await expect(page.locator('app-post-detail-published')).toBeVisible();
+    return title;
+  }
+
+  test('TC-D1: Scheduled detail renders Scheduled badge + sidebar order', async ({ page }) => {
+    await openScheduled(page, { id: 'd1-sched' });
+    await expect(page.locator('app-post-detail-header [data-pill="scheduled"]')).toBeVisible();
+    // No production-step bar on the terminal shell.
+    await expect(page.locator('app-post-detail-scheduled app-production-steps-bar')).toHaveCount(0);
+    // Sidebar has the scheduled-date card.
+    await expect(page.locator('app-post-detail-scheduled app-scheduled-date-card')).toBeVisible();
+    // No Live Post Link / Performance on Scheduled.
+    await expect(page.locator('app-post-detail-scheduled app-live-post-link-card')).toHaveCount(0);
+    await expect(page.locator('app-post-detail-scheduled app-performance-card')).toHaveCount(0);
+  });
+
+  test('TC-D2: Reschedule via the inline date picker persists', async ({ page }) => {
+    await openScheduled(page, { id: 'd2-sched' });
+    // Open the popover.
+    await page.locator('app-scheduled-date-card .sd-edit-btn').click();
+    await expect(page.locator('app-scheduled-date-card .sd-popover')).toBeVisible();
+    const input = page.locator('app-scheduled-date-card .sd-popover-input');
+    await input.fill('2099-12-25T10:30');
+    const putWait = page.waitForResponse(
+      (res) =>
+        res.url().includes('/api/workspaces/hive-collective/content-items/d2-sched') &&
+        res.request().method() === 'PUT',
+    );
+    await page.locator('app-scheduled-date-card .sd-btn--primary').click();
+    await putWait;
+    await expect(page.locator('app-scheduled-date-card .sd-popover')).toHaveCount(0);
+    // Date display now reflects the new value.
+    await expect(page.locator('app-scheduled-date-card .sd-date-text')).toContainText(
+      /Dec|25|2099/,
+    );
+  });
+
+  test('TC-D3: Edit on Scheduled detail flips status to in-progress + lands on qa', async ({
+    page,
+  }) => {
+    await openScheduled(page, { id: 'd3-sched' });
+    // Open the header 3-dot menu.
+    await page.locator('app-post-detail-header .detail-menu-btn').click();
+    await page.locator('.detail-menu-item', { hasText: 'Edit' }).click();
+    // The outer status @switch swaps in the production-step shell on
+    // qa step. Wait for app-approve-schedule-step to appear.
+    await expect(page.locator('app-approve-schedule-step')).toBeVisible();
+    await expect(page.locator('app-post-detail-scheduled')).toHaveCount(0);
+  });
+
+  test('TC-D4: Publish Now published detail renders read-only URL + populated metrics', async ({
+    page,
+  }) => {
+    await openPublished(page, {
+      id: 'd4-pub',
+      isExported: false,
+      livePostUrl: 'https://www.instagram.com/p/abc',
+      metrics: {
+        views: 12400,
+        likes: 847,
+        comments: 63,
+        shares: 124,
+        saves: 312,
+        engagementRate: 0.042,
+        reach: 10800,
+      },
+    });
+    await expect(page.locator('app-post-detail-header [data-pill="published"]')).toBeVisible();
+    await expect(page.locator('app-post-detail-header [data-pill="exported"]')).toHaveCount(0);
+    // Live Post Link card read-only.
+    await expect(page.locator('app-live-post-link-card .lp-readonly')).toContainText(
+      'https://www.instagram.com/p/abc',
+    );
+    await expect(page.locator('app-live-post-link-card .lp-input')).toHaveCount(0);
+    await expect(page.locator('app-live-post-link-card .lp-external')).toBeVisible();
+    // Performance card populated.
+    await expect(page.locator('app-performance-card .perf-row')).toHaveCount(7);
+    await expect(page.locator('app-performance-card .perf-row-value').first()).toContainText(
+      /12,400|12400/,
+    );
+  });
+
+  test('TC-D5: Export Packet without URL — editable input + empty-state metrics', async ({
+    page,
+  }) => {
+    await openPublished(page, { id: 'd5-pub', isExported: true });
+    await expect(page.locator('app-post-detail-header [data-pill="exported"]')).toBeVisible();
+    const input = page.locator('app-live-post-link-card .lp-input');
+    await expect(input).toBeVisible();
+    await expect(input).toHaveAttribute('placeholder', 'Paste the published post URL…');
+    await expect(page.locator('app-performance-card .perf-empty')).toBeVisible();
+  });
+
+  test('TC-D6: Paste URL on Export Packet — saves on blur', async ({ page }) => {
+    await openPublished(page, { id: 'd6-pub', isExported: true });
+    const input = page.locator('app-live-post-link-card .lp-input');
+    const putWait = page.waitForResponse(
+      (res) =>
+        res.url().includes('/api/workspaces/hive-collective/content-items/d6-pub') &&
+        res.request().method() === 'PUT',
+    );
+    await input.fill('https://www.instagram.com/p/xyz');
+    await input.blur();
+    await putWait;
+    // External-link icon now appears.
+    await expect(page.locator('app-live-post-link-card .lp-external')).toBeVisible();
+  });
+
+  test('TC-D7: Performance refresh button fires toast', async ({ page }) => {
+    await openPublished(page, {
+      id: 'd7-pub',
+      metrics: { views: 100, likes: 10, comments: 1 },
+    });
+    await page.locator('app-performance-card .perf-refresh-btn').click();
+    // ToastService uses MatSnackBar; the snackbar container surfaces with mat-snack-bar-container.
+    await expect(page.locator('mat-snack-bar-container')).toBeVisible();
+  });
+
+  test('TC-D8: Send back to Concept menu item is absent on both terminal shells', async ({
+    page,
+  }) => {
+    // Scheduled.
+    await openScheduled(page, { id: 'd8-sched' });
+    await page.locator('app-post-detail-header .detail-menu-btn').click();
+    await expect(
+      page.locator('.detail-menu-item', { hasText: 'Send back to Concept' }),
+    ).toHaveCount(0);
+
+    // Published.
+    await openPublished(page, { id: 'd8-pub' });
+    await page.locator('app-post-detail-header .detail-menu-btn').click();
+    await expect(
+      page.locator('.detail-menu-item', { hasText: 'Send back to Concept' }),
+    ).toHaveCount(0);
+  });
+});
+
+
