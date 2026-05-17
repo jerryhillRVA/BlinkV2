@@ -3,11 +3,14 @@ import { Observable, Subject, of, throwError } from 'rxjs';
 import type {
   AiAssistRequestContract,
   AiAssistResponseContract,
+  ConceptDraftContract,
+  ConceptDraftSnapshotContract,
   GenerateIdeasRequestContract,
   GenerateIdeasResponseContract,
 } from '@blinksocial/contracts';
 import { ContentCreateStore } from './content-create.store';
 import { AiAssistApiService } from '../../../../core/ai-assist/ai-assist.service';
+import { ConceptDraftApiService } from '../../../../core/concept-draft/concept-draft-api.service';
 import { GeneratedIdeasApiService } from '../../../../core/generated-ideas/generated-ideas.service';
 import { ToastService } from '../../../../core/toast/toast.service';
 import type {
@@ -18,7 +21,6 @@ import type {
   ProductionConceptPayload,
   BriefPayload,
 } from '../../content.types';
-import { AI_SIMULATION_DELAY_MS } from '../../content.constants';
 
 const PILLARS: ContentPillar[] = [
   { id: 'p1', name: 'Pillar One', description: '', color: '#fff' },
@@ -36,8 +38,17 @@ interface SetupHandles {
   store: ContentCreateStore;
   api: { generate: ReturnType<typeof vi.fn> };
   aiAssist: { assist: ReturnType<typeof vi.fn> };
+  conceptDraft: { generate: ReturnType<typeof vi.fn> };
   toast: { showError: ReturnType<typeof vi.fn>; showSuccess: ReturnType<typeof vi.fn> };
 }
+
+const STUB_DRAFT: ConceptDraftContract = {
+  description: 'Generated description text.',
+  hook: 'Generated hook line.',
+  cta: { type: 'comment', text: 'Drop your thoughts in the comments below' },
+  pillarIdFallback: 'p1',
+  segmentIdsFallback: ['s1', 's2'],
+};
 
 function setup(workspaceId: string | null = 'w1'): ContentCreateStore {
   return setupWithHandles(workspaceId).store;
@@ -59,19 +70,23 @@ function setupWithHandles(workspaceId: string | null = 'w1'): SetupHandles {
   const aiAssist = {
     assist: vi.fn().mockReturnValue(of<AiAssistResponseContract>({ values: ['stub'] })),
   };
+  const conceptDraft = {
+    generate: vi.fn().mockReturnValue(of<ConceptDraftContract>(STUB_DRAFT)),
+  };
   const toast = { showError: vi.fn(), showSuccess: vi.fn() };
   TestBed.configureTestingModule({
     providers: [
       ContentCreateStore,
       { provide: GeneratedIdeasApiService, useValue: api },
       { provide: AiAssistApiService, useValue: aiAssist },
+      { provide: ConceptDraftApiService, useValue: conceptDraft },
       { provide: ToastService, useValue: toast },
     ],
   });
   const store = TestBed.inject(ContentCreateStore);
   store.setContext(PILLARS, SEGMENTS);
   store.setWorkspaceId(workspaceId);
-  return { store, api, aiAssist, toast };
+  return { store, api, aiAssist, conceptDraft, toast };
 }
 
 describe('ContentCreateStore — basic mutations', () => {
@@ -376,41 +391,133 @@ describe('ContentCreateStore — brief validation', () => {
   });
 });
 
-describe('ContentCreateStore — AI actions (fake timers)', () => {
-  beforeEach(() => vi.useFakeTimers());
-  afterEach(() => vi.useRealTimers());
-
-  it('generateConcept no-op without title + objective', () => {
-    const store = setup();
+describe('ContentCreateStore — generateConcept', () => {
+  it('no-ops without title', () => {
+    const { store, conceptDraft } = setupWithHandles();
+    store.patch({ objective: 'engagement' });
     store.generateConcept();
+    expect(conceptDraft.generate).not.toHaveBeenCalled();
     expect(store.state().isGeneratingConcept).toBe(false);
   });
 
-  it('generateConcept flips flag then resolves with description + hook', () => {
-    const store = setup();
-    store.setType('concept');
-    store.patch({ title: 'T', objective: 'awareness' });
+  it('no-ops without objective', () => {
+    const { store, conceptDraft } = setupWithHandles();
+    store.patch({ title: 'X' });
+    store.generateConcept();
+    expect(conceptDraft.generate).not.toHaveBeenCalled();
+    expect(store.state().isGeneratingConcept).toBe(false);
+  });
+
+  it('no-ops when a request is already in-flight (concurrency guard)', () => {
+    const { store, conceptDraft } = setupWithHandles();
+    conceptDraft.generate.mockReturnValue(new Subject<ConceptDraftContract>());
+    store.patch({ title: 'X', objective: 'engagement' });
     store.generateConcept();
     expect(store.state().isGeneratingConcept).toBe(true);
-    vi.advanceTimersByTime(AI_SIMULATION_DELAY_MS);
+    store.generateConcept();
+    expect(conceptDraft.generate).toHaveBeenCalledTimes(1);
+  });
+
+  it('no-ops when workspaceId is null', () => {
+    const { store, conceptDraft } = setupWithHandles(null);
+    store.patch({ title: 'X', objective: 'engagement' });
+    store.generateConcept();
+    expect(conceptDraft.generate).not.toHaveBeenCalled();
     expect(store.state().isGeneratingConcept).toBe(false);
-    expect(store.state().description.length).toBeGreaterThan(0);
-    expect(store.state().hook.length).toBeGreaterThan(0);
+  });
+
+  it('POSTs the draft snapshot and applies all returned fields on success', () => {
+    const { store, conceptDraft } = setupWithHandles();
+    store.setType('concept');
+    store.patch({
+      title: 'Why teams need rituals',
+      objective: 'engagement',
+      pillarIds: [],
+      segmentIds: [],
+    });
+    store.generateConcept();
+    expect(conceptDraft.generate).toHaveBeenCalledWith('w1', {
+      title: 'Why teams need rituals',
+      objective: 'engagement',
+      pillarIds: [],
+      segmentIds: [],
+    } satisfies ConceptDraftSnapshotContract);
+    expect(store.state().description).toBe(STUB_DRAFT.description);
+    expect(store.state().hook).toBe(STUB_DRAFT.hook);
+    expect(store.state().ctaType).toBe('comment');
+    expect(store.state().ctaText).toBe('Drop your thoughts in the comments below');
+    expect(store.state().pillarIds).toEqual(['p1']);
+    expect(store.state().segmentIds).toEqual(['s1', 's2']);
+    expect(store.state().isGeneratingConcept).toBe(false);
     expect(store.state().conceptAiGenerated).toBe(true);
     expect(store.state().conceptFilledByAI).toBe(true);
   });
 
-  it('generateConcept fallback-fills pillars and segments when empty', () => {
-    const store = setup();
+  it('does not patch cta fields when response cta is null', () => {
+    const { store, conceptDraft } = setupWithHandles();
+    conceptDraft.generate.mockReturnValue(
+      of<ConceptDraftContract>({ ...STUB_DRAFT, cta: null }),
+    );
     store.setType('concept');
-    store.patch({ title: 'T', objective: 'awareness' });
+    store.patch({
+      title: 'T',
+      objective: 'community',
+      ctaType: 'follow',
+      ctaText: 'follow me',
+    });
     store.generateConcept();
-    vi.advanceTimersByTime(AI_SIMULATION_DELAY_MS);
-    expect(store.state().pillarIds).toEqual(['p1']);
-    expect(store.state().segmentIds).toEqual(['s1', 's2']);
+    expect(store.state().ctaType).toBe('follow');
+    expect(store.state().ctaText).toBe('follow me');
   });
 
+  it('preserves user-selected pillar chips when response pillarIdFallback is null', () => {
+    const { store, conceptDraft } = setupWithHandles();
+    conceptDraft.generate.mockReturnValue(
+      of<ConceptDraftContract>({
+        ...STUB_DRAFT,
+        pillarIdFallback: null,
+        segmentIdsFallback: [],
+      }),
+    );
+    store.setType('concept');
+    store.patch({
+      title: 'T',
+      objective: 'engagement',
+      pillarIds: ['p2'],
+      segmentIds: ['s3'],
+    });
+    store.generateConcept();
+    expect(store.state().pillarIds).toEqual(['p2']);
+    expect(store.state().segmentIds).toEqual(['s3']);
+  });
 
+  it('shows toast and clears spinner on HTTP error, leaving form fields unchanged', () => {
+    const { store, conceptDraft, toast } = setupWithHandles();
+    conceptDraft.generate.mockReturnValue(throwError(() => new Error('502')));
+    store.setType('concept');
+    store.patch({
+      title: 'T',
+      objective: 'engagement',
+      description: 'original-desc',
+      hook: 'original-hook',
+      pillarIds: ['p2'],
+      segmentIds: ['s3'],
+      ctaType: 'follow',
+      ctaText: 'original-cta',
+    });
+    store.generateConcept();
+    expect(toast.showError).toHaveBeenCalledWith('AI Assist failed. Please try again.');
+    expect(store.state().isGeneratingConcept).toBe(false);
+    expect(store.state().description).toBe('original-desc');
+    expect(store.state().hook).toBe('original-hook');
+    expect(store.state().pillarIds).toEqual(['p2']);
+    expect(store.state().segmentIds).toEqual(['s3']);
+    expect(store.state().ctaType).toBe('follow');
+    expect(store.state().ctaText).toBe('original-cta');
+  });
+});
+
+describe('ContentCreateStore — generateIdeas', () => {
   it('generateIdeas no-op without focus pillars', () => {
     const { store, api } = setupWithHandles();
     store.generateIdeas();

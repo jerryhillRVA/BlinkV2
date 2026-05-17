@@ -2,6 +2,7 @@ import { DestroyRef, Injectable, computed, inject, signal } from '@angular/core'
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import type { AiAssistDraftFieldContract } from '@blinksocial/contracts';
 import { AiAssistApiService } from '../../../../core/ai-assist/ai-assist.service';
+import { ConceptDraftApiService } from '../../../../core/concept-draft/concept-draft-api.service';
 import { GeneratedIdeasApiService } from '../../../../core/generated-ideas/generated-ideas.service';
 import { ToastService } from '../../../../core/toast/toast.service';
 import type {
@@ -22,7 +23,6 @@ import type {
   TonePreset,
 } from '../../content.types';
 import {
-  AI_SIMULATION_DELAY_MS,
   DESCRIPTION_MAX_CHARS,
   DESCRIPTION_MIN_CHARS,
   HOOK_MAX_CHARS,
@@ -30,8 +30,7 @@ import {
   KEY_MESSAGE_MAX_CHARS,
   MAX_PILLARS_PER_ITEM,
 } from '../../content.constants';
-import { safeTimeout, toggleArrayItem } from '../../content.utils';
-import { generateConceptFromObjective } from './content-create.ai';
+import { toggleArrayItem } from '../../content.utils';
 
 export interface FormState {
   type: ContentItemType;
@@ -96,6 +95,7 @@ export class ContentCreateStore {
   private readonly destroyRef = inject(DestroyRef);
   private readonly generatedIdeasApi = inject(GeneratedIdeasApiService);
   private readonly aiAssist = inject(AiAssistApiService);
+  private readonly conceptDraftApi = inject(ConceptDraftApiService);
   private readonly toast = inject(ToastService);
   /* v8 ignore next 4 — V8's function-call-throws branches on input()/signal() declarations are unreachable (Angular class-field init time; ESM exports not spy-able) */
   private readonly _state = signal<FormState>({ ...INITIAL_FORM_STATE });
@@ -254,42 +254,47 @@ export class ContentCreateStore {
   readonly canMoveToProduction = computed(() => this.productionValid());
   readonly canDraftAssets = computed(() => this.briefValid());
 
-  // --- AI actions (simulated) ---------------------------------------------
+  // --- AI actions ----------------------------------------------------------
   generateConcept(): void {
     const s = this._state();
-    if (!s.title.trim() || !s.objective) return;
+    if (!s.title.trim() || !s.objective || s.isGeneratingConcept) return;
+    const workspaceId = this._workspaceId();
+    if (!workspaceId) return;
     this.patch({ isGeneratingConcept: true });
-    safeTimeout(
-      () => {
-        const result = generateConceptFromObjective(
-          s.objective as ContentObjective,
-          s.pillarIds,
-          this._pillars(),
-          this._segments(),
-          s.segmentIds,
-        );
-        const patch: Partial<FormState> = {
-          description: result.description,
-          hook: result.hook,
-          isGeneratingConcept: false,
-          conceptAiGenerated: true,
-          conceptFilledByAI: true,
-        };
-        if (result.cta) {
-          patch.ctaType = result.cta.type;
-          patch.ctaText = result.cta.text;
-        }
-        if (result.pillarIdFallback) {
-          patch.pillarIds = [result.pillarIdFallback];
-        }
-        if (result.segmentIdsFallback.length > 0) {
-          patch.segmentIds = result.segmentIdsFallback;
-        }
-        this.patch(patch);
-      },
-      AI_SIMULATION_DELAY_MS,
-      this.destroyRef,
-    );
+    this.conceptDraftApi
+      .generate(workspaceId, {
+        title: s.title.trim(),
+        objective: s.objective as ContentObjective,
+        pillarIds: [...s.pillarIds],
+        segmentIds: [...s.segmentIds],
+      })
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (draft) => {
+          const patch: Partial<FormState> = {
+            description: draft.description,
+            hook: draft.hook,
+            isGeneratingConcept: false,
+            conceptAiGenerated: true,
+            conceptFilledByAI: true,
+          };
+          if (draft.cta) {
+            patch.ctaType = draft.cta.type;
+            patch.ctaText = draft.cta.text;
+          }
+          if (draft.pillarIdFallback) {
+            patch.pillarIds = [draft.pillarIdFallback];
+          }
+          if (draft.segmentIdsFallback.length > 0) {
+            patch.segmentIds = draft.segmentIdsFallback;
+          }
+          this.patch(patch);
+        },
+        error: () => {
+          this.patch({ isGeneratingConcept: false });
+          this.toast.showError('AI Assist failed. Please try again.');
+        },
+      });
   }
 
   assistDescription(): void {
