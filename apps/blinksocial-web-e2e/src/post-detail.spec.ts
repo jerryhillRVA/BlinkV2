@@ -1534,3 +1534,241 @@ test.describe('Audio Planning — strategy + mood (#147)', () => {
     await expect(page.locator('app-audio-planning-section .mood-region')).toBeVisible();
   });
 });
+
+// #140 Publish Flow — Finish button + pipeline transitions + calendar
+// per-status events. Drives the Finish action through each of its five
+// branches and verifies UI + pipeline-column landing.
+test.describe('Publish Flow — Finish action (#140)', () => {
+  const POST_BUILDER_COL = 2;
+  const SCHEDULED_COL = 3;
+  const PUBLISHED_COL = 4;
+
+  test.beforeEach(async ({ page }) => {
+    await mockAuthenticatedUser(page);
+  });
+
+  /**
+   * Seed an approved IG Reel directly on the Approve & Schedule step with
+   * a fully-approved workflow and a chosen publishAction. Returns the
+   * (id, title) pair for downstream assertions.
+   */
+  async function openApprovedQA(
+    page: Page,
+    options: {
+      id: string;
+      title?: string;
+      publishAction: 'save-draft' | 'schedule' | 'publish-now' | 'export-packet';
+      scheduledAt?: string;
+    },
+  ): Promise<{ id: string; title: string }> {
+    const title = options.title ?? `Finish-flow ${options.id}`;
+    const entry = {
+      ...approvedPostEntry({
+        id: options.id,
+        title,
+        platform: 'instagram',
+        contentType: 'reel',
+      }),
+      status: 'review' as const,
+    };
+    const detail = {
+      ...approvedPostInQA({
+        id: options.id,
+        title,
+        platform: 'instagram',
+        contentType: 'reel',
+      }),
+      status: 'review' as const,
+      ...(options.scheduledAt ? { scheduledAt: options.scheduledAt } : {}),
+      production: {
+        ...approvedPostInQA({
+          id: options.id,
+          title,
+          platform: 'instagram',
+          contentType: 'reel',
+        }).production,
+        qa: {
+          approved: true,
+          publishConfig: {
+            publishAction: options.publishAction,
+            deliveryMethod: 'auto' as const,
+          },
+          approvals: [
+            {
+              role: 'brand-reviewer',
+              label: 'Brand Reviewer',
+              required: true,
+              status: 'approved' as const,
+              timestamp: new Date().toISOString(),
+            },
+          ],
+        },
+      },
+    };
+    await mockHiveContent(page, { indexItems: [entry], details: { [options.id]: detail } });
+    await page.goto(`/workspace/hive-collective/content/${options.id}`);
+    await expect(page.locator('app-post-detail')).toBeVisible();
+    await expect(page.locator('app-approve-schedule-step')).toBeVisible();
+    return { id: options.id, title };
+  }
+
+  test('TC-E1: Finish + Save Draft keeps the post in Post Builder', async ({ page }) => {
+    const { title } = await openApprovedQA(page, {
+      id: 'finish-tc-e1',
+      publishAction: 'save-draft',
+    });
+    const finishBtn = page.locator('app-step-action-bar .continue-btn');
+    await expect(finishBtn).toBeEnabled();
+    await finishBtn.click();
+    // No navigation away — toast container is the only visible side effect.
+    await expect(page.locator('app-approve-schedule-step')).toBeVisible();
+    // Verify the pipeline column membership stays in Post Builder.
+    await page.locator('app-post-detail-header .detail-back').click();
+    await expect(page.locator('app-pipeline-view')).toBeVisible();
+    const pb = page.locator('.kanban-column').nth(POST_BUILDER_COL);
+    await expect(pb.locator('.content-card', { hasText: title })).toBeVisible();
+  });
+
+  test('TC-E2: Finish + Schedule moves card to Scheduled with the new card variant', async ({
+    page,
+  }) => {
+    const { title } = await openApprovedQA(page, {
+      id: 'finish-tc-e2',
+      publishAction: 'schedule',
+      scheduledAt: '2099-01-15T15:00:00.000Z',
+    });
+    await page.locator('app-step-action-bar .continue-btn').click();
+    // Wait for navigation back to the pipeline.
+    await expect(page.locator('app-pipeline-view')).toBeVisible();
+    const scheduledCol = page.locator('.kanban-column').nth(SCHEDULED_COL);
+    await expect(scheduledCol.locator('.column-title')).toContainText('Scheduled');
+    await expect(scheduledCol.locator('app-pipeline-card-scheduled', { hasText: title })).toBeVisible();
+    await expect(
+      scheduledCol.locator('app-pipeline-card-scheduled [data-pill="exported"]', {
+        hasText: 'Exported',
+      }),
+    ).toHaveCount(0);
+  });
+
+  test('TC-E3: Finish + Publish Now moves card to Published with placeholder metrics', async ({
+    page,
+  }) => {
+    const { title } = await openApprovedQA(page, {
+      id: 'finish-tc-e3',
+      publishAction: 'publish-now',
+    });
+    await page.locator('app-step-action-bar .continue-btn').click();
+    await expect(page.locator('app-pipeline-view')).toBeVisible();
+    const publishedCol = page.locator('.kanban-column').nth(PUBLISHED_COL);
+    await expect(publishedCol.locator('.column-title')).toContainText('Published');
+    const card = publishedCol.locator('app-pipeline-card-published', { hasText: title });
+    await expect(card).toBeVisible();
+    await expect(card.locator('[data-pill="published"]')).toBeVisible();
+    await expect(card.locator('.pc-metric')).toHaveCount(3);
+    await expect(card.locator('[data-pill="exported"]')).toHaveCount(0);
+  });
+
+  test('TC-E4: Export Packet (no date) — confirm dialog → Published + Exported pill', async ({
+    page,
+  }) => {
+    const { title } = await openApprovedQA(page, {
+      id: 'finish-tc-e4',
+      publishAction: 'export-packet',
+    });
+    await page.locator('app-step-action-bar .continue-btn').click();
+    // Dialog opens; focus on Download. ESC cancels.
+    const dialog = page.locator('app-confirm-dialog .cd-dialog');
+    await expect(dialog).toBeVisible();
+    await expect(dialog.locator('.cd-title')).toContainText('Download Export Packet');
+    await page.keyboard.press('Escape');
+    await expect(dialog).toHaveCount(0);
+    // Re-open and confirm.
+    await page.locator('app-step-action-bar .continue-btn').click();
+    await expect(page.locator('app-confirm-dialog .cd-btn--primary')).toBeVisible();
+    // Wait for the persistence PUT to flush so isExported=true lands in
+    // the cache BEFORE we navigate to the pipeline.
+    const exportPutE4 = page.waitForResponse(
+      (res) =>
+        res.url().includes('/api/workspaces/hive-collective/content-items/finish-tc-e4') &&
+        res.request().method() === 'PUT',
+    );
+    await page.locator('app-confirm-dialog .cd-btn--primary').click();
+    await exportPutE4;
+    await expect(page.locator('app-pipeline-view')).toBeVisible();
+    const publishedCol = page.locator('.kanban-column').nth(PUBLISHED_COL);
+    const card = publishedCol.locator('app-pipeline-card-published', { hasText: title });
+    await expect(card).toBeVisible();
+    await expect(card.locator('[data-pill="published"]')).toBeVisible();
+    await expect(card.locator('[data-pill="exported"]')).toBeVisible();
+  });
+
+  test('TC-E5: Export Packet (future date) — confirm → Scheduled + Exported pill', async ({
+    page,
+  }) => {
+    const { title } = await openApprovedQA(page, {
+      id: 'finish-tc-e5',
+      publishAction: 'export-packet',
+      scheduledAt: '2099-01-15T15:00:00.000Z',
+    });
+    await page.locator('app-step-action-bar .continue-btn').click();
+    const exportPutE5 = page.waitForResponse(
+      (res) =>
+        res.url().includes('/api/workspaces/hive-collective/content-items/finish-tc-e5') &&
+        res.request().method() === 'PUT',
+    );
+    await page.locator('app-confirm-dialog .cd-btn--primary').click();
+    await exportPutE5;
+    await expect(page.locator('app-pipeline-view')).toBeVisible();
+    const scheduledCol = page.locator('.kanban-column').nth(SCHEDULED_COL);
+    const card = scheduledCol.locator('app-pipeline-card-scheduled', { hasText: title });
+    await expect(card).toBeVisible();
+    await expect(card.locator('[data-pill="scheduled"]')).toBeVisible();
+    await expect(card.locator('[data-pill="exported"]')).toBeVisible();
+  });
+
+  test('TC-E6: Finish button disabled-state surfaces the tooltip', async ({ page }) => {
+    // Set up an approved post BUT keep approvals pending so the Finish
+    // button stays disabled.
+    const id = 'finish-tc-e6';
+    const title = 'Finish-flow disabled';
+    const entry = {
+      ...approvedPostEntry({ id, title, platform: 'instagram', contentType: 'reel' }),
+      status: 'review' as const,
+    };
+    const baseDetail = approvedPostInQA({
+      id, title, platform: 'instagram', contentType: 'reel',
+    });
+    const detail = {
+      ...baseDetail,
+      status: 'review' as const,
+      production: {
+        ...baseDetail.production,
+        qa: {
+          publishConfig: { publishAction: 'publish-now' as const, deliveryMethod: 'auto' as const },
+          approvals: [
+            {
+              role: 'brand-reviewer',
+              label: 'Brand Reviewer',
+              required: true,
+              status: 'pending' as const,
+            },
+          ],
+        },
+      },
+    };
+    await mockHiveContent(page, { indexItems: [entry], details: { [id]: detail } });
+    await page.goto(`/workspace/hive-collective/content/${id}`);
+    await expect(page.locator('app-approve-schedule-step')).toBeVisible();
+
+    const finishBtn = page.locator('app-step-action-bar .continue-btn');
+    await expect(finishBtn).toBeDisabled();
+    await expect(finishBtn).toHaveAttribute(
+      'aria-describedby',
+      'finish-disabled-hint',
+    );
+    await expect(page.locator('#finish-disabled-hint')).toContainText(
+      'Post must be approved before finishing',
+    );
+  });
+});
+

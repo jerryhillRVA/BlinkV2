@@ -49,6 +49,10 @@ function indexEntryToItem(entry: ContentItemsIndexEntryContract): ContentItem {
     // components read.
     conceptId: entry.parentConceptId ?? undefined,
     scheduledAt: entry.scheduledAt ?? undefined,
+    // #140: lite-entry surfaced fields so Scheduled/Published cards
+    // render correctly without a full-item cache hit.
+    publishedAt: entry.publishedAt,
+    isExported: entry.isExported,
     archived: entry.archived ?? false,
     createdAt: entry.createdAt,
     updatedAt: entry.updatedAt,
@@ -158,6 +162,9 @@ function itemToIndexEntry(
     parentIdeaId: item.parentIdeaId ?? null,
     parentConceptId: item.parentConceptId ?? null,
     scheduledAt: item.scheduledAt ?? null,
+    // #140
+    publishedAt: item.publishedAt,
+    isExported: item.isExported,
     archived: item.archived ?? false,
     createdAt: item.createdAt,
     updatedAt: item.updatedAt,

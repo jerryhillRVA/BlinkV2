@@ -268,6 +268,9 @@ export const mockHiveContent = async (
         : next.parentConceptId,
     scheduledAt:
       next.scheduledAt === undefined ? prev.scheduledAt : next.scheduledAt,
+    // #140: keep new lite-entry fields in sync after PUTs.
+    publishedAt: next.publishedAt === undefined ? prev.publishedAt : next.publishedAt,
+    isExported: next.isExported === undefined ? prev.isExported : next.isExported,
     archived: next.archived ?? prev.archived,
     updatedAt: next.updatedAt ?? prev.updatedAt,
   });
