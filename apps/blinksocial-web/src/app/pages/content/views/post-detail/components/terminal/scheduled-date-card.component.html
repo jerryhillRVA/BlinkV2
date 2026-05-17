@@ -1,0 +1,51 @@
+<section class="sd-card" aria-labelledby="sd-card-title">
+  <header class="sd-card-header">
+    <span id="sd-card-title" class="sd-card-eyebrow">Scheduled Date</span>
+  </header>
+
+  <div class="sd-card-body">
+    <span class="sd-date-value">
+      <app-icon name="clock" size="14" class="sd-date-icon" />
+      <span class="sd-date-text">{{ formattedDate() }}</span>
+    </span>
+
+    <button
+      #triggerBtn
+      type="button"
+      class="sd-edit-btn"
+      [disabled]="disabled()"
+      aria-label="Edit scheduled date"
+      (click)="onOpen()"
+    >
+      <app-icon name="pencil" size="14" />
+    </button>
+  </div>
+
+  @if (popoverOpen()) {
+    <div
+      class="sd-popover"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="sd-popover-title"
+      cdkTrapFocus
+      [cdkTrapFocusAutoCapture]="true"
+    >
+      <span id="sd-popover-title" class="sd-popover-title">Reschedule</span>
+      <input
+        type="datetime-local"
+        class="sd-popover-input"
+        aria-label="Scheduled date and time"
+        [value]="draftLocal()"
+        (input)="onInputChange($event)"
+      />
+      <div class="sd-popover-actions">
+        <button type="button" class="sd-btn sd-btn--secondary" (click)="onCancel()">
+          Cancel
+        </button>
+        <button type="button" class="sd-btn sd-btn--primary" (click)="onSave()">
+          Save
+        </button>
+      </div>
+    </div>
+  }
+</section>

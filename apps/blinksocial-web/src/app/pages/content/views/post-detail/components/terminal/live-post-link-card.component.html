@@ -1,0 +1,33 @@
+<section class="lp-card" aria-labelledby="lp-card-title">
+  <header class="lp-card-header">
+    <span id="lp-card-title" class="lp-card-eyebrow">Live Post Link</span>
+    @if (resolvedUrl()) {
+      <a
+        class="lp-external"
+        [href]="resolvedUrl()"
+        target="_blank"
+        rel="noopener noreferrer"
+        aria-label="Open live post in a new tab"
+      >
+        <app-icon name="external-link" size="14" />
+      </a>
+    }
+  </header>
+
+  @if (editable()) {
+    <input
+      id="live-post-url-input"
+      class="lp-input"
+      type="url"
+      [value]="resolvedUrl()"
+      placeholder="Paste the published post URL…"
+      aria-label="Live post URL"
+      (input)="onInput($event)"
+      (focus)="onFocus($event)"
+      (blur)="onBlur($event)"
+      (keydown)="onKeydown($event)"
+    />
+  } @else {
+    <p class="lp-readonly">{{ resolvedUrl() || '—' }}</p>
+  }
+</section>

@@ -1,0 +1,155 @@
+:host {
+  display: block;
+  position: relative;
+}
+
+.sd-card {
+  background: var(--blink-surface);
+  border: 1px solid var(--blink-outline-variant);
+  border-radius: 8px;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.sd-card-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.sd-card-eyebrow {
+  font-size: var(--blink-label-small);
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--blink-on-surface-faint);
+}
+
+.sd-card-body {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.sd-date-value {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--blink-body-medium);
+  color: var(--blink-on-surface);
+}
+
+.sd-date-icon {
+  color: var(--blink-scheduled-card-accent);
+}
+
+.sd-edit-btn {
+  appearance: none;
+  cursor: pointer;
+  background: transparent;
+  border: none;
+  padding: 4px;
+  color: var(--blink-on-surface-faint);
+  border-radius: 4px;
+
+  &:hover:not(:disabled) {
+    color: var(--blink-on-surface);
+    background: var(--blink-surface-hover);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--blink-brand-primary);
+    outline-offset: 2px;
+  }
+
+  &:disabled {
+    cursor: not-allowed;
+    opacity: 0.5;
+  }
+}
+
+.sd-popover {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  margin-top: 6px;
+  z-index: 100;
+  width: 280px;
+  background: var(--blink-surface);
+  border: 1px solid var(--blink-outline-variant);
+  border-radius: 8px;
+  box-shadow: var(--blink-shadow-lg);
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.sd-popover-title {
+  font-size: var(--blink-label-small);
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--blink-on-surface-faint);
+}
+
+.sd-popover-input {
+  width: 100%;
+  height: 32px;
+  padding: 0 10px;
+  font-family: inherit;
+  font-size: var(--blink-body-medium);
+  color: var(--blink-on-surface);
+  background: var(--blink-input-bg-dark);
+  border: 1px solid transparent;
+  border-radius: 6px;
+
+  &:focus-visible {
+    outline: 2px solid var(--blink-brand-primary);
+    outline-offset: 1px;
+  }
+}
+
+.sd-popover-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 6px;
+}
+
+.sd-btn {
+  appearance: none;
+  cursor: pointer;
+  padding: 6px 12px;
+  font-family: inherit;
+  font-size: var(--blink-body-small);
+  font-weight: 600;
+  border-radius: 6px;
+  border: 1px solid transparent;
+
+  &:focus-visible {
+    outline: 2px solid var(--blink-brand-primary);
+    outline-offset: 2px;
+  }
+}
+
+.sd-btn--secondary {
+  background: transparent;
+  color: var(--blink-on-surface);
+  border-color: var(--blink-outline-variant);
+
+  &:hover {
+    background: var(--blink-surface-hover);
+  }
+}
+
+.sd-btn--primary {
+  background: var(--blink-brand-primary);
+  color: white;
+
+  &:hover {
+    background: var(--blink-brand-primary-active, var(--blink-brand-primary));
+  }
+}

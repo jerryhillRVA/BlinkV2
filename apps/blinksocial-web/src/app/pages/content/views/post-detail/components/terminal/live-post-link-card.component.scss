@@ -1,0 +1,73 @@
+:host {
+  display: block;
+}
+
+.lp-card {
+  background: var(--blink-surface);
+  border: 1px solid var(--blink-outline-variant);
+  border-radius: 8px;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.lp-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.lp-card-eyebrow {
+  font-size: var(--blink-label-small);
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--blink-on-surface-faint);
+}
+
+.lp-external {
+  color: var(--blink-on-surface-faint);
+  display: inline-flex;
+  padding: 4px;
+  border-radius: 4px;
+
+  &:hover {
+    color: var(--blink-on-surface);
+    background: var(--blink-surface-hover);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--blink-brand-primary);
+    outline-offset: 2px;
+  }
+}
+
+.lp-readonly {
+  margin: 0;
+  font-size: var(--blink-body-medium);
+  color: var(--blink-on-surface);
+  word-break: break-all;
+}
+
+.lp-input {
+  width: 100%;
+  height: 32px;
+  padding: 0 10px;
+  font-family: inherit;
+  font-size: var(--blink-body-medium);
+  color: var(--blink-on-surface);
+  background: var(--blink-input-bg-dark);
+  border: 1px solid transparent;
+  border-radius: 6px;
+
+  &::placeholder {
+    color: var(--blink-on-surface-muted);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--blink-brand-primary);
+    outline-offset: 1px;
+  }
+}

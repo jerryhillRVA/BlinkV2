@@ -1,0 +1,28 @@
+<section class="perf-card" aria-labelledby="perf-card-title">
+  <header class="perf-card-header">
+    <span id="perf-card-title" class="perf-card-eyebrow">Performance</span>
+    <button
+      type="button"
+      class="perf-refresh-btn"
+      aria-label="Refresh performance data"
+      (click)="onRefreshClick()"
+    >
+      <app-icon name="refresh-cw" size="14" />
+    </button>
+  </header>
+
+  @if (!hasMetrics()) {
+    <p class="perf-empty">
+      No performance data yet. Add the live post link to enable tracking.
+    </p>
+  } @else {
+    <ul class="perf-rows">
+      @for (row of rows(); track row.key) {
+        <li class="perf-row">
+          <span class="perf-row-label">{{ row.label }}</span>
+          <span class="perf-row-value">{{ row.display }}</span>
+        </li>
+      }
+    </ul>
+  }
+</section>
