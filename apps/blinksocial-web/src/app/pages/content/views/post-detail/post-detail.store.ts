@@ -1317,6 +1317,50 @@ export class PostDetailStore {
     });
   }
 
+  /**
+   * #146: write the live-post URL on a Published item. For Export
+   * Packet items (`isExported`) whose `publishedAt` is missing,
+   * also stamp `publishedAt = now` on the first save — matches spec
+   * §4 "How publishedAt is set" for the Export Packet path. No-op
+   * if the item isn't currently `published` (the Live Post Link
+   * card is Published-detail-only).
+   */
+  setLivePostUrl(url: string): void {
+    const item = this.item();
+    if (!item) return;
+    if (item.status !== 'published') return;
+    const trimmed = url.trim();
+    const patch: Partial<ContentItem> = {
+      livePostUrl: trimmed || undefined,
+    };
+    if (item.isExported && !item.publishedAt && trimmed) {
+      patch.publishedAt = new Date().toISOString();
+    }
+    this.state.saveItem({
+      ...item,
+      ...patch,
+      updatedAt: new Date().toISOString(),
+    });
+  }
+
+  /**
+   * #146: revert a Scheduled post back to in-progress and navigate
+   * into the QA step. Reverses #140's Finish gate so the user can
+   * re-edit + Finish again. No-op unless current status is
+   * `scheduled` (Published items don't have an Edit action).
+   */
+  revertToInProgress(): void {
+    const item = this.item();
+    if (!item) return;
+    if (item.status !== 'scheduled') return;
+    this.state.saveItem({
+      ...item,
+      status: 'in-progress',
+      updatedAt: new Date().toISOString(),
+    });
+    this.activeStep.set('qa');
+  }
+
   // Patch the production.qa slot. Same briefApproved write-lock as the
   // draft/packaging slots — Approve & Schedule is downstream of brief
   // approval and cannot be edited before the brief is approved.

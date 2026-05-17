@@ -2074,3 +2074,123 @@ describe('ContentStateService — downgradeOrphanedScheduled (#140)', () => {
     expect(second?.status).toBe('review');
   });
 });
+
+// Ticket #146 — Scheduled/Published detail mutations
+describe('PostDetailStore — setLivePostUrl (#146)', () => {
+  function publishedItem(partial: Partial<ContentItem> = {}): ContentItem {
+    return makeItem({
+      status: 'published',
+      briefApproved: true,
+      publishedAt: '2026-05-15T15:00:00.000Z',
+      livePostUrl: 'https://www.instagram.com/p/seed',
+      ...partial,
+    });
+  }
+
+  it('writes livePostUrl on a Publish Now item (isExported=false)', () => {
+    const { store, state } = setup(publishedItem({ isExported: false }));
+    store.setLivePostUrl('https://www.instagram.com/p/edited');
+    const saved = state.items().find((i) => i.id === 'post-1');
+    expect(saved?.livePostUrl).toBe('https://www.instagram.com/p/edited');
+    // publishedAt unchanged for Publish Now path.
+    expect(saved?.publishedAt).toBe('2026-05-15T15:00:00.000Z');
+  });
+
+  it('auto-stamps publishedAt on first save for Export Packet when publishedAt missing', () => {
+    const { store, state } = setup(
+      publishedItem({
+        isExported: true,
+        publishedAt: undefined,
+        livePostUrl: undefined,
+      }),
+    );
+    const before = Date.now();
+    store.setLivePostUrl('https://www.instagram.com/p/first-save');
+    const saved = state.items().find((i) => i.id === 'post-1');
+    expect(saved?.livePostUrl).toBe('https://www.instagram.com/p/first-save');
+    expect(saved?.publishedAt).toBeDefined();
+    expect(new Date(saved!.publishedAt!).getTime()).toBeGreaterThanOrEqual(before);
+  });
+
+  it('does NOT re-stamp publishedAt on a subsequent URL edit', () => {
+    const seedDate = '2026-05-15T15:00:00.000Z';
+    const { store, state } = setup(
+      publishedItem({
+        isExported: true,
+        publishedAt: seedDate,
+        livePostUrl: 'https://www.instagram.com/p/old',
+      }),
+    );
+    store.setLivePostUrl('https://www.instagram.com/p/new');
+    const saved = state.items().find((i) => i.id === 'post-1');
+    expect(saved?.livePostUrl).toBe('https://www.instagram.com/p/new');
+    expect(saved?.publishedAt).toBe(seedDate);
+  });
+
+  it('clears livePostUrl when given an empty string and does NOT auto-stamp publishedAt', () => {
+    const { store, state } = setup(
+      publishedItem({
+        isExported: true,
+        publishedAt: undefined,
+        livePostUrl: 'https://x',
+      }),
+    );
+    store.setLivePostUrl('   ');
+    const saved = state.items().find((i) => i.id === 'post-1');
+    expect(saved?.livePostUrl).toBeUndefined();
+    expect(saved?.publishedAt).toBeUndefined();
+  });
+
+  it('no-op when item status is scheduled', () => {
+    const { store, state } = setup(
+      makeItem({ status: 'scheduled', briefApproved: true }),
+    );
+    store.setLivePostUrl('https://x');
+    const saved = state.items().find((i) => i.id === 'post-1');
+    expect(saved?.livePostUrl).toBeUndefined();
+  });
+
+  it('no-op when item is not found', () => {
+    const { store, state } = setup();
+    store.setItemId('missing');
+    expect(() => store.setLivePostUrl('https://x')).not.toThrow();
+    expect(state.items().find((i) => i.id === 'missing')).toBeUndefined();
+  });
+});
+
+describe('PostDetailStore — revertToInProgress (#146)', () => {
+  function scheduledItem(): ContentItem {
+    return makeItem({
+      status: 'scheduled',
+      briefApproved: true,
+      scheduledAt: '2099-06-01T15:00:00.000Z',
+      production: {
+        qa: {
+          publishConfig: { publishAction: 'schedule', deliveryMethod: 'auto' },
+        },
+      },
+    });
+  }
+
+  it('flips status to in-progress and navigates to qa', () => {
+    const { store, state } = setup(scheduledItem());
+    store.revertToInProgress();
+    const saved = state.items().find((i) => i.id === 'post-1');
+    expect(saved?.status).toBe('in-progress');
+    expect(store.activeStep()).toBe('qa');
+  });
+
+  it('no-op when current status is in-progress', () => {
+    const { store, state } = setup(makeItem({ status: 'in-progress', briefApproved: true }));
+    store.revertToInProgress();
+    const saved = state.items().find((i) => i.id === 'post-1');
+    expect(saved?.status).toBe('in-progress');
+  });
+
+  it('no-op on published items (Edit is not available)', () => {
+    const { store, state } = setup(makeItem({ status: 'published', briefApproved: true }));
+    store.revertToInProgress();
+    const saved = state.items().find((i) => i.id === 'post-1');
+    expect(saved?.status).toBe('published');
+  });
+});
