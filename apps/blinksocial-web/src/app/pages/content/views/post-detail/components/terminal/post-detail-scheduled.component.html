@@ -37,7 +37,7 @@
           />
 
           <app-brief-content-concept
-            [concept]="parentConcept"
+            [concept]="parentConcept ?? it"
             [pillars]="store.pillars()"
             [segments]="store.segments()"
             [objectives]="businessObjectives()"

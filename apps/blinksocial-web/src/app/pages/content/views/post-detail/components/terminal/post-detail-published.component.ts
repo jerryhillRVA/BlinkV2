@@ -60,8 +60,12 @@ export class PostDetailPublishedComponent {
   @Input() previewCaption = '';
   @Input() previewCoverAsset: string | undefined;
 
+  /**
+   * #146: terminal shells default to expanded so the post preview is
+   * visible immediately — matches the prototype reference.
+   */
   /* v8 ignore next 1 — V8's function-call-throws branches on signal() declarations are unreachable */
-  protected readonly previewExpanded = signal(false);
+  protected readonly previewExpanded = signal(true);
 
   @Output() back = new EventEmitter<void>();
 
