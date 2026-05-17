@@ -427,6 +427,30 @@ describe('ContentItemsService', () => {
       expect(Object.keys(fs.files)).toHaveLength(0);
     });
 
+    it('updateItem in mock mode refreshes the lite-entry index row (status / platform / publishedAt / isExported)', async () => {
+      const { svc, mockDs } = await buildMockService();
+      const post = await svc.createItem('hive-collective', {
+        stage: 'post',
+        status: 'in-progress',
+        title: 'Post',
+        platform: 'instagram',
+        contentType: 'reel',
+      });
+      // Mimic Finish + Publish Now — status flips + publishedAt set.
+      await svc.updateItem('hive-collective', post.id, {
+        status: 'published',
+        publishedAt: '2026-05-17T15:00:00.000Z',
+        isExported: true,
+      });
+      const idx = (await svc.getIndex('hive-collective')) as {
+        items: Array<{ id: string; status: string; publishedAt?: string; isExported?: boolean }>;
+      };
+      const row = idx.items.find((r) => r.id === post.id);
+      expect(row?.status).toBe('published');
+      expect(row?.publishedAt).toBe('2026-05-17T15:00:00.000Z');
+      expect(row?.isExported).toBe(true);
+    });
+
     it('createItem in mock mode flips parent idea to used when a concept is added', async () => {
       const { svc, mockDs } = await buildMockService();
       const idea = await svc.createItem('hive-collective', {

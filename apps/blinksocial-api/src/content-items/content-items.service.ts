@@ -74,6 +74,10 @@ export class ContentItemsService {
       parentIdeaId: item.parentIdeaId ?? null,
       parentConceptId: item.parentConceptId ?? null,
       scheduledAt: item.scheduledAt ?? null,
+      // #140: surface the new optional fields on the lite entry so
+      // pipeline cards render correctly without a full-item fetch.
+      publishedAt: item.publishedAt,
+      isExported: item.isExported,
       archived: item.archived ?? false,
       createdAt: item.createdAt,
       updatedAt: item.updatedAt,
@@ -395,6 +399,13 @@ export class ContentItemsService {
         // advancing production.productionStep lands the user on the new
         // step on the next visit instead of reverting to the seed.
         this.mockDataService.setItemOverride(workspaceId, itemId, merged);
+        // Also refresh the lite-entry projection on the index aggregate
+        // so subsequent /index GETs surface the new status / platform /
+        // publishedAt / isExported fields without a full-item fetch.
+        // Without this, pipeline-card status / Exported pill / etc. stay
+        // stuck on the seed until the cache happens to re-fetch the
+        // detail. Mirrors the AFS-branch index update below.
+        await this.mockReplaceIndexRow(workspaceId, merged);
         return merged;
       }
       throw new NotFoundException(`Workspace not found: ${workspaceId}`);

@@ -70,8 +70,8 @@
       "stage": "concept",
       "status": "used",
       "title": "Alcohol & Sleep: The Myth of the Nightcap",
-      "platform": null,
-      "contentType": null,
+      "platform": "youtube",
+      "contentType": "long-form",
       "pillarIds": [
         "bk-p1"
       ],
@@ -92,8 +92,8 @@
       "stage": "concept",
       "status": "used",
       "title": "Weekend Mocktail Series: Spring Edition",
-      "platform": null,
-      "contentType": null,
+      "platform": "instagram",
+      "contentType": "reel",
       "pillarIds": [
         "bk-p4"
       ],

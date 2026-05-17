@@ -49,8 +49,15 @@
             [(expanded)]="previewExpanded"
           />
 
+          <!--
+            #146: terminal shells render the POST's own Business Objective
+            / Pillars / Audience here, never the parent concept's. The
+            parent may live on a different platform/contentType than the
+            post that descended from it; using `it` keeps the chip on the
+            sidebar in sync with the post-card chip on the pipeline.
+          -->
           <app-brief-content-concept
-            [concept]="parentConcept ?? it"
+            [concept]="it"
             [pillars]="store.pillars()"
             [segments]="store.segments()"
             [objectives]="businessObjectives()"
