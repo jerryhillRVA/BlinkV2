@@ -179,6 +179,86 @@ describe('buildEvents', () => {
     const events = buildEvents(response);
     expect(events.find((e) => e.contentId === 'c' && e.kind === 'publish')).toBeUndefined();
   });
+
+  // #140 — per-status tone derivation in publish events.
+  it('emits tone="scheduled" + uses scheduledAt as the event date for status=scheduled', () => {
+    const response = buildResponse();
+    response.items.push(
+      buildItem({
+        id: 's',
+        status: 'scheduled',
+        scheduledAt: '2099-01-15T12:00:00.000Z',
+      }),
+    );
+    const events = buildEvents(response);
+    const ev = events.find((e) => e.contentId === 's' && e.kind === 'publish');
+    expect(ev).toBeDefined();
+    expect(ev?.kind === 'publish' && ev.tone).toBe('scheduled');
+    expect(ev?.date.toISOString()).toBe('2099-01-15T12:00:00.000Z');
+  });
+
+  it('emits tone="published" + uses publishedAt for status=published', () => {
+    const response = buildResponse();
+    response.items.push(
+      buildItem({
+        id: 'p',
+        status: 'published',
+        scheduledAt: '2099-01-15T12:00:00.000Z',
+        publishedAt: '2099-01-16T08:00:00.000Z',
+      }),
+    );
+    const events = buildEvents(response);
+    const ev = events.find((e) => e.contentId === 'p' && e.kind === 'publish');
+    expect(ev).toBeDefined();
+    expect(ev?.kind === 'publish' && ev.tone).toBe('published');
+    expect(ev?.date.toISOString()).toBe('2099-01-16T08:00:00.000Z');
+  });
+
+  it('silently skips a published item with no publishedAt (legacy data)', () => {
+    const response = buildResponse();
+    response.items.push(
+      buildItem({
+        id: 'legacy',
+        status: 'published',
+        scheduledAt: '2099-01-15T12:00:00.000Z',
+        publishedAt: undefined,
+      }),
+    );
+    const events = buildEvents(response);
+    expect(
+      events.find((e) => e.contentId === 'legacy' && e.kind === 'publish'),
+    ).toBeUndefined();
+  });
+
+  it('emits tone="intent" for non-terminal status with scheduledAt (legacy intent-to-schedule)', () => {
+    const response = buildResponse();
+    response.items.push(
+      buildItem({
+        id: 'i',
+        status: 'in-progress',
+        scheduledAt: '2099-01-15T12:00:00.000Z',
+      }),
+    );
+    const events = buildEvents(response);
+    const ev = events.find((e) => e.contentId === 'i' && e.kind === 'publish');
+    expect(ev).toBeDefined();
+    expect(ev?.kind === 'publish' && ev.tone).toBe('intent');
+  });
+
+  it('propagates isExported into the publish event view', () => {
+    const response = buildResponse();
+    response.items.push(
+      buildItem({
+        id: 'ex',
+        status: 'scheduled',
+        scheduledAt: '2099-01-15T12:00:00.000Z',
+        isExported: true,
+      }),
+    );
+    const events = buildEvents(response);
+    const ev = events.find((e) => e.contentId === 'ex' && e.kind === 'publish');
+    expect(ev?.kind === 'publish' && ev.isExported).toBe(true);
+  });
 });
 
 describe('applyFilters', () => {

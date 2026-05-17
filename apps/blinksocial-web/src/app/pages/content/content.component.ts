@@ -10,6 +10,7 @@ import { ContentCreateDrawerComponent } from './views/content-create/content-cre
 import type { ContentView, ContentCreatePayload, IdeaPayload, ContentItemType } from './content.types';
 import { ContentStateService } from './content-state.service';
 import { buildContentItem } from './content.utils';
+import { PublishTransitionService } from '../../core/publish-transition/publish-transition.service';
 
 @Component({
   selector: 'app-content',
@@ -21,7 +22,7 @@ import { buildContentItem } from './content.utils';
     PerformanceStubComponent,
     ContentCreateDrawerComponent,
   ],
-  providers: [ContentStateService],
+  providers: [ContentStateService, PublishTransitionService],
   templateUrl: './content.component.html',
   styleUrl: './content.component.scss',
 })
@@ -30,6 +31,9 @@ export class ContentComponent {
   private readonly router = inject(Router);
   private readonly destroyRef = inject(DestroyRef);
   protected readonly stateService = inject(ContentStateService);
+  // #140: silent past-due Scheduled → Published auto-flip. Scoped to the
+  // Content route since that's where the items signal lives.
+  private readonly publishTransition = inject(PublishTransitionService);
   /* v8 ignore next 5 — V8's function-call-throws branches on input()/signal() declarations are unreachable (Angular class-field init time; ESM exports not spy-able) */
   readonly workspaceId = signal<string>('');
   readonly activeView = signal<ContentView>('overview');
@@ -38,6 +42,7 @@ export class ContentComponent {
   readonly createInitialType = signal<ContentItemType | undefined>(undefined);
 
   constructor() {
+    this.publishTransition.start();
     let isFirst = true;
     this.route.paramMap
       .pipe(takeUntilDestroyed(this.destroyRef))
