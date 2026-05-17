@@ -258,7 +258,8 @@
       "archived": false,
       "createdAt": "2026-02-01T08:00:00Z",
       "updatedAt": "2026-02-15T10:00:00Z",
-      "scheduledAt": "2026-02-15T00:00:00.000Z"
+      "scheduledAt": "2026-02-15T00:00:00.000Z",
+      "publishedAt": "2026-02-15T14:00:00Z"
     },
     {
       "id": "bk-pub2",
@@ -280,7 +281,9 @@
       "archived": false,
       "createdAt": "2026-01-20T09:00:00Z",
       "updatedAt": "2026-02-10T14:00:00Z",
-      "scheduledAt": "2026-02-10T00:00:00.000Z"
+      "scheduledAt": "2026-02-10T00:00:00.000Z",
+      "publishedAt": "2026-02-10T15:00:00Z",
+      "isExported": true
     },
     {
       "id": "bk-img1",
@@ -345,8 +348,62 @@
       "createdAt": "2026-04-30T09:00:00Z",
       "updatedAt": "2026-05-05T11:00:00Z",
       "scheduledAt": "2026-05-23T00:00:00.000Z"
+    },
+    {
+      "id": "bk-concept5",
+      "stage": "concept",
+      "status": "new",
+      "title": "Five-Phrase Sober Toolkit for Weddings",
+      "platform": "instagram",
+      "contentType": "reel",
+      "pillarIds": ["bk-p2"],
+      "segmentIds": ["bk-s1", "bk-s3"],
+      "owner": "user-mara",
+      "parentIdeaId": null,
+      "parentConceptId": null,
+      "archived": false,
+      "createdAt": "2026-05-14T13:00:00Z",
+      "updatedAt": "2026-05-14T13:00:00Z",
+      "scheduledAt": null
+    },
+    {
+      "id": "bk-sched2",
+      "stage": "post",
+      "status": "scheduled",
+      "title": "Sober Stories: Quitting at 28",
+      "platform": "youtube",
+      "contentType": "long-form",
+      "pillarIds": ["bk-p3"],
+      "segmentIds": ["bk-s1", "bk-s2"],
+      "owner": "user-mara",
+      "parentIdeaId": null,
+      "parentConceptId": "bk-concept3",
+      "archived": false,
+      "createdAt": "2026-04-30T09:00:00Z",
+      "updatedAt": "2026-05-15T15:00:00Z",
+      "scheduledAt": "2026-06-12T18:00:00Z",
+      "isExported": true
+    },
+    {
+      "id": "bk-pub3",
+      "stage": "post",
+      "status": "published",
+      "title": "Mocktail of the Week: Bitter Citrus Highball",
+      "platform": "instagram",
+      "contentType": "reel",
+      "pillarIds": ["bk-p4"],
+      "segmentIds": ["bk-s1"],
+      "owner": "user-devin",
+      "parentIdeaId": null,
+      "parentConceptId": "bk-concept4",
+      "archived": false,
+      "createdAt": "2026-04-28T11:00:00Z",
+      "updatedAt": "2026-05-12T17:00:00Z",
+      "scheduledAt": null,
+      "publishedAt": "2026-05-12T17:00:00Z",
+      "isExported": true
     }
   ],
-  "totalCount": 16,
-  "lastUpdated": "2026-05-10T00:00:00.000Z"
+  "totalCount": 19,
+  "lastUpdated": "2026-05-15T00:00:00.000Z"
 }

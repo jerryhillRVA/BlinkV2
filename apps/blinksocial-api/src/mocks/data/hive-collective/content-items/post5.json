@@ -29,6 +29,8 @@
   "claimsFlag": false,
   "riskLevel": "low",
   "scheduledAt": "2026-04-22T19:00:00Z",
+  "publishedAt": "2026-04-22T19:00:00Z",
+  "livePostUrl": "https://www.instagram.com/p/mock-post5/",
   "briefApproved": true,
   "briefApprovedAt": "2026-04-08T15:00:00Z",
   "briefApprovedBy": "user-sarah",

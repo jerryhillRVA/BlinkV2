@@ -1,0 +1,55 @@
+{
+  "id": "concept5",
+  "stage": "concept",
+  "status": "new",
+  "parentIdeaId": null,
+  "title": "The 10-Minute Cortisol-Aware Morning",
+  "description": "A short series concept that swaps high-intensity AM cardio for a 10-minute low-cortisol stack: 4 minutes of mobility, 4 minutes of brisk walking, 2 minutes of short strength bursts. Frame the throughline as 'work with your nervous system, not against it.' Pillar-1 anchor; spin off three weekly variations as separate posts.",
+  "pillarIds": [
+    "p1",
+    "p3"
+  ],
+  "segmentIds": [
+    "s1",
+    "s2"
+  ],
+  "tags": [
+    "cortisol",
+    "perimenopause",
+    "morning-routine",
+    "series-anchor"
+  ],
+  "owner": "user-sarah",
+  "createdAt": "2026-05-14T10:00:00Z",
+  "updatedAt": "2026-05-14T10:00:00Z",
+  "targetPlatforms": [
+    {
+      "platform": "instagram",
+      "contentType": "reel",
+      "postId": null
+    },
+    {
+      "platform": "tiktok",
+      "contentType": "short-video",
+      "postId": null
+    }
+  ],
+  "hook": "Your morning workout might be making cortisol worse, not better.",
+  "objective": "education",
+  "cta": {
+    "type": "follow",
+    "text": "Follow for the next entry in the series"
+  },
+  "keyMessage": "Ten minutes of intentional, low-intensity movement beats thirty minutes of cortisol-spiking cardio for women 40+.",
+  "angle": "Reframe morning movement around hormonal reality rather than fitness culture.",
+  "formatNotes": [
+    "b-roll",
+    "captions-required",
+    "show-timer-overlays"
+  ],
+  "claimsFlag": false,
+  "riskLevel": "low",
+  "platform": "instagram",
+  "contentType": "reel",
+  "objectiveId": "obj-1"
+}

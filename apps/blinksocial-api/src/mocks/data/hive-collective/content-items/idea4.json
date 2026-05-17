@@ -1,0 +1,23 @@
+{
+  "id": "idea4",
+  "stage": "idea",
+  "status": "new",
+  "title": "Cortisol-Aware Workout Stack",
+  "description": "Pitch women 40+ on swapping high-intensity AM cardio for a low-cortisol stack: 10-minute mobility, walking, and short strength bursts. Frame as 'work with your nervous system, not against it.' Could anchor a Pillar-1 series.",
+  "pillarIds": [
+    "p1",
+    "p3"
+  ],
+  "segmentIds": [
+    "s1",
+    "s2"
+  ],
+  "tags": [
+    "cortisol",
+    "perimenopause",
+    "strength",
+    "series-pitch"
+  ],
+  "createdAt": "2026-05-12T09:00:00Z",
+  "updatedAt": "2026-05-12T09:00:00Z"
+}

@@ -1,0 +1,92 @@
+{
+  "id": "bk-pub3",
+  "stage": "post",
+  "status": "published",
+  "title": "Mocktail of the Week: Bitter Citrus Highball",
+  "description": "Pillar-4 mocktail recipe (Aperol-style bitter + grapefruit + tonic) cross-posted from the team's Instagram. Exported packet — Devin published from Later and hasn't yet pasted the live URL back into Blink, so the live-post link is empty and the card shows the warning state.",
+  "pillarIds": [
+    "bk-p4"
+  ],
+  "segmentIds": [
+    "bk-s1"
+  ],
+  "tags": [
+    "mocktail",
+    "recipe",
+    "weekly"
+  ],
+  "owner": "user-devin",
+  "hook": "Bitter, fizzy, slightly grown-up. Not a drink — a drink.",
+  "objective": "engagement",
+  "platform": "instagram",
+  "contentType": "reel",
+  "cta": {
+    "type": "save",
+    "text": "Save for the next bar night"
+  },
+  "keyMessage": "Bitterness reads as 'adult drink' to the palate; lean into it.",
+  "tonePreset": "playful",
+  "claimsFlag": false,
+  "riskLevel": "low",
+  "publishedAt": "2026-05-12T17:00:00Z",
+  "isExported": true,
+  "briefApproved": true,
+  "briefApprovedAt": "2026-05-04T10:00:00Z",
+  "briefApprovedBy": "user-mara",
+  "createdAt": "2026-04-28T11:00:00Z",
+  "updatedAt": "2026-05-12T17:00:00Z",
+  "conceptId": "bk-concept4",
+  "parentConceptId": "bk-concept4",
+  "production": {
+    "productionStep": "qa",
+    "brief": {
+      "strategy": {
+        "objective": "engagement",
+        "audienceSegmentIds": ["bk-s1"],
+        "pillarIds": ["bk-p4"],
+        "keyMessage": "Bitterness reads as 'adult drink' to the palate; lean into it.",
+        "ctaType": "save",
+        "ctaText": "Save for the next bar night",
+        "tonePreset": "playful"
+      },
+      "creativePlan": {
+        "hook": "Bitter, fizzy, slightly grown-up. Not a drink — a drink.",
+        "storyArc": "ingredients-build-pour-taste",
+        "musicNotes": "Upbeat lounge instrumental — no licensed track"
+      },
+      "compliance": {
+        "containsClaims": false,
+        "disclosureNeeded": false
+      },
+      "approved": true,
+      "canonicalType": "VIDEO_SHORT_VERTICAL",
+      "hasTalent": true,
+      "hasMusic": true,
+      "needsAccessibility": true
+    },
+    "sources": [],
+    "outputs": {},
+    "assets": [],
+    "tasks": [],
+    "versions": [],
+    "qa": {
+      "approved": true,
+      "qaApprovedAt": "2026-05-12T16:30:00Z",
+      "qaApprovedBy": "user-mara",
+      "publishConfig": {
+        "publishAction": "export-packet",
+        "deliveryMethod": "auto",
+        "visibility": "public"
+      },
+      "approvals": [
+        {
+          "role": "brand-reviewer",
+          "label": "Brand Reviewer",
+          "required": true,
+          "status": "approved",
+          "timestamp": "2026-05-12T16:30:00Z"
+        }
+      ]
+    }
+  }
+}

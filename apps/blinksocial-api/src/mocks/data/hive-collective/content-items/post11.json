@@ -1,0 +1,96 @@
+{
+  "id": "post11",
+  "stage": "post",
+  "status": "published",
+  "title": "Three Bone-Density Lifts for Women 40+",
+  "description": "Long-form YouTube explainer on the three lifts that move the needle on bone density: hex-bar deadlift, goblet squat, single-arm row. Exported packet — creator published from their own scheduler and hasn't yet pasted the live URL back into Blink.",
+  "pillarIds": [
+    "p3"
+  ],
+  "segmentIds": [
+    "s1",
+    "s2"
+  ],
+  "tags": [
+    "strength",
+    "bone-density",
+    "long-form"
+  ],
+  "owner": "user-sarah",
+  "hook": "Three lifts. Three minutes each. Decades of bone density at stake.",
+  "objective": "education",
+  "platform": "youtube",
+  "contentType": "long-form",
+  "cta": {
+    "type": "subscribe",
+    "text": "Subscribe for the strength-after-40 series"
+  },
+  "keyMessage": "Bone density responds to weighted loading, not minutes of cardio.",
+  "tonePreset": "authoritative",
+  "claimsFlag": true,
+  "sourceLinks": [
+    "https://example.com/research/bone-density-loading"
+  ],
+  "riskLevel": "medium",
+  "publishedAt": "2026-05-13T15:00:00Z",
+  "isExported": true,
+  "briefApproved": true,
+  "briefApprovedAt": "2026-04-30T11:00:00Z",
+  "briefApprovedBy": "user-sarah",
+  "createdAt": "2026-04-20T09:00:00Z",
+  "updatedAt": "2026-05-13T15:00:00Z",
+  "conceptId": "concept3",
+  "parentConceptId": "concept3",
+  "production": {
+    "productionStep": "qa",
+    "brief": {
+      "strategy": {
+        "objective": "education",
+        "audienceSegmentIds": ["s1", "s2"],
+        "pillarIds": ["p3"],
+        "keyMessage": "Bone density responds to weighted loading, not minutes of cardio.",
+        "ctaType": "subscribe",
+        "ctaText": "Subscribe for the strength-after-40 series",
+        "tonePreset": "authoritative"
+      },
+      "creativePlan": {
+        "hook": "Three lifts. Three minutes each. Decades of bone density at stake.",
+        "storyArc": "three-lift-deep-dive",
+        "musicNotes": "No music; let the lift cues breathe"
+      },
+      "compliance": {
+        "containsClaims": true,
+        "disclosureNeeded": false
+      },
+      "approved": true,
+      "canonicalType": "VIDEO_LONG_HORIZONTAL",
+      "hasTalent": true,
+      "hasMusic": false,
+      "needsAccessibility": true
+    },
+    "sources": [],
+    "outputs": {},
+    "assets": [],
+    "tasks": [],
+    "versions": [],
+    "qa": {
+      "approved": true,
+      "qaApprovedAt": "2026-05-13T14:30:00Z",
+      "qaApprovedBy": "user-sarah",
+      "publishConfig": {
+        "publishAction": "export-packet",
+        "deliveryMethod": "auto",
+        "visibility": "public"
+      },
+      "approvals": [
+        {
+          "role": "brand-reviewer",
+          "label": "Brand Reviewer",
+          "required": true,
+          "status": "approved",
+          "timestamp": "2026-05-13T14:30:00Z"
+        }
+      ]
+    }
+  }
+}

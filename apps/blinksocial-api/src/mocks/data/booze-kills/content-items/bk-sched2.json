@@ -1,0 +1,93 @@
+{
+  "id": "bk-sched2",
+  "stage": "post",
+  "status": "scheduled",
+  "title": "Sober Stories: Quitting at 28",
+  "description": "Long-form YouTube interview with community member Devin (consent obtained). Creator will publish manually from YouTube Studio; Blink is being used as the brief/draft/QA toolkit only — hence the export-packet path on a future scheduled date.",
+  "pillarIds": [
+    "bk-p3"
+  ],
+  "segmentIds": [
+    "bk-s1",
+    "bk-s2"
+  ],
+  "tags": [
+    "community-story",
+    "long-form",
+    "youtube"
+  ],
+  "owner": "user-mara",
+  "hook": "I quit at 28. Here's everything no one tells you about the first year.",
+  "objective": "community",
+  "platform": "youtube",
+  "contentType": "long-form",
+  "cta": {
+    "type": "subscribe",
+    "text": "Subscribe for more sober stories"
+  },
+  "keyMessage": "Sobriety in your 20s is a different animal than in your 40s; we don't have to pretend otherwise.",
+  "tonePreset": "authentic",
+  "claimsFlag": false,
+  "riskLevel": "low",
+  "scheduledAt": "2026-06-12T18:00:00Z",
+  "isExported": true,
+  "briefApproved": true,
+  "briefApprovedAt": "2026-05-09T10:00:00Z",
+  "briefApprovedBy": "user-mara",
+  "createdAt": "2026-04-30T09:00:00Z",
+  "updatedAt": "2026-05-15T15:00:00Z",
+  "conceptId": "bk-concept3",
+  "parentConceptId": "bk-concept3",
+  "production": {
+    "productionStep": "qa",
+    "brief": {
+      "strategy": {
+        "objective": "community",
+        "audienceSegmentIds": ["bk-s1", "bk-s2"],
+        "pillarIds": ["bk-p3"],
+        "keyMessage": "Sobriety in your 20s is a different animal than in your 40s; we don't have to pretend otherwise.",
+        "ctaType": "subscribe",
+        "ctaText": "Subscribe for more sober stories",
+        "tonePreset": "authentic"
+      },
+      "creativePlan": {
+        "hook": "I quit at 28. Here's everything no one tells you about the first year.",
+        "storyArc": "interview-with-chapter-markers",
+        "musicNotes": "Soft bed under chapter transitions only"
+      },
+      "compliance": {
+        "containsClaims": false,
+        "disclosureNeeded": true
+      },
+      "approved": true,
+      "canonicalType": "VIDEO_LONG_HORIZONTAL",
+      "hasTalent": true,
+      "hasMusic": false,
+      "needsAccessibility": true
+    },
+    "sources": [],
+    "outputs": {},
+    "assets": [],
+    "tasks": [],
+    "versions": [],
+    "qa": {
+      "approved": true,
+      "qaApprovedAt": "2026-05-15T14:30:00Z",
+      "qaApprovedBy": "user-mara",
+      "publishConfig": {
+        "publishAction": "export-packet",
+        "deliveryMethod": "auto",
+        "visibility": "public"
+      },
+      "approvals": [
+        {
+          "role": "brand-reviewer",
+          "label": "Brand Reviewer",
+          "required": true,
+          "status": "approved",
+          "timestamp": "2026-05-15T14:30:00Z"
+        }
+      ]
+    }
+  }
+}
